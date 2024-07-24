@@ -15,6 +15,7 @@ import java.rmi.RemoteException
 /**
  * Interface for wrappers of RemoteExternalSystemProjectResolver, that operate on results as byte arrays.
  */
+@ApiStatus.Internal
 interface RawExternalSystemProjectResolver<S : ExternalSystemExecutionSettings>
   : RemoteExternalSystemService<S> {
 

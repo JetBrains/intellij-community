@@ -344,13 +344,15 @@ class SourceFolderManagerImpl(private val project: Project,
   }
 }
 
+@ApiStatus.Internal
 class ExternalSystemRootConfigurationAccessor(override val actualDiffBuilder: MutableEntityStorage) : RootConfigurationAccessor(),
                                                                                                       RootConfigurationAccessorForWorkspaceModel
-
+@ApiStatus.Internal
 data class SourceFolderManagerState(@get:XCollection(style = XCollection.Style.v2) val sourceFolders: Collection<SourceFolderModelState>) {
   constructor() : this(mutableListOf())
 }
 
+@ApiStatus.Internal
 data class SourceFolderModelState(var moduleName: String,
                                   var url: String,
                                   var type: String,

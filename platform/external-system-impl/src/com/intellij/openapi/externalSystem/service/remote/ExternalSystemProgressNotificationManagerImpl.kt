@@ -14,6 +14,7 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
+@ApiStatus.Internal
 class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSystemProgressNotificationManager, RemoteExternalSystemProgressNotificationManager {
   private val dispatcher = EventDispatcher.create(ExternalSystemTaskNotificationListener::class.java)
 

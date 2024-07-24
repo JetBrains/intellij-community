@@ -19,6 +19,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -281,6 +282,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return String.format("%s task %s: %s", myExternalSystemId.getReadableName(), myId, myState);
   }
 
+  @ApiStatus.Internal
   protected static @NotNull ExternalSystemTaskNotificationListener wrapWithListener(
     @NotNull ExternalSystemProgressNotificationManagerImpl manager
   ) {

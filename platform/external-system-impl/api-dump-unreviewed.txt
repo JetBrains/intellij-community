@@ -186,7 +186,6 @@ com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
 - sf:NULL_OBJECT:com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
 - a:applyProgressManager(com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager):V
 - a:applySettings(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
-- a:getRawProjectResolver():com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver
 - a:getResolver():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver
 - a:getTaskManager():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
 com.intellij.openapi.externalSystem.service.RemoteExternalSystemService
@@ -519,7 +518,6 @@ a:com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTas
 - refreshState():V
 - p:setState(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState):V
 - p:wrapProgressText(java.lang.String):java.lang.String
-- ps:wrapWithListener(com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl):com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 c:com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask
 - com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTask
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,java.lang.String,com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration):V
@@ -777,16 +775,6 @@ f:com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
 - getSettingsFiles():java.util.Set
 - reloadProject(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext):V
 - subscribe(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListener,com.intellij.openapi.Disposable):V
-a:com.intellij.openapi.externalSystem.service.project.manage.AbstractDependencyDataService
-- com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
-- <init>():V
-- computeOrphanData(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):com.intellij.openapi.util.Computable
-- p:getOrderEntryName(com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.roots.ExportableOrderEntry):java.lang.String
-- pa:getOrderEntryType():java.lang.Class
-- importData(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
-- pa:importData(java.util.Collection,com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):java.util.Map
-- removeData(com.intellij.openapi.util.Computable,java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
-- p:removeData(java.util.Collection,com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
 a:com.intellij.openapi.externalSystem.service.project.manage.AbstractModuleDataService
 - com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
 - sf:MODULE_DATA_KEY:com.intellij.openapi.util.Key
@@ -802,11 +790,6 @@ a:com.intellij.openapi.externalSystem.service.project.manage.AbstractModuleDataS
 - removeData(com.intellij.openapi.util.Computable,java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
 - p:setModuleOptions(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.model.DataNode):V
 - s:unlinkModuleFromExternalSystem(com.intellij.openapi.module.Module):V
-f:com.intellij.openapi.externalSystem.service.project.manage.DeduplicateVisitorsSupplier
-- <init>():V
-- f:getVisitor(com.intellij.openapi.externalSystem.model.Key):java.util.function.Function
-- f:visit(com.intellij.openapi.externalSystem.model.project.LibraryDependencyData):com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
-- f:visit(com.intellij.openapi.externalSystem.model.project.ModuleDependencyData):com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
 f:com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
@@ -864,9 +847,6 @@ f:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeyma
 com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension$ActionsProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createGroup(com.intellij.openapi.util.Condition,com.intellij.openapi.project.Project):com.intellij.openapi.keymap.KeymapGroup
-f:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemRootConfigurationAccessor
-- <init>(com.intellij.platform.workspace.storage.MutableEntityStorage):V
-- getActualDiffBuilder():com.intellij.platform.workspace.storage.MutableEntityStorage
 c:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager
 - com.intellij.openapi.Disposable
 - <init>(com.intellij.openapi.project.Project):V
@@ -919,38 +899,6 @@ c:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskA
 - getProjectPath():java.lang.String
 - getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - getTaskName():java.lang.String
-*:com.intellij.openapi.externalSystem.service.project.manage.ProjectStructureUIModifiableModelsProvider
-f:com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerState
-- <init>():V
-- <init>(java.util.Collection):V
-- f:component1():java.util.Collection
-- f:copy(java.util.Collection):com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerState
-- bs:copy$default(com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerState,java.util.Collection,I,java.lang.Object):com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerState
-- equals(java.lang.Object):Z
-- f:getSourceFolders():java.util.Collection
-- hashCode():I
-f:com.intellij.openapi.externalSystem.service.project.manage.SourceFolderModelState
-- <init>():V
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
-- f:component1():java.lang.String
-- f:component2():java.lang.String
-- f:component3():java.lang.String
-- f:component4():java.lang.String
-- f:component5():Z
-- f:copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):com.intellij.openapi.externalSystem.service.project.manage.SourceFolderModelState
-- bs:copy$default(com.intellij.openapi.externalSystem.service.project.manage.SourceFolderModelState,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,I,java.lang.Object):com.intellij.openapi.externalSystem.service.project.manage.SourceFolderModelState
-- equals(java.lang.Object):Z
-- f:getGenerated():Z
-- f:getModuleName():java.lang.String
-- f:getPackagePrefix():java.lang.String
-- f:getType():java.lang.String
-- f:getUrl():java.lang.String
-- hashCode():I
-- f:setGenerated(Z):V
-- f:setModuleName(java.lang.String):V
-- f:setPackagePrefix(java.lang.String):V
-- f:setType(java.lang.String):V
-- f:setUrl(java.lang.String):V
 c:com.intellij.openapi.externalSystem.service.project.manage.TaskActivationState
 - afterCompileTasks:java.util.List
 - afterRebuildTask:java.util.List
@@ -1042,57 +990,6 @@ a:com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProject
 - p:validateArtifactId(com.intellij.ui.layout.ValidationInfoBuilder):com.intellij.openapi.ui.ValidationInfo
 - p:validateGroupId(com.intellij.ui.layout.ValidationInfoBuilder):com.intellij.openapi.ui.ValidationInfo
 f:com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep$Companion
-a:com.intellij.openapi.externalSystem.service.remote.AbstractRemoteExternalSystemService
-- com.intellij.openapi.externalSystem.service.RemoteExternalSystemService
-- <init>():V
-- p:execute(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.util.function.Supplier):java.lang.Object
-- getNotificationListener():com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-- getSettings():com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
-- getTasksInProgress():java.util.Map
-- isTaskInProgress(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- setNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
-- setSettings(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
-f:com.intellij.openapi.externalSystem.service.remote.CustomClassDeserializingResolver
-- com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver
-- <init>(com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver,com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver):V
-- cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- getTasksInProgress():java.util.Map
-- isTaskInProgress(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- resolveProjectInfo(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy):com.intellij.openapi.externalSystem.model.DataNode
-- setNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
-- setSettings(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
-f:com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
-- com.intellij.execution.rmi.RemoteObject
-- com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-- com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager
-- sf:Companion:com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl$Companion
-- <init>():V
-- addNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):Z
-- addNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):Z
-- addNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener,com.intellij.openapi.Disposable):Z
-- beforeCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- sf:getInstanceImpl():com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
-- onCancel(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- onEnd(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- onEnvironmentPrepared(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- onFailure(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.Exception):V
-- onStart(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String):V
-- onStatusChange(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent):V
-- onSuccess(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):V
-- onTaskOutput(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z):V
-- removeNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):Z
-f:com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl$Companion
-- f:getInstanceImpl():com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
-f:com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
-- java.io.ObjectInputStream
-- <init>(java.io.InputStream,java.util.Collection):V
-- f:getLoaders():java.util.Collection
-com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver
-- com.intellij.openapi.externalSystem.service.RemoteExternalSystemService
-- sf:Companion:com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver$Companion
-- a:resolveProjectInfo(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy):B[]
-f:com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver$Companion
-- f:getNULL_OBJECT():com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver
 com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager
 - java.rmi.Remote
 - sf:NULL_OBJECT:com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager
@@ -1177,10 +1074,6 @@ a:com.intellij.openapi.externalSystem.service.task.ui.AbstractExternalSystemTool
 - createToolWindowContent(com.intellij.openapi.project.Project,com.intellij.openapi.wm.ToolWindow):V
 - pa:getSettings(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings
 - shouldBeAvailable(com.intellij.openapi.project.Project):Z
-f:com.intellij.openapi.externalSystem.service.task.ui.ConfigureTasksActivationDialog
-- com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):V
 c:com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemNode
 - javax.swing.tree.DefaultMutableTreeNode
 - <init>(com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemNodeDescriptor):V
@@ -1563,9 +1456,6 @@ f:com.intellij.openapi.externalSystem.util.CrcUtils
 - sf:calculateCrc(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):J
 f:com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment
 - sf:DEBUG_ORPHAN_MODULES_PROCESSING:Z
-f:com.intellij.openapi.externalSystem.util.ExternalSystemProgressEventConverter
-- <init>():V
-- s:convertBuildEvent(com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent):com.intellij.build.events.BuildEvent
 com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl
 - a:apply(java.lang.Object):V
 - a:disposeUIResources():V
@@ -1577,10 +1467,6 @@ com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl
 - reset(com.intellij.openapi.project.Project):V
 - a:showUi(Z):V
 - a:validate(java.lang.Object):Z
-com.intellij.openapi.externalSystem.util.ExternalSystemTaskUnderProgress
-- a:execute(com.intellij.openapi.progress.ProgressIndicator):V
-- s:executeTaskUnderProgress(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode,com.intellij.openapi.externalSystem.util.ExternalSystemTaskUnderProgress):V
-- getId():java.lang.Object
 f:com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 - sf:INSETS:I
 - s:disposeUi(java.lang.Object):V
@@ -1694,9 +1580,6 @@ a:com.intellij.openapi.externalSystem.util.ui.DataView
 f:com.intellij.openapi.externalSystem.util.ui.DataView$Companion
 - f:getData(com.intellij.openapi.externalSystem.util.ui.DataView):java.lang.Object
 - f:getIcon(com.intellij.openapi.externalSystem.util.ui.DataView):javax.swing.Icon
-f:com.intellij.openapi.externalSystem.util.wsl.WSLUtilKt
-- sf:connectRetrying(J,J,kotlin.jvm.functions.Function0):java.lang.Object
-- bs:connectRetrying$default(J,J,kotlin.jvm.functions.Function0,I,java.lang.Object):java.lang.Object
 f:com.intellij.openapi.externalSystem.view.ExternalProjectTree
 - com.intellij.ui.treeStructure.SimpleTree
 - <init>(com.intellij.openapi.project.Project):V

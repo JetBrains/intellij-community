@@ -44,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ConfigureTasksActivationDialog extends DialogWrapper {
   @NotNull private final Project myProject;
   @NotNull private final ExternalSystemTaskActivator myTaskActivator;

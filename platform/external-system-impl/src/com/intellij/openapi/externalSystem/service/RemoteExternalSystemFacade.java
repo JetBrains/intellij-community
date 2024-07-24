@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProje
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.rmi.Remote;
@@ -110,5 +111,6 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
    * Same as {@link #getResolver()}, but operating on raw result
    */
   @NotNull
+  @ApiStatus.Internal
   RawExternalSystemProjectResolver<S> getRawProjectResolver() throws RemoteException;
 }
