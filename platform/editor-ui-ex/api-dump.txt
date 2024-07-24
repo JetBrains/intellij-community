@@ -210,7 +210,6 @@ c:com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl
 - p:attributesEqual(com.intellij.openapi.editor.colors.impl.AbstractColorsScheme,Z):Z
 - clone():java.lang.Object
 - p:colorsEqual(com.intellij.openapi.editor.colors.impl.AbstractColorsScheme,java.util.function.Predicate):Z
-- copyTo(com.intellij.openapi.editor.colors.impl.AbstractColorsScheme):V
 - getAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):com.intellij.openapi.editor.markup.TextAttributes
 - getAttributes(com.intellij.openapi.editor.colors.TextAttributesKey,Z):com.intellij.openapi.editor.markup.TextAttributes
 - getColor(com.intellij.openapi.editor.colors.ColorKey):java.awt.Color
