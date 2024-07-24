@@ -142,7 +142,7 @@ abstract class ToolWindowHeader internal constructor(
 
           val tabListAction = e.actionManager.getAction("TabList")
           if (hideCommonActions == true) {
-            return arrayOf(tabListAction, *extraActions.toTypedArray())
+            return arrayOf(tabListAction)
           }
           return arrayOf(tabListAction, *extraActions.toTypedArray(), commonActionsGroup)
         }
