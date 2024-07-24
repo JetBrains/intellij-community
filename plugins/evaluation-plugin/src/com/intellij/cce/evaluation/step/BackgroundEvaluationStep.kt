@@ -16,7 +16,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.FutureResult
 
-abstract class BackgroundEvaluationStep(protected val project: Project) : EvaluationStep {
+abstract class BackgroundEvaluationStep(val project: Project) : EvaluationStep {
   protected companion object {
     val LOG = Logger.getInstance(BackgroundEvaluationStep::class.java)
   }

@@ -36,7 +36,7 @@ class BackgroundStepFactory(
     ActionsInterpretationStep(config, config.language, invokersFactory, project)
 
   override fun generateReportStep(): EvaluationStep =
-    ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
+    ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) },
                          config.reports.sessionsFilters, config.reports.comparisonFilters, project, feature)
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =

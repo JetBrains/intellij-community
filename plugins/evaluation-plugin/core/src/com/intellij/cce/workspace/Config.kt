@@ -83,6 +83,7 @@ data class Config private constructor(
     val sessionSeed: Long?,
     val order: InterpretationOrder,
     val saveLogs: Boolean,
+    val saveFusLogs: Boolean,
     val saveFeatures: Boolean,
     val saveContent: Boolean,
     val logLocationAndItemText: Boolean,
@@ -122,6 +123,7 @@ data class Config private constructor(
     var outputDir: String = Paths.get(projectPath, "completion-evaluation").toAbsolutePath().toString()
     var strategy: EvaluationStrategy = EvaluationStrategy.defaultStrategy
     var saveLogs = false
+    var saveFusLogs = false
     var saveFeatures = true
     var saveContent = false
     var logLocationAndItemText = false
@@ -147,6 +149,7 @@ data class Config private constructor(
       evaluationRoots.addAll(config.actions.evaluationRoots)
       ignoreFileNames.addAll(config.actions.ignoreFileNames)
       saveLogs = config.interpret.saveLogs
+      saveFusLogs = config.interpret.saveFusLogs
       saveFeatures = config.interpret.saveFeatures
       saveContent = config.interpret.saveContent
       logLocationAndItemText = config.interpret.logLocationAndItemText
@@ -195,6 +198,7 @@ data class Config private constructor(
         sessionSeed,
         order,
         saveLogs,
+        saveFusLogs,
         saveFeatures,
         saveContent,
         logLocationAndItemText,

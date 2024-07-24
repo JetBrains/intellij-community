@@ -2,31 +2,33 @@
 package com.intellij.cce.workspace.storages
 
 import java.io.BufferedWriter
-import java.io.File
 import java.io.FileWriter
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.zip.GZIPInputStream
+import kotlin.io.path.div
 
-class LogsStorage(private val storageDir: String) {
+class StatLogsSaver(private val logsTemporaryStoragePath: Path, private val finalStorageDir: Path) : LogsSaver {
   private val formatter = SimpleDateFormat("dd_MM_yyyy")
   private val sessionIds = linkedSetOf<String>()
 
-  val path = storageDir
+  override fun <T> invokeRememberingLogs(action: () -> T): T = action()
 
-  fun save(logsPath: String, languageName: String, trainingPercentage: Int) {
-    val logsDir = File(logsPath)
+  override fun save(languageName: String, trainingPercentage: Int) {
+    val logsDir = logsTemporaryStoragePath.toFile()
     if (!logsDir.exists()) return
-    val outputDir = Paths.get(storageDir, languageName)
+    require(logsDir.isDirectory)
+    val outputDir = finalStorageDir / languageName
     Files.createDirectories(outputDir)
     FileWriter(Paths.get(outputDir.toString(), "full.log").toString()).use { writer ->
       for (logChunk in (logsDir.listFiles() ?: emptyArray())
         .filter { it.name.startsWith("chunk") }
         .map { it.name.toString() }
         .sortedBy { it.substringAfterLast('_').substringBefore(".gz").toInt() }) {
-        val chunkPath = Paths.get(logsPath, logChunk)
+        val chunkPath = logsTemporaryStoragePath / logChunk
         if (Files.exists(chunkPath)) {
           val log = GZIPInputStream(chunkPath.toFile().readBytes().inputStream()).reader().readText()
           sessionIds.addAll(log.split("\n").filter { it.isNotBlank() }.map { getSessionId(it) })
@@ -36,7 +38,7 @@ class LogsStorage(private val storageDir: String) {
       }
     }
     saveLogs(outputDir.toString(), trainingPercentage)
-    File(storageDir).compress()
+    finalStorageDir.toFile().compress()
   }
 
   private fun saveLogs(outputDir: String, trainingPercentage: Int) {

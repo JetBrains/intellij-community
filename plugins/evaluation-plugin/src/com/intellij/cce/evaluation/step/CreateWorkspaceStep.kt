@@ -13,7 +13,7 @@ abstract class CreateWorkspaceStep(
   project: Project) : BackgroundEvaluationStep(project) {
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
-    val newWorkspace = EvaluationWorkspace.create(config)
+    val newWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
     handler.invoke(workspace, newWorkspace, progress)
     return newWorkspace
   }

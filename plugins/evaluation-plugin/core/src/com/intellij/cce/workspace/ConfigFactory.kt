@@ -88,6 +88,7 @@ object ConfigFactory {
       builder.order = InterpretationOrder.valueOf(map.getAs<String>("order"))
     }
     builder.saveLogs = map.getAs("saveLogs")
+    builder.saveFusLogs = map.getAs("saveFusLogs")
     if (map.containsKey("saveFeatures")) {
       builder.saveFeatures = map.getAs("saveFeatures")
     }

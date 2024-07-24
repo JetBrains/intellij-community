@@ -2,10 +2,7 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
-import com.intellij.cce.interpreter.InterpretFilter
-import com.intellij.cce.interpreter.InterpretationHandlerImpl
-import com.intellij.cce.interpreter.Interpreter
-import com.intellij.cce.interpreter.InvokersFactory
+import com.intellij.cce.interpreter.*
 import com.intellij.cce.util.ExceptionsUtil
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.util.Progress
@@ -15,6 +12,9 @@ import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileSessionsInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
+import com.intellij.cce.workspace.storages.LogsSaver
+import com.intellij.cce.workspace.storages.asCompositeLogsSaver
+import com.intellij.cce.workspace.storages.logsSaverIf
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import kotlin.math.roundToInt
@@ -26,9 +26,15 @@ class ActionsInterpretationHandler(
   private val language: String,
   private val invokersFactory: InvokersFactory,
   private val project: Project) : TwoWorkspaceHandler {
+
   companion object {
     val LOG = Logger.getInstance(ActionsInterpretationHandler::class.java)
   }
+
+  private fun createLogsSaver(workspace: EvaluationWorkspace): LogsSaver = listOf(
+    logsSaverIf(config.interpret.saveLogs) { workspace.statLogsSaver },
+    logsSaverIf(config.interpret.saveFusLogs) { workspace.fusLogsSaver }
+  ).asCompositeLogsSaver()
 
   override fun invoke(workspace1: EvaluationWorkspace, workspace2: EvaluationWorkspace, indicator: Progress) {
     var sessionsCount: Int
@@ -37,12 +43,14 @@ class ActionsInterpretationHandler(
     }
     LOG.info("Computing of sessions count took $computingTime ms")
     val interpretationConfig = config.interpret
+    val logsSaver = createLogsSaver(workspace2)
     val handler = InterpretationHandlerImpl(indicator, sessionsCount, interpretationConfig.sessionsLimit)
     val filter =
       if (interpretationConfig.sessionProbability < 1)
         RandomInterpretFilter(interpretationConfig.sessionProbability, interpretationConfig.sessionSeed)
       else InterpretFilter.default()
-    val interpreter = Interpreter(invokersFactory, handler, filter, config.interpret.order, project.basePath)
+    val interpreter = ActionInvokingInterpreter(invokersFactory, handler, filter, config.interpret.order, project.basePath)
+      .wrapLogging(logsSaver)
     val featuresStorage = if (interpretationConfig.saveFeatures) workspace2.featuresStorage else FeaturesStorage.EMPTY
     LOG.info("Start interpreting actions")
     if (interpretationConfig.sessionProbability < 1) {
@@ -75,7 +83,7 @@ class ActionsInterpretationHandler(
       }
       if (handler.isCancelled() || handler.isLimitExceeded()) break
     }
-    if (interpretationConfig.saveLogs) workspace2.logsStorage.save(SetupStatsCollectorStep.statsCollectorLogsDirectory(), language, interpretationConfig.trainTestSplit)
+    logsSaver.save(language, config.interpret.trainTestSplit)
     SetupStatsCollectorStep.deleteLogs()
     workspace2.saveMetadata()
     LOG.info("Interpreting actions completed")

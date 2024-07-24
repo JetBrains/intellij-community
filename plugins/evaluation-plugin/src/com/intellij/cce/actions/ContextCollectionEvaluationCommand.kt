@@ -14,6 +14,7 @@ import com.intellij.cce.evaluable.common.getEditorSafe
 import com.intellij.cce.evaluable.completion.BaseCompletionActionsInvoker
 import com.intellij.cce.evaluation.*
 import com.intellij.cce.evaluation.step.ActionsGenerationStep
+import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterReader
 import com.intellij.cce.interpreter.FeatureInvoker
@@ -55,7 +56,7 @@ internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.
   override fun run() {
     val feature = EvaluableFeature.forFeature(featureName) ?: error("There is no support for the $featureName")
     val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
-    val workspace = EvaluationWorkspace.create(config)
+    val workspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
     val evaluationRootInfo = EvaluationRootInfo(true)
     loadAndApply(config.projectPath) { project ->
       val stepFactory = object : StepFactory by BackgroundStepFactory(

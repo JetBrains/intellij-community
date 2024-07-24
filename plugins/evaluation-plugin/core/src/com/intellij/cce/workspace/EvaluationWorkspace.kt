@@ -4,6 +4,7 @@ package com.intellij.cce.workspace
 import com.google.gson.Gson
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
+import com.intellij.cce.fus.FusLogsSaver
 import com.intellij.cce.workspace.storages.*
 import java.io.FileWriter
 import java.nio.file.Files
@@ -12,25 +13,25 @@ import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 
-class EvaluationWorkspace private constructor(private val basePath: Path) {
+class EvaluationWorkspace private constructor(private val basePath: Path,
+                                              statsLogsPath: Path) {
   companion object {
     private const val DEFAULT_REPORT_TYPE = "html"
     private val gson = Gson()
     private val formatter = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")
 
-    fun open(workspaceDir: String): EvaluationWorkspace {
-      return EvaluationWorkspace(Paths.get(workspaceDir).toAbsolutePath())
+    fun open(workspaceDir: String, statsLogsPath: Path): EvaluationWorkspace {
+      return EvaluationWorkspace(Paths.get(workspaceDir).toAbsolutePath(), statsLogsPath)
     }
 
-    fun create(config: Config): EvaluationWorkspace {
-      val workspace = EvaluationWorkspace(Paths.get(config.outputDir).toAbsolutePath().resolve(formatter.format(Date())))
+    fun create(config: Config, statsLogsPath: Path): EvaluationWorkspace {
+      val workspace = EvaluationWorkspace(Paths.get(config.outputDir).toAbsolutePath().resolve(formatter.format(Date())), statsLogsPath)
       workspace.writeConfig(config)
       return workspace
     }
   }
 
   private val sessionsDir = subdir("data")
-  private val logsDir = subdir("logs")
   private val fullLineLogsDir = subdir("full-line-logs")
   private val featuresDir = subdir("features")
   private val actionsDir = subdir("actions")
@@ -45,7 +46,9 @@ class EvaluationWorkspace private constructor(private val basePath: Path) {
 
   val errorsStorage: FileErrorsStorage = FileErrorsStorage(errorsDir.toString())
 
-  val logsStorage: LogsStorage = LogsStorage(logsDir.toString())
+  val statLogsSaver: StatLogsSaver = StatLogsSaver(statsLogsPath, subdir("logs"))
+
+  val fusLogsSaver: LogsSaver = FusLogsSaver(subdir("fus-logs"))
 
   val featuresStorage: FeaturesStorage = FeaturesStorageImpl(featuresDir.toString())
 
