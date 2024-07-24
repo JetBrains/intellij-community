@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemOperati
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector;
 import com.intellij.openapi.externalSystem.statistics.Phase;
-import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,7 +43,10 @@ import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
-import org.gradle.tooling.*;
+import org.gradle.tooling.BuildActionFailureException;
+import org.gradle.tooling.CancellationTokenSource;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
@@ -105,6 +107,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Key.create("gradleOutputs");
 
   private static final Key<File> GRADLE_HOME_DIR = Key.create("gradleHomeDir");
+
+  public static final boolean DEBUG_ORPHAN_MODULES_PROCESSING = Boolean.getBoolean("external.system.debug.orphan.modules.processing");
 
   // This constructor is called by external system API, see AbstractExternalSystemFacadeImpl class constructor.
   @SuppressWarnings("UnusedDeclaration")
@@ -532,7 +536,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     if (gradleModule == null) {
       return null;
     }
-    if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+    if (DEBUG_ORPHAN_MODULES_PROCESSING) {
       LOG.info(String.format("Importing module data: %s", gradleModule));
     }
     final String moduleName = gradleModule.getName();

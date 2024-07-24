@@ -1429,8 +1429,6 @@ f:com.intellij.openapi.externalSystem.util.CrcUtils
 - sf:calculateCrc(com.intellij.openapi.vfs.VirtualFile):J
 - sf:calculateCrc(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):J
 - sf:calculateCrc(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):J
-f:com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment
-- sf:DEBUG_ORPHAN_MODULES_PROCESSING:Z
 com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl
 - a:apply(java.lang.Object):V
 - a:disposeUIResources():V
