@@ -3,7 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
@@ -11,7 +11,7 @@ import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import java.awt.Rectangle
 
 class EditorCellInput(
-  private val editor: EditorEx,
+  private val editor: EditorImpl,
   private val componentFactory: (EditorCellInput, EditorCellViewComponent?) -> EditorCellViewComponent,
   private val cell: EditorCell,
 ) : EditorCellViewComponent() {
@@ -44,13 +44,21 @@ class EditorCellInput(
 
   private var gutterAction: AnAction? = null
 
-  private fun getFoldingBounds() : Pair<Int, Int> {
+  private fun getFoldingBounds(): Pair<Int, Int> {
+    //For disposed
+    cell
+    if (cell.intervalPointer.get()==null) {
+      return Pair(0,0)
+    }
+
     val delimiterPanelSize = if (interval.ordinal == 0) {
       editor.notebookAppearance.aboveFirstCellDelimiterHeight
     }
     else {
       editor.notebookAppearance.cellBorderHeight / 2
     }
+
+    val bounds = calculateBounds()
     return bounds.y + delimiterPanelSize to bounds.height - delimiterPanelSize
   }
 
@@ -63,7 +71,6 @@ class EditorCellInput(
       toggleTextFolding()
       inputComponentFactory(this, component)
     }
-    invalidate()
   }
 
   private fun toggleTextFolding() {
@@ -127,17 +134,9 @@ class EditorCellInput(
     return bounds
   }
 
-  override fun doLayout() {
-    super.doLayout()
-    folding.updateBounds()
-  }
 
   fun updateInput(force: Boolean = false) {
     val oldComponent = if (force) null else component
     component = componentFactory(this, oldComponent)
-
-    if (bounds != calculateBounds()) {
-      invalidate()
-    }
   }
 }

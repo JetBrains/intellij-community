@@ -4,31 +4,18 @@ import org.jetbrains.plugins.notebooks.visualization.UpdateContext
 import java.awt.Rectangle
 
 abstract class EditorCellViewComponent {
-
-  var bounds: Rectangle = Rectangle(0, 0, 0, 0)
-    set(value) {
-      if (value != field) {
-        invalidate()
-      }
-      field = value
-    }
-
-  private var parent: EditorCellViewComponent? = null
+  protected var parent: EditorCellViewComponent? = null
 
   private val children = mutableListOf<EditorCellViewComponent>()
-
-  private var valid = false
 
   fun add(child: EditorCellViewComponent) {
     children.add(child)
     child.parent = this
-    invalidate()
   }
 
   fun remove(child: EditorCellViewComponent) {
     children.remove(child)
     child.parent = null
-    invalidate()
   }
 
   fun dispose() {
@@ -47,31 +34,6 @@ abstract class EditorCellViewComponent {
 
   abstract fun calculateBounds(): Rectangle
 
-  fun isValid(): Boolean = valid
-
-  fun validate() {
-    if (!valid) {
-      doLayout()
-      children.forEach { it.validate() }
-      valid = true
-    }
-  }
-
-  open fun doLayout() {
-    children.forEach {
-      it.bounds = it.calculateBounds()
-    }
-  }
-
-  fun invalidate() {
-    if (valid) {
-      doInvalidate()
-      valid = false
-      parent?.invalidate()
-    }
-  }
-
-  open fun doInvalidate() = Unit
   open fun updateCellFolding(updateContext: UpdateContext) {
     children.forEach {
       it.updateCellFolding(updateContext)

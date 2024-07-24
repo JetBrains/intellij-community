@@ -3,30 +3,22 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.AncestorListenerAdapter
-import com.intellij.ui.ComponentUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayShowable
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComponent
-import org.jetbrains.plugins.notebooks.visualization.outputs.impl.SurroundingComponent
 import java.awt.Graphics
-import java.awt.Point
 import java.awt.Rectangle
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
-import javax.swing.event.AncestorEvent
 
 val NOTEBOOK_CELL_OUTPUT_DATA_KEY = DataKey.create<EditorCellOutput>("NOTEBOOK_CELL_OUTPUT")
 
 class EditorCellOutput internal constructor(
-  private val editor: EditorEx,
+  private val editor: EditorImpl,
   private val component: CollapsingComponent,
   private val toDispose: Disposable?,
 ) : EditorCellViewComponent() {
@@ -55,8 +47,8 @@ class EditorCellOutput internal constructor(
   fun getOutputComponent(): JComponent = component.mainComponent
 
   private fun getFoldingBounds(): Pair<Int, Int> {
-    val inlayComponentLocation = SwingUtilities.convertPoint(component, Point(0, 0), editor.gutterComponentEx)
-    return inlayComponentLocation.y to component.height
+    val bounds = calculateBounds()
+    return bounds.y to bounds.height
   }
 
   override fun doDispose() {
@@ -67,7 +59,6 @@ class EditorCellOutput internal constructor(
   override fun doViewportChange() {
     val component = component.mainComponent as? NotebookOutputInlayShowable ?: return
     if (component !is JComponent) return
-    validateComponent(component)
     val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
     component.shown = editor.scrollPane.viewport.viewRect.intersects(componentRect)
   }
@@ -87,7 +78,16 @@ class EditorCellOutput internal constructor(
   }
 
   override fun calculateBounds(): Rectangle {
-    val location = SwingUtilities.convertPoint(component.parent, component.location, editor.contentComponent)
+    val allCellOutputs = parent as EditorCellOutputs
+
+    //Need validate because swing component can be invalid on update
+    allCellOutputs.innerComponent.validate()
+
+    val inlayBounds = allCellOutputs.inlay?.bounds ?: Rectangle(0, 0, 0, 0)
+    val diffBetweenInternalAndExternal = allCellOutputs.innerComponent.location
+
+    val location = component.location
+    location.translate(inlayBounds.x + diffBetweenInternalAndExternal.x, inlayBounds.y + diffBetweenInternalAndExternal.y)
     return Rectangle(location, component.size)
   }
 }

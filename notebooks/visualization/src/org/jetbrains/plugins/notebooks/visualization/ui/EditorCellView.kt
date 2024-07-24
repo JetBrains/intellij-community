@@ -33,7 +33,6 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.time.ZonedDateTime
 import javax.swing.JComponent
-import javax.swing.JPanel
 import kotlin.reflect.KClass
 
 class EditorCellView(
@@ -92,7 +91,7 @@ class EditorCellView(
                           currentComponent
                         }
                         else {
-                          ControllerEditorCellViewComponent(controller, parent, editor, cell)
+                          ControllerEditorCellViewComponent(controller, editor, cell)
                         }
                       }
                       else {
@@ -109,9 +108,6 @@ class EditorCellView(
       }
 
   fun postInitInlays() {
-    _controllers.forEach {
-      (it.inlay.renderer as? JPanel)?.validate()
-    }
     updateControllers()
   }
 
@@ -152,7 +148,6 @@ class EditorCellView(
     input.update(force)
     updateOutputs()
     updateCellHighlight()
-    invalidate()
   }
 
   private fun recreateControllers() {
@@ -395,31 +390,20 @@ class EditorCellView(
     input.runCellButton?.visible = mouseOver || selected
   }
 
-  override fun doInvalidate() {
-    cellInlayManager.invalidateCells()
-  }
 
   override fun calculateBounds(): Rectangle {
     val inputBounds = input.calculateBounds()
     val currentOutputs = outputs
-    return Rectangle(
-      0,
-      inputBounds.y,
-      editor.contentSize.width,
-      currentOutputs?.calculateBounds()
-        ?.takeIf { !it.isEmpty }
-        ?.let { it.height + it.y - inputBounds.y }
-      ?: inputBounds.height
-    )
+
+    val outputRectangle = currentOutputs?.calculateBounds()?.takeIf { !it.isEmpty }
+    val height = outputRectangle?.let { it.height + it.y - inputBounds.y } ?: inputBounds.height
+
+    return Rectangle(0, inputBounds.y, editor.contentSize.width, height)
   }
 
   val shouldUpdateFolding: Boolean
     get() = controllers.any { it.shouldUpdateInlay }
 
-  override fun updateCellFolding(updateContext: UpdateContext) {
-    super.updateCellFolding(updateContext)
-    controllers.forEach { it.updateCellFolding() }
-  }
 
   fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
     _controllers.filterIsInstance<CellExecutionStatusView>().firstOrNull()

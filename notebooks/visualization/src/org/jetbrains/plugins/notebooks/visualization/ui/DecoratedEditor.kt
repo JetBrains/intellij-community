@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.FullEditorWidthRenderer
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
@@ -19,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.setMode
 import org.jetbrains.plugins.notebooks.visualization.*
+import org.jetbrains.plugins.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
 import java.awt.*
@@ -49,9 +49,6 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
 
     setupEditorComponentWrapper()
 
-    manager.onInvalidate {
-      component.revalidate()
-    }
     manager.addCellViewEventsListener(object : EditorCellViewEventListener {
       override fun onEditorCellViewEvents(events: List<EditorCellViewEvent>) {
         events.asSequence().filterIsInstance<CellViewRemoved>().forEach {
@@ -146,7 +143,7 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
     val scrollPane = editorEx.scrollPane
     val view = scrollPane.viewport.view
     scrollPane.viewport.isOpaque = false
-    scrollPane.viewport.view = EditorComponentWrapper(editorEx, view as EditorComponentImpl, manager)
+    scrollPane.viewport.view = EditorComponentWrapper(editorEx, view as EditorComponentImpl)
   }
 
   override fun getComponent(): JComponent = component
@@ -214,13 +211,9 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
   }
 
   private fun getCellViewByPoint(point: Point): EditorCellView? {
-    val cells = manager.cells
-    val currentOverCell = cells.filter { it.visible }.mapNotNull { it.view }.firstOrNull {
-      val viewTop = it.bounds.y
-      val viewBottom = viewTop + it.bounds.height
-      point.y in viewTop..<viewBottom
-    }
-    return currentOverCell
+    val visualLine = editor.xyToLogicalPosition(point)
+    val cur = manager.cells.firstOrNull { it.interval.lines.contains(visualLine.line) }
+    return cur?.view
   }
 
   override fun inlayClicked(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean) {
@@ -228,6 +221,7 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
     mousePressed(clickedCell, ctrlPressed, shiftPressed)
   }
 
+  @Suppress("ConvertArgumentToSet")
   private fun mousePressed(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean) {
     val model = editor.cellSelectionModel!!
     when {
@@ -287,8 +281,7 @@ internal fun keepScrollingPositionWhile(editor: Editor, task: Runnable) {
 
 class EditorComponentWrapper(
   private val editor: Editor,
-  private val editorComponent: EditorComponentImpl,
-  private val manager: NotebookCellInlayManager,
+  editorComponent: EditorComponentImpl,
 ) : JComponent() {
   init {
     isOpaque = false
@@ -296,21 +289,11 @@ class EditorComponentWrapper(
     add(editorComponent, BorderLayout.CENTER)
   }
 
-  override fun doLayout() {
-    super.doLayout()
-    // EditorEmbeddedComponentManager breaks the Swing layout model as it expect that subcomponents will define their own bounds themselves.
-    // Here we invoke FullEditorWidthRenderer#validate to place inlay components correctly after doLayout.
-    editorComponent.components.asSequence()
-      .filterIsInstance<FullEditorWidthRenderer>()
-      .forEach {
-        it.validate()
-      }
-    manager.validateCells()
-  }
-
   override fun validateTree() {
     keepScrollingPositionWhile(editor) {
+      JupyterBoundsChangeHandler.get(editor)?.postponeUpdates()
       super.validateTree()
+      JupyterBoundsChangeHandler.get(editor)?.performPostponed()
     }
   }
 }
