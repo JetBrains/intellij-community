@@ -39,6 +39,7 @@ import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -54,6 +55,7 @@ import java.util.concurrent.RejectedExecutionException;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor {
   protected final Project myProject;
+  private final CompletableFuture<Void> myInitFuture;
 
   NodeRenderer myRenderer = null;
 
@@ -91,10 +93,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myProject = project;
     myValue = value;
     myValueReady = true;
+    myInitFuture = CompletableFuture.completedFuture(null);
   }
 
   protected ValueDescriptorImpl(Project project) {
     myProject = project;
+    myInitFuture = new CompletableFuture<>();
   }
 
   private void assertValueReady() {
@@ -238,6 +242,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       myIsExpandable = false;
     }
     finally {
+      myInitFuture.complete(null);
       myValueReady = true;
     }
 
@@ -254,6 +259,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public void setOnDemandPresentationProvider(@NotNull OnDemandPresentationProvider onDemandPresentationProvider) {
     myOnDemandPresentationProvider = onDemandPresentationProvider;
+  }
+
+  @ApiStatus.Internal
+  public CompletableFuture<Void> getInitFuture() {
+    return myInitFuture;
   }
 
   @Nullable
@@ -298,6 +308,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
       if (other.myValueReady) {
         myValue = other.getValue();
+        myInitFuture.complete(null);
         myValueReady = true;
       }
     }

@@ -53,6 +53,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider,
                                                       PinToTopParentValue, PinToTopMemberValue {
@@ -88,6 +89,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     myNodeManager = nodeManager;
     myContextSet = contextSet;
     myCanBePinned = doComputeCanBePinned();
+  }
+
+  @Override
+  public CompletableFuture<Void> getInitCallback() {
+    return myValueDescriptor.getInitFuture();
   }
 
   @Nullable
@@ -166,11 +172,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       @Override
       protected void commandCancelled() {
         node.setPresentation(null, new XErrorValuePresentation(JavaDebuggerBundle.message("error.context.has.changed")), false);
+        cancelInitFuture();
       }
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         if (node.isObsolete()) {
+          cancelInitFuture();
           return;
         }
         if (!myContextSet) {
@@ -228,6 +236,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             return false;
           }
         });
+      }
+
+      private void cancelInitFuture() {
+        var future = myValueDescriptor.getInitFuture();
+        if (!future.isDone()) {
+          future.cancel(false);
+        }
       }
     });
   }

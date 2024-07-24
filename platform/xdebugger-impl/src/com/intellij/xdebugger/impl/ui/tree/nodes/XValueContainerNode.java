@@ -80,12 +80,13 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
         boolean valuesInline = XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline();
         InlineDebuggerHelper inlineHelper = getTree().getEditorsProvider().getInlineDebuggerHelper();
         for (int i = 0; i < children.size(); i++) {
-          XValueNodeImpl node = new XValueNodeImpl(myTree, this, children.getName(i), children.getValue(i));
+          XValue value = children.getValue(i);
+          XValueNodeImpl node = new XValueNodeImpl(myTree, this, children.getName(i), value);
           myValueChildren.add(node);
           newChildren.add(node);
 
           if (valuesInline && inlineHelper.shouldEvaluateChildrenByDefault(node) && isUseGetChildrenHack(myTree)) { //todo[kb]: try to generify this dirty hack
-            node.getChildren();
+            value.getInitCallback().thenApply(v -> node.getChildren());
           }
         }
       }
