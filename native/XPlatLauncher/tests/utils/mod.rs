@@ -592,13 +592,27 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
         if let Some(es) = launcher_process.try_wait()? {
             return Ok(LauncherRunResult {
                 exit_status: es,
-                stdout: fs::read_to_string(stdout_file_path).context("Cannot open stdout file")?,
-                stderr: fs::read_to_string(stderr_file_path).context("Cannot open stderr file")?,
+                stdout: read_output_file(stdout_file_path).context("Cannot read stdout file")?,
+                stderr: read_output_file(stderr_file_path).context("Cannot read stderr file")?,
                 dump: if run_spec.dump { Some(read_launcher_run_result(&dump_file_path)) } else { None }
             });
         }
 
         thread::sleep(time::Duration::from_secs(1))
+    }
+}
+
+fn read_output_file(path: &Path) -> Result<String> {
+    let bytes = fs::read(path).with_context(|| format!("Cannot open {:?}", path))?;
+    if let Ok(string) = String::from_utf8(bytes.to_owned()) {
+        Ok(string)
+    } else {
+        for line in bytes.split(|b| *b == '\n' as u8) {
+            if let Err(e) = String::from_utf8(line.to_owned()) {
+                bail!("{}: {:?} {:?}", e, line, String::from_utf8_lossy(line))
+            }
+        }
+        panic!("Should not reach here");
     }
 }
 

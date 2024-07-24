@@ -46,7 +46,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(target_os = "windows", not(target_arch = "x86_64")))]
+    #[cfg(target_os = "windows")]
     fn classpath_test_on_acp() {
         use windows::Win32::Globalization::{CP_ACP, MB_ERR_INVALID_CHARS, MultiByteToWideChar};
 
