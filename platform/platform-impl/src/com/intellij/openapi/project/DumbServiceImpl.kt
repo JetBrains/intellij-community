@@ -274,12 +274,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       return block()
     }
     finally {
-      withContext(Dispatchers.EDT) {
+      // in the case of cancellation this block won't execute if NonCancellable is omitted
+      withContext(Dispatchers.EDT + NonCancellable) {
         blockingContext {
           decrementDumbCounter()
         }
+        LOG.info("[$project]: finished dumb task without visible indicator: $debugReason")
       }
-      LOG.info("[$project]: finished dumb task without visible indicator: $debugReason")
     }
   }
 
