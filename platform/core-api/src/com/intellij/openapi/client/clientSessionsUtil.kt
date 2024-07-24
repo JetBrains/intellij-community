@@ -74,11 +74,13 @@ suspend fun Project.forEachSessionSuspending(kind: ClientKind, action: suspend (
 
 @get:Internal
 val Application.currentSession: ClientAppSession
-  get() = ClientSessionsManager.getAppSession() ?: error("Application-level session is not set. ${ClientId.current}")
+  get() = ClientSessionsManager.getAppSession() ?:
+  error("Application-level session is not set. ${ClientId.current}")
 
 @get:Internal
 val Project.currentSession: ClientProjectSession
-  get() = ClientSessionsManager.getProjectSession(this) ?: error("Project-level session is not set. ${ClientId.current}")
+  get() = ClientSessionsManager.getProjectSession(this) ?:
+  error("Project-level session is not set. ${ClientId.current}")
 
 @Internal
 fun Application.sessions(kind: ClientKind): List<ClientAppSession> {
@@ -92,10 +94,12 @@ fun Project.sessions(kind: ClientKind): List<ClientProjectSession> {
 
 @Internal
 fun Application.session(clientId: ClientId): ClientAppSession {
-  return ClientSessionsManager.getAppSession(clientId) ?: error("Application-level session is not found. $clientId")
+  return ClientSessionsManager.getAppSession(clientId) ?:
+  error("Application-level session is not found. $clientId")
 }
 
 @Internal
 fun Project.session(clientId: ClientId): ClientProjectSession {
-  return ClientSessionsManager.getProjectSession(this, clientId) ?: error("Project-level session is not found. $clientId")
+  return ClientSessionsManager.getProjectSession(this, clientId) ?:
+  error("Project-level session is not found. $clientId")
 }
