@@ -5,10 +5,7 @@ import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
-import io.opentelemetry.api.metrics.LongHistogram
-import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.time.measureTime
 
 private val eventsCounter: AtomicLong = AtomicLong()
 
