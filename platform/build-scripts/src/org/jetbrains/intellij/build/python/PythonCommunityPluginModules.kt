@@ -63,21 +63,22 @@ object PythonCommunityPluginModules {
       spec.directoryName = name
       spec.mainJarName = "$name.jar"
       spec.withModules(modules)
-
-      spec.withGeneratedResources { targetDir, context ->
-        val output = targetDir.resolve("helpers")
-        Files.createDirectories(output)
-        copyDir(
-          sourceDir = context.paths.communityHomeDir.resolve("python/helpers"), targetDir = output,
-          dirFilter = { path ->
-            when {
-              path.endsWith("tests") || path.endsWith(".idea") -> false
-              path.parent?.fileName?.toString() == "pydev" -> !path.fileName.toString().startsWith("pydev_test")
-              else -> true
-            }
-          },
-          fileFilter = { path -> !path.endsWith("setup.py") && !path.endsWith("conftest.py") }
-        )
+      if (mainModuleName == "intellij.python.community.plugin") {
+        spec.withGeneratedResources { targetDir, context ->
+          val output = targetDir.resolve("helpers")
+          Files.createDirectories(output)
+          copyDir(
+            sourceDir = context.paths.communityHomeDir.resolve("python/helpers"), targetDir = output,
+            dirFilter = { path ->
+              when {
+                path.endsWith("tests") || path.endsWith(".idea") -> false
+                path.parent?.fileName?.toString() == "pydev" -> !path.fileName.toString().startsWith("pydev_test")
+                else -> true
+              }
+            },
+            fileFilter = { path -> !path.endsWith("setup.py") && !path.endsWith("conftest.py") }
+          )
+        }
       }
 
       // required for "Python Console" in PythonCore plugin

@@ -113,7 +113,7 @@ public final class PyCythonExtensionWarning {
         throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
       final String interpreterPath = runConfiguration.getInterpreterPath();
-      final String helpersPath = PythonHelpersLocator.getHelpersRoot().getPath();
+      final String helpersPath = PythonHelpersLocator.getCommunityHelpersRoot().getPath();
 
       final String cythonExtensionsDir = PyDebugRunner.CYTHON_EXTENSIONS_DIR;
       final String[] cythonArgs =

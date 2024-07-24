@@ -502,6 +502,9 @@
     <extensionPoint qualifiedName="Pythonid.pyiStubSuppressor"
                     interface="com.jetbrains.python.pyi.PyiStubSuppressor"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.pythonHelpersLocator"
+                    interface="com.jetbrains.python.PythonHelpersLocator"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -575,6 +578,10 @@
     <importResolver implementation="com.jetbrains.python.tensorFlow.PyTensorFlowImportResolver"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.tensorFlow.PyTensorFlowModuleMembersProvider"/>
     <pyiStubSuppressor implementation="com.jetbrains.python.tensorFlow.TensorflowPyiStubsSuppressor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.python">
+    <pythonHelpersLocator implementation="com.jetbrains.python.PythonHelpersLocatorDefault" />
   </extensions>
 
 </idea-plugin>

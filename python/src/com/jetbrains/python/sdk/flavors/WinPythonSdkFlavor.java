@@ -69,7 +69,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
-    findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
+    findInstallations(candidates, "python.exe", PythonHelpersLocator.getCommunityHelpersRoot().getParent());
     return ContainerUtil.map(candidates, Path::of);
   }
 

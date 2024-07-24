@@ -203,7 +203,7 @@ public class PyDocumentationBuilder {
 
   private void buildForKeyword(@NotNull String name) {
     try {
-      try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name),
+      try (FileReader reader = new FileReader(PythonHelpersLocator.findPathInHelpers("/tools/python_keywords/" + name),
                                               StandardCharsets.UTF_8)) {
         final String text = FileUtil.loadTextAndClose(reader);
         final String converted = StringUtil.convertLineSeparators(text, "\n");
