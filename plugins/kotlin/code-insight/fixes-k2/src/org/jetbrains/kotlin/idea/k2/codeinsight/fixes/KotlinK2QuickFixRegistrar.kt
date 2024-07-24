@@ -130,6 +130,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(MoveWhenElseBranchFixFactory.moveWhenElseBranchFixFactory)
         registerFactory(TypeVarianceConflictErrorFixFactory.removeTypeVariance)
         registerFactory(FinalUpperBoundFixFactory.removeFinalUpperBound)
+        registerFactory(WrongAnnotationTargetWithUseSiteTargetFixFactory.moveReceiverAnnotation)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

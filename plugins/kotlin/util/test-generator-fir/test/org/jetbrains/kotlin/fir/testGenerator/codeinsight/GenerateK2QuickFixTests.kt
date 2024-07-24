@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixM
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 
@@ -140,7 +140,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/migration/missingConstructorKeyword", pattern = pattern)
             model("$idea/quickfix/missingConstructorBrackets", pattern = pattern)
             model("$idea/quickfix/moveMemberToCompanionObject", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/moveReceiverAnnotation", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/moveReceiverAnnotation", pattern = pattern)
             model("$idea/quickfix/moveToConstructorParameters", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/moveToSealedParent", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/moveTypeAliasToTopLevel", pattern = pattern)
