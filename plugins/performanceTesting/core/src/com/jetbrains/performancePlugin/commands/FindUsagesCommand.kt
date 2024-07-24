@@ -1,7 +1,9 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.find.FindManager
 import com.intellij.find.actions.ShowUsagesAction
+import com.intellij.find.actions.findUsages
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.usages.impl.searchTargets
 import com.intellij.openapi.application.EDT
@@ -12,9 +14,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.usages.Usage
+import com.intellij.usages.UsageView
+import com.intellij.usages.impl.UsageViewElementsListener
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.sampullara.cli.Args
 import io.opentelemetry.api.trace.Span
@@ -35,13 +40,14 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
     const val PREFIX: @NonNls String = CMD_PREFIX + "findUsages"
     const val SPAN_NAME: @NonNls String = "findUsages"
     const val PARENT_SPAN_NAME: @NonNls String = SPAN_NAME + "Parent"
+    const val FIRST_USAGE_SPAN_BACKGROUND = "${SPAN_NAME}_firstUsage_background"
     private val LOG = logger<FindUsagesCommand>()
   }
 
   @Suppress("TestOnlyProblems")
   override suspend fun doExecute(context: PlaybackContext) {
     val options = FindUsagesArguments()
-    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split(" ", limit= 2) }.toTypedArray())
+    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split(" ", limit = 2) }.toTypedArray())
 
     val project = context.project
     val position = options.position
@@ -81,12 +87,33 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
             GotoDeclarationAction.findElementToShowUsagesOf(editor, offset)
           }
         }
+
+        if (options.runInBackground) {
+          val firstUsageSpan = TelemetryManager
+            .getTracer(com.intellij.platform.diagnostic.telemetry.Scope(SPAN_NAME))
+            .spanBuilder(FIRST_USAGE_SPAN_BACKGROUND)
+            .startSpan()
+          UsageViewElementsListener.EP_NAME.point.registerExtension(object : UsageViewElementsListener {
+            override fun beforeUsageAdded(view: UsageView, usage: Usage) {
+              // Unregister extension to avoid extra calls
+              UsageViewElementsListener.EP_NAME.point.unregisterExtension(this)
+              firstUsageSpan.end()
+              super.beforeUsageAdded(view, usage)
+            }
+          })
+        }
+
         if (element != null) {
           LOG.info("Command find usages is called on element $element")
 
           if (!elementName.isNullOrEmpty()) {
             val foundElementName = (element as PsiNamedElement).name
             check(foundElementName != null && foundElementName == elementName) { "Found element name $foundElementName does not correspond to expected $elementName" }
+          }
+
+          if (options.runInBackground) {
+            FindManager.getInstance(project).findUsages(element)
+            return@withContext
           }
 
           spanRef = spanBuilder.startSpan()
@@ -101,6 +128,11 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
 
           LOG.info("Command find usages is called on target $target")
 
+          if (options.runInBackground) {
+            findUsages(false, project, scope, target)
+            return@withContext
+          }
+
           spanRef = spanBuilder.startSpan()
           scopeRef = spanRef!!.makeCurrent()
 
@@ -113,11 +145,13 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
       }
     }
 
-    val results = findUsagesFuture!!.get()
-    spanRef!!.end()
-    scopeRef!!.close()
-    AdvancedSettings.setInt("ide.usages.page.size", storedPageSize)
-    FindUsagesDumper.storeMetricsDumpFoundUsages(results.toMutableList(), project)
+    if (!options.runInBackground) {
+      val results = findUsagesFuture!!.get()
+      spanRef!!.end()
+      scopeRef!!.close()
+      AdvancedSettings.setInt("ide.usages.page.size", storedPageSize)
+      FindUsagesDumper.storeMetricsDumpFoundUsages(results.toMutableList(), project)
+    }
   }
 
   override fun getName(): String = PREFIX

@@ -99,7 +99,7 @@ fun <T : CommandChain> T.openRandomFile(extension: String): T = apply {
 }
 
 fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean = true, detectProjectLeak: Boolean = false): T = apply {
-  if(detectProjectLeak && openInNewWindow) throw IllegalArgumentException("To analyze the project leak, we need to close the project")
+  if (detectProjectLeak && openInNewWindow) throw IllegalArgumentException("To analyze the project leak, we need to close the project")
   addCommand("${CMD_PREFIX}openProject", projectPath.toString(), (!openInNewWindow).toString(), detectProjectLeak.toString())
 }
 
@@ -162,6 +162,7 @@ fun <T : CommandChain> T.navigateAndFindUsages(
   position: String = "INTO",
   scope: String = "Project Files",
   warmup: Boolean = false,
+  runInBackground: Boolean = false,
 ): T = apply {
   val command = mutableListOf("${CMD_PREFIX}findUsages")
   if (expectedElementName.isNotEmpty()) {
@@ -177,6 +178,9 @@ fun <T : CommandChain> T.navigateAndFindUsages(
   if (warmup) {
     command.add("WARMUP")
   }
+
+  command.add("-runInBackground $runInBackground")
+
   addCommandWithSeparator("|", *command.toTypedArray())
 }
 
