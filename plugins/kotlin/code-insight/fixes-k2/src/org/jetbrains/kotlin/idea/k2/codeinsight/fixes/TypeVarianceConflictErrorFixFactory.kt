@@ -14,13 +14,13 @@ import org.jetbrains.kotlin.types.Variance
 internal object TypeVarianceConflictErrorFixFactory {
 
     @OptIn(KaExperimentalApi::class)
-    val removeTypeVariance = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.TypeVarianceConflictError ->
-        val typeReference = diagnostic.psi as? KtTypeReference ?: return@IntentionBased emptyList()
-        val type = typeReference.type as? KaTypeParameterType ?: return@IntentionBased emptyList()
+    val removeTypeVariance = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.TypeVarianceConflictError ->
+        val typeReference = diagnostic.psi as? KtTypeReference ?: return@ModCommandBased emptyList()
+        val type = typeReference.type as? KaTypeParameterType ?: return@ModCommandBased emptyList()
         val symbol = type.symbol
         val variance = symbol.variance
-        if (variance == Variance.INVARIANT) return@IntentionBased emptyList()
-        val typeParameter = symbol.psi as? KtTypeParameter ?: return@IntentionBased emptyList()
+        if (variance == Variance.INVARIANT) return@ModCommandBased emptyList()
+        val typeParameter = symbol.psi as? KtTypeParameter ?: return@ModCommandBased emptyList()
 
         listOf(
             RemoveTypeVarianceFix(
