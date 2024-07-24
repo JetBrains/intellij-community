@@ -32,6 +32,21 @@ object JdkDownloader {
     }
   }
 
+  /**
+   * Will be used by JpsBootstrapMain when IJI-2074 is ready
+   */
+  @Suppress("unused")
+  @JvmStatic
+  fun getRuntimeHome(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return runBlocking(Dispatchers.IO) {
+      val dependenciesProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+      val runtimeBuild = dependenciesProperties.property("runtimeBuild")
+      getJdkHome(communityRoot, jdkBuildNumber = runtimeBuild, variation = "jbr_jcef") {
+        Logger.getLogger(JdkDownloader::class.java.name).info(it)
+      }
+    }
+  }
+
   suspend fun getJdkHome(
     communityRoot: BuildDependenciesCommunityRoot,
     os: OS,
@@ -73,8 +88,6 @@ object JdkDownloader {
       Arch.ARM64 -> "aarch64"
     }
 
-    val variationSuffix = if (variation == null) "" else "_$variation"
-
     val jdkBuild = if (jdkBuildNumber == null) {
       val dependencyProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
       dependencyProperties.property("jdkBuild")
@@ -85,8 +98,8 @@ object JdkDownloader {
     check(jdkBuildSplit.size == 2) { "Malformed jdkBuild property: $jdkBuild" }
     val version = jdkBuildSplit[0]
     val build = "b" + jdkBuildSplit[1]
-    return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk" +
-                      variationSuffix + "-" +
+    return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/" +
+                      (variation ?: "jbrsdk") + "-" +
                       version + "-" + osString + "-" +
                       archString + "-" + build + ext)
   }
