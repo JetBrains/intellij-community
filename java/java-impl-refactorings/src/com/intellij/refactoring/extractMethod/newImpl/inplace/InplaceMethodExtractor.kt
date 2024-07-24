@@ -42,8 +42,7 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 internal class InplaceMethodExtractor(private val editor: Editor,
                              private val range: TextRange,
                              private val popupProvider: ExtractMethodPopupProvider,
-                             private val baseExtractor: DuplicatesMethodExtractor,
-                             private val initialMethodName: String) {
+                             private val defaultExtractor: DuplicatesMethodExtractor) {
 
   companion object {
     private val INPLACE_METHOD_EXTRACTOR = Key<InplaceMethodExtractor>("InplaceMethodExtractor")
@@ -59,7 +58,7 @@ internal class InplaceMethodExtractor(private val editor: Editor,
 
   private val extractor: DuplicatesMethodExtractor = createExtractor()
 
-  private val file: PsiFile = baseExtractor.targetClass.containingFile
+  private val file: PsiFile = defaultExtractor.targetClass.containingFile
 
   private val editorState = EditorState(file.project, editor)
 
@@ -72,13 +71,13 @@ internal class InplaceMethodExtractor(private val editor: Editor,
   private val project = file.project
 
   private fun createExtractor(): DuplicatesMethodExtractor {
-    val elements = ExtractSelector().suggestElementsToExtract(baseExtractor.targetClass.containingFile, range)
-    var options = baseExtractor.extractOptions
+    val elements = ExtractSelector().suggestElementsToExtract(defaultExtractor.targetClass.containingFile, range)
+    var options = defaultExtractor.extractOptions
     if (popupProvider.makeStatic == true) {
       val analyzer = CodeFragmentAnalyzer(options.elements)
       options = ExtractMethodPipeline.withForcedStatic(analyzer, options) ?: throw IllegalStateException()
     }
-    return DuplicatesMethodExtractor(options, baseExtractor.targetClass, elements)
+    return DuplicatesMethodExtractor(options, defaultExtractor.targetClass, elements)
   }
 
   fun extractAndRunTemplate(suggestedNames: LinkedHashSet<String>) {
@@ -122,7 +121,7 @@ internal class InplaceMethodExtractor(private val editor: Editor,
           val range = callIdentifierRange?.asTextRange ?: return@onSuccess
           val methodName = editor.document.getText(range)
           val extractedMethod = findElementAt<PsiMethod>(file, methodIdentifierRange) ?: return@onSuccess
-          InplaceExtractMethodCollector.executed.log(initialMethodName != methodName)
+          InplaceExtractMethodCollector.executed.log(defaultExtractor.extractOptions.methodName != methodName)
           installGotItTooltips(editor, callIdentifierRange?.asTextRange, methodIdentifierRange?.asTextRange)
           MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
           extractor.replaceDuplicates(editor, extractedMethod)
@@ -199,7 +198,7 @@ internal class InplaceMethodExtractor(private val editor: Editor,
     val methodName = if (identifierRange != null) editor.document.getText(identifierRange) else null
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
     WriteCommandAction.writeCommandAction(project).withName(ExtractMethodHandler.getRefactoringName()).run<Throwable> {
-      val inplaceExtractor = InplaceMethodExtractor(editor, range, popupProvider, baseExtractor, initialMethodName)
+      val inplaceExtractor = InplaceMethodExtractor(editor, range, popupProvider, defaultExtractor)
       inplaceExtractor.extractAndRunTemplate(linkedSetOf())
       if (methodName != null) {
         inplaceExtractor.setMethodName(methodName)

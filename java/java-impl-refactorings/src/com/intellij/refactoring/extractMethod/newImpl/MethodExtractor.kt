@@ -125,8 +125,7 @@ class MethodExtractor {
     val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
     executeRefactoringCommand(project) {
       val extractor = DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic)
-      require(extractor.targetClass == options.targetClass)
-      val inplaceExtractor = InplaceMethodExtractor(editor, range, popupSettings, extractor, methodName)
+      val inplaceExtractor = InplaceMethodExtractor(editor, range, popupSettings, extractor)
       inplaceExtractor.extractAndRunTemplate(LinkedHashSet(suggestedNames))
     }
   }
