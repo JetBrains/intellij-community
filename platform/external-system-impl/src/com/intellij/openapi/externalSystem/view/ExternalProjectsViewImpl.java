@@ -543,15 +543,6 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     return myStructure != null ? myStructure.getSelectedNodes(myTree, aClass) : ContainerUtil.emptyList();
   }
 
-  private List<ProjectNode> getSelectedProjectNodes() {
-    return getSelectedNodes(ProjectNode.class);
-  }
-
-  private @Nullable ProjectNode getSelectedProjectNode() {
-    final List<ProjectNode> projectNodes = getSelectedProjectNodes();
-    return projectNodes.size() == 1 ? projectNodes.get(0) : null;
-  }
-
   private @Nullable ExternalSystemTaskLocation extractLocation(List<ExternalSystemNode> selectedNodes) {
     if (selectedNodes.isEmpty()) return null;
 

@@ -42,11 +42,9 @@ public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   };
 
   @NotNull private final ExternalSystemUiAware myUiAware;
-  @NotNull private final ProjectSystemId myExternalSystemId;
 
   public ExternalSystemTasksTreeModel(@NotNull ProjectSystemId externalSystemId) {
     super(new ExternalSystemNode<>(new ExternalSystemNodeDescriptor<>("", "", "", null)));
-    myExternalSystemId = externalSystemId;
     myUiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
   }
 
@@ -87,27 +85,6 @@ public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     return result;
   }
 
-  /**
-   * Asks current model to remove all nodes which have given data as a {@link ExternalSystemNodeDescriptor#getElement() payload}.
-   *
-   * @param payload target payload
-   */
-  public void pruneNodes(@NotNull Object payload) {
-    Deque<ExternalSystemNode<?>> toProcess = new ArrayDeque<>();
-    toProcess.addFirst(getRoot());
-    while (!toProcess.isEmpty()) {
-      ExternalSystemNode<?> node = toProcess.removeLast();
-      if (payload.equals(node.getDescriptor().getElement())) {
-        removeNodeFromParent(node);
-      }
-      else {
-        for (int i = 0; i < node.getChildCount(); i++) {
-          toProcess.addFirst(node.getChildAt(i));
-        }
-      }
-    }
-  }
-
   public void ensureSubProjectsStructure(@NotNull ExternalProjectPojo topLevelProject,
                                          @NotNull Collection<? extends ExternalProjectPojo> subProjects) {
     ExternalSystemNode<ExternalProjectPojo> topLevelProjectNode = ensureProjectNodeExists(topLevelProject);
@@ -137,74 +114,6 @@ public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
                        topLevelProjectNode);
       }
     }
-  }
-
-  public void ensureTasks(@NotNull String externalProjectConfigPath, @NotNull Collection<? extends ExternalTaskPojo> tasks) {
-    if (tasks.isEmpty()) {
-      return;
-    }
-    ExternalSystemNode<ExternalProjectPojo> moduleNode = findProjectNode(externalProjectConfigPath);
-    if (moduleNode == null) {
-//      LOG.warn(String.format(
-//        "Can't proceed tasks for module which external config path is '%s'. Reason: no such module node is found. Tasks: %s",
-//        externalProjectConfigPath, tasks
-//      ));
-      return;
-    }
-    Set<ExternalTaskExecutionInfo> toAdd = new HashSet<>();
-    for (ExternalTaskPojo task : tasks) {
-      toAdd.add(buildTaskInfo(task));
-    }
-    for (int i = 0; i < moduleNode.getChildCount(); i++) {
-      ExternalSystemNode<?> childNode = moduleNode.getChildAt(i);
-      Object element = childNode.getDescriptor().getElement();
-      if (element instanceof ExternalTaskExecutionInfo) {
-        if (!toAdd.remove(element)) {
-          removeNodeFromParent(childNode);
-          //noinspection AssignmentToForLoopParameter
-          i--;
-        }
-      }
-    }
-
-    if (!toAdd.isEmpty()) {
-      for (ExternalTaskExecutionInfo taskInfo : toAdd) {
-        insertNodeInto(
-          new ExternalSystemNode<>(descriptor(taskInfo, taskInfo.getDescription(), myUiAware.getTaskIcon())),
-          moduleNode);
-      }
-    }
-  }
-
-  @NotNull
-  private ExternalTaskExecutionInfo buildTaskInfo(@NotNull ExternalTaskPojo task) {
-    ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
-    settings.setExternalProjectPath(task.getLinkedExternalProjectPath());
-    settings.setTaskNames(Collections.singletonList(task.getName()));
-    settings.setTaskDescriptions(Collections.singletonList(task.getDescription()));
-    settings.setExternalSystemIdString(myExternalSystemId.toString());
-    return new ExternalTaskExecutionInfo(settings, DefaultRunExecutor.EXECUTOR_ID);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Nullable
-  private ExternalSystemNode<ExternalProjectPojo> findProjectNode(@NotNull String configPath) {
-    for (int i = getRoot().getChildCount() - 1; i >= 0; i--) {
-      ExternalSystemNode<?> child = getRoot().getChildAt(i);
-      Object childElement = child.getDescriptor().getElement();
-      if (childElement instanceof ExternalProjectPojo && ((ExternalProjectPojo)childElement).getPath().equals(configPath)) {
-        return (ExternalSystemNode<ExternalProjectPojo>)child;
-      }
-      for (int j = child.getChildCount() - 1; j >= 0; j--) {
-        ExternalSystemNode<?> grandChild = child.getChildAt(j);
-        Object grandChildElement = grandChild.getDescriptor().getElement();
-        if (grandChildElement instanceof ExternalProjectPojo
-            && ((ExternalProjectPojo)grandChildElement).getPath().equals(configPath)) {
-          return (ExternalSystemNode<ExternalProjectPojo>)grandChild;
-        }
-      }
-    }
-    return null;
   }
 
   @NotNull

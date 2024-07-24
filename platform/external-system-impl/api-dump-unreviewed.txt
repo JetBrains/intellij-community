@@ -925,18 +925,6 @@ a:com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalMod
 - getExternalProjectSettings():com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
 - getNodeIcon():javax.swing.Icon
 - getPresentableName():java.lang.String
-c:com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep
-- com.intellij.ide.util.projectWizard.ModuleWizardStep
-- sf:SKIP_STEP_KEY:com.intellij.openapi.util.Key
-- <init>(com.intellij.ide.util.projectWizard.WizardContext,com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder,com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl):V
-- <init>(com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder,com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl):V
-- disposeUIResources():V
-- getComponent():javax.swing.JComponent
-- getHelpId():java.lang.String
-- isStepVisible():Z
-- updateDataModel():V
-- updateStep():V
-- validate():Z
 com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardData
 - a:getArtifactId():java.lang.String
 - a:getArtifactIdProperty():com.intellij.openapi.observable.properties.GraphProperty
