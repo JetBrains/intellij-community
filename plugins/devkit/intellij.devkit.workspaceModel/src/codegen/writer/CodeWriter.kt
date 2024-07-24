@@ -48,7 +48,8 @@ object CodeWriter {
   @RequiresEdt
   suspend fun generate(
     project: Project, module: Module, sourceFolder: VirtualFile,
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean,
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
+    isTestSourceFolder: Boolean, isTestModule: Boolean,
     targetFolderGenerator: () -> VirtualFile?,
     existingTargetFolder: () -> VirtualFile?
   ) {
@@ -86,7 +87,7 @@ object CodeWriter {
       val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
-        val objModules = loadObjModules(ktClasses, module, processAbstractTypes)
+        val objModules = loadObjModules(ktClasses, module, processAbstractTypes, isTestSourceFolder)
 
         val results = generate(codeGenerator, objModules, explicitApiEnabled, isTestModule)
         val generatedCode = results.flatMap { it.generatedCode }
@@ -255,14 +256,14 @@ object CodeWriter {
     return apiVersion ?: CodegenApiVersion.UNKNOWN_VERSION
   }
 
-  private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module, processAbstractTypes: Boolean): List<CompiledObjModule> {
+  private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module, processAbstractTypes: Boolean, isTestSourceFolder: Boolean): List<CompiledObjModule> {
     val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
 
     val metaModelProvider: WorkspaceMetaModelProvider = WorkspaceMetaModelProviderImpl(
       processAbstractTypes = processAbstractTypes,
       module.project
     )
-    return packages.filter { it != "" }.map { metaModelProvider.getObjModule(it, module) }
+    return packages.filter { it != "" }.map { metaModelProvider.getObjModule(it, module, isTestSourceFolder) }
   }
 
   private fun generate(codeGenerator: CodeGenerator, objModules: List<CompiledObjModule>,

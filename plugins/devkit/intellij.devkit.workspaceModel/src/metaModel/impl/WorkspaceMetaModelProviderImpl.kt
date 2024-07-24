@@ -38,8 +38,12 @@ internal class WorkspaceMetaModelProviderImpl(
   private val javaPsiFacade = JavaPsiFacade.getInstance(project)
   private val allScope = GlobalSearchScope.allScope(project)
 
-  override fun getObjModule(packageName: String, module: Module): CompiledObjModule {
-    val sourceInfo = module.productionSourceInfo ?: module.testSourceInfo ?: error("No production sources in ${module.name}")
+  override fun getObjModule(packageName: String, module: Module, isTestSourceFolder: Boolean): CompiledObjModule {
+    val sourceInfo =  if (!isTestSourceFolder) {
+      module.productionSourceInfo
+    } else {
+      module.testSourceInfo
+    } ?: error("No production sources in ${module.name}")
     val resolutionFacade = KotlinCacheService.getInstance(module.project).getResolutionFacadeByModuleInfo(sourceInfo, sourceInfo.platform)!!
     val moduleDescriptor = resolutionFacade.moduleDescriptor
     return getObjModule(packageName, moduleDescriptor)
