@@ -127,6 +127,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddDefaultConstructorFixFactory.addDefaultConstructorFixFactory)
         registerFactory(MakeClassAnAnnotationClassFixFactory.makeClassAnAnnotationClassFixFactory)
         registerFactory(WrongLongSuffixFixFactory.changeToCorrectLongSuffix)
+        registerFactory(MoveWhenElseBranchFixFactory.moveWhenElseBranchFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
