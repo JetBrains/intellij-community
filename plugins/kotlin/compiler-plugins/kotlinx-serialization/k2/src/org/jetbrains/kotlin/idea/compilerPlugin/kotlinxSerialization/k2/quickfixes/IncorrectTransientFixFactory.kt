@@ -15,20 +15,19 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlinx.serialization.compiler.fir.checkers.FirSerializationErrors
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerializationAnnotations
 
-internal object AddKotlinxSerializationTransientImportQuickFixFactory {
+internal object IncorrectTransientFixFactory {
 
-    val useKotlinxSerializationTransientQuickFixFactory =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaCompilerPluginDiagnostic0 ->
-            if (diagnostic.factoryName != FirSerializationErrors.INCORRECT_TRANSIENT.name) return@ModCommandBased emptyList()
-            val annotationEntry = diagnostic.psi as? KtAnnotationEntry ?: return@ModCommandBased emptyList()
-            val isImportNeeded = annotationEntry.containingKtFile.importDirectives.find {
-                it.importedFqName == SerializationAnnotations.serialTransientFqName
-            } == null
+    val useKotlinxSerializationTransientFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaCompilerPluginDiagnostic0 ->
+        if (diagnostic.factoryName != FirSerializationErrors.INCORRECT_TRANSIENT.name) return@ModCommandBased emptyList()
+        val annotationEntry = diagnostic.psi as? KtAnnotationEntry ?: return@ModCommandBased emptyList()
+        val isImportNeeded = annotationEntry.containingKtFile.importDirectives.find {
+            it.importedFqName == SerializationAnnotations.serialTransientFqName
+        } == null
 
-            listOf(
-                UseKotlinxSerializationTransientQuickFix(annotationEntry, isImportNeeded)
-            )
-        }
+        listOf(
+            UseKotlinxSerializationTransientQuickFix(annotationEntry, isImportNeeded)
+        )
+    }
 
     private class UseKotlinxSerializationTransientQuickFix(
         element: KtAnnotationEntry,

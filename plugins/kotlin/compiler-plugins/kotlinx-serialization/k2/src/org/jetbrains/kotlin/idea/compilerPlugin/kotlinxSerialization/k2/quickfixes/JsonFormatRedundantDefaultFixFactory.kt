@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlinx.serialization.compiler.fir.checkers.FirSerializationErrors
 import java.util.Collections.emptyList
 
-internal object JsonRedundantDefaultQuickFixFactory {
+internal object JsonFormatRedundantDefaultFixFactory {
 
-    val jsonRedundantDefaultQuickFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaCompilerPluginDiagnostic0 ->
+    val replaceWithInstanceFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaCompilerPluginDiagnostic0 ->
         if (diagnostic.factoryName != FirSerializationErrors.JSON_FORMAT_REDUNDANT_DEFAULT.name) return@ModCommandBased emptyList()
         val element = diagnostic.psi as? KtCallExpression ?: return@ModCommandBased emptyList()
 
