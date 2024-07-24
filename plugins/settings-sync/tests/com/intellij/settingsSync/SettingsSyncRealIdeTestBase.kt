@@ -8,16 +8,26 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.progress.currentThreadCoroutineScope
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil.createTempDirectory
+import com.intellij.settingsSync.GitSettingsLog.Companion
+import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.replaceService
 import com.intellij.util.progress.sleepCancellable
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import java.lang.reflect.Constructor
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.CountDownLatch
+import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
 internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
@@ -27,6 +37,11 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   fun setupComponentStore() {
     componentStore = TestComponentStore(configDir)
     application.replaceService(IComponentStore::class.java, componentStore, disposable)
+    //warm up
+
+    application.processAllImplementationClasses { componentClass, plugin ->
+      // do nothing
+    }
   }
 
   @AfterEach
@@ -43,7 +58,7 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
     bridge.initialize(initMode)
     timeoutRunBlocking(5.seconds) {
       while (!bridge.isInitialized) {
-        sleepCancellable(10)
+        yield()
       }
     }
   }
@@ -114,5 +129,29 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
       }
     }
 
+  }
+
+  companion object {
+    @JvmStatic
+    @BeforeAll
+    fun warmUp(): Unit {
+      val tempDir = createTempDirectory("gitWarmup-${System.currentTimeMillis()}", "beforeAll")
+      val parentDisposable = Disposer.newDisposable()
+      val gitSettingsLog = GitSettingsLog(
+        tempDir.resolve("storage").toPath(),
+        tempDir.resolve("config").toPath(),
+        parentDisposable,
+        { null },
+        initialSnapshotProvider = {
+          SettingsSnapshot(
+            SettingsSnapshot.MetaInfo(Instant.now(), null, true),
+            emptySet(), null, emptyMap(), emptySet()
+          )
+
+        }
+      )
+      gitSettingsLog.initialize()
+      Disposer.dispose(parentDisposable)
+    }
   }
 }
