@@ -21,6 +21,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
+import com.intellij.refactoring.extractMethod.newImpl.CodeFragmentAnalyzer
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addInlaySettingsElement
@@ -34,10 +36,11 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtil
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showInEditor
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 
-class InplaceMethodExtractor(private val editor: Editor,
+internal class InplaceMethodExtractor(private val editor: Editor,
                              private val range: TextRange,
                              private val targetClass: PsiClass,
                              private val popupProvider: ExtractMethodPopupProvider,
+                             private val baseExtractor: DuplicatesMethodExtractor,
                              private val initialMethodName: String) {
 
   companion object {
@@ -56,8 +59,12 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   private fun createExtractor(): DuplicatesMethodExtractor {
     val elements = ExtractSelector().suggestElementsToExtract(file, range)
-    val shouldBeStatic = popupProvider.makeStatic ?: false
-    return DuplicatesMethodExtractor.create(targetClass, elements, initialMethodName, shouldBeStatic)
+    var options = baseExtractor.extractOptions
+    if (popupProvider.makeStatic == true) {
+      val analyzer = CodeFragmentAnalyzer(options.elements)
+      options = ExtractMethodPipeline.withForcedStatic(analyzer, options) ?: throw IllegalStateException()
+    }
+    return DuplicatesMethodExtractor(options, targetClass, elements)
   }
 
   private val extractor: DuplicatesMethodExtractor = createExtractor()
@@ -180,8 +187,8 @@ class InplaceMethodExtractor(private val editor: Editor,
     val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
     InplaceExtractMethodCollector.openExtractDialog.log(project, isLinkUsed)
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
-    val elements = ExtractSelector().suggestElementsToExtract(targetClass.containingFile, range)
-    extractInDialog(targetClass, elements, methodName, popupProvider.makeStatic ?: extractor.extractOptions.isStatic)
+    val elements = ExtractSelector().suggestElementsToExtract(extractor.targetClass.containingFile, range)
+    extractInDialog(extractor.targetClass, elements, methodName, popupProvider.makeStatic ?: extractor.extractOptions.isStatic)
   }
 
   private fun restartInplace() {
@@ -190,7 +197,7 @@ class InplaceMethodExtractor(private val editor: Editor,
     val methodName = if (identifierRange != null) editor.document.getText(identifierRange) else null
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
     WriteCommandAction.writeCommandAction(project).withName(ExtractMethodHandler.getRefactoringName()).run<Throwable> {
-      val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, popupProvider, initialMethodName)
+      val inplaceExtractor = InplaceMethodExtractor(editor, range, targetClass, popupProvider, baseExtractor, initialMethodName)
       inplaceExtractor.extractAndRunTemplate(linkedSetOf())
       if (methodName != null) {
         inplaceExtractor.setMethodName(methodName)

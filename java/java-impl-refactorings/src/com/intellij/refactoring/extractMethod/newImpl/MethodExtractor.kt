@@ -30,10 +30,7 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replac
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.findAllOptionsToExtract
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
-import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
-import com.intellij.refactoring.extractMethod.newImpl.inplace.extractInDialog
+import com.intellij.refactoring.extractMethod.newImpl.inplace.*
 import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ResultObjectExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -127,7 +124,8 @@ class MethodExtractor {
     val methodName = guessedNames.first()
     val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
     executeRefactoringCommand(project) {
-      val inplaceExtractor = InplaceMethodExtractor(editor, range, options.targetClass, popupSettings, methodName)
+      val extractor = DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic)
+      val inplaceExtractor = InplaceMethodExtractor(editor, range, options.targetClass, popupSettings, extractor, methodName)
       inplaceExtractor.extractAndRunTemplate(LinkedHashSet(suggestedNames))
     }
   }
