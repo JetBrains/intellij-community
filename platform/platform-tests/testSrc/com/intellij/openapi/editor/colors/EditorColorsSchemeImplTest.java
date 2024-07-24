@@ -797,5 +797,20 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
+  public void testCopyDoesNotCatastrophicallyWipeOldAttributes() {
+    TextAttributesKey tempKey = TextAttributesKey.createTempTextAttributesKey("myxxx", null);
 
+    EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null);
+
+    try {
+      TextAttributes attributes = new TextAttributes(new Color(1, 2, 3), new Color(4, 5, 6), new Color(7, 8, 9), EffectType.BOLD_DOTTED_LINE, 5);
+      scheme.setAttributes(tempKey, attributes);
+      assertEquals(attributes, scheme.getAttributes(tempKey));
+      scheme.copyTo(new EditorColorsSchemeImpl(null));
+      assertEquals(attributes, scheme.getAttributes(tempKey));
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey(tempKey.getExternalName());
+    }
+  }
 }
