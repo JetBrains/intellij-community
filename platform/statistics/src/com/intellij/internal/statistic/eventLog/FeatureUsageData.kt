@@ -226,6 +226,11 @@ class FeatureUsageData(val recorderId: String) {
     return this
   }
 
+  fun addAnonymizedValue(@NonNls key: String, @NonNls value: List<String>): FeatureUsageData {
+    data[key] = value.map { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(it, false) }
+    return this
+  }
+
   fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?, short: Boolean = false): FeatureUsageData {
     data[key] = value?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(value, short) } ?: "undefined"
     return this
