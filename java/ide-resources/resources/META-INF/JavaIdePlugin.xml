@@ -26,9 +26,12 @@
   </xi:include>
 
   <xi:include href="/META-INF/XmlPlugin.xml"/>
-  <xi:include href="intellij.json.xml">
-    <xi:fallback/>
-  </xi:include>
+  <!--<xi:include href="intellij.json.xml">-->
+  <!--  <xi:fallback/>-->
+  <!--</xi:include>-->
+  <!--<dependencies>-->
+  <!--  <plugin id="com.intellij.modules.json"/>-->
+  <!--</dependencies>-->
   <xi:include href="/META-INF/RegExpPlugin.xml">
     <xi:fallback/>
   </xi:include>

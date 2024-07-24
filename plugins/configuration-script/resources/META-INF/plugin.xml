@@ -8,6 +8,10 @@
   </description>
   <vendor>JetBrains</vendor>
 
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
   </extensions>
