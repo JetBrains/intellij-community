@@ -187,11 +187,7 @@ public interface JBAccountInfoService {
       INSTANCE
     }
 
-    record RequestDeclined(@NotNull Reason reason, @NlsSafe @NotNull String message) implements LicenseListResult {
-      public enum Reason {
-        TRIAL_NOT_ALLOWED,
-        PAYMENT_PROOF_REQUIRED,
-      }
+    record RequestDeclined(@NotNull String errorCode, @NlsSafe @NotNull String message) implements LicenseListResult {
     }
 
     record FetchFailure(@NlsSafe @NotNull String errorMessage) implements LicenseListResult { }
