@@ -219,9 +219,10 @@ fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArg
         extraInfo: vfprintf_hook as *mut c_void,
     });
 
-    for opt in vm_options {
+    let c_vm_options = convert_vm_options(vm_options)?;
+    for opt in c_vm_options {
         jni_options.push(jni::sys::JavaVMOption {
-            optionString: CString::new(opt.as_str())?.into_raw(),
+            optionString: opt.into_raw(),
             extraInfo: std::ptr::null_mut(),
         });
     }
@@ -234,6 +235,48 @@ fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArg
     };
 
     Ok((jvm_init_args, jni_options))
+}
+
+#[cfg(target_os = "windows")]
+fn convert_vm_options(vm_options: Vec<String>) -> Result<Vec<CString>> {
+    use {
+        windows::core::{HSTRING, PCSTR},
+        windows::Win32::Foundation::BOOL,
+        windows::Win32::Globalization::{GetACP, CP_ACP, CP_UTF8, WC_NO_BEST_FIT_CHARS, WideCharToMultiByte}
+    };
+
+    let mut strings = Vec::<CString>::with_capacity(vm_options.len());
+    let acp = unsafe { GetACP() };
+    debug!("[JVM] ACP={}", acp);
+
+    for opt in vm_options {
+        let str = if acp == CP_UTF8 {
+            CString::new(opt.as_bytes())
+        } else {
+            let ucs_str = HSTRING::from(&opt);
+            let mut acp_bytes = vec![0u8; ucs_str.len()];
+            let mut failed = BOOL::default();
+            let acp_len = unsafe {
+                WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, ucs_str.as_wide(), Some(&mut acp_bytes), PCSTR::null(), Some(&mut failed))
+            };
+            if acp_len == 0 || failed.as_bool() {
+                bail!("Cannot convert VM option string '{}' to ANSI code page ({}): {}", opt, acp, std::io::Error::last_os_error());
+            }
+            CString::new(acp_bytes)
+        }.with_context(|| format!("Invalid VM option string: '{}'", opt))?;
+        strings.push(str);
+    }
+
+    Ok(strings)
+}
+
+#[cfg(target_family = "unix")]
+fn convert_vm_options(vm_options: Vec<String>) -> Result<Vec<CString>> {
+    let mut strings = Vec::<CString>::with_capacity(vm_options.len());
+    for opt in vm_options {
+        strings.push(CString::new(opt.as_bytes())?);
+    }
+    Ok(strings)
 }
 
 fn release_jvm_init_args(jni_options: Vec<jni::sys::JavaVMOption>) {
