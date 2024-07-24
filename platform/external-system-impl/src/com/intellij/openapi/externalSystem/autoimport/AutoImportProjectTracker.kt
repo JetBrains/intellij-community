@@ -138,6 +138,8 @@ class AutoImportProjectTracker(
   }
 
   private fun processChanges() {
+    LOG.debug("Process changes")
+
     when (settings.autoReloadType) {
       AutoReloadType.ALL -> when (getModificationType()) {
         INTERNAL -> scheduleDelayedSmartProjectReload()
