@@ -29,5 +29,5 @@ any distributions of the compiler, libraries or plugin:
 
 [aosp]: third-party/aosp-license.txt
 [asm]: third-party/asm-license.txt
-[javaslang]: third-party/javaslang-license.txt
+[vavr]: third-party/vavr-license.txt
 [kotlinx.collections.immutable]: third-party/kotlinx.collections.immutable-license.txt
