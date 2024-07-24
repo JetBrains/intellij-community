@@ -646,6 +646,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test merge started project reloads from explicit reload (parallel)`() {
     test {
       enableAsyncExecution()
+      setDispatcherMergingSpan(10)
 
       repeat(10) {
         parallel {
@@ -670,6 +671,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test merge project reloads from external modification (parallel)`() {
     test { settingsFile ->
       enableAsyncExecution()
+      setDispatcherMergingSpan(10)
 
       repeat(10) {
         parallel {
@@ -692,6 +694,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test merge project reloads from batch modification (parallel)`() {
     test { settingsFile ->
       enableAsyncExecution()
+      setDispatcherMergingSpan(10)
 
       repeat(10) {
         waitForAllProjectActivities {
@@ -707,6 +710,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test merge project reloads with different nature (parallel)`() {
     test { settingsFile ->
       enableAsyncExecution()
+      setDispatcherMergingSpan(10)
 
       repeat(10) {
         parallel {
@@ -716,7 +720,7 @@ class AutoReloadTest : AutoReloadTestCase() {
             }
           }
           thread {
-            Thread.sleep(500)
+            Thread.sleep(50) // see AutoImportProjectTracker.scheduleDelayedSmartProjectReload
             markDirty()
             waitForAllProjectActivities {
               scheduleProjectReload()
