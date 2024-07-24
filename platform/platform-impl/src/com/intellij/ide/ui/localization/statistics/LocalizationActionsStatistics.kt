@@ -13,8 +13,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
 internal class LocalizationActionsStatistics: CounterUsagesCollector() {
-  private val localizationActionsGroup = EventLogGroup("localization.actions.info", 3)
-  private val eventSource: NullableEnumEventField<EventSource> = EventFields.NullableEnum<EventSource>("event_source")
+  private val localizationActionsGroup = EventLogGroup("localization.actions.info", 4)
+  private val eventSource: EnumEventField<EventSource> = EventFields.Enum<EventSource>("event_source")
   private val availableLanguages = listOf(Locale.CHINA, Locale.JAPANESE, Locale.KOREAN, Locale.ENGLISH).map { it.toLanguageTag() }
   private val availableRegions = Region.entries.map { it.externalName() }
   private val selectedLang: StringEventField = EventFields.String("selected_language", availableLanguages)
