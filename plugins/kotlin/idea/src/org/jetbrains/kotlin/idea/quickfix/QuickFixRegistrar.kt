@@ -591,7 +591,7 @@ class QuickFixRegistrar : QuickFixContributor {
         WRONG_NUMBER_OF_TYPE_ARGUMENTS.registerFactory(CreateTypeParameterUnmatchedTypeArgumentActionFactory)
 
         FINAL_UPPER_BOUND.registerFactory(InlineTypeParameterFix)
-        FINAL_UPPER_BOUND.registerFactory(RemoveFinalUpperBoundFix)
+        FINAL_UPPER_BOUND.registerFactory(RemoveFinalUpperBoundFixFactory)
 
         TYPE_PARAMETER_AS_REIFIED.registerFactory(AddReifiedToTypeParameterOfFunctionFixFactory)
 
