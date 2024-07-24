@@ -31,7 +31,7 @@ internal class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtPa
 
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         val nameIdentifier = element.nameIdentifier ?: return false
-        if (!nameIdentifier.textRange.contains(caretOffset)) return false
+        if (!nameIdentifier.textRange.containsOffset(caretOffset)) return false
 
         if (element.isVarArg) return false
 

@@ -7375,6 +7375,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("caretAfterParameterName.kt")
+        public void testCaretAfterParameterName() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/caretAfterParameterName.kt");
+        }
+
         @TestMetadata("classParameter.kt")
         public void testClassParameter() throws Exception {
             runTest("testData/intentions/convertParameterToReceiver/classParameter.kt");
