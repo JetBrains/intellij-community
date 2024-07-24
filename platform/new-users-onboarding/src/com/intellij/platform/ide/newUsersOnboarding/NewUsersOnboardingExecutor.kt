@@ -8,7 +8,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStopReason
@@ -28,7 +27,9 @@ internal class NewUsersOnboardingExecutor(
   private val disposable = Disposer.newDisposable()
   private val tourStartMillis = System.currentTimeMillis()
 
-  private val initialToolWindowsLayout: DesktopLayout = ToolWindowManagerEx.getInstanceEx(project).getLayout().copy()
+  private val initiallyVisibleToolWindowIds: List<String> = ToolWindowManagerEx.getInstanceEx(project)
+    .toolWindows
+    .mapNotNull { if (it.isVisible) it.id else null }
 
   private var curStepId: String? = null
   private var curStepStartMillis: Long? = null
@@ -37,8 +38,8 @@ internal class NewUsersOnboardingExecutor(
     Disposer.register(parentDisposable, disposable)
     Disposer.register(disposable) {
       coroutineScope.cancel()
-      // Restore initial tool windows layout on the tour end
-      restoreToolWindowLayout(initialToolWindowsLayout)
+      // Restore initially visible tool windows on the tour end
+      restoreVisibleToolWindows(initiallyVisibleToolWindowIds)
     }
 
     // log if user aborted the onboarding by closing the project
@@ -142,21 +143,15 @@ internal class NewUsersOnboardingExecutor(
     }
   }
 
-  private fun restoreToolWindowLayout(initialLayout: DesktopLayout) {
+  private fun restoreVisibleToolWindows(visibleToolWindowIds: List<String>) {
     val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project)
-    val currentLayout = toolWindowManager.getLayout()
-
-    // Do not reset the state of showing the stripe button.
-    // It is needed to leave all demonstrated in the tour tool windows in stripe.
-    val windowInfoMap = initialLayout.getInfos()
-    for ((windowId, initialInfo) in windowInfoMap.entries) {
-      val currentInfo = currentLayout.getInfo(windowId)
-      if (currentInfo != null) {
-        initialInfo.isShowStripeButton = currentInfo.isShowStripeButton
+    for (toolWindow in toolWindowManager.toolWindows) {
+      if (!toolWindow.isVisible && toolWindow.id in visibleToolWindowIds) {
+        toolWindow.show()
+      }
+      else if (toolWindow.isVisible) {
+        toolWindow.hide()
       }
     }
-
-    val adjustedLayout = DesktopLayout(windowInfoMap.toMutableMap(), initialLayout.unifiedWeights)
-    toolWindowManager.setLayout(adjustedLayout)
   }
 }
