@@ -1,0 +1,15 @@
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR$/compose_fake_plugin.jar
+// FILE: main.kt
+// ALLOW_ERRORS
+import androidx.compose.runtime.Composable
+
+@Composable fun A() {}
+val aCallable: () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'"), HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'kotlin.Function0<kotlin.Unit>', actual 'androidx.compose.runtime.internal.KComposableFunction0<kotlin.Unit>'.'")!>::A<!>
+val bCallable: @Composable () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'")!>::A<!>
+val cCallable = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'")!>::A<!>
+fun doSomething(fn: () -> Unit) { print(fn) }
+@Composable fun B(content: @Composable () -> Unit) {
+    content()
+    doSomething(::<!HIGHLIGHTING("severity='ERROR'; descr='[INAPPLICABLE_CANDIDATE] Inapplicable candidate(s): fun A(): Unit'")!>A<!>)
+    B(<!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'")!>::A<!>)
+}
