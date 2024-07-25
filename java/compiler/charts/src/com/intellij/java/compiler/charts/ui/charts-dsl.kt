@@ -49,18 +49,24 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
     axis = ChartAxis(zoom).apply(init)
   }
 
-  fun draw(g2d: Graphics2D, component: ImageObserver, init: Charts.() -> BufferedImage): BufferedImage {
-    return withImage(init(), g2d, component) { g ->
-      val components = listOf(progress, usage, axis)
-      components.forEach { it.background(g, settings) }
-      components.forEach { it.component(g, settings) }
-    }
+  fun draw(g2d: Graphics2D, init: Charts.() -> Unit) {
+    init()
+    drawChartComponents(g2d)
+  }
+
+  fun drawOnImage(g2d: Graphics2D, component: ImageObserver, init: Charts.() -> BufferedImage): BufferedImage {
+    return withImage(init(), g2d, component) { g -> drawChartComponents(g) }
+  }
+
+  private fun drawChartComponents(g: Graphics2D) {
+    val components = listOf(progress, usage, axis)
+    components.forEach { it.background(g, settings) }
+    components.forEach { it.component(g, settings) }
   }
 
   private fun withImage(image: BufferedImage, g2d: Graphics2D, component: ImageObserver, draw: (Graphics2D) -> Unit): BufferedImage {
     image.createGraphics().run {
-      setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+      setupRenderingHints()
 
       draw(this)
 

@@ -135,26 +135,39 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
 
   override fun paintComponent(g2d: Graphics) {
     if (g2d !is Graphics2D) return
-    cached(g2d) {
-      return@cached charts.model {
-        progress {
-          data(modules.data.getAndClean())
-          filter = modules.filter
-        }
-        usage(usages[cpuMemory]!!) {
-          data(stats[cpuMemory]!!.getAndClean(), when (cpuMemory) {
-            MEMORY -> vm.statistics.maxMemory
-            CPU -> 100
-          })
-        }
-      }.draw(g2d, this) {
-        val size = Dimension(width().toInt(), height().toInt())
-        if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
-          this@CompilationChartsDiagramsComponent.preferredSize = size
-          this@CompilationChartsDiagramsComponent.revalidate()
-        }
-        return@draw UIUtil.createImage(this@CompilationChartsDiagramsComponent, width().toInt(), height().toInt(), BufferedImage.TYPE_INT_ARGB)
+    val updatedModel = charts.model {
+      progress {
+        data(modules.data.getAndClean())
+        filter = modules.filter
       }
+      usage(usages[cpuMemory]!!) {
+        data(stats[cpuMemory]!!.getAndClean(), when (cpuMemory) {
+          MEMORY -> vm.statistics.maxMemory
+          CPU -> 100
+        })
+      }
+    }
+
+    if (zoom.shouldCacheImage()) {
+      cached(g2d) {
+        updatedModel.drawOnImage(g2d, this) {
+          revalidateDimensions()
+          return@drawOnImage UIUtil.createImage(this@CompilationChartsDiagramsComponent, width().toInt(), height().toInt(), BufferedImage.TYPE_INT_ARGB)
+        }
+      }
+    } else {
+      updatedModel.draw(g2d) {
+        g2d.setupRenderingHints()
+        revalidateDimensions()
+      }
+    }
+  }
+
+  private fun Charts.revalidateDimensions() {
+    val size = Dimension(width().toInt(), height().toInt())
+    if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
+      this@CompilationChartsDiagramsComponent.preferredSize = size
+      this@CompilationChartsDiagramsComponent.revalidate()
     }
   }
 
@@ -178,6 +191,7 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
       focusableEmptyButton.requestFocusInWindow()
     }
   }
+
 
   override fun addNotify() {
     super.addNotify()

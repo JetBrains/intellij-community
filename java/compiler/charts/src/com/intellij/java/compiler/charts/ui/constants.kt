@@ -44,3 +44,5 @@ const val MIN_ZOOM_SECONDS = 0.2
 const val MAX_ZOOM_SECONDS = 1_000.0
 
 const val MAX_WIDTH = 10_000.0
+
+const val ZOOM_CACHING_DELAY = 50

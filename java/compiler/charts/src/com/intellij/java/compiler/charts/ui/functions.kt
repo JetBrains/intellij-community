@@ -120,4 +120,9 @@ internal fun Path2D.Double.curveTo(neighbour: DoubleArray) {
   curveTo(cx0, cy0, cx1, cy1, x2, y2)
 }
 
+internal fun Graphics2D.setupRenderingHints() {
+  setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+  setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+}
+
 private fun Double.orZero() = if (this.isNaN()) 0.0 else this
