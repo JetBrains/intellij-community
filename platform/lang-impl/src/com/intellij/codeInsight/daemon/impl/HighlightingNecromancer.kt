@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.util.CommonProcessors
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ConcurrentIntObjectMap
@@ -123,6 +124,9 @@ open class HighlightingNecromancer(
       val spawned = spawnZombie(markupModel, recipe, zombie)
       spawnedZombies.put(recipe.fileId, spawned == 0)
       logFusStatistic(recipe.file, MarkupGraveEvent.RESTORED, spawned)
+      if (spawned != 0) {
+        FUSProjectHotStartUpMeasurer.markupRestored(recipe.file as VirtualFileWithId)
+      }
       LOG.debug { "spawned zombie with ${spawned}/${zombie.limbs().size} libs for ${fileName(recipe.file)}" }
     }
   }
