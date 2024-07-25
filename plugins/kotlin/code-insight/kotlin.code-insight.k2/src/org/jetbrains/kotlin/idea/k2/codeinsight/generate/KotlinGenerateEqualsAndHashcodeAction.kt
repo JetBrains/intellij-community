@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.generate
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.addIfNotNull
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
+import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.confirmMemberRewrite
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.findEqualsMethodForClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.findHashCodeMethodForClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils.generateEquals
@@ -33,8 +35,8 @@ class Info(
     val klass: KtClass,
     val variablesForEquals: List<KtNamedDeclaration>,
     val variablesForHashCode: List<KtNamedDeclaration>,
-    val needEquals: Boolean,
-    val needHashCode: Boolean
+    val equalsInClass: KtNamedFunction?,
+    val hashCodeInClass: KtNamedFunction?
 )
 
 class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Info>() {
@@ -57,40 +59,56 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Inf
     }
 
     override fun prepareMembersInfo(klass: KtClassOrObject, project: Project, editor: Editor): Info? {
-        val asClass = klass as? KtClass ?: return null
-        return prepareMembersInfo(asClass, project, true)
-    }
-
-    fun prepareMembersInfo(klass: KtClass, project: Project, askDetails: Boolean): Info? {
+        if (klass !is KtClass) return null
         val (preInfo, toMemberInfo) = analyzeInModalWindow(klass, KotlinBundle.message("fix.change.signature.prepare")) {
             val classSymbol = klass.symbol as? KaClassSymbol ?: return@analyzeInModalWindow null
             val properties = getPropertiesToUseInGeneratedMember(klass)
 
-            var needEquals = findEqualsMethodForClass(classSymbol)?.containingSymbol != classSymbol
-            var needHashCode = findHashCodeMethodForClass(classSymbol)?.containingSymbol != classSymbol
+            val equalsMethodForClass = findEqualsMethodForClass(classSymbol)
+            val hashCodeMethodForClass = findHashCodeMethodForClass(classSymbol)
 
             Info(
                 klass,
                 properties,
                 properties,
-                needEquals,
-                needHashCode
+                (equalsMethodForClass?.psi as? KtNamedFunction)?.takeIf { equalsMethodForClass.containingSymbol == classSymbol },
+                (hashCodeMethodForClass?.psi as? KtNamedFunction)?.takeIf { hashCodeMethodForClass.containingSymbol == classSymbol }
             ) to LinkedHashMap(properties.keysToMap<KtNamedDeclaration, KotlinMemberInfo> { createMemberInfo(it) })
         } ?: return null
 
-        if (preInfo.variablesForEquals.isEmpty() || ApplicationManager.getApplication().isUnitTestMode() || !askDetails) {
-            return Info(klass, preInfo.variablesForEquals, preInfo.variablesForHashCode, preInfo.needEquals, preInfo.needHashCode)
+        var equalsInClass = preInfo.equalsInClass
+        var hashCodeInClass = preInfo.hashCodeInClass
+        if (preInfo.variablesForEquals.isEmpty() || ApplicationManager.getApplication().isUnitTestMode()) {
+            return Info(klass, preInfo.variablesForEquals, preInfo.variablesForHashCode, equalsInClass, hashCodeInClass)
         }
 
-        return with( KotlinGenerateEqualsAndHashCodeWizard(project, klass, preInfo.variablesForEquals, preInfo.needEquals, preInfo.needHashCode, toMemberInfo.values.toList(), toMemberInfo)) {
+        if (equalsInClass != null && hashCodeInClass != null) {
+            if (!confirmMemberRewrite(
+                    klass,
+                    KotlinBundle.message("generate.equals.and.hashcode.fix.text"),
+                    equalsInClass,
+                    hashCodeInClass
+                )
+            ) return null
+
+            runWriteAction {
+                equalsInClass?.delete()
+                hashCodeInClass?.delete()
+                equalsInClass = null
+                hashCodeInClass = null
+
+            }
+        }
+
+        return with( KotlinGenerateEqualsAndHashCodeWizard(project, klass, preInfo.variablesForEquals, equalsInClass == null, hashCodeInClass == null, toMemberInfo.values.toList(), toMemberInfo)) {
             if (!klass.hasExpectModifier() && !showAndGet()) return null
 
             Info(
                 klass,
                 getPropertiesForEquals(),
                 getPropertiesForHashCode(),
-                preInfo.needEquals,
-                preInfo.needHashCode
+                equalsInClass,
+                hashCodeInClass
             )
         }
     }

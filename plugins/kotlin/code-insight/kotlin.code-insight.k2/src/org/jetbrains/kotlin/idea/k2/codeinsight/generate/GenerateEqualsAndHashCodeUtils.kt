@@ -139,7 +139,7 @@ object GenerateEqualsAndHashCodeUtils {
 
     context(KaSession)
     fun generateEquals(info: Info): KtNamedFunction? {
-        if (!info.needEquals) return null
+        if (info.equalsInClass != null) return null
 
         val klass = info.klass
 
@@ -171,7 +171,7 @@ object GenerateEqualsAndHashCodeUtils {
 
     context(KaSession)
     fun generateHashCode(info: Info): KtNamedFunction? {
-        if (!info.needHashCode) return null
+        if (info.hashCodeInClass != null) return null
 
         val klass = info.klass
 
@@ -220,7 +220,7 @@ object GenerateEqualsAndHashCodeUtils {
     fun generateHashCode(klass: KtClass): String {
         return analyze(klass) {
             val variablesForEquals = getPropertiesToUseInGeneratedMember(klass)
-            val hashCode = generateHashCode(Info(klass, variablesForEquals, variablesForEquals, true, true))!!
+            val hashCode = generateHashCode(Info(klass, variablesForEquals, variablesForEquals, null, null))!!
             hashCode.text
         }
     }
@@ -228,7 +228,7 @@ object GenerateEqualsAndHashCodeUtils {
     fun generateEquals(klass: KtClass): String {
         return analyze(klass) {
             val variablesForEquals = getPropertiesToUseInGeneratedMember(klass)
-            val equals = generateEquals(Info(klass, variablesForEquals, variablesForEquals, true, true))!!
+            val equals = generateEquals(Info(klass, variablesForEquals, variablesForEquals, null, null))!!
             equals.text
         }
     }
