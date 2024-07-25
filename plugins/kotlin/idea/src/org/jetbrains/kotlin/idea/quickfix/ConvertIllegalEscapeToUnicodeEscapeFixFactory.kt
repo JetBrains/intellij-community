@@ -8,14 +8,6 @@ import org.jetbrains.kotlin.psi.*
 internal object ConvertIllegalEscapeToUnicodeEscapeFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val element = diagnostic.psiElement as? KtElement ?: return null
-        val illegalEscape = when (element) {
-            is KtConstantExpression -> element.text.takeIf { it.length >= 2 }?.drop(1)?.dropLast(1)
-            is KtEscapeStringTemplateEntry -> element.text
-            else -> null
-        } ?: return null
-        val unicodeEscape = illegalEscapeToUnicodeEscape[illegalEscape] ?: return null
-        return ConvertIllegalEscapeToUnicodeEscapeFix(element, unicodeEscape).asIntention()
+        return ConvertIllegalEscapeToUnicodeEscapeFix.createIfApplicable(element)?.asIntention()
     }
-
-    private val illegalEscapeToUnicodeEscape = mapOf("\\f" to "\\u000c")
 }

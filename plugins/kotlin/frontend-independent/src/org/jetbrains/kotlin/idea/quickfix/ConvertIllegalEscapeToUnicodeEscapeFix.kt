@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class ConvertIllegalEscapeToUnicodeEscapeFix(
+class ConvertIllegalEscapeToUnicodeEscapeFix private constructor(
     element: KtElement,
     private val unicodeEscape: String
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtElement, Unit>(element, Unit) {
@@ -29,4 +29,19 @@ class ConvertIllegalEscapeToUnicodeEscapeFix(
             is KtEscapeStringTemplateEntry -> element.replace(psiFactory.createStringTemplate(unicodeEscape).entries.first())
         }
     }
+
+    companion object {
+        fun createIfApplicable(element: KtElement): ConvertIllegalEscapeToUnicodeEscapeFix? {
+            val illegalEscape = when (element) {
+                is KtConstantExpression -> element.text.takeIf { it.length >= 2 }?.drop(1)?.dropLast(1)
+                is KtEscapeStringTemplateEntry -> element.text
+                else -> null
+            } ?: return null
+            val unicodeEscape = illegalEscapeToUnicodeEscape[illegalEscape] ?: return null
+
+            return ConvertIllegalEscapeToUnicodeEscapeFix(element, unicodeEscape)
+        }
+    }
 }
+
+private val illegalEscapeToUnicodeEscape = mapOf("\\f" to "\\u000c")
