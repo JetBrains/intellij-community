@@ -212,6 +212,9 @@ open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleB
     override val binaryRoots: Collection<Path>
         get() = libraryInfo.getLibraryRoots().map(Paths::get)
 
+    @KaExperimentalApi
+    override val binaryVirtualFiles: Collection<VirtualFile> = emptyList()
+
     override val isSdk: Boolean get() = false
 
     override val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
@@ -271,6 +274,9 @@ class KtSdkLibraryModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModule
         get() = moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES).map { virtualFile ->
             Paths.get(virtualFile.fileSystem.extractPresentableUrl(virtualFile.path)).normalize()
         }
+
+    @KaExperimentalApi
+    override val binaryVirtualFiles: Collection<VirtualFile> = emptyList()
 
     override val librarySources: KaLibrarySourceModule? get() = null
 
