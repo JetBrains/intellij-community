@@ -45,6 +45,11 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDirectoryToUnrelatedModuleConflict/moveDirectoryToUnrelatedModuleConflict.test");
     }
 
+    @TestMetadata("moveEnumVariableReference/moveEnumVariableReference.test")
+    public void testMoveEnumVariableReference_MoveEnumVariableReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveEnumVariableReference/moveEnumVariableReference.test");
+    }
+
     @TestMetadata("moveFileToNonSrc/moveFileToNonSrc.test")
     public void testMoveFileToNonSrc_MoveFileToNonSrc() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveFileToNonSrc/moveFileToNonSrc.test");

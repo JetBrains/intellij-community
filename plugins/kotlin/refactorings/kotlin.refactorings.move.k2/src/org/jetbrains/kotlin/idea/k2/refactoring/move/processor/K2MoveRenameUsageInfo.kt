@@ -163,10 +163,8 @@ sealed class K2MoveRenameUsageInfo(
                 if (resolvedSymbol is KaPackageSymbol) return false // ignore packages
                 if (containingSymbol == null) return true // top levels are static
                 if (containingSymbol is KaClassSymbol) {
-                    when (containingSymbol.classKind) {
-                        KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.ENUM_CLASS -> return true
-                        else -> {}
-                    }
+                    val classKind = containingSymbol.classKind
+                    if (classKind == KaClassKind.OBJECT || classKind == KaClassKind.COMPANION_OBJECT) return true
                 }
                 if (containingSymbol is KaDeclarationContainerSymbol) {
                     if (resolvedSymbol in containingSymbol.staticMemberScope.declarations) return true
