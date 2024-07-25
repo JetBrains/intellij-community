@@ -9025,7 +9025,39 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/isEnumEntry")
+    public static class IsEnumEntry extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("is.kt")
+        public void testIs() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/isEnumEntry/is.kt");
+        }
+
+        @TestMetadata("isWhenCondition.kt")
+        public void testIsWhenCondition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/isEnumEntry/isWhenCondition.kt");
+        }
+
+        @TestMetadata("notIs.kt")
+        public void testNotIs() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/isEnumEntry/notIs.kt");
+        }
+
+        @TestMetadata("notIsWhenCondition.kt")
+        public void testNotIsWhenCondition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/isEnumEntry/notIsWhenCondition.kt");
+        }
+    }
 
 
 
