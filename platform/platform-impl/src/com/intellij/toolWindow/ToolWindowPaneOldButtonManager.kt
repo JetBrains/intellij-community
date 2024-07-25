@@ -29,10 +29,10 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
   override val isNewUi: Boolean
     get() = false
 
-  override fun add(pane: JComponent) {
+  override fun setupContentPane(pane: JComponent) {
   }
 
-  override fun addToToolWindowPane(pane: JComponent) {
+  override fun setupToolWindowPane(pane: JComponent) {
     pane.add(topStripe, JLayeredPane.POPUP_LAYER, -1)
     pane.add(leftStripe, JLayeredPane.POPUP_LAYER, -1)
     pane.add(bottomStripe, JLayeredPane.POPUP_LAYER, -1)

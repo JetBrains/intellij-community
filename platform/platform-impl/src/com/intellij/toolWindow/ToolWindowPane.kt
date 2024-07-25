@@ -144,7 +144,7 @@ class ToolWindowPane internal constructor(
     layeredPane = FrameLayeredPane(if (isWideScreen) horizontalSplitter else verticalSplitter, frame = frame)
 
     // compose layout
-    buttonManager.addToToolWindowPane(this)
+    buttonManager.setupToolWindowPane(this)
     add(layeredPane, DEFAULT_LAYER, -1)
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
     ToolWindowDragHelper(disposable, this).start()

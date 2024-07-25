@@ -91,11 +91,11 @@ open class IdeRootPane internal constructor(
     val toolWindowButtonManager: ToolWindowButtonManager
     if (ExperimentalUI.isNewUI()) {
       toolWindowButtonManager = ToolWindowPaneNewButtonManager(paneId)
-      toolWindowButtonManager.add(contentPane as JComponent)
     }
     else {
       toolWindowButtonManager = ToolWindowPaneOldButtonManager(paneId)
     }
+    toolWindowButtonManager.setupContentPane(contentPane as JComponent)
     toolWindowPane = ToolWindowPane(frame, coroutineScope, paneId, toolWindowButtonManager)
     return toolWindowPane!!
   }

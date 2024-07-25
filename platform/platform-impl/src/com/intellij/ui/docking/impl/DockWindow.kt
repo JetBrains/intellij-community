@@ -108,12 +108,13 @@ internal class DockWindow(
     val buttonManager: ToolWindowButtonManager
     if (ExperimentalUI.isNewUI()) {
       buttonManager = ToolWindowPaneNewButtonManager(paneId, false)
-      buttonManager.add(dockContentUiContainer)
+      buttonManager.setupContentPane(dockContentUiContainer)
       buttonManager.initMoreButton(dockManager.project)
       buttonManager.updateResizeState(null)
     }
     else {
       buttonManager = ToolWindowPaneOldButtonManager(paneId)
+      buttonManager.setupContentPane(dockContentUiContainer)
     }
     val containerComponent = container.containerComponent
     toolWindowPane = ToolWindowPane(frame = frame, coroutineScope = coroutineScope!!.childScope(), paneId = paneId,
