@@ -88,10 +88,7 @@ internal class ShellCommandOutputScraperImpl(
       val styles: MutableList<StyleRange> = mutableListOf()
       val styleCollectingOutputBuilder: TerminalLinesCollector = StylesCollectingTerminalLinesCollector(stringCollector, styles::add)
       val terminalLinesCollector: TerminalLinesCollector = styleCollectingOutputBuilder
-      if (!textBuffer.isUsingAlternateBuffer) {
-        terminalLinesCollector.addLines(textBuffer.historyBuffer)
-      }
-      terminalLinesCollector.addLines(textBuffer.screenBuffer)
+      textBuffer.collectLines(terminalLinesCollector)
       return StyledCommandOutput(stringCollector.buildText(), commandEndMarkerFound, styles)
     }
   }
@@ -165,4 +162,14 @@ private fun trimToLength(styleRange: StyleRange, newLength: Int): StyleRange? {
   }
 
   return StyleRange(styleRange.startOffset, newLength, styleRange.style)
+}
+
+internal fun TerminalTextBuffer.collectLines(
+  terminalLinesCollector: TerminalLinesCollector,
+) {
+  if (!isUsingAlternateBuffer) {
+    terminalLinesCollector.addLines(historyBuffer)
+  }
+  terminalLinesCollector.addLines(screenBuffer)
+  terminalLinesCollector.flush()
 }
