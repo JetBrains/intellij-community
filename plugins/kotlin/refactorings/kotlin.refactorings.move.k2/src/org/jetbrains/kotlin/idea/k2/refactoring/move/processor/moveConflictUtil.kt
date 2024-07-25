@@ -34,11 +34,7 @@ import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
-import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 /**
@@ -132,7 +128,7 @@ fun createCopyTarget(
 
         // Retarget all references to make sure all references are resolvable after moving
         val retargetResult = copyUsageInfo.retarget(copyUsageInfo.referencedElement as PsiNamedElement) as? KtElement ?: return@forEach
-        val retargetReference = retargetResult.getCalleeExpressionIfAny() as? KtSimpleNameExpression ?: return@forEach
+        val retargetReference = retargetResult.getQualifiedElementSelector() as? KtReferenceExpression ?: return@forEach
         // Attach physical usage info to the copied reference.
         // This will make it possible for the conflict checker to check whether a conflict exists before even calling the refactoring.
         retargetReference.internalUsageInfo = originalUsageInfo
