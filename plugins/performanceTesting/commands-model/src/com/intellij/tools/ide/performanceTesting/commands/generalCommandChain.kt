@@ -863,6 +863,12 @@ fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String? = null, spa
   executeEditorAction(action.toString())
 }
 
+fun <T : CommandChain> T.goToImplementation(): T = apply {
+  val action = StringBuilder("GotoImplementation")
+  executeEditorAction(action.toString())
+}
+
+
 fun <T : CommandChain> T.collectAllFiles(extension: String, fromSources: Boolean = true): T = apply {
   addCommand("${CMD_PREFIX}collectAllFiles $extension $fromSources")
 }
