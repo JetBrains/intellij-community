@@ -479,6 +479,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (myThreadTracker != null) {
+          VfsTestUtil.waitForFileWatcher();
           myThreadTracker.checkLeak();
         }
       },

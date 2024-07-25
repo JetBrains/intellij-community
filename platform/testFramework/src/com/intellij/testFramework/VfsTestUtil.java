@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,10 +12,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public final class VfsTestUtil {
   public static final Key<String> TEST_DATA_FILE_PATH = Key.create("TEST_DATA_FILE_PATH");
@@ -238,5 +241,15 @@ public final class VfsTestUtil {
     else if (e instanceof VFileContentChangeEvent) type = 'U';
     else if (e instanceof VFilePropertyChangeEvent) type = 'P';
     return type + " : " + e.getPath();
+  }
+
+  public static void waitForFileWatcher() {
+    if (LocalFileSystem.getInstance() instanceof LocalFileSystemImpl impl) {
+      var watcher = impl.getFileWatcher();
+      var stopAt = System.nanoTime() + TimeUnit.MINUTES.toNanos(1);
+      while (watcher.isSettingRoots() && System.nanoTime() < stopAt) {
+        TimeoutUtil.sleep(10);
+      }
+    }
   }
 }

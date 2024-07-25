@@ -404,6 +404,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (myThreadTracker != null) {
+          VfsTestUtil.waitForFileWatcher();
           myThreadTracker.checkLeak();
         }
       },
