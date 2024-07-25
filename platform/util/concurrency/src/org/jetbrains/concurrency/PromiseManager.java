@@ -2,12 +2,14 @@
 package org.jetbrains.concurrency;
 
 import com.intellij.util.concurrency.AtomicFieldUpdater;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+@ApiStatus.Internal
 public abstract class PromiseManager<HOST, VALUE> {
   private final AtomicFieldUpdater<HOST, Promise<VALUE>> fieldUpdater;
 
