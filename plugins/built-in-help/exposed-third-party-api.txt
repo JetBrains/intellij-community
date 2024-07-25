@@ -1,7 +1,0 @@
-io/netty/channel/Channel
-io/netty/channel/ChannelHandlerContext
-io/netty/handler/codec/http/FullHttpRequest
-io/netty/handler/codec/http/HttpHeaders
-io/netty/handler/codec/http/HttpRequest
-io/netty/handler/codec/http/QueryStringDecoder
-kotlin/jvm/internal/DefaultConstructorMarker
