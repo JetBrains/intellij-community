@@ -19,7 +19,7 @@ internal class StickyLinesPassFactory : TextEditorHighlightingPassFactoryRegistr
 
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (editor.project != null && !editor.isDisposed && editor.settings.areStickyLinesShown()) {
-      if (StickyLinesCollector.ModStamp.isChanged(psiFile)) {
+      if (StickyLinesCollector.ModStamp.isChanged(editor, psiFile)) {
         return StickyLinesPass(editor.document, psiFile)
       }
     }
