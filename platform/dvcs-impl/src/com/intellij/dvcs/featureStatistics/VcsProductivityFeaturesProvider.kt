@@ -6,18 +6,20 @@ import com.intellij.featureStatistics.ApplicabilityFilter
 import com.intellij.featureStatistics.ProductivityFeaturesProvider
 import com.intellij.openapi.project.Project
 
-internal class VcsProductivityFeaturesProvider : ProductivityFeaturesProvider() {
+private class VcsProductivityFeaturesProvider : ProductivityFeaturesProvider() {
   override fun getXmlFilesUrls() = listOf("VcsProductivityFeatures.xml")
 
-  override fun getApplicabilityFilters(): Array<ApplicabilityFilter> {
-    return arrayOf(VcsFeaturesApplicabilityFilter())
-  }
+  override fun getApplicabilityFilters(): Array<ApplicabilityFilter> = arrayOf(VcsFeaturesApplicabilityFilter())
 }
 
 private class VcsFeaturesApplicabilityFilter : ApplicabilityFilter {
   override fun isApplicable(featureId: String, project: Project?): Boolean {
-    if (featureId == "vcs.use.integration") return true
-    if (project == null) return false
+    if (featureId == "vcs.use.integration") {
+      return true
+    }
+    if (project == null) {
+      return false
+    }
     return VcsRepositoryManager.getInstance(project).getRepositories().isNotEmpty()
   }
 
