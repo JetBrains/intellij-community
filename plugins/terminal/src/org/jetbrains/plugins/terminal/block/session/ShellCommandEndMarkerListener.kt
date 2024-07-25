@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.session
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class ShellCommandEndMarkerListener(private val session: BlockTerminalSession, private val onFound: () -> Unit) {
@@ -20,7 +21,9 @@ internal class ShellCommandEndMarkerListener(private val session: BlockTerminalS
   }
 
   private fun findCommandEndMarker(): Boolean {
-    val output = session.model.withContentLock { ShellCommandOutputScraperImpl.scrapeOutput(session) }
+    val textBuffer = session.model.textBuffer
+    val commandEndMarker = session.commandBlockIntegration.commandEndMarker
+    val output = textBuffer.withLock { ShellCommandOutputScraperImpl.scrapeOutput(textBuffer, commandEndMarker) }
     if (output.commandEndMarkerFound && found.compareAndSet(false, true)) {
       Disposer.dispose(disposable)
       onFound()

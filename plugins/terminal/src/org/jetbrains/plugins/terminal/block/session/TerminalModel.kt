@@ -230,5 +230,15 @@ internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   companion object {
     const val MIN_WIDTH = 5
     const val MIN_HEIGHT = 2
+
+    inline fun <T> TerminalTextBuffer.withLock(callable: (TerminalTextBuffer) -> T): T {
+      lock()
+      return try {
+        callable(this)
+      }
+      finally {
+        unlock()
+      }
+    }
   }
 }

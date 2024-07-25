@@ -6,6 +6,7 @@ import com.intellij.util.Alarm
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.block.session.scraper.DropTrailingNewLinesStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StringCollector
@@ -25,6 +26,7 @@ internal class ShellCommandOutputScraperImpl(
 
   constructor(session: BlockTerminalSession) : this(session, session.model.textBuffer, session)
 
+  private val terminalTextBuffer = session.model.textBuffer
   private val listeners: MutableList<ShellCommandOutputListener> = CopyOnWriteArrayList()
   private val contentChangedAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
   private val scheduled: AtomicBoolean = AtomicBoolean(false)
@@ -65,8 +67,8 @@ internal class ShellCommandOutputScraperImpl(
     }
   }
 
-  override fun scrapeOutput(): StyledCommandOutput = session.model.withContentLock {
-    scrapeOutput(session.model.textBuffer, session.commandBlockIntegration.commandEndMarker)
+  override fun scrapeOutput(): StyledCommandOutput = terminalTextBuffer.withLock {
+    scrapeOutput(terminalTextBuffer, session.commandBlockIntegration.commandEndMarker)
   }
 
   companion object {
