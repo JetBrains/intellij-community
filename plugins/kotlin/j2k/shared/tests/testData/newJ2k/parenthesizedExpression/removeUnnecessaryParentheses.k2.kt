@@ -45,7 +45,7 @@ internal class Foo {
     }
 
     fun bar(s: String?): Any? {
-        println("s = $s")
+        println("s = " + s)
         return if (s == null) "" else null
     }
 
@@ -54,7 +54,7 @@ internal class Foo {
     }
 
     companion object {
-        const val TEXT1: String = "text1.\n" +
+        val TEXT1: String = "text1.\n" +
                 "text2\n" +
                 "text3"
     }

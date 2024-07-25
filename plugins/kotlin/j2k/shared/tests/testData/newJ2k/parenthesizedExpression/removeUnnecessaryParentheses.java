@@ -1,8 +1,5 @@
-// IGNORE_K2
 import java.util.*;
 
-import kotlin.collections.CollectionsKt;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,14 +22,6 @@ class Foo {
         a = ((b) += (c));
 
         char ch = (byte) 1;
-
-        List<String> x = new ArrayList<String>();
-        CollectionsKt.filter(x, new Function1<String, Boolean>() {
-            @Override
-            public Boolean invoke(String o) {
-                return o.equals("a");
-            }
-        });
 
         if (!(0 != 1) && a > b) return;
         if (0 == 1 && !/*comment 1*/(/*comment 2*/a == b)) return;
