@@ -19,14 +19,17 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 
 internal class ShellCommandOutputScraperImpl(
-  private val session: BlockTerminalSession,
-  textBuffer: TerminalTextBuffer,
+  private val textBuffer: TerminalTextBuffer,
   parentDisposable: Disposable,
+  private val commandEndMarker: String?,
 ) : ShellCommandOutputScraper {
 
-  constructor(session: BlockTerminalSession) : this(session, session.model.textBuffer, session)
+  constructor(session: BlockTerminalSession) : this(
+    session.model.textBuffer,
+    session as Disposable,
+    session.commandBlockIntegration.commandEndMarker
+  )
 
-  private val terminalTextBuffer = session.model.textBuffer
   private val listeners: MutableList<ShellCommandOutputListener> = CopyOnWriteArrayList()
   private val contentChangedAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
   private val scheduled: AtomicBoolean = AtomicBoolean(false)
@@ -67,8 +70,8 @@ internal class ShellCommandOutputScraperImpl(
     }
   }
 
-  override fun scrapeOutput(): StyledCommandOutput = terminalTextBuffer.withLock {
-    scrapeOutput(terminalTextBuffer, session.commandBlockIntegration.commandEndMarker)
+  override fun scrapeOutput(): StyledCommandOutput = textBuffer.withLock {
+    scrapeOutput(textBuffer, commandEndMarker)
   }
 
   companion object {
