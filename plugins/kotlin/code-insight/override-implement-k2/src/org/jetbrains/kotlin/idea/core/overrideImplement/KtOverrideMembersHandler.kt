@@ -25,22 +25,24 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> =
-        classOrObject.classSymbol?.let { getOverridableMembers(it) }.orEmpty().map { (symbol, bodyType, containingSymbol) ->
-            @NlsSafe
-            val fqName = containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
-            KtClassMember(
-                KtClassMemberInfo.create(
-                    symbol,
-                    symbol.render(renderer),
-                    getIcon(symbol),
-                    fqName,
-                    containingSymbol?.let { getIcon(it) },
-                ),
-                bodyType,
-                preferConstructorParameter = false,
-            )
-        }
+private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
+    val classSymbol = (classOrObject.symbol as? KaEnumEntrySymbol)?.enumEntryInitializer as? KaClassSymbol ?: classOrObject.classSymbol ?: return emptyList()
+    return getOverridableMembers(classSymbol).map { (symbol, bodyType, containingSymbol) ->
+        @NlsSafe
+        val fqName = containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
+        KtClassMember(
+            KtClassMemberInfo.create(
+                symbol,
+                symbol.render(renderer),
+                getIcon(symbol),
+                fqName,
+                containingSymbol?.let { getIcon(it) },
+            ),
+            bodyType,
+            preferConstructorParameter = false,
+        )
+    }
+}
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)

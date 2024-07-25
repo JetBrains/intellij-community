@@ -396,6 +396,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testEnumClass4()
     }
 
+    override fun testEnumEntry() {
+        super.testEnumEntry()
+    }
+
     override fun testOverrideExternalFunction() {
         super.testOverrideExternalFunction()
     }

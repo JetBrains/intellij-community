@@ -401,6 +401,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doOverrideFileTest("toString")
     }
 
+    open fun testEnumEntry() {
+        doOverrideFileTest("foo")
+    }
+
    open fun testOverrideExternalFunction() {
         doOverrideFileTest()
     }
