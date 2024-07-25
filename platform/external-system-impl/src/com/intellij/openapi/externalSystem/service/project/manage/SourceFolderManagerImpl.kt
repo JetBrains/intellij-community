@@ -156,7 +156,9 @@ class SourceFolderManagerImpl(
       ThreadingAssertions.assertEventDispatchThread()
       val completableFuture = job.asCompletableFuture()
       operationsStates.add(completableFuture)
-      job.invokeOnCompletion { operationsStates.remove(completableFuture) }
+      job.invokeOnCompletion {
+        operationsStates.remove(completableFuture)
+      }
     }
   }
 
@@ -187,44 +189,56 @@ class SourceFolderManagerImpl(
 
   private fun updateSourceFolders(sourceFoldersToChange: Map<Module, List<Pair<VirtualFile, SourceFolderModel>>>) {
     for ((key, values) in sourceFoldersToChange.keys.groupBy { it.project }) {
-      batchUpdateModels(key, values) { model ->
-        val p = sourceFoldersToChange[model.module] ?: error("Value for the module ${model.module.name} should be available")
-        for ((eventFile, sourceFolders) in p) {
-          val (_, url, type, packagePrefix, generated) = sourceFolders
-          val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile) ?: model.addContentEntry(url, true)
-          val sourceFolder = contentEntry.addSourceFolder(url, type, true)
-          if (!packagePrefix.isNullOrEmpty()) {
-            sourceFolder.packagePrefix = packagePrefix
-          }
-          setForGeneratedSources(sourceFolder, generated)
+      ApplicationManager.getApplication().invokeAndWait {
+        batchUpdateModelsInEdt(key, values) { model ->
+          modifyModel(sourceFoldersToChange, model)
         }
       }
     }
   }
 
-  private fun batchUpdateModels(project: Project, modules: Collection<Module>, modifier: (ModifiableRootModel) -> Unit) {
-    ApplicationManager.getApplication().invokeAndWait {
-      val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
-      val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
-        val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
-        val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
-                                                                                             false)
-        modifiableRootModel as ModifiableRootModelBridge
-        modifier.invoke(modifiableRootModel)
-        modifiableRootModel.prepareForCommit()
-        modifiableRootModel
-      }.toList()
-
-      WriteAction.run<RuntimeException> {
-        if (project.isDisposed) {
-          return@run
-        }
-
-        WorkspaceModel.getInstance(project).updateProjectModel("Source folder manager: batch update models") { updater ->
-          updater.applyChangesFrom(diffBuilder)
-        }
-        modifiableRootModels.forEach { it.postCommit() }
+  private fun modifyModel(
+    sourceFoldersToChange: Map<Module, List<Pair<VirtualFile, SourceFolderModel>>>,
+    model: ModifiableRootModel,
+  ) {
+    val p = sourceFoldersToChange[model.module] ?: error("Value for the module ${model.module.name} should be available")
+    for ((eventFile, sourceFolders) in p) {
+      val (_, url, type, packagePrefix, generated) = sourceFolders
+      val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile) ?: model.addContentEntry(url, true)
+      val sourceFolder = contentEntry.addSourceFolder(url, type, true)
+      if (!packagePrefix.isNullOrEmpty()) {
+        sourceFolder.packagePrefix = packagePrefix
       }
+      setForGeneratedSources(sourceFolder, generated)
+    }
+  }
+
+  @RequiresEdt
+  private fun batchUpdateModelsInEdt(
+    project: Project,
+    modules: Collection<Module>,
+    modifier: (ModifiableRootModel) -> Unit,
+  ) {
+    val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
+    val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
+      val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
+      val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
+                                                                                           false)
+      modifiableRootModel as ModifiableRootModelBridge
+      modifier.invoke(modifiableRootModel)
+      modifiableRootModel.prepareForCommit()
+      modifiableRootModel
+    }.toList()
+
+    WriteAction.run<RuntimeException> {
+      if (project.isDisposed) {
+        return@run
+      }
+
+      WorkspaceModel.getInstance(project).updateProjectModel("Source folder manager: batch update models") { updater ->
+        updater.applyChangesFrom(diffBuilder)
+      }
+      modifiableRootModels.forEach { it.postCommit() }
     }
   }
 
