@@ -3590,6 +3590,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/TypeArgOfOwnerClass.kt");
             }
 
+            @TestMetadata("TypeParamAsTypeArg.kt")
+            public void testTypeParamAsTypeArg() throws Exception {
+                runTest("../testData/basic/common/TypeParamAsTypeArg.kt");
+            }
+
             @TestMetadata("TypeParameterFromOuterClass.kt")
             public void testTypeParameterFromOuterClass() throws Exception {
                 runTest("../testData/basic/common/TypeParameterFromOuterClass.kt");

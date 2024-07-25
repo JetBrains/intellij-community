@@ -3769,6 +3769,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/TypeArgOfOwnerClass.kt");
         }
 
+        @TestMetadata("TypeParamAsTypeArg.kt")
+        public void testTypeParamAsTypeArg() throws Exception {
+            runTest("../../completion/testData/basic/common/TypeParamAsTypeArg.kt");
+        }
+
         @TestMetadata("TypeParameterFromOuterClass.kt")
         public void testTypeParameterFromOuterClass() throws Exception {
             runTest("../../completion/testData/basic/common/TypeParameterFromOuterClass.kt");
