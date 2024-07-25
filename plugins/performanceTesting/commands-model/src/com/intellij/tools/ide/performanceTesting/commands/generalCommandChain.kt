@@ -175,11 +175,14 @@ fun <T : CommandChain> T.navigateAndFindUsages(
   if (scope.isNotEmpty()) {
     command.add("-scope $scope")
   }
+
+  if(runInBackground) {
+    command.add("-runInBackground")
+  }
+
   if (warmup) {
     command.add("WARMUP")
   }
-
-  command.add("-runInBackground $runInBackground")
 
   addCommandWithSeparator("|", *command.toTypedArray())
 }
