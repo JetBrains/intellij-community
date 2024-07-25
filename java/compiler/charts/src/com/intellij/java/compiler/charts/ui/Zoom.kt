@@ -36,10 +36,11 @@ class Zoom {
     val newViewPositionX = toPixels(currentTimeUnderCursor) - localX
     val correctedViewPositionX = correctedViewPosition(newViewPositionX, localX, currentTimeUnderCursor)
 
-    correctionDuration = currentTimeUnderCursor - toDuration(correctedViewPositionX + localX)
     lastCorrectionTime = System.currentTimeMillis()
-
-    viewport.viewPosition = Point(correctedViewPositionX, viewport.viewPosition.y)
+    if (viewport.width < viewport.viewSize.width) {
+      correctionDuration = currentTimeUnderCursor - toDuration(correctedViewPositionX + localX)
+      viewport.viewPosition = Point(correctedViewPositionX, viewport.viewPosition.y)
+    }
   }
 
   internal fun shouldCacheImage() = System.currentTimeMillis() - lastCorrectionTime > ZOOM_CACHING_DELAY
