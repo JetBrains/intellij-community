@@ -571,7 +571,9 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       val content = String(file.contentsToByteArray())
       MavenLog.LOG.warn("Checking highlighting in file $file:\n$content")
       fixture.openFileInEditor(file)
-      val highlightingInfos = fixture.doHighlighting();
+      MavenLog.LOG.warn("Text in editor: ${fixture.editor.document.text}")
+      val highlightingInfos = fixture.doHighlighting()
+      MavenLog.LOG.warn("Highlighting results: ${highlightingInfos.joinToString { "\n${it.severity} ${it.description} (${it.startOffset}, ${it.endOffset})" }}")
       assertHighlighting(highlightingInfos, *expectedHighlights)
     }
   }
