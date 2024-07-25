@@ -259,8 +259,11 @@ fn convert_vm_options(vm_options: Vec<String>) -> Result<Vec<CString>> {
             let acp_len = unsafe {
                 WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, ucs_str.as_wide(), Some(&mut acp_bytes), PCSTR::null(), Some(&mut failed))
             };
-            if acp_len == 0 || failed.as_bool() {
+            if acp_len == 0 {
                 bail!("Cannot convert VM option string '{}' to ANSI code page ({}): {}", opt, acp, std::io::Error::last_os_error());
+            }
+            if failed.as_bool() {
+                bail!("Cannot convert VM option string '{}' to ANSI code page ({})", opt, acp);
             }
             CString::new(acp_bytes)
         }.with_context(|| format!("Invalid VM option string: '{}'", opt))?;
