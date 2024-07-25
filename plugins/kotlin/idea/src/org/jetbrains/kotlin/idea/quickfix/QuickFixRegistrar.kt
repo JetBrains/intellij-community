@@ -767,7 +767,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         JAVA_CLASS_ON_COMPANION.registerFactory(JavaClassOnCompanionFixes)
 
-        ILLEGAL_ESCAPE.registerFactory(ConvertIllegalEscapeToUnicodeEscapeFix)
+        ILLEGAL_ESCAPE.registerFactory(ConvertIllegalEscapeToUnicodeEscapeFixFactory)
 
         MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND.registerFactory(AddEmptyArgumentListFixFactory)
 
