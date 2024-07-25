@@ -1178,18 +1178,15 @@ a:com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettin
 - forgetExternalProjects(java.util.Set):V
 - getAvailableProjects():java.util.Map
 - getExternalConfigModificationStamps():java.util.Map
-- getProjectBuildClasspath():java.util.Map
 - getProjectSyncType():java.util.Map
 - getRecentTasks():java.util.List
 - getState():com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings$State
 - invalidateCaches():V
 - loadState(com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings$State):V
 - setAvailableProjects(java.util.Map):V
-- setProjectBuildClasspath(java.util.Map):V
 c:com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings$State
 - availableProjects:java.util.Map
 - modificationStamps:java.util.Map
-- projectBuildClasspath:java.util.Map
 - projectSyncType:java.util.Map
 - f:recentTasks:java.util.List
 - <init>():V
