@@ -32,6 +32,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -330,15 +332,48 @@ val Sdk.poetrySources: List<String>
 /**
  * A quick-fix for setting up the poetry for the module of the current PSI element.
  */
-class PoetryAssociationQuickFix: LocalQuickFix {
-  private val quickFixName = PyBundle.message("python.sdk.poetry.quickfix.use.pipenv.name")
+class UsePoetryQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
+  private val quickFixName = when {
+    sdk != null && sdk.isAssociatedWithAnotherModule(module) -> PyBundle.message("python.sdk.poetry.quickfix.fix.pipenv.name")
+    else -> PyBundle.message("python.sdk.poetry.quickfix.use.pipenv.name")
+  }
+
+  companion object {
+    fun isApplicable(module: Module): Boolean = module.pyProjectToml != null
+
+    fun setUpPoetry(project: Project, module: Module) {
+      val sdksModel = ProjectSdksModel().apply {
+        reset(project)
+      }
+      val existingSdks = sdksModel.sdks.filter { it.sdkType is PythonSdkType }
+      // XXX: Should we show an error message on exceptions and on null?
+      val newSdk = setupPoetrySdkUnderProgress(project, module, existingSdks, null, null, false)
+                   ?: return
+      val existingSdk = existingSdks.find { it.isPoetry && it.homePath == newSdk.homePath }
+      val sdk = existingSdk ?: newSdk
+      if (sdk == newSdk) {
+        SdkConfigurationUtil.addSdk(newSdk)
+      }
+      else {
+        sdk.associateWithModule(module, null)
+      }
+      project.pythonSdk = sdk
+      module.pythonSdk = sdk
+      PoetryConfigService.getInstance(project).poetryVirtualenvPaths.add(sdk.homePath!!)
+
+    }
+  }
 
   override fun getFamilyName() = quickFixName
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
-    module.pythonSdk?.setAssociationToModule(module)
+    // Invoke the setup later to escape the write action of the quick fix in order to show the modal progress dialog
+    ApplicationManager.getApplication().invokeLater {
+      if (project.isDisposed || module.isDisposed) return@invokeLater
+      setUpPoetry(project, module)
+    }
   }
 }
 

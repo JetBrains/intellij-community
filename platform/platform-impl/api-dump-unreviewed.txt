@@ -6602,13 +6602,10 @@ f:com.intellij.ide.impl.ProjectUtil
 - f:showYesNoDialog(java.lang.String,java.lang.String):Z
 - sf:updateLastProjectLocation(java.nio.file.Path):V
 c:com.intellij.ide.impl.ProjectUtilService
-- sf:Companion:com.intellij.ide.impl.ProjectUtilService$Companion
 - <init>(com.intellij.openapi.project.Project):V
 - focusProjectWindow(Z):V
 - bs:focusProjectWindow$default(com.intellij.ide.impl.ProjectUtilService,Z,I,java.lang.Object):V
 - pf:getProject():com.intellij.openapi.project.Project
-f:com.intellij.ide.impl.ProjectUtilService$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.impl.ProjectUtilService
 f:com.intellij.ide.impl.SelectInEditorManagerImpl
 - com.intellij.ide.SelectInEditorManager
 - com.intellij.openapi.Disposable
@@ -16309,6 +16306,12 @@ f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$AdvancedSet
 - f:getReset():kotlin.jvm.functions.Function0
 - hashCode():I
 - f:isDefault():com.intellij.ui.layout.ComponentPredicate
+f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$Config
+- sf:Companion:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$Config$Companion
+- <init>():V
+f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$Config$Companion
+- f:getShowFederatedLearningSwitches():Z
+- f:setShowFederatedLearningSwitches(Z):V
 f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurableKt
 - sf:updateMatchText(javax.swing.JComponent,java.lang.String,java.lang.String):V
 f:com.intellij.openapi.options.advanced.AdvancedSettingsImpl

@@ -86,8 +86,6 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   protected val showFooter = AtomicBooleanProperty(true)
 
   init {
-    border = JBUI.Borders.empty(5)
-
     PyDataViewCompletionProvider().apply(sliceTextField)
 
     val panel = panel {

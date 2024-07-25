@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
-import org.jetbrains.kotlin.j2k.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.Nullability.*
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -63,16 +63,16 @@ class JavaToJKTreeBuilder(
     private val declarationMapper = DeclarationMapper(expressionTreeMapper, withBody = bodyFilter == null)
     private val formattingCollector = FormattingCollector()
 
-    // Per-file property with collected nullability information for various declarations.
+    // Per-file property with collected nullability information.
     // Needs to be flushed before building the tree for each root element.
-    private var declarationNullabilityInfo: DeclarationNullabilityInfo? = null
+    private var nullabilityInfo: NullabilityInfo? = null
 
     companion object {
         private val LOG = Logger.getInstance("@org.jetbrains.kotlin.nj2k.JavaToJKTreeBuilder")
     }
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
-        declarationNullabilityInfo = null
+        nullabilityInfo = null
 
         return when (psi) {
             is PsiJavaFile -> psi.toJK()
@@ -1159,8 +1159,13 @@ class JavaToJKTreeBuilder(
             LOG.error(t)
         }
 
-        declarationNullabilityInfo = DeclarationNullabilityInfo(nullityInferrer.nullableTypes, nullityInferrer.notNullTypes)
-        typeFactory.declarationNullabilityInfo = declarationNullabilityInfo
+        nullabilityInfo = NullabilityInfo(
+            nullityInferrer.nullableTypes,
+            nullityInferrer.notNullTypes,
+            nullityInferrer.nullableElements,
+            nullityInferrer.notNullElements
+        )
+        typeFactory.nullabilityInfo = nullabilityInfo
     }
 
     private fun PsiImportList?.toJK(saveImports: Boolean): JKImportList =

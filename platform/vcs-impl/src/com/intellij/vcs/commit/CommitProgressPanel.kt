@@ -310,9 +310,9 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
 sealed class CommitCheckFailure {
   object Unknown : CommitCheckFailure()
 
-  open class WithDescription(val text: @NlsContexts.NotificationContent String) : CommitCheckFailure()
+  open class WithDescription(val text: @NlsContexts.NotificationContent HtmlChunk) : CommitCheckFailure()
 
-  class WithDetails(text: @NlsContexts.NotificationContent String,
+  class WithDetails(text: @NlsContexts.NotificationContent HtmlChunk,
                     val viewDetailsLinkText: @NlsContexts.NotificationContent String?,
                     val viewDetailsActionText: @NlsContexts.NotificationContent String,
                     val viewDetails: (place: CommitProblemPlace) -> Unit) : WithDescription(text)
@@ -388,14 +388,14 @@ private class FailuresDescriptionPanel : HtmlPanel() {
       when (val failure = it.value) {
         is CommitCheckFailure.WithDetails -> {
           if (failure.viewDetailsLinkText != null) {
-            HtmlChunk.text(failure.text).plus(HtmlChunk.nbsp())
+            failure.text.plus(HtmlChunk.nbsp())
               .plus(HtmlChunk.link(it.key.toString(), failure.viewDetailsLinkText))
           }
           else {
             HtmlChunk.link(it.key.toString(), failure.text)
           }
         }
-        is CommitCheckFailure.WithDescription -> HtmlChunk.text(failure.text)
+        is CommitCheckFailure.WithDescription -> failure.text
         else -> null
       }
     }

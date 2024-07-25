@@ -4,125 +4,60 @@ package org.jetbrains.idea.devkit.run
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import org.jetbrains.idea.devkit.run.ProductInfo.Launch.OS.*
+import org.jetbrains.io.JsonReaderEx
+import org.jetbrains.io.JsonUtil
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.exists
-import kotlin.io.path.readText
-
-private val json = Json { ignoreUnknownKeys = true }
+import java.util.Map.entry
 
 /**
  * @return `null` if no `product-info.json` could be found in given IDE installation or on errors
  */
-fun loadProductInfo(ideaJdkHome: String): ProductInfo? {
+@Suppress("UNCHECKED_CAST")
+internal fun loadProductInfo(ideaJdkHome: String): ProductInfo? {
   val ideHomePath = Path.of(ideaJdkHome)
-  val productInfoJsonPath = listOf(
-    ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC,
-    ApplicationEx.PRODUCT_INFO_FILE_NAME,
-  ).firstNotNullOfOrNull { ideHomePath.resolve(it).takeIf(Path::exists) } ?: return null
+  val productInfoJsonPath = when {
+    SystemInfo.isMac -> ideHomePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC)
+    else -> ideHomePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME)
+  }
+  if (Files.notExists(productInfoJsonPath)) return null
 
-  return runCatching { json.decodeFromString<ProductInfo>(productInfoJsonPath.readText()) }
-    .onFailure { logger<ProductInfo>().error("error parsing '$productInfoJsonPath'", it) }
-    .getOrNull()
-}
+  try {
+    val jsonRoot = JsonUtil.nextObject(JsonReaderEx(Files.readString(productInfoJsonPath)))
+    val launch = jsonRoot["launch"] as? MutableList<*> ?: return null
+    val launchMap = launch.firstOrNull() as? MutableMap<*, *> ?: return null
+    val bootClassPathJarNames = launchMap["bootClassPathJarNames"] as? MutableList<String> ?: return null
 
-fun resolveIdeHomeVariable(path: String, ideHome: String) =
-  path
-    .replace("\$APP_PACKAGE", ideHome)
-    .replace("\$IDE_HOME", ideHome)
-    .replace("%IDE_HOME%", ideHome)
-    .replace("Contents/Contents", "Contents")
-    .let { entry ->
-      val (_, value) = entry.split("=")
-      when {
-        runCatching { Path(value).exists() }.getOrElse { false } -> entry
-        else -> entry.replace("/Contents", "")
-      }
-    }
+    var additionalJvmArguments = launchMap["additionalJvmArguments"] as? MutableList<String> ?: return null
+    additionalJvmArguments = additionalJvmArguments.map { s: String ->
+      s.replace("\$APP_PACKAGE", ideaJdkHome)
+        .replace("\$IDE_HOME", ideaJdkHome)
+        .replace("%IDE_HOME%", ideaJdkHome)
+        .replace("Contents/Contents", "Contents")
+    }.toMutableList()
 
-/**
- * Represents information about the IntelliJ Platform product.
- * The information is retrieved from the `product-info.json` file in the IntelliJ Platform directory.
- */
-@Serializable
-data class ProductInfo(
-  val name: String = "",
-  val version: String = "",
-  val buildNumber: String = "",
-  val productCode: String = "",
-  val launch: List<Launch> = mutableListOf(),
-  val layout: List<LayoutItem> = mutableListOf(),
-) {
-
-  /**
-   * Finds the [ProductInfo.Launch] object for the given architecture and OS.
-   */
-  fun getCurrentLaunch(): Launch {
-    val availableArchitectures = launch.mapNotNull { it.arch }.toSet()
-    val architecture = SystemInfo.OS_ARCH
-
-    val arch = with(availableArchitectures) {
-      when {
-        isEmpty() -> null // older SDKs or Maven releases don't provide architecture information, null is used in such a case
-        contains(architecture) -> architecture
-        contains("amd64") && architecture == "x86_64" -> "amd64"
-        else -> null
-      }
-    }
-
-    val os = when {
-      SystemInfo.isLinux -> Linux
-      SystemInfo.isWindows -> Windows
-      SystemInfo.isMac -> macOS
-      else -> null
-    }
-
-    return launch
-      .find { os == it.os && arch == it.arch }
-      .let {
-        requireNotNull(it) {
-          val options = launch.associate { option -> option.os to option.arch }
-          """
-          Could not find launch information for $name $version ($buildNumber) using {os=$os, arch=$arch}.<br/>
-          Available options: $options
-          """.trimIndent()
+    val productModuleJarPaths = ArrayList<String>()
+    val layout = jsonRoot["layout"] as? List<*>
+    if (layout != null) {
+      for (layoutEntry in layout ) {
+        val entry = layoutEntry as? Map<*, *>?: continue
+        if (entry["kind"] == "productModuleV2") {
+          val classPath = entry["classPath"] as? List<String>?: continue
+          for (classPath in classPath) {
+            productModuleJarPaths += classPath
+          }
         }
       }
-      .run { copy(additionalJvmArguments = additionalJvmArguments.map { it.trim('"') }) }
-  }
-
-  fun getProductModuleJarPaths(): List<String> = layout
-    .filter { it.kind == ProductInfo.LayoutItem.LayoutItemKind.productModuleV2 }
-    .flatMap { it.classPath }
-
-  /**
-   * Represents a launch configuration for a product.
-   */
-  @Serializable
-  data class Launch(
-    val os: OS? = null,
-    val arch: String? = null,
-    val bootClassPathJarNames: List<String> = mutableListOf(),
-    val additionalJvmArguments: List<String> = mutableListOf(),
-  ) {
-
-    @Suppress("EnumEntryName")
-    enum class OS { Linux, Windows, macOS; }
-  }
-
-  @Serializable
-  data class LayoutItem(
-    val name: String,
-    val kind: LayoutItemKind,
-    val classPath: List<String> = mutableListOf(),
-  ) {
-
-    @Serializable
-    enum class LayoutItemKind {
-      plugin, pluginAlias, productModuleV2, moduleV2
     }
+
+    return ProductInfo(bootClassPathJarNames, productModuleJarPaths, additionalJvmArguments)
+  }
+  catch (e: Throwable) {
+    logger<ProductInfo>().error("error parsing '$productInfoJsonPath'", e)
+    return null
   }
 }
+
+internal data class ProductInfo(val bootClassPathJarNames: List<String>,
+                                val productModuleJarPaths: List<String>,
+                                val additionalJvmArguments: List<String>)

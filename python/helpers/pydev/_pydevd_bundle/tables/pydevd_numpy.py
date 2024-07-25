@@ -26,17 +26,20 @@ def get_type(arr):
 
 def get_shape(arr):
     # type: (np.ndarray) -> str
-    return str(arr.shape[0])
+    if arr.ndim == 1:
+        return str((arr.shape[0], 1))
+    else:
+        return str((arr.shape[0], arr.shape[1]))
 
 
 def get_head(arr):
     # type: (np.ndarray) -> str
-    return repr(_create_table(arr).head().to_html(notebook=True, max_cols=None))
+    return "None"
 
 
 def get_column_types(arr):
     # type: (np.ndarray) -> str
-    table = _create_table(arr)
+    table = _create_table(arr[:1])
     cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()
 
     return NP_ROWS_TYPE + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
@@ -220,14 +223,7 @@ def _create_table(command, start_index=None, end_index=None):
         np_array = command['data']
         sort_keys = command['sort_keys']
     else:
-        try:
-            import tensorflow as tf
-            if isinstance(command, tf.SparseTensor):
-                command = tf.sparse.to_dense(tf.sparse.reorder(command))
-        except ImportError:
-            pass
-        finally:
-            np_array = command
+        np_array = command
 
     if is_pd:
         sorting_arr = _sort_df(pd.DataFrame(np_array), sort_keys)
@@ -263,6 +259,12 @@ def __get_tables_display_options():
     import sys
     if sys.version_info < (3, 0):
         return None, MAX_COLWIDTH, None
+    try:
+        import pandas as pd
+        if int(pd.__version__.split('.')[0]) < 1:
+            return None, MAX_COLWIDTH_PYTHON_2, None
+    except ImportError:
+        pass
     return None, None, None
 
 
@@ -275,10 +277,7 @@ def _set_pd_options():
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_rows', max_rows)
-    try:
-        pd.set_option('display.max_colwidth', max_colwidth)
-    except ValueError:
-        pd.set_option('display.max_colwidth', MAX_COLWIDTH_PYTHON_2)
+    pd.set_option('display.max_colwidth', max_colwidth)
 
     return _jb_max_cols, _jb_max_colwidth, _jb_max_rows
 

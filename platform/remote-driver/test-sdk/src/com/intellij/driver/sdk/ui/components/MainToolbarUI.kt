@@ -1,9 +1,22 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.openapi.util.SystemInfo
 
 val Finder.mainToolbar: MainToolbarUI get() =
   x("//div[@class='MainToolbar']", MainToolbarUI::class.java)
+
+/**
+ * On Linux without DISPLAY, we run xvfb without window manager and in this case header is missing and we fallback to maintoolbar
+ */
+val Finder.toolbar: UiComponent
+  get() = if (SystemInfo.isLinux && System.getenv("DISPLAY") == null) {
+    mainToolbar
+  }
+  else {
+    toolbarHeader
+  }
+
 
 class MainToolbarUI(data: ComponentData) : UiComponent(data) {
   val vcsWidget: UiComponent get() = x("//div[@class='ToolbarComboButton' and @visible_text='Version control']")

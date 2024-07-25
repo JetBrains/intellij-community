@@ -14,8 +14,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
+import static com.jetbrains.python.ast.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
 
 /**
  * Function declaration in source (the {@code def} and everything within).
@@ -68,6 +70,27 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
   @Nullable
   default PyStringLiteralExpression getDocStringExpression() {
     return (PyStringLiteralExpression)PyAstFunction.super.getDocStringExpression();
+  }
+
+  /**
+   * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..
+   *
+   * @return the deprecation message or null if the function is not deprecated.
+   */
+  @Nullable
+  @Override
+  default String getDeprecationMessage() {
+    return extractDeprecationMessage();
+  }
+
+  @Nullable
+  default String extractDeprecationMessage() {
+    String deprecationMessageFromDecorator = extractDeprecationMessageFromDecorator(this);
+    if (deprecationMessageFromDecorator != null) {
+      return deprecationMessageFromDecorator;
+    }
+    PyAstStatementList statementList = getStatementList();
+    return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
   }
 
   static @Nullable String extractDeprecationMessage(List<? extends PyAstStatement> statements) {

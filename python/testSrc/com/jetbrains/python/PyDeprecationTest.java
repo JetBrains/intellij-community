@@ -90,12 +90,6 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
-  public void testFqnDecorator() {
-    myFixture.enableInspections(PyDeprecationInspection.class);
-    myFixture.configureByFile("deprecation/fqnDeprecation.py");
-    myFixture.checkHighlighting(true, false, false);
-  }
-
   public void testDeprecatedMethod() {
     myFixture.enableInspections(PyDeprecationInspection.class);
     myFixture.configureByFile("deprecation/deprecatedMethod.py");

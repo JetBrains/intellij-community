@@ -20,13 +20,13 @@ def get_shape(table):
 # noinspection PyUnresolvedReferences
 def get_head(table):
      # type: (datasets.arrow_dataset.Dataset) -> str
-    return repr(__convert_to_df(table).head().to_html(notebook=True, max_cols=None))
+    return repr(__convert_to_df(table.select([0])).head().to_html(notebook=True, max_cols=None))
 
 
 # noinspection PyUnresolvedReferences
 def get_column_types(table):
      # type: (datasets.arrow_dataset.Dataset) -> str
-    table = __convert_to_df(table)
+    table = __convert_to_df(table.select([0]))
     return str(table.index.dtype) + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
             TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
 
@@ -68,10 +68,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None):
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_rows', max_rows)
-    try:
-        pd.set_option('display.max_colwidth', max_colwidth)
-    except ValueError:
-        pd.set_option('display.max_colwidth', MAX_COLWIDTH_PYTHON_2)
+    pd.set_option('display.max_colwidth', max_colwidth)
 
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
@@ -93,6 +90,12 @@ def __get_tables_display_options():
     import sys
     if sys.version_info < (3, 0):
         return None, MAX_COLWIDTH_PYTHON_2, None
+    try:
+        import pandas as pd
+        if int(pd.__version__.split('.')[0]) < 1:
+            return None, MAX_COLWIDTH_PYTHON_2, None
+    except ImportError:
+        pass
     return None, None, None
 
 

@@ -69,7 +69,7 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
     override fun setUp() {
         super.setUp()
 
-        Registry.get("kotlin.k2.kmp.enabled").setValue(true, testRootDisposable)
+        Registry.get("kotlin.k2.kmp.wasm.enabled").setValue(true, testRootDisposable)
 
         // sync is necessary to detect unexpected disappearances of library files
         VfsTestUtil.syncRefresh()

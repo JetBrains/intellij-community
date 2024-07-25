@@ -6,6 +6,7 @@ import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -34,6 +35,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.NlsSafe
@@ -233,15 +236,46 @@ val Sdk.pipFileLockRequirements: List<PyRequirement>?
 /**
  * A quick-fix for setting up the pipenv for the module of the current PSI element.
  */
-class PipEnvAssociationQuickFix : LocalQuickFix {
-  private val quickFixName = PyBundle.message("python.sdk.pipenv.quickfix.use.pipenv.name")
+class UsePipEnvQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
+  @IntentionName
+  private val quickFixName = when {
+    sdk != null && sdk.isAssociatedWithAnotherModule(module) -> PyBundle.message("python.sdk.pipenv.quickfix.fix.pipenv.name")
+    else -> PyBundle.message("python.sdk.pipenv.quickfix.use.pipenv.name")
+  }
+
+  companion object {
+    fun isApplicable(module: Module): Boolean = module.pipFile != null
+
+    fun setUpPipEnv(project: Project, module: Module) {
+      val sdksModel = ProjectSdksModel().apply {
+        reset(project)
+      }
+      val existingSdks = sdksModel.sdks.filter { it.sdkType is PythonSdkType }
+      // XXX: Should we show an error message on exceptions and on null?
+      val newSdk = setupPipEnvSdkUnderProgress(project, module, existingSdks, null, null, false) ?: return
+      val existingSdk = existingSdks.find { it.isPipEnv && it.homePath == newSdk.homePath }
+      val sdk = existingSdk ?: newSdk
+      if (sdk == newSdk) {
+        SdkConfigurationUtil.addSdk(newSdk)
+      }
+      else {
+        sdk.associateWithModule(module, null)
+      }
+      project.pythonSdk = sdk
+      module.pythonSdk = sdk
+    }
+  }
 
   override fun getFamilyName() = quickFixName
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
-    module.pythonSdk?.setAssociationToModule(module)
+    // Invoke the setup later to escape the write action of the quick fix in order to show the modal progress dialog
+    ApplicationManager.getApplication().invokeLater {
+      if (project.isDisposed || module.isDisposed) return@invokeLater
+      setUpPipEnv(project, module)
+    }
   }
 }
 

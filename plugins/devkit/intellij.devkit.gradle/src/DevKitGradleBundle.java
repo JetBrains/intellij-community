@@ -8,23 +8,23 @@ import java.util.function.Supplier;
 
 final class DevKitGradleBundle {
 
-  public static final @NonNls String BUNDLE = "messages.DevKitGradleBundle";
-  private static final DynamicBundle INSTANCE = new DynamicBundle(DevKitGradleBundle.class, BUNDLE);
+  private static final @NonNls String BUNDLE_FQN = "messages.DevKitGradleBundle";
+  private static final DynamicBundle BUNDLE = new DynamicBundle(DevKitGradleBundle.class, BUNDLE_FQN);
 
   private DevKitGradleBundle() {
   }
 
   public static @Nls @NotNull String message(
-    @PropertyKey(resourceBundle = BUNDLE) @NotNull String key,
+    @PropertyKey(resourceBundle = BUNDLE_FQN) @NotNull String key,
     @Nullable Object @NotNull ... params
   ) {
-    return INSTANCE.getMessage(key, params);
+    return BUNDLE.getMessage(key, params);
   }
 
   public static @NotNull Supplier<@Nls @NotNull String> messagePointer(
-    @PropertyKey(resourceBundle = BUNDLE) @NotNull String key,
+    @PropertyKey(resourceBundle = BUNDLE_FQN) @NotNull String key,
     @Nullable Object @NotNull ... params
   ) {
-    return INSTANCE.getLazyMessage(key, params);
+    return BUNDLE.getLazyMessage(key, params);
   }
 }

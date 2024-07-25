@@ -51,11 +51,27 @@ class NotebookCellInlayManager private constructor(
 
   private var valid = false
 
-  fun update(block: () -> Unit) {
-    keepScrollingPositionWhile(editor) {
-      block()
+  private var updateCtx: UpdateContext? = null
+
+  fun update(force: Boolean = false, block: (updateCtx: UpdateContext) -> Unit) {
+    val ctx = updateCtx
+    if (ctx != null) {
+      block(ctx)
     }
-    inlaysChanged()
+    else {
+      val newCtx = UpdateContext(force)
+      updateCtx = newCtx
+      try {
+        keepScrollingPositionWhile(editor) {
+          block(newCtx)
+          newCtx.applyUpdates(editor)
+        }
+        inlaysChanged()
+      }
+      finally {
+        updateCtx = null
+      }
+    }
   }
 
   override fun dispose() {}
@@ -84,13 +100,7 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun update(pointers: Collection<NotebookIntervalPointer>) = runInEdt {
-    val linesList = pointers.mapNotNullTo(mutableListOf()) { it.get()?.lines }
-    linesList.sortBy { it.first }
-    linesList.mergeAndJoinIntersections(listOf())
-
-    for (lines in linesList) {
-      updateCells(pointers.mapNotNull { it.get()?.ordinal }.sorted().map { cells[it] }, force = false)
-    }
+    updateCells(pointers.mapNotNull { it.get()?.ordinal }.sorted().map { cells[it] }, force = false)
   }
 
   fun update(cell: EditorCell) = runInEdt {
@@ -102,9 +112,9 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun updateCells(cells: List<EditorCell>, force: Boolean = false) {
-    update {
+    update(force) { ctx ->
       cells.forEach {
-        it.update(force)
+        it.update(ctx)
       }
       updateCellsFolding(cells)
     }
@@ -239,18 +249,11 @@ class NotebookCellInlayManager private constructor(
     changedListener?.inlaysChanged()
   }
 
-  private fun updateCellsFolding(editorCells: List<EditorCell>) {
-    val foldingModel = editor.foldingModel
-
+  private fun updateCellsFolding(editorCells: List<EditorCell>) = update { ctx ->
     val cellsForFoldingUpdate = editorCells.filter { it.view?.shouldUpdateFolding == true }
-    if (cellsForFoldingUpdate.isEmpty())
-      return
-
-    foldingModel.runBatchFoldingOperation({
-                                            cellsForFoldingUpdate.forEach { cell ->
-                                              cell.view?.updateCellFolding()
-                                            }
-                                          }, true, false)
+    cellsForFoldingUpdate.forEach { cell ->
+      cell.view?.updateCellFolding(ctx)
+    }
   }
 
   companion object {
@@ -268,7 +271,7 @@ class NotebookCellInlayManager private constructor(
     private val key = Key.create<NotebookCellInlayManager>(NotebookCellInlayManager::class.java.name)
   }
 
-  override fun onUpdated(event: NotebookIntervalPointersEvent) {
+  override fun onUpdated(event: NotebookIntervalPointersEvent) = update { ctx ->
     val events = mutableListOf<EditorCellEvent>()
     for (change in event.changes) {
       when (change) {
@@ -295,16 +298,15 @@ class NotebookCellInlayManager private constructor(
           val secondCell = _cells[change.secondOrdinal]
           firstCell.intervalPointer = secondCell.intervalPointer
           secondCell.intervalPointer = first
-          firstCell.update(force = false)
-          secondCell.update(force = false)
+          firstCell.update(ctx)
+          secondCell.update(ctx)
         }
       }
     }
     event.changes.filterIsInstance<NotebookIntervalPointersEvent.OnInserted>().forEach { change ->
-      fixInlaysOffsetsAfterNewCellInsert(change)
+      fixInlaysOffsetsAfterNewCellInsert(change, ctx)
     }
     cellEventListeners.multicaster.onEditorCellEvents(events)
-    inlaysChanged()
 
     checkInlayOffsets()
   }
@@ -323,11 +325,11 @@ class NotebookCellInlayManager private constructor(
     }
   }
 
-  private fun fixInlaysOffsetsAfterNewCellInsert(change: NotebookIntervalPointersEvent.OnInserted) {
+  private fun fixInlaysOffsetsAfterNewCellInsert(change: NotebookIntervalPointersEvent.OnInserted, ctx: UpdateContext) {
     val prevCellIndex = change.subsequentPointers.first().interval.ordinal - 1
     if (prevCellIndex >= 0) {
       val prevCell = getCell(prevCellIndex)
-      prevCell.update()
+      prevCell.update(ctx)
     }
   }
 
@@ -390,4 +392,20 @@ class NotebookCellInlayManager private constructor(
   fun onInvalidate(function: () -> Unit) {
     invalidationListeners.add(function)
   }
+}
+
+class UpdateContext(val force: Boolean = false) {
+
+  private val foldingOperations = mutableListOf<() -> Unit>()
+
+  fun addFoldingOperation(block: () -> Unit) {
+    foldingOperations.add(block)
+  }
+
+  fun applyUpdates(editor: Editor) {
+    editor.foldingModel.runBatchFoldingOperation {
+      foldingOperations.forEach { it() }
+    }
+  }
+
 }

@@ -652,7 +652,9 @@ f:com.intellij.ide.Prefs
 - sf:APAC:com.intellij.ide.Region
 - sf:CHINA:com.intellij.ide.Region
 - sf:EUROPE:com.intellij.ide.Region
+- sf:MIDDLE_EAST:com.intellij.ide.Region
 - sf:NOT_SET:com.intellij.ide.Region
+- sf:OCEANIA:com.intellij.ide.Region
 - externalName():java.lang.String
 - s:fromExternalName(java.lang.String):com.intellij.ide.Region
 - getDisplayName():java.lang.String

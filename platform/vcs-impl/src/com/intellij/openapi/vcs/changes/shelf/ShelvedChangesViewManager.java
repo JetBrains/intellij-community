@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -363,9 +364,11 @@ public class ShelvedChangesViewManager implements Disposable {
     return result;
   }
 
-  private static @NotNull @Nls String constructDeleteSuccessfullyMessage(int shelvedFilesToDeleteSize,
-                                                                         @NotNull List<ShelvedChangeList> shelvedListsToDelete) {
-    String filesMessage = shelvedFilesToDeleteSize != 0 ? VcsBundle.message("shelve.delete.files.successful.message", shelvedFilesToDeleteSize) : "";
+  private static @NotNull @Nls HtmlChunk constructDeleteSuccessfullyMessage(int shelvedFilesToDeleteSize,
+                                                                            @NotNull List<ShelvedChangeList> shelvedListsToDelete) {
+    String filesMessage = shelvedFilesToDeleteSize != 0
+                          ? VcsBundle.message("shelve.delete.files.successful.message", shelvedFilesToDeleteSize)
+                          : "";
 
     String listsMessage = "";
     int shelvedListsToDeleteSize = shelvedListsToDelete.size();
@@ -373,13 +376,17 @@ public class ShelvedChangesViewManager implements Disposable {
       ShelvedChangeList singleDeletedList = getOnlyItem(shelvedListsToDelete);
       if (singleDeletedList != null) {
         listsMessage = VcsBundle.message("shelve.delete.changelist.name.message", singleDeletedList.getDescription());
-      } else {
+      }
+      else {
         listsMessage = VcsBundle.message("shelve.delete.changelists.count.message", shelvedListsToDeleteSize);
       }
     }
 
-    return StringUtil.capitalize(VcsBundle.message("shelve.delete.successful.message",
-                                                   filesMessage, shelvedFilesToDeleteSize > 0 && shelvedListsToDeleteSize > 0 ? 1 : 0, listsMessage));
+    String message = VcsBundle.message("shelve.delete.successful.message",
+                                       filesMessage,
+                                       shelvedFilesToDeleteSize > 0 && shelvedListsToDeleteSize > 0 ? 1 : 0,
+                                       listsMessage);
+    return HtmlChunk.text(StringUtil.capitalize(message));
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
@@ -458,9 +465,9 @@ public class ShelvedChangesViewManager implements Disposable {
   private static void showUndoDeleteNotification(@NotNull Project project, @NotNull List<ShelvedChangeList> shelvedListsToDelete,
                                                  int shelvedFilesToDeleteSize,
                                                  @NotNull Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate) {
-    String message = constructDeleteSuccessfullyMessage(shelvedFilesToDeleteSize, shelvedListsToDelete);
+    HtmlChunk message = constructDeleteSuccessfullyMessage(shelvedFilesToDeleteSize, shelvedListsToDelete);
     Notification shelfDeletionNotification = new Notification(VcsNotifier.STANDARD_NOTIFICATION.getDisplayId(),
-                                                              XmlStringUtil.wrapInHtml(message),
+                                                              message.toString(),
                                                               NotificationType.INFORMATION);
     shelfDeletionNotification.setDisplayId(VcsNotificationIdsHolder.SHELF_UNDO_DELETE);
     shelfDeletionNotification.addAction(new UndoShelfDeletionAction(project, createdDeletedListsWithOriginalDate));

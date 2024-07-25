@@ -7,7 +7,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
@@ -15,7 +14,6 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,7 +44,7 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
         val resultWrapper = ActionCallback()
         cs.launch {
           // may have been changed by this time...
-          val mavenProjects = readAction { getMavenProjects(psiFile) }
+          val mavenProjects = getMavenProjects(psiFile)
           if (mavenProjects.isEmpty()) {
             resultWrapper.setRejected()
             return@launch
