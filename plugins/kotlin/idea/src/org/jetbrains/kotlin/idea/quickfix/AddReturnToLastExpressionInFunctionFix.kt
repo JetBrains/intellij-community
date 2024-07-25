@@ -27,6 +27,6 @@ internal object AddReturnToLastExpressionInFunctionFixFactory : KotlinSingleInte
         val expectedType = namedFunction.resolveToDescriptorIfAny()?.returnType?.takeIf { !it.isError } ?: return null
         if (!lastType.isSubtypeOf(expectedType)) return null
 
-        return AddReturnToLastExpressionInFunctionFix(casted.psiElement)
+        return AddReturnToLastExpressionInFunctionFix(namedFunction).asIntention()
     }
 }
