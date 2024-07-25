@@ -14,7 +14,7 @@ internal object ConvertIllegalEscapeToUnicodeEscapeFixFactory : KotlinSingleInte
             else -> null
         } ?: return null
         val unicodeEscape = illegalEscapeToUnicodeEscape[illegalEscape] ?: return null
-        return ConvertIllegalEscapeToUnicodeEscapeFix(element, unicodeEscape)
+        return ConvertIllegalEscapeToUnicodeEscapeFix(element, unicodeEscape).asIntention()
     }
 
     private val illegalEscapeToUnicodeEscape = mapOf("\\f" to "\\u000c")
