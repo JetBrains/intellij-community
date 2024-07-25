@@ -699,6 +699,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/dslMarker/noDslCompletionForNonDslReciever.kt");
         }
 
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../completion/testData/basic/common/dslMarker/property.kt");
+        }
+
         @TestMetadata("root.kt")
         public void testRoot() throws Exception {
             runTest("../../completion/testData/basic/common/dslMarker/root.kt");

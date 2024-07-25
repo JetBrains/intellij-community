@@ -670,6 +670,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/dslMarker/noDslCompletionForNonDslReciever.kt");
             }
 
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("../testData/basic/common/dslMarker/property.kt");
+            }
+
             @TestMetadata("root.kt")
             public void testRoot() throws Exception {
                 runTest("../testData/basic/common/dslMarker/root.kt");
