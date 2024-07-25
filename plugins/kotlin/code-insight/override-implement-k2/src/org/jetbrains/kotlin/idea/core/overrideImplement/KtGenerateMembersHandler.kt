@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -40,6 +41,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 abstract class KtGenerateMembersHandler(
     final override val toImplement: Boolean
 ) : AbstractGenerateMembersHandler<KtClassMember>() {
+
+    override fun isClassNode(key: MemberChooserObject): Boolean = key is KaClassOrObjectSymbolChooserObject
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun generateMembers(

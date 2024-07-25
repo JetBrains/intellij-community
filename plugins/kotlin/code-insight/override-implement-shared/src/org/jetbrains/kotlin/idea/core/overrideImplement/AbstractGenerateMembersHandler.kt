@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.overrideImplement
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.generation.ClassMember
+import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.util.MemberChooser
 import com.intellij.lang.LanguageCodeInsightActionHandler
@@ -47,10 +48,16 @@ abstract class AbstractGenerateMembersHandler<T : ClassMember> : LanguageCodeIns
 
     protected open fun isValidForClass(classOrObject: KtClassOrObject) = true
 
+    protected open fun isClassNode(key: MemberChooserObject): Boolean = false
+
     private fun showOverrideImplementChooser(project: Project, members: Collection<T>): MemberChooser<T>? {
         @Suppress("UNCHECKED_CAST")
         val memberArray = members.toTypedArray<ClassMember>() as Array<T>
-        val chooser = MemberChooser(memberArray, false, true, project)
+        val chooser = object : MemberChooser<T>(memberArray, false, true, project) {
+            override fun isContainerNode(key: MemberChooserObject): Boolean {
+                return super.isContainerNode(key) || isClassNode(key)
+            }
+        }
         chooser.title = getChooserTitle()
         if (toImplement) {
             chooser.selectElements(memberArray)

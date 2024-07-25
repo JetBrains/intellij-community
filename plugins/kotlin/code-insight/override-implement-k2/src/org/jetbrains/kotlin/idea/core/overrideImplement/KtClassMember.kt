@@ -82,7 +82,7 @@ data class KtClassMember(
     }
 }
 
-private data class KaClassOrObjectSymbolChooserObject(
+data class KaClassOrObjectSymbolChooserObject(
     @NlsContexts.Label val symbolText: String?,
     val symbolIcon: Icon?
 ) :
