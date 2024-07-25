@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -97,7 +96,7 @@ class MethodExtractor {
       }
     }
     catch (exception: ExtractException) {
-      if (exception is ExtractMultipleVariablesException && Registry.`is`("refactorings.extract.method.introduce.object")){
+      if (exception is ExtractMultipleVariablesException){
         val variables = exception.variables.sortedBy { variable -> variable.textRange.startOffset }
         invokeLater { ResultObjectExtractor.run(editor, variables, exception.scope) }
       }
