@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
-import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.getArgumentOrIndexExpressions
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.mapArgumentsToParameterIndices
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
@@ -292,11 +291,7 @@ object K2SemanticMatcher {
 
         context(KaSession)
         private fun getSingleParameterSymbolForAnonymousFunctionOrNull(function: KtFunction): KaValueParameterSymbol? {
-            val anonymousFunction = when (function) {
-                is KtNamedFunction -> function.anonymousSymbol
-                is KtFunctionLiteral -> function.symbol
-                else -> unexpectedElementError<KtFunction>(function)
-            }
+            val anonymousFunction = function.symbol as? KaAnonymousFunctionSymbol ?: return null
             return anonymousFunction.valueParameters.singleOrNull()
         }
     }
