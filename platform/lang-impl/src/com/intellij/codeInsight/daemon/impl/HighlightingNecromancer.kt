@@ -160,8 +160,7 @@ open class HighlightingNecromancer(
     }
     val severity = HighlightInfo.fromRangeHighlighter(highlighter)?.severity
     if (severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY ||
-        (severity != null && severity > HighlightSeverity.INFORMATION)) {
-      // either warning/error or symbol type (e.g., field text attribute)
+        (severity != null && severity >= HighlightSeverity.INFORMATION)) {
       return true
     }
     val lineMarker = LineMarkersUtil.getLineMarkerInfo(highlighter)
