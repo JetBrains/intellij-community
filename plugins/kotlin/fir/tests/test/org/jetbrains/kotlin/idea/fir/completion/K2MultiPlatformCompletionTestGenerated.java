@@ -42,6 +42,11 @@ public abstract class K2MultiPlatformCompletionTestGenerated extends AbstractK2M
             runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFun/");
         }
 
+        @TestMetadata("actualModuleTargetIsNotVisibleInAnotherModule")
+        public void testActualModuleTargetIsNotVisibleInAnotherModule() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualModuleTargetIsNotVisibleInAnotherModule/");
+        }
+
         @TestMetadata("actualVal")
         public void testActualVal() throws Exception {
             runTest("../../completion/testData/multiPlatform/actualDeclaration/actualVal/");

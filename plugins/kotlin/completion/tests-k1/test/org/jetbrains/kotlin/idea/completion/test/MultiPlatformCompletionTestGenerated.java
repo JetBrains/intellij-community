@@ -42,6 +42,11 @@ public abstract class MultiPlatformCompletionTestGenerated extends AbstractMulti
             runTest("../testData/multiPlatform/actualDeclaration/actualFun/");
         }
 
+        @TestMetadata("actualModuleTargetIsNotVisibleInAnotherModule")
+        public void testActualModuleTargetIsNotVisibleInAnotherModule() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualModuleTargetIsNotVisibleInAnotherModule/");
+        }
+
         @TestMetadata("actualVal")
         public void testActualVal() throws Exception {
             runTest("../testData/multiPlatform/actualDeclaration/actualVal/");
