@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -441,7 +443,7 @@ internal class SoftwareBillOfMaterialsImpl(
 
   private val mavenLibraries: List<MavenLibrary> by lazy {
     runBlocking(Dispatchers.IO) {
-      val usedModulesNames = distributionFiles.includedModules.toSet()
+      val usedModulesNames = getIncludedModules(distributionFiles.asSequence()).toHashSet()
       val usedModules = context.project.modules.asSequence().filter {
         usedModulesNames.contains(it.name)
       }.toSet()
@@ -462,8 +464,8 @@ internal class SoftwareBillOfMaterialsImpl(
         it.first.mavenDescriptor?.mavenId ?: it.first.name
       }.groupBy({ it.first }, { it.second }).map { (library, modules) ->
         async {
-          val libraryName = LibraryLicensesListGenerator.getLibraryName(library)
-          val libraryEntry = librariesBundledInDistributions[libraryName]
+          val libraryName = getLibraryFilename(library)
+          val libraryEntry = librariesBundledInDistributions.get(libraryName)
           val libraryFile = libraryEntry?.libraryFile ?: return@async null
           val libraryLicense = context.productProperties.allLibraryLicenses.firstOrNull {
             it.getLibraryNames().contains(libraryName)
@@ -616,9 +618,9 @@ internal class SoftwareBillOfMaterialsImpl(
     val organizations = (pomModel?.organization?.name?.let { sequenceOf(it) }
                          ?: pomModel?.developers?.asSequence()?.mapNotNull { it.organization })
       ?.filter { it.isNotBlank() }
-      ?.mapNotNull {
+      ?.map { htmlContent ->
         @Suppress("HardCodedStringLiteral")
-        Jsoup.parse(it).wholeText().takeIf { it.isNotBlank() } ?: it
+        Jsoup.parse(htmlContent).wholeText().takeIf { it.isNotBlank() } ?: htmlContent
       }?.distinct()
       ?.joinToString(transform = ::translateSupplier)
       ?.takeIf { it.isNotBlank() }

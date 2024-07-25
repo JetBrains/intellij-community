@@ -617,6 +617,7 @@
 
     <fileIconProvider implementation="org.jetbrains.idea.devkit.apiDump.ApiDumpFileIconProvider"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.apiDump.ApiDumpGeneratedSourcesFilter"/>
+    <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.contentReport.ContentReportGeneratedSourcesFilter"/>
 
     <!-- INTERNAL -->
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>

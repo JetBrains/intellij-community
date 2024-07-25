@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.LibraryLicense
-import org.jetbrains.intellij.build.impl.LibraryLicensesListGenerator
+import org.jetbrains.intellij.build.impl.getLibraryFilename
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -35,7 +35,7 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     val librariesWithLicenses = licenses.flatMap { it.getLibraryNames() }.toSet()
 
     for ((jpsLibrary, jpsModule) in libraries) {
-      val libraryName = LibraryLicensesListGenerator.getLibraryName(jpsLibrary)
+      val libraryName = getLibraryFilename(jpsLibrary)
       if (libraryName !in librariesWithLicenses) {
         // require licence entry only for a main library (ktor-client), not for sub-libraries
         if (isImplicitLibrary(libraryName)) {

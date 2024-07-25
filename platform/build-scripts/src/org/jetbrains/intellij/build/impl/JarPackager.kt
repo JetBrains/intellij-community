@@ -417,7 +417,7 @@ class JarPackager private constructor(
                 ModuleLibraryFileEntry(
                   path = targetFile,
                   moduleName = moduleName,
-                  libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+                  libraryName = getLibraryFilename(library),
                   libraryFile = file,
                   hash = hash,
                   size = size,
@@ -601,7 +601,7 @@ class JarPackager private constructor(
               ModuleLibraryFileEntry(
                 path = targetFile,
                 moduleName = it,
-                libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+                libraryName = getLibraryFilename(library),
                 libraryFile = file,
                 hash = hash,
                 size = size,

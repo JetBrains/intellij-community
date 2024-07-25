@@ -1,0 +1,3 @@
+- name: lib/color-scheme-all_hallows_eve.jar
+  modules:
+  - name: intellij.color.scheme.all_hallows_eve

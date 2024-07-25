@@ -1,0 +1,8 @@
+- name: lib/git4idea-rt.jar
+  modules:
+  - name: intellij.vcs.git.rt
+- name: lib/vcs-git.jar
+  modules:
+  - name: intellij.vcs.git
+  contentModules:
+  - name: intellij.vcs.git.coverage

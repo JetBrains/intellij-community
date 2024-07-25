@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
@@ -230,7 +230,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
         else if (!isOptionalDependency(library)) {
           Span.current().addEvent("module depends on non-maven library", Attributes.of(
             AttributeKey.stringKey("module"), module.name,
-            AttributeKey.stringKey("library"), LibraryLicensesListGenerator.getLibraryName(library),
+            AttributeKey.stringKey("library"), getLibraryFilename(library),
           ))
           mavenizable = false
         }

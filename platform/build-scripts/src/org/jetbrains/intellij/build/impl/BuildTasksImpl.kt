@@ -21,8 +21,8 @@ import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
+import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
 import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
 import org.jetbrains.intellij.build.io.*
@@ -36,7 +36,6 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
-import kotlin.io.NoSuchFileException
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
@@ -118,8 +117,8 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
  * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val entries = generateProjectStructureMapping(context = context, platformLayout = createPlatformLayout(context = context))
-  writeProjectStructureReport(entries = entries.first + entries.second, file = targetFile, buildPaths = context.paths)
+  val report = generateProjectStructureMapping(context = context, platformLayout = createPlatformLayout(context = context))
+  writeProjectStructureReport(contentReport = report, file = targetFile, buildPaths = context.paths)
 }
 
 data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
@@ -342,10 +341,10 @@ private fun checkProjectLibraries(names: Collection<String>, fieldName: String, 
   }
 }
 
-private suspend fun buildSourcesArchive(entries: List<DistributionFileEntry>, context: BuildContext) {
+private suspend fun buildSourcesArchive(contentReport: ContentReport, context: BuildContext) {
   val productProperties = context.productProperties
   val archiveName = "${productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)}-sources.zip"
-  val openSourceModules = entries.includedModules.filter { moduleName ->
+  val openSourceModules = getIncludedModules(contentReport.combined()).filter { moduleName ->
     productProperties.includeIntoSourcesArchiveFilter.test(context.findRequiredModule(moduleName), context)
   }.toList()
   zipSourcesOfModules(
@@ -479,19 +478,19 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
       return@coroutineScope
     }
 
-    val distEntries = spanBuilder("build platform and plugin JARs").useWithScope {
-      val entries = buildDistribution(state = distributionState, context)
+    val contentReport = spanBuilder("build platform and plugin JARs").useWithScope {
+      val contentReport = buildDistribution(state = distributionState, context)
       if (context.productProperties.buildSourcesArchive) {
-        buildSourcesArchive(entries, context)
+        buildSourcesArchive(contentReport, context)
       }
-      entries
+      contentReport
     }
 
     layoutShared(context)
     val distDirs = buildOsSpecificDistributions(context)
     launch(Dispatchers.IO) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
-        SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = distEntries).generate()
+        SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = contentReport.combined().toList()).generate()
       }
     }
     if (context.productProperties.buildCrossPlatformDistribution) {

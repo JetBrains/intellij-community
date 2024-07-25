@@ -1,0 +1,9 @@
+- name: lib/client/yaml-frontend.jar
+  modules:
+  - name: intellij.yaml.frontend
+- name: lib/yaml-editing.jar
+  modules:
+  - name: intellij.yaml.editing
+- name: lib/yaml.jar
+  modules:
+  - name: intellij.yaml

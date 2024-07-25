@@ -1,0 +1,14 @@
+- name: lib/rmi-stubs.jar
+- name: lib/rt/saxon.jar
+- name: lib/rt/saxon9he.jar
+- name: lib/rt/serializer-2.7.3.jar
+- name: lib/rt/xalan-2.7.3.jar
+- name: lib/rt/xslt-debugger-impl-rt.jar
+  modules:
+  - name: intellij.xslt.debugger.impl.rt
+- name: lib/xslt-debugger-rt.jar
+  modules:
+  - name: intellij.xslt.debugger.rt
+- name: lib/xslt-debugger.jar
+  modules:
+  - name: intellij.xslt.debugger

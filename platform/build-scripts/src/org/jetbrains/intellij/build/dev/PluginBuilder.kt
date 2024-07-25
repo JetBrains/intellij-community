@@ -5,9 +5,7 @@ package org.jetbrains.intellij.build.dev
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBuildDescriptor
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
@@ -34,6 +32,7 @@ internal suspend fun buildPlugins(
       context = context,
       buildPlatformJob = buildPlatformJob,
       searchableOptionSet = searchableOptionSet,
+      os = null,
     )
   }
 }

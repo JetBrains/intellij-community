@@ -16,7 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
-import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
 import java.nio.file.Path
@@ -29,15 +28,14 @@ import kotlin.io.path.pathString
  * (along with information from plugin.xml files and other files describing custom layouts of plugins if necessary) to determine which
  * resources should be included in the distribution, instead of taking this information from the project model.
  */
-internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry>, context: BuildContext) {
+internal fun generateRuntimeModuleRepository(entries: Sequence<DistributionFileEntry>, context: BuildContext) {
   val compiledModulesDescriptors = context.originalModuleRepository.rawRepositoryData
 
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
                             SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(it.os, it.arch, context) }
   for (entry in entries) {
-    val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) }
-                                   ?: continue
+    val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) } ?: continue
 
     val pathInDist = rootPath.relativize(entry.path).pathString
     repositoryEntries.add(RuntimeModuleRepositoryEntry(distribution, pathInDist, entry))
@@ -221,12 +219,14 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
     .filter { it.getFiles(JpsOrderRootType.COMPILED).size == 1 }
     .mapTo(HashSet()) { it.name }
   
-  fun ProjectLibraryEntry.isPackedIntoSingleJar() = data.libraryName in singleFileProjectLibraries 
-                                                    || data.packMode == LibraryPackMode.MERGED 
-                                                    || data.packMode == LibraryPackMode.STANDALONE_MERGED
+  fun isPackedIntoSingleJar(projectLibraryEntry: ProjectLibraryEntry): Boolean {
+    return (projectLibraryEntry.data.libraryName in singleFileProjectLibraries
+            || projectLibraryEntry.data.packMode == LibraryPackMode.MERGED
+            || projectLibraryEntry.data.packMode == LibraryPackMode.STANDALONE_MERGED)
+  }
   
   fun ModuleLibraryFileEntry.isPackedIntoSingleJar(): Boolean {
-    val library = context.findRequiredModule(moduleName).libraryCollection.libraries.find { LibraryLicensesListGenerator.getLibraryName(it) == libraryName }
+    val library = context.findRequiredModule(moduleName).libraryCollection.libraries.find { getLibraryFilename(it) == libraryName }
     require(library != null) { "Cannot find module-level library '$libraryName' in '$moduleName'" }
     return library.getFiles(JpsOrderRootType.COMPILED).size == 1 
   }
@@ -236,8 +236,8 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
   //exclude libraries which may be packed in multiple JARs from consideration, because multiple entries may not indicate that a library is copied to multiple places in such cases,
   //and all resource roots should be kept
   val moduleIdsToPaths = entries.asSequence()
-    .filter { entry -> entry.origin is ProjectLibraryEntry && entry.origin.isPackedIntoSingleJar()
-                       || entry.origin is ModuleLibraryFileEntry && entry.origin.isPackedIntoSingleJar()                   
+    .filter { entry -> entry.origin is ProjectLibraryEntry && isPackedIntoSingleJar(entry.origin)
+                       || entry.origin is ModuleLibraryFileEntry && entry.origin.isPackedIntoSingleJar()
                        || entry.origin is ModuleOutputEntry }
     .groupBy({ it.origin.runtimeModuleId }, { it.relativePath })
 

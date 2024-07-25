@@ -1,0 +1,12 @@
+- name: lib/markdown.jar
+  modules:
+  - name: intellij.markdown
+  contentModules:
+  - name: intellij.markdown.fenceInjection
+  - name: intellij.markdown.frontmatter
+  - name: intellij.markdown.frontmatter.toml
+  - name: intellij.markdown.frontmatter.yaml
+  - name: intellij.markdown.images
+  - name: intellij.markdown.model
+  - name: intellij.markdown.spellchecker
+  - name: intellij.markdown.xml

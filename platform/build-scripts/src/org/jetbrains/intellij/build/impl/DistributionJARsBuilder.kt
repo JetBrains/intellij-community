@@ -57,7 +57,7 @@ internal suspend fun buildDistribution(
   state: DistributionBuilderState,
   context: BuildContext,
   isUpdateFromSources: Boolean = false,
-): List<DistributionFileEntry> = coroutineScope {
+): ContentReport = coroutineScope {
   validateModuleStructure(state.platform, context)
   context.productProperties.validateLayout(state.platform, context)
   createBuildBrokenPluginListJob(context)
@@ -70,7 +70,7 @@ internal suspend fun buildDistribution(
   }
 
   val traceContext = Context.current().asContextElement()
-  val entries = coroutineScope {
+  val contentReport = coroutineScope {
     // must be completed before plugin building
     val searchableOptionSet = context.executeStep(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) {
       buildSearchableOptions(productRunner = productRunner, context = context)
@@ -116,33 +116,37 @@ internal suspend fun buildDistribution(
       context = context,
     )
 
-    buildPlatformJob.await().asSequence() + bundledPluginItems + buildNonBundledPlugins.await()
-  }.toList()
+    ContentReport(
+      platform = buildPlatformJob.await(),
+      bundledPlugins = bundledPluginItems,
+      nonBundledPlugins = buildNonBundledPlugins.await(),
+    )
+  }
 
   coroutineScope {
     launch(Dispatchers.IO) {
       spanBuilder("generate content report").useWithScope {
         Files.createDirectories(context.paths.artifactDir)
         val contentMappingJson = context.paths.artifactDir.resolve("content-mapping.json")
-        writeProjectStructureReport(entries = entries, file = contentMappingJson, buildPaths = context.paths)
-        val contentJson = context.paths.artifactDir.resolve("content.json")
-        Files.newOutputStream(contentJson).use {
-          buildJarContentReport(entries = entries, out = it, buildPaths = context.paths, context = context)
+        writeProjectStructureReport(contentReport = contentReport, file = contentMappingJson, buildPaths = context.paths)
+        val contentReportFile = context.paths.artifactDir.resolve("content-report.zip")
+        writeNewZipWithoutIndex(contentReportFile) { zipFileWriter ->
+          buildJarContentReport(contentReport = contentReport, zipFileWriter = zipFileWriter, buildPaths = context.paths, context = context)
         }
         context.notifyArtifactBuilt(contentMappingJson)
-        context.notifyArtifactBuilt(contentJson)
+        context.notifyArtifactBuilt(contentReportFile)
       }
     }
-    createBuildThirdPartyLibraryListJob(entries, context)
+    createBuildThirdPartyLibraryListJob(contentReport.combined(), context)
     if (context.useModularLoader || context.generateRuntimeModuleRepository) {
       launch(Dispatchers.IO) {
         spanBuilder("generate runtime module repository").useWithScope {
-          generateRuntimeModuleRepository(entries, context)
+          generateRuntimeModuleRepository(contentReport.combined(), context)
         }
       }
     }
   }
-  entries
+  contentReport
 }
 
 private suspend fun buildBundledPluginsForAllPlatforms(
@@ -153,7 +157,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   moduleOutputPatcher: ModuleOutputPatcher,
   context: BuildContext,
-): List<DistributionFileEntry> {
+): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return coroutineScope {
     val commonDeferred = async {
       doBuildBundledPlugins(
@@ -197,7 +201,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
       context = context,
     )
     listOf(common, specific.values.flatten())
-  }.flatMap { list -> list.flatMap { it.second } }
+  }.flatten()
 }
 
 private fun writePluginInfo(
@@ -296,6 +300,7 @@ private suspend fun doBuildBundledPlugins(
         state = state,
         context = context,
         buildPlatformJob = buildPlatformJob,
+        os = null,
         searchableOptionSet = searchableOptionSet,
       )
 
@@ -349,6 +354,7 @@ private suspend fun buildOsSpecificBundledPlugins(
                 targetDir = targetDir,
                 state = state,
                 context = context,
+                os = os,
                 buildPlatformJob = buildPlatformJob,
                 searchableOptionSet = searchableOptionSet,
               )
@@ -389,7 +395,7 @@ internal suspend fun buildNonBundledPlugins(
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
-): List<DistributionFileEntry> {
+): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope { span ->
     if (pluginsToPublish.isEmpty()) {
       return@useWithScope emptyList()
@@ -420,6 +426,7 @@ internal suspend fun buildNonBundledPlugins(
       searchableOptionSet = searchableOptionSet,
       context = context,
       buildPlatformJob = buildPlatformLibJob,
+      os = null,
     ) { plugin, pluginDirOrFile ->
       val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
         context.buildNumber
@@ -474,7 +481,7 @@ internal suspend fun buildNonBundledPlugins(
     }
 
     mappings
-  }.flatMap { it.second }
+  }
 }
 
 private suspend fun validatePlugin(path: Path, context: BuildContext) {
@@ -521,6 +528,7 @@ private suspend fun buildHelpPlugin(
       context = context,
       searchableOptionSet = searchableOptionSetDescriptor,
       buildPlatformJob = null,
+      os = null,
     )
     zipWithCompression(targetFile = destFile, dirs = mapOf(pluginsToPublishDir.resolve(directory) to ""))
     null
@@ -528,7 +536,7 @@ private suspend fun buildHelpPlugin(
   return PluginRepositorySpec(pluginZip = destFile, pluginXml = moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
 }
 
-internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLayout, context: BuildContext): Pair<List<DistributionFileEntry>, List<DistributionFileEntry>> {
+internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLayout, context: BuildContext): ContentReport {
   return coroutineScope {
     val moduleOutputPatcher = ModuleOutputPatcher()
     val libDirLayout = async {
@@ -546,11 +554,11 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
       modules = context.bundledPluginModules,
       productLayout = context.productProperties.productLayout,
     )
-    val entries = mutableListOf<DistributionFileEntry>()
+    val entries = mutableListOf<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>()
     for (plugin in allPlugins) {
       if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
         val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
-        entries.addAll(layoutDistribution(
+        entries.add(PluginBuildDescriptor(dir = targetDirectory, layout = plugin, os = null, moduleNames = emptyList()) to layoutDistribution(
           layout = plugin,
           platformLayout = platformLayout,
           targetDirectory = targetDirectory,
@@ -562,13 +570,14 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
         ).first)
       }
     }
-    libDirLayout.await() to entries
+    ContentReport(platform = libDirLayout.await(), bundledPlugins = entries, nonBundledPlugins = emptyList())
   }
 }
 
 internal suspend fun buildPlugins(
   moduleOutputPatcher: ModuleOutputPatcher,
   plugins: Collection<PluginLayout>,
+  os: OsFamily?,
   targetDir: Path,
   state: DistributionBuilderState,
   context: BuildContext,
@@ -632,7 +641,7 @@ internal suspend fun buildPlugins(
         }
       }
 
-      PluginBuildDescriptor(dir = pluginDir, layout = plugin, moduleNames = emptyList()) to task.await()
+      PluginBuildDescriptor(dir = pluginDir, layout = plugin, os = os, moduleNames = emptyList()) to task.await()
     }
   }
 
@@ -897,12 +906,14 @@ private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext)
   }
 }
 
-private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<DistributionFileEntry>, context: BuildContext): Job? {
+private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: Sequence<DistributionFileEntry>, context: BuildContext): Job? {
   return createSkippableJob(spanBuilder("generate table of licenses for used third-party libraries"),
                             BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
-    val generator = LibraryLicensesListGenerator.create(project = context.project,
-                                                        licensesList = context.productProperties.allLibraryLicenses,
-                                                        usedModulesNames = entries.includedModules.toHashSet())
+    val generator = createLibraryLicensesListGenerator(
+      project = context.project,
+      licenseList = context.productProperties.allLibraryLicenses,
+      usedModulesNames = getIncludedModules(entries).toHashSet(),
+    )
     val distAllDir = context.paths.distAllDir
     withContext(Dispatchers.IO) {
       Files.createDirectories(distAllDir)
@@ -1215,7 +1226,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
         entries.add(ModuleLibraryFileEntry(
           path = artifactFile,
           moduleName = parentReference.moduleName,
-          libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+          libraryName = getLibraryFilename(library),
           libraryFile = null,
           hash = 0,
           size = 0,
@@ -1327,13 +1338,13 @@ private fun buildBlockMap(file: Path, json: JSON) {
 }
 
 suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext): Collection<String> {
-  val (lib, plugins) = generateProjectStructureMapping(context = context, platformLayout = platform)
+  val contentReport = generateProjectStructureMapping(context = context, platformLayout = platform)
 
   val pluginLayouts = context.productProperties.productLayout.pluginLayouts
   val classPath = LinkedHashSet<Path>()
 
   val libDir = context.paths.distAllDir.resolve("lib")
-  for (entry in lib) {
+  for (entry in contentReport.platform) {
     if (!(entry is ModuleOutputEntry && entry.reason == ModuleIncludeReasons.PRODUCT_MODULES)) {
       val relativePath = libDir.relativize(entry.path)
       if (relativePath.nameCount != 1 && !relativePath.startsWith("modules")) {
@@ -1351,7 +1362,7 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
   }
 
   val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-  for (entry in plugins) {
+  for (entry in contentReport.bundledPlugins.flatMap { it.second }) {
     val relativePath = pluginDir.relativize(entry.path)
     // for plugins, our classloader load jars only from lib folder
     if (relativePath.nameCount != 3 || relativePath.getName(1).toString() != LIB_DIRECTORY) {

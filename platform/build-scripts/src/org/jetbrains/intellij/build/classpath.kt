@@ -161,6 +161,7 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
 
 internal data class PluginBuildDescriptor(
   @JvmField val dir: Path,
+  @JvmField val os: OsFamily?,
   @JvmField val layout: PluginLayout,
   @JvmField val moduleNames: List<String>,
 )

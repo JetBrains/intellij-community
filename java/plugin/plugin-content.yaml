@@ -1,0 +1,136 @@
+- name: lib/aether-dependency-resolver.jar
+  modules:
+  - name: intellij.java.aetherDependencyResolver
+- name: lib/client/java-frontend.jar
+  modules:
+  - name: intellij.java.frontend
+- name: lib/debugger-memory-agent.jar
+- name: lib/ecj/eclipse.jar
+  projectLibraries:
+  - name: Eclipse
+    files:
+    - name: $PROJECT_DIR$/community/lib/ecj-4.jar
+    reason: withProjectLibrary
+- name: lib/java-frontback.jar
+  modules:
+  - name: intellij.java.frontback.impl
+  - name: intellij.java.frontback.psi
+  - name: intellij.java.frontback.psi.impl
+- name: lib/java-impl.jar
+  modules:
+  - name: intellij.java
+  - name: intellij.java.analysis
+  - name: intellij.java.analysis.impl
+  - name: intellij.java.compiler
+  - name: intellij.java.compiler.impl
+  - name: intellij.java.debugger
+  - name: intellij.java.debugger.impl
+  - name: intellij.java.debugger.memory.agent
+  - name: intellij.java.duplicates
+  - name: intellij.java.duplicates.analysis
+  - name: intellij.java.duplicatesDetection
+  - name: intellij.java.execution
+  - name: intellij.java.execution.impl
+  - name: intellij.java.impl
+    libraries:
+      completion-ranking-java:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
+  - name: intellij.java.impl.inspections
+  - name: intellij.java.impl.refactorings
+  - name: intellij.java.indexing
+  - name: intellij.java.indexing.impl
+  - name: intellij.java.jam
+  - name: intellij.java.jam.impl
+  - name: intellij.java.manifest
+  - name: intellij.java.plugin
+  - name: intellij.java.psi
+  - name: intellij.java.psi.impl
+  - name: intellij.java.remoteServers
+  - name: intellij.java.remoteServers.impl
+  - name: intellij.java.resources
+    reason: <- intellij.java.plugin
+  - name: intellij.java.resources.en
+    reason: <- intellij.java.plugin
+  - name: intellij.java.structureView
+  - name: intellij.java.typeMigration
+  - name: intellij.java.uast
+  - name: intellij.java.uast.ide
+  - name: intellij.java.ui
+  - name: intellij.jsp
+  - name: intellij.jsp.spi
+  - name: intellij.jvm.analysis
+  - name: intellij.jvm.analysis.impl
+  - name: intellij.jvm.analysis.quickFix
+  - name: intellij.jvm.analysis.refactoring
+  - name: intellij.platform.uast
+  - name: intellij.platform.uast.ide
+  - name: intellij.uiDesigner
+  contentModules:
+  - name: intellij.java.compiler.charts
+  - name: intellij.java.performancePlugin
+- name: lib/javac2.jar
+  modules:
+  - name: intellij.java.compiler.antTasks
+  - name: intellij.java.compiler.instrumentationUtil
+  - name: intellij.java.compiler.instrumentationUtil.java8
+  - name: intellij.java.guiForms.compiler
+- name: lib/jb-jdi.jar
+  projectLibraries:
+  - name: jb-jdi
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar
+    reason: withProjectLibrary
+- name: lib/jetbrains.kotlinx.metadata.jvm.jar
+  projectLibraries:
+  - name: jetbrains.kotlinx.metadata.jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0/kotlinx-metadata-jvm-0.jar
+    reason: withProjectLibrary
+- name: lib/jgoodies-common.jar
+  projectLibraries:
+  - name: jgoodies-common
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jgoodies/jgoodies-common/1/jgoodies-common-1.jar
+    reason: withProjectLibrary
+- name: lib/jps-builders-6.jar
+  modules:
+  - name: intellij.platform.jps.build.javac.rt
+- name: lib/jps-builders.jar
+  modules:
+  - name: intellij.platform.jps.build
+    libraries:
+      qdox-java-parser:
+      - name: $MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2/qdox-2.jar
+- name: lib/jps-javac-extension.jar
+  projectLibraries:
+  - name: jps-javac-extension
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/9/jps-javac-extension-9.jar
+    reason: withProjectLibrary
+- name: lib/jps-launcher.jar
+  modules:
+  - name: intellij.platform.jps.build.launcher
+- name: lib/jps/java-compiler-charts-jps.jar
+  modules:
+  - name: intellij.java.compiler.charts.jps
+- name: lib/jshell-frontend.jar
+- name: lib/jshell-protocol.jar
+  modules:
+  - name: intellij.java.jshell.protocol
+- name: lib/maven-resolver-connector-basic.jar
+- name: lib/maven-resolver-transport-file.jar
+- name: lib/maven-resolver-transport-http.jar
+- name: lib/modules/intellij.java.featuresTrainer.jar
+  contentModules:
+  - name: intellij.java.featuresTrainer
+- name: lib/modules/intellij.java.structuralSearch.jar
+  contentModules:
+  - name: intellij.java.structuralSearch
+- name: lib/modules/intellij.java.unscramble.jar
+  contentModules:
+  - name: intellij.java.unscramble
+- name: lib/modules/intellij.java.vcs.jar
+  contentModules:
+  - name: intellij.java.vcs
+- name: lib/rt/debugger-agent.jar
+- name: lib/sa-jdwp.jar
