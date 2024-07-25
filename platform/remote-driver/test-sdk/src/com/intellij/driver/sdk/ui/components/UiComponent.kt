@@ -3,8 +3,10 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Driver
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.sdk.screenshot.takeScreenshot
-import com.intellij.driver.sdk.ui.*
 import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
+import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.SearchContext
+import com.intellij.driver.sdk.ui.UiText
 import com.intellij.driver.sdk.ui.UiText.Companion.allText
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
@@ -19,7 +21,6 @@ import com.intellij.openapi.util.SystemInfo
 import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
-import java.awt.event.KeyEvent
 import java.awt.image.BufferedImage
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -469,6 +470,4 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       component.isFocusOwner()
     }
   }
-
-
 }
