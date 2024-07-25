@@ -142,7 +142,6 @@ public class FontEditorPreview implements PreviewPanel{
     settings.setRightMarginShown(true);
     settings.setRightMargin(60);
     settings.setGutterIconsShown(false);
-    settings.setIndentGuidesShown(false);
     ((EditorGutterComponentEx)editor.getGutter()).setPaintBackground(false);
     return editor;
   }
