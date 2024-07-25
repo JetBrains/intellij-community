@@ -174,7 +174,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       }
     }
     Color guideColor = isDebugZombie()
-                       ? JBColor.DARK_GRAY
+                       ? bgColor
                        : editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE);
     g.setColor(guideColor);
     g.fillRect(startX, filledStartY, scale(LINE_WIDTH), filledHeight);
