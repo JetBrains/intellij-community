@@ -11,6 +11,9 @@ import com.intellij.internal.ui.sandbox.dsl.*
 import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrComboBoxPanel
 import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrListPanel
 import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrOthersPanel
+import com.intellij.internal.ui.sandbox.dsl.validation.CrossValidationPanel
+import com.intellij.internal.ui.sandbox.dsl.validation.ValidationPanel
+import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPanel
 import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -70,6 +73,11 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
         LcrComboBoxPanel(),
         LcrOthersPanel()
       )),
+      Group("Validaiton", children = listOf(
+        CrossValidationPanel(),
+        ValidationPanel(),
+        ValidationRefactoringPanel(),
+      )),
 
       CellsWithSubPanelsPanel(),
       CheckBoxRadioButtonPanel(),
@@ -85,8 +93,6 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       SegmentedButtonPanel(),
       TextFieldsPanel(),
       TextMaxLinePanel(),
-      ValidationPanel(),
-      ValidationRefactoringPanel(),
       VisibleEnabledPanel()
     )),
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.ui.sandbox.dsl
+package com.intellij.internal.ui.sandbox.dsl.validation
 
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
@@ -15,8 +15,8 @@ internal class ValidationPanel : UISandboxPanel {
   override val title: String = "Validation API"
 
   override fun createContent(disposable: Disposable): JComponent {
-    lateinit var panel: DialogPanel
-    panel = panel {
+    lateinit var result: DialogPanel
+    result = panel {
       lateinit var cbValidationEnabled: JCheckBox
 
       row {
@@ -47,12 +47,12 @@ internal class ValidationPanel : UISandboxPanel {
 
       row {
         button("Validate") {
-          panel.validateAll()
+          result.validateAll()
         }
       }
     }
 
-    panel.registerValidators(disposable)
-    return panel
+    result.registerValidators(disposable)
+    return result
   }
 }
