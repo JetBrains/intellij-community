@@ -14,20 +14,20 @@ public final class DevKitIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, DevKitIcons.class.getClassLoader(), cacheKey, flags);
   }
-  private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String expUIPath, @NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, DevKitIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Add_sdk = load("icons/add_sdk.svg", "icons/expui/addSDK.svg", 641117830, 2);
+  /** 16x16 */ public static final @NotNull Icon Add_sdk = load("icons/expui/addSDK.svg", "icons/add_sdk.svg", 641117830, 2);
 
   public static final class Gutter {
-    /** 12x12 */ public static final @NotNull Icon DescriptionFile = load("icons/gutter/descriptionFile.svg", "icons/expui/gutter/descriptionFile@14x14.svg", 1318760137, 2);
-    /** 12x12 */ public static final @NotNull Icon Diff = load("icons/gutter/diff.svg", "icons/expui/gutter/diff@14x14.svg", 124039984, 2);
-    /** 12x12 */ public static final @NotNull Icon Plugin = load("icons/gutter/plugin.svg", "icons/expui/gutter/plugin@14x14.svg", 1850322899, 2);
-    /** 12x12 */ public static final @NotNull Icon Properties = load("icons/gutter/properties.svg", "icons/expui/gutter/properties@14x14.svg", -818710709, 2);
+    /** 12x12 */ public static final @NotNull Icon DescriptionFile = load("icons/expui/gutter/descriptionFile@14x14.svg", "icons/gutter/descriptionFile.svg", 1318760137, 2);
+    /** 12x12 */ public static final @NotNull Icon Diff = load("icons/expui/gutter/diff@14x14.svg", "icons/gutter/diff.svg", 124039984, 2);
+    /** 12x12 */ public static final @NotNull Icon Plugin = load("icons/expui/gutter/plugin@14x14.svg", "icons/gutter/plugin.svg", 1850322899, 2);
+    /** 12x12 */ public static final @NotNull Icon Properties = load("icons/expui/gutter/properties@14x14.svg", "icons/gutter/properties.svg", -818710709, 2);
   }
 
-  /** 16x16 */ public static final @NotNull Icon LocalizationFile = load("icons/localizationFile.svg", "icons/expui/localizationFile.svg", -1571747209, 2);
+  /** 16x16 */ public static final @NotNull Icon LocalizationFile = load("icons/expui/localizationFile.svg", "icons/localizationFile.svg", -1571747209, 2);
   /** 16x16 */ public static final @NotNull Icon PluginV2 = load("icons/expui/pluginV2.svg", 1719825147, 2);
-  /** 16x16 */ public static final @NotNull Icon RemoteMapping = load("icons/remoteMapping.svg", "icons/expui/remoteMapping.svg", 1371307852, 2);
-  /** 16x16 */ public static final @NotNull Icon Sdk_closed = load("icons/sdk_closed.svg", "icons/expui/sdkClosed.svg", -1355048140, 2);
+  /** 16x16 */ public static final @NotNull Icon RemoteMapping = load("icons/expui/remoteMapping.svg", "icons/remoteMapping.svg", 1371307852, 2);
+  /** 16x16 */ public static final @NotNull Icon Sdk_closed = load("icons/expui/sdkClosed.svg", "icons/sdk_closed.svg", -1355048140, 2);
 }

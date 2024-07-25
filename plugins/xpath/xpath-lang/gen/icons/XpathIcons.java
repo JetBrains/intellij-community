@@ -14,7 +14,7 @@ public final class XpathIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, XpathIcons.class.getClassLoader(), cacheKey, flags);
   }
-  private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String expUIPath, @NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, XpathIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Association = load("icons/association.svg", -708606974, 0);
@@ -23,7 +23,7 @@ public final class XpathIcons {
   /** 16x16 */ public static final @NotNull Icon Namespace = load("icons/namespace.svg", 1849515194, 1);
   /** 16x16 */ public static final @NotNull Icon Template = load("icons/template.svg", 414204381, 0);
   /** 16x16 */ public static final @NotNull Icon Xml = load("icons/xml.png", 0, 2);
-  /** 16x16 */ public static final @NotNull Icon Xpath = load("icons/xpath.svg", "icons/expui/xpath.svg", -220283778, 0);
+  /** 16x16 */ public static final @NotNull Icon Xpath = load("icons/expui/xpath.svg", "icons/xpath.svg", -220283778, 0);
   /** 16x16 */ public static final @NotNull Icon XsltFiletypeOverlay = load("icons/xslt-filetype-overlay.svg", -935948328, 0);
   /** 16x16 */ public static final @NotNull Icon Xslt = load("icons/xslt.svg", 1017401713, 0);
 }

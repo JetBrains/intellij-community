@@ -14,7 +14,7 @@ public final class GithubIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, GithubIcons.class.getClassLoader(), cacheKey, flags);
   }
-  private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String expUIPath, @NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, GithubIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon GithubWarning = load("org/jetbrains/plugins/github/githubWarning.svg", -1077307434, 2);
@@ -23,7 +23,7 @@ public final class GithubIcons {
   /** 16x16 */ public static final @NotNull Icon LocalBranch = load("org/jetbrains/plugins/github/localBranch.svg", 1596019706, 2);
   /** 16x16 */ public static final @NotNull Icon PullRequestDraft = load("org/jetbrains/plugins/github/pullRequestDraft.svg", 1604718817, 0);
   /** 16x16 */ public static final @NotNull Icon PullRequestMerged = load("org/jetbrains/plugins/github/pullRequestMerged.svg", 240330859, 0);
-  /** 13x13 */ public static final @NotNull Icon PullRequestsToolWindow = load("org/jetbrains/plugins/github/pullRequestsToolWindow.svg", "org/jetbrains/plugins/github/expui/pullRequests.svg", -198411003, 2);
+  /** 13x13 */ public static final @NotNull Icon PullRequestsToolWindow = load("org/jetbrains/plugins/github/expui/pullRequests.svg", "org/jetbrains/plugins/github/pullRequestsToolWindow.svg", -198411003, 2);
   /** 16x16 */ public static final @NotNull Icon Review = load("org/jetbrains/plugins/github/review.svg", -352327129, 0);
   /** 16x16 */ public static final @NotNull Icon ReviewAccepted = load("org/jetbrains/plugins/github/reviewAccepted.svg", 1063742228, 0);
   /** 16x16 */ public static final @NotNull Icon ReviewRejected = load("org/jetbrains/plugins/github/reviewRejected.svg", -1652779952, 0);

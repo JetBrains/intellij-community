@@ -14,10 +14,10 @@ public final class VcsLogIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, VcsLogIcons.class.getClassLoader(), cacheKey, flags);
   }
-  private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String expUIPath, @NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, VcsLogIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon IntelliSort = load("icons/IntelliSort.svg", "icons/new/intelliSort.svg", -1276475056, 2);
+  /** 16x16 */ public static final @NotNull Icon IntelliSort = load("icons/new/intelliSort.svg", "icons/IntelliSort.svg", -1276475056, 2);
 
   public static final class Process {
     /** 16x16 */ public static final @NotNull Icon Dots_1 = load("icons/process/dots_1.svg", -2127224195, 0);

@@ -343,7 +343,7 @@ internal open class IconsClassGenerator(
     }
 
     if (!info.mappings.isNullOrEmpty() && info.images.find { info.mappings.containsKey(it.sourceCodeParameterName) } != null) {
-      append(result, "private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {", 1)
+      append(result, "private static @NotNull Icon load(@NotNull String expUIPath, @NotNull String path, int cacheKey, int flags) {", 1)
       append(result, "return $ICON_MANAGER_CODE.loadRasterizedIcon(path, expUIPath, ${info.className}.class.getClassLoader(), cacheKey, flags);", 2)
       append(result, "}", 1)
     }
@@ -518,7 +518,7 @@ internal open class IconsClassGenerator(
 
     val imagePathCodeParameter = image.sourceCodeParameterName
     append(result, "${javaDoc}public static final @NotNull Icon $iconName = " +
-                   "load(\"$imagePathCodeParameter\", ${appendExpUIPath(imagePathCodeParameter, mappings)}$key, ${image.getFlags()});", level)
+                   "load(${appendExpUIPath(imagePathCodeParameter, mappings)}\"$imagePathCodeParameter\", $key, ${image.getFlags()});", level)
 
     val oldName = deprecatedIconFieldNameMap[iconName]
     if (oldName != null) {
@@ -530,9 +530,6 @@ internal open class IconsClassGenerator(
     if (mappings != null) {
       val expUIPath = mappings[imagePathCodeParameter]
       if (expUIPath != null) {
-        if (expUIPath.endsWith("/$imagePathCodeParameter")) {
-          return "\"${expUIPath.substring(0, expUIPath.length - imagePathCodeParameter.length)}\", "
-        }
         return "\"$expUIPath\", "
       }
     }
