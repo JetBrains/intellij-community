@@ -29,7 +29,7 @@ internal class WhatsNewShowOnStartCheckService : ProjectActivity {
         // TODO: disable for remdev since lux is not ready to open what's new
         || AppMode.isRemoteDevHost()
         // TODO: disable for UI tests since UI tests are not ready for What's new
-        || Registry.`is`("expose.ui.hierarchy.url")) return
+        || Registry.`is`("expose.ui.hierarchy.url", false)) return
     logger.info("Checking whether to show the What's New page on startup.")
 
     // a bit hacky workaround but now we don't have any tools to forward local startup activities to a controller
