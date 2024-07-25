@@ -4,6 +4,7 @@ package com.intellij.codeInsight.folding.impl
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
@@ -82,7 +83,9 @@ private class CodeFoldingNecromancer(
       if (foldingState != null) {
         val editor = recipe.editorSupplier()
         withContext(Dispatchers.EDT) {
-          foldingState.setToEditor(editor)
+          runReadAction { // set to editor with RA IJPL-159083
+            foldingState.setToEditor(editor)
+          }
         }
       }
     }
