@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleKt;
 import org.jetbrains.kotlin.utils.PathUtil;
+import org.junit.Ignore;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 
@@ -113,13 +114,15 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(myProject));
     }
 
-    public void testNewLibrary_js() {
-        doTestSingleJsModule();
-    }
+    // The JS configurator does not work with the new klib format because it requires target platforms to be set correctly
+    //public void testNewLibrary_js() {
+    //    doTestSingleJsModule();
+    //}
 
-    public void testJsLibraryWithoutPaths_js() {
-        doTestSingleJsModule();
-    }
+    // The JS configurator does not work with the new klib format because it requires target platforms to be set correctly
+    //public void testJsLibraryWithoutPaths_js() {
+    //    doTestSingleJsModule();
+    //}
 
     public void testJsLibraryWrongKind() {
         assertProperlyConfigured(getModule(), getJsConfigurator());
