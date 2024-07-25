@@ -84,9 +84,11 @@ object SpecifyRemainingArgumentsByNameUtil {
         // Do not show the intention for Java/JS/etc. sources that do not support named arguments
         if (!functionSymbol.hasStableParameterNames) return null
 
-        val specifiedArguments = resolvedCall.argumentMapping.map { it.value.name.identifier }.toSet()
+        val specifiedArguments = resolvedCall.argumentMapping.mapNotNull {
+            it.value.name.takeIf { !it.isSpecial }?.identifier
+        }.toSet()
         val remainingArguments = functionSymbol.valueParameters.filter { parameter ->
-            parameter.name.identifier !in specifiedArguments && !parameter.isVararg
+            !parameter.name.isSpecial && parameter.name.identifier !in specifiedArguments && !parameter.isVararg
         }.map { parameter ->
             RemainingNamedArgumentData(parameter.name, parameter.hasDefaultValue)
         }
