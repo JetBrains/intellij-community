@@ -15,7 +15,7 @@ data class IjentPosixFileInfoImpl(
   override val inodeDev: Long,
   override val inodeIno: Long,
 ) : IjentPosixFileInfo {
-  data object Directory : IjentFileInfo.Type.Directory
+  data class Directory(override val sensitivity: IjentFileInfo.CaseSensitivity) : IjentFileInfo.Type.Directory
   data class Regular(override val size: Long) : IjentFileInfo.Type.Regular
   data class SymlinkResolved(override val result: IjentPath.Absolute) : IjentPosixFileInfo.Type.Symlink.Resolved
   data object SymlinkUnresolved : IjentPosixFileInfo.Type.Symlink.Unresolved

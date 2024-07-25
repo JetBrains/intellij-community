@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
+import com.intellij.openapi.util.io.CaseSensitivityAttribute
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.ijent.IjentId
@@ -258,7 +260,7 @@ class IjentNioPosixFileAttributesWithDosAdapter(
   private val userInfo: IjentPosixInfo.User,
   private val fileInfo: PosixFileAttributes,
   private val nameStartsWithDot: Boolean,
-) : PosixFileAttributes by fileInfo, DosFileAttributes {
+) : CaseSensitivityAttribute, PosixFileAttributes by fileInfo, DosFileAttributes {
   /**
    * Returns `false` if the corresponding file or directory can be modified.
    * Note that returning `true` does not mean that the corresponding file can be read or the directory can be listed.
@@ -283,4 +285,8 @@ class IjentNioPosixFileAttributesWithDosAdapter(
   override fun isArchive(): Boolean = false
 
   override fun isSystem(): Boolean = false
+
+  override fun getCaseSensitivity(): FileAttributes.CaseSensitivity {
+    if (fileInfo is CaseSensitivityAttribute) return fileInfo.caseSensitivity else return FileAttributes.CaseSensitivity.UNKNOWN
+  }
 }
