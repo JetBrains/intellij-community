@@ -241,6 +241,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
+    open fun testLongPackageName() {
+        doImplementFileTest()
+    }
+
    open fun testVarArgs() {
         doOverrideFileTest()
     }

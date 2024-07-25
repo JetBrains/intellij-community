@@ -5,10 +5,12 @@ package org.jetbrains.kotlin.idea.core.overrideImplement
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -300,11 +302,14 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
         }
         updateBatch()
 
-        return runWriteAction {
-            insertionBlocks.map { (newDeclarations, anchor) ->
-                InsertedBlock(insertMembersAfter(editor, currentClass, newDeclarations, anchor = anchor))
+        //do not reformat on WA finish automatically, first we need to shorten references
+        return PostprocessReformattingAspect.getInstance(currentClass.project).postponeFormattingInside(Computable {
+            runWriteAction {
+                insertionBlocks.map { (newDeclarations, anchor) ->
+                    InsertedBlock(insertMembersAfter(editor, currentClass, newDeclarations, anchor = anchor))
+                }
             }
-        }
+        })
     }
 
     private class DoublyLinkedNode<T>(val t: T? = null) {

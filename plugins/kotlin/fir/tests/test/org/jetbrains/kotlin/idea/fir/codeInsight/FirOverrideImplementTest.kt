@@ -244,6 +244,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testValueClass()
     }
 
+    override fun testLongPackageName() {
+        super.testLongPackageName()
+    }
+
     override fun testVarArgs() {
         super.testVarArgs()
     }
