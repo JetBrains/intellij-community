@@ -46,7 +46,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 
 @ApiStatus.Internal
@@ -61,7 +61,7 @@ class SourceFolderManagerImpl(
   private var sourceFolders = CanonicalPathPrefixTreeFactory.createMap<SourceFolderModel>()
   private var sourceFoldersByModule = HashMap<String, ModuleModel>()
 
-  private val operationsStates = ArrayBlockingQueue<Future<*>>(16)
+  private val operationsStates = ConcurrentLinkedQueue<Future<*>>()
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val refreshFilesDispatcher = Dispatchers.IO.limitedParallelism(3)
