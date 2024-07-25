@@ -8,6 +8,8 @@ import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.logEdito
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.RangeMarker
@@ -53,10 +55,9 @@ open class HighlightingNecromancer(
 ) : GravingNecromancer<HighlightingZombie>(
   project,
   coroutineScope,
-  NAME,
+  GRAVED_HIGHLIGHTING,
   HighlightingNecromancy,
 ) {
-
   private val spawnedZombies: ConcurrentIntObjectMap<Boolean> = ConcurrentCollectionFactory.createConcurrentIntObjectMap()
 
   override fun turnIntoZombie(recipe: TurningRecipe): HighlightingZombie? {
@@ -85,13 +86,16 @@ open class HighlightingNecromancer(
     )
     return when (graveDecision) {
       GraveDecision.BURY_NEW -> {
+        LOG.debug { "put in grave zombie with ${zombie.zombie().limbs().size} libs for ${fileName(recipe.file)}" }
         true
       }
       GraveDecision.REMOVE_OLD -> {
+        LOG.debug { "remove old zombie for ${fileName(recipe.file)}" }
         buryZombie(recipe.fileId, null)
         false
       }
       GraveDecision.KEEP_OLD -> {
+        LOG.debug { "keep old zombie for ${fileName(recipe.file)}" }
         false
       }
     }
@@ -105,6 +109,7 @@ open class HighlightingNecromancer(
     if (zombie == null) {
       spawnedZombies.put(recipe.fileId, true)
       logFusStatistic(recipe.file, MarkupGraveEvent.NOT_RESTORED_CACHE_MISS)
+      LOG.debug { "no zombie to spawn for ${fileName(recipe.file)}" }
     } else {
       val markupModel = DocumentMarkupModel.forDocument(recipe.document, project, true)
 
@@ -118,6 +123,7 @@ open class HighlightingNecromancer(
       val spawned = spawnZombie(markupModel, recipe, zombie)
       spawnedZombies.put(recipe.fileId, spawned == 0)
       logFusStatistic(recipe.file, MarkupGraveEvent.RESTORED, spawned)
+      LOG.debug { "spawned zombie with ${spawned}/${zombie.limbs().size} libs for ${fileName(recipe.file)}" }
     }
   }
 
@@ -184,6 +190,7 @@ open class HighlightingNecromancer(
       for (highlighter in zombies) {
         highlighter.dispose()
       }
+      LOG.debug { "disposed zombies ${zombies.size} for file ${fileName(file)}" }
     }
   }
 
@@ -266,6 +273,14 @@ open class HighlightingNecromancer(
     spawnedZombies.clear()
   }
 
+  private fun fileName(file: VirtualFileWithId): String {
+    return fileName(file as VirtualFile)
+  }
+
+  private fun fileName(file: VirtualFile): String {
+    return "file(id=${(file as VirtualFileWithId).id}, name=${file.name})"
+  }
+
   private inner class HighlighterCollector : CommonProcessors.CollectProcessor<RangeHighlighterEx>() {
     override fun accept(highlighter: RangeHighlighterEx?): Boolean {
       return highlighter != null && shouldBuryHighlighter(highlighter)
@@ -313,9 +328,11 @@ open class HighlightingNecromancer(
   }
 
   companion object {
-    private const val NAME = "graved-highlighting"
+    private const val GRAVED_HIGHLIGHTING = "graved-highlighting"
 
     private const val RA_BATCH_SIZE = 3_000
+
+    private val LOG = logger<HighlightingNecromancer>()
 
     private val IS_ZOMBIE = Key.create<Boolean>("IS_ZOMBIE")
 
@@ -349,7 +366,7 @@ open class HighlightingNecromancer(
     @TestOnly
     fun clearSpawnedZombies(project: Project) {
       val service = project.service<Necropolis>()
-      (service.necromancerByName(NAME) as HighlightingNecromancer).clearSpawnedZombies()
+      (service.necromancerByName(GRAVED_HIGHLIGHTING) as HighlightingNecromancer).clearSpawnedZombies()
     }
   }
 }
