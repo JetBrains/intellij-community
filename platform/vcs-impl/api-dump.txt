@@ -7860,13 +7860,13 @@ f:com.intellij.vcs.commit.CommitOptionsKt
 f:com.intellij.vcs.commit.CommitOptionsPanel
 - com.intellij.vcs.commit.CommitOptionsUi
 - sf:Companion:com.intellij.vcs.commit.CommitOptionsPanel$Companion
-- <init>(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0,Z):V
+- <init>(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0,Z,Z):V
 - f:getComponent():javax.swing.JComponent
 - f:isEmpty():Z
 - setOptions(com.intellij.vcs.commit.CommitOptions):V
 - setVisible(java.util.Collection):V
 f:com.intellij.vcs.commit.CommitOptionsPanel$Companion
-- f:commitChecksGroupTitle(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
+- f:commitChecksGroupTitle(java.lang.String):java.lang.String
 com.intellij.vcs.commit.CommitOptionsUi
 - a:setOptions(com.intellij.vcs.commit.CommitOptions):V
 - a:setVisible(java.util.Collection):V

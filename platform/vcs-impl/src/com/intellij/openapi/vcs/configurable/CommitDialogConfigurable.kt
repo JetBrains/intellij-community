@@ -11,9 +11,11 @@ import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.selected
 import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.*
@@ -38,11 +40,13 @@ class CommitDialogConfigurable(private val project: Project)
     val appSettings = VcsApplicationSettings.getInstance()
     val settings = VcsConfiguration.getInstance(project)
 
+    lateinit var nonModalCommitCheckBox: JBCheckBox
     return panel {
       row {
-        checkBox(VcsBundle.message("settings.commit.without.dialog"))
+        nonModalCommitCheckBox = checkBox(VcsBundle.message("settings.commit.without.dialog"))
           .comment(VcsBundle.message("settings.commit.without.dialog.applies.to.git.mercurial"))
           .bindSelected({ appSettings.COMMIT_FROM_LOCAL_CHANGES }, { CommitModeManager.setCommitFromLocalChanges(project, it) })
+          .component
       }
 
       row {
@@ -64,7 +68,15 @@ class CommitDialogConfigurable(private val project: Project)
 
       if (configurables.isNotEmpty()) {
         val actionName = UIUtil.removeMnemonic(getDefaultCommitActionName(emptyList()))
-        group(CommitOptionsPanel.commitChecksGroupTitle(project, actionName)) {
+        group(CommitOptionsPanel.commitChecksGroupTitle(actionName)) {
+          row {
+            checkBox(VcsBundle.message("settings.commit.slow.checks"))
+              .comment(VcsBundle.message("settings.commit.slow.checks.description"))
+              .enabledIf(nonModalCommitCheckBox.selected)
+              .bindSelected({ settings.NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS }, { setRunSlowCommitChecksAfterCommit(project, it) })
+          }
+          separator()
+
           for (configurable in configurables) {
             appendDslConfigurable(configurable)
           }
