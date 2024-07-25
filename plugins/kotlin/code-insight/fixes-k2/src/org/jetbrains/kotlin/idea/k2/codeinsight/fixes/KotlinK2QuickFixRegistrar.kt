@@ -133,6 +133,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(WrongAnnotationTargetWithUseSiteTargetFixFactory.moveReceiverAnnotation)
         registerFactory(IllegalEscapeFixFactory.convertToUnicodeEscape)
         registerFactory(IsEnumEntryFixFactory.factory)
+        registerFactory(NoReturnInFunctionWithBlockBodyFixFactory.addReturnToLastExpression)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
