@@ -2,11 +2,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -17,21 +13,6 @@ object IsEnumEntryFactory : KotlinSingleIntentionActionFactory() {
             is KtIsExpression -> if (element.typeReference == null) null else ReplaceWithComparisonFix(element)
             is KtWhenConditionIsPattern -> if (element.typeReference == null || element.isNegated) null else RemoveIsFix(element)
             else -> null
-        }
-    }
-
-    private class ReplaceWithComparisonFix(isExpression: KtIsExpression) : KotlinQuickFixAction<KtIsExpression>(isExpression) {
-        private val comparison = if (isExpression.isNegated) "!=" else "=="
-
-        override fun getText() = KotlinBundle.message("replace.with.0", comparison)
-
-        override fun getFamilyName() = text
-
-        override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-            val leftHandSide = element?.leftHandSide ?: return
-            val typeReference = element?.typeReference?.text ?: return
-            val binaryExpression = KtPsiFactory(project).createExpressionByPattern("$0 $comparison $1", leftHandSide, typeReference)
-            element?.replace(binaryExpression)
         }
     }
 }
