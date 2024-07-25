@@ -34,15 +34,4 @@ object IsEnumEntryFactory : KotlinSingleIntentionActionFactory() {
             element?.replace(binaryExpression)
         }
     }
-
-    private class RemoveIsFix(isPattern: KtWhenConditionIsPattern) : KotlinQuickFixAction<KtWhenConditionIsPattern>(isPattern) {
-        override fun getText() = KotlinBundle.message("remove.expression", "is")
-
-        override fun getFamilyName() = text
-
-        override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-            val typeReference = element?.typeReference?.text ?: return
-            element?.replace(KtPsiFactory(project).createWhenCondition(typeReference))
-        }
-    }
 }
