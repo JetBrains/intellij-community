@@ -275,7 +275,11 @@ fun getCanBeConfiguredModules(project: Project, configurator: KotlinProjectConfi
 
 private fun KotlinProjectConfigurator.canConfigure(moduleSourceRootGroup: ModuleSourceRootGroup) =
     getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CAN_BE_CONFIGURED &&
-            (allConfigurators().toList() - this).none { it.getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CONFIGURED }
+            (allConfigurators().toList() - this).none {
+                it.isApplicable(moduleSourceRootGroup.baseModule) && it.getStatus(
+                    moduleSourceRootGroup
+                ) == ConfigureKotlinStatus.CONFIGURED
+            }
 
 fun getConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): Map<String, Module> {
     val projectModules = project.modules.asList()
