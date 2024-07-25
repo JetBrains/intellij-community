@@ -27,9 +27,13 @@ internal class TestPluginInstaller(private val afterInstallPluginCallback: (Plug
     return true
   }
 
-  override fun createDownloader(pluginId: PluginId, indicator: ProgressIndicator): PluginDownloader? {
-    val descriptor = TestPluginDescriptor.ALL[pluginId] ?: return null
-    return PluginDownloader.createDownloader(descriptor)
+  override fun createDownloaders(pluginIds: Collection<PluginId>): List<PluginDownloader> {
+    val retval = arrayListOf<PluginDownloader>()
+    for (pluginId in pluginIds) {
+      val descriptor = TestPluginDescriptor.ALL[pluginId] ?: continue
+      retval.add(PluginDownloader.createDownloader(descriptor))
+    }
+    return retval
   }
 }
 

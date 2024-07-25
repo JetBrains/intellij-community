@@ -10,6 +10,7 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.progress.withLockCancellable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -54,7 +55,7 @@ class SettingsSyncBridge(
     get() = queueJob != null
 
 
-  private val eventsLock = ReentrantLock()
+  private val eventsLock = AtomicBoolean()
 
   private val settingsChangeListener = object : SettingsSyncEventListener {
     override fun settingChanged(event: SyncSettingsEvent) {
@@ -63,22 +64,27 @@ class SettingsSyncBridge(
         pendingExclusiveEvents.add(event)
         coroutineScope.launch {
           var locked = false
+          val lockAcquireStartTime = System.currentTimeMillis()
           try {
             do {
-              locked = eventsLock.tryLock(1, TimeUnit.SECONDS)
-              if (!locked) {
-                LOG.info("Couldn't obtain event lock in 1 second")
+              locked = eventsLock.compareAndSet(false, true)
+              yield()
+              if (System.currentTimeMillis() - lockAcquireStartTime > 60*1000) {
+                LOG.error("Give up waiting for events lock (exclusive event)", Throwable())
+                return@launch
               }
             }
             while (!locked)
             processExclusiveEvent(event)
           }
           catch (th: Throwable) {
-            LOG.error("An error occurred while obtaining lock for exclusive event")
+            LOG.error("An error occurred while obtaining lock for exclusive event", th)
           }
           finally {
             if (locked) {
-              eventsLock.unlock()
+              if (!eventsLock.compareAndSet(true, false)) {
+                LOG.error("eventsLock already unlocked by someone else!!!")
+              }
             }
             pendingExclusiveEvents.remove(event)
           }
@@ -258,17 +264,21 @@ class SettingsSyncBridge(
   }
 
   private suspend fun processPendingEvents(force: Boolean = false) {
-    var locked = eventsLock.tryLock()
+    var locked = false
     try {
-      while (!locked) {
-        if (force) {
-          locked = eventsLock.tryLock()
+      val lockAcquireStartTime = System.currentTimeMillis()
+      while (!eventsLock.compareAndSet(false, true)) {
+        if (!force) {
+          LOG.info("Couldn't obtain event lock. Will retry later")
+          return
         }
-        else {
-          LOG.debug("Couldn't obtain event lock. Will retry later")
+        yield()
+        if (System.currentTimeMillis() - lockAcquireStartTime > 60*1000) {
+          LOG.error("Give up waiting for events lock (exclusive event)", Throwable())
           return
         }
       }
+      locked = true
       if (pendingEvents.isEmpty()) {
         LOG.debug("Pending events is empty")
         return
@@ -324,7 +334,9 @@ class SettingsSyncBridge(
     }
     finally {
       if (locked) {
-        eventsLock.unlock()
+        if (!eventsLock.compareAndSet(true, false)) {
+          LOG.error("Lock is already unlocked by someone else?!")
+        }
       }
     }
   }
