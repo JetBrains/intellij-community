@@ -2,7 +2,6 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
-import com.intellij.driver.model.RdTarget
 
 @Remote("com.intellij.openapi.project.Project")
 interface Project : ProjectRef {
@@ -13,4 +12,5 @@ interface Project : ProjectRef {
   fun getName(): String
   fun getPresentableUrl(): String?
   fun getProjectFile(): VirtualFile?
+  fun getProjectFilePath(): String?
 }
