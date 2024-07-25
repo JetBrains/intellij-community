@@ -49,11 +49,10 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOperationDe
             .flatMap { declaration -> (declaration as? KtNamedDeclaration)?.withChildDeclarations() ?: emptyList() }
         unMarkNonUpdatableUsages(declarationsToMove)
         val updatableUsages = refUsages.get()
-            ?.filter { if (it is K2MoveRenameUsageInfo) it.isUpdatable(declarationsToMove) else false }
-            ?.filterIsInstance<K2MoveRenameUsageInfo>()
+            ?.filter { (it as? K2MoveRenameUsageInfo)?.isUpdatable(declarationsToMove) == true }
             ?: return false
         refUsages.set(updatableUsages.toTypedArray())
-        val usagesByFile = updatableUsages.groupBy { it.referencedElement?.containingFile }
+        val usagesByFile = updatableUsages.groupBy { (it as? K2MoveRenameUsageInfo)?.referencedElement?.containingFile }
         usagesByFile.forEach { file, usages -> myFoundUsages.replace(file, usages) }
         return true
     }
