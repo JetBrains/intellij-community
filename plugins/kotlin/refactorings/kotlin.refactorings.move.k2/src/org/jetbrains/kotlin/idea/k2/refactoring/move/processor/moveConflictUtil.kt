@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -187,7 +188,7 @@ private fun MoveRenameUsageInfo.isVisibleBeforeMove(): Boolean {
 }
 
 private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
-    return if (this is KtNamedDeclaration && usage is KtElement) {
+    return if (usage is KtElement) {
         kotlinIsVisibleTo(usage)
     } else {
         lightIsVisibleTo(usage)
@@ -196,16 +197,21 @@ private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KtNamedDeclaration.isVisibleTo(usage: PsiElement): Boolean {
+private fun PsiNamedElement.isVisibleTo(usage: KtElement): Boolean {
     val file = (usage.containingFile as? KtFile)?.symbol ?: return false
-    val symbol = symbol
+    val symbol = if (this is KtNamedDeclaration) {
+        symbol
+    } else {
+        if (this !is PsiMember) return false // get Java symbol through resolve because it is not possible through getSymbol
+        usage.mainReference?.resolveToSymbol() as? KaDeclarationSymbol ?: return false
+    }
     return isVisible(symbol, file, position = usage)
 }
 
-private fun KtNamedDeclaration.kotlinIsVisibleTo(usage: KtElement) = when {
-    !isPhysical -> analyzeCopy(this, KaDanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
+private fun PsiNamedElement.kotlinIsVisibleTo(usage: KtElement) = when {
+    !isPhysical && this is KtNamedDeclaration -> analyzeCopy(this, KaDanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
     !usage.isPhysical -> analyzeCopy(usage, KaDanglingFileResolutionMode.PREFER_SELF) { isVisibleTo(usage) }
-    else -> analyze(this) { isVisibleTo(usage) }
+    else -> analyze(usage) { isVisibleTo(usage) }
 }
 
 private fun PsiNamedElement.lightIsVisibleTo(usage: PsiElement): Boolean {
