@@ -22,6 +22,8 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
+    // TODO IDEA-356815
+    //noinspection IncorrectServiceRetrieving
     return dir.getProject().getService(CoreJavaFileManager.class).getPackage(dir);
   }
 
