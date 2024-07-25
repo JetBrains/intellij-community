@@ -46,6 +46,11 @@ interface IjentChildProcess {
     class StdinClosed : SendStdinError("Stdin closed")
   }
 
+  /**
+   * Send `SIGINT` on Unix.
+   */
+  suspend fun interrupt()
+
   suspend fun terminate()
   suspend fun kill()
 

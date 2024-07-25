@@ -3,7 +3,6 @@ package com.intellij.execution.ijent
 
 import com.intellij.execution.process.SelfKiller
 import com.intellij.platform.ijent.IjentChildProcess
-import com.intellij.platform.ijent.IjentId
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
@@ -23,11 +22,9 @@ import java.util.concurrent.TimeUnit
 @ApiStatus.Internal
 class IjentChildPtyProcessAdapter(
   coroutineScope: CoroutineScope,
-  ijentId: IjentId,
   private val ijentChildProcess: IjentChildProcess,
 ) : PtyProcess(), SelfKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
-    ijentId,
     coroutineScope,
     ijentChildProcess,
     redirectStderr = false,  // There can't be the stderr in a PTY at all.
