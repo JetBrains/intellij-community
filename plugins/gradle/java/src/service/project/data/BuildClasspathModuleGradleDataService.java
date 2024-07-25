@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.data;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -141,7 +142,8 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
         }
       }
     }
-    localSettings.setProjectBuildClasspath(localProjectBuildClasspath);
+
+    WriteAction.runAndWait(() -> localSettings.setProjectBuildClasspath(localProjectBuildClasspath));
 
     if (!project.isDisposed()) {
       GradleBuildClasspathManager.getInstance(project).reload();
