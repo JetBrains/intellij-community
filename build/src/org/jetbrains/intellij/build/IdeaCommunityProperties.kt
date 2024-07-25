@@ -80,6 +80,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     buildDocAuthoringAssets = true
 
     qodanaProductProperties = QodanaProductProperties("QDJVMC", "Qodana Community for JVM")
+    enableKotlinPluginK2ByDefault()
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {

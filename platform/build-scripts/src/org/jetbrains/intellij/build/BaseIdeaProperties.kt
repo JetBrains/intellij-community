@@ -178,4 +178,12 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
     additionalModulesToCompile = persistentListOf("intellij.tools.jps.build.standalone")
     modulesToCompileTests = persistentListOf("intellij.platform.jps.build.tests")
   }
+
+  /**
+   * 🌲
+   * see KTIJ-30761
+   */
+  protected fun enableKotlinPluginK2ByDefault() {
+    additionalVmOptions += "-Didea.kotlin.plugin.use.k2=true"
+  }
 }
