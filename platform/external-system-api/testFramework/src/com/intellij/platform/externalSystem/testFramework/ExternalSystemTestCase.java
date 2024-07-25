@@ -197,7 +197,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     ).run();
   }
 
-  protected void tearDownFixtures() throws Exception {
+  protected void tearDownFixtures() {
     RunAll.runAll(
       () -> myTestFixture.tearDown(),
       () -> myTestFixture = null

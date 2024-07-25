@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -36,9 +36,11 @@ final class CanonicalPathMap {
   private Collection<Pair<String, String>> myInitialPathMappings;
   private final MultiMap<String, String> myPathMappings;
 
-  CanonicalPathMap(@NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
-                   @NotNull NavigableSet<String> optimizedFlatWatchRoots,
-                   @NotNull Collection<Pair<String, String>> initialPathMappings) {
+  CanonicalPathMap(
+    @NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
+    @NotNull NavigableSet<String> optimizedFlatWatchRoots,
+    @NotNull Collection<Pair<String, String>> initialPathMappings
+  ) {
     myOptimizedRecursiveWatchRoots = optimizedRecursiveWatchRoots;
     myOptimizedFlatWatchRoots = optimizedFlatWatchRoots;
     myInitialPathMappings = initialPathMappings;
@@ -135,7 +137,7 @@ final class CanonicalPathMap {
    * then filters out those that do not fall under watched roots.
    *
    * <h3>Exactness</h3>
-   * Some watchers (e.g. the native one on macOS) report a parent directory as dirty instead of the "exact" file path.
+   * Some watchers (e.g., the native one on macOS) report a parent directory as dirty instead of the "exact" file path.
    * <p>
    * For flat roots, it means that if and only if the exact dirty file path is returned, we should compare the parent to the flat roots,
    * otherwise we should compare to a path given to us because it is already the parent of the actual dirty path.

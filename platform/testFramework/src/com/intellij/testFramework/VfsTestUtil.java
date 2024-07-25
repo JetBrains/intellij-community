@@ -90,7 +90,7 @@ public final class VfsTestUtil {
           parent = child;
         }
 
-        parent.getChildren();  // to ensure that fileCreated event is fired
+        parent.getChildren();  // to ensure that the "file created" event is fired
 
         String name = PathUtil.getFileName(relativePath);
         VirtualFile file;
@@ -110,7 +110,7 @@ public final class VfsTestUtil {
           if (data != null) {
             file.setBinaryContent(data);
           }
-          manager.reloadFiles(file);  // update the document now, to prevent MemoryDiskConflictResolver from kicking in later
+          manager.reloadFiles(file);  // update the document now to prevent `MemoryDiskConflictResolver` from kicking in later
         }
         return file;
       });
