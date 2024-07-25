@@ -159,7 +159,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
       {"shift ctrl alt M",         "Console.TableResult.MaximizeEditingCell", "FullLine.GenerateMarkerAction"},
       {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
-      {"ctrl BACK_SLASH",          "AIAssistant.Editor.GenerateCodeInplace", "FileChooser.GoToRoot"},
+      {"ctrl BACK_SLASH",          "AIAssistant.Editor.AskAiAssistantInEditor", "FileChooser.GoToRoot"},
+      {"alt BACK_SLASH",           "CallInlineCompletionAction", "MainMenuButton.ShowMenu"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
@@ -317,7 +318,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt K",         "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
       {"shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "VcsShowPrevChangeMarker"},
       {"shift ctrl alt UP",        "MoveStatementUp", "ResizeToolWindowUp"},
-      {"ctrl SLASH",               "AIAssistant.Editor.GenerateCodeInplace", "Graph.ActualSize"},
+      {"ctrl SLASH",               "AIAssistant.Editor.AskAiAssistantInEditor", "Graph.ActualSize"},
       {"alt SLASH",                "CallInlineCompletionAction", "HippieCompletion"},
       {"F8",                       "NextOccurence", "NextDiff"},
       {"shift F8",                 "PreviousOccurence", "PreviousDiff"},
