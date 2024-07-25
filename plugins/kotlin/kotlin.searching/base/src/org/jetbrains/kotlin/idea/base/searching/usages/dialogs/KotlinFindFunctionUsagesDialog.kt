@@ -69,7 +69,7 @@ class KotlinFindFunctionUsagesDialog(
                 true
             )
         }
-        addCheckboxToPanel(
+        myCbIncludeOverloadedMethods = addCheckboxToPanel(
             message("find.declaration.include.overloaded.methods.checkbox"),
             FindSettings.getInstance().isSearchOverloadedMethods(),
             optionsPanel,
@@ -90,7 +90,7 @@ class KotlinFindFunctionUsagesDialog(
                 false
             )
         }
-        super.addUsagesOptions(optionsPanel)
+        addDefaultOptions(optionsPanel)
     }
 
     override fun calcFindUsagesOptions(options: JavaMethodFindUsagesOptions) {
