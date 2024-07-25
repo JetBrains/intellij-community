@@ -399,12 +399,6 @@ open class IdeRootPane internal constructor(
     IdeStatusBarImpl(coroutineScope.childScope(), frameHelper,
                      addToolWindowWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders)
 
-  val statusBarHeight: Int
-    get() {
-      val statusBar = statusBar
-      return if (statusBar != null && statusBar.isVisible) statusBar.height else 0
-    }
-
   private fun updateStatusBarVisibility() {
     val uiSettings = UISettings.shadowInstance
     statusBar!!.isVisible = uiSettings.showStatusBar && !uiSettings.presentationMode
