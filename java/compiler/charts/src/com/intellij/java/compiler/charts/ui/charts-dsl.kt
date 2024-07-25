@@ -49,13 +49,15 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
     axis = ChartAxis(zoom).apply(init)
   }
 
-  fun draw(g2d: Graphics2D, init: Charts.() -> Unit) {
-    init()
-    drawChartComponents(g2d)
-  }
-
-  fun drawOnImage(g2d: Graphics2D, component: ImageObserver, init: Charts.() -> BufferedImage): BufferedImage {
-    return withImage(init(), g2d, component) { g -> drawChartComponents(g) }
+  fun draw(g2d: Graphics2D, component: ImageObserver, init: Charts.() -> BufferedImage?): BufferedImage? {
+    val image = init()
+    return if (image != null) {
+      withImage(image, g2d, component) { g -> drawChartComponents(g) }
+    }
+    else {
+      drawChartComponents(g2d)
+      null
+    }
   }
 
   private fun drawChartComponents(g: Graphics2D) {

@@ -23,9 +23,11 @@ import javax.swing.JViewport
 import javax.swing.SwingUtilities
 import kotlin.math.exp
 
-class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewModel,
-                                         private val zoom: Zoom,
-                                         private val viewport: JViewport) : JBPanelWithEmptyText(BorderLayout()) {
+class CompilationChartsDiagramsComponent(
+  private val vm: CompilationChartsViewModel,
+  private val zoom: Zoom,
+  private val viewport: JViewport,
+) : JBPanelWithEmptyText(BorderLayout()) {
   companion object {
     val ROW_HEIGHT = JBTable().rowHeight * 1.5
     val LOG = Logger.getInstance(CompilationChartsDiagramsComponent::class.java)
@@ -135,51 +137,49 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
 
   override fun paintComponent(g2d: Graphics) {
     if (g2d !is Graphics2D) return
-    val updatedModel = charts.model {
-      progress {
-        data(modules.data.getAndClean())
-        filter = modules.filter
-      }
-      usage(usages[cpuMemory]!!) {
-        data(stats[cpuMemory]!!.getAndClean(), when (cpuMemory) {
-          MEMORY -> vm.statistics.maxMemory
-          CPU -> 100
-        })
-      }
-    }
-
-    if (zoom.shouldCacheImage()) {
-      cached(g2d) {
-        updatedModel.drawOnImage(g2d, this) {
-          revalidateDimensions()
-          return@drawOnImage UIUtil.createImage(this@CompilationChartsDiagramsComponent, width().toInt(), height().toInt(), BufferedImage.TYPE_INT_ARGB)
+    tryCacheImage(g2d) { saveToImage ->
+      return@tryCacheImage charts.model {
+        progress {
+          data(modules.data.getAndClean())
+          filter = modules.filter
+        }
+        usage(usages[cpuMemory]!!) {
+          data(stats[cpuMemory]!!.getAndClean(), when (cpuMemory) {
+            MEMORY -> vm.statistics.maxMemory
+            CPU -> 100
+          })
+        }
+      }.draw(g2d, this) {
+        val size = Dimension(width().toInt(), height().toInt())
+        if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
+          this@CompilationChartsDiagramsComponent.preferredSize = size
+          this@CompilationChartsDiagramsComponent.revalidate()
+        }
+        if (saveToImage) {
+          UIUtil.createImage(this@CompilationChartsDiagramsComponent, width().toInt(), height().toInt(), BufferedImage.TYPE_INT_ARGB)
+        }
+        else {
+          g2d.setupRenderingHints()
+          null
         }
       }
-    } else {
-      updatedModel.draw(g2d) {
-        g2d.setupRenderingHints()
-        revalidateDimensions()
+    }
+  }
+
+  private fun tryCacheImage(g2d: Graphics2D, draw: (saveToImage: Boolean) -> BufferedImage?) {
+    if (zoom.shouldCacheImage()) {
+      if (!shouldRepaint) {
+        image?.let { img -> g2d.drawImage(img, this) }
+        return
       }
-    }
-  }
 
-  private fun Charts.revalidateDimensions() {
-    val size = Dimension(width().toInt(), height().toInt())
-    if (size != this@CompilationChartsDiagramsComponent.preferredSize) {
-      this@CompilationChartsDiagramsComponent.preferredSize = size
-      this@CompilationChartsDiagramsComponent.revalidate()
+      shouldRepaint = false
+      image?.flush()
+      image = draw(true)
     }
-  }
-
-  private fun cached(g2d: Graphics2D, init: () -> BufferedImage) {
-    if (!shouldRepaint) {
-      image?.let { img -> g2d.drawImage(img, this) }
-      return
+    else {
+      draw(false)
     }
-
-    shouldRepaint = false
-    image?.flush()
-    image = init()
   }
 
   internal fun updateView() {
