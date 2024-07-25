@@ -33,7 +33,7 @@ final class TodoHighlightVisitor implements HighlightVisitor {
                          @NotNull Runnable action) {
     action.run();
     // run unconditionally, because the todo API sucks and is file-level only
-    highlightTodos(psiFile, psiFile.getText(), holder.getAnnotationSession().getHighlightRange(), holder);
+    highlightTodos(psiFile, psiFile.getText(), holder);
     return true;
   }
 
@@ -49,11 +49,10 @@ final class TodoHighlightVisitor implements HighlightVisitor {
 
   private static void highlightTodos(@NotNull PsiFile file,
                                      @NotNull CharSequence text,
-                                     @NotNull TextRange restrictRange,
                                      @NotNull HighlightInfoHolder holder) {
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.getInstance(file.getProject());
     if (helper == null || !shouldHighlightTodos(helper, file)) return;
-    TodoItem[] todoItems = helper.findTodoItems(file, restrictRange.getStartOffset(), restrictRange.getEndOffset());
+    TodoItem[] todoItems = helper.findTodoItems(file);
 
     for (TodoItem todoItem : todoItems) {
       ProgressManager.checkCanceled();
