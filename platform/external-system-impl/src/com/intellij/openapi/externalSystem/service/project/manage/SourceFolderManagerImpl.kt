@@ -148,14 +148,15 @@ class SourceFolderManagerImpl(
     }
 
     val application = ApplicationManager.getApplication()
-    val future = coroutineScope.async {
+    val job = coroutineScope.async {
       updateSourceFolders(sourceFoldersToChange)
-    }.asCompletableFuture()
+    }
 
     if (application.isUnitTestMode) {
       ThreadingAssertions.assertEventDispatchThread()
-      operationsStates.add(future)
-      future.whenComplete { _, _ -> operationsStates.remove(future) }
+      val completableFuture = job.asCompletableFuture()
+      operationsStates.add(completableFuture)
+      job.invokeOnCompletion { operationsStates.remove(completableFuture) }
     }
   }
 
