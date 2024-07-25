@@ -153,7 +153,7 @@
     <listener class="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedListener"
               topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$BulkFileListenerImpl"
+    <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImplBulkFileListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"
               activeInHeadlessMode="true" activeInTestMode="true"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$ModuleListenerImpl"

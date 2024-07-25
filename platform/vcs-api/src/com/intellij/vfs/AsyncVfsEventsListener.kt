@@ -5,11 +5,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.jetbrains.annotations.ApiStatus
 
 /**
- *
- * Receives notifications about changes in the virtual file system, just as [BulkFileListener] and [VirtualFileListener],
+ * Receives notifications about changes in the virtual file system,
+ * just as [com.intellij.openapi.vfs.newvfs.BulkFileListener] and [com.intellij.openapi.vfs.VirtualFileListener],
  * but on a pooled thread, which allows to off-load the EDT, but requires more care in the listener code due to asynchrony and
- * the absence of read action. For a safer alternative, consider [com.intellij.openapi.vfs.AsyncFileListener].
- *
+ * the absence of read action.
+ * For a safer alternative, consider [com.intellij.openapi.vfs.AsyncFileListener].
  *
  * Use the [AsyncVfsEventsPostProcessor.addListener] to subscribe.
  *

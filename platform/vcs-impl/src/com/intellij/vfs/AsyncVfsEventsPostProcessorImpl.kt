@@ -2,6 +2,7 @@
 package com.intellij.vfs
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -12,11 +13,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<AsyncVfsEventsPostProcessorImpl>()
 
 @ApiStatus.Internal
+@VisibleForTesting
 class AsyncVfsEventsPostProcessorImpl(coroutineScope: CoroutineScope) : AsyncVfsEventsPostProcessor {
   private val queue = MutableSharedFlow<Any>(extraBufferCapacity = Int.MAX_VALUE)
   private val messageBus = ApplicationManager.getApplication().messageBus
@@ -79,15 +82,13 @@ class AsyncVfsEventsPostProcessorImpl(coroutineScope: CoroutineScope) : AsyncVfs
     @TestOnly
     fun waitEventsProcessed() {
       assert(ApplicationManager.getApplication().isUnitTestMode)
-      val processor = ApplicationManager.getApplication().getServiceIfCreated(AsyncVfsEventsPostProcessor::class.java)
-      if (processor != null) {
-        runBlocking {
-          val job = CompletableDeferred<Unit>(parent = coroutineContext.job)
-          (processor as AsyncVfsEventsPostProcessorImpl).queue.tryEmit(Runnable {
-            job.complete(Unit)
-          })
-          job.join()
-        }
+      val processor = serviceIfCreated<AsyncVfsEventsPostProcessor>() ?: return
+      runBlocking {
+        val job = CompletableDeferred<Unit>(parent = coroutineContext.job)
+        (processor as AsyncVfsEventsPostProcessorImpl).queue.tryEmit(Runnable {
+          job.complete(Unit)
+        })
+        job.join()
       }
     }
   }
