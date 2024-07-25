@@ -11,6 +11,8 @@ import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -32,7 +34,7 @@ import org.jetbrains.kotlin.psi.KtFile
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     // map TextRange -> list of diagnostics for that range obtained from collectDiagnosticsForFile()
     // we have to extract diags from this map according to the range of the current element being visited, to avoid flickers
-    private lateinit var diagnosticRanges: MutableMap<TextRange, MutableList<HighlightInfo.Builder>>
+    private lateinit var diagnosticRanges: MutableMap<TextRange, MutableList<HighlightInfo.Builder?>>
     private var holder: HighlightInfoHolder? = null
     override fun suitableForFile(file: PsiFile): Boolean {
         return file is KtFile
@@ -60,7 +62,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         return true
     }
 
-    private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<HighlightInfo.Builder>> {
+    private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<HighlightInfo.Builder?>> {
         analyze(file) {
             //remove filtering when KTIJ-29195 is fixed
             val isIJProject = IntelliJProjectUtil.isIntelliJPlatformProject(file.project)
@@ -69,7 +71,18 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
                 .filterOutCodeFragmentVisibilityErrors(file)
                 .filterNot { isIJProject && it.diagnosticClass == KaFirDiagnostic.ContextReceiversDeprecated::class }
                 .flatMap { diagnostic -> diagnostic.textRanges.map { range -> Pair(range, diagnostic) } }
-                .groupByTo(HashMap(), { it.first }, { convertToBuilder(file, it.first, it.second) })
+                .groupByTo(HashMap(), { it.first }, {
+                    try {
+                      convertToBuilder(file, it.first, it.second)
+                    }
+                    catch (e: ProcessCanceledException) {
+                        throw e
+                    }
+                    catch (e: Exception) {
+                        Logger.getInstance(KotlinDiagnosticHighlightVisitor::class.java).error(e)
+                        null
+                    }
+                })
 
             KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
                 analysis.asSequence().filter { it.severity == KaSeverity.ERROR }.mapNotNull(KaDiagnosticWithPsi<*>::factoryName), file
@@ -176,7 +189,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         val iterator = diagnosticRanges.iterator()
         for (entry in iterator) {
             if (entry.key in elementRange) {
-                val diagnostics = entry.value
+                val diagnostics = entry.value.filterNotNull()
                 for (builder in diagnostics) {
                     holder!!.add(builder.create())
                 }
