@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -51,6 +50,20 @@ class MethodExtractor {
       activeExtractor.restartInDialog()
       return
     }
+
+    try {
+      val elements = ExtractSelector().suggestElementsToExtract(file, range)
+      if (elements.isNotEmpty()) {
+        val analyzer = CodeFragmentAnalyzer(elements)
+        val outputVariables = analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset }
+        if (outputVariables.size > 1) {
+          ResultObjectExtractor.run(editor, outputVariables, elements)
+          return
+        }
+      }
+    } catch (_: ExtractException) {
+    }
+
     val prepareStart = System.currentTimeMillis()
     val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(editor, file, range)
     if (descriptorsForAllTargetPlaces.isEmpty()) return
@@ -96,13 +109,7 @@ class MethodExtractor {
       }
     }
     catch (exception: ExtractException) {
-      if (exception is ExtractMultipleVariablesException){
-        val variables = exception.variables.sortedBy { variable -> variable.textRange.startOffset }
-        invokeLater { ResultObjectExtractor.run(editor, variables, exception.scope) }
-      }
-      else {
-        InplaceExtractUtils.showExtractErrorHint(editor, exception)
-      }
+      InplaceExtractUtils.showExtractErrorHint(editor, exception)
       return emptyList()
     }
   }

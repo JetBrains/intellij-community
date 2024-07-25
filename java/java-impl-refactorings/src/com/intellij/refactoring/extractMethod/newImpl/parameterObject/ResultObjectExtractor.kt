@@ -16,7 +16,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMultipleVariablesException
+import com.intellij.refactoring.extractMethod.newImpl.ExtractException
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
@@ -41,7 +41,7 @@ object ResultObjectExtractor {
 
     val affectedReferences = ParameterObjectUtils.findAffectedReferences(variables, scope)
     if (affectedReferences == null) {
-      InplaceExtractUtils.showExtractErrorHint(editor, ExtractMultipleVariablesException(variables, scope))
+      InplaceExtractUtils.showExtractErrorHint(editor, ExtractException(JavaRefactoringBundle.message("extract.method.error.many.outputs"), variables))
       return
     }
     val shouldInsertRecord = PsiUtil.isAvailable(JavaFeature.RECORDS, variables.first())

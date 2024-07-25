@@ -188,7 +188,7 @@ private fun findFlowData(analyzer: CodeFragmentAnalyzer, flowOutput: FlowOutput)
 
 private fun findVariableData(analyzer: CodeFragmentAnalyzer, variables: List<PsiVariable>, inferNullity: Boolean): DataOutput {
   val variable = when {
-    variables.size > 1 -> throw ExtractMultipleVariablesException(variables, analyzer.elements)
+    variables.size > 1 -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.outputs"), variables)
     analyzer.elements.singleOrNull() is PsiExpression && variables.isNotEmpty() ->
       throw ExtractException(JavaRefactoringBundle.message("extract.method.error.variable.in.expression"), variables)
     variables.isEmpty() -> return EmptyOutput()
