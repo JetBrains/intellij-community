@@ -15,9 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,8 +30,23 @@ public final class RegionUrlMapper {
   private static final int CACHE_DATA_EXPIRATION_MIN = 2;
   private static final String CONFIG_URL_DEFAULT = "https://www.jetbrains.com/config/JetBrainsResourceMapping.json";
   private static final Map<Region, String> CONFIG_URL_TABLE = Map.of(
+    // augment the table with other regions if needed
     Region.CHINA, "https://www.jetbrains.com.cn/config/JetBrainsResourceMapping.json"
   );
+  
+  private static final Map<Region, String> OVERRIDE_CONFIG_URL_TABLE = new HashMap<>();  // for testing
+  static {
+    for (Region reg : Region.values()) {
+      String propName = "jb.mapper.configuration.url";
+      if (reg != Region.NOT_SET) {
+        propName = propName + "." + reg.name().toLowerCase(Locale.ENGLISH);
+      }
+      String overridden = System.getProperty(propName, "");
+      if (!overridden.isBlank()) {
+        OVERRIDE_CONFIG_URL_TABLE.put(reg, overridden);
+      }
+    }
+  }
 
   private static final LoadingCache<Region, List<Pair<String, String>>> ourCache = Caffeine.newBuilder().expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES).build(RegionUrlMapper::loadMappings);
 
@@ -102,7 +115,8 @@ public final class RegionUrlMapper {
   }
 
   private static @NotNull String getConfigUrl(Region reg) {
-    return CONFIG_URL_TABLE.getOrDefault(reg, CONFIG_URL_DEFAULT);
+    String overridden = OVERRIDE_CONFIG_URL_TABLE.get(reg);
+    return overridden != null? overridden : CONFIG_URL_TABLE.getOrDefault(reg, CONFIG_URL_DEFAULT);
   }
 
 }
