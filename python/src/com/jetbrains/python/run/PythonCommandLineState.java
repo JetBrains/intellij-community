@@ -878,8 +878,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     if (isDebug && PythonSdkFlavor.getFlavor(sdkHome) instanceof JythonSdkFlavor) {
       //that fixes Jython problem changing sys.argv on execfile, see PY-8164
-      pythonPath.add(PythonHelpersLocator.findPathInHelpers("pycharm"));
-      pythonPath.add(PythonHelpersLocator.findPathInHelpers("pydev"));
+      pythonPath.add(PythonHelpersLocator.findPathStringInHelpers("pycharm"));
+      pythonPath.add(PythonHelpersLocator.findPathStringInHelpers("pydev"));
     }
 
     return pythonPath;
