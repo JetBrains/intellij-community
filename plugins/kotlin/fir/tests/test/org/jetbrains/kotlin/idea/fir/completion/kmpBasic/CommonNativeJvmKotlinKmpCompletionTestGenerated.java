@@ -2422,6 +2422,21 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/primitiveCompletion/smartCast.kt");
         }
 
+        @TestMetadata("smartCastAssignedLaterVariable.kt")
+        public void testSmartCastAssignedLaterVariable() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastAssignedLaterVariable.kt");
+        }
+
+        @TestMetadata("smartCastReassignedVariable.kt")
+        public void testSmartCastReassignedVariable() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastReassignedVariable.kt");
+        }
+
+        @TestMetadata("smartCastReassignedVariable2.kt")
+        public void testSmartCastReassignedVariable2() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastReassignedVariable2.kt");
+        }
+
         @TestMetadata("stringCompletion.kt")
         public void testStringCompletion() throws Exception {
             runTest("../../completion/testData/basic/common/primitiveCompletion/stringCompletion.kt");

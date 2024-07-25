@@ -2283,6 +2283,21 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/primitiveCompletion/smartCast.kt");
             }
 
+            @TestMetadata("smartCastAssignedLaterVariable.kt")
+            public void testSmartCastAssignedLaterVariable() throws Exception {
+                runTest("../testData/basic/common/primitiveCompletion/smartCastAssignedLaterVariable.kt");
+            }
+
+            @TestMetadata("smartCastReassignedVariable.kt")
+            public void testSmartCastReassignedVariable() throws Exception {
+                runTest("../testData/basic/common/primitiveCompletion/smartCastReassignedVariable.kt");
+            }
+
+            @TestMetadata("smartCastReassignedVariable2.kt")
+            public void testSmartCastReassignedVariable2() throws Exception {
+                runTest("../testData/basic/common/primitiveCompletion/smartCastReassignedVariable2.kt");
+            }
+
             @TestMetadata("stringCompletion.kt")
             public void testStringCompletion() throws Exception {
                 runTest("../testData/basic/common/primitiveCompletion/stringCompletion.kt");
