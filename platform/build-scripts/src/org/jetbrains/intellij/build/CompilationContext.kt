@@ -33,7 +33,7 @@ interface CompilationContext {
   val stableJavaExecutable: Path
 
   /**
-   * Stable JDK used to compile a project and run utilities, not a JBR to assert compatibility with a standard Java Runtime.
+   * Stable JDK used to compile a project and run utilities
    */
   suspend fun getStableJdkHome(): Path
 
