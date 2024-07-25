@@ -551,7 +551,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (!smart && parent instanceof PsiJavaModuleReferenceElement) {
-      addModuleReferences(parent, parameters.getOriginalFile(), result);
+      addModuleReferences(parent, position, parameters.getOriginalFile(), result);
     }
 
     if (JavaPatternCompletionUtil.insideDeconstructionList(parameters.getPosition())) {
@@ -1384,7 +1384,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return added[0];
   }
 
-  private static void addModuleReferences(PsiElement moduleRef, PsiFile originalFile, CompletionResultSet result) {
+  private static void addModuleReferences(PsiElement moduleRef, PsiElement position, PsiFile originalFile, CompletionResultSet result) {
     PsiElement statement = moduleRef.getParent();
     boolean withAutoModules;
     if ((withAutoModules = statement instanceof PsiRequiresStatement || statement instanceof PsiImportModuleStatement) || statement instanceof PsiPackageAccessibilityStatement) {
@@ -1392,11 +1392,24 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       if (parent != null) {
         Project project = moduleRef.getProject();
         Set<String> filter = new HashSet<>();
-        if (parent instanceof PsiJavaModule psiJavaModule) {
-          filter.add(psiJavaModule.getName());
-        } else {
-          PsiJavaModule psiJavaModule = JavaModuleGraphHelper.getInstance().findDescriptorByElement(originalFile);
-          if (psiJavaModule != null) filter.add(psiJavaModule.getName());
+        Function<PsiJavaModule, String> getModuleName = psiJavaModule -> {
+          if (psiJavaModule == null) return null;
+          return psiJavaModule.getName();
+        };
+        String currentJavaModuleName = getModuleName.apply(PsiTreeUtil.getParentOfType(statement, PsiJavaModule.class));
+        if (currentJavaModuleName == null) currentJavaModuleName = getModuleName.apply(JavaModuleGraphHelper.getInstance().findDescriptorByElement(originalFile));
+        if (currentJavaModuleName == null) currentJavaModuleName = findModuleName(originalFile, position);
+
+        if (currentJavaModuleName != null) {
+          // "importing a module declaration" can declare its own module.
+          if (statement instanceof PsiImportModuleStatement) {
+            LookupElement lookup = TailTypeDecorator.withTail(LookupElementBuilder.create(currentJavaModuleName)
+                                                                .withIcon(AllIcons.Nodes.JavaModule),
+                                                              TailTypes.semicolonType());
+            result.addElement(lookup);
+          }
+
+          filter.add(currentJavaModuleName);
         }
 
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
@@ -1441,6 +1454,43 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         }
       }
     }
+  }
+
+
+  /**
+   * Searching for a module name in a broken PsiFile when import module declaration typing before the module description.
+   * <pre>{@code
+   *   import module current.<caret>
+   *   module current.module.name {
+   *   }
+   * }</pre>
+   *
+   * @param originalFile The module-info.java file
+   * @param position the position within the file
+   * @return The module name if found, otherwise null.
+   */
+  private static @Nullable String findModuleName(@NotNull PsiFile originalFile, @NotNull PsiElement position) {
+    if (!PsiJavaModule.MODULE_INFO_FILE.equals(originalFile.getName())) return null;
+    if(!(position.getNode() instanceof PsiIdentifier intellijIdeaRulezzz)) return null;
+    StringBuilder name = new StringBuilder();
+    PsiElement cursor = intellijIdeaRulezzz;
+    PsiElement prev = null;
+    while ((cursor = cursor.getNextSibling()) != null) {
+      if (cursor instanceof PsiErrorElement) {
+        name.setLength(0);
+      }
+      else if (cursor instanceof PsiIdentifier && prev instanceof PsiIdentifier) {
+        name.setLength(0);
+        name.append(cursor.getText());
+      }
+      else if (!(cursor instanceof PsiWhiteSpace)){
+        name.append(cursor.getText());
+      }
+      prev = cursor;
+    }
+    String result = name.toString();
+    if (result.trim().isEmpty()) return null;
+    return result;
   }
 
   private static void addAutoModuleReference(String name, PsiElement parent, Set<? super String> filter, CompletionResultSet result) {

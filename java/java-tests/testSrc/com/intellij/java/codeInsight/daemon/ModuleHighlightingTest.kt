@@ -63,8 +63,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testModuleImportDeclarationUnresolvedModule() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      addFile("moodule-info.java", "module current.module.name {}");
       highlight("Test.java", """
         import module M2;
+        import module current.module.name;
         import module <error descr="Module is not in dependencies: M3">M3</error>;
         import module <error descr="Module not found: M4">M4</error>;
         

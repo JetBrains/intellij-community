@@ -154,22 +154,58 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     """)
 
   @NeedsIndex.Full
-  fun testModuleImportDeclarationsBare() =
+  fun testModuleImportDeclarationsBare() {
+    addFile("module-info.java", "module current.module.name { }")
     fileVariants("Test.java", """
       import module <caret>
       class Test { }
     """.trimIndent(),
                  "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws",
-                 "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "all.fours", "lib.with.module.info")
+                 "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "all.fours", "lib.with.module.info", "current.module.name")
+  }
 
   @NeedsIndex.Full
-  fun testModuleImportDeclarationsIgnoreCurrentModule() {
+  fun testModuleImportDeclarationsUseOwnModule() {
     addFile("module-info.java", "module current.module.name { }")
-    fileVariants("Test.java", """
-      import module current<caret>
-      class Test { }
+    fileComplete("Test.java", """
+      import module current.<caret>
+      public class Test { }
+    """.trimIndent(), """
+      import module current.module.name;
+      public class Test { }
     """.trimIndent())
   }
+
+  @NeedsIndex.Full
+  fun testModuleImportDeclarationsUseOwnModule2() = complete("""
+      import module current.<caret>
+      module current.module.name { }
+    """.trimIndent(), """
+      import module current.module.name;
+      module current.module.name { }
+    """.trimIndent())
+
+  @NeedsIndex.Full
+  fun testModuleImportDeclarationsUseOwnModule3() = complete("""
+      import module curr<caret>
+      module current
+        .module .name { }
+    """.trimIndent(), """
+      import module current.module.name;
+      module current
+        .module .name { }
+    """.trimIndent())
+
+  @NeedsIndex.Full
+  fun testModuleImportDeclarationsUseOwnModule4() = complete("""
+      import module curr<caret>
+      import module java.base;
+      module current.module.name { }
+    """.trimIndent(), """
+      import module current.module.name;
+      import module java.base;
+      module current.module.name { }
+    """.trimIndent())
 
   //<editor-fold desc="Helpers.">
   private fun complete(text: String, expected: String) = fileComplete("module-info.java", text, expected)
