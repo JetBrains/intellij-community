@@ -5,8 +5,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
 abstract class GeneratedSourcesFilter {
   companion object {
@@ -37,4 +39,19 @@ abstract class GeneratedSourcesFilter {
    * @return a text to be shown in the editor notification panel or `null` for the default text
    */
   open fun getNotificationText(file: VirtualFile, project: Project): @NlsContexts.LinkLabel String? = null
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  open fun getNotification(file: VirtualFile, project: Project): @NlsContexts.LinkLabel GeneratedSourceFilterNotification? {
+    return GeneratedSourceFilterNotification(text = getNotificationText(file, project) ?: return null, actions = emptyList())
+  }
 }
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+data class GeneratedSourceFilterNotification(@NlsSafe val text: String, val actions: List<GeneratedSourceFilterHyperLinkAction>)
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+data class GeneratedSourceFilterHyperLinkAction(@NlsSafe val text: String, val link: String)
+
