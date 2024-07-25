@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.project.manage
 import com.intellij.ide.projectView.actions.MarkRootActionBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -147,12 +148,17 @@ class SourceFolderManagerImpl(
       }
     }
 
-    val application = ApplicationManager.getApplication()
     val job = coroutineScope.async {
-      updateSourceFolders(sourceFoldersToChange)
+      for ((key, values) in sourceFoldersToChange.keys.groupBy { it.project }) {
+        withContext(Dispatchers.EDT) {
+          batchUpdateModelsInEdt(key, values) { model ->
+            modifyModel(sourceFoldersToChange, model)
+          }
+        }
+      }
     }
 
-    if (application.isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
       ThreadingAssertions.assertEventDispatchThread()
       val completableFuture = job.asCompletableFuture()
       operationsStates.add(completableFuture)
