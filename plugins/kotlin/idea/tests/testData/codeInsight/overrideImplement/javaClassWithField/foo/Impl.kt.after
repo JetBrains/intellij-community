@@ -1,0 +1,8 @@
+// FIR_IDENTICAL
+import foo.JavaClassWithField
+
+class Impl(): JavaClassWithField() {
+    override fun fooBar() {
+        super.fooBar()
+    }
+}

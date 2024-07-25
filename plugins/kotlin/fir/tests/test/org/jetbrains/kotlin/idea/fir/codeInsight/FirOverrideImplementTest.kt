@@ -60,6 +60,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testJavaInterfaceMethod()
     }
 
+    override fun testJavaClassWithField() {
+        super.testJavaClassWithField()
+    }
+
     override fun testJavaInterfaceMethodInCorrectOrder() {
         super.testJavaInterfaceMethodInCorrectOrder()
     }
