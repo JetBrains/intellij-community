@@ -15,6 +15,7 @@ import javax.xml.stream.XMLStreamException
 // DTD, COMMENT and PROCESSING_INSTRUCTION are ignored
 
 @Throws(XMLStreamException::class)
+@ApiStatus.Internal
 fun buildJdomDocument(stream: XMLStreamReader2): Document {
   var state = stream.eventType
 
@@ -57,6 +58,7 @@ fun buildJdomDocument(stream: XMLStreamReader2): Document {
 }
 
 @Throws(XMLStreamException::class)
+@ApiStatus.Internal
 fun buildNsUnawareJdom(reader: Reader): Element {
   val xmlStreamReader = createXmlStreamReader(reader)
   try {
@@ -68,6 +70,7 @@ fun buildNsUnawareJdom(reader: Reader): Element {
 }
 
 @Throws(XMLStreamException::class)
+@ApiStatus.Internal
 fun buildNsUnawareJdom(data: ByteArray): Element {
   val xmlStreamReader = createXmlStreamReader(data)
   try {
@@ -79,6 +82,7 @@ fun buildNsUnawareJdom(data: ByteArray): Element {
 }
 
 @Throws(XMLStreamException::class)
+@ApiStatus.Internal
 fun buildNsUnawareJdom(file: Path): Element {
   val xmlStreamReader = createXmlStreamReader(Files.newInputStream(file))
   try {
@@ -90,11 +94,13 @@ fun buildNsUnawareJdom(file: Path): Element {
 }
 
 @Throws(XMLStreamException::class)
+@ApiStatus.Internal
 fun buildNsUnawareJdomAndClose(stream: XMLStreamReader2): Element {
   return buildJdom(stream = stream, isNsSupported = false)
 }
 
 @Throws(XMLStreamException::class)
+@ApiStatus.Internal
 fun buildJdom(
   stream: XMLStreamReader2,
   isNsSupported: Boolean,

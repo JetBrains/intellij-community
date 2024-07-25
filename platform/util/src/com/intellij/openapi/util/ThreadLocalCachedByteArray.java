@@ -16,9 +16,11 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.lang.ref.SoftReference;
 
+@ApiStatus.Internal
 public final class ThreadLocalCachedByteArray {
   private final ThreadLocal<SoftReference<byte[]>> myThreadLocal = new ThreadLocal<>();
 

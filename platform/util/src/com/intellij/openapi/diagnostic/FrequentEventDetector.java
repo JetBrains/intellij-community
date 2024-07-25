@@ -5,14 +5,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.FixedHashMap;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public final class FrequentEventDetector {
   private static final Logger LOG = Logger.getInstance(FrequentEventDetector.class);
 

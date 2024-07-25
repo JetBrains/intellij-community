@@ -10524,7 +10524,7 @@ f:com.intellij.idea.IdeStarter$Companion
 - f:openFilesOnLoading(java.util.List):V
 - f:openUriOnLoading(java.lang.String):V
 f:com.intellij.idea.IdeaLogger
-- com.intellij.openapi.diagnostic.JulLogger
+- com.intellij.openapi.diagnostic.Logger
 - s:ourErrorsOccurred:java.lang.Exception
 - s:ourLastActionId:java.lang.String
 - s:dropFrequentExceptionsCaches():V

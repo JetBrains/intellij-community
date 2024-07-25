@@ -3,6 +3,7 @@ package com.intellij.util.ref;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.EmptyRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 
 @SuppressWarnings("CallToSystemGC")
+@ApiStatus.Internal
 public final class GCUtil {
   /**
    * Try to force VM to collect soft references if possible.

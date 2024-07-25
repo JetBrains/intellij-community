@@ -2,10 +2,12 @@
 package com.intellij.util.indexing.containers;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
+@ApiStatus.Internal
 public final class IntHashSetAsRAIntContainer implements RandomAccessIntContainer {
   private final IntOpenHashSet myHashSet;
 

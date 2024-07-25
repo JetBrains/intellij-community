@@ -23,6 +23,7 @@ import com.intellij.util.*;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,6 +239,7 @@ public final class LoadTextUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static class DetectResult {
     public final Charset hardCodedCharset;
     public final CharsetToolkit.GuessedEncoding guessed;
@@ -323,6 +325,7 @@ public final class LoadTextUtil {
   }
 
 
+  @ApiStatus.Internal
   public static @NotNull DetectResult guessFromContent(@NotNull VirtualFile virtualFile, byte @NotNull [] content) {
     return guessFromContent(virtualFile, content, content.length);
   }
@@ -568,11 +571,11 @@ public final class LoadTextUtil {
 
   // written in push way to make sure no-one stores the CharSequence because it came from thread-local byte buffers which will be overwritten soon
   public static @NotNull FileType processTextFromBinaryPresentationOrNull(@NotNull ByteSequence bytes,
-                                                                 @NotNull VirtualFile virtualFile,
-                                                                 boolean saveDetectedSeparators,
-                                                                 boolean saveBOM,
-                                                                 @NotNull FileType fileType,
-                                                                 @NotNull NotNullFunction<? super CharSequence, ? extends FileType> fileTextProcessor) {
+                                                                          @NotNull VirtualFile virtualFile,
+                                                                          boolean saveDetectedSeparators,
+                                                                          boolean saveBOM,
+                                                                          @NotNull FileType fileType,
+                                                                          @NotNull NotNullFunction<? super CharSequence, ? extends FileType> fileTextProcessor) {
     byte[] buffer = ((ByteArraySequence)bytes).getInternalBuffer();
     DetectResult detectResult = detectInternalCharsetAndSetBOM(virtualFile, buffer, bytes.length(), saveBOM, fileType);
     Charset internalCharset = detectResult.hardCodedCharset;

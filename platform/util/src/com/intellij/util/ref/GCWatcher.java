@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -27,6 +28,7 @@ import java.util.Set;
  * so, if you pass fields or local variables there, nullify them before calling {@link #ensureCollected()}.
  *
  */
+@ApiStatus.Internal
 public final class GCWatcher {
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();
   private final Set<Reference<?>> myReferences = ContainerUtil.newConcurrentSet();
