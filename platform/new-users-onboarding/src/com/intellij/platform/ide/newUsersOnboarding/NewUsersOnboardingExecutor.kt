@@ -149,7 +149,7 @@ internal class NewUsersOnboardingExecutor(
       if (!toolWindow.isVisible && toolWindow.id in visibleToolWindowIds) {
         toolWindow.show()
       }
-      else if (toolWindow.isVisible) {
+      else if (toolWindow.isVisible && toolWindow.id !in visibleToolWindowIds) {
         toolWindow.hide()
       }
     }
