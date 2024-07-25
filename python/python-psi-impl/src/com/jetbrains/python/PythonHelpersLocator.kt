@@ -70,7 +70,7 @@ interface PythonHelpersLocator {
           return path
       }
 
-      LOG.warn("File $resourceName does not exist in helpers root")
+      LOG.info("File $resourceName does not exist in helpers root")
       return null
     }
 
