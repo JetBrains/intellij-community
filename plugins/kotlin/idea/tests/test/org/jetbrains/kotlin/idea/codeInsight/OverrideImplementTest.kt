@@ -53,6 +53,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
+    open fun testSuspendOverride() {
+        doImplementFileTest()
+    }
+
    open fun testJavaInterfaceMethod() {
         doImplementDirectoryTest()
     }

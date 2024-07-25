@@ -56,6 +56,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testGenericTypesSeveralMethods()
     }
 
+    override fun testSuspendOverride() {
+        super.testSuspendOverride()
+    }
+
     override fun testJavaInterfaceMethod() {
         super.testJavaInterfaceMethod()
     }
