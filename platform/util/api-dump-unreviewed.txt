@@ -1362,6 +1362,9 @@ f:com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 - com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 - sf:INSTANCE:com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 - convertToList(java.lang.String):java.util.List
+com.intellij.openapi.util.io.CaseSensitivityAttribute
+- java.nio.file.attribute.BasicFileAttributes
+- a:getCaseSensitivity():com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 f:com.intellij.openapi.util.io.FileAttributes
 - sf:BROKEN_SYMLINK:com.intellij.openapi.util.io.FileAttributes
 - f:lastModified:J
