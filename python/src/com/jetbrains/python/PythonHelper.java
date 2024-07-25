@@ -12,10 +12,8 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.PythonHelpersLocator.*;
@@ -90,12 +88,12 @@ public enum PythonHelper implements HelperPackage {
   private static @NotNull PathHelperPackage findModule(String moduleEntryPoint, String path, boolean asModule, String[] thirdPartyDependencies) {
     List<HelperDependency> dependencies = HelperDependency.findThirdPartyDependencies(thirdPartyDependencies);
 
-    if (findFileInHelpers(path + ".zip") != null) {
+    if (findPathInHelpers(path + ".zip") != null) {
       return new ModuleHelperPackage(moduleEntryPoint, path + ".zip", dependencies);
     }
-
-    if (!asModule && new File(findFileInHelpers(path), moduleEntryPoint + ".py").isFile()) {
-      return new ScriptPythonHelper(moduleEntryPoint + ".py", findFileInHelpers(path), dependencies);
+    Path pathInHelpers = findPathInHelpers(path);
+    if (!asModule && pathInHelpers != null && new File(pathInHelpers.toFile(), moduleEntryPoint + ".py").isFile()) {
+      return new ScriptPythonHelper(moduleEntryPoint + ".py", pathInHelpers.toFile(), dependencies);
     }
 
     return new ModuleHelperPackage(moduleEntryPoint, path, dependencies);
@@ -112,7 +110,7 @@ public enum PythonHelper implements HelperPackage {
   }
 
   PythonHelper(String helperScript) {
-    myModule = new ScriptPythonHelper(helperScript, getCommunityHelpersRoot(), Collections.emptyList());
+    myModule = new ScriptPythonHelper(helperScript, getCommunityHelpersRoot().toFile(), Collections.emptyList());
   }
 
   public abstract static class PathHelperPackage implements HelperPackage {
@@ -186,7 +184,7 @@ public enum PythonHelper implements HelperPackage {
     private final String myModuleName;
 
     public ModuleHelperPackage(String moduleName, String relativePath, @NotNull List<HelperDependency> dependencies) {
-      super(findPathInHelpers(relativePath), dependencies);
+      super(findPathStringInHelpers(relativePath), dependencies);
       this.myModuleName = moduleName;
     }
 
@@ -254,7 +252,7 @@ public enum PythonHelper implements HelperPackage {
     }
 
     private static @NotNull File getHelpersThirdPartyDir() {
-      return findFileInHelpers("third_party");
+      return Objects.requireNonNull(findPathInHelpers("third_party")).toFile();
     }
   }
 
