@@ -21,6 +21,7 @@ import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
 import java.awt.EventQueue
 import java.util.concurrent.TimeUnit
@@ -38,6 +39,7 @@ private val LOG: Logger = logger<SingleAlarm>()
  * [request] adds a request if it's not scheduled yet, i.e., it does not delay execution of the request
  * [cancelAndRequest] cancels the current request and schedules a new one instead, i.e., it delays execution of the request.
  */
+@Obsolete
 class SingleAlarm @Internal constructor(
   private val task: Runnable,
   private val delay: Int,
