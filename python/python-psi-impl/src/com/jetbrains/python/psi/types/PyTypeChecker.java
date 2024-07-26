@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
@@ -1250,39 +1251,8 @@ public final class PyTypeChecker {
       // LiteralString-specific methods of str, or for instantiating the type parameters of the containing class
       // when it's not possible to infer them by other means, e.g. as in the following overload of dict[_KT, _VT].__init__:
       // def __init__(self: dict[str, _VT], **kwargs: _VT) -> None: ...
-      if (paramWrapper.isSelf()) {
-        // TODO find out a better way to pass the corresponding function inside
-        final PyParameter param = paramWrapper.getParameter();
-        final PyFunction function = as(ScopeUtil.getScopeOwner(param), PyFunction.class);
-        assert function != null;
-        if (isNewMethod(function) || function.getModifier() == PyAstFunction.Modifier.CLASSMETHOD) {
-          actualType = PyTypeUtil.toStream(actualType)
-            .select(PyClassLikeType.class)
-            .map(PyClassLikeType::toClass)
-            .select(PyType.class)
-            .foldLeft(PyUnionType::union)
-            .orElse(actualType);
-        }
-        else if (PyUtil.isInitMethod(function)) {
-          actualType = PyTypeUtil.toStream(actualType)
-            .select(PyInstantiableType.class)
-            .map(PyInstantiableType::toInstance)
-            .select(PyType.class)
-            .foldLeft(PyUnionType::union)
-            .orElse(actualType);
-        }
-
-        PyClass containingClass = function.getContainingClass();
-        assert containingClass != null;
-        PyType genericClass = findGenericDefinitionType(containingClass, context);
-        if (genericClass instanceof PyInstantiableType<?> instantiableType && (isNewMethod(function) || function.getModifier() == PyAstFunction.Modifier.CLASSMETHOD)) {
-          genericClass = instantiableType.toClass();
-        }
-        if (genericClass != null && !match(genericClass, expectedType, context, substitutions)) {
-          return null;
-        }
-      }
-      if (!match(expectedType, actualType, context, substitutions)) {
+      boolean matchedByTypes = matchParameterArgumentTypes(paramWrapper, expectedType, actualType, substitutions, context);
+      if (!matchedByTypes) {
         return null;
       }
     }
@@ -1297,12 +1267,100 @@ public final class PyTypeChecker {
     return substitutions;
   }
 
+  @Nullable
+  public static GenericSubstitutions unifyGenericCallOnArgumentTypes(@Nullable PyType receiverType,
+                                                                     @NotNull Map<Ref<PyType>, PyCallableParameter> arguments,
+                                                                     @NotNull TypeEvalContext context) {
+    final var substitutions = unifyReceiver(receiverType, context);
+    for (Map.Entry<Ref<PyType>, PyCallableParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
+      final PyCallableParameter paramWrapper = entry.getValue();
+      final PyType expectedType = paramWrapper.getArgumentType(context);
+      var actualType = Ref.deref(entry.getKey());
+      boolean matchedByTypes = matchParameterArgumentTypes(paramWrapper, expectedType, actualType, substitutions, context);
+      if (!matchedByTypes) {
+        return null;
+      }
+    }
+    if (!matchContainerByType(getMappedPositionalContainer(arguments),
+                              ContainerUtil.map(getArgumentsMappedToPositionalContainer(arguments), Ref::deref),
+                              substitutions, context)) {
+      return null;
+    }
+    if (!matchContainerByType(getMappedKeywordContainer(arguments),
+                              ContainerUtil.map(getArgumentsMappedToKeywordContainer(arguments), Ref::deref),
+                              substitutions, context)) {
+      return null;
+    }
+    return substitutions;
+  }
+
+  @Nullable
+  private static PyType processSelfParameter(@NotNull PyCallableParameter paramWrapper,
+                                             @Nullable PyType expectedType,
+                                             @Nullable PyType actualType,
+                                             @NotNull GenericSubstitutions substitutions,
+                                             @NotNull TypeEvalContext context) {
+      // TODO find out a better way to pass the corresponding function inside
+      final PyParameter param = paramWrapper.getParameter();
+      final PyFunction function = as(ScopeUtil.getScopeOwner(param), PyFunction.class);
+      assert function != null;
+      if (function.getModifier() == PyAstFunction.Modifier.CLASSMETHOD) {
+        actualType = PyTypeUtil.toStream(actualType)
+          .select(PyClassLikeType.class)
+          .map(PyClassLikeType::toClass)
+          .select(PyType.class)
+          .foldLeft(PyUnionType::union)
+          .orElse(actualType);
+      }
+      else if (PyUtil.isInitMethod(function)) {
+        actualType = PyTypeUtil.toStream(actualType)
+          .select(PyInstantiableType.class)
+          .map(PyInstantiableType::toInstance)
+          .select(PyType.class)
+          .foldLeft(PyUnionType::union)
+          .orElse(actualType);
+      }
+
+      PyClass containingClass = function.getContainingClass();
+      assert containingClass != null;
+      PyType genericClass = findGenericDefinitionType(containingClass, context);
+      if (genericClass instanceof PyInstantiableType<?> instantiableType && (isNewMethod(function) || function.getModifier() == PyAstFunction.Modifier.CLASSMETHOD)) {
+        genericClass = instantiableType.toClass();
+      }
+      if (genericClass != null && !match(genericClass, expectedType, context, substitutions)) {
+        return null;
+      }
+      return actualType;
+  }
+
+  private static boolean matchParameterArgumentTypes(@NotNull PyCallableParameter paramWrapper,
+                                                     @Nullable PyType expectedType,
+                                                     @Nullable PyType actualType,
+                                                     @NotNull GenericSubstitutions substitutions,
+                                                     @NotNull TypeEvalContext context) {
+    if (paramWrapper.isSelf()) {
+      actualType = processSelfParameter(paramWrapper, expectedType, actualType, substitutions, context);
+      if (actualType == null) {
+        return false;
+      }
+    }
+    return match(expectedType, actualType, context, substitutions);
+  }
+
   private static boolean matchContainer(@Nullable PyCallableParameter container, @NotNull List<? extends PyExpression> arguments,
                                         @NotNull GenericSubstitutions substitutions, @NotNull TypeEvalContext context) {
     if (container == null) {
       return true;
     }
     final List<PyType> actualArgumentTypes = ContainerUtil.map(arguments, context::getType);
+    return matchContainerByType(container, actualArgumentTypes, substitutions, context);
+  }
+
+  private static boolean matchContainerByType(@Nullable PyCallableParameter container, @NotNull List<PyType> actualArgumentTypes,
+                                              @NotNull GenericSubstitutions substitutions, @NotNull TypeEvalContext context) {
+    if (container == null) {
+      return true;
+    }
     final PyType expectedArgumentType = container.getArgumentType(context);
     if (container.isPositionalContainer() && expectedArgumentType instanceof PyVariadicType variadicType) {
       return match(variadicType, PyUnpackedTupleTypeImpl.create(actualArgumentTypes),
@@ -1313,11 +1371,20 @@ public final class PyTypeChecker {
 
   @NotNull
   public static GenericSubstitutions unifyReceiver(@Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
-    // Collect generic params of object type
     final var substitutions = new GenericSubstitutions();
     if (receiver != null) {
-      // TODO properly handle union types here
       PyType receiverType = context.getType(receiver);
+      return unifyReceiver(receiverType, context);
+    }
+    return substitutions;
+  }
+
+  @NotNull
+  public static GenericSubstitutions unifyReceiver(@Nullable PyType receiverType, @NotNull TypeEvalContext context) {
+    // Collect generic params of object type
+    final var substitutions = new GenericSubstitutions();
+    if (receiverType != null) {
+      // TODO properly handle union types here
       if (receiverType instanceof PyClassType) {
         substitutions.qualifierType = ((PyClassType)receiverType).toInstance();
       }
