@@ -6,7 +6,9 @@ import com.intellij.platform.ml.feature.FeatureDeclaration
 import com.intellij.platform.ml.feature.FeatureValueType
 import com.intellij.platform.ml.logs.schema.*
 import com.intellij.platform.ml.session.DescriptionPartition
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Deprecated("Provide a description")
 val NO_DESCRIPTION: () -> String = { "" }
 
