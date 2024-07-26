@@ -99,9 +99,6 @@ internal open class ProjectFrameAllocator(private val options: OpenProjectTask) 
   open suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }
   }
-
-  open fun projectOpened(project: Project) {
-  }
 }
 
 private fun CoroutineScope.scheduleSaveTemplate(options: OpenProjectTask): Job? {
