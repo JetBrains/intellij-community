@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.diagnostic.LoadingState;
@@ -190,10 +190,10 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     component.setBackground(JBColor.lazy(() -> getColor(component, BACKGROUND)));
   }
 
-  static final class Track extends ScrollBarPainter {
+  public static final class Track extends ScrollBarPainter {
     private final MixedColorProducer fillProducer;
 
-    Track(@NotNull Supplier<? extends Component> supplier) {
+    public Track(@NotNull Supplier<? extends Component> supplier) {
       super(supplier);
       fillProducer = new MixedColorProducer(
         getColor(supplier, TRACK_BACKGROUND, TRACK_OPAQUE_BACKGROUND),
@@ -204,7 +204,10 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     public void paint(@NotNull Graphics2D g, int x, int y, int width, int height, @Nullable Float value) {
       double mixer = value == null ? 0 : value.doubleValue();
       Color fill = fillProducer.produce(mixer);
-      if (0 >= fill.getAlpha()) return; // optimization
+      // optimization
+      if (0 >= fill.getAlpha()) {
+        return;
+      }
 
       g.setPaint(fill);
       RectanglePainter.FILL.paint(g, x, y, width, height, null);

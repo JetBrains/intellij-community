@@ -30,15 +30,15 @@ internal class TabScrollBarUI(thickness: Int, thicknessMax: Int, thicknessMin: I
         super.onThumbHover(hovered)
         if (isHovered != hovered) {
           isHovered = hovered
-          myScrollBar.revalidate()
-          myScrollBar.repaint()
+          myScrollBar!!.revalidate()
+          myScrollBar!!.repaint()
         }
       }
     }
   }
 
 
-  override fun paintThumb(g: Graphics2D?, c: JComponent?) {
+  override fun paintThumb(g: Graphics2D, c: JComponent) {
     if (myAnimationBehavior != null && myAnimationBehavior!!.thumbFrame > 0) {
       paint(myThumb, g, c, !isHovered)
     }

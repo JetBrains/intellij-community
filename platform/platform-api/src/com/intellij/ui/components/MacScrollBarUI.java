@@ -37,32 +37,32 @@ class MacScrollBarUI extends DefaultScrollBarUI {
   }
 
   @Override
-  protected ScrollBarAnimationBehavior createBaseAnimationBehavior() {
+  protected @NotNull ScrollBarAnimationBehavior createBaseAnimationBehavior() {
     return new MacScrollBarAnimationBehavior(() -> myScrollBar, myTrack.animator, myThumb.animator);
   }
 
   @Override
-  boolean isAbsolutePositioning(MouseEvent event) {
+  public boolean isAbsolutePositioning(MouseEvent event) {
     return Behavior.JumpToSpot == Behavior.CURRENT.getValue();
   }
 
   @Override
-  boolean isTrackClickable() {
+  public boolean isTrackClickable() {
     return isOpaque(myScrollBar) || (myAnimationBehavior.getTrackFrame() > 0 && myAnimationBehavior.getThumbFrame() > 0);
   }
 
   @Override
-  boolean isTrackExpandable() {
+  public boolean isTrackExpandable() {
     return !isOpaque(myScrollBar);
   }
 
   @Override
-  void paintTrack(Graphics2D g, JComponent c) {
+  public void paintTrack(Graphics2D g, JComponent c) {
     if (myAnimationBehavior.getTrackFrame() > 0 && myAnimationBehavior.getThumbFrame() > 0 || isOpaque(c)) super.paintTrack(g, c);
   }
 
   @Override
-  void paintThumb(Graphics2D g, JComponent c) {
+  public void paintThumb(Graphics2D g, JComponent c) {
     if (isOpaque(c)) {
       paint(myThumb, g, c, true);
     }

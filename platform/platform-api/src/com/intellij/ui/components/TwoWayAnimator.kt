@@ -7,8 +7,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal abstract class TwoWayAnimator(
+@Internal
+abstract class TwoWayAnimator(
   name: String,
   totalFrames: Int,
   pauseForward: Int,

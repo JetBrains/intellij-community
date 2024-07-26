@@ -20,17 +20,17 @@ public class ThinScrollBarUI extends DefaultScrollBarUI {
   }
 
   @Override
-  protected ScrollBarPainter.Thumb createThumbPainter() {
+  protected ScrollBarPainter.@NotNull Thumb createThumbPainter() {
     return new ScrollBarPainter.ThinScrollBarThumb(() -> myScrollBar, false);
   }
 
   @Override
-  void paintTrack(Graphics2D g, JComponent c) {
+  protected void paintTrack(Graphics2D g, JComponent c) {
     // Track is not needed
   }
 
   @Override
-  void paintThumb(Graphics2D g, JComponent c) {
+  protected void paintThumb(Graphics2D g, JComponent c) {
     if (isOpaque(c)) {
       paint(myThumb, g, c, ScrollSettings.isThumbSmallIfOpaque.invoke());
     }
