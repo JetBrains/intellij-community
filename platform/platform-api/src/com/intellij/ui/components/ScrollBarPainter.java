@@ -12,7 +12,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.MixedColorProducer;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.RegionPainter;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +24,7 @@ import java.util.function.Supplier;
 /**
  * This is an internal implementation for drawing opaque and transparent scroll bars.
  * It is public only to provide the ability to edit colors in the Settings/Preferences.
- * Due to the fact that the colors are animated, the constants given in the class
- * represent some key points for drawing scrollbars in different modes.
+ * Since the colors are animated, the constants given in the class represent some key points for drawing scrollbars in different modes.
  *
  * @see com.intellij.openapi.options.colors.pages.GeneralColorsPage
  */
@@ -169,7 +167,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
       alpha = Integer.min(alpha, 255);
     }
     else {
-      alpha = UIUtil.isUnderDarcula() ? DARK_ALPHA : LIGHT_ALPHA;
+      alpha = JBColor.isBright() ? LIGHT_ALPHA : DARK_ALPHA;
     }
 
     return ColorUtil.toAlpha(color, alpha);

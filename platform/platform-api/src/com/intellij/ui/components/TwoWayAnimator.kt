@@ -2,6 +2,8 @@
 package com.intellij.ui.components
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.util.ui.Animator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -53,11 +55,12 @@ abstract class TwoWayAnimator(
   fun start(forward: Boolean) {
     @Suppress("SSBasedInspection")
     if (coroutineScope == null) {
+      val context = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()
       coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("TwoWayAnimator"))
       coroutineScope!!.launch {
         animateRequests.collectLatest { animator ->
           delay(animator.pauseInMs.toLong())
-          withContext(Dispatchers.EDT) {
+          withContext(context) {
             animator.reset()
             animator.resume()
           }
