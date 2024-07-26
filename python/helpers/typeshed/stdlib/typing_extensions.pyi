@@ -381,6 +381,7 @@ else:
             def __ror__(self, other: Any) -> _SpecialForm: ...
 
 if sys.version_info >= (3, 12):
+    from collections.abc import Buffer as Buffer
     from types import get_original_bases as get_original_bases
     from typing import TypeAliasType as TypeAliasType, override as override
 else:

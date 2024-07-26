@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="intellij.python.parser" exported="" />
     <orderEntry type="module" module-name="intellij.python.ast" exported="" />
     <orderEntry type="module" module-name="intellij.python.syntax.core" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

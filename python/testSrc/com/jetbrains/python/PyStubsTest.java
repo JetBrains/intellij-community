@@ -5,6 +5,7 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -18,6 +19,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.psi.impl.PyVersionCheck;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
@@ -128,6 +130,43 @@ public class PyStubsTest extends PyTestCase {
         assertNotParsed(file);
       }
     );
+  }
+
+  // PY-34617
+  public void testStubStructureWithVersionChecks() {
+    final PsiFileImpl file = (PsiFileImpl)getTestFile();
+    element(PyFileStub.class)
+      .withChildren(
+        element(PyImportStatementStub.class),
+        ifPart(3, 0, false)
+          .withChildren(
+            ifPart(3, 12, true)
+              .withChildren(
+                element(PyFunctionStub.class)
+              )
+          ),
+        element(PyElsePartStub.class)
+          .withChildren(
+            ifPart(2, 2, true),
+            elifPart(2, 5, true),
+            element(PyElsePartStub.class)
+              .withChildren(
+                element(PyClassStub.class)
+                  .withChildren(
+                    ifPart(3, 12, true)
+                      .withChildren(
+                        element(PyClassStub.class)
+                          .withChildren(
+                            ifPart(3, 11, false),
+                            element(PyElsePartStub.class)
+                          )
+                      ),
+                    element(PyElsePartStub.class)
+                  )
+              )
+          )
+      )
+      .test(file.getStub());
   }
 
   public void testLoadingDeeperTreeRemainsKnownPsiElement() {
@@ -282,12 +321,13 @@ public class PyStubsTest extends PyTestCase {
   }
 
   public void testImportInExcept() {
-    final PyFileImpl file = (PyFileImpl) getTestFile();
-    final PsiElement element = file.getElementNamed("tzinfo");
-    assertTrue(element != null ? element.toString() : "null", element instanceof PyClass);
-    assertNotParsed(file);
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> {
+      final PyFileImpl file = (PyFileImpl)getTestFile();
+      final PsiElement element = file.getElementNamed("tzinfo");
+      assertTrue(String.valueOf(element), element instanceof PyClass);
+      assertNotParsed(file);
+    });
   }
-
 
   public void testImportFeatures() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
@@ -1123,7 +1163,6 @@ public class PyStubsTest extends PyTestCase {
     doTestTypeParameterStub(typeAliasStatement, file);
   }
 
-
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
   }
@@ -1231,6 +1270,39 @@ public class PyStubsTest extends PyTestCase {
       assertEquals(hasDefault, fieldStub.hasDefault());
       assertEquals(hasDefaultFactory, fieldStub.hasDefaultFactory());
       assertEquals(initValue, fieldStub.initValue());
+    }
+  }
+
+  private static @NotNull StubElementValidator element(@NotNull Class<?> clazz) {
+    return stub -> assertInstanceOf(stub, clazz);
+  }
+
+  private static @NotNull StubElementValidator ifPart(int major, int minor, boolean isLessThan) {
+    return stub -> {
+      assertInstanceOf(stub, PyIfPartIfStub.class);
+      assertEquals(new PyVersionCheck(new Version(major, minor, 0), isLessThan), ((PyIfPartIfStub)stub).getVersionCheck());
+    };
+  }
+
+  private static @NotNull StubElementValidator elifPart(int major, int minor, boolean isLessThan) {
+    return stub -> {
+      assertInstanceOf(stub, PyIfPartElifStub.class);
+      assertEquals(new PyVersionCheck(new Version(major, minor, 0), isLessThan), ((PyIfPartElifStub)stub).getVersionCheck());
+    };
+  }
+
+  private interface StubElementValidator {
+    void test(@NotNull StubElement<?> stub);
+
+    default @NotNull StubElementValidator withChildren(StubElementValidator @NotNull ... children) {
+      return stub -> {
+        test(stub);
+        List<StubElement<?>> childrenStubs = stub.getChildrenStubs();
+        assertSize(children.length, childrenStubs);
+        for (int i = 0; i != children.length; i++) {
+          children[i].test(childrenStubs.get(i));
+        }
+      };
     }
   }
 }

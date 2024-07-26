@@ -12,10 +12,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.ast.PyAstClass;
-import com.jetbrains.python.ast.PyAstFile;
-import com.jetbrains.python.ast.PyAstFunction;
-import com.jetbrains.python.ast.PyAstTargetExpression;
+import com.jetbrains.python.ast.*;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
@@ -101,8 +98,13 @@ public abstract class PyDocumentationSettings
   @Nullable
   private static PyAstTargetExpression getDocFormatAttribute(@NotNull List<StubElement<?>> stubs) {
     for (StubElement<?> stub : stubs) {
-      if (stub.getPsi() instanceof PyAstTargetExpression targetExpression && PyNames.DOCFORMAT.equals(targetExpression.getName())) {
+      PsiElement psi = stub.getPsi();
+      if (psi instanceof PyAstTargetExpression targetExpression && PyNames.DOCFORMAT.equals(targetExpression.getName())) {
         return targetExpression;
+      }
+      if (psi instanceof PyAstIfPart || psi instanceof PyAstElsePart) {
+        PyAstTargetExpression targetExpression = getDocFormatAttribute(stub.getChildrenStubs());
+        if (targetExpression != null) return targetExpression;
       }
     }
     return null;

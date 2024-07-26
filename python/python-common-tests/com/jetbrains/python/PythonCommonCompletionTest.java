@@ -2101,6 +2101,33 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     doTest();
   }
 
+  // PY-34617
+  public void testVersionCheckAtFileLevel() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      List<String> suggested = doTestByFile();
+      assertContainsElements(suggested, "attr0", "attr3", "f0", "f3", "MyClass0", "MyClass3");
+      assertDoesntContain(suggested, "attr1", "attr2", "f1", "f2", "MyClass1", "MyClass2");
+    });
+  }
+
+  // PY-34617
+  public void testVersionCheckAtClassLevel() {
+    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> {
+      List<String> suggested = doTestByFile();
+      assertContainsElements(suggested, "attr0", "attr2", "f0", "f2", "MyClass0", "MyClass2");
+      assertDoesntContain(suggested, "attr1", "attr3", "f1", "f3", "MyClass1", "MyClass3");
+    });
+  }
+
+  // PY-34617
+  public void testVersionCheckInClassInsideMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      List<String> suggested = doTestByFile();
+      assertContainsElements(suggested, "f0", "f1");
+      assertDoesntContain(suggested, "f2", "f3");
+    });
+  }
+
   private void doTestHasattrContributor(String[] inList, String[] notInList) {
     doTestHasattrContributor("hasattrCompletion/" + getTestName(true) + ".py", inList, notInList);
   }

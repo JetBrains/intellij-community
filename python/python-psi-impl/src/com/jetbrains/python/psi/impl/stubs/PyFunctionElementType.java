@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -116,7 +115,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyFunctionNameIndex.KEY, name);
-      if (stub.getParentStub() instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
+      if (PyPsiUtils.getParentStubSkippingVersionChecks(stub) instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
         sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
       }
     }

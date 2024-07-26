@@ -590,7 +590,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   public PyClass getContainingClass() {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null) {
-      final StubElement parentStub = stub.getParentStub();
+      final StubElement parentStub = PyPsiUtils.getParentStubSkippingVersionChecks(stub);
       if (parentStub instanceof PyClassStub) {
         return ((PyClassStub)parentStub).getPsi();
       }

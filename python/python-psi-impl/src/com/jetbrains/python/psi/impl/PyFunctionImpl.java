@@ -29,10 +29,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
-import com.jetbrains.python.psi.stubs.PyClassStub;
-import com.jetbrains.python.psi.stubs.PyFunctionStub;
-import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -133,9 +130,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public @Nullable PyClass getContainingClass() {
     final PyFunctionStub stub = getStub();
     if (stub != null) {
-      final StubElement parentStub = stub.getParentStub();
-      if (parentStub instanceof PyClassStub) {
-        return ((PyClassStub)parentStub).getPsi();
+      final StubElement<?> parentStub = PyPsiUtils.getParentStubSkippingVersionChecks(stub);
+      if (parentStub instanceof PyClassStub classStub) {
+        return classStub.getPsi();
       }
 
       return null;

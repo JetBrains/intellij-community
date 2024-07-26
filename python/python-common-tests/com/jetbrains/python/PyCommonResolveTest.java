@@ -1918,4 +1918,80 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
     assertEquals("next", containingMethod.getName());
   }
+
+  // PY-34617
+  public void testFileAttributeMatchingVersionCheck() {
+    myFixture.copyDirectoryToProject("resolve/FileAttributeUnderVersionCheck", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      myFixture.configureByText(
+        PythonFileType.INSTANCE,
+        """
+          import mod
+          mod.foo
+               <ref>"""
+      );
+      final PsiElement element = PyCommonResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+      assertResolveResult(element, PyTargetExpression.class, "foo", "mod.py");
+    });
+    assertFilesNotParsed();
+  }
+
+  // PY-34617
+  public void testFileAttributeNotMatchingVersionCheck() {
+    myFixture.copyDirectoryToProject("resolve/FileAttributeUnderVersionCheck", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      myFixture.configureByText(
+        PythonFileType.INSTANCE,
+        """
+          import mod
+          mod.bar
+               <ref>"""
+      );
+      final PsiElement element = PyCommonResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+      assertNull(element);
+    });
+    assertFilesNotParsed();
+  }
+
+  // PY-34617
+  public void testClassAttributeMatchingVersionCheck() {
+    myFixture.copyDirectoryToProject("resolve/ClassAttributeUnderVersionCheck", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      myFixture.configureByText(
+        PythonFileType.INSTANCE,
+        """
+          from mod import MyClass
+          m = MyClass()
+          m.buz()
+             <ref>"""
+      );
+      final PsiElement element = PyCommonResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+      assertResolveResult(element, PyFunction.class, "buz", "mod.py");
+    });
+    assertFilesNotParsed();
+  }
+
+  // PY-34617
+  public void testClassAttributeNotMatchingVersionCheck() {
+    myFixture.copyDirectoryToProject("resolve/ClassAttributeUnderVersionCheck", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      myFixture.configureByText(
+        PythonFileType.INSTANCE,
+        """
+          from mod import MyClass
+          m = MyClass()
+          m.foo()
+             <ref>"""
+      );
+      final PsiElement element = PyCommonResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+      assertNull(element);
+    });
+    assertFilesNotParsed();
+  }
+
+  private void assertFilesNotParsed() {
+    final PsiFile file = myFixture.getFile();
+    assertProjectFilesNotParsed(file);
+    assertSdkRootsNotParsed(file);
+  }
 }

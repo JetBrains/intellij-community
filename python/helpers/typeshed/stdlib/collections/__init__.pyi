@@ -11,17 +11,18 @@ if sys.version_info < (3, 10):
     from _collections_abc import *
 else:
     from collections.abc import (
-        Callable,
-        ItemsView,
-        Iterable,
-        Iterator,
-        KeysView,
-        Mapping,
-        MutableMapping,
-        MutableSequence,
-        Reversible,
-        Sequence,
-        ValuesView,
+        Callable as Callable,
+        Hashable as Hashable,
+        ItemsView as ItemsView,
+        Iterable as Iterable,
+        Iterator as Iterator,
+        KeysView as KeysView,
+        Mapping as Mapping,
+        MutableMapping as MutableMapping,
+        MutableSequence as MutableSequence,
+        Reversible as Reversible,
+        Sequence as Sequence,
+        ValuesView as ValuesView,
     )
 
 __all__ = ["ChainMap", "Counter", "OrderedDict", "UserDict", "UserList", "UserString", "defaultdict", "deque", "namedtuple"]

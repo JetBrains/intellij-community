@@ -161,7 +161,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     final List<String> slots = PyFileElementType.readNullableList(dataStream);
 
     final String docStringInStub = dataStream.readUTFFast();
-    final String docString = docStringInStub.length() > 0 ? docStringInStub : null;
+    final String docString = !docStringInStub.isEmpty() ? docStringInStub : null;
 
     final String deprecationMessage = dataStream.readNameString();
 
@@ -177,7 +177,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     if (name != null) {
       sink.occurrence(PyClassNameIndex.KEY, name);
       sink.occurrence(PyClassNameIndexInsensitive.KEY, StringUtil.toLowerCase(name));
-      if (stub.getParentStub() instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
+      if (PyPsiUtils.getParentStubSkippingVersionChecks(stub) instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
         sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
       }
     }
