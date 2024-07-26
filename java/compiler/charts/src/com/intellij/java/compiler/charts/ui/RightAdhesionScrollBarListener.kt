@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.awt.Point
 import java.awt.event.AdjustmentEvent
@@ -50,9 +49,5 @@ internal class RightAdhesionScrollBarListener(private val viewport: JViewport) :
   fun scrollToEnd() {
     shouldScroll = true
     adjustHorizontalScrollToRightIfNeeded()
-  }
-
-  companion object {
-    val LOG = Logger.getInstance(RightAdhesionScrollBarListener::class.java)
   }
 }

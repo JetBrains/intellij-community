@@ -4,7 +4,6 @@ package com.intellij.java.compiler.charts.ui
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -16,7 +15,6 @@ import javax.swing.ScrollPaneConstants
 class CompilationChartsView(project: Project, private val vm: CompilationChartsViewModel) : BorderLayoutPanel() {
   init {
     val zoom = Zoom()
-
 
     val scroll = object : JBScrollPane() {
       override fun createViewport(): JViewport = CompilationChartsViewport(zoom)
@@ -88,10 +86,6 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
     vm.scrollToEndEvent.advise(vm.lifetime) { _ ->
       rightAdhesionScrollBarListener.scrollToEnd()
     }
-  }
-
-  companion object {
-    val LOG = Logger.getInstance(CompilationChartsView::class.java)
   }
 }
 
