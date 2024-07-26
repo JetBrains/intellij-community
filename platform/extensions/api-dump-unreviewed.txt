@@ -29,7 +29,6 @@ com.intellij.openapi.components.ComponentManager
 - com.intellij.openapi.extensions.AreaInstance
 - com.intellij.openapi.util.UserDataHolder
 - a:createError(java.lang.String,java.lang.Throwable,com.intellij.openapi.extensions.PluginId,java.util.Map):java.lang.RuntimeException
-- a:getActivityCategory(Z):com.intellij.diagnostic.ActivityCategory
 - a:getComponent(java.lang.Class):java.lang.Object
 - getComponent(java.lang.String):com.intellij.openapi.components.BaseComponent
 - a:getDisposed():com.intellij.openapi.util.Condition
@@ -45,7 +44,6 @@ com.intellij.openapi.components.NamedComponent
 com.intellij.openapi.extensions.AreaInstance
 a:com.intellij.openapi.extensions.BaseExtensionPointName
 - f:getName():java.lang.String
-- f:getPointImpl(com.intellij.openapi.extensions.AreaInstance):com.intellij.openapi.extensions.impl.ExtensionPointImpl
 f:com.intellij.openapi.extensions.DefaultPluginDescriptor
 - com.intellij.openapi.extensions.PluginDescriptor
 - <init>(com.intellij.openapi.extensions.PluginId):V
@@ -167,10 +165,36 @@ f:com.intellij.openapi.extensions.Extensions
 - s:getExtensions(com.intellij.openapi.extensions.ExtensionPointName):java.lang.Object[]
 - s:getExtensions(com.intellij.openapi.extensions.ExtensionPointName,com.intellij.openapi.extensions.AreaInstance):java.lang.Object[]
 - s:getRootArea():com.intellij.openapi.extensions.ExtensionsArea
-- s:setRootArea(com.intellij.openapi.extensions.impl.ExtensionsAreaImpl):V
-- s:setRootArea(com.intellij.openapi.extensions.impl.ExtensionsAreaImpl,com.intellij.openapi.Disposable):V
+com.intellij.openapi.extensions.ExtensionsArea
+- a:getExtensionPoint(com.intellij.openapi.extensions.ExtensionPointName):com.intellij.openapi.extensions.ExtensionPoint
+- a:getExtensionPoint(java.lang.String):com.intellij.openapi.extensions.ExtensionPoint
+- a:getExtensionPointIfRegistered(java.lang.String):com.intellij.openapi.extensions.ExtensionPoint
+- a:hasExtensionPoint(com.intellij.openapi.extensions.ExtensionPointName):Z
+- a:hasExtensionPoint(java.lang.String):Z
+- registerExtensionPoint(java.lang.String,java.lang.String,com.intellij.openapi.extensions.ExtensionPoint$Kind):V
+- a:registerExtensionPoint(java.lang.String,java.lang.String,com.intellij.openapi.extensions.ExtensionPoint$Kind,Z):V
+- a:unregisterExtensionPoint(java.lang.String):V
 @:com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 - java.lang.annotation.Annotation
+f:com.intellij.openapi.extensions.LoadingOrder
+- sf:AFTER_STR:java.lang.String
+- sf:AFTER_STR_OLD:java.lang.String
+- sf:ANY:com.intellij.openapi.extensions.LoadingOrder
+- sf:BEFORE_STR:java.lang.String
+- sf:BEFORE_STR_OLD:java.lang.String
+- sf:Companion:com.intellij.openapi.extensions.LoadingOrder$Companion
+- sf:FIRST:com.intellij.openapi.extensions.LoadingOrder
+- sf:FIRST_STR:java.lang.String
+- sf:LAST:com.intellij.openapi.extensions.LoadingOrder
+- sf:LAST_STR:java.lang.String
+- sf:ORDER_RULE_SEPARATOR:C
+- sf:after(java.lang.String):com.intellij.openapi.extensions.LoadingOrder
+- sf:before(java.lang.String):com.intellij.openapi.extensions.LoadingOrder
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.openapi.extensions.LoadingOrder$Companion
+- f:after(java.lang.String):com.intellij.openapi.extensions.LoadingOrder
+- f:before(java.lang.String):com.intellij.openapi.extensions.LoadingOrder
 com.intellij.openapi.extensions.PluginAware
 - a:setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 com.intellij.openapi.extensions.PluginDescriptor
@@ -230,7 +254,6 @@ f:com.intellij.openapi.extensions.ProjectExtensionPointName
 - f:hasAnyExtensions(com.intellij.openapi.extensions.AreaInstance):Z
 f:com.intellij.openapi.extensions.SortingException
 - java.lang.RuntimeException
-- getConflictingElements():com.intellij.openapi.extensions.LoadingOrder$Orderable[]
 com.intellij.util.KeyedLazyInstance
 - a:getInstance():java.lang.Object
 - a:getKey():java.lang.String

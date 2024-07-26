@@ -49,7 +49,6 @@ com/intellij/openapi/components/impl/stores/IComponentStore
 com/intellij/openapi/editor/colors/Groups
 com/intellij/openapi/editor/impl/CaretImpl
 com/intellij/openapi/editor/markup/AnalyzerStatus
-com/intellij/openapi/extensions/ExtensionsArea
 com/intellij/openapi/extensions/impl/ExtensionPointImpl
 com/intellij/openapi/fileEditor/impl/EditorCompositeListener
 com/intellij/openapi/fileEditor/impl/FileEditorOpenOptions

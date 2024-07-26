@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.extensions.LoadingOrder.Companion.readOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import com.intellij.util.messages.ListenerDescriptor
@@ -491,15 +492,6 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
 
     containerDescriptor.addService(readServiceDescriptor(reader, os))
     reader.skipElement()
-  }
-}
-
-private fun readOrder(orderAttr: String?): LoadingOrder {
-  return when (orderAttr) {
-    null -> LoadingOrder.ANY
-    LoadingOrder.FIRST_STR -> LoadingOrder.FIRST
-    LoadingOrder.LAST_STR -> LoadingOrder.LAST
-    else -> LoadingOrder(orderAttr)
   }
 }
 

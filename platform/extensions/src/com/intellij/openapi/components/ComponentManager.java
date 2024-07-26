@@ -130,5 +130,6 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @ApiStatus.Internal
   @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor);
 
+  @ApiStatus.Internal
   @NotNull ActivityCategory getActivityCategory(boolean isExtension);
 }

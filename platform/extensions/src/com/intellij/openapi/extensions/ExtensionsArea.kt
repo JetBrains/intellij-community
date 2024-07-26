@@ -1,13 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions
 
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.Unmodifiable
 
-@ApiStatus.Internal
 interface ExtensionsArea {
   @TestOnly
   fun registerExtensionPoint(extensionPointName: @NonNls String,
@@ -40,8 +39,10 @@ interface ExtensionsArea {
 
   fun <T : Any> getExtensionPoint(extensionPointName: ExtensionPointName<T>): ExtensionPoint<T>
 
+  @get:Internal
   val nameToPointMap: @Unmodifiable Map<String, ExtensionPointImpl<*>>
 
   @TestOnly
+  @Internal
   fun processExtensionPoints(consumer: (ExtensionPointImpl<*>) -> Unit)
 }

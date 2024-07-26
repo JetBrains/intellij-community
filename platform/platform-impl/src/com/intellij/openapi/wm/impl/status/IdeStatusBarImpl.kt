@@ -251,7 +251,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   override fun addWidget(widget: StatusBarWidget, anchor: String) {
-    val order = StatusBarWidgetsManager.anchorToOrder(anchor)
+    val order = LoadingOrder.anchorToOrder(anchor)
     EdtInvocationManager.invokeLaterIfNeeded { addWidget(widget, Position.RIGHT, order) }
   }
 
@@ -262,7 +262,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   override fun addWidget(widget: StatusBarWidget, anchor: String, parentDisposable: Disposable) {
-    val order = StatusBarWidgetsManager.anchorToOrder(anchor)
+    val order = LoadingOrder.anchorToOrder(anchor)
     EdtInvocationManager.invokeLaterIfNeeded {
       addWidget(widget = widget, position = Position.RIGHT, anchor = order)
       val id = widget.ID()
