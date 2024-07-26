@@ -10,9 +10,25 @@ group = "org.jetbrains.jewel"
 val gitHubRef: String? = System.getenv("GITHUB_REF")
 
 version = when {
+    properties.containsKey("versionOverride") -> {
+        val rawVersion = (properties["versionOverride"] as String).trim()
+        if (!rawVersion.matches("^\\d\\.\\d{2,}\\.\\d+$".toRegex())) {
+            throw GradleException("Invalid versionOverride: $rawVersion")
+        }
+        logger.warn("Using version override: $rawVersion")
+        rawVersion
+    }
     gitHubRef?.startsWith("refs/tags/") == true -> {
         gitHubRef.substringAfter("refs/tags/")
             .removePrefix("v")
+    }
+    properties.containsKey("useCurrentVersion") -> {
+        val rawVersion = (properties["jewel.release.version"] as String).trim()
+        if (!rawVersion.matches("^\\d\\.\\d{2,}\\.\\d+$".toRegex())) {
+            throw GradleException("Invalid jewel.release.version found in gradle.properties: $rawVersion")
+        }
+        logger.warn("Using jewel.release.version: $rawVersion")
+        rawVersion
     }
 
     else -> "1.0.0-SNAPSHOT"
