@@ -77,12 +77,12 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
     vm.filter.advise(vm.lifetime) { filter ->
       diagrams.modules.filter = filter
-      diagrams.updateView()
+      diagrams.forceRepaint()
     }
 
     vm.cpuMemory.advise(vm.lifetime) { filter ->
       diagrams.cpuMemory = filter
-      diagrams.updateView()
+      diagrams.forceRepaint()
     }
   }
 

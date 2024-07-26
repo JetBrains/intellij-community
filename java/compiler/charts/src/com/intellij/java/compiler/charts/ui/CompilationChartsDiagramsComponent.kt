@@ -129,7 +129,7 @@ class CompilationChartsDiagramsComponent(
       }, 0, 1, TimeUnit.SECONDS)
   }
 
-  private fun forceRepaint() {
+  internal fun forceRepaint() {
     shouldRepaint = true
     revalidate()
     repaint()
