@@ -80,7 +80,7 @@ internal class InplaceMethodExtractor(private val editor: Editor,
     return DuplicatesMethodExtractor(options, defaultExtractor.targetClass, elements)
   }
 
-  fun extractAndRunTemplate(suggestedNames: LinkedHashSet<String>) {
+  fun extractAndRunTemplate(suggestedNames: List<String>) {
     try {
       val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
       Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
@@ -109,7 +109,7 @@ internal class InplaceMethodExtractor(private val editor: Editor,
         TemplateField(methodIdentifier.textRange)
       }
       val templateFieldWithSettings = templateField
-        .withCompletionNames(suggestedNames.toList())
+        .withCompletionNames(suggestedNames)
         .withCompletionHint(InplaceRefactoring.getPopupOptionsAdvertisement())
         .withValidation { variableRange -> checkReferenceIdentifier(editor, file, variableRange) }
       val templateState = ExtractMethodTemplateBuilder(editor, ExtractMethodHandler.getRefactoringName())
@@ -199,7 +199,7 @@ internal class InplaceMethodExtractor(private val editor: Editor,
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
     WriteCommandAction.writeCommandAction(project).withName(ExtractMethodHandler.getRefactoringName()).run<Throwable> {
       val inplaceExtractor = InplaceMethodExtractor(editor, range, popupProvider, defaultExtractor)
-      inplaceExtractor.extractAndRunTemplate(linkedSetOf())
+      inplaceExtractor.extractAndRunTemplate(emptyList())
       if (methodName != null) {
         inplaceExtractor.setMethodName(methodName)
       }

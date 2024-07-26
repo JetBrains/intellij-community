@@ -156,7 +156,7 @@ class MethodExtractor {
     executeRefactoringCommand(project) {
       val extractor = DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic)
       val inplaceExtractor = InplaceMethodExtractor(editor, range, popupSettings, extractor)
-      inplaceExtractor.extractAndRunTemplate(LinkedHashSet(suggestedNames))
+      inplaceExtractor.extractAndRunTemplate(suggestedNames)
     }
   }
 
