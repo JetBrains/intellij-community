@@ -2288,6 +2288,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/primitiveCompletion/smartCastAssignedLaterVariable.kt");
             }
 
+            @TestMetadata("smartCastBySafeCastAndEarlyReturn.kt")
+            public void testSmartCastBySafeCastAndEarlyReturn() throws Exception {
+                runTest("../testData/basic/common/primitiveCompletion/smartCastBySafeCastAndEarlyReturn.kt");
+            }
+
             @TestMetadata("smartCastReassignedVariable.kt")
             public void testSmartCastReassignedVariable() throws Exception {
                 runTest("../testData/basic/common/primitiveCompletion/smartCastReassignedVariable.kt");

@@ -2288,6 +2288,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastAssignedLaterVariable.kt");
             }
 
+            @TestMetadata("smartCastBySafeCastAndEarlyReturn.kt")
+            public void testSmartCastBySafeCastAndEarlyReturn() throws Exception {
+                runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastBySafeCastAndEarlyReturn.kt");
+            }
+
             @TestMetadata("smartCastReassignedVariable.kt")
             public void testSmartCastReassignedVariable() throws Exception {
                 runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastReassignedVariable.kt");
