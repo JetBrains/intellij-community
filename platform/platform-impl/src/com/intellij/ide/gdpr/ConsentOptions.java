@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -57,6 +58,14 @@ public final class ConsentOptions implements ModificationTracker {
     return PathManager.getCommonDataPath().resolve("consentOptions/accepted");
   }
 
+  private static Locale getCurrentLocale() {
+    return LocalizationUtil.INSTANCE.getLocale();
+  }
+  
+  private static Locale getDefaultLocale() {
+    return LocalizationUtil.INSTANCE.getDefaultLocale();
+  }
+
   private static final class InstanceHolder {
     static final ConsentOptions ourInstance = new ConsentOptions(new IOBackend() {
       @Override
@@ -74,6 +83,20 @@ public final class ConsentOptions implements ModificationTracker {
       @Override
       public @NotNull String readBundledConsents() {
         return loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(getBundledResourcePath()));
+      }
+
+      @Override
+      public @Nullable String readLocalizedBundledConsents() {
+        if (getCurrentLocale() == getDefaultLocale()) return null;
+        String path = getBundledResourcePath();
+        List<String> localizedPaths = LocalizationUtil.INSTANCE.getLocalizedPathStrings(path, getCurrentLocale());
+        for (String localizedPath : localizedPaths) {
+          String loadedText = loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(localizedPath));
+          if (!loadedText.isEmpty()) {
+            return loadedText;
+          }
+        }
+        return null;
       }
 
       @Override
@@ -149,10 +172,10 @@ public final class ConsentOptions implements ModificationTracker {
   }
 
   public void setProductCode(String platformCode, Iterable<String> pluginCodes) {
-    myProductCode = platformCode != null? platformCode.toLowerCase(Locale.ENGLISH) : null;
+    myProductCode = platformCode != null? platformCode.toLowerCase(getDefaultLocale()) : null;
     Set<String> codes = new HashSet<>();
     for (String pluginCode : pluginCodes) {
-      codes.add(pluginCode.toLowerCase(Locale.ENGLISH));
+      codes.add(pluginCode.toLowerCase(getDefaultLocale()));
     }
     myPluginCodes = codes.isEmpty()? Set.of() : Collections.unmodifiableSet(codes);
   }
@@ -217,11 +240,12 @@ public final class ConsentOptions implements ModificationTracker {
   }
 
   public @Nullable String getConfirmedConsentsString() {
-    final Map<String, Consent> defaults = loadDefaultConsents();
+    final Map<String, Map<Locale,Consent>> defaults = loadDefaultConsents();
     if (!defaults.isEmpty()) {
       final String str = confirmedConsentToExternalString(
         loadConfirmedConsents().values().stream().filter(c -> {
-          final Consent def = defaults.get(c.getId());
+          Map<Locale, Consent> defaultConsents = defaults.get(c.getId());
+          final Consent def = defaultConsents != null? defaultConsents.get(getDefaultLocale()): null;
           if (def != null) {
             return !def.isDeleted();
           }
@@ -247,9 +271,9 @@ public final class ConsentOptions implements ModificationTracker {
     try {
       final Collection<ConsentAttributes> fromServer = fromJson(json);
       // defaults
-      final Map<String, Consent> defaults = loadDefaultConsents();
+      final @NotNull Map<String, Map<Locale, Consent>> defaults = loadDefaultConsents();
       if (applyServerChangesToDefaults(defaults, fromServer)) {
-        myBackend.writeDefaultConsents(consentsToJson(defaults.values().stream()));
+        myBackend.writeDefaultConsents(consentsToJson(defaults.values().stream().flatMap(it -> it.values().stream())));
       }
       // confirmed consents
       final Map<String, ConfirmedConsent> confirmed = loadConfirmedConsents();
@@ -268,7 +292,7 @@ public final class ConsentOptions implements ModificationTracker {
   }
 
   public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter) {
-    final Map<String, Consent> allDefaults = loadDefaultConsents();
+    final Map<String, Map<Locale, Consent>> allDefaults = loadDefaultConsents();
     if (isEAP()) {
       // for EA builds there is a different option for statistics sending management
       allDefaults.remove(STATISTICS_OPTION_ID);
@@ -278,9 +302,9 @@ public final class ConsentOptions implements ModificationTracker {
       allDefaults.remove(lookupConsentID(EAP_FEEDBACK_OPTION_ID));
     }
 
-    for (Iterator<Map.Entry<String, Consent>> it = allDefaults.entrySet().iterator(); it.hasNext(); ) {
-      final Map.Entry<String, Consent> entry = it.next();
-      if (!filter.test(entry.getValue())) {
+    for (Iterator<Map.Entry<String, Map<Locale, Consent>>> it = allDefaults.entrySet().iterator(); it.hasNext(); ) {
+      final Map.Entry<String, Map<Locale, Consent>> entry = it.next();
+      if (!filter.test(entry.getValue().get(getDefaultLocale()))) {
         it.remove();
       }
     }
@@ -291,11 +315,13 @@ public final class ConsentOptions implements ModificationTracker {
 
     final Map<String, ConfirmedConsent> allConfirmed = loadConfirmedConsents();
     final List<Consent> result = new ArrayList<>();
-    for (Map.Entry<String, Consent> entry : allDefaults.entrySet()) {
-      final Consent base = entry.getValue();
+    for (Map.Entry<String, Map<Locale, Consent>> entry : allDefaults.entrySet()) {
+      final Consent base = entry.getValue().get(getDefaultLocale());
+      final Consent localized = entry.getValue().get(getCurrentLocale());
       if (!base.isDeleted()) {
         final ConfirmedConsent confirmed = allConfirmed.get(base.getId());
-        result.add(confirmed == null? base : base.derive(confirmed.isAccepted()));
+        Consent consent = localized == null || base.getVersion().isNewer(localized.getVersion()) ? base : localized;
+        result.add(confirmed == null? consent : consent.derive(confirmed.isAccepted()));
       }
     }
     result.sort(Comparator.comparing(ConsentBase::getId));
@@ -329,7 +355,13 @@ public final class ConsentOptions implements ModificationTracker {
   }
 
   private @Nullable Consent getDefaultConsent(String consentId) {
-    return loadDefaultConsents().get(lookupConsentID(consentId));
+    Map<String, Map<Locale, Consent>> defaultConsents = loadDefaultConsents();
+    Map<Locale, Consent> consentMap = defaultConsents.get(consentId);
+    Consent defaultConsent = consentMap.get(getDefaultLocale());
+    Consent localizedConsent = consentMap.get(getCurrentLocale());
+    return localizedConsent == null || defaultConsent.getVersion().isNewer(localizedConsent.getVersion())
+           ? defaultConsent
+           : localizedConsent;
   }
 
   private @Nullable ConfirmedConsent getConfirmedConsent(String consentId) {
@@ -373,8 +405,9 @@ public final class ConsentOptions implements ModificationTracker {
     return confirmedVersion.isOlder(defaultVersion) && confirmedVersion.getMajor() != defaultVersion.getMajor();
   }
 
-  private boolean needReconfirm(Map<String, Consent> defaults, Map<String, ConfirmedConsent> confirmed) {
-    for (Consent defConsent : defaults.values()) {
+  private boolean needReconfirm(Map<String, Map<Locale, Consent>> defaults, Map<String, ConfirmedConsent> confirmed) {
+    for (Map<Locale, Consent> consents : defaults.values()) {
+      Consent defConsent = consents.get(getDefaultLocale());
       if (defConsent.isDeleted()) {
         continue;
       }
@@ -423,13 +456,23 @@ public final class ConsentOptions implements ModificationTracker {
     return changes;
   }
 
-  private static boolean applyServerChangesToDefaults(@NotNull Map<String, Consent> base, @NotNull Collection<ConsentAttributes> fromServer) {
+  private static boolean applyServerChangesToDefaults(@NotNull Map<String, Map<Locale, Consent>> base, @NotNull Collection<ConsentAttributes> fromServer) {
     boolean changes = false;
     for (ConsentAttributes update : fromServer) {
       final Consent newConsent = new Consent(update);
-      final Consent current = base.get(newConsent.getId());
-      if (current != null && !newConsent.isDeleted() && newConsent.getVersion().isNewer(current.getVersion())) {
-        base.put(newConsent.getId(), newConsent);
+      final Map<Locale, Consent> current = base.get(newConsent.getId());
+      if (current == null) {
+        base.put(newConsent.getId(), Map.of(Locale.forLanguageTag(newConsent.getLocale()), newConsent));
+        return true;
+      }
+      Locale newConsentLocale = newConsent.getLocale() != null && !newConsent.getLocale().isEmpty()? Locale.forLanguageTag(newConsent.getLocale()): getDefaultLocale();
+      Consent consent = current.get(newConsentLocale);
+      if (consent == null && newConsentLocale != getDefaultLocale()) {
+        newConsentLocale = getDefaultLocale();
+        consent = current.get(newConsentLocale);
+      }
+      if (consent != null && !newConsent.isDeleted() && newConsent.getVersion().isNewer(consent.getVersion())) {
+        base.get(newConsent.getId()).put(newConsentLocale, newConsent);
         changes = true;
       }
     }
@@ -469,10 +512,15 @@ public final class ConsentOptions implements ModificationTracker {
     return consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(ConfirmedConsent::toExternalString).collect(Collectors.joining(";"));
   }
 
-  private @NotNull Map<String, Consent> loadDefaultConsents() {
-    final Map<String, Consent> result = new HashMap<>();
+  private @NotNull Map<String, Map<Locale, Consent>> loadDefaultConsents() {
+    final Map<String, Map<Locale, Consent>> result = new HashMap<>();
+    Collection<ConsentAttributes> localizedConsentAttributes = fromJson(myBackend.readLocalizedBundledConsents());
     for (ConsentAttributes attributes : fromJson(myBackend.readBundledConsents())) {
-      result.put(attributes.consentId, new Consent(attributes));
+      HashMap<Locale, Consent> map = new HashMap<>();
+      map.put(getDefaultLocale(), new Consent(attributes));
+      localizedConsentAttributes.stream().filter(it -> Objects.equals(it.consentId, attributes.consentId)).findFirst()
+        .ifPresent(localizedAttributes -> map.put(getCurrentLocale(), new Consent(localizedAttributes)));
+      result.put(attributes.consentId, map);
     }
     try {
       applyServerChangesToDefaults(result, fromJson(myBackend.readDefaultConsents()));
@@ -515,7 +563,8 @@ public final class ConsentOptions implements ModificationTracker {
     String readDefaultConsents() throws IOException;
     @NotNull
     String readBundledConsents();
-
+    @Nullable
+    String readLocalizedBundledConsents();
     void writeConfirmedConsents(@NotNull String data) throws IOException;
     @NotNull
     String readConfirmedConsents() throws IOException;

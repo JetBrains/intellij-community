@@ -20,12 +20,14 @@ object LocalizationUtil {
   private const val LOCALIZATION_FOLDER_NAME: String = "localization"
   @Internal
   const val LOCALIZATION_KEY: String = "i18n.locale"
+  @Internal
+  val defaultLocale: Locale = Locale.ENGLISH
 
   @JvmOverloads
   fun getLocale(ignoreRestartRequired: Boolean = false): Locale {
     val localizationStateService = LocalizationStateService.getInstance()
     val languageTag = if (localizationStateService == null) {
-      return Locale.ENGLISH
+      return defaultLocale
     }
     else if (!ignoreRestartRequired && localizationStateService.isRestartRequired) {
       localizationStateService.lastSelectedLocale
@@ -35,8 +37,8 @@ object LocalizationUtil {
     }
     
     val locale = Locale.forLanguageTag(languageTag)
-    if (locale.language != Locale.ENGLISH.language && findLanguageBundle(locale) == null) {
-      return Locale.ENGLISH
+    if (locale.language != defaultLocale.language && findLanguageBundle(locale) == null) {
+      return defaultLocale
     }
 
     return locale
@@ -44,13 +46,13 @@ object LocalizationUtil {
 
   fun getLocaleOrNullForDefault(): Locale? {
     val locale = getLocale()
-    return if (locale.language == Locale.ENGLISH.language) null else locale
+    return if (locale.language == defaultLocale.language) null else locale
   }
 
   @Internal
   @JvmOverloads
   fun getPluginClassLoader(defaultLoader: ClassLoader? = null, locale: Locale = getLocale()): ClassLoader? {
-    if (locale == Locale.ENGLISH || locale == Locale.ROOT) return null
+    if (locale == defaultLocale || locale == Locale.ROOT) return null
     val langBundle = findLanguageBundle(locale) ?: return null
     return langBundle.pluginDescriptor?.classLoader ?: defaultLoader
   }
@@ -123,6 +125,12 @@ object LocalizationUtil {
       //inspectionDescriptions/name_zh.html
       path.convertPathToLocaleSuffixUsage(locale, false),
     ).distinct()
+  }
+  
+  @Internal
+  @JvmOverloads
+  fun getLocalizedPathStrings(path: String, specialLocale: Locale? = null): List<String> {
+    return getLocalizedPaths(Path(path), specialLocale).map { FileUtil.toSystemIndependentName(it.pathString) }
   }
 
   @Internal
@@ -210,9 +218,9 @@ object LocalizationUtil {
       }
     }
 
-    return buildList<Locale> {
-      add(Locale.ENGLISH)
-      addAll(list.sortedBy { map[it] ?: it.getDisplayLanguage(Locale.ENGLISH) })
+    return buildList {
+      add(defaultLocale)
+      addAll(list.sortedBy { map[it] ?: it.getDisplayLanguage(defaultLocale) })
     } to map
   }
 }
