@@ -624,7 +624,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private suspend fun doOpenAsync(options: OpenProjectTask, projectStoreBaseDir: Path): Project? {
     val app = ApplicationManager.getApplication()
     val frameAllocator = if (app.isHeadlessEnvironment || app.isUnitTestMode) {
-      HeadlessProjectFrameAllocator(options)
+      HeadlessProjectFrameAllocator()
     }
     else {
       IdeProjectFrameAllocator(options, projectStoreBaseDir)
@@ -634,13 +634,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     var module: Module? = null
     var result: Project? = null
     try {
-      frameAllocator.run { saveTemplateJob, projectInitObserver ->
+      frameAllocator.run { projectInitObserver ->
         val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
         val project = when {
           options.project != null -> options.project!!
           options.isNewProject -> prepareNewProject(options = options,
-                                                    projectStoreBaseDir = projectStoreBaseDir,
-                                                    saveTemplateJob = saveTemplateJob)
+                                                    projectStoreBaseDir = projectStoreBaseDir)
           else -> prepareProject(options = options,
                                  projectStoreBaseDir = projectStoreBaseDir,
                                  projectInitObserver = projectInitObserver.takeIf { initFrameEarly })
@@ -845,22 +844,32 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return project
   }
 
-  private suspend fun prepareNewProject(options: OpenProjectTask, projectStoreBaseDir: Path, saveTemplateJob: Job?): Project {
-    withContext(Dispatchers.IO) {
-      removeProjectConfigurationAndCaches(projectStoreBaseDir)
-    }
+  private suspend fun prepareNewProject(options: OpenProjectTask, projectStoreBaseDir: Path): Project {
+    return coroutineScope {
+      val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
+      val saveTemplateJob = if (template != null) {
+        launch(CoroutineName("save default project") + Dispatchers.IO) {
+          saveSettings(template, forceSavingAllSettings = true)
+        }
+      }
+      else {
+        null
+      }
+      withContext(Dispatchers.IO) {
+        removeProjectConfigurationAndCaches(projectStoreBaseDir)
+      }
 
-    val project = instantiateProject(projectStoreBaseDir, options)
-    project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
-    saveTemplateJob?.join()
-    val template = if (options.useDefaultProjectAsTemplate) defaultProject else null
-    initProject(file = projectStoreBaseDir,
-                project = project,
-                isRefreshVfsNeeded = options.isRefreshVfsNeeded,
-                preloadServices = options.preloadServices,
-                template = template,
-                isTrustCheckNeeded = false)
-    return project
+      val project = instantiateProject(projectStoreBaseDir, options)
+      project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, true)
+      saveTemplateJob?.join()
+      initProject(file = projectStoreBaseDir,
+                  project = project,
+                  isRefreshVfsNeeded = options.isRefreshVfsNeeded,
+                  preloadServices = options.preloadServices,
+                  template = template,
+                  isTrustCheckNeeded = false)
+      project
+    }
   }
 
   private suspend fun prepareProject(options: OpenProjectTask,

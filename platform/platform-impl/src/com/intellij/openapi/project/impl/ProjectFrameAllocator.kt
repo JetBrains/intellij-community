@@ -6,7 +6,6 @@ package com.intellij.openapi.project.impl
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.concurrency.captureThreadContext
-import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.StartUpPerformanceService
@@ -40,10 +39,8 @@ import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ReadmeShownUsageCollector.README_OPENED_ON_START_TS
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.project.impl.ProjectFrameAllocator.Companion.scheduleSaveTemplate
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
@@ -81,7 +78,7 @@ import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
 internal fun interface FrameAllocatorTask {
-  suspend fun execute(saveTemplateJob: Job?, projectInitObserver: ProjectInitObserver?)
+  suspend fun execute(projectInitObserver: ProjectInitObserver?)
 }
 
 internal sealed interface ProjectInitObserver {
@@ -93,27 +90,11 @@ internal sealed interface ProjectInitObserver {
 internal interface ProjectFrameAllocator {
   suspend fun run(task: FrameAllocatorTask)
   suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?)
-
-  companion object {
-    @JvmStatic
-    fun CoroutineScope.scheduleSaveTemplate(options: OpenProjectTask): Job? {
-      if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
-        return launch(CoroutineName("save default project") + Dispatchers.IO) {
-          saveSettings(serviceAsync<ProjectManager>().defaultProject, forceSavingAllSettings = true)
-        }
-      }
-      else {
-        return null
-      }
-    }
-  }
 }
 
-internal class HeadlessProjectFrameAllocator(private val options: OpenProjectTask) : ProjectFrameAllocator {
+internal class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
   override suspend fun run(task: FrameAllocatorTask) {
-    return coroutineScope {
-      task.execute(scheduleSaveTemplate(options), null)
-    }
+    task.execute( null)
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
@@ -262,7 +243,7 @@ internal class IdeProjectFrameAllocator(
         }
       }
 
-      task.execute(scheduleSaveTemplate(options), projectInitObserver)
+      task.execute(projectInitObserver)
       startOfWaitingForReadyFrame.set(System.nanoTime())
     }
   }
