@@ -240,15 +240,9 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   public final void forceCachedPsi(@NotNull PsiFile psiFile) {
-    while (true) {
-      PsiFile prev = myPsiFile;
-      // jdk 6 doesn't have getAndSet()
-      if (myPsiFileUpdater.compareAndSet(this, prev, psiFile)) {
-        if (prev != psiFile && prev instanceof PsiFileEx) {
-          DebugUtil.performPsiModification(getClass().getName() + " PSI change", () -> ((PsiFileEx)prev).markInvalidated());
-        }
-        break;
-      }
+    PsiFile prev = myPsiFileUpdater.getAndSet(this, psiFile);
+    if (prev != psiFile && prev instanceof PsiFileEx) {
+      DebugUtil.performPsiModification(getClass().getName() + " PSI change", () -> ((PsiFileEx)prev).markInvalidated());
     }
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
   }
