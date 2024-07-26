@@ -580,7 +580,7 @@ private class ClassConverter(
                     ktGetter.removeModifier(ABSTRACT_KEYWORD)
                 }
 
-                if (ktGetter.isRedundantGetter()) {
+                if (ktGetter.isRedundant()) {
                     realGetter.function.deleteExplicitLabelComments()
                     val commentSaver = CommentSaver(realGetter.function)
                     commentSaver.restore(ktProperty)
@@ -590,7 +590,7 @@ private class ClassConverter(
             }
 
             if (realSetter != null) {
-                if (ktSetter?.isRedundantSetter() == true) {
+                if (ktSetter?.isRedundant() == true) {
                     realSetter.function.deleteExplicitLabelComments()
                     val commentSaver = CommentSaver(realSetter.function)
                     commentSaver.restore(ktProperty)
@@ -622,8 +622,8 @@ private class ClassConverter(
     private fun removeRedundantPropertyAccessors(property: KtProperty) {
         val getter = property.getter
         val setter = property.setter
-        if (getter?.isRedundantGetter() == true) removeRedundantGetter(getter)
-        if (setter?.isRedundantSetter() == true) removeRedundantSetter(setter)
+        if (getter?.isRedundant() == true) removeRedundantGetter(getter)
+        if (setter?.isRedundant() == true) removeRedundantSetter(setter)
     }
 
     private fun addGetter(getter: Getter, ktProperty: KtProperty, isFakeProperty: Boolean): KtPropertyAccessor {
@@ -799,6 +799,10 @@ private class ClassConverter(
         }
         setName(newName)
     }
+
+    private fun KtPropertyAccessor.isRedundant(): Boolean =
+        // We need to ignore comments because there may be explicit label comments that we must preserve
+        if (isGetter) isRedundantGetter(respectComments = false) else isRedundantSetter(respectComments = false)
 
     // Don't try to save the now useless explicit label comments,
     // they may hurt formatting later
