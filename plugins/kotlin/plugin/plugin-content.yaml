@@ -5,7 +5,7 @@
   projectLibraries:
   - name: kotlinc.kotlin-jps-plugin-classpath
     files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/1/kotlin-jps-plugin-classpath-1.jar
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2/kotlin-jps-plugin-classpath-2.jar
     reason: withProjectLibrary
 - name: lib/kotlin-base-jps.jar
   modules:
