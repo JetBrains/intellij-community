@@ -26,7 +26,10 @@ import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
@@ -130,7 +133,11 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   override fun createPanel(): DialogPanel {
-    val categoriesPanel = SettingsSyncPanelFactory.createPanel(message("configurable.what.to.sync.label"), SettingsSyncSettings.getInstance())
+    val syncConfigPanel = SettingsSyncPanelFactory.createCombinedSyncSettingsPanel(
+      message("configurable.what.to.sync.label"),
+      SettingsSyncSettings.getInstance(),
+      SettingsSyncLocalSettings.getInstance(),
+    )
     val authService = SettingsSyncAuthService.getInstance()
     val authAvailable = authService.isLoginAvailable()
     configPanel = panel {
@@ -204,40 +211,20 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         comment(message("settings.sync.info.message"), 80)
           .visibleIf(isSyncEnabled.not())
       }
+
       row {
-        cell(categoriesPanel)
+        cell(syncConfigPanel)
           .visibleIf(LoggedInPredicate().and(EnabledPredicate()))
           .onApply {
-            categoriesPanel.apply()
+            syncConfigPanel.apply()
+
             SettingsSyncEvents.getInstance().fireCategoriesChanged()
+            SettingsSyncEvents.getInstance().fireSettingsChanged(
+              SyncSettingsEvent.CrossIdeSyncStateChanged(SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled))
           }
-          .onReset { categoriesPanel.reset() }
-          .onIsModified { categoriesPanel.isModified() }
+          .onReset(syncConfigPanel::reset)
+          .onIsModified(syncConfigPanel::isModified)
       }
-
-      panel {
-        row {
-          topGap(TopGap.MEDIUM)
-          label(message("settings.cross.product.sync"))
-        }
-        indent {
-          buttonsGroup {
-            row {
-              radioButton(
-                message("settings.cross.product.sync.choice.only.this.product", ApplicationNamesInfo.getInstance().fullProductName), false)
-            }
-            row {
-              radioButton(message("settings.cross.product.sync.choice.all.products"), true)
-            }
-          }.bind({ SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled },
-                 {
-                   SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = it
-
-                   SettingsSyncEvents.getInstance().fireSettingsChanged(
-                     SyncSettingsEvent.CrossIdeSyncStateChanged(SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled))
-                 })
-        }
-      }.visibleIf(LoggedInPredicate().and(EnabledPredicate()))
     }
     SettingsSyncEvents.getInstance().addListener(
       object : SettingsSyncEventListener {
@@ -260,8 +247,11 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   override fun serverStateCheckFinished(state: UpdateResult) {
     when (state) {
-      NoFileOnServer, FileDeletedFromServer -> showEnableSyncDialog(null)
-      is Success -> showEnableSyncDialog(state.settingsSnapshot.getState())
+      NoFileOnServer, FileDeletedFromServer -> showEnableSyncDialog(null, null)
+      is Success -> showEnableSyncDialog(
+          state.settingsSnapshot.getState(),
+          SettingsSyncLocalStateHolder(state.isCrossIdeSyncEnabled),
+      )
       is Error -> {
         if (state != SettingsSyncEnabler.State.CANCELLED) {
           showError(message("notification.title.update.error"), state.message)
@@ -286,20 +276,26 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     updateStatusInfo()
   }
 
-  private fun showEnableSyncDialog(remoteSettings: SettingsSyncState?) {
-    val dialog = EnableSettingsSyncDialog(configPanel, remoteSettings)
+  private fun showEnableSyncDialog(remoteSettings: SettingsSyncState?, remoteSyncScopeSettings: SettingsSyncLocalStateHolder?) {
+    val dialog = EnableSettingsSyncDialog(configPanel, remoteSettings, remoteSyncScopeSettings)
+
     dialog.show()
+
     val dialogResult = dialog.getResult()
+
     if (dialogResult != null) {
       when (dialogResult) {
         EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> {
           syncEnabler.getSettingsFromServer(dialog.syncSettings)
+
           SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.GET_FROM_SERVER)
         }
+
         EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
-          SettingsSyncSettings.getInstance().applyFromState(dialog.syncSettings)
           SettingsSyncSettings.getInstance().syncEnabled = true
+
           syncEnabler.pushSettingsToServer()
+
           if (remoteSettings != null) {
             SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL)
           }
@@ -312,6 +308,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     else {
       SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.CANCELED)
     }
+
     reset()
     configPanel.reset()
   }

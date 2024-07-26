@@ -1,6 +1,5 @@
 package com.intellij.settingsSync
 
-import com.intellij.util.resettableLazy
 import org.junit.Assert
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
@@ -53,4 +52,9 @@ internal open class TestRemoteCommunicator(customServerUrl: String = "http://loc
     return result
   }
 
+  fun ideCrossSyncState(): Boolean? {
+    val (_, crossSyncState) = currentSnapshotFilePath() ?: Pair(null, null)
+
+    return crossSyncState
+  }
 }
