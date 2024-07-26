@@ -14,28 +14,32 @@ internal class TabScrollBarUI(
 ) : ThinScrollBarUI(thickness = thickness, thicknessMax = thicknessMax, thicknessMin = thicknessMin) {
   private var isHovered: Boolean = false
 
-  private val defaultColorProducer: MixedColorProducer = MixedColorProducer(
-    ScrollBarPainter.getColor({ scrollBar }, ScrollBarPainter.TABS_TRANSPARENT_THUMB_BACKGROUND),
-    ScrollBarPainter.getColor({ scrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND))
+  override fun createThumbPainter(state: DefaultScrollbarUiInstalledState): ScrollBarPainter.Thumb {
+    val defaultColorProducer = MixedColorProducer(
+      ScrollBarPainter.getColor({ state.scrollBar }, ScrollBarPainter.TABS_TRANSPARENT_THUMB_BACKGROUND),
+      ScrollBarPainter.getColor({ state.scrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND))
 
-  private val hoveredColorProducer: MixedColorProducer = MixedColorProducer(
-    ScrollBarPainter.getColor({ scrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND),
-    ScrollBarPainter.getColor({ scrollBar }, ScrollBarPainter.TABS_THUMB_HOVERED_BACKGROUND))
+    val hoveredColorProducer = MixedColorProducer(
+      ScrollBarPainter.getColor({ state.scrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND),
+      ScrollBarPainter.getColor({ state.scrollBar }, ScrollBarPainter.TABS_THUMB_HOVERED_BACKGROUND))
 
-  override fun createThumbPainter(): ScrollBarPainter.Thumb {
-    return object : ScrollBarPainter.ThinScrollBarThumb({ scrollBar }, false) {
+    return object : ScrollBarPainter.ThinScrollBarThumb({ state.scrollBar }, false, state.coroutineScope) {
       override fun getFillProducer() = if (isHovered) hoveredColorProducer else defaultColorProducer
     }
   }
 
-  override fun createWrapAnimationBehaviour(defaultScrollbarUiInstalledState: DefaultScrollbarUiInstalledState): ScrollBarAnimationBehavior {
-    return object : ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(), myTrack.animator, thumb.animator) {
+  override fun createWrapAnimationBehaviour(state: DefaultScrollbarUiInstalledState): ScrollBarAnimationBehavior {
+    return object : ToggleableScrollBarAnimationBehaviorDecorator(
+      decoratedBehavior = createBaseAnimationBehavior(state),
+      trackAnimator = state.track.animator,
+      thumbAnimator = state.thumb.animator,
+    ) {
       override fun onThumbHover(hovered: Boolean) {
         super.onThumbHover(hovered)
         if (isHovered != hovered) {
           isHovered = hovered
-          scrollBar!!.revalidate()
-          scrollBar!!.repaint()
+          state.scrollBar.revalidate()
+          state.scrollBar.repaint()
         }
       }
     }
@@ -43,12 +47,10 @@ internal class TabScrollBarUI(
 
 
   override fun paintThumb(g: Graphics2D, c: JComponent, state: DefaultScrollbarUiInstalledState) {
-    if (animationBehavior != null && animationBehavior!!.thumbFrame > 0) {
-      paint(thumb, g, c, !isHovered)
+    if (state.animationBehavior.thumbFrame > 0) {
+      paint(p = state.thumb, g = g, c = c, small = !isHovered)
     }
   }
 
-  override fun getInsets(small: Boolean): Insets {
-    return if (small) JBUI.insetsBottom(2) else JBUI.emptyInsets()
-  }
+  override fun getInsets(small: Boolean): Insets = if (small) JBUI.insetsBottom(2) else JBUI.emptyInsets()
 }

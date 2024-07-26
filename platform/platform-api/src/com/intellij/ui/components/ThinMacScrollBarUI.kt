@@ -1,42 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components;
+package com.intellij.ui.components
 
-import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.components.ScrollBarPainter.ThinScrollBarThumb
+import com.intellij.util.ui.JBUI
+import java.awt.Graphics2D
+import java.awt.Insets
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.awt.*;
+private const val DEFAULT_THICKNESS: Int = 3
 
-@ApiStatus.Internal
-public class ThinMacScrollBarUI extends MacScrollBarUI {
-  public static final int DEFAULT_THICKNESS = 3;
-  ThinMacScrollBarUI() {
-    super(DEFAULT_THICKNESS, DEFAULT_THICKNESS, DEFAULT_THICKNESS);
+internal open class ThinMacScrollBarUI : MacScrollBarUI {
+  internal constructor() : super(DEFAULT_THICKNESS, DEFAULT_THICKNESS, DEFAULT_THICKNESS)
+
+  constructor(thickNess: Int, thicknessMax: Int, thicknessMin: Int) : super(thickNess, thicknessMax, thicknessMin)
+
+  override fun createThumbPainter(state: DefaultScrollbarUiInstalledState): ScrollBarPainter.Thumb {
+    return ThinScrollBarThumb({ state.scrollBar }, false, state.coroutineScope)
   }
 
-
-  public ThinMacScrollBarUI(int thickNess, int thicknessMax, int thicknessMin) {
-   super(thickNess, thicknessMax, thicknessMin);
+  public override fun paintTrack(g: Graphics2D, c: JComponent) {
+    // track is not needed
   }
 
-  @Override
-  public @NotNull ScrollBarPainter.Thumb createThumbPainter$intellij_platform_ide(@NotNull DefaultScrollbarUiInstalledState state) {
-    return new ScrollBarPainter.ThinScrollBarThumb(() -> state.scrollBar, false, state.coroutineScope);
-  }
+  override fun getInsets(small: Boolean): Insets = JBUI.emptyInsets()
 
-  @Override
-  public void paintTrack(@NotNull Graphics2D g, @NotNull JComponent c) {
-    // Track is not needed
-  }
-
-  @Override
-  protected @NotNull Insets getInsets(boolean small) {
-    return JBUI.emptyInsets();
-  }
-
-  @Override
-  protected void updateStyle(MacScrollbarStyle style) {
-    super.updateStyle(MacScrollbarStyle.Overlay);
+  override fun updateStyle(style: MacScrollbarStyle?) {
+    super.updateStyle(MacScrollbarStyle.Overlay)
   }
 }

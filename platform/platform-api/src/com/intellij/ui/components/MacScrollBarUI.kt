@@ -131,7 +131,7 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
     }
   }
 
-  public override fun paintThumb(g: Graphics2D, c: JComponent, state: DefaultScrollbarUiInstalledState) {
+  override fun paintThumb(g: Graphics2D, c: JComponent, state: DefaultScrollbarUiInstalledState) {
     if (isOpaque(c)) {
       paint(p = state.thumb, g = g, c = c, small = true)
     }

@@ -220,6 +220,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
 
     Thumb(@NotNull Supplier<? extends Component> supplier, boolean opaque, @NotNull CoroutineScope coroutineScope) {
       super(supplier, coroutineScope);
+
       fillProducer = new MixedColorProducer(
         opaque ? getColor(supplier, THUMB_OPAQUE_BACKGROUND)
                : getColor(supplier, THUMB_BACKGROUND, THUMB_OPAQUE_BACKGROUND),

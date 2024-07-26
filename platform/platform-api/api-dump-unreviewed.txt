@@ -8382,7 +8382,6 @@ c:com.intellij.ui.components.JBScrollPane
 - p:createViewport():javax.swing.JViewport
 - getBackground():java.awt.Color
 - getStatusComponent():javax.swing.JComponent
-- *s:getThumbPainter(java.util.function.Supplier):com.intellij.util.ui.RegionPainter
 - isOptimizedDrawingEnabled():Z
 - isOverlappingScrollBar():Z
 - s:isScrollEvent(java.awt.event.MouseWheelEvent):Z
@@ -12334,7 +12333,6 @@ c:com.intellij.util.ui.AnimatedIcon
 - suspend():V
 - updateUI():V
 a:com.intellij.util.ui.Animator
-- com.intellij.openapi.Disposable
 - pf:isForward:Z
 - <init>(java.lang.String,I,I,Z):V
 - <init>(java.lang.String,I,I,Z,Z):V

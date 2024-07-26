@@ -2,7 +2,7 @@
 package com.intellij.ui.components
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ClientProperty
@@ -23,6 +23,7 @@ import javax.swing.*
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import javax.swing.plaf.ScrollBarUI
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
 import kotlin.math.min
 
@@ -30,7 +31,7 @@ import kotlin.math.min
 open class DefaultScrollBarUI @JvmOverloads internal constructor(
   private val thickness: Int = if (ScrollSettings.isThumbSmallIfOpaque.invoke()) 13 else 10,
   private val thicknessMax: Int = 14,
-  private val thicknessMin: Int = 10
+  private val thicknessMin: Int = 10,
 ) : ScrollBarUI() {
   private val listener = Listener()
   private val scrollTimer = TimerUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, listener)
@@ -740,20 +741,23 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
 }
 
 internal class DefaultScrollbarUiInstalledState(ui: DefaultScrollBarUI, @JvmField val scrollBar: JScrollBar) {
+  @Suppress("SSBasedInspection")
   @JvmField
-  val animationBehavior: ScrollBarAnimationBehavior = ui.createWrapAnimationBehaviour(this)
-
-  @JvmField
-  val coroutineScope = CoroutineScope(SupervisorJob() +
-                                      Dispatchers.Default +
-                                      ModalityState.defaultModalityState().asContextElement() +
-                                      ClientId.coroutineContext())
+  val coroutineScope = CoroutineScope(
+    SupervisorJob() +
+    Dispatchers.Default +
+    (ApplicationManager.getApplication()?.defaultModalityState?.asContextElement() ?: EmptyCoroutineContext) +
+    ClientId.coroutineContext()
+  )
 
   @JvmField
   val track: ScrollBarPainter.Track = ScrollBarPainter.Track({ scrollBar }, coroutineScope)
 
   @JvmField
   val thumb: ScrollBarPainter.Thumb = ui.createThumbPainter(this)
+
+  @JvmField
+  val animationBehavior: ScrollBarAnimationBehavior = ui.createWrapAnimationBehaviour(this)
 }
 
 private fun addPreferredWidth(preferred: Dimension, component: Component?) {
