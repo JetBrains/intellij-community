@@ -22,7 +22,7 @@ public class ThinMacScrollBarUI extends MacScrollBarUI {
 
   @Override
   protected ScrollBarPainter.Thumb createThumbPainter() {
-    return new ScrollBarPainter.ThinScrollBarThumb(() -> myScrollBar, false);
+    return new ScrollBarPainter.ThinScrollBarThumb(() -> scrollBar, false);
   }
 
   @Override
@@ -36,7 +36,7 @@ public class ThinMacScrollBarUI extends MacScrollBarUI {
   }
 
   @Override
-  protected void updateStyle(MacScrollBarUI.Style style) {
-    super.updateStyle(Style.Overlay);
+  protected void updateStyle(MacScrollbarStyle style) {
+    super.updateStyle(MacScrollbarStyle.Overlay);
   }
 }

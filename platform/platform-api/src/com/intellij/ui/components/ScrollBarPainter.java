@@ -182,7 +182,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
   static Color getColor(@NotNull Supplier<? extends Component> supplier, @NotNull ColorKey transparent, @NotNull ColorKey opaque) {
     return JBColor.lazy(() -> {
       Component component = supplier.get();
-      return getColor(component, component != null && DefaultScrollBarUI.isOpaque(component) ? opaque : transparent);
+      return getColor(component, component != null && DefaultScrollBarUI.Companion.isOpaque(component) ? opaque : transparent);
     });
   }
 

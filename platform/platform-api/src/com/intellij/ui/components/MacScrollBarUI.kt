@@ -1,291 +1,281 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components;
+package com.intellij.ui.components
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.NotNullProducer;
-import com.intellij.util.ui.EdtInvocationManager;
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.mac.foundation.Foundation
+import com.intellij.ui.mac.foundation.ID
+import com.intellij.util.ui.EdtInvocationManager
+import com.sun.jna.Callback
+import com.sun.jna.Pointer
+import java.awt.AWTEvent
+import java.awt.Component
+import java.awt.Graphics2D
+import java.awt.Toolkit
+import java.awt.event.AWTEventListener
+import java.awt.event.MouseEvent
+import java.lang.ref.Reference
+import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JComponent
+import javax.swing.JScrollBar
+import javax.swing.JScrollPane
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.MouseEvent;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+internal open class MacScrollBarUI : DefaultScrollBarUI {
+  constructor(thickness: Int, thicknessMax: Int, thicknessMin: Int) : super(
+    thickness = thickness,
+    thicknessMax = thicknessMax,
+    thicknessMin = thicknessMin,
+  )
 
-import static com.intellij.ui.mac.foundation.Foundation.*;
+  constructor() : super(thickness = 14, thicknessMax = 14, thicknessMin = 11)
 
-class MacScrollBarUI extends DefaultScrollBarUI {
-  private static final List<Reference<MacScrollBarUI>> UI = new ArrayList<>();
+  companion object {
+    private val CURRENT_STYLE = object : MacScrollbarNative<MacScrollbarStyle>() {
+      override fun run() {
+        val oldStyle = invoke()
+        if (SystemInfoRt.isMac && !Registry.`is`("ide.mac.disableMacScrollbars", false)) {
+          super.run()
+        }
 
-  MacScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
-    super(thickness, thicknessMax, thicknessMin);
-  }
-
-  MacScrollBarUI() {
-    super(14, 14, 11);
-  }
-
-  @Override
-  protected @NotNull ScrollBarAnimationBehavior createBaseAnimationBehavior() {
-    return new MacScrollBarAnimationBehavior(() -> myScrollBar, myTrack.animator, myThumb.animator);
-  }
-
-  @Override
-  public boolean isAbsolutePositioning(MouseEvent event) {
-    return Behavior.JumpToSpot == Behavior.CURRENT.getValue();
-  }
-
-  @Override
-  public boolean isTrackClickable() {
-    return isOpaque(myScrollBar) || (myAnimationBehavior.getTrackFrame() > 0 && myAnimationBehavior.getThumbFrame() > 0);
-  }
-
-  @Override
-  public boolean isTrackExpandable() {
-    return !isOpaque(myScrollBar);
-  }
-
-  @Override
-  public void paintTrack(Graphics2D g, JComponent c) {
-    if (myAnimationBehavior.getTrackFrame() > 0 && myAnimationBehavior.getThumbFrame() > 0 || isOpaque(c)) super.paintTrack(g, c);
-  }
-
-  @Override
-  public void paintThumb(Graphics2D g, JComponent c) {
-    if (isOpaque(c)) {
-      paint(myThumb, g, c, true);
-    }
-    else if (myAnimationBehavior.getThumbFrame() > 0) {
-      paint(myThumb, g, c, false);
-    }
-  }
-
-  @Override
-  public void installUI(JComponent c) {
-    super.installUI(c);
-    updateStyle(Style.CURRENT.getValue());
-    processReferences(this, null, null);
-    AWTEventListener listener = MOVEMENT_LISTENER.getAndSet(null); // add only one movement listener
-    if (listener != null) Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
-  }
-
-  @Override
-  public void uninstallUI(JComponent c) {
-    processReferences(null, this, null);
-    super.uninstallUI(c);
-  }
-
-  /**
-   * The movement listener that is intended to do not hide shown thumb while mouse is moving.
-   */
-  private static final AtomicReference<AWTEventListener> MOVEMENT_LISTENER = new AtomicReference<>(new AWTEventListener() {
-    @Override
-    public void eventDispatched(AWTEvent event) {
-      if (event != null && MouseEvent.MOUSE_MOVED == event.getID()) {
-        Object source = event.getSource();
-        if (source instanceof Component) {
-          JScrollPane pane = ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)source);
-          if (pane != null) {
-            pauseThumbAnimation(pane.getHorizontalScrollBar());
-            pauseThumbAnimation(pane.getVerticalScrollBar());
+        val newStyle = invoke()
+        if (newStyle != oldStyle) {
+          val list = ArrayList<MacScrollBarUI>()
+          processReferences(toAdd = null, toRemove = null, list = list)
+          for (ui in list) {
+            ui.updateStyle(newStyle)
           }
         }
+      }
+
+      override fun invoke(): MacScrollbarStyle {
+        val style = Foundation.invoke(Foundation.getObjcClass("NSScroller"), "preferredScrollerStyle")
+        val value = if (1 == style.toInt()) MacScrollbarStyle.Overlay else MacScrollbarStyle.Legacy
+        Logger.getInstance(MacScrollBarUI::class.java).debug("scroll bar style ", value, " from ", style)
+        return value
+      }
+
+      override fun toString(): String = "scroll bar style"
+
+      override fun initialize(): ID {
+        return Foundation.invoke(Foundation.invoke("NSNotificationCenter", "defaultCenter"),
+                                 "addObserver:selector:name:object:",
+                                 createDelegate("JBScrollBarStyleObserver", Foundation.createSelector("handleScrollerStyleChanged:"),
+                                                this),
+                                 Foundation.createSelector("handleScrollerStyleChanged:"),
+                                 Foundation.nsString("NSPreferredScrollerStyleDidChangeNotification"),
+                                 ID.NIL
+        )
       }
     }
 
     /**
-     * Pauses animation of the thumb if it is shown.
-     *
-     * @param bar the scroll bar with custom UI
+     * The movement listener that is intended to do not hide shown thumb while mouse is moving.
      */
-    private static void pauseThumbAnimation(JScrollBar bar) {
-      Object object = bar == null ? null : bar.getUI();
-      if (object instanceof MacScrollBarUI ui) {
-        if (0 < ui.myAnimationBehavior.getThumbFrame()) ui.myAnimationBehavior.onThumbMove();
-      }
-    }
-  });
-
-
-  /**
-   * Processes references in the static list of references synchronously.
-   * This method removes all cleared references and the reference specified to remove,
-   * collects objects from other references into the specified list and
-   * adds the reference specified to add.
-   *
-   * @param toAdd    the object to add to the static list of references (ignored if {@code null})
-   * @param toRemove the object to remove from the static list of references (ignored if {@code null})
-   * @param list     the list to collect all available objects (ignored if {@code null})
-   */
-  private static void processReferences(MacScrollBarUI toAdd, MacScrollBarUI toRemove, List<? super MacScrollBarUI> list) {
-    synchronized (UI) {
-      Iterator<Reference<MacScrollBarUI>> iterator = UI.iterator();
-      while (iterator.hasNext()) {
-        Reference<MacScrollBarUI> reference = iterator.next();
-        MacScrollBarUI ui = reference.get();
-        if (ui == null || ui == toRemove) {
-          iterator.remove();
-        }
-        else if (list != null) {
-          list.add(ui);
-        }
-      }
-      if (toAdd != null) {
-        UI.add(new WeakReference<>(toAdd));
-      }
-    }
-  }
-
-  protected void updateStyle(Style style) {
-    if (myScrollBar != null) {
-      myScrollBar.setOpaque(style != Style.Overlay);
-      myScrollBar.revalidate();
-      myScrollBar.repaint();
-      myAnimationBehavior.onThumbMove();
-    }
-  }
-
-  private static ID createDelegate(String name, Pointer pointer, Callback callback) {
-    ID delegateClass = allocateObjcClassPair(getObjcClass("NSObject"), name);
-    if (!ID.NIL.equals(delegateClass)) {
-      if (!addMethod(delegateClass, pointer, callback, "v@")) {
-        throw new RuntimeException("Cannot add observer method");
-      }
-      registerObjcClassPair(delegateClass);
-    }
-    return invoke(name, "new");
-  }
-
-  private static <T> T callMac(NotNullProducer<? extends T> producer) {
-    if (SystemInfoRt.isMac) {
-      NSAutoreleasePool pool = new NSAutoreleasePool();
-      try {
-        return producer.produce();
-      }
-      catch (Throwable throwable) {
-        Logger.getInstance(MacScrollBarUI.class).warn(throwable);
-      }
-      finally {
-        pool.drain();
-      }
-    }
-    return null;
-  }
-
-  private enum Behavior {
-    NextPage, JumpToSpot;
-
-    private static final Native<Behavior> CURRENT = new Native<>() {
-      @Override
-      public @NotNull Behavior produce() {
-        ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
-        invoke(defaults, "synchronize");
-        ID behavior = invoke(defaults, "boolForKey:", nsString("AppleScrollerPagingBehavior"));
-        Behavior value = 1 == behavior.intValue() ? JumpToSpot : NextPage;
-        Logger.getInstance(MacScrollBarUI.class).debug("scroll bar behavior ", value, " from ", behavior);
-        return value;
-      }
-
-      @Override
-      public String toString() {
-        return "scroll bar behavior";
-      }
-
-      @Override
-      ID initialize() {
-        return invoke(invoke("NSDistributedNotificationCenter", "defaultCenter"),
-                      "addObserver:selector:name:object:",
-                      createDelegate("JBScrollBarBehaviorObserver", createSelector("handleBehaviorChanged:"), this),
-                      createSelector("handleBehaviorChanged:"),
-                      nsString("AppleNoRedisplayAppearancePreferenceChanged"),
-                      ID.NIL,
-                      2 // NSNotificationSuspensionBehaviorCoalesce
-        );
-      }
-    };
-  }
-
-  protected enum Style {
-    Legacy, Overlay;
-
-    private static final Native<Style> CURRENT = new Native<>() {
-      @Override
-      public void run() {
-        Style oldStyle = getValue();
-        if (SystemInfoRt.isMac && !Registry.is("ide.mac.disableMacScrollbars", false)) {
-          super.run();
-        }
-        Style newStyle = getValue();
-        if (newStyle != oldStyle) {
-          List<MacScrollBarUI> list = new ArrayList<>();
-          processReferences(null, null, list);
-          for (MacScrollBarUI ui : list) {
-            ui.updateStyle(newStyle);
+    private val MOVEMENT_LISTENER = AtomicReference<AWTEventListener?>(object : AWTEventListener {
+      override fun eventDispatched(event: AWTEvent?) {
+        if (event != null && MouseEvent.MOUSE_MOVED == event.id) {
+          val source = event.source
+          if (source is Component) {
+            val pane = ComponentUtil.getParentOfType(
+              JScrollPane::class.java as Class<out JScrollPane?>, source)
+            if (pane != null) {
+              pauseThumbAnimation(pane.horizontalScrollBar)
+              pauseThumbAnimation(pane.verticalScrollBar)
+            }
           }
         }
       }
 
-      @Override
-      public @NotNull Style produce() {
-        ID style = invoke(getObjcClass("NSScroller"), "preferredScrollerStyle");
-        Style value = 1 == style.intValue() ? Overlay : Legacy;
-        Logger.getInstance(MacScrollBarUI.class).debug("scroll bar style ", value, " from ", style);
-        return value;
+      /**
+       * Pauses animation of the thumb if it is shown.
+       *
+       * @param bar the scroll bar with custom UI
+       */
+      private fun pauseThumbAnimation(bar: JScrollBar?) {
+        val ui = bar?.ui
+        if (ui is MacScrollBarUI && 0 < ui.myAnimationBehavior!!.thumbFrame) {
+          ui.myAnimationBehavior!!.onThumbMove()
+        }
       }
-
-      @Override
-      public String toString() {
-        return "scroll bar style";
-      }
-
-      @Override
-      ID initialize() {
-        return invoke(invoke("NSNotificationCenter", "defaultCenter"),
-                      "addObserver:selector:name:object:",
-                      createDelegate("JBScrollBarStyleObserver", createSelector("handleScrollerStyleChanged:"), this),
-                      createSelector("handleScrollerStyleChanged:"),
-                      nsString("NSPreferredScrollerStyleDidChangeNotification"),
-                      ID.NIL
-        );
-      }
-    };
+    })
   }
 
-  private abstract static class Native<T> implements Callback, Runnable, NotNullProducer<T> {
-    private T myValue;
+  override fun createBaseAnimationBehavior(): ScrollBarAnimationBehavior {
+    return MacScrollBarAnimationBehavior(
+      scrollBarComputable = { scrollBar },
+      trackAnimator = myTrack.animator,
+      thumbAnimator = thumb.animator,
+    )
+  }
 
-    Native() {
-      Logger.getInstance(MacScrollBarUI.class).debug("initialize ", this);
-      callMac(() -> initialize());
-      EdtInvocationManager.invokeLaterIfNeeded(this);
-    }
+  override fun isAbsolutePositioning(event: MouseEvent): Boolean = Behavior.JumpToSpot == Behavior.CURRENT_BEHAVIOR()
 
-    abstract ID initialize();
+  override fun isTrackClickable(): Boolean {
+    return isOpaque(scrollBar!!) || (myAnimationBehavior!!.trackFrame > 0 && myAnimationBehavior!!.thumbFrame > 0)
+  }
 
-    T getValue() {
-      return myValue;
-    }
+  override val isTrackExpandable: Boolean
+    get() = !isOpaque(scrollBar!!)
 
-    @SuppressWarnings("UnusedDeclaration")
-    public void callback(ID self, Pointer selector, ID event) {
-      Logger.getInstance(MacScrollBarUI.class).debug("update ", this);
-      EdtInvocationManager.invokeLaterIfNeeded(this);
-    }
-
-    @Override
-    public void run() {
-      myValue = callMac(this);
+  override fun paintTrack(g: Graphics2D, c: JComponent) {
+    if (myAnimationBehavior!!.trackFrame > 0 && myAnimationBehavior!!.thumbFrame > 0 || isOpaque(c)) {
+      super.paintTrack(g, c)
     }
   }
+
+  public override fun paintThumb(g: Graphics2D, c: JComponent) {
+    if (isOpaque(c)) {
+      paint(p = thumb, g = g, c = c, small = true)
+    }
+    else if (myAnimationBehavior!!.thumbFrame > 0) {
+      paint(p = thumb, g = g, c = c, small = false)
+    }
+  }
+
+  override fun installUI(c: JComponent) {
+    super.installUI(c)
+    updateStyle(CURRENT_STYLE())
+    processReferences(toAdd = this, toRemove = null, list = null)
+    val listener = MOVEMENT_LISTENER.getAndSet(null)
+    if (listener != null) {
+      Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK)
+    }
+  }
+
+  override fun uninstallUI(c: JComponent) {
+    processReferences(toAdd = null, toRemove = this, list = null)
+    super.uninstallUI(c)
+  }
+
+  protected open fun updateStyle(style: MacScrollbarStyle?) {
+    val scrollBar = scrollBar
+    if (scrollBar != null) {
+      scrollBar.isOpaque = style != MacScrollbarStyle.Overlay
+      scrollBar.revalidate()
+      scrollBar.repaint()
+      myAnimationBehavior?.onThumbMove()
+    }
+  }
+}
+
+internal enum class MacScrollbarStyle {
+  Legacy, Overlay;
+}
+
+private enum class Behavior {
+  NextPage, JumpToSpot;
+
+  companion object {
+    val CURRENT_BEHAVIOR = object : MacScrollbarNative<Behavior>() {
+      override fun invoke(): Behavior {
+        val defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults")
+        Foundation.invoke(defaults, "synchronize")
+        val behavior = Foundation.invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior"))
+        val value = if (behavior.toInt() == 1) JumpToSpot else NextPage
+        //Logger.getInstance(MacScrollBarUI::class.java).debug("scroll bar behavior ", value, " from ", behavior)
+        return value
+      }
+
+      override fun toString(): String = "scroll bar behavior"
+
+      override fun initialize(): ID {
+        return Foundation.invoke(Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter"),
+                                 "addObserver:selector:name:object:",
+                                 createDelegate("JBScrollBarBehaviorObserver", Foundation.createSelector("handleBehaviorChanged:"), this),
+                                 Foundation.createSelector("handleBehaviorChanged:"),
+                                 Foundation.nsString("AppleNoRedisplayAppearancePreferenceChanged"),
+                                 ID.NIL,
+                                 2 // NSNotificationSuspensionBehaviorCoalesce
+        )
+      }
+    }
+  }
+}
+
+private abstract class MacScrollbarNative<T> : Callback, Runnable, () -> T? {
+  private var value: T? = null
+
+  init {
+    callMac { initialize() }
+    @Suppress("LeakingThis")
+    EdtInvocationManager.invokeLaterIfNeeded(this)
+  }
+
+  abstract fun initialize(): ID
+
+  override fun invoke() = value
+
+  @Suppress("UNUSED_PARAMETER")
+  fun callback(self: ID?, selector: Pointer?, event: ID?) {
+    EdtInvocationManager.invokeLaterIfNeeded(this)
+  }
+
+  override fun run() {
+    value = callMac(this)
+  }
+}
+
+private val UI = ArrayList<Reference<MacScrollBarUI>>()
+
+/**
+ * Processes references in the static list of references synchronously.
+ * This method removes all cleared references and the reference specified to remove,
+ * collects objects from other references into the specified list and
+ * adds the reference specified to add.
+ *
+ * @param toAdd    the object to add to the static list of references (ignored if `null`)
+ * @param toRemove the object to remove from the static list of references (ignored if `null`)
+ * @param list     the list to collect all available objects (ignored if `null`)
+ */
+private fun processReferences(toAdd: MacScrollBarUI?, toRemove: MacScrollBarUI?, list: MutableList<MacScrollBarUI>?) {
+  synchronized(UI) {
+    val iterator = UI.iterator()
+    while (iterator.hasNext()) {
+      val reference = iterator.next()
+      val ui = reference.get()
+      if (ui == null || ui === toRemove) {
+        iterator.remove()
+      }
+      else {
+        list?.add(ui)
+      }
+    }
+
+    if (toAdd != null) {
+      UI.add(WeakReference(toAdd))
+    }
+  }
+}
+
+private fun createDelegate(name: String, pointer: Pointer, callback: Callback): ID {
+  val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), name)
+  if (ID.NIL != delegateClass) {
+    if (!Foundation.addMethod(delegateClass, pointer, callback, "v@")) {
+      throw RuntimeException("Cannot add observer method")
+    }
+    Foundation.registerObjcClassPair(delegateClass)
+  }
+  return Foundation.invoke(name, "new")
+}
+
+private fun <T : Any> callMac(producer: () -> T?): T? {
+  if (!SystemInfoRt.isMac) {
+    return null
+  }
+
+  val pool = Foundation.NSAutoreleasePool()
+  try {
+    return producer()
+  }
+  catch (e: Throwable) {
+    logger<MacScrollBarUI>().warn(e)
+  }
+  finally {
+    pool.drain()
+  }
+  return null
 }

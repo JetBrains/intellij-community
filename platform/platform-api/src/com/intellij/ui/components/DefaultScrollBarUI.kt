@@ -21,24 +21,25 @@ import kotlin.math.min
 
 @ApiStatus.Internal
 open class DefaultScrollBarUI @JvmOverloads internal constructor(
-  private val myThickness: Int = if (ScrollSettings.isThumbSmallIfOpaque.invoke()) 13 else 10,
-  private val myThicknessMax: Int = 14,
-  private val myThicknessMin: Int = 10
+  private val thickness: Int = if (ScrollSettings.isThumbSmallIfOpaque.invoke()) 13 else 10,
+  private val thicknessMax: Int = 14,
+  private val thicknessMin: Int = 10
 ) : ScrollBarUI() {
-  private val myListener: Listener = Listener()
-  private val myScrollTimer: Timer = TimerUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener)
+  private val listener = Listener()
+  private val scrollTimer = TimerUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, listener)
 
   @JvmField
-  var myScrollBar: JScrollBar? = null
+  protected var scrollBar: JScrollBar? = null
 
   @JvmField
-  protected val myTrack: ScrollBarPainter.Track = ScrollBarPainter.Track({ myScrollBar })
+  protected val myTrack: ScrollBarPainter.Track = ScrollBarPainter.Track({ scrollBar })
+  @Suppress("LeakingThis")
   @JvmField
-  val myThumb: ScrollBarPainter.Thumb = createThumbPainter()
+  protected val thumb: ScrollBarPainter.Thumb = createThumbPainter()
 
   private var isValueCached: Boolean = false
-  private var myCachedValue: Int = 0
-  private var myOldValue: Int = 0
+  private var cachedValue: Int = 0
+  private var oldValue: Int = 0
 
   @JvmField
   protected var myAnimationBehavior: ScrollBarAnimationBehavior? = null
@@ -48,11 +49,10 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     @JvmField
     val LEADING: Key<Component> = Key.create("JB_SCROLL_BAR_LEADING_COMPONENT")
 
-    @JvmField
     @ApiStatus.Internal
+    @JvmField
     val TRAILING: Key<Component> = Key.create("JB_SCROLL_BAR_TRAILING_COMPONENT")
 
-    @JvmStatic
     fun isOpaque(c: Component): Boolean {
       if (c.isOpaque) {
         return true
@@ -68,23 +68,21 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     return ToggleableScrollBarAnimationBehaviorDecorator(
       decoratedBehavior = createBaseAnimationBehavior(),
       trackAnimator = myTrack.animator,
-      thumbAnimator = myThumb.animator,
+      thumbAnimator = thumb.animator,
     )
   }
 
   protected open fun createThumbPainter(): ScrollBarPainter.Thumb {
-    return ScrollBarPainter.Thumb({ myScrollBar }, false)
+    return ScrollBarPainter.Thumb({ scrollBar }, false)
   }
 
   protected open fun createBaseAnimationBehavior(): ScrollBarAnimationBehavior {
-    return DefaultScrollBarAnimationBehavior(trackAnimator = myTrack.animator, thumbAnimator = myThumb.animator)
+    return DefaultScrollBarAnimationBehavior(trackAnimator = myTrack.animator, thumbAnimator = thumb.animator)
   }
 
-  val thickness: Int
-    get() = scale(if (myScrollBar == null || isOpaque(myScrollBar!!)) myThickness else myThicknessMax)
+  private fun getEffectiveThickness(): Int = scale(if (scrollBar == null || isOpaque(scrollBar!!)) thickness else thicknessMax)
 
-  val minimalThickness: Int
-    get() = scale(if (myScrollBar == null || isOpaque(myScrollBar!!)) myThickness else myThicknessMin)
+  private fun getMinimalThickness(): Int = scale(if (scrollBar == null || isOpaque(scrollBar!!)) thickness else thicknessMin)
 
   fun toggle(isOn: Boolean) {
     if (myAnimationBehavior != null) {
@@ -94,7 +92,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
 
   open fun isAbsolutePositioning(event: MouseEvent): Boolean = SwingUtilities.isMiddleMouseButton(event)
 
-  open fun isTrackClickable(): Boolean = isOpaque(myScrollBar!!) || (myAnimationBehavior != null && myAnimationBehavior!!.trackFrame > 0)
+  open fun isTrackClickable(): Boolean = isOpaque(scrollBar!!) || (myAnimationBehavior != null && myAnimationBehavior!!.trackFrame > 0)
 
   open val isTrackExpandable: Boolean
     get() = false
@@ -104,15 +102,15 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   }
 
   fun isThumbContains(x: Int, y: Int): Boolean {
-    return myThumb.bounds.contains(x, y)
+    return thumb.bounds.contains(x, y)
   }
 
-  protected open fun paintTrack(g: Graphics2D, c: JComponent?) {
+  protected open fun paintTrack(g: Graphics2D, c: JComponent) {
     paint(myTrack, g, c, false)
   }
 
   protected open fun paintThumb(g: Graphics2D, c: JComponent) {
-    paint(myThumb, g, c, ScrollSettings.isThumbSmallIfOpaque.invoke() && isOpaque(c))
+    paint(thumb, g, c, ScrollSettings.isThumbSmallIfOpaque.invoke() && isOpaque(c))
   }
 
   fun paint(p: ScrollBarPainter, g: Graphics2D, c: JComponent?, small: Boolean) {
@@ -121,16 +119,16 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     var width: Int = p.bounds.width
     var height: Int = p.bounds.height
 
-    val alignment: JBScrollPane.Alignment = JBScrollPane.Alignment.get(c)
+    val alignment = JBScrollPane.Alignment.get(c)
     if (alignment == JBScrollPane.Alignment.LEFT || alignment == JBScrollPane.Alignment.RIGHT) {
-      val offset: Int = getTrackOffset(width - minimalThickness)
+      val offset: Int = getTrackOffset(width - getMinimalThickness())
       if (offset > 0) {
         width -= offset
         if (alignment == JBScrollPane.Alignment.RIGHT) x += offset
       }
     }
     else {
-      val offset: Int = getTrackOffset(height - minimalThickness)
+      val offset: Int = getTrackOffset(height - getMinimalThickness())
       if (offset > 0) {
         height -= offset
         if (alignment == JBScrollPane.Alignment.BOTTOM) y += offset
@@ -159,16 +157,16 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   }
 
   fun repaint() {
-    if (myScrollBar != null) myScrollBar!!.repaint()
+    if (scrollBar != null) scrollBar!!.repaint()
   }
 
   fun repaint(x: Int, y: Int, width: Int, height: Int) {
-    if (myScrollBar != null) myScrollBar!!.repaint(x, y, width, height)
+    if (scrollBar != null) scrollBar!!.repaint(x, y, width, height)
   }
 
   private fun scale(value: Int): Int {
     val scaledValue = JBUIScale.scale(value)
-    return when (UIUtil.getComponentStyle(myScrollBar)) {
+    return when (UIUtil.getComponentStyle(scrollBar)) {
       ComponentStyle.LARGE -> (scaledValue * 1.15).toInt()
       ComponentStyle.SMALL -> (scaledValue * 0.857).toInt()
       ComponentStyle.MINI -> (scaledValue * 0.714).toInt()
@@ -179,16 +177,16 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   override fun installUI(c: JComponent) {
     myAnimationBehavior = createWrapAnimationBehaviour()
 
-    myScrollBar = c as JScrollBar
+    scrollBar = c as JScrollBar
     ScrollBarPainter.setBackground(c)
-    myScrollBar!!.isOpaque = false
-    myScrollBar!!.isFocusable = false
-    myScrollBar!!.addMouseListener(myListener)
-    myScrollBar!!.addMouseMotionListener(myListener)
-    myScrollBar!!.model.addChangeListener(myListener)
-    myScrollBar!!.addPropertyChangeListener(myListener)
-    myScrollBar!!.addFocusListener(myListener)
-    myScrollTimer.initialDelay = 300
+    scrollBar!!.isOpaque = false
+    scrollBar!!.isFocusable = false
+    scrollBar!!.addMouseListener(listener)
+    scrollBar!!.addMouseMotionListener(listener)
+    scrollBar!!.model.addChangeListener(listener)
+    scrollBar!!.addPropertyChangeListener(listener)
+    scrollBar!!.addFocusListener(listener)
+    scrollTimer.initialDelay = 300
   }
 
   override fun uninstallUI(c: JComponent) {
@@ -196,30 +194,30 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     myAnimationBehavior!!.onUninstall()
     myAnimationBehavior = null
 
-    myScrollTimer.stop()
-    myScrollBar!!.removeFocusListener(myListener)
-    myScrollBar!!.removePropertyChangeListener(myListener)
-    myScrollBar!!.model.removeChangeListener(myListener)
-    myScrollBar!!.removeMouseMotionListener(myListener)
-    myScrollBar!!.removeMouseListener(myListener)
-    myScrollBar!!.foreground = null
-    myScrollBar!!.background = null
-    myScrollBar = null
+    scrollTimer.stop()
+    scrollBar!!.removeFocusListener(listener)
+    scrollBar!!.removePropertyChangeListener(listener)
+    scrollBar!!.model.removeChangeListener(listener)
+    scrollBar!!.removeMouseMotionListener(listener)
+    scrollBar!!.removeMouseListener(listener)
+    scrollBar!!.foreground = null
+    scrollBar!!.background = null
+    scrollBar = null
   }
 
   override fun getPreferredSize(c: JComponent): Dimension {
-    val thickness: Int = myThickness
+    val thickness: Int = getEffectiveThickness()
     val alignment: JBScrollPane.Alignment = JBScrollPane.Alignment.get(c)
     val preferred = Dimension(thickness, thickness)
     if (alignment == JBScrollPane.Alignment.LEFT || alignment == JBScrollPane.Alignment.RIGHT) {
       preferred.height += preferred.height
-      addPreferredHeight(preferred, ClientProperty.get(myScrollBar, LEADING))
-      addPreferredHeight(preferred, ClientProperty.get(myScrollBar, TRAILING))
+      addPreferredHeight(preferred, ClientProperty.get(scrollBar, LEADING))
+      addPreferredHeight(preferred, ClientProperty.get(scrollBar, TRAILING))
     }
     else {
       preferred.width += preferred.width
-      addPreferredWidth(preferred, ClientProperty.get(myScrollBar, LEADING))
-      addPreferredWidth(preferred, ClientProperty.get(myScrollBar, TRAILING))
+      addPreferredWidth(preferred, ClientProperty.get(scrollBar, LEADING))
+      addPreferredWidth(preferred, ClientProperty.get(scrollBar, TRAILING))
     }
     return preferred
   }
@@ -266,14 +264,14 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       }
       // do not set track size bigger that expected thickness
       if (alignment == JBScrollPane.Alignment.LEFT || alignment == JBScrollPane.Alignment.RIGHT) {
-        val offset: Int = bounds.width - myThickness
+        val offset: Int = bounds.width - getEffectiveThickness()
         if (offset > 0) {
           bounds.width -= offset
           if (alignment == JBScrollPane.Alignment.RIGHT) bounds.x += offset
         }
       }
       else {
-        val offset: Int = bounds.height - myThickness
+        val offset: Int = bounds.height - getEffectiveThickness()
         if (offset > 0) {
           bounds.height -= offset
           if (alignment == JBScrollPane.Alignment.BOTTOM) bounds.y += offset
@@ -289,29 +287,29 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
         track.paint(g, myTrack.bounds.x, myTrack.bounds.y, myTrack.bounds.width, myTrack.bounds.height, null)
       }
       // process drawing the thumb
-      if (myThumb.bounds.width > 0 && myThumb.bounds.height > 0) {
+      if (thumb.bounds.width > 0 && thumb.bounds.height > 0) {
         paintThumb(g, c)
       }
     }
   }
 
   private fun updateThumbBounds(animate: Boolean) {
-    var animate: Boolean = animate
+    var animate = animate
     var value = 0
-    val min: Int = myScrollBar!!.minimum
-    val max: Int = myScrollBar!!.maximum
+    val min: Int = scrollBar!!.minimum
+    val max: Int = scrollBar!!.maximum
     val range: Int = max - min
     if (range <= 0) {
-      myThumb.bounds.setBounds(0, 0, 0, 0)
+      thumb.bounds.setBounds(0, 0, 0, 0)
     }
-    else if (Adjustable.VERTICAL == myScrollBar!!.orientation) {
-      val extent = myScrollBar!!.visibleAmount
+    else if (Adjustable.VERTICAL == scrollBar!!.orientation) {
+      val extent = scrollBar!!.visibleAmount
       val height = max(
         convert(newRange = myTrack.bounds.height.toDouble(), oldValue = extent.toDouble(), oldRange = range.toDouble()).toDouble(),
-        (2 * myThickness).toDouble(),
+        (2 * getEffectiveThickness()).toDouble(),
       ).toInt()
       if (myTrack.bounds.height <= height) {
-        myThumb.bounds.setBounds(0, 0, 0, 0)
+        thumb.bounds.setBounds(0, 0, 0, 0)
       }
       else {
         value = this.value
@@ -326,16 +324,23 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
         else {
           maxY
         }
-        myThumb.bounds.setBounds(myTrack.bounds.x, adjust(y, myTrack.bounds.y, maxY), myTrack.bounds.width, height)
-        animate = animate or (myOldValue != value) // animate thumb on move
+        thumb.bounds.setBounds(myTrack.bounds.x, adjust(y, myTrack.bounds.y, maxY), myTrack.bounds.width, height)
+        // animate thumb on move
+        animate = animate or (oldValue != value)
       }
     }
     else {
-      val extent: Int = myScrollBar!!.visibleAmount
-      val width: Int = max(convert(myTrack.bounds.width.toDouble(), extent.toDouble(), range.toDouble()).toDouble(),
-                           (2 * myThickness).toDouble()).toInt()
+      val extent: Int = scrollBar!!.visibleAmount
+      val width: Int = max(
+        convert(
+          newRange = myTrack.bounds.width.toDouble(),
+          oldValue = extent.toDouble(),
+          oldRange = range.toDouble(),
+        ).toDouble(),
+        (2 * getEffectiveThickness()).toDouble(),
+      ).toInt()
       if (myTrack.bounds.width <= width) {
-        myThumb.bounds.setBounds(0, 0, 0, 0)
+        thumb.bounds.setBounds(0, 0, 0, 0)
       }
       else {
         value = this.value
@@ -343,19 +348,21 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
         var x: Int = if ((value < max - extent)) convert((myTrack.bounds.width - width).toDouble(), (value - min).toDouble(),
                                                          (range - extent).toDouble())
         else maxX
-        if (!myScrollBar!!.componentOrientation.isLeftToRight) x = myTrack.bounds.x - x + maxX
-        myThumb.bounds.setBounds(adjust(x, myTrack.bounds.x, maxX), myTrack.bounds.y, width, myTrack.bounds.height)
-        animate = animate or (myOldValue != value) // animate thumb on move
+        if (!scrollBar!!.componentOrientation.isLeftToRight) {
+          x = myTrack.bounds.x - x + maxX
+        }
+        thumb.bounds.setBounds(adjust(x, myTrack.bounds.x, maxX), myTrack.bounds.y, width, myTrack.bounds.height)
+        animate = animate or (oldValue != value) // animate thumb on move
       }
     }
-    myOldValue = value
+    oldValue = value
     if (animate && myAnimationBehavior != null) {
       myAnimationBehavior!!.onThumbMove()
     }
   }
 
   private val value: Int
-    get() = if (isValueCached) myCachedValue else myScrollBar!!.value
+    get() = if (isValueCached) cachedValue else scrollBar!!.value
 
   private inner class Listener : MouseAdapter(), ActionListener, FocusListener, ChangeListener, PropertyChangeListener {
     private var myOffset: Int = 0
@@ -396,7 +403,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       }
 
       // redispatch current event to the view
-      val parent: Container = myScrollBar!!.parent
+      val parent: Container = scrollBar!!.parent
       if (parent is JScrollPane) {
         val view: Component? = parent.viewport.view
         if (view != null) {
@@ -410,45 +417,45 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     }
 
     override fun mouseClicked(e: MouseEvent) {
-      if (myScrollBar != null && myScrollBar!!.isEnabled) redispatchIfTrackNotClickable(e)
+      if (scrollBar != null && scrollBar!!.isEnabled) redispatchIfTrackNotClickable(e)
     }
 
     override fun mousePressed(event: MouseEvent) {
-      if (myScrollBar == null || !myScrollBar!!.isEnabled) return
+      if (scrollBar == null || !scrollBar!!.isEnabled) return
       if (redispatchIfTrackNotClickable(event)) return
       if (SwingUtilities.isRightMouseButton(event)) return
 
       isValueCached = true
-      myCachedValue = myScrollBar!!.value
-      myScrollBar!!.valueIsAdjusting = true
+      cachedValue = scrollBar!!.value
+      scrollBar!!.valueIsAdjusting = true
 
       myMouseX = event.x
       myMouseY = event.y
 
-      val vertical: Boolean = Adjustable.VERTICAL == myScrollBar!!.orientation
+      val vertical: Boolean = Adjustable.VERTICAL == scrollBar!!.orientation
       if (isThumbContains(myMouseX, myMouseY)) {
         // pressed on the thumb
-        myOffset = if (vertical) (myMouseY - myThumb.bounds.y) else (myMouseX - myThumb.bounds.x)
+        myOffset = if (vertical) (myMouseY - thumb.bounds.y) else (myMouseX - thumb.bounds.x)
         isDragging = true
       }
       else if (isTrackContains(myMouseX, myMouseY)) {
         // pressed on the track
         if (isAbsolutePositioning(event)) {
-          myOffset = (if (vertical) myThumb.bounds.height else myThumb.bounds.width) / 2
+          myOffset = (if (vertical) thumb.bounds.height else thumb.bounds.width) / 2
           isDragging = true
           setValueFrom(event)
         }
         else {
-          myScrollTimer.stop()
+          scrollTimer.stop()
           isDragging = false
-          if (Adjustable.VERTICAL == myScrollBar!!.orientation) {
-            val y: Int = if (myThumb.bounds.isEmpty) myScrollBar!!.height / 2 else myThumb.bounds.y
+          if (Adjustable.VERTICAL == scrollBar!!.orientation) {
+            val y: Int = if (thumb.bounds.isEmpty) scrollBar!!.height / 2 else thumb.bounds.y
             isReversed = myMouseY < y
           }
           else {
-            val x: Int = if (myThumb.bounds.isEmpty) myScrollBar!!.width / 2 else myThumb.bounds.x
+            val x: Int = if (thumb.bounds.isEmpty) scrollBar!!.width / 2 else thumb.bounds.x
             isReversed = myMouseX < x
-            if (!myScrollBar!!.componentOrientation.isLeftToRight) {
+            if (!scrollBar!!.componentOrientation.isLeftToRight) {
               isReversed = !isReversed
             }
           }
@@ -460,21 +467,21 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
 
     override fun mouseReleased(event: MouseEvent) {
       if (isDragging) updateMouse(event.x, event.y)
-      if (myScrollBar == null || !myScrollBar!!.isEnabled) return
-      myScrollBar!!.valueIsAdjusting = false
+      if (scrollBar == null || !scrollBar!!.isEnabled) return
+      scrollBar!!.valueIsAdjusting = false
       if (redispatchIfTrackNotClickable(event)) return
       if (SwingUtilities.isRightMouseButton(event)) return
       isDragging = false
       myOffset = 0
-      myScrollTimer.stop()
+      scrollTimer.stop()
       isValueCached = true
-      myCachedValue = myScrollBar!!.value
+      cachedValue = scrollBar!!.value
       repaint()
     }
 
     override fun mouseDragged(event: MouseEvent) {
-      if (myScrollBar == null || !myScrollBar!!.isEnabled) return
-      if (myThumb.bounds.isEmpty || SwingUtilities.isRightMouseButton(event)) return
+      if (scrollBar == null || !scrollBar!!.isEnabled) return
+      if (thumb.bounds.isEmpty || SwingUtilities.isRightMouseButton(event)) return
       if (isDragging) {
         setValueFrom(event)
       }
@@ -487,29 +494,29 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     }
 
     override fun mouseMoved(event: MouseEvent) {
-      if (myScrollBar == null || !myScrollBar!!.isEnabled) return
+      if (scrollBar == null || !scrollBar!!.isEnabled) return
       if (!isDragging) updateMouse(event.x, event.y)
     }
 
     override fun mouseExited(event: MouseEvent) {
-      if (myScrollBar == null || !myScrollBar!!.isEnabled) return
+      if (scrollBar == null || !scrollBar!!.isEnabled) return
       if (!isDragging) updateMouseExit()
     }
 
     override fun actionPerformed(event: ActionEvent) {
-      if (myScrollBar == null) {
-        myScrollTimer.stop()
+      if (scrollBar == null) {
+        scrollTimer.stop()
       }
       else {
         scroll(isReversed)
-        if (!myThumb.bounds.isEmpty) {
+        if (!thumb.bounds.isEmpty) {
           if (if (isReversed) !isMouseBeforeThumb() else !isMouseAfterThumb()) {
-            myScrollTimer.stop()
+            scrollTimer.stop()
           }
         }
-        val value: Int = myScrollBar!!.value
-        if (if (isReversed) value <= myScrollBar!!.minimum else value >= myScrollBar!!.maximum - myScrollBar!!.visibleAmount) {
-          myScrollTimer.stop()
+        val value: Int = scrollBar!!.value
+        if (if (isReversed) value <= scrollBar!!.minimum else value >= scrollBar!!.maximum - scrollBar!!.visibleAmount) {
+          scrollTimer.stop()
         }
       }
     }
@@ -545,7 +552,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
           myAnimationBehavior!!.onReset()
         }
         myTrack.bounds.setBounds(0, 0, 0, 0)
-        myThumb.bounds.setBounds(0, 0, 0, 0)
+        thumb.bounds.setBounds(0, 0, 0, 0)
       }
     }
 
@@ -556,108 +563,108 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       val thumbMin: Int
       val thumbMax: Int
       val thumbPos: Int
-      if (Adjustable.VERTICAL == myScrollBar!!.orientation) {
+      if (Adjustable.VERTICAL == scrollBar!!.orientation) {
         thumbMin = myTrack.bounds.y
-        thumbMax = myTrack.bounds.y + myTrack.bounds.height - myThumb.bounds.height
+        thumbMax = myTrack.bounds.y + myTrack.bounds.height - thumb.bounds.height
         thumbPos = MathUtil.clamp(y - myOffset, thumbMin, thumbMax)
-        if (myThumb.bounds.y != thumbPos) {
-          val minY: Int = min(myThumb.bounds.y.toDouble(), thumbPos.toDouble()).toInt()
-          val maxY: Int = (max(myThumb.bounds.y.toDouble(), thumbPos.toDouble()) + myThumb.bounds.height).toInt()
-          myThumb.bounds.y = thumbPos
+        if (thumb.bounds.y != thumbPos) {
+          val minY: Int = min(thumb.bounds.y.toDouble(), thumbPos.toDouble()).toInt()
+          val maxY: Int = (max(thumb.bounds.y.toDouble(), thumbPos.toDouble()) + thumb.bounds.height).toInt()
+          thumb.bounds.y = thumbPos
           if (myAnimationBehavior != null) {
             myAnimationBehavior!!.onThumbMove()
           }
-          repaint(myThumb.bounds.x, minY, myThumb.bounds.width, maxY - minY)
+          repaint(thumb.bounds.x, minY, thumb.bounds.width, maxY - minY)
         }
       }
       else {
         thumbMin = myTrack.bounds.x
-        thumbMax = myTrack.bounds.x + myTrack.bounds.width - myThumb.bounds.width
+        thumbMax = myTrack.bounds.x + myTrack.bounds.width - thumb.bounds.width
         thumbPos = MathUtil.clamp(x - myOffset, thumbMin, thumbMax)
-        if (myThumb.bounds.x != thumbPos) {
-          val minX: Int = min(myThumb.bounds.x.toDouble(), thumbPos.toDouble()).toInt()
-          val maxX: Int = (max(myThumb.bounds.x.toDouble(), thumbPos.toDouble()) + myThumb.bounds.width).toInt()
-          myThumb.bounds.x = thumbPos
+        if (thumb.bounds.x != thumbPos) {
+          val minX: Int = min(thumb.bounds.x.toDouble(), thumbPos.toDouble()).toInt()
+          val maxX: Int = (max(thumb.bounds.x.toDouble(), thumbPos.toDouble()) + thumb.bounds.width).toInt()
+          thumb.bounds.x = thumbPos
           if (myAnimationBehavior != null) {
             myAnimationBehavior!!.onThumbMove()
           }
-          repaint(minX, myThumb.bounds.y, maxX - minX, myThumb.bounds.height)
+          repaint(minX, thumb.bounds.y, maxX - minX, thumb.bounds.height)
         }
       }
-      val valueMin: Int = myScrollBar!!.minimum
-      val valueMax: Int = myScrollBar!!.maximum - myScrollBar!!.visibleAmount
+      val valueMin: Int = scrollBar!!.minimum
+      val valueMax: Int = scrollBar!!.maximum - scrollBar!!.visibleAmount
       // If the thumb has reached the end of the scrollbar, then set the value to its maximum.
       // Otherwise, compute the value as accurately as possible.
-      val isDefaultOrientation: Boolean = Adjustable.VERTICAL == myScrollBar!!.orientation || myScrollBar!!.componentOrientation.isLeftToRight
+      val isDefaultOrientation: Boolean = Adjustable.VERTICAL == scrollBar!!.orientation || scrollBar!!.componentOrientation.isLeftToRight
       if (thumbPos == thumbMax) {
-        myScrollBar!!.value = if (isDefaultOrientation) valueMax else valueMin
+        scrollBar!!.value = if (isDefaultOrientation) valueMax else valueMin
       }
       else {
         val valueRange = valueMax - valueMin
         val thumbRange = thumbMax - thumbMin
         val thumbValue = if (isDefaultOrientation) thumbPos - thumbMin else thumbMax - thumbPos
         isValueCached = true
-        myCachedValue = valueMin + convert(valueRange.toDouble(), thumbValue.toDouble(), thumbRange.toDouble())
-        myScrollBar!!.value = myCachedValue
+        cachedValue = valueMin + convert(valueRange.toDouble(), thumbValue.toDouble(), thumbRange.toDouble())
+        scrollBar!!.value = cachedValue
       }
       if (!isDragging) updateMouse(x, y)
     }
 
     fun startScrollTimerIfNecessary() {
-      if (!myScrollTimer.isRunning) {
+      if (!scrollTimer.isRunning) {
         if (if (isReversed) isMouseBeforeThumb() else isMouseAfterThumb()) {
-          myScrollTimer.start()
+          scrollTimer.start()
         }
       }
     }
 
     fun isMouseBeforeThumb(): Boolean {
       return when {
-        Adjustable.VERTICAL == myScrollBar!!.orientation -> isMouseOnTop()
-        myScrollBar!!.componentOrientation.isLeftToRight -> isMouseOnLeft()
+        Adjustable.VERTICAL == scrollBar!!.orientation -> isMouseOnTop()
+        scrollBar!!.componentOrientation.isLeftToRight -> isMouseOnLeft()
         else -> isMouseOnRight()
       }
     }
 
     fun isMouseAfterThumb(): Boolean {
       return when {
-        Adjustable.VERTICAL == myScrollBar!!.orientation -> isMouseOnBottom()
-        myScrollBar!!.componentOrientation.isLeftToRight -> isMouseOnRight()
+        Adjustable.VERTICAL == scrollBar!!.orientation -> isMouseOnBottom()
+        scrollBar!!.componentOrientation.isLeftToRight -> isMouseOnRight()
         else -> isMouseOnLeft()
       }
     }
 
     fun isMouseOnTop(): Boolean {
-      return myMouseY < myThumb.bounds.y
+      return myMouseY < thumb.bounds.y
     }
 
     fun isMouseOnLeft(): Boolean {
-      return myMouseX < myThumb.bounds.x
+      return myMouseX < thumb.bounds.x
     }
 
     fun isMouseOnRight(): Boolean {
-      return myMouseX > myThumb.bounds.x + myThumb.bounds.width
+      return myMouseX > thumb.bounds.x + thumb.bounds.width
     }
 
     fun isMouseOnBottom(): Boolean {
-      return myMouseY > myThumb.bounds.y + myThumb.bounds.height
+      return myMouseY > thumb.bounds.y + thumb.bounds.height
     }
 
     fun scroll(reversed: Boolean) {
-      var delta: Int = myScrollBar!!.getBlockIncrement(if (reversed) -1 else 1)
+      var delta: Int = scrollBar!!.getBlockIncrement(if (reversed) -1 else 1)
       if (reversed) delta = -delta
 
-      val oldValue: Int = myScrollBar!!.value
+      val oldValue: Int = scrollBar!!.value
       var newValue: Int = oldValue + delta
 
       if (delta > 0 && newValue < oldValue) {
-        newValue = myScrollBar!!.maximum
+        newValue = scrollBar!!.maximum
       }
       else if (delta < 0 && newValue > oldValue) {
-        newValue = myScrollBar!!.minimum
+        newValue = scrollBar!!.minimum
       }
       if (oldValue != newValue) {
-        myScrollBar!!.value = newValue
+        scrollBar!!.value = newValue
       }
     }
   }
