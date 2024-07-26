@@ -31,7 +31,6 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.find
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOption
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.inplace.*
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showExtractErrorHint
 import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ResultObjectExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -65,13 +64,13 @@ class MethodExtractor {
 
         val elements = ExtractSelector().suggestElementsToExtract(file, range)
         if (elements.isEmpty()) {
-          showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
+          InplaceExtractUtils.showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
           return@withContext
         }
 
         val analyzer = CodeFragmentAnalyzer.createAnalyzer(elements)
         if (analyzer == null) {
-          showExtractErrorHint(editor, JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"))
+          InplaceExtractUtils.showExtractErrorHint(editor, JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"))
           return@withContext
         }
 
@@ -115,7 +114,7 @@ class MethodExtractor {
       try {
         findAllOptionsToExtract(elements)
       } catch (exception: ExtractException) {
-        showExtractErrorHint(editor, exception)
+        InplaceExtractUtils.showExtractErrorHint(editor, exception)
         emptyList()
       }
     }
