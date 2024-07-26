@@ -10,7 +10,7 @@ import com.intellij.patterns.ElementPattern
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
-import org.jetbrains.kotlin.idea.completion.implCommon.handlers.HandleCompletionCharLookupElementDecorator
+import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -108,9 +108,8 @@ class LookupElementsCollector(
         }
 
         val decorated = element
-            .let { HandleCompletionCharLookupElementDecorator(it, completionParameters) }
+            .let { LookupElementDecorator.withDelegateInsertHandler(it, CompletionCharInsertHandler(completionParameters)) }
             .let { InsertExplicitTypeArgumentsLookupElementDecorator(it) }
-
 
         var result: LookupElement = decorated
         for (postProcessor in postProcessors) {
