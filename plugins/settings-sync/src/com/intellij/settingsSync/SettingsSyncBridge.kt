@@ -100,7 +100,11 @@ class SettingsSyncBridge(
     coroutineScope.launch {
       withProgressText(SettingsSyncBundle.message(initMode.messageKey)) {
         try {
+          // We only due it on `PushToServer` because  with other init modes this method can be called too early in the IDE initialization process
+          // and cause saving settings to fail — see fhttps://github.com/JetBrains/intellij-community/pull/2793#discussion_r1692737467 for context.
           if (initMode == InitMode.PushToServer) {
+            // Flush settings explicitly – if this is not done before sending sync events, then remotely synced settings
+            // might not contain the most up–to–date settings state (e.g. sync settings will be stale).
             saveIdeSettings()
           }
           settingsLog.initialize()
@@ -147,6 +151,19 @@ class SettingsSyncBridge(
 
     settingsLog.logExistingSettings()
     try {
+      // We need to create this remote file before the first sync, otherwise the settings value (even if persisted) will be overwritten by
+      // the sync-server-side value when `com.intellij.settingsSync.CloudConfigServerCommunicator#currentSnapshotFilePath` applies
+      // the remote config received in the first sync.
+      val fileExists = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
+      if (SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
+        if (!fileExists)
+          remoteCommunicator.createFile(CROSS_IDE_SYNC_MARKER_FILE, "")
+      }
+      else {
+        if (fileExists)
+          remoteCommunicator.deleteFile(CROSS_IDE_SYNC_MARKER_FILE)
+      }
+
       when (initMode) {
         is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
         InitMode.PushToServer -> mergeAndPush(previousState.idePosition, previousState.cloudPosition, FORCE_PUSH)

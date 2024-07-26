@@ -10,11 +10,8 @@ import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
-import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -23,14 +20,16 @@ import java.time.Instant
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.readText
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `settings are pushed`() = timeoutRunBlockingAndStopBridge {
-    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+    SettingsSyncSettings.getInstance().init()
+    SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
+    saveComponentStore()
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
     executeAndWaitUntilPushed {
       GeneralSettings.getInstance().initModifyAndSave {
@@ -44,6 +43,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
           autoSaveFiles = false
         }
       }
+      fileState(SettingsSyncSettings.getInstance().toFileState())
     }
   }
 
@@ -225,6 +225,65 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
+  fun `not enabling cross IDE sync initially works as expected`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().init()
+    GeneralSettings.getInstance().initModifyAndSave { autoSaveFiles = false }
+
+    assertIdeCrossSync(false)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertIdeCrossSync(false)
+
+    assertServerSnapshot {
+      fileState {
+        GeneralSettings().withState { autoSaveFiles = false }
+      }
+      fileState {
+        SettingsSyncSettings().also { it.syncEnabled = true }
+      }
+    }
+  }
+
+  @Test
+  fun `enabling cross IDE sync initially works as expected`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().init()
+    GeneralSettings.getInstance().initModifyAndSave { autoSaveFiles = false }
+
+    assertIdeCrossSync(false)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer, true)
+
+    assertIdeCrossSync(true)
+
+    assertServerSnapshot {
+      fileState {
+        GeneralSettings().withState { autoSaveFiles = false }
+      }
+      fileState {
+        SettingsSyncSettings().also { it.syncEnabled = true }
+      }
+    }
+  }
+
+  @Test
+  fun `sync settings are always uploaded even if system settings are disabled`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().init()
+    GeneralSettings.getInstance().initModifyAndSave { autoSaveFiles = false }
+
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer, false)
+
+    assertServerSnapshot {
+      // the state of `GeneralSettings` should be explicitly absent
+      fileState {
+        SettingsSyncSettings().also { it.syncEnabled = true; it.setCategoryEnabled(SettingsCategory.SYSTEM, false) }
+      }
+    }
+  }
+
+  @Test
   fun `exportable non-roamable settings should not be synced`() = timeoutRunBlockingAndStopBridge {
     testVariousComponentsShouldBeSyncedOrNot(ExportableNonRoamable(), expectedToBeSynced = false)
   }
@@ -319,20 +378,20 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     Assertions.assertTrue(UISettings.getInstance().compactTreeIndents)
   }
 
-/*
-  @TestFor(issues = ["IDEA-291623"])
-  @Test
-  fun `zip file size limit exceed`() {
-    val notificationServiceSpy = Mockito.spy<NotificationServiceImpl>()
-    ApplicationManager.getApplication().replaceService(NotificationService::class.java, notificationServiceSpy, disposable)
+  /*
+    @TestFor(issues = ["IDEA-291623"])
+    @Test
+    fun `zip file size limit exceed`() {
+      val notificationServiceSpy = Mockito.spy<NotificationServiceImpl>()
+      ApplicationManager.getApplication().replaceService(NotificationService::class.java, notificationServiceSpy, disposable)
 
-    EditorSettingsExternalizable.getInstance().initModifyAndSave {
-      languageBreadcrumbsMap = (1..100000).associate { UUID.randomUUID().toString() to true } // please FIXME if you now a better way to make a fat file
-    }
-    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+      EditorSettingsExternalizable.getInstance().initModifyAndSave {
+        languageBreadcrumbsMap = (1..100000).associate { UUID.randomUUID().toString() to true } // please FIXME if you now a better way to make a fat file
+      }
+      initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
-    verify(notificationServiceSpy).notifyZipSizeExceed()
-  }*/
+      verify(notificationServiceSpy).notifyZipSizeExceed()
+    }*/
 
   //@Test
   fun `only changed components should be reloaded`() {

@@ -11,10 +11,6 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestCoroutineScheduler
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.runCurrent
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -25,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 
@@ -101,6 +98,12 @@ internal abstract class SettingsSyncTestBase {
   protected fun assertFileWithContent(expectedContent: String, file: Path) {
     assertTrue(file.exists(), "File $file does not exist")
     assertEquals(expectedContent, file.readText(), "File $file has unexpected content")
+  }
+
+  protected fun assertIdeCrossSync(expectedIdeCrossSyncState: Boolean?) {
+    val actualIdeCrossSyncState = remoteCommunicator.ideCrossSyncState()
+
+    assertEquals(expectedIdeCrossSyncState, actualIdeCrossSyncState, "Unexpected IDE cross sync state $actualIdeCrossSyncState, expected $actualIdeCrossSyncState")
   }
 
   protected fun assertServerSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {

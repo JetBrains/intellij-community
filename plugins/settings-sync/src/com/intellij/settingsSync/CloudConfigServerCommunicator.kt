@@ -59,18 +59,18 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
 
   @VisibleForTesting
   @Throws(IOException::class, UnauthorizedException::class)
-  protected fun currentSnapshotFilePath(): String? {
+  protected fun currentSnapshotFilePath(): Pair<String, Boolean>? {
     try {
       val crossIdeSyncEnabled = isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
       if (crossIdeSyncEnabled != SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
         LOG.info("Cross-IDE sync status on server is: ${enabledOrDisabled(crossIdeSyncEnabled)}. Updating local settings with it.")
         SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = crossIdeSyncEnabled
       }
-      return if (crossIdeSyncEnabled) {
-        SETTINGS_SYNC_SNAPSHOT_ZIP
+      if (crossIdeSyncEnabled) {
+        return Pair(SETTINGS_SYNC_SNAPSHOT_ZIP, true)
       }
       else {
-        "${ApplicationNamesInfo.getInstance().productName.lowercase()}/$SETTINGS_SYNC_SNAPSHOT_ZIP"
+        return Pair("${ApplicationNamesInfo.getInstance().productName.lowercase()}/$SETTINGS_SYNC_SNAPSHOT_ZIP", false)
       }
     }
     catch (e: Throwable) {
@@ -118,7 +118,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     val snapshotFilePath: String
     val defaultMessage = "Unknown during checking $CROSS_IDE_SYNC_MARKER_FILE"
     try {
-      snapshotFilePath = currentSnapshotFilePath() ?: return SettingsSyncPushResult.Error(defaultMessage)
+      snapshotFilePath = currentSnapshotFilePath()?.first ?: return SettingsSyncPushResult.Error(defaultMessage)
     }
     catch (ioe: IOException) {
       return SettingsSyncPushResult.Error(ioe.message ?: defaultMessage)
@@ -163,7 +163,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
   override fun checkServerState(): ServerState {
     val idTokenInRequest = getCurrentIdToken()
     try {
-      val snapshotFilePath = currentSnapshotFilePath() ?: return ServerState.Error("Unknown error during checkServerState")
+      val snapshotFilePath = currentSnapshotFilePath()?.first ?: return ServerState.Error("Unknown error during checkServerState")
       val latestVersion = client.getLatestVersion(snapshotFilePath)
       LOG.debug("Latest version info: $latestVersion")
       clearLastRemoteError()
@@ -183,7 +183,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     LOG.info("Receiving settings snapshot from the cloud config server...")
     val idTokenInRequest = getCurrentIdToken()
     try {
-      val snapshotFilePath = currentSnapshotFilePath() ?: return UpdateResult.Error("Unknown error during receiveUpdates")
+      val (snapshotFilePath, isCrossIdeSync) = currentSnapshotFilePath() ?: return UpdateResult.Error("Unknown error during receiveUpdates")
       val (stream, version) = receiveSnapshotFile(snapshotFilePath)
       clearLastRemoteError()
       if (stream == null) {
@@ -200,7 +200,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
           return UpdateResult.NoFileOnServer
         }
         else {
-          return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version)
+          return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version, isCrossIdeSync)
         }
       }
       finally {

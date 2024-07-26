@@ -49,8 +49,9 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
     componentStore.resetComponents()
   }
 
-  protected suspend fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
+  protected suspend fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit, crossIdeSync: Boolean = false) {
     SettingsSyncSettings.getInstance().syncEnabled = true
+    SettingsSyncLocalSettings.getInstance().state.crossIdeSyncEnabled = crossIdeSync;
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
     val controls = SettingsSyncMain.init(currentThreadCoroutineScope(), disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
