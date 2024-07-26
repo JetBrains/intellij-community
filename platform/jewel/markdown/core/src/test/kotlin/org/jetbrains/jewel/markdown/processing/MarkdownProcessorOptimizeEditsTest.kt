@@ -45,7 +45,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `first blocks stay the same`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -80,7 +80,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `first block edited`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -136,7 +136,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `last block edited`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -195,7 +195,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `middle block edited`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -256,7 +256,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `blocks merged`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -313,7 +313,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `blocks split`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -371,7 +371,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `blocks deleted`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -423,7 +423,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `blocks added`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondDocument =
             """
@@ -491,7 +491,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `no changes`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun = processor.processWithQuickEdits(rawMarkdown)
         assertHtmlEquals(
@@ -523,7 +523,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `empty line added`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun = processor.processWithQuickEdits("\n" + rawMarkdown)
         assertHtmlEquals(
@@ -557,7 +557,7 @@ class MarkdownProcessorOptimizeEditsTest {
     /** Regression https://github.com/JetBrains/jewel/issues/344 */
     @Test
     fun `content if empty`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         processor.processWithQuickEdits(rawMarkdown)
         val secondRun = processor.processWithQuickEdits("")
         assertHtmlEquals(
@@ -570,7 +570,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `chained changes`() {
-        val processor = MarkdownProcessor(optimizeEdits = true)
+        val processor = MarkdownProcessor(editorMode = true)
         processor.processWithQuickEdits(
             """
             # Header 0

@@ -35,15 +35,21 @@ import org.commonmark.node.ListBlock as CMListBlock
  *
  * @param extensions Extensions to use when processing the Markdown (e.g.,
  *    to support parsing custom block-level Markdown).
- * @param optimizeEdits Indicates whether the processing should only update
- *    the changed blocks by keeping a previous state in memory. Default is
- *    `false`; set this to `true` if this parser will be used in an editor
- *    scenario, where the raw Markdown is only ever going to change
- *    slightly but frequently (e.g., as the user types). Setting this to
- *    `true` has a memory cost, and can be a performance regression if the
- *    parse input is not always small variations of the same basic text.
- *    When this is `true`, the instance of [MarkdownProcessor] is **not**
- *    thread-safe!
+ * @param editorMode Indicates whether the processor should be optimized
+ *    for an editor/preview scenario, where it assumes small incremental
+ *    changes as performed by a user typing. This means it will only update
+ *    the changed blocks by keeping state in memory.
+ *
+ *    Default is `false`; set this to `true` if this parser will be used in
+ *    an editor scenario, where the raw Markdown is only ever going to
+ *    change slightly but frequently (e.g., as the user types).
+ *
+ *    **Attention:** do **not** reuse or share an instance of
+ *    [MarkdownProcessor] that is in [editorMode]. Processing entirely
+ *    different Markdown strings will defeat the purpose of the
+ *    optimization. When in editor mode, the instance of
+ *    [MarkdownProcessor] is **not** thread-safe!
+ *
  * @param commonMarkParser The CommonMark [Parser] used to parse the
  *    Markdown. By default it's a vanilla instance provided by the
  *    [MarkdownParserFactory], but you can provide your own if you need to
@@ -54,8 +60,8 @@ import org.commonmark.node.ListBlock as CMListBlock
 @ExperimentalJewelApi
 public class MarkdownProcessor(
     private val extensions: List<MarkdownProcessorExtension> = emptyList(),
-    private val optimizeEdits: Boolean = false,
-    private val commonMarkParser: Parser = MarkdownParserFactory.create(optimizeEdits, extensions),
+    private val editorMode: Boolean = false,
+    private val commonMarkParser: Parser = MarkdownParserFactory.create(editorMode, extensions),
 ) {
     private var currentState = State(emptyList(), emptyList(), emptyList())
 
@@ -76,7 +82,7 @@ public class MarkdownProcessor(
         @Language("Markdown") rawMarkdown: String,
     ): List<MarkdownBlock> {
         val blocks =
-            if (optimizeEdits) {
+            if (editorMode) {
                 processWithQuickEdits(rawMarkdown)
             } else {
                 parseRawMarkdown(rawMarkdown)

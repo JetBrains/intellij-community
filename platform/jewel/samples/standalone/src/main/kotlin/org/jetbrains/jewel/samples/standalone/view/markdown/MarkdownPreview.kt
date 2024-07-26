@@ -56,7 +56,7 @@ internal fun MarkdownPreview(
     // We are doing this here for the sake of simplicity.
     // In a real-world scenario you would be doing this outside your Composables,
     // potentially involving ViewModels, dependency injection, etc.
-    val processor = remember { MarkdownProcessor(extensions, optimizeEdits = true) }
+    val processor = remember { MarkdownProcessor(extensions, editorMode = true) }
 
     LaunchedEffect(rawMarkdown) {
         // TODO you may want to debounce or drop on backpressure, in real usages. You should also not do this
