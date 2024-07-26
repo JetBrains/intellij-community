@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInsight.generate;
+package org.jetbrains.kotlin.idea.k2.generate;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
@@ -15,15 +15,15 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("code-insight/kotlin.code-insight.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/codeInsight/generate/secondaryConstructors")
-public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTest {
+@TestMetadata("../../idea/tests/testData/codeInsight/generate/secondaryConstructors")
+public class FirGenerateSecondaryConstructorActionTestGenerated extends AbstractFirGenerateSecondaryConstructorActionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K1;
+        return KotlinPluginMode.K2;
     }
 
     private void runTest(String testDataFilePath) throws Exception {
@@ -32,76 +32,76 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
 
     @TestMetadata("empty.kt")
     public void testEmpty() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/empty.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/empty.kt");
     }
 
     @TestMetadata("emptyExists.kt")
     public void testEmptyExists() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/emptyExists.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/emptyExists.kt");
     }
 
     @TestMetadata("javaSupers.kt")
     public void testJavaSupers() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/javaSupers.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/javaSupers.kt");
     }
 
     @TestMetadata("javaSupersWithGenerics.kt")
     public void testJavaSupersWithGenerics() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/javaSupersWithGenerics.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/javaSupersWithGenerics.kt");
     }
 
     @TestMetadata("javaSupersWithKeywords.kt")
     public void testJavaSupersWithKeywords() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/javaSupersWithKeywords.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/javaSupersWithKeywords.kt");
     }
 
     @TestMetadata("primaryExists.kt")
     public void testPrimaryExists() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/primaryExists.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/primaryExists.kt");
     }
 
     @TestMetadata("properties.kt")
     public void testProperties() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/properties.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/properties.kt");
     }
 
     @TestMetadata("propertiesWithKeywords.kt")
     public void testPropertiesWithKeywords() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/propertiesWithKeywords.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/propertiesWithKeywords.kt");
     }
 
     @TestMetadata("propertiesWithSupers.kt")
     public void testPropertiesWithSupers() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/propertiesWithSupers.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/propertiesWithSupers.kt");
     }
 
     @TestMetadata("superInvisible.kt")
     public void testSuperInvisible() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/superInvisible.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/superInvisible.kt");
     }
 
     @TestMetadata("supers.kt")
     public void testSupers() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/supers.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/supers.kt");
     }
 
     @TestMetadata("supersAllExist.kt")
     public void testSupersAllExist() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/supersAllExist.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/supersAllExist.kt");
     }
 
     @TestMetadata("supersSomeExist.kt")
     public void testSupersSomeExist() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/supersSomeExist.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/supersSomeExist.kt");
     }
 
     @TestMetadata("supersWithGenerics.kt")
     public void testSupersWithGenerics() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/supersWithGenerics.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/supersWithGenerics.kt");
     }
 
     @TestMetadata("supersWithVarargs.kt")
     public void testSupersWithVarargs() throws Exception {
-        runTest("testData/codeInsight/generate/secondaryConstructors/supersWithVarargs.kt");
+        runTest("../../idea/tests/testData/codeInsight/generate/secondaryConstructors/supersWithVarargs.kt");
     }
 }
