@@ -70,7 +70,10 @@ fun Iterable<Int>.range(): Int {
 /** Difference between the smallest and the largest values */
 fun Iterable<PerformanceMetrics.Metric>.rangeValue(): Int = this.map { it.value }.range()
 
-/** Calculates [percentile] in the provided collection */
+/**
+ * Calculates [percentile] in the provided collection.
+ * It will return only the existing data point (not a calculated "middle point" between data points)
+ */
 fun Iterable<Int>.percentile(percentile: Byte): Int {
   require(percentile in 0..100) { "Percentile must be between 0 and 100" }
   require(this.count() > 0) { "Cannot calculate percentile because collection is empty" }
