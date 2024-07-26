@@ -134,10 +134,9 @@ class IjentNioPath internal constructor(
             if (LinkOption.NOFOLLOW_LINKS in options)
               normalizedPath
             else
-              nioFs
-                .fsBlocking {
-                  nioFs.ijent.fs.canonicalize(normalizedPath)
-                }
+              fsBlocking {
+                nioFs.ijent.fs.canonicalize(normalizedPath)
+              }
                 .getOrThrowFileSystemException()
           }
           .toNioPath()

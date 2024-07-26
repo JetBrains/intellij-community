@@ -5,9 +5,13 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.fs.*
 import com.intellij.util.text.nullize
+import kotlinx.coroutines.Dispatchers
 import java.io.IOException
 import java.nio.channels.NonWritableChannelException
 import java.nio.file.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.startCoroutine
 
 /**
  * Returns an adapter from [IjentFileSystemApi] to [java.nio.file.FileSystem]. The adapter is automatically registered in advance,
@@ -67,3 +71,52 @@ internal fun Path.toIjentPath(isWindows: Boolean): IjentPath =
 
     else -> IjentPath.Relative.parse(toString()).getOrThrow()
   }
+
+internal fun <T> fsBlocking(body: suspend () -> T): T = invokeSuspending(body)
+
+/**
+ * Runs a suspending IO operation [block] in non-suspending code.
+ * Normally, [kotlinx.coroutines.runBlocking] should be used in such cases,
+ * but it has significant performance overhead: creation and installation of an [kotlinx.coroutines.EventLoop].
+ *
+ * Unfortunately, the execution of [block] may still launch coroutines, although they are very primitive.
+ * To mitigate this, we use [Dispatchers.Unconfined] as an elementary event loop.
+ * It does not change the final thread of execution,
+ * as we are awaiting for a monitor on the same thread where [invokeSuspending] was called.
+ *
+ * We manage to save up to 30% (300 microseconds) of performance cost in comparison with [kotlinx.coroutines.runBlocking],
+ * which is important in case of many short IO operations.
+ *
+ * The invoked operation is non-cancellable, as one can expect from regular native-based IO calls.
+ *
+ * @see com.intellij.openapi.application.impl.runSuspend
+ */
+private fun <T> invokeSuspending(block: suspend () -> T): T {
+  val run = RunSuspend<T>()
+  block.startCoroutine(run)
+  return run.await()
+}
+
+private class RunSuspend<T> : Continuation<T> {
+  override val context: CoroutineContext = Dispatchers.Unconfined
+
+  var result: Result<T>? = null
+
+  override fun resumeWith(result: Result<T>) = synchronized(this) {
+    this.result = result
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") (this as Object).notifyAll()
+  }
+
+  fun await(): T {
+    synchronized(this) {
+      while (true) {
+        when (val result = this.result) {
+          null -> @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") (this as Object).wait()
+          else -> {
+            return result.getOrThrow() // throw up failure
+          }
+        }
+      }
+    }
+  }
+}

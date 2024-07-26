@@ -9,7 +9,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem.FsAndUs
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
-import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.*
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.CreateDirectoryException
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import kotlinx.coroutines.job
 import java.io.IOException
@@ -19,7 +19,9 @@ import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
 import java.nio.file.StandardOpenOption.*
-import java.nio.file.attribute.*
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileAttribute
+import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
@@ -106,16 +108,17 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         .append(APPEND in options)
         .truncateExisting(TRUNCATE_EXISTING in options)
         .creationMode(when {
-          CREATE_NEW in options -> IjentFileSystemApi.FileWriterCreationMode.ONLY_CREATE
-          CREATE in options -> IjentFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
-          else -> IjentFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
-        }).build()
+                        CREATE_NEW in options -> IjentFileSystemApi.FileWriterCreationMode.ONLY_CREATE
+                        CREATE in options -> IjentFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
+                        else -> IjentFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
+                      }).build()
 
 
-      fs.fsBlocking {
+      fsBlocking {
         if (READ in options) {
           IjentNioFileChannel.createReadingWriting(fs, writeOptions)
-        } else {
+        }
+        else {
           IjentNioFileChannel.createWriting(fs, writeOptions)
         }
       }
@@ -126,7 +129,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       if (DELETE_ON_CLOSE in options) TODO("READ + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("READ + NOFOLLOW_LINKS")
 
-      fs.fsBlocking {
+      fsBlocking {
         IjentNioFileChannel.createReading(fs, path.ijentPath)
       }
     }
@@ -136,7 +139,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureIjentNioPath(dir)
     val nioFs = dir.nioFs
 
-    return nioFs.fsBlocking {
+    return fsBlocking {
       // TODO listDirectoryWithAttrs+sun.nio.fs.BasicFileAttributesHolder
       val childrenNames = nioFs.ijent.fs.listDirectory(ensurePathIsAbsolute(dir.ijentPath)).getOrThrowFileSystemException()
 
@@ -162,21 +165,23 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val path = dir.ijentPath
     try {
       ensurePathIsAbsolute(path)
-    } catch (e : IllegalArgumentException) {
+    }
+    catch (e: IllegalArgumentException) {
       throw IOException(e)
     }
     try {
-      dir.nioFs.fsBlocking {
+      fsBlocking {
         when (val fsApi = dir.nioFs.ijent.fs) {
           is IjentFileSystemPosixApi -> fsApi.createDirectory(path, emptyList())
           is IjentFileSystemWindowsApi -> TODO()
         }
       }
     }
-    catch (e : CreateDirectoryException) {
+    catch (e: CreateDirectoryException) {
       when (e) {
         is CreateDirectoryException.DirAlreadyExists,
-        is CreateDirectoryException.FileAlreadyExists -> throw FileAlreadyExistsException(dir.toString())
+        is CreateDirectoryException.FileAlreadyExists,
+          -> throw FileAlreadyExistsException(dir.toString())
         is CreateDirectoryException.ParentNotFound -> throw NoSuchFileException(dir.toString(), null, "Parent directory not found")
         else -> throw IOException(e)
       }
@@ -185,10 +190,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun delete(path: Path) {
     ensureIjentNioPath(path)
-    path.nioFs.fsBlocking {
+    fsBlocking {
       try {
         path.nioFs.ijent.fs.deleteDirectory(path.ijentPath as IjentPath.Absolute, false)
-      } catch (e : IjentFileSystemApi.DeleteException.DirNotEmpty) {
+      }
+      catch (e: IjentFileSystemApi.DeleteException.DirNotEmpty) {
         val exception = DirectoryNotEmptyException(path.toString())
         exception.addSuppressed(e)
         throw exception
@@ -206,7 +212,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val targetPath = target.ijentPath
     ensurePathIsAbsolute(sourcePath)
     ensurePathIsAbsolute(targetPath)
-    source.nioFs.fsBlocking {
+    fsBlocking {
       var builder = source.nioFs.ijent.fs.copyOptionsBuilder(sourcePath, targetPath)
       for (option in options) {
         builder = when (option) {
@@ -232,10 +238,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureIjentNioPath(path2)
     val nioFs = path.nioFs
 
-    return nioFs
-      .fsBlocking {
-        nioFs.ijent.fs.sameFile(ensurePathIsAbsolute(path.ijentPath), ensurePathIsAbsolute(path2.ijentPath))
-      }
+    return fsBlocking {
+      nioFs.ijent.fs.sameFile(ensurePathIsAbsolute(path.ijentPath), ensurePathIsAbsolute(path2.ijentPath))
+    }
       .getOrThrowFileSystemException()
   }
 
@@ -250,7 +255,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun checkAccess(path: Path, vararg modes: AccessMode) {
     val fs = ensureIjentNioPath(path).nioFs
-    fs.fsBlocking {
+    fsBlocking {
       when (val ijent = fs.ijent) {
         is FsAndUserApi.Posix -> {
           // According to the javadoc, this method must follow symlinks.
@@ -307,7 +312,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     val result = when (fs.ijent) {
       is FsAndUserApi.Posix ->
-        IjentNioPosixFileAttributes(fs.fsBlocking {
+        IjentNioPosixFileAttributes(fsBlocking {
           statPosix(path.ijentPath, fs.ijent.fs, LinkOption.NOFOLLOW_LINKS in options)
         })
 

@@ -1,13 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.ijent.fs.IjentFileInfo
-import com.intellij.platform.ijent.fs.IjentFileSystemApi
-import com.intellij.platform.ijent.fs.IjentOpenedFile
-import com.intellij.platform.ijent.fs.IjentPath
-import com.intellij.platform.ijent.fs.IjentPosixFileInfo
+import com.intellij.platform.ijent.fs.*
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.*
@@ -53,7 +48,7 @@ internal class IjentNioFileChannel private constructor(
     }
 
     var totalRead = 0L
-    nioFs.fsBlocking {
+    fsBlocking {
       handleThatSmartMultiBufferApi(dsts, offset, length) { buf ->
         val read = when (val res = ijentOpenedFile.read(buf).getOrThrowFileSystemException()) {
           is IjentOpenedFile.Reader.ReadResult.Bytes -> res.bytesRead
@@ -77,7 +72,7 @@ internal class IjentNioFileChannel private constructor(
     }
 
     var totalWritten = 0L
-    nioFs.fsBlocking {
+    fsBlocking {
       handleThatSmartMultiBufferApi(srcs, offset, length) { buf ->
         val written = ijentOpenedFile.write(buf).getOrThrowFileSystemException()
         if (written <= 0) {  // A non-strict comparison.
@@ -119,14 +114,14 @@ internal class IjentNioFileChannel private constructor(
 
   override fun position(): Long {
     checkClosed()
-    return nioFs.fsBlocking {
+    return fsBlocking {
       ijentOpenedFile.tell().getOrThrowFileSystemException()
     }
   }
 
   override fun position(newPosition: Long): FileChannel {
     checkClosed()
-    return nioFs.fsBlocking {
+    return fsBlocking {
       ijentOpenedFile.seek(newPosition, IjentOpenedFile.SeekWhence.START).getOrThrowFileSystemException()
       this@IjentNioFileChannel
     }
@@ -134,7 +129,7 @@ internal class IjentNioFileChannel private constructor(
 
   override fun size(): Long {
     checkClosed()
-    return nioFs.fsBlocking {
+    return fsBlocking {
       return@fsBlocking when (val type = nioFs.ijent.fs.stat(ijentOpenedFile.path, false).getOrThrowFileSystemException().type) {
         is IjentFileInfo.Type.Regular -> type.size
         is IjentFileInfo.Type.Directory, is IjentFileInfo.Type.Other -> throw IOException("This file channel is opened for a directory")
@@ -150,7 +145,7 @@ internal class IjentNioFileChannel private constructor(
       is IjentOpenedFile.Reader -> throw IOException("File ${ijentOpenedFile.path} is not open for writing")
     }
     val currentSize = this.size()
-    nioFs.fsBlocking {
+    fsBlocking {
       if (size < currentSize) {
         try {
           file.truncate(size)
@@ -229,7 +224,7 @@ internal class IjentNioFileChannel private constructor(
       is IjentOpenedFile.Reader -> Unit
       is IjentOpenedFile.Writer -> throw NonReadableChannelException()
     }
-    val readResult = nioFs.fsBlocking {
+    val readResult = fsBlocking {
       if (position == null) {
         ijentOpenedFile.read(dst)
       } else {
@@ -253,8 +248,8 @@ internal class IjentNioFileChannel private constructor(
       is IjentOpenedFile.Reader -> throw NonWritableChannelException()
     }
 
-    val bytesWritten = nioFs
-      .fsBlocking {
+    val bytesWritten =
+      fsBlocking {
         if (position != null) {
           ijentOpenedFile.write(src, position)
         } else {
@@ -281,7 +276,7 @@ internal class IjentNioFileChannel private constructor(
   @Throws(FileSystemException::class)
   override fun implCloseChannel() {
     closeOrigin = Throwable()
-    nioFs.fsBlocking {
+    fsBlocking {
       ijentOpenedFile.close()
     }
   }
