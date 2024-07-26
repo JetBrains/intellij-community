@@ -3,6 +3,7 @@ package com.jetbrains.python.testing
 
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -18,6 +19,9 @@ class PyTestLineMarkerContributor : RunLineMarkerContributor(), DumbAware {
       return null
     }
     val testElement = element.parent ?: return null
+    if (!PyTestLineMarkerContributorCustomizer.shouldProcessElement(testElement)) {
+      return null
+    }
 
     val typeEvalContext = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
     if ((testElement is PyClass || testElement is PyFunction)
@@ -26,4 +30,16 @@ class PyTestLineMarkerContributor : RunLineMarkerContributor(), DumbAware {
     }
     return null
   }
+}
+
+interface PyTestLineMarkerContributorCustomizer {
+  companion object {
+    private val EP_NAME: ExtensionPointName<PyTestLineMarkerContributorCustomizer> =
+      ExtensionPointName.create("com.jetbrains.python.testing.pyTestLineMarkerContributorCustomizer")
+
+    @JvmStatic
+    fun shouldProcessElement(testElement: PsiElement): Boolean = EP_NAME.extensionList.all { it.isTestableElement(testElement) }
+  }
+
+  fun isTestableElement(testElement: PsiElement): Boolean = true
 }
