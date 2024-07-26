@@ -79,7 +79,9 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
-private typealias FrameAllocatorTask = suspend (saveTemplateJob: Job?, projectInitObserver: ProjectInitObserver?) -> Unit
+internal fun interface FrameAllocatorTask {
+  suspend fun execute(saveTemplateJob: Job?, projectInitObserver: ProjectInitObserver?)
+}
 
 internal sealed interface ProjectInitObserver {
   fun scheduleProjectPreInit(project: Project): Job
@@ -90,7 +92,7 @@ internal sealed interface ProjectInitObserver {
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
   open suspend fun run(task: FrameAllocatorTask) {
     return coroutineScope {
-      task(scheduleSaveTemplate(options), null)
+      task.execute(scheduleSaveTemplate(options), null)
     }
   }
 
@@ -174,7 +176,7 @@ internal class ProjectUiFrameAllocator(
       }
 
       try {
-        doRun(outOfLoadingScope = this, task = task, deferredProjectFrameHelper = deferredProjectFrameHelper)
+        doRun(outOfLoadingScope = this, task = task)
       }
       finally {
         debugTask.cancel()
@@ -182,9 +184,7 @@ internal class ProjectUiFrameAllocator(
     }
   }
 
-  private suspend fun doRun(outOfLoadingScope: CoroutineScope,
-                            task: FrameAllocatorTask,
-                            deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>) {
+  private suspend fun doRun(outOfLoadingScope: CoroutineScope, task: FrameAllocatorTask) {
     coroutineScope {
       val loadingScope = this
       val projectInitObserver = FrameAllocatorProjectInitObserver(coroutineScope = loadingScope,
@@ -256,7 +256,7 @@ internal class ProjectUiFrameAllocator(
         }
       }
 
-      task(scheduleSaveTemplate(options), projectInitObserver)
+      task.execute(scheduleSaveTemplate(options), projectInitObserver)
       startOfWaitingForReadyFrame.set(System.nanoTime())
     }
   }
