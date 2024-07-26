@@ -54,6 +54,35 @@ fun main() {
     EventsBus.unsubscribeAll()
 }
 ```
+ You can also unsubscribe a single event when you want. (The same for shared events)
+
+```kotlin
+import com.intellij.tools.ide.starter.bus.EventsBus
+import com.intellij.tools.ide.starter.bus.events.Event
+import java.util.concurrent.atomic.AtomicInteger
+
+
+fun main() {
+  val result = AtomicInteger(0)
+  val subscriberName1 = "New subscriber 1"
+  EventsBus.subscribe(subscriberName1) { event: Event ->
+    {
+      result.incrementAndGet()
+      EventBus.unsubscribe<Event>(subscriberName1)
+    }
+  }
+
+  EventsBus.postAndWaitProcessing(Event())
+
+   println("Event was processed ${result.get()} times") // 1 times
+
+  EventsBus.postAndWaitProcessing(Event())
+
+  println("Event was processed ${result.get()} times") // Still be 1 times
+
+  EventsBus.unsubscribeAll()
+}
+```
 
 
 # Shared between processes

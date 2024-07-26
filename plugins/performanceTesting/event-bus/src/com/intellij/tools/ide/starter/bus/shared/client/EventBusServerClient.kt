@@ -6,7 +6,8 @@ import kotlin.time.Duration
 
 interface EventBusServerClient {
   fun postAndWaitProcessing(sharedEventDto: SharedEventDto): Boolean
-  fun newSubscriber(eventClass: Class<out Event>, timeout: Duration)
+  fun newSubscriber(eventClass: Class<out Event>, timeout: Duration, subscriberName: String)
+  fun unsubscribe(eventClass: Class<out Event>, subscriberName: String)
   fun getEvents(): Map<String, List<Pair<String, Event>>?>
   fun processedEvent(eventName: String)
   fun endServerProcess()
