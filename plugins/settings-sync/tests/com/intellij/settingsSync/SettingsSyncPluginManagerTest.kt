@@ -1,7 +1,5 @@
 package com.intellij.settingsSync
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginEnableStateChangedListener
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
@@ -11,7 +9,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicReference
@@ -364,7 +361,6 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       typengo(enabled = true)
     }
     assertPluginManagerState(pushedState)
-    Thread.sleep(100)
     assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, quickJump.idString))
   }
 
@@ -464,6 +460,35 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       localization_ja(enabled = true)
       localization_kr(enabled = true)
     }
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-157266"])
+  fun `disable syncing of incompatible plugin`(){
+    val weirdPlugin = TestPluginDescriptor(
+      "org.intellij.weird"
+    )
+    TestPluginDescriptor.ALL.remove(weirdPlugin.pluginId)
+    testPluginManager.addPluginDescriptors(git4idea)
+    pluginManager.updateStateFromIdeOnStart(state {
+      git4idea (enabled = true) // bundled
+    })
+    assertPluginManagerState {
+      // empty
+    }
+
+    pushToIdeAndWait(state {
+      git4idea(enabled = true)
+      weirdPlugin(enabled = true)
+    })
+
+    assertIdeState {
+      git4idea (enabled = true)
+    }
+    assertPluginManagerState {
+      weirdPlugin(enabled = true)
+    }
+    assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, weirdPlugin.idString))
   }
 
   private fun restart_required_base(installedBefore: Boolean, enabledBefore: Boolean, enabledInPush: Boolean) = runTest {

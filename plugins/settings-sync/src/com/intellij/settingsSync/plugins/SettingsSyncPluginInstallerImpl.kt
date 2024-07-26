@@ -5,7 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
@@ -25,36 +25,51 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
   override suspend fun installPlugins(pluginsToInstall: List<PluginId>) {
     if (pluginsToInstall.isEmpty())
       return
+
+    val project: Project? = ProjectManager.getInstanceIfCreated()?.openProjects?.firstOrNull()
+    val downloaders = withBackgroundProgress(currentOrDefaultProject(project), SettingsSyncBundle.message("installing.plugins.indicator")) {
+      createDownloaders(pluginsToInstall)
+    }
+    val remainingPluginIds = mutableSetOf(*pluginsToInstall.toTypedArray())
+    downloaders.forEach {
+      remainingPluginIds.remove(it.id)
+    }
+    var settingsChanged = false
+    remainingPluginIds.forEach {
+      LOG.info("Cannot find compatible updates for $it. Will not try to install it again.")
+      disablePluginSync(it)
+      settingsChanged = true
+    }
+    installCollected(downloaders, settingsChanged)
+  }
+
+  internal open suspend fun installCollected(installers: List<PluginDownloader>, settingsAlreadyChanged: Boolean) {
     withModalProgress(ModalTaskOwner.guess(), SettingsSyncBundle.message("installing.plugins.indicator"), TaskCancellation.nonCancellable()) {
-      val downloaders = createDownloaders(pluginsToInstall)
-      installCollected(downloaders)
+      installCollected(installers, settingsAlreadyChanged)
     }
   }
 
-  private suspend fun installCollected(installers: List<PluginDownloader>) {
+  internal suspend fun doInstallCollected(installers: List<PluginDownloader>, settingsAlreadyChanged: Boolean) {
     val pluginsRequiredRestart = mutableListOf<String>()
-    var settingsChanged = false
-    val settings = SettingsSyncSettings.getInstance()
+    var settingsChanged = settingsAlreadyChanged
     for (installer in installers) {
-      withContext(Dispatchers.EDT) {
-        try {
-          if (!install(installer)) {
-            pluginsRequiredRestart.add(installer.pluginName)
-          }
-          LOG.info("Setting sync installed plugin ID: ${installer.id.idString}")
+      try {
+        if (!install(installer)) {
+          pluginsRequiredRestart.add(installer.pluginName)
         }
-        catch (ex: Exception) {
+        LOG.info("Setting sync installed plugin ID: ${installer.id.idString}")
+      }
+      catch (ex: Exception) {
 
-          // currently, we don't install plugins that have missing dependencies.
-          // TODO: toposort plugin with dependencies.
-          // TODO: Skip installation dependent plugins, if any dependency fails to install.
-          LOG.warn("An exception occurred while installing plugin ${installer.id.idString}. Will disable syncing this plugin", ex)
-          settings.setSubcategoryEnabled(SettingsCategory.PLUGINS, installer.id.idString, false)
-          settingsChanged = true
-        }
+        // currently, we don't install plugins that have missing dependencies.
+        // TODO: toposort plugin with dependencies.
+        // TODO: Skip installation dependent plugins, if any dependency fails to install.
+        LOG.warn("An exception occurred while installing plugin ${installer.id.idString}. Will disable syncing this plugin", ex)
+        disablePluginSync(installer.id)
+        settingsChanged = true
       }
     }
-    if (settingsChanged){
+    if (settingsChanged) {
       SettingsSyncEvents.getInstance().fireCategoriesChanged()
     }
     if (pluginsRequiredRestart.size > 0) {
@@ -62,22 +77,25 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
     }
   }
 
-  open internal fun install(installer: PluginDownloader): Boolean = installer.installDynamically(null)
+  private fun disablePluginSync(pluginId: PluginId) {
+    SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.PLUGINS, pluginId.idString, false)
+  }
+
+  internal open suspend fun install(installer: PluginDownloader): Boolean {
+    return withContext(Dispatchers.EDT) {
+      installer.installDynamically(null)
+    }
+  }
 
   open internal fun createDownloaders(pluginIds: Collection<PluginId>): List<PluginDownloader> {
     val compatibleUpdates = MarketplaceRequests.getLastCompatiblePluginUpdate(pluginIds.toSet())
     val retval = arrayListOf<PluginDownloader>()
-    val remainingPluginIds = mutableSetOf(*pluginIds.toTypedArray())
     for (update in compatibleUpdates) {
       val pluginDescriptor = MarketplaceRequests.loadPluginDescriptor(update.pluginId, update)
       val downloader = PluginDownloader.createDownloader(pluginDescriptor)
       if (downloader.prepareToInstall(null)) {
         retval.add(downloader)
-        remainingPluginIds.remove(PluginId.getId(update.externalPluginId))
       }
-    }
-    if (remainingPluginIds.isNotEmpty()) {
-      LOG.info("Cannot find compatible updates for ${remainingPluginIds.joinToString()}")
     }
     return retval
   }
