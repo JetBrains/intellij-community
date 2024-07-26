@@ -8,7 +8,14 @@ import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.util.PlatformUtils
 import java.util.concurrent.TimeUnit
 
-private class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider(MLSE_RECORDER_ID, 8, TimeUnit.MINUTES.toMillis(10), 100 * 1024, sendLogsOnIdeClose = true) {
+private class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider(
+  MLSE_RECORDER_ID,
+  8,
+  TimeUnit.MINUTES.toMillis(10),
+  100 * 1024,
+  sendLogsOnIdeClose = true,
+  isCharsEscapingRequired = false
+) {
   override fun isRecordEnabled(): Boolean {
     val app = ApplicationManager.getApplication()
     return !app.isUnitTestMode && app.isEAP &&
