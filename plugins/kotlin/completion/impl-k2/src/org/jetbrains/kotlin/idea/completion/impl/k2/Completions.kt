@@ -1,16 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.completion
+package org.jetbrains.kotlin.idea.completion.impl.k2
 
+import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.contributors.complete
+import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.*
@@ -19,13 +22,17 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
+
     context(KaSession)
     fun complete(
-        factory: FirCompletionContributorFactory,
+        basicContext: FirBasicCompletionContext,
         positionContext: KotlinRawPositionContext,
-        weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
+        resultController: PolicyController,
     ) {
+        val factory = FirCompletionContributorFactory(basicContext, resultController)
+        val weighingContext = createWeighingContext(basicContext, positionContext)
+        val sessionParameters = FirCompletionSessionParameters(basicContext, positionContext)
+
         when (positionContext) {
             is KotlinExpressionNameReferencePositionContext -> if (positionContext.allowsOnlyNamedArguments()) {
                 complete(factory.namedArgumentContributor(0), positionContext, weighingContext, sessionParameters)
@@ -144,7 +151,7 @@ internal object Completions {
     }
 
     context(KaSession)
-    fun createWeighingContext(
+    private fun createWeighingContext(
         basicContext: FirBasicCompletionContext,
         positionContext: KotlinRawPositionContext
     ): WeighingContext = when (positionContext) {
