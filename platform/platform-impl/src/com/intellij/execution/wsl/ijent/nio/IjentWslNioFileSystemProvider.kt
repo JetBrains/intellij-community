@@ -113,11 +113,11 @@ internal class IjentWslNioFileSystemProvider(
   override fun checkAccess(path: Path, vararg modes: AccessMode): Unit =
     ijentFsProvider.checkAccess(path.toIjentPath(), *modes)
 
-  override fun newInputStream(path: Path?, vararg options: OpenOption?): InputStream =
-    originalFsProvider.newInputStream(path, *options)
+  override fun newInputStream(path: Path, vararg options: OpenOption?): InputStream =
+    ijentFsProvider.newInputStream(path.toIjentPath(), *options)
 
-  override fun newOutputStream(path: Path?, vararg options: OpenOption?): OutputStream =
-    originalFsProvider.newOutputStream(path, *options)
+  override fun newOutputStream(path: Path, vararg options: OpenOption?): OutputStream =
+    ijentFsProvider.newOutputStream(path.toIjentPath(), *options)
 
   override fun newFileChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): FileChannel =
     ijentFsProvider.newFileChannel(path.toIjentPath(), options, *attrs)
@@ -147,8 +147,8 @@ internal class IjentWslNioFileSystemProvider(
   override fun getPath(uri: URI): Path =
     originalFsProvider.getPath(uri)
 
-  override fun newByteChannel(path: Path?, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
-    originalFsProvider.newByteChannel(path, options, *attrs)
+  override fun newByteChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
+    ijentFsProvider.newByteChannel(path.toIjentPath(), options, *attrs)
 
   override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>?): DirectoryStream<Path> =
     object : DirectoryStream<Path> {
