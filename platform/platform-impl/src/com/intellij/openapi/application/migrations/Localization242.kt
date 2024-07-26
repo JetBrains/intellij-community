@@ -32,7 +32,7 @@ internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir
   }
   localizationPlugins.firstNotNullOfOrNull { getLanguageTagFromDescriptor(it) }?.let {
     if (LocalizationStateService.getInstance() != null) {
-      LocalizationStateService.getInstance()!!.setSelectedLocale(it)
+      LocalizationStateService.getInstance()!!.setSelectedLocale(it, true)
       logger<ConfigImportHelper>().info("[i18n] Locale is set to $it in LocalizationStateService")
     }
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {

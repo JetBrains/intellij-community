@@ -172,7 +172,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
 
   override fun doOKAction() {
     localizationStatistics.nextButtonPressed(selectedLanguage, selectedRegion)
-    LocalizationStateService.getInstance()?.setSelectedLocale(selectedLanguage.toLanguageTag())
+    LocalizationStateService.getInstance()?.setSelectedLocale(selectedLanguage.toLanguageTag(), true)
     RegionSettings.setRegion(selectedRegion)
     clearCache()
     super.doOKAction()
