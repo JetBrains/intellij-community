@@ -1,6 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.completion.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
@@ -31,8 +30,9 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  */
 internal class FirDeclarationFromUnresolvedNameContributor(
     basicContext: FirBasicCompletionContext,
-    priority: Int,
+    priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
+
     context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,

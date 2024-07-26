@@ -1,6 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.completion.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.InsertionContext
@@ -23,7 +22,6 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadat
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
@@ -37,26 +35,15 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
-internal class FirCompletionContributorOptions(
-    val priority: Int = 0
-) {
-    companion object {
-        val DEFAULT = FirCompletionContributorOptions()
-    }
-}
-
 internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
     protected val basicContext: FirBasicCompletionContext,
-    options: FirCompletionContributorOptions,
+    priority: Int,
 ) : FirCompletionContributor<C> {
-
-    constructor(basicContext: FirBasicCompletionContext, priority: Int) :
-            this(basicContext, FirCompletionContributorOptions(priority))
 
     protected open val prefixMatcher: PrefixMatcher get() = basicContext.prefixMatcher
 
     protected val parameters: CompletionParameters get() = basicContext.parameters
-    protected val sink: LookupElementSink = basicContext.sink.withPriority(options.priority)
+    protected val sink: LookupElementSink = basicContext.sink.withPriority(priority)
     protected val originalKtFile: KtFile get() = basicContext.originalKtFile
     protected val fakeKtFile: KtFile get() = basicContext.fakeKtFile
     protected val project: Project get() = basicContext.project

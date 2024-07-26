@@ -1,6 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.completion.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
@@ -42,8 +41,9 @@ import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(
     basicContext: FirBasicCompletionContext,
-    priority: Int,
+    priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(basicContext, priority) {
+
     private val prefix: String get() = basicContext.prefixMatcher.prefix
     private val onTypingIsKeyword: Boolean = prefix.isNotEmpty() && KtTokens.IS_KEYWORD.value.startsWith(prefix)
 

@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.completion.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
@@ -9,8 +8,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -40,7 +39,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
 internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     basicContext: FirBasicCompletionContext,
-    priority: Int
+    priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
 
     private val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes()
