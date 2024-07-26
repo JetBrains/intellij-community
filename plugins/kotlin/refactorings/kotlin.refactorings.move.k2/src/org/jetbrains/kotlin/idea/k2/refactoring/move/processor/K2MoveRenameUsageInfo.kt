@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.canBeUsedInImport
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
-import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.references.KtConstructorDelegationReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -69,7 +68,7 @@ sealed class K2MoveRenameUsageInfo(
         override fun retarget(to: PsiNamedElement): PsiElement? {
             if (to !is KtNamedDeclaration) error("Usage must reference a Kotlin element")
             val element = element ?: return element
-            val newLightElement = to.toLightElements()[lightElementIndex].nameDeterminant()
+            val newLightElement = to.toLightElements()[lightElementIndex]
             if (element.reference?.isReferenceTo(newLightElement) == true) return element
             if (element is PsiReferenceExpression
                 && wasMember
@@ -213,7 +212,10 @@ sealed class K2MoveRenameUsageInfo(
     companion object {
         fun find(declaration: KtNamedDeclaration): List<UsageInfo> {
             markInternalUsages(declaration)
-            return preProcessUsages(declaration.collectDescendantsOfType<KtNamedDeclaration>().flatMap { findExternalUsages(it) })
+            val externalDeclarationsToSearch = declaration
+                .collectDescendantsOfType<KtNamedDeclaration>()
+                .filter { it !is KtConstructor<*> } // references to constructors are found when searching for the containing class references
+            return preProcessUsages(externalDeclarationsToSearch.flatMap { findExternalUsages(it) })
         }
 
         /**
@@ -273,7 +275,7 @@ sealed class K2MoveRenameUsageInfo(
                 .mapNotNull { ref ->
                     val element = ref.element
                     if (ref is KtReference && element is KtElement) {
-                        Source(ref.element, ref, declaration.nameDeterminant(), false)
+                        Source(ref.element, ref, declaration, false)
                     } else {
                         val lightElements = declaration.toLightElements()
                         val lightElement = if (lightElements.size == 1) {

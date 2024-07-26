@@ -717,6 +717,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         public void testKotlin_unaryOperatorReference_UnaryOperatorReference() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/unaryOperatorReference/unaryOperatorReference.test");
         }
+
+        @TestMetadata("kotlin/usageInJavaExtendsList/usageInJavaExtendsList.test")
+        public void testKotlin_usageInJavaExtendsList_UsageInJavaExtendsList() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/usageInJavaExtendsList/usageInJavaExtendsList.test");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
