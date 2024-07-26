@@ -397,13 +397,9 @@ internal suspend fun buildNonBundledPlugins(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
-  return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope { span ->
+  return context.executeStep(spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()), BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
     if (pluginsToPublish.isEmpty()) {
-      return@useWithScope emptyList()
-    }
-    if (context.isStepSkipped(BuildOptions.NON_BUNDLED_PLUGINS_STEP)) {
-      span.addEvent("skip")
-      return@useWithScope emptyList()
+      return@executeStep emptyList()
     }
 
     val nonBundledPluginsArtifacts = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-plugins")
@@ -473,39 +469,44 @@ internal suspend fun buildNonBundledPlugins(
       generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
     }
 
-    if (!context.isStepSkipped(BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED)) {
-      for (plugin in pluginSpecs) {
-        launch {
-          validatePlugin(path = plugin.pluginZip, context = context)
-        }
-      }
-    }
+    validatePlugins(context, pluginSpecs)
 
     mappings
+  } ?: emptyList()
+}
+
+private suspend fun validatePlugins(context: BuildContext, pluginSpecs: Collection<PluginRepositorySpec>) {
+  context.executeStep(spanBuilder("plugins validation"), BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED) { span ->
+    for (plugin in pluginSpecs) {
+      val path = plugin.pluginZip
+      if (Files.notExists(path)) {
+        span.addEvent("doesn't exist, skipped", Attributes.of(AttributeKey.stringKey("path"), "$path"))
+        continue
+      }
+      launch {
+        validatePlugin(path, context, span)
+      }
+    }
   }
 }
 
-private suspend fun validatePlugin(path: Path, context: BuildContext) {
-  spanBuilder("plugin validation").setAttribute("path", path.toString()).useWithScope { span ->
-    if (Files.notExists(path)) {
-      span.addEvent("path doesn't exist, skipped")
-      return@useWithScope
-    }
-
-    val pluginManager = IdePluginManager.createManager()
-    val result = pluginManager.createPlugin(path, validateDescriptor = true)
-    // todo fix AddStatisticsEventLogListenerTemporary
-    val id = when (result) {
-      is PluginCreationSuccess -> result.plugin.pluginId
-      is PluginCreationFail -> (pluginManager.createPlugin(path, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
-    }
-    val problems = context.productProperties.validatePlugin(id, result, context)
-    if (problems.isNotEmpty()) {
-      context.messages.reportBuildProblem(problems.joinToString(
+private fun validatePlugin(path: Path, context: BuildContext, span: Span) {
+  val pluginManager = IdePluginManager.createManager()
+  val result = pluginManager.createPlugin(path, validateDescriptor = true)
+  // todo fix AddStatisticsEventLogListenerTemporary
+  val id = when (result) {
+    is PluginCreationSuccess -> result.plugin.pluginId
+    is PluginCreationFail -> (pluginManager.createPlugin(path, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
+  }
+  val problems = context.productProperties.validatePlugin(id, result, context)
+  if (problems.isNotEmpty()) {
+    span.addEvent("failed", Attributes.of(AttributeKey.stringKey("path"), "$path"))
+    context.messages.reportBuildProblem(
+      problems.joinToString(
         prefix = "${id ?: path}: ",
         separator = ". ",
-      ), identity = "${id ?: path}")
-    }
+      ), identity = "${id ?: path}"
+    )
   }
 }
 
@@ -871,7 +872,7 @@ private suspend fun scramble(platform: PlatformLayout, context: BuildContext) {
   }
 }
 
-private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext): Job? {
+private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext): Job {
   val buildString = context.fullBuildNumber
   return createSkippableJob(
     spanBuilder("build broken plugin list").setAttribute("buildNumber", buildString),
@@ -885,7 +886,7 @@ private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext)
   }
 }
 
-private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: Sequence<DistributionFileEntry>, context: BuildContext): Job? {
+private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: Sequence<DistributionFileEntry>, context: BuildContext): Job {
   return createSkippableJob(spanBuilder("generate table of licenses for used third-party libraries"),
                             BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
     val generator = createLibraryLicensesListGenerator(

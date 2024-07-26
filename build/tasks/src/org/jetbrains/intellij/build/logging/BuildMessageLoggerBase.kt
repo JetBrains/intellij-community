@@ -25,7 +25,9 @@ abstract class BuildMessageLoggerBase : BuildMessageLogger() {
         val errorsString = (message as CompilationErrorsLogMessage).errorMessages.joinToString(separator = "\n")
         Span.current().addEvent("compilation errors (${message.compilerName}):\n$errorsString")
       }
-      LogMessage.Kind.BUILD_CANCEL -> throw BuildScriptsLoggedError(message.text)
+      LogMessage.Kind.BUILD_CANCEL, LogMessage.Kind.BUILD_PROBLEM -> {
+        throw BuildScriptsLoggedError(message.text)
+      }
       else -> {
         if (shouldBePrinted(message.kind)) {
           Span.current().addEvent(message.text)

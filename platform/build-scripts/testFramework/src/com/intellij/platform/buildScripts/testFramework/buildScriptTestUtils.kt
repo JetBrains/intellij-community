@@ -18,8 +18,10 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.buildDistributions
+import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.junit.jupiter.api.TestInfo
@@ -28,10 +30,10 @@ import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.Path
 
-fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, skipDependencySetup: Boolean = false): BuildOptions {
+fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, skipDependencySetup: Boolean = false, testInfo: TestInfo? = null): BuildOptions {
   val outDir = createTestBuildOutDir(productProperties)
   val options = BuildOptions(cleanOutDir = false, useCompiledClassesFromProjectOutput = true, jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"))
-  customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup)
+  customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup, testInfo = testInfo)
   return options
 }
 
@@ -39,13 +41,13 @@ fun createTestBuildOutDir(productProperties: ProductProperties): Path {
   return FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
 }
 
-private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, customizer: (BuildOptions) -> Unit): BuildOptions {
-  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir)
+private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo)
   customizer(options)
   return options
 }
 
-fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false) {
+fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDependencySetup: Boolean = false, testInfo: TestInfo?) {
   options.skipDependencySetup = skipDependencySetup
   options.isTestBuild = true
 
@@ -56,11 +58,15 @@ fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDepend
     BuildOptions.WIN_SIGN_STEP,
     BuildOptions.MAC_SIGN_STEP,
     BuildOptions.MAC_NOTARIZE_STEP,
+    BuildOptions.MAC_DMG_STEP,
   )
   options.buildUnixSnaps = false
   options.outRootDir = outDir
   options.useCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false
+  if (testInfo != null && isUnderTeamCity) {
+    options.buildStepListener = BuildStepTeamCityListener(testInfo)
+  }
 }
 
 suspend inline fun createBuildContext(
@@ -78,7 +84,7 @@ suspend inline fun createBuildContext(
 fun runTestBuild(
   homePath: Path,
   productProperties: ProductProperties,
-  traceSpanName: String,
+  testInfo: TestInfo,
   buildTools: ProprietaryBuildTools,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ) {
@@ -86,7 +92,7 @@ fun runTestBuild(
     homeDir = homePath,
     productProperties = productProperties,
     buildTools = buildTools,
-    traceSpanName = traceSpanName,
+    testInfo = testInfo,
     isReproducibilityTestAllowed = true,
     buildOptionsCustomizer = buildOptionsCustomizer,
   )
@@ -96,28 +102,29 @@ fun runTestBuild(
   homeDir: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-  traceSpanName: String,
+  testInfo: TestInfo,
   isReproducibilityTestAllowed: Boolean = true,
-  build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) },
-  onSuccess: suspend (context: BuildContext) -> Unit = {},
+  build: suspend (BuildContext) -> Unit = { buildDistributions(it) },
+  onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) = runBlocking(Dispatchers.Default) {
-  if (isReproducibilityTestAllowed) {
+  if (isReproducibilityTestAllowed && BuildArtifactsReproducibilityTest.isEnabled) {
     val reproducibilityTest = BuildArtifactsReproducibilityTest()
     repeat(reproducibilityTest.iterations) { iterationNumber ->
       launch {
-        val buildContext = BuildContextImpl.createContext(
-          projectHome = homeDir,
-          productProperties = productProperties,
-          proprietaryBuildTools = buildTools,
-          setupTracer = false,
-          options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, customizer = buildOptionsCustomizer).also {
-            reproducibilityTest.configure(it)
-          },
-        )
         doRunTestBuild(
-          context = buildContext,
-          traceSpanName = "#$iterationNumber",
+          context = {
+            BuildContextImpl.createContext(
+              projectHome = homeDir,
+              productProperties = productProperties,
+              proprietaryBuildTools = buildTools,
+              setupTracer = false,
+              options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo, customizer = buildOptionsCustomizer).also {
+                reproducibilityTest.configure(it)
+              },
+            )
+          },
+          traceSpanName = "${testInfo.spanName}#$iterationNumber",
           writeTelemetry = false,
           build = { context ->
             build(context)
@@ -130,15 +137,17 @@ fun runTestBuild(
   }
   else {
     doRunTestBuild(
-      context = BuildContextImpl.createContext(
-        projectHome = homeDir,
-        productProperties = productProperties,
-        proprietaryBuildTools = buildTools,
-        setupTracer = false,
-        options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, customizer = buildOptionsCustomizer),
-      ),
+      context = {
+        BuildContextImpl.createContext(
+          projectHome = homeDir,
+          productProperties = productProperties,
+          proprietaryBuildTools = buildTools,
+          setupTracer = false,
+          options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo, customizer = buildOptionsCustomizer),
+        )
+      },
       writeTelemetry = true,
-      traceSpanName = traceSpanName,
+      traceSpanName = testInfo.spanName,
       build = { context ->
         build(context)
         onSuccess(context)
@@ -149,33 +158,30 @@ fun runTestBuild(
 
 // FIXME: test reproducibility
 suspend fun runTestBuild(
-  context: BuildContext,
-  traceSpanName: String,
-  build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) }
+  testInfo: TestInfo,
+  context: suspend () -> BuildContext,
+  build: suspend (BuildContext) -> Unit = { buildDistributions(it) }
 ) {
-  doRunTestBuild(context = context, traceSpanName = traceSpanName, writeTelemetry = true, build = build)
+  doRunTestBuild(context = context, traceSpanName = testInfo.spanName, writeTelemetry = true, build = build)
 }
 
 private val defaultLogFactory = Logger.getFactory()
 
-private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?, writeTelemetry: Boolean, build: suspend (context: BuildContext) -> Unit) {
-  context.cleanupJarCache()
-
-  val traceFile = if (writeTelemetry) {
-    val traceFile = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName-trace.json")
-    JaegerJsonSpanExporterManager.setOutput(traceFile, addShutDownHook = false)
-    traceFile
-  }
-  else {
-    null
-  }
-
-  val outDir = context.paths.buildOutputDir
+private suspend fun doRunTestBuild(context: suspend () -> BuildContext, traceSpanName: String, writeTelemetry: Boolean, build: suspend (context: BuildContext) -> Unit) {
+  var outDir: Path? = null
+  var traceFile: Path? = null
   var error: Throwable? = null
   try {
-    spanBuilder(traceSpanName ?: "test build of ${context.productProperties.baseFileName}")
-      .setAttribute("outDir", outDir.toString())
-      .useWithScope { span ->
+    spanBuilder(traceSpanName).useWithScope { span ->
+        val context = context()
+        context.cleanupJarCache()
+        outDir = context.paths.buildOutputDir
+        span.setAttribute("outDir", "$outDir")
+        if (writeTelemetry) {
+          traceFile = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName-trace.json").also {
+            JaegerJsonSpanExporterManager.setOutput(it, addShutDownHook = false)
+          }
+        }
         try {
           build(context)
           val jetBrainsClientMainModule = context.productProperties.embeddedJetBrainsClientMainModule
@@ -203,7 +209,11 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
             error = e
           }
         }
-      }
+        finally {
+          // close debug logging to prevent locking of the output directory on Windows
+          context.messages.close()
+        }
+    }
   }
   finally {
     closeKtorClient()
@@ -213,16 +223,13 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
       println("Performance report is written to $traceFile")
     }
 
-    // close debug logging to prevent locking of output directory on Windows
-    context.messages.close()
-
     /**
      * Overridden in [org.jetbrains.intellij.build.impl.JpsCompilationRunner.runBuild]
      */
     Logger.setFactory(defaultLogFactory)
 
     try {
-      NioFiles.deleteRecursively(outDir)
+      outDir?.also(NioFiles::deleteRecursively)
     }
     catch (e: Throwable) {
       System.err.println("cannot cleanup $outDir:")

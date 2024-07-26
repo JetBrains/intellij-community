@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.jps.model.module.JpsModule
@@ -149,12 +150,27 @@ interface BuildContext : CompilationContext {
 suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
                                                 stepId: String,
                                                 crossinline step: suspend CoroutineScope.(Span) -> T): T? {
-  if (isStepSkipped(stepId)) {
-    spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
-    return null
-  }
-  else {
-    return spanBuilder.useWithScope(Dispatchers.IO, step)
+  return spanBuilder.useWithScope(Dispatchers.IO) { span ->
+    try {
+      options.buildStepListener.onStart(stepId, messages)
+      if (isStepSkipped(stepId)) {
+        span.addEvent("skip '$stepId' step")
+        options.buildStepListener.onSkipping(stepId, messages)
+        null
+      }
+      else {
+        coroutineScope {
+          step(span)
+        }
+      }
+    }
+    catch (failure: Throwable) {
+      options.buildStepListener.onFailure(stepId, failure, messages)
+      null
+    }
+    finally {
+      options.buildStepListener.onCompletion(stepId, messages)
+    }
   }
 }
 

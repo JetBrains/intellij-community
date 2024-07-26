@@ -8,18 +8,21 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.readBuiltinModulesFile
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.TestInfo
 import java.nio.file.Path
 
 /**
  * Checks that frontend distribution (ex JetBrains Client) described by [frontendProperties] can be built successfully.
  */
-fun runTestBuildForFrontend(homePath: Path, frontendProperties: ProductProperties, buildTools: ProprietaryBuildTools,
-                            traceSpanName: String, softly: SoftAssertions) {
+fun runTestBuildForFrontend(
+  homePath: Path, frontendProperties: ProductProperties, buildTools: ProprietaryBuildTools,
+  testInfo: TestInfo, softly: SoftAssertions,
+) {
   runTestBuild(
     homeDir = homePath,
     productProperties = frontendProperties,
     buildTools = buildTools,
-    traceSpanName = traceSpanName,
+    testInfo = testInfo,
     onSuccess = { context ->
       verifyBuiltInModules(context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json"))
       assertTrue(context.useModularLoader) { "Frontend distribution must use the modular loader, but $frontendProperties doesn't use it" }

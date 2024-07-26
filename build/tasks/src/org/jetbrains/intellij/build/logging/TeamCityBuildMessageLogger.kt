@@ -104,7 +104,7 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
         print(ServiceMessageTypes.COMPILATION_FINISHED, "compiler" to compiler)
       }
       DEBUG -> {} //debug messages are printed to a separate file available in the build artifacts
-      BUILD_PROBLEM -> {
+      BUILD_PROBLEM -> { // The text is limited to 4000 symbols and will be truncated if the limit is exceeded
         check(message is BuildProblemLogMessage) {
           "Unexpected build problem message type: ${message::class.java.canonicalName}"
         }

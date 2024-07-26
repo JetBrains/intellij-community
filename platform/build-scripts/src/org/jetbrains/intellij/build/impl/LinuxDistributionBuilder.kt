@@ -121,14 +121,16 @@ class LinuxDistributionBuilder(
         }
       }
 
-      if (tarGzPath != null && !context.isStepSkipped(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-        val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
-        try {
-          unTar(tarGzPath, tempTar)
-          RepairUtilityBuilder.generateManifest(context, unpackedDistribution = tempTar.resolve(rootDirectoryName), OsFamily.LINUX, arch)
-        }
-        finally {
-          NioFiles.deleteRecursively(tempTar)
+      if (tarGzPath != null ) {
+        context.executeStep(spanBuilder("bundle repair utility"), BuildOptions.REPAIR_UTILITY_BUNDLE_STEP) {
+          val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
+          try {
+            unTar(tarGzPath, tempTar)
+            RepairUtilityBuilder.generateManifest(context, unpackedDistribution = tempTar.resolve(rootDirectoryName), OsFamily.LINUX, arch)
+          }
+          finally {
+            NioFiles.deleteRecursively(tempTar)
+          }
         }
       }
     }

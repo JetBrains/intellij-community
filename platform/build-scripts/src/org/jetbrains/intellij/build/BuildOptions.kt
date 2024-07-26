@@ -478,6 +478,10 @@ data class BuildOptions(
   @ApiStatus.Internal
   var useReleaseCycleRelatedBundlingRestrictionsForContentReport: Boolean = true
 
+  @set:TestOnly
+  @ApiStatus.Internal
+  var buildStepListener: BuildStepListener = BuildStepListener()
+
   init {
     val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()
     targetOs = when {

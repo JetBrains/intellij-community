@@ -24,7 +24,7 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
   val featureUsageStatisticsPropertiesList = context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
   return createSkippableJob(
     spanBuilder("bundle a default version of feature usage statistics"),
-    taskId = BuildOptions.FUS_METADATA_BUNDLE_STEP,
+    stepId = BuildOptions.FUS_METADATA_BUNDLE_STEP,
     context = context
   ) {
     for (featureUsageStatisticsProperties in featureUsageStatisticsPropertiesList) {
