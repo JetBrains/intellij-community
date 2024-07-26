@@ -26845,11 +26845,11 @@ f:com.intellij.ui.layout.CellBuilder$DefaultImpls
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bs:withBinding(com.intellij.ui.layout.CellBuilder,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 f:com.intellij.ui.layout.CellKt
-- sf:applyToComponent(com.intellij.ui.layout.CellBuilder,kotlin.jvm.functions.Function1):com.intellij.ui.layout.CellBuilder
+- bsf:applyToComponent(com.intellij.ui.layout.CellBuilder,kotlin.jvm.functions.Function1):com.intellij.ui.layout.CellBuilder
 - sf:createPropertyBinding(kotlin.reflect.KMutableProperty0,java.lang.Class):com.intellij.ui.layout.PropertyBinding
 - bsf:getSelected(com.intellij.ui.layout.CellBuilder):com.intellij.ui.layout.ComponentPredicate
 - bsf:listCellRenderer(kotlin.jvm.functions.Function4):com.intellij.ui.SimpleListCellRenderer
-- sf:toNullable(com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.PropertyBinding
+- bsf:toNullable(com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.PropertyBinding
 - bsf:withSelectedBinding(com.intellij.ui.layout.CellBuilder,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 - bsf:withTextBinding(com.intellij.ui.layout.CellBuilder,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 @:com.intellij.ui.layout.CellMarker
