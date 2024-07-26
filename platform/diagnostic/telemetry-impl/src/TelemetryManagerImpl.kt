@@ -77,8 +77,6 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     batchSpanProcessor = if (hasSpanExporters) {
       // must be first, before JaegerJsonSpanExporter
       spanExporters.add(0, object : AsyncSpanExporter {
-        override val exporterVersion: Int = 0
-
         override suspend fun export(spans: Collection<SpanData>) {
         }
 

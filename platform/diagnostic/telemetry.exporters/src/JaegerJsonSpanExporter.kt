@@ -31,7 +31,7 @@ class JaegerJsonSpanExporter(
   val serviceVersion: String? = null,
   val serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  override val exporterVersion: Int = 2
+  val exporterVersion: Int = 2
 
   private val fileChannel: FileChannel
   private var writer: JsonGenerator

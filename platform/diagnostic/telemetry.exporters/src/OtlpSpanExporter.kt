@@ -17,8 +17,6 @@ import java.net.ConnectException
 
 @Internal
 class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
-  override val exporterVersion: Int = 0
-
   override suspend fun export(spans: Collection<SpanData>) {
     // checking whether the spans are exported from rem dev backend
     if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null) {
