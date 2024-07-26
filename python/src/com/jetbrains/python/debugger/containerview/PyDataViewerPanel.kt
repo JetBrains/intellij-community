@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -78,11 +77,9 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     }
 
   var isModified: Boolean = false
-    private set
+    protected set
 
   private lateinit var errorLabel: Cell<JEditorPane>
-
-  protected val showFooter: AtomicBooleanProperty = AtomicBooleanProperty(true)
 
   init {
     PyDataViewCompletionProvider().apply(sliceTextField)
@@ -93,7 +90,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
         cell(sliceTextField).align(AlignX.FILL).resizableColumn()
         label(PyBundle.message("form.data.viewer.format"))
         cell(formatTextField)
-      }.visibleIf(showFooter)
+      }
       row { errorLabel = text("").apply { component.setForeground(JBColor.RED) } }
     }
 
