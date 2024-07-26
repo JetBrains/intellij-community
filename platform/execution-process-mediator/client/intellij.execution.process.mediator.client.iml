@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module-library">
       <library name="grpc-inprocess" type="repository">
         <properties include-transitive-deps="false" maven-id="io.grpc:grpc-inprocess:1.61.0">
@@ -39,5 +40,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.grpc" />
+    <orderEntry type="module" module-name="intellij.libraries.grpc.netty.shaded" />
   </component>
 </module>

@@ -4,12 +4,17 @@ package com.intellij.execution.process.mediator.client.launcher
 import com.intellij.execution.process.mediator.client.ProcessMediatorClient
 import com.intellij.execution.process.mediator.common.DaemonClientCredentials
 import com.intellij.execution.process.mediator.daemon.ProcessMediatorServerDaemon
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.util.io.MultiCloseable
 import com.intellij.util.io.runClosingOnFailure
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import io.grpc.ManagedChannelRegistry
 import io.grpc.inprocess.InProcessChannelBuilder
 import io.grpc.inprocess.InProcessServerBuilder
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelProvider
 import io.grpc.stub.MetadataUtils
 import kotlinx.coroutines.CoroutineScope
 import java.io.Closeable
@@ -37,6 +42,7 @@ fun ProcessMediatorConnection.Companion.createDaemonConnection(
   processHandle?.let {
     registerCloseable { it.destroy() }
   }
+  NettyChannelProviderRegistrationService.ensureChannelProviderRegistered()
   val channel = ManagedChannelBuilder.forAddress(LOOPBACK_IP, port)
     .usePlaintext()
     .build().also(::registerCloseable)
@@ -75,4 +81,31 @@ private class ConnectionImpl(
   cleanup: AutoCloseable,
 ) : ProcessMediatorConnection, Closeable, AutoCloseable by cleanup {
   override fun toString(): String = "Connection(client=$client)"
+}
+
+/**
+ * [ManagedChannelRegistry.getDefaultRegistry] has the ability to discover available [io.grpc.ManagedChannelProvider] subclasses.
+ * However, [ManagedChannelRegistry]
+ * uses a classloader that has no access to [NettyChannelProvider],
+ * because intellij.libraries.grpc module does not depend on intellij.libraries.grpc.netty.shaded,
+ * so automatic discovery fails.
+ */
+@Service(Service.Level.APP)
+private class NettyChannelProviderRegistrationService : Disposable {
+  private val registry = ManagedChannelRegistry.getDefaultRegistry()
+  private val channelProvider = NettyChannelProvider()
+
+  init {
+    registry.register(channelProvider)
+  }
+
+  override fun dispose() {
+    registry.deregister(channelProvider)
+  }
+
+  companion object {
+    fun ensureChannelProviderRegistered() {
+      service<NettyChannelProviderRegistrationService>()
+    }
+  }
 }

@@ -56,8 +56,9 @@ object LocalizationUtil {
 
   @Internal
   @JvmOverloads
-  fun getPluginClassLoader(defaultLoader: ClassLoader? = null): ClassLoader? {
-    val langBundle = findLanguageBundle() ?: return null
+  fun getPluginClassLoader(defaultLoader: ClassLoader? = null, locale: Locale = getLocale()): ClassLoader? {
+    if (locale == Locale.ENGLISH || locale == Locale.ROOT) return null
+    val langBundle = findLanguageBundle(locale) ?: return null
     return langBundle.pluginDescriptor?.classLoader ?: defaultLoader
   }
 
@@ -95,18 +96,29 @@ object LocalizationUtil {
   fun getResourceAsStream(defaultLoader: ClassLoader?, path: Path, specialLocale: Locale? = null): InputStream? {
     val locale = specialLocale ?: getLocale()
     val localizedPaths = getLocalizedPaths(path, locale)
-    getPluginClassLoader()?.getResourceAsStream(FileUtil.toSystemIndependentName(path.pathString))?.let { return it }
     for (localizedPath in localizedPaths) {
       val pathString = FileUtil.toSystemIndependentName(localizedPath.pathString)
       defaultLoader?.getResourceAsStream(pathString)?.let { return it }
     }
-    return null
+    return getPluginClassLoader()?.getResourceAsStream(path.pathString) ?:
+    defaultLoader?.getResourceAsStream(path.pathString)
+  }
+
+  @Internal
+  @JvmOverloads
+  fun getLocalizedPathsWithDefault(path: Path, specialLocale: Locale? = null): List<Path> {
+    val locale = specialLocale ?: getLocale()
+    return getLocalizedPaths(path, locale).toMutableList().let {
+      it.add(path)
+      it.distinct()
+    }
   }
 
   @Internal
   @JvmOverloads
   fun getLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
     val locale = specialLocale ?: getLocale()
+    if (locale == Locale.ROOT) return emptyList()
     return listOf(
       //localizations/zh/CN/inspectionDescriptions/name.html
       path.convertToLocalizationFolderUsage(locale, true),
@@ -119,9 +131,6 @@ object LocalizationUtil {
 
       //inspectionDescriptions/name_zh.html
       path.convertPathToLocaleSuffixUsage(locale, false),
-
-      //inspectionDescriptions/name.html
-      path
     ).distinct()
   }
 

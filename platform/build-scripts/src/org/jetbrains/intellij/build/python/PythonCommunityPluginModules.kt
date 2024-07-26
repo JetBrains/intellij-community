@@ -11,7 +11,6 @@ object PythonCommunityPluginModules {
   @JvmField
   val COMMUNITY_MODULES: PersistentList<String> = persistentListOf(
     "intellij.commandInterface",
-    "intellij.jupyter.core",
     "intellij.python.community",
     "intellij.python.community.communityOnly",
     "intellij.python.community.core.impl",

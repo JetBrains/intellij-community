@@ -1291,7 +1291,7 @@
     <depends>com.intellij.modules.lang</depends>
     <depends optional="true">-org-jetbrains-plugins-terminal-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.python.jupyter/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.jupyter.plugin/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-notebooks-jupyter-</id>
     <name>Jupyter Notebook</name>
     <depends>com.intellij.modules.platform</depends>

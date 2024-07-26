@@ -89,7 +89,9 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
                                                          myCoroutineScope,
                                                          "On project open",
                                                          ScanningType.FULL_ON_PROJECT_OPEN,
-                                                         ScanningType.PARTIAL_ON_PROJECT_OPEN);
+                                                         ScanningType.PARTIAL_ON_PROJECT_OPEN,
+                                                         wasCorrupted,
+                                                         InitialScanningSkipReporter.SourceOfScanning.OnProjectOpen);
     forgetProjectDirtyFilesOnCompletion(indexesCleanupJob, fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.getUntrimmedSize());
   }
 

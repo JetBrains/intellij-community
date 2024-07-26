@@ -5,6 +5,7 @@ import com.intellij.execution.process.mediator.client.launcher.ProcessMediatorCo
 import com.intellij.execution.process.mediator.client.launcher.startInProcessServer
 import com.intellij.execution.process.mediator.client.rt.MediatedProcessTestMain
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -20,6 +21,7 @@ import java.util.concurrent.CancellationException
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
+@TestApplication
 open class ProcessMediatorTest {
   private val deferred = CompletableDeferred<Unit>()
   private val coroutineScope = CoroutineScope(deferred + CoroutineExceptionHandler { _, cause ->

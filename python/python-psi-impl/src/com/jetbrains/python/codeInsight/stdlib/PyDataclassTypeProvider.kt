@@ -140,24 +140,31 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         seenKeywordOnlyClass = seenKeywordOnlyClass || parameters.kwOnly
 
         if (seenInit) {
-          current
+          val fieldsInfo = current
             .classAttributes
             .asReversed()
             .asSequence()
             .filterNot { PyTypingTypeProvider.isClassVar(it, context) }
             .mapNotNull { fieldToParameter(current, it, parameters.type, ellipsis, context) }
             .filterNot { it.first in seenNames }
-            .forEach { (name, kwOnly, parameter) ->
-              // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
+            .toList()
 
-              if ((seenKeywordOnlyClass || kwOnly) && name !in collected) {
-                keywordOnly += name
-              }
+          val indexOfKeywordOnlyAttribute = fieldsInfo.indexOfLast { (_, _, parameter) ->
+            parameter != null && isKwOnlyMarkerField(parameter, context)
+          }
 
-              if (parameter == null) {
-                seenNames.add(name)
-              }
-              else if (parameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
+          fieldsInfo.forEachIndexed { index, (name, kwOnly, parameter) ->
+            // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
+
+            if ((seenKeywordOnlyClass || index < indexOfKeywordOnlyAttribute || kwOnly) && name !in collected) {
+              keywordOnly += name
+            }
+
+            if (parameter == null) {
+              seenNames.add(name)
+            }
+            else if (!isKwOnlyMarkerField(parameter, context)) {
+              if (parameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
                 // std: attribute that overrides ancestor's attribute does not change the order but updates type
                 collected[name] = collected.remove(name) ?: parameter
               }
@@ -166,10 +173,18 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
                 collected[name] = parameter
               }
             }
+          }
         }
       }
-
       return if (seenInit) PyCallableTypeImpl(buildParameters(elementGenerator, collected, keywordOnly), clsType.toInstance()) else null
+    }
+
+    private fun isKwOnlyMarkerField(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {
+      val psi = parameter.declarationElement
+      if (psi !is PyTargetExpression) return false
+      val typeHint = PyTypingTypeProvider.getAnnotationValue(psi, context) as? PyReferenceExpression ?: return false
+      val type = Ref.deref(PyTypingTypeProvider.getType(typeHint, context))
+      return type is PyClassType && type.classQName == Dataclasses.DATACLASSES_KW_ONLY
     }
 
     private fun buildParameters(elementGenerator: PyElementGenerator,

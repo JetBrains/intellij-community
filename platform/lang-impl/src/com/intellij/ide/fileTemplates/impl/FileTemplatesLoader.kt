@@ -371,22 +371,24 @@ private class LoadedConfiguration(@JvmField val managers: Map<String, FTManager>
 }
 
 private fun loadLocalizedContent(classLoader: ClassLoader, root: Any, path: String): String? {
-  var result: String? = null
+  var result: String?
   val locale = LocalizationUtil.getLocaleOrNullForDefault()
   if (locale != null) {
-    //loading from localization plugin
-    val localizedPaths = LocalizationUtil.getLocalizedPaths(Path.of(path)).map { it.invariantSeparatorsPathString }
-    result = LocalizationUtil.getPluginClassLoader()?.let {
-      ResourceUtil.getResourceAsBytesSafely(path, it)?.toString(StandardCharsets.UTF_8)
-    }
-    //loading localized content from source files
-    if (!result.isNullOrEmpty()) return result
+    val contentPath = Path.of(path)
+    //loading from source files with localization folder/suffix 
+    val localizedPaths = LocalizationUtil.getLocalizedPaths(contentPath).map { it.invariantSeparatorsPathString }
     for (localizedPath in localizedPaths) {
       result = loadFileContent(classLoader, root, localizedPath)
       if (!result.isNullOrEmpty()) return result
     }
+    //loading from localization plugin
+    result = LocalizationUtil.getPluginClassLoader()?.let {
+      ResourceUtil.getResourceAsBytesSafely(path, it)?.toString(StandardCharsets.UTF_8)
+    }  ?: loadFileContent(classLoader, root, path)
+    //loading localized content from source files
+    if (!result.isNullOrEmpty()) return result
   }
-  //default loading content in case of default locale
+  //default loading content
   result = loadFileContent(classLoader, root, path)
   return result
 }

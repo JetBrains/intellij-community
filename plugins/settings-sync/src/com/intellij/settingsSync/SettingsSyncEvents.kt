@@ -112,14 +112,3 @@ internal class RestartForPluginDisable(val plugins: Collection<String>) : Restar
     return "$number. " + SettingsSyncBundle.message("sync.notification.restart.message.list.entry.plugin.disable", plugins.size, plugins.take(2).joinToString(", "))
   }
 }
-
-internal class RestartForNewUI(val enable: Boolean) : RestartReason() {
-  override val sortingPriority = 3
-  override fun getSingleReasonNotificationMessage(): String {
-    return SettingsSyncBundle.message(if (enable) "sync.notification.restart.message.new.ui.enable" else "sync.notification.restart.message.new.ui.disable")
-  }
-
-  override fun getMultiReasonNotificationListEntry(number: Int): String {
-    return "$number. " + SettingsSyncBundle.message(if (enable) "sync.notification.restart.message.list.entry.new.ui.enable" else "sync.notification.restart.message.list.entry.new.ui.disable")
-  }
-}

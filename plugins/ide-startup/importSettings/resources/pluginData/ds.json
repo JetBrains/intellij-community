@@ -216,8 +216,8 @@
   },
   {
     "vsCodeId": "ms-toolsai.jupyter",
-    "ideaName": "Python Support for Jupyter",
-    "ideaId": "intellij.jupyter.py"
+    "ideaName": "Jupyter",
+    "ideaId": "intellij.jupyter"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",

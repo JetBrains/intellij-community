@@ -34,7 +34,6 @@ final class UnknownSdkEditorPanel extends EditorNotificationPanel {
     if (myAction != null) {
       HyperlinkLabel label = createActionLabel(myAction.getActionShortText(), () -> {
         if (!myIsRunning.compareAndSet(false, true)) return;
-        if (myAction instanceof FixWithConsent ucFix) ucFix.giveConsent();
         myAction.applySuggestionAsync(project);
       }, true);
 

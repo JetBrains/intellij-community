@@ -71,9 +71,9 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         iconDirectory = "icons/com/jetbrains/localization",
       )
 
-      "intellij.jupyter.core"-> IntellijIconClassGeneratorModuleConfig(
+      "intellij.notebooks.jupyter.core"-> IntellijIconClassGeneratorModuleConfig(
         className = "JupyterCoreIcons",
-        packageName = "com.intellij.jupyter.core.icons",
+        packageName = "com.intellij.notebooks.jupyter.core.icons",
         iconDirectory = "icons/org.jetbrains.plugins.notebooks.jupyter",
       )
 

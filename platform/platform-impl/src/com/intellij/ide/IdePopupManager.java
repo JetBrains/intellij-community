@@ -27,7 +27,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
 
   boolean isPopupActive() {
     for (IdePopupEventDispatcher each : myDispatchStack) {
-      if (each.getComponent() == null || !each.getComponent().isShowing()) {
+      if (each.getComponent() == null || !UIUtil.isShowing(each.getComponent())) {
         myDispatchStack.remove(each);
       }
     }

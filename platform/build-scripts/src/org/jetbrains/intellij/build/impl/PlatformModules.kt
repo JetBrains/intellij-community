@@ -428,6 +428,7 @@ private suspend fun computeImplicitRequiredModules(
   unique.add("intellij.pycharm.community")
   unique.add("intellij.python.featuresTrainer")
   unique.add("intellij.pycharm.ds")
+  unique.add("intellij.notebooks.visualization")
 
   val result = mutableListOf<Pair<String, PersistentList<String>>>()
   computeTransitive(list = rootList, context = context, unique = unique, result = result)

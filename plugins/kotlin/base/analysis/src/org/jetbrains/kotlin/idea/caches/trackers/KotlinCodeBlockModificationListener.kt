@@ -49,7 +49,9 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
         // manually if needed.
         val outOfCodeBlock = when (event.code) {
             PROPERTY_CHANGED ->
-                event.propertyName === PsiTreeChangeEvent.PROP_UNLOADED_PSI || event.propertyName === PsiTreeChangeEvent.PROP_ROOTS
+                event.propertyName === PsiTreeChangeEvent.PROP_UNLOADED_PSI
+                        || event.propertyName === PsiTreeChangeEvent.PROP_ROOTS
+                        || event.propertyName  === PsiTreeChangeEvent.PROP_FILE_NAME
             CHILD_MOVED -> event.oldParent is PsiDirectory || event.newParent is PsiDirectory
             else -> event.parent is PsiDirectory
         }

@@ -17,6 +17,7 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,7 +97,7 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
               error = XmlAnalysisBundle.message("html.inspections.attribute.is.not.boolean", attribute.getName());
             }
             if (error != null) {
-              registerProblemOnAttributeName(attribute, error, holder, quickFixes);
+              registerProblemOnAttributeName(attribute, error, holder, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
             }
           }
         }

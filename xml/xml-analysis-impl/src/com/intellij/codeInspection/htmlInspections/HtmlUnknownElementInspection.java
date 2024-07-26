@@ -55,6 +55,7 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
   protected static void registerProblemOnAttributeName(@NotNull XmlAttribute attribute,
                                                        @InspectionMessage String message,
                                                        @NotNull ProblemsHolder holder,
+                                                       @NotNull ProblemHighlightType highlightType,
                                                        @NotNull LocalQuickFix @NotNull ... quickfixes) {
     final ASTNode node = attribute.getNode();
     assert node != null;
@@ -62,7 +63,7 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
     if (nameNode != null) {
       final PsiElement nameElement = nameNode.getPsi();
       if (nameElement.getTextLength() > 0) {
-        holder.registerProblem(nameElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickfixes);
+        holder.registerProblem(nameElement, message, highlightType, quickfixes);
       }
     }
   }

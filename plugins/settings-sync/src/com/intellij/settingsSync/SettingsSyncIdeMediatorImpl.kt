@@ -107,7 +107,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
             RestartForPluginInstall::class.java -> RestartForPluginInstall(reasons.flatMap { (it as RestartForPluginInstall).plugins })
             RestartForPluginEnable::class.java -> RestartForPluginEnable(reasons.flatMap { (it as RestartForPluginEnable).plugins })
             RestartForPluginDisable::class.java -> RestartForPluginDisable(reasons.flatMap { (it as RestartForPluginDisable).plugins })
-            RestartForNewUI::class.java -> reasons.lastOrNull()
             else -> null
         }
     }
@@ -287,10 +286,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       componentStore.reloadComponents(normalChanged, deletedFileSpecs)
       if (lastChanged.isNotEmpty()) {
         componentStore.reloadComponents(lastChanged, emptyList())
-      }
-      val newUI = Registry.get(NewUiValue.KEY)
-      if (newUI.isChangedSinceAppStart) {
-        SettingsSyncEvents.getInstance().fireRestartRequired(RestartForNewUI(newUI.asBoolean()))
       }
     }
   }

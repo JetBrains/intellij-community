@@ -50,6 +50,7 @@ def __create_config():
     # type: () -> pl.Config
     cfg = pl.Config()
     cfg.set_tbl_cols(-1)  # Unlimited
+    cfg.set_tbl_rows(-1)  # Unlimited
     cfg.set_fmt_str_lengths(MAX_COLWIDTH)  # No option to set unlimited, so it's 100_000
     return cfg
 

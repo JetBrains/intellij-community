@@ -26,10 +26,12 @@ import org.jetbrains.plugins.notebooks.ui.visualization.NotebookLineMarkerRender
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.*
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
+import java.time.ZonedDateTime
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.reflect.KClass
@@ -63,7 +65,7 @@ class EditorCellView(
     set(value) {
       field = value
       updateFolding()
-      updateRunButton()
+      updateRunButtonVisibility()
       updateCellHighlight()
     }
 
@@ -230,13 +232,13 @@ class EditorCellView(
   fun mouseExited() {
     mouseOver = false
     updateFolding()
-    updateRunButton()
+    updateRunButtonVisibility()
   }
 
   fun mouseEntered() {
     mouseOver = true
     updateFolding()
-    updateRunButton()
+    updateRunButtonVisibility()
   }
 
   inline fun <reified T : Any> getExtension(): T? {
@@ -338,7 +340,7 @@ class EditorCellView(
   fun updateSelection(value: Boolean) {
     selected = value
     updateFolding()
-    updateRunButton()
+    updateRunButtonVisibility()
     updateCellHighlight()
   }
 
@@ -387,13 +389,8 @@ class EditorCellView(
     outputs?.foldingsSelected = selected
   }
 
-  private fun updateRunButton() {
-    if (mouseOver || selected) {
-      input.showRunButton()
-    }
-    else {
-      input.hideRunButton()
-    }
+  private fun updateRunButtonVisibility() {
+    input.runCellButton?.visible = mouseOver || selected
   }
 
   override fun doInvalidate() {
@@ -419,6 +416,12 @@ class EditorCellView(
 
   fun updateCellFolding() {
     controllers.forEach { it.updateCellFolding() }
+  }
+
+  fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
+    _controllers.filterIsInstance<CellExecutionStatusView>().firstOrNull()
+      ?.updateExecutionStatus(executionCount, progressStatus, startTime, endTime)
+    input.runCellButton?.updateGutterAction(progressStatus)
   }
 
   inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : NotebookLineMarkerRenderer() {

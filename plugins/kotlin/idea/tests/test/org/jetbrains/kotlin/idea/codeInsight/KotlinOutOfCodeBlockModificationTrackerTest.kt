@@ -58,6 +58,22 @@ class KotlinOutOfCodeBlockModificationTrackerTest : KotlinLightCodeInsightFixtur
             changeExpected = { PsiManagerEx.getInstanceEx(project).fileManager.findCachedViewProvider(foo) == null })
     }
 
+    fun `test file rename fires OOBM`() {
+        val foo = myFixture.tempDirFixture.createFile("Foo.kt", initialText())
+
+        // to avoid incrementing `KotlinCodeBlockModificationListener` via `propUnloadedPsi` which is thrown when no PSI is available
+        myFixture.openFileInEditor(foo)
+
+        val modificationTracker = KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+        val initialModificationCount = modificationTracker.modificationCount
+
+        runWriteAction {
+            foo.rename(this, "Bar.kt")
+        }
+
+        assertNotEquals(initialModificationCount, modificationTracker.modificationCount)
+    }
+
     private fun doTestChangeComments(foo: VirtualFile, changeExpected: () -> Boolean) {
         val modificationTracker = KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
         val initialModificationCount = modificationTracker.modificationCount

@@ -139,10 +139,10 @@ open class EditorComposite internal constructor(
 
     if (model is PrecomputedFlow) {
       if (model.fireFileOpened) {
-        blockingHandleModel(model.model)
+        blockingHandleModel2(model.model)
       }
       else {
-        blockingHandleModel2(model.model)
+        blockingHandleModel(model.model)
       }
     }
     else {
@@ -870,10 +870,6 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   override fun requestDefaultFocus(): Boolean = focusComponent()?.requestDefaultFocus() ?: false
 
   override fun uiDataSnapshot(sink: DataSink) {
-    val component = composite.preferredFocusedComponent
-    if (component !== this) {
-      DataSink.uiDataSnapshot(sink, component)
-    }
     sink[CommonDataKeys.PROJECT] = composite.project
     sink[PlatformCoreDataKeys.FILE_EDITOR] = composite.selectedEditor
     sink[CommonDataKeys.VIRTUAL_FILE] = composite.file

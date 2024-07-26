@@ -47,8 +47,13 @@ class EditorCellFoldingBar(
     }
 
   fun dispose() {
-    panel?.let { editor.gutterComponentEx.remove(it) }
-    panel = null
+    panel?.let {
+      editor.gutterComponentEx.apply {
+        remove(it)
+        repaint()
+      }
+      panel = null
+    }
   }
 
   fun updateBounds() {
@@ -97,7 +102,7 @@ class EditorCellFoldingBar(
       g.create().use { g2 ->
         g2 as Graphics2D
         g2.color = color
-        RectanglePainter2D.FILL.paint(g2, rect, arc, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_DEFAULT)
+        RectanglePainter2D.FILL.paint(g2, rect, arc, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
       }
     }
 

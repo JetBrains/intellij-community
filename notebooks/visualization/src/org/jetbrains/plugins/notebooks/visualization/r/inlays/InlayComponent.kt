@@ -4,14 +4,12 @@
 
 package org.jetbrains.plugins.notebooks.visualization.r.inlays
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import java.awt.*
-import java.lang.invoke.MethodHandles
 import javax.swing.JPanel
 
 /** Inlay editor component displaying text output, table data and charts for notebook paragraphs. */
@@ -31,10 +29,6 @@ open class InlayComponent : JPanel(BorderLayout()), EditorCustomElementRenderer 
     g.composite = AlphaComposite.SrcOver
     super<JPanel>.paint(g)
     g.composite = oldComposite
-  }
-
-  companion object {
-    val LOG = Logger.getInstance(MethodHandles.lookup().lookupClass())
   }
 
   var resizable: Boolean

@@ -17,6 +17,7 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -90,13 +91,14 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
         ((XmlAttributeDescriptorEx)attributeDescriptor).validateAttributeName(attribute, holder, isOnTheFly);
       }
 
-      addUnknownXmlAttributeQuickFixes(tag, name, quickfixes, holder, isFixRequired);
+      var highlightType = addUnknownXmlAttributeQuickFixes(tag, name, quickfixes, holder, isFixRequired);
 
       if (!quickfixes.isEmpty()) {
         registerProblemOnAttributeName(
           attribute,
           XmlAnalysisBundle.message("xml.inspections.attribute.is.not.allowed.here", name),
           holder,
+          highlightType,
           quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY)
         );
       }
@@ -116,13 +118,19 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     }
   }
 
-  private static void addUnknownXmlAttributeQuickFixes(XmlTag tag,
-                                                       String name,
-                                                       ArrayList<? super LocalQuickFix> quickfixes,
-                                                       ProblemsHolder holder,
-                                                       boolean isFixRequired) {
+  private static ProblemHighlightType addUnknownXmlAttributeQuickFixes(XmlTag tag,
+                                                                       String name,
+                                                                       ArrayList<? super LocalQuickFix> quickfixes,
+                                                                       ProblemsHolder holder,
+                                                                       boolean isFixRequired) {
+    var highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     for (XmlUnknownAttributeQuickFixProvider fixProvider : XmlUnknownAttributeQuickFixProvider.EP_NAME.getExtensionList()) {
       quickfixes.addAll(fixProvider.getOrRegisterAttributeFixes(tag, name, holder, isFixRequired));
+      var providerHighlightType = fixProvider.getProblemHighlightType(tag);
+      if (providerHighlightType != ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+        highlightType = providerHighlightType;
+      }
     }
+    return highlightType;
   }
 }

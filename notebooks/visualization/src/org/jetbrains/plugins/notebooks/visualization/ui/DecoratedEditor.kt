@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
+import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
+import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
 import java.awt.AWTEvent
 import java.awt.BorderLayout
 import java.awt.GraphicsEnvironment
@@ -35,12 +37,20 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
       setupScrollPaneListener()
     }
 
-    // TODO This position keeper conflicts with editor position keeper and produces invalid positioning on fold.
-    setupScrollingPositionKeeper()
+    setupEditorComponentWrapper()
 
     manager.onInvalidate {
       component.revalidate()
     }
+    manager.addCellViewEventsListener(object : EditorCellViewEventListener {
+      override fun onEditorCellViewEvents(events: List<EditorCellViewEvent>) {
+        events.asSequence().filterIsInstance<CellViewRemoved>().forEach {
+          if (it.view == mouseOverCell) {
+            mouseOverCell = null
+          }
+        }
+      }
+    }, this)
   }
 
   private fun setupScrollPaneListener() {
@@ -60,10 +70,11 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
     return original.structureViewBuilder
   }
 
-  private fun setupScrollingPositionKeeper() {
+  private fun setupEditorComponentWrapper() {
     val editorEx = original.editor as EditorEx
     val scrollPane = editorEx.scrollPane
     val view = scrollPane.viewport.view
+    scrollPane.viewport.isOpaque = false
     scrollPane.viewport.view = EditorComponentWrapper(editorEx, view as EditorComponentImpl, manager)
   }
 
@@ -151,6 +162,7 @@ class EditorComponentWrapper(
   private val manager: NotebookCellInlayManager,
 ) : JComponent() {
   init {
+    isOpaque = false
     layout = BorderLayout()
     add(editorComponent, BorderLayout.CENTER)
   }
