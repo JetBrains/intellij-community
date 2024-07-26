@@ -24,6 +24,17 @@ public final class ExplicitlyImportedWeigher extends ProximityWeigher {
     PsiElement position = location.getPosition();
     return position == null ? null : getContextPackage(position);
   });
+  private static final NullableLazyKey<List<String>, ProximityLocation> PLACE_IMPORTED_MODULE_NAMES = NullableLazyKey.create("importedModuleNames", location -> {
+    final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(location.getPosition(), PsiJavaFile.class, false);
+    final PsiImportList importList = psiJavaFile == null ? null : psiJavaFile.getImportList();
+    if (importList == null) return Collections.emptyList();
+
+    List<String> importedModuleNames = new ArrayList<>();
+    for (PsiImportModuleStatement statement : importList.getImportModuleStatements()) {
+      ContainerUtil.addIfNotNull(importedModuleNames, statement.getReferenceName());
+    }
+    return importedModuleNames;
+  });
   private static final NotNullLazyKey<List<String>, ProximityLocation> PLACE_IMPORTED_NAMES =
     NotNullLazyKey.createLazyKey("importedNames", location -> {
       final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(location.getPosition(), PsiJavaFile.class, false);
@@ -95,6 +106,12 @@ public final class ExplicitlyImportedWeigher extends ProximityWeigher {
           return ImportWeight.CLASS_ON_DEMAND_NESTED;
         }
 
+        List<String> moduleNames = PLACE_IMPORTED_MODULE_NAMES.getValue(location);
+        if (moduleNames != null && !moduleNames.isEmpty()) {
+          PsiJavaModule psiJavaModule = JavaModuleGraphHelper.getInstance().findDescriptorByElement(element);
+          if (psiJavaModule != null && moduleNames.contains(psiJavaModule.getName())) return ImportWeight.MODULE_IMPORTED;
+        }
+
         final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
         if (placePackage != null) {
           Module elementModule = ModuleUtilCore.findModuleForPsiElement(element);
@@ -134,6 +151,7 @@ public final class ExplicitlyImportedWeigher extends ProximityWeigher {
     CLASS_HAS_SAME_PACKAGE_IMPORT,
     CLASS_DECLARED_IN_SAME_PACKAGE_NESTED,
     CLASS_ON_DEMAND_NESTED,
+    MODULE_IMPORTED,
     CLASS_ON_DEMAND_TOP_LEVEL,
     CLASS_JAVA_LANG,
     MEMBER_SAME_PACKAGE,
