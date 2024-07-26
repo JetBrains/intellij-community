@@ -207,6 +207,48 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       module current.module.name { }
     """.trimIndent())
 
+  @NeedsIndex.Full
+  fun testModuleImportDeclarationsOrder() {
+    addFile("module-info.java", """
+      module first.module.name { 
+        exports first.module.name;
+      }
+    """.trimIndent(), M2)
+    addFile("MyClassA.java", """
+      package first.module.name;
+      public class MyClassA { }
+    """.trimIndent(), M2)
+
+    addFile("module-info.java", """
+      module second.module.name { 
+        exports second.module.name;
+      }
+    """.trimIndent(), M4)
+    addFile("MyClassB.java", """
+      package second.module.name;
+      public class MyClassB { }
+    """.trimIndent(), M4)
+
+    addFile("MyClassC.java", """
+      package current.pkg.name;
+      public class MyClassC { }
+    """.trimIndent())
+    myFixture.configureByText("Main.java", """
+      import module second.module.name;
+      import current.pkg.name.*;
+      
+      public class Main {
+        public static void main(String[] args) {
+          MyCla<caret>
+        }
+      }
+    """.trimIndent())
+
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.getLookup()
+    myFixture.assertPreferredCompletionItems(0, "MyClassC", "MyClassB", "MyClassA")
+  }
+
   //<editor-fold desc="Helpers.">
   private fun complete(text: String, expected: String) = fileComplete("module-info.java", text, expected)
   private fun fileComplete(fileName: String, text: String, expected: String) {
