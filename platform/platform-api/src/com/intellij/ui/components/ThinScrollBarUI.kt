@@ -1,46 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components;
+package com.intellij.ui.components
 
-import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.components.ScrollBarPainter.ThinScrollBarThumb
+import com.intellij.util.ui.JBUI
+import java.awt.Graphics2D
+import java.awt.Insets
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.awt.*;
+private const val DEFAULT_THICKNESS = 3
 
-@ApiStatus.Internal
-public class ThinScrollBarUI extends DefaultScrollBarUI {
-  private final static int DEFAULT_THICKNESS = 3;
-  ThinScrollBarUI() {
-    super(DEFAULT_THICKNESS, DEFAULT_THICKNESS, DEFAULT_THICKNESS);
+internal open class ThinScrollBarUI : DefaultScrollBarUI {
+  internal constructor() : super(thickness = DEFAULT_THICKNESS, thicknessMax = DEFAULT_THICKNESS, thicknessMin = DEFAULT_THICKNESS)
+
+  constructor(thickness: Int, thicknessMax: Int, thicknessMin: Int) : super(
+    thickness = thickness,
+    thicknessMax = thicknessMax,
+    thicknessMin = thicknessMin,
+  )
+
+  override fun createThumbPainter(): ScrollBarPainter.Thumb = ThinScrollBarThumb({ scrollBar }, false)
+
+  override fun paintTrack(g: Graphics2D, c: JComponent) {
+    // track is not needed
   }
 
-  public ThinScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
-    super(thickness, thicknessMax, thicknessMin);
-  }
-
-  @Override
-  protected ScrollBarPainter.@NotNull Thumb createThumbPainter() {
-    return new ScrollBarPainter.ThinScrollBarThumb(() -> scrollBar, false);
-  }
-
-  @Override
-  protected void paintTrack(@NotNull Graphics2D g, @NotNull JComponent c) {
-    // Track is not needed
-  }
-
-  @Override
-  protected void paintThumb(@NotNull Graphics2D g, @NotNull JComponent c) {
-    if (Companion.isOpaque(c)) {
-      paint(thumb, g, c, ScrollSettings.isThumbSmallIfOpaque.invoke());
+  override fun paintThumb(g: Graphics2D, c: JComponent) {
+    if (isOpaque(c)) {
+      paint(p = thumb, g = g, c = c, small = ScrollSettings.isThumbSmallIfOpaque.invoke())
     }
-    else if (myAnimationBehavior != null && myAnimationBehavior.getThumbFrame() > 0) {
-      paint(thumb, g, c, false);
+    else if (animationBehavior != null && animationBehavior!!.thumbFrame > 0) {
+      paint(p = thumb, g = g, c = c, small = false)
     }
   }
 
-  @Override
-  protected @NotNull Insets getInsets(boolean small) {
-    return JBUI.emptyInsets();
-  }
+  override fun getInsets(small: Boolean): Insets = JBUI.emptyInsets()
 }

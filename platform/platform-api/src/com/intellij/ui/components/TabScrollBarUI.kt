@@ -7,7 +7,11 @@ import java.awt.Graphics2D
 import java.awt.Insets
 import javax.swing.JComponent
 
-internal class TabScrollBarUI(thickness: Int, thicknessMax: Int, thicknessMin: Int) : ThinScrollBarUI(thickness, thicknessMax, thicknessMin) {
+internal class TabScrollBarUI(
+  thickness: Int,
+  thicknessMax: Int,
+  thicknessMin: Int,
+) : ThinScrollBarUI(thickness = thickness, thicknessMax = thicknessMax, thicknessMin = thicknessMin) {
   private var isHovered: Boolean = false
 
   private val defaultColorProducer: MixedColorProducer = MixedColorProducer(
@@ -39,7 +43,7 @@ internal class TabScrollBarUI(thickness: Int, thicknessMax: Int, thicknessMin: I
 
 
   override fun paintThumb(g: Graphics2D, c: JComponent) {
-    if (myAnimationBehavior != null && myAnimationBehavior!!.thumbFrame > 0) {
+    if (animationBehavior != null && animationBehavior!!.thumbFrame > 0) {
       paint(thumb, g, c, !isHovered)
     }
   }

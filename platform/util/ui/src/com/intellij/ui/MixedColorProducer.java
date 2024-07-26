@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Couple;
@@ -8,7 +8,7 @@ import java.awt.*;
 import java.util.function.Supplier;
 
 /**
- * This is a color producer that allows dynamically mix two colors.
+ * This is a color producer that allows to dynamically mix two colors.
  */
 public final class MixedColorProducer implements Supplier<@NotNull Color> {
   private final Couple<@NotNull Color> couple;

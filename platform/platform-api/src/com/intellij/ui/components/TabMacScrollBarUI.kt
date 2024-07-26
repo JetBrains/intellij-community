@@ -42,7 +42,7 @@ internal class TabMacScrollBarUI(
 
 
   override fun paintThumb(g: Graphics2D, c: JComponent) {
-    if (myAnimationBehavior != null && myAnimationBehavior!!.thumbFrame > 0) {
+    if (animationBehavior != null && animationBehavior!!.thumbFrame > 0) {
       paint(thumb, g, c, !isHovered)
     }
   }

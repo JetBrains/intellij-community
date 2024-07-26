@@ -42,7 +42,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   private var oldValue: Int = 0
 
   @JvmField
-  protected var myAnimationBehavior: ScrollBarAnimationBehavior? = null
+  protected var animationBehavior: ScrollBarAnimationBehavior? = null
 
   companion object {
     @ApiStatus.Internal
@@ -85,14 +85,14 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   private fun getMinimalThickness(): Int = scale(if (scrollBar == null || isOpaque(scrollBar!!)) thickness else thicknessMin)
 
   fun toggle(isOn: Boolean) {
-    if (myAnimationBehavior != null) {
-      myAnimationBehavior!!.onToggle(isOn)
+    if (animationBehavior != null) {
+      animationBehavior!!.onToggle(isOn)
     }
   }
 
   open fun isAbsolutePositioning(event: MouseEvent): Boolean = SwingUtilities.isMiddleMouseButton(event)
 
-  open fun isTrackClickable(): Boolean = isOpaque(scrollBar!!) || (myAnimationBehavior != null && myAnimationBehavior!!.trackFrame > 0)
+  open fun isTrackClickable(): Boolean = isOpaque(scrollBar!!) || (animationBehavior != null && animationBehavior!!.trackFrame > 0)
 
   open val isTrackExpandable: Boolean
     get() = false
@@ -150,7 +150,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
 
   private fun getTrackOffset(offset: Int): Int {
     if (!isTrackExpandable) return offset
-    val value: Float = if (myAnimationBehavior == null) 0f else myAnimationBehavior!!.trackFrame
+    val value: Float = if (animationBehavior == null) 0f else animationBehavior!!.trackFrame
     if (value <= 0) return offset
     if (value >= 1) return 0
     return (.5f + offset * (1 - value)).toInt()
@@ -175,7 +175,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   }
 
   override fun installUI(c: JComponent) {
-    myAnimationBehavior = createWrapAnimationBehaviour()
+    animationBehavior = createWrapAnimationBehaviour()
 
     scrollBar = c as JScrollBar
     ScrollBarPainter.setBackground(c)
@@ -190,9 +190,9 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   }
 
   override fun uninstallUI(c: JComponent) {
-    checkNotNull(myAnimationBehavior)
-    myAnimationBehavior!!.onUninstall()
-    myAnimationBehavior = null
+    checkNotNull(animationBehavior)
+    animationBehavior!!.onUninstall()
+    animationBehavior = null
 
     scrollTimer.stop()
     scrollBar!!.removeFocusListener(listener)
@@ -356,8 +356,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       }
     }
     oldValue = value
-    if (animate && myAnimationBehavior != null) {
-      myAnimationBehavior!!.onThumbMove()
+    if (animate && animationBehavior != null) {
+      animationBehavior!!.onThumbMove()
     }
   }
 
@@ -375,12 +375,12 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
 
     fun updateMouse(x: Int, y: Int) {
       if (isTrackContains(x, y)) {
-        if (!isOverTrack && myAnimationBehavior != null) {
-          myAnimationBehavior!!.onTrackHover(true.also { isOverTrack = it })
+        if (!isOverTrack && animationBehavior != null) {
+          animationBehavior!!.onTrackHover(true.also { isOverTrack = it })
         }
         val hover: Boolean = isThumbContains(x, y)
-        if (isOverThumb != hover && myAnimationBehavior != null) {
-          myAnimationBehavior!!.onThumbHover(hover.also { isOverThumb = it })
+        if (isOverThumb != hover && animationBehavior != null) {
+          animationBehavior!!.onThumbHover(hover.also { isOverThumb = it })
         }
       }
       else {
@@ -389,11 +389,11 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     }
 
     fun updateMouseExit() {
-      if (isOverThumb && myAnimationBehavior != null) {
-        myAnimationBehavior!!.onThumbHover(false.also { isOverThumb = it })
+      if (isOverThumb && animationBehavior != null) {
+        animationBehavior!!.onThumbHover(false.also { isOverThumb = it })
       }
-      if (isOverTrack && myAnimationBehavior != null) {
-        myAnimationBehavior!!.onTrackHover(false.also { isOverTrack = it })
+      if (isOverTrack && animationBehavior != null) {
+        animationBehavior!!.onTrackHover(false.also { isOverTrack = it })
       }
     }
 
@@ -548,8 +548,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
         repaint()
       }
       if ("opaque" == name || "visible" == name) {
-        if (myAnimationBehavior != null) {
-          myAnimationBehavior!!.onReset()
+        if (animationBehavior != null) {
+          animationBehavior!!.onReset()
         }
         myTrack.bounds.setBounds(0, 0, 0, 0)
         thumb.bounds.setBounds(0, 0, 0, 0)
@@ -571,8 +571,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
           val minY: Int = min(thumb.bounds.y.toDouble(), thumbPos.toDouble()).toInt()
           val maxY: Int = (max(thumb.bounds.y.toDouble(), thumbPos.toDouble()) + thumb.bounds.height).toInt()
           thumb.bounds.y = thumbPos
-          if (myAnimationBehavior != null) {
-            myAnimationBehavior!!.onThumbMove()
+          if (animationBehavior != null) {
+            animationBehavior!!.onThumbMove()
           }
           repaint(thumb.bounds.x, minY, thumb.bounds.width, maxY - minY)
         }
@@ -585,8 +585,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
           val minX: Int = min(thumb.bounds.x.toDouble(), thumbPos.toDouble()).toInt()
           val maxX: Int = (max(thumb.bounds.x.toDouble(), thumbPos.toDouble()) + thumb.bounds.width).toInt()
           thumb.bounds.x = thumbPos
-          if (myAnimationBehavior != null) {
-            myAnimationBehavior!!.onThumbMove()
+          if (animationBehavior != null) {
+            animationBehavior!!.onThumbMove()
           }
           repaint(minX, thumb.bounds.y, maxX - minX, thumb.bounds.height)
         }
