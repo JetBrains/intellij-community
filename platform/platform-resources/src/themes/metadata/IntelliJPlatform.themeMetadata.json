@@ -2530,6 +2530,10 @@
       "since": "2024.2"
     },
     {
+      "key": "LicenseDialog.LicenseList.licenseIdForeground",
+      "since": "2024.2"
+    },
+    {
       "key": "LicenseDialog.LicenseList.separatorColor",
       "since": "2024.2"
     },

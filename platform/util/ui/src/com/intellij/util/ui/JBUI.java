@@ -2471,11 +2471,17 @@ public final class JBUI {
       public static final class LicenseList {
         private static final @NotNull Color LICENSE_DETAILS_COLOR =
           JBColor.namedColor("LicenseDialog.LicenseList.licenseDetailsForeground", 0xC9CCD6, 0x9DA0A8);
+        private static final @NotNull Color LICENSE_ID_COLOR =
+          JBColor.namedColor("LicenseDialog.LicenseList.licenseIdForeground", 0xD3D5DB, 0x43454A);
         private static final @NotNull Color SEPARATOR_COLOR =
           JBColor.namedColor("LicenseDialog.LicenseList.separatorColor", 0xD3D5DB, 0x43454A);
 
         public static @NotNull Color getLicenseDetailsColor() {
           return LICENSE_DETAILS_COLOR;
+        }
+
+        public static @NotNull Color getLicenseIdColor() {
+          return LICENSE_ID_COLOR;
         }
 
         public static @NotNull Color getSeparatorColor() {

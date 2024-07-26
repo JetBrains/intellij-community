@@ -872,6 +872,7 @@
       "separatorColor": "Gray3",
       "LicenseList": {
         "licenseDetailsForeground": "Gray9",
+        "licenseIdForeground": "Gray7",
         "separatorColor": "Gray4"
       },
       "LicenseServer": {
