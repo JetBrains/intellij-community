@@ -5,11 +5,7 @@ import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
-import com.intellij.platform.ijent.IjentId
-import com.intellij.platform.ijent.IjentInfo
-import com.intellij.platform.ijent.IjentPosixInfo
-import com.intellij.platform.ijent.IjentSessionRegistry
-import com.intellij.platform.ijent.IjentWindowsInfo
+import com.intellij.platform.ijent.*
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixUserPrincipal
@@ -22,11 +18,7 @@ import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.DosFileAttributes
-import java.nio.file.attribute.FileAttribute
-import java.nio.file.attribute.FileAttributeView
-import java.nio.file.attribute.PosixFileAttributes
+import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ExecutorService
