@@ -168,12 +168,3 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         }
     }
 }
-
-internal fun <C : KotlinRawPositionContext> KaSession.complete(
-    contextContributor: FirCompletionContributor<C>,
-    positionContext: C,
-    weighingContext: WeighingContext,
-    sessionParameters: FirCompletionSessionParameters,
-) {
-    contextContributor.complete(positionContext, weighingContext, sessionParameters)
-}

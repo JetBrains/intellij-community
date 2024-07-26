@@ -171,8 +171,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 }
 
 internal data class FirCompletionSessionParameters(
-    private val basicContext: FirBasicCompletionContext,
-    private val positionContext: KotlinRawPositionContext,
+    val basicContext: FirBasicCompletionContext,
+    val positionContext: KotlinRawPositionContext,
 ) {
     private val languageVersionSettings = basicContext.project.languageVersionSettings
     val excludeEnumEntries: Boolean = !languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
