@@ -4,11 +4,9 @@ package com.intellij.java.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
-import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -70,7 +68,10 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
 
     context.setExternalProfile(profile);
 
-    ProgressManager.getInstance().runProcess(() -> context.launchInspectionsOffline(scope, outputPath, false, resultFiles), new ProgressWindow(false, getProject()));
+    ActionUtil.underModalProgress(myFixture.getProject(), "", () -> {
+      context.launchInspectionsOffline(scope, outputPath, false, resultFiles);
+      return null;
+    });
     assertSize(2, resultFiles);
 
     Element dfaResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("ConstantValue.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);
