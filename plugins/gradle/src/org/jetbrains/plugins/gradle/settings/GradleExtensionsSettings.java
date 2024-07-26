@@ -17,9 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
 import org.jetbrains.plugins.gradle.model.GradleProperty;
@@ -78,8 +76,8 @@ public class GradleExtensionsSettings {
   }
 
   public static class Settings {
-    public Map<String, GradleProject> projects = new HashMap<>();
-    private final GradleExtensionDataFactory extensionDataFactory = new GradleExtensionDataFactory();
+    private final @NotNull Map<String, GradleProject> projects = new HashMap<>();
+    private final @NotNull GradleExtensionDataFactory extensionDataFactory = new GradleExtensionDataFactory();
 
     public void add(@NotNull String rootPath,
                     @NotNull Collection<? extends DataNode<GradleExtensions>> extensionsData) {
@@ -98,22 +96,16 @@ public class GradleExtensionsSettings {
     public void add(@NotNull String rootPath, @NotNull Map<String, GradleExtensions> extensions) {
       GradleProject gradleProject = new GradleProject();
       for (Map.Entry<String, GradleExtensions> entry : extensions.entrySet()) {
-        GradleExtensionsData extensionsData = extensionDataFactory.getGradleExtensionsData(entry.getValue());
+        GradleExtensionsData extensionsData = extensionDataFactory.getGradleExtensionsData(entry.getValue(), gradleProject);
         gradleProject.extensions.put(entry.getKey(), extensionsData);
-        extensionsData.myGradleProject = gradleProject;
       }
-
-      Map<String, GradleProject> projects = new HashMap<>(this.projects);
       projects.put(rootPath, gradleProject);
-      this.projects = projects;
     }
 
-    public void remove(Set<String> rootPaths) {
-      Map<String, GradleProject> projects = new HashMap<>(this.projects);
+    public void remove(@NotNull Set<String> rootPaths) {
       for (String path : rootPaths) {
         projects.remove(path);
       }
-      this.projects = projects;
     }
 
     /**
@@ -153,20 +145,36 @@ public class GradleExtensionsSettings {
   }
 
   public static class GradleExtensionsData {
-    private GradleProject myGradleProject;
-    public String parent;
-    @NotNull
-    public final Map<String, GradleExtension> extensions = new HashMap<>();
-    @NotNull
-    public final List<GradleConvention> conventions = new SmartList<>();
-    @NotNull
-    public final Map<String, GradleProp> properties = new HashMap<>();
-    @NotNull
-    public final Map<String, GradleTask> tasksMap = new LinkedHashMap<>();
-    @NotNull
-    public final Map<String, GradleConfiguration> configurations = new HashMap<>();
-    @NotNull
-    public final Map<String, GradleConfiguration> buildScriptConfigurations = new HashMap<>();
+
+    private final @Nullable GradleProject myGradleProject;
+    private final @Nullable String parent;
+
+    public final @NotNull Map<String, GradleExtension> extensions;
+    public final @NotNull List<GradleConvention> conventions;
+    public final @NotNull Map<String, GradleProp> properties;
+    public final @NotNull Map<String, GradleTask> tasksMap;
+    public final @NotNull Map<String, GradleConfiguration> configurations;
+    public final @NotNull Map<String, GradleConfiguration> buildScriptConfigurations;
+
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public GradleExtensionsData(@Nullable GradleProject gradleProject,
+                                @Nullable String parent,
+                                @NotNull Map<String, GradleExtension> extensions,
+                                @NotNull List<GradleConvention> conventions,
+                                @NotNull Map<String, GradleProp> properties,
+                                @NotNull Map<String, GradleTask> tasksMap,
+                                @NotNull Map<String, GradleConfiguration> configurations,
+                                @NotNull Map<String, GradleConfiguration> buildScriptConfigurations) {
+      this.myGradleProject = gradleProject;
+      this.parent = parent;
+      this.extensions = Collections.unmodifiableMap(extensions);
+      this.conventions = Collections.unmodifiableList(conventions);
+      this.properties = Collections.unmodifiableMap(properties);
+      this.tasksMap = Collections.unmodifiableMap(tasksMap);
+      this.configurations = Collections.unmodifiableMap(configurations);
+      this.buildScriptConfigurations = Collections.unmodifiableMap(buildScriptConfigurations);
+    }
 
     @Nullable
     public GradleExtensionsData getParent() {
@@ -212,36 +220,49 @@ public class GradleExtensionsSettings {
 
   private static class GradleExtensionDataFactory {
 
-    public @NotNull GradleExtensionsData getGradleExtensionsData(@NotNull GradleExtensions gradleExtensions) {
-      GradleExtensionsData extensionsData = new GradleExtensionsData();
-      extensionsData.parent = gradleExtensions.getParentProjectPath();
-
+    public @NotNull GradleExtensionsData getGradleExtensionsData(@NotNull GradleExtensions gradleExtensions,
+                                                                 @NotNull GradleProject gradleProject) {
+      Map<String, GradleExtension> extensions = new HashMap<>();
       for (org.jetbrains.plugins.gradle.model.GradleExtension extension : gradleExtensions.getExtensions()) {
         GradleExtension gradleExtension = convertGradleExtension(extension);
-        extensionsData.extensions.put(gradleExtension.getName(), gradleExtension);
+        extensions.put(gradleExtension.getName(), gradleExtension);
       }
+
+      List<GradleConvention> conventions = new SmartList<>();
       for (org.jetbrains.plugins.gradle.model.GradleConvention convention : gradleExtensions.getConventions()) {
         GradleConvention gradleConvention = convertGradleConvention(convention);
-        extensionsData.conventions.add(gradleConvention);
+        conventions.add(gradleConvention);
       }
+
+      Map<String, GradleProp> properties = new HashMap<>();
       for (GradleProperty property : gradleExtensions.getGradleProperties()) {
         GradleProp gradleProp = convertGradleProp(property);
-        extensionsData.properties.put(gradleProp.getName(), gradleProp);
+        properties.put(gradleProp.getName(), gradleProp);
       }
+
+      Map<String, GradleTask> tasksMap = new LinkedHashMap<>();
       for (ExternalTask task : gradleExtensions.getTasks()) {
         GradleTask gradleTask = convertGradleTask(task);
-        extensionsData.tasksMap.put(gradleTask.getName(), gradleTask);
+        tasksMap.put(gradleTask.getName(), gradleTask);
       }
+
+      Map<String, GradleConfiguration> configurations = new HashMap<>();
+      Map<String, GradleConfiguration> buildScriptConfigurations = new HashMap<>();
       for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
         GradleConfiguration gradleConfiguration = convertGradleConfiguration(configuration);
         if (gradleConfiguration.scriptClasspath) {
-          extensionsData.buildScriptConfigurations.put(gradleConfiguration.getName(), gradleConfiguration);
+          buildScriptConfigurations.put(gradleConfiguration.getName(), gradleConfiguration);
         }
         else {
-          extensionsData.configurations.put(gradleConfiguration.getName(), gradleConfiguration);
+          configurations.put(gradleConfiguration.getName(), gradleConfiguration);
         }
       }
-      return extensionsData;
+
+      return new GradleExtensionsData(gradleProject, gradleExtensions.getParentProjectPath(),
+                                      extensions, conventions,
+                                      properties, tasksMap,
+                                      configurations, buildScriptConfigurations
+      );
     }
 
     private static @NotNull GradleExtension convertGradleExtension(@NotNull org.jetbrains.plugins.gradle.model.GradleExtension extension) {
