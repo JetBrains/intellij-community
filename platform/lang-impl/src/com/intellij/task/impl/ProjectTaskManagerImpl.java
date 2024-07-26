@@ -77,7 +77,8 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return run(createModulesBuildTask(modules, false, false, false));
   }
 
-  private ProjectTask createModulesFilesTask(VirtualFile @NotNull [] files) {
+  @ApiStatus.Internal
+  public ProjectTask createModulesFilesTask(VirtualFile @NotNull [] files) {
     Map<Module, List<Pair<VirtualFile, Module>>> modulesMap = stream(files)
       .map(file -> new Pair<>(file, ProjectFileIndex.getInstance(myProject).getModuleForFile(file, false)))
       .filter(pair -> pair.second != null)

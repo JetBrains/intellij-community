@@ -76,6 +76,8 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
     HotSwapSessionManager.getInstance(project).fireStatusChanged(this, HotSwapVisibleStatus.IN_PROGRESS)
   }
 
+  fun getChanges() = changesCollector.getChanges()
+
   fun createStatusListener() = object : HotSwapResultListener {
     override fun onCompleted() {
       completeHotSwap()

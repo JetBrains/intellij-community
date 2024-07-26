@@ -285,8 +285,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       }
       else {
         ProjectTask buildProjectTask = projectTaskManager.createAllModulesBuildTask(true, project);
-        ProjectTaskContext context = new ProjectTaskContext(callback).withUserData(HOT_SWAP_CALLBACK_KEY, callback);
-        projectTaskManager.run(context, buildProjectTask);
+        projectTaskManager.run(createContext(callback), buildProjectTask);
       }
     }
     else {
@@ -301,11 +300,27 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
   @Override
   public void compileAndReload(@NotNull DebuggerSession session, VirtualFile @NotNull ... files) {
+    compileAndReload(session, null, files);
+  }
+
+  @Override
+  public void compileAndReload(@NotNull DebuggerSession session, @Nullable HotSwapStatusListener callback, VirtualFile @NotNull ... files) {
     dontAskHotswapAfterThisCompilation();
     Project project = session.getProject();
     ProjectTaskManagerImpl.putBuildOriginator(project, this.getClass());
-    ProjectTaskManager.getInstance(project).compile(files);
+
+    if (callback == null) {
+      ProjectTaskManager.getInstance(project).compile(files);
+    } else {
+      ProjectTaskManagerImpl taskManager = (ProjectTaskManagerImpl)ProjectTaskManager.getInstance(project);
+      ProjectTask task = taskManager.createModulesFilesTask(files);
+      taskManager.run(createContext(callback), task);
+    }
     // The control flow continues at MyCompilationStatusListener.finished.
+  }
+
+  private static ProjectTaskContext createContext(@NotNull HotSwapStatusListener callback) {
+    return new ProjectTaskContext(callback).withUserData(HOT_SWAP_CALLBACK_KEY, callback);
   }
 
   public void dontAskHotswapAfterThisCompilation() {
