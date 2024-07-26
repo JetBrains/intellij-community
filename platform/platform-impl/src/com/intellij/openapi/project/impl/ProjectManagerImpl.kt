@@ -672,8 +672,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         // The project is loaded and is initialized, project services and components can be accessed.
         // But start-up and post start-up activities are not yet executed.
         if (!initFrameEarly && projectInitObserver != null) {
-          projectInitObserver.beforeInitRawProject(project)
-          projectInitObserver.rawProjectDeferred.complete(project)
+          projectInitObserver.scheduleProjectPreInit(project)
+          projectInitObserver.notifyProjectInit(project)
         }
 
         span("project startup") {
@@ -1241,11 +1241,11 @@ private suspend fun initProject(
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
-      val beforeComponentCreation = projectInitObserver?.beforeInitRawProject(project)
+      val beforeComponentCreation = projectInitObserver?.scheduleProjectPreInit(project)
       val workspaceIndexReady = CompletableDeferred<Unit>()
       launch {
         workspaceIndexReady.join()
-        projectInitObserver?.rawProjectDeferred?.complete(project)
+        projectInitObserver?.notifyProjectInit(project)
         if (preloadServices) {
           schedulePreloadServices(project)
         }

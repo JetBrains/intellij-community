@@ -82,9 +82,9 @@ import kotlin.time.Duration.Companion.seconds
 private typealias FrameAllocatorTask = suspend (saveTemplateJob: Job?, projectInitObserver: ProjectInitObserver?) -> Unit
 
 internal sealed interface ProjectInitObserver {
-  fun beforeInitRawProject(project: Project): Job
-
-  val rawProjectDeferred: CompletableDeferred<Project>
+  fun scheduleProjectPreInit(project: Project): Job
+  suspend fun awaitProjectInit(): Project
+  fun notifyProjectInit(project: Project)
 }
 
 internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
@@ -117,7 +117,9 @@ private class FrameAllocatorProjectInitObserver(
   private val coroutineScope: CoroutineScope,
   private val deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
 ) : ProjectInitObserver {
-  override fun beforeInitRawProject(project: Project): Job {
+  private val rawProjectDeferred = CompletableDeferred<Project>()
+
+  override fun scheduleProjectPreInit(project: Project): Job {
     val task = coroutineScope.launch {
       (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
     }
@@ -151,7 +153,11 @@ private class FrameAllocatorProjectInitObserver(
     return task
   }
 
-  override val rawProjectDeferred = CompletableDeferred<Project>()
+  override suspend fun awaitProjectInit(): Project = rawProjectDeferred.await()
+
+  override fun notifyProjectInit(project: Project) {
+    rawProjectDeferred.complete(project)
+  }
 }
 
 internal class ProjectUiFrameAllocator(
@@ -190,11 +196,9 @@ internal class ProjectUiFrameAllocator(
 
       val startOfWaitingForReadyFrame = AtomicLong(-1)
 
-      val rawProjectDeferred = projectInitObserver.rawProjectDeferred
-
       // Wait for opening editor or any tool window in the outer scope, to not block the completion of the loading scope.
       val hideSplashTask = outOfLoadingScope.launch {
-        val project = rawProjectDeferred.await()
+        val project = projectInitObserver.awaitProjectInit()
         val connection = project.messageBus.connect(this)
         hideSplashWhenEditorOrToolWindowShown(connection)
       }
@@ -204,7 +208,7 @@ internal class ProjectUiFrameAllocator(
       }
 
       val reopeningEditorJob = launch {
-        val project = rawProjectDeferred.await()
+        val project = projectInitObserver.awaitProjectInit()
         span("restoreEditors") {
           val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
           restoreEditors(project = project, fileEditorManager = fileEditorManager)
@@ -217,13 +221,13 @@ internal class ProjectUiFrameAllocator(
       }
 
       val toolWindowInitJob = scheduleInitFrame(
-        rawProjectDeferred = rawProjectDeferred,
+        projectInitObserver = projectInitObserver,
         reopeningEditorJob = reopeningEditorJob,
         deferredProjectFrameHelper = deferredProjectFrameHelper,
       )
 
       launch {
-        val project = rawProjectDeferred.await()
+        val project = projectInitObserver.awaitProjectInit()
         val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
 
         val onNoEditorsLeft = blockingContext {
@@ -388,12 +392,12 @@ private suspend fun hideSplashWhenEditorOrToolWindowShown(connection: SimpleMess
 }
 
 private fun CoroutineScope.scheduleInitFrame(
-  rawProjectDeferred: CompletableDeferred<Project>,
+  projectInitObserver: ProjectInitObserver,
   reopeningEditorJob: Job,
   deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
 ): Job {
   return launch {
-    val project = rawProjectDeferred.await()
+    val project = projectInitObserver.awaitProjectInit()
     span("initFrame") {
       launch(CoroutineName("tool window pane creation")) {
         val toolWindowManager = async { project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl }
