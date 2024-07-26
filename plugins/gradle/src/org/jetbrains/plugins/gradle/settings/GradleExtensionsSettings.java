@@ -79,6 +79,7 @@ public class GradleExtensionsSettings {
 
   public static class Settings {
     public Map<String, GradleProject> projects = new HashMap<>();
+    private final GradleExtensionDataFactory extensionDataFactory = new GradleExtensionDataFactory();
 
     public void add(@NotNull String rootPath,
                     @NotNull Collection<? extends DataNode<GradleExtensions>> extensionsData) {
@@ -97,67 +98,7 @@ public class GradleExtensionsSettings {
     public void add(@NotNull String rootPath, @NotNull Map<String, GradleExtensions> extensions) {
       GradleProject gradleProject = new GradleProject();
       for (Map.Entry<String, GradleExtensions> entry : extensions.entrySet()) {
-        GradleExtensionsData extensionsData = new GradleExtensionsData();
-        GradleExtensions gradleExtensions = entry.getValue();
-        extensionsData.parent = gradleExtensions.getParentProjectPath();
-
-        for (org.jetbrains.plugins.gradle.model.GradleExtension extension : gradleExtensions.getExtensions()) {
-          GradleExtension gradleExtension = new GradleExtension(
-            extension.getName(),
-            extension.getTypeFqn()
-          );
-          extensionsData.extensions.put(extension.getName(), gradleExtension);
-        }
-        for (org.jetbrains.plugins.gradle.model.GradleConvention convention : gradleExtensions.getConventions()) {
-          GradleConvention gradleConvention = new GradleConvention(
-            convention.getName(),
-            convention.getTypeFqn()
-          );
-          extensionsData.conventions.add(gradleConvention);
-        }
-        for (GradleProperty property : gradleExtensions.getGradleProperties()) {
-          GradleProp gradleProp = new GradleProp(
-            property.getName(),
-            property.getTypeFqn()
-          );
-          extensionsData.properties.put(gradleProp.name, gradleProp);
-        }
-        for (ExternalTask task : gradleExtensions.getTasks()) {
-          StringBuilder description = new StringBuilder();
-          if (task.getDescription() != null) {
-            description.append(task.getDescription());
-            if (task.getGroup() != null) {
-              description.append("<p>");
-            }
-          }
-          if (task.getGroup() != null) {
-            description.append("<i>Task group: ").append(task.getGroup()).append("<i>");
-          }
-
-          GradleTask gradleTask = new GradleTask(
-            task.getName(),
-            Objects.requireNonNullElse(task.getType(), GradleCommonClassNames.GRADLE_API_DEFAULT_TASK),
-            description.toString()
-          );
-
-          extensionsData.tasksMap.put(gradleTask.name, gradleTask);
-        }
-        for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
-          GradleConfiguration gradleConfiguration = new GradleConfiguration(
-            configuration.getName(),
-            configuration.isVisible(),
-            configuration.isScriptClasspathConfiguration(),
-            configuration.getDescription(),
-            configuration.getDeclarationAlternatives()
-          );
-
-          if (gradleConfiguration.scriptClasspath) {
-            extensionsData.buildScriptConfigurations.put(configuration.getName(), gradleConfiguration);
-          }
-          else {
-            extensionsData.configurations.put(configuration.getName(), gradleConfiguration);
-          }
-        }
+        GradleExtensionsData extensionsData = extensionDataFactory.getGradleExtensionsData(entry.getValue());
         gradleProject.extensions.put(entry.getKey(), extensionsData);
         extensionsData.myGradleProject = gradleProject;
       }
@@ -266,6 +207,92 @@ public class GradleExtensionsSettings {
         }
       }
       return null;
+    }
+  }
+
+  private static class GradleExtensionDataFactory {
+
+    public @NotNull GradleExtensionsData getGradleExtensionsData(@NotNull GradleExtensions gradleExtensions) {
+      GradleExtensionsData extensionsData = new GradleExtensionsData();
+      extensionsData.parent = gradleExtensions.getParentProjectPath();
+
+      for (org.jetbrains.plugins.gradle.model.GradleExtension extension : gradleExtensions.getExtensions()) {
+        GradleExtension gradleExtension = convertGradleExtension(extension);
+        extensionsData.extensions.put(gradleExtension.getName(), gradleExtension);
+      }
+      for (org.jetbrains.plugins.gradle.model.GradleConvention convention : gradleExtensions.getConventions()) {
+        GradleConvention gradleConvention = convertGradleConvention(convention);
+        extensionsData.conventions.add(gradleConvention);
+      }
+      for (GradleProperty property : gradleExtensions.getGradleProperties()) {
+        GradleProp gradleProp = convertGradleProp(property);
+        extensionsData.properties.put(gradleProp.getName(), gradleProp);
+      }
+      for (ExternalTask task : gradleExtensions.getTasks()) {
+        GradleTask gradleTask = convertGradleTask(task);
+        extensionsData.tasksMap.put(gradleTask.getName(), gradleTask);
+      }
+      for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
+        GradleConfiguration gradleConfiguration = convertGradleConfiguration(configuration);
+        if (gradleConfiguration.scriptClasspath) {
+          extensionsData.buildScriptConfigurations.put(gradleConfiguration.getName(), gradleConfiguration);
+        }
+        else {
+          extensionsData.configurations.put(gradleConfiguration.getName(), gradleConfiguration);
+        }
+      }
+      return extensionsData;
+    }
+
+    private static @NotNull GradleExtension convertGradleExtension(@NotNull org.jetbrains.plugins.gradle.model.GradleExtension extension) {
+      return new GradleExtension(
+        extension.getName(),
+        extension.getTypeFqn()
+      );
+    }
+
+    private static @NotNull GradleConvention convertGradleConvention(@NotNull org.jetbrains.plugins.gradle.model.GradleConvention convention) {
+      return new GradleConvention(
+        convention.getName(),
+        convention.getTypeFqn()
+      );
+    }
+
+    private static @NotNull GradleProp convertGradleProp(@NotNull GradleProperty property) {
+      return new GradleProp(
+        property.getName(),
+        property.getTypeFqn()
+      );
+    }
+
+    private static @NotNull GradleTask convertGradleTask(@NotNull ExternalTask task) {
+      StringBuilder description = new StringBuilder();
+      if (task.getDescription() != null) {
+        description.append(task.getDescription());
+        if (task.getGroup() != null) {
+          description.append("<p>");
+        }
+      }
+      if (task.getGroup() != null) {
+        description.append("<i>Task group: ").append(task.getGroup()).append("<i>");
+      }
+      return new GradleTask(
+        task.getName(),
+        Objects.requireNonNullElse(task.getType(), GradleCommonClassNames.GRADLE_API_DEFAULT_TASK),
+        description.toString()
+      );
+    }
+
+    private static @NotNull GradleConfiguration convertGradleConfiguration(
+      @NotNull org.jetbrains.plugins.gradle.model.GradleConfiguration configuration
+    ) {
+      return new GradleConfiguration(
+        configuration.getName(),
+        configuration.isVisible(),
+        configuration.isScriptClasspathConfiguration(),
+        configuration.getDescription(),
+        configuration.getDeclarationAlternatives()
+      );
     }
   }
 
