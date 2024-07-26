@@ -20,85 +20,55 @@ import java.util.stream.Collectors
 
 private val DETECTED_PYTHON_INTERPRETERS_KEY = Key.create<Set<PyDetectedSdk>>("DETECTED_PYTHON_INTERPRETERS")
 
-suspend fun detectSystemWideSdksSuspended(module: Module?,
-                                          target: TargetEnvironmentConfiguration? = null,
-                                          context: UserDataHolder): List<Sdk> {
+suspend fun detectSystemWideSdksSuspended(
+  module: Module?,
+  target: TargetEnvironmentConfiguration? = null,
+  context: UserDataHolder,
+): List<Sdk> {
   return detectSystemWideSdksSuspended(module, existingSdks = emptyList(), target, context)
 }
 
-// TODO move close to view
 /**
  * Gather detected SDKs using [detectSystemWideSdksSuspended].
  */
-fun prepareSdkList(detectedSdks: List<Sdk>, existingSdks: List<Sdk>, target: TargetEnvironmentConfiguration?): List<Sdk> {
-  val existing = filterSystemWideSdks(existingSdks)
-    .sortedWith(PreferredSdkComparator.INSTANCE)
-    .filter { it.targetEnvConfiguration?.typeId == target?.typeId }
-    .filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
-  val detected = detectedSdks.filter { detectedSdk -> existingSdks.none(detectedSdk::isSameAs) }
-  return existing + detected
-}
 
-suspend fun findBaseSdksSuspended(existingSdks: List<Sdk>,
-                                  module: Module?,
-                                  target: TargetEnvironmentConfiguration?,
-                                  context: UserDataHolder): List<Sdk> {
-  val existing = filterSystemWideSdks(existingSdks)
-    .sortedWith(PreferredSdkComparator.INSTANCE)
-    .filter { it.targetEnvConfiguration?.typeId == target?.typeId }
-    .filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
+private suspend fun detectSystemWideSdksSuspended(
+  module: Module?,
+  existingSdks: List<Sdk>,
+  target: TargetEnvironmentConfiguration? = null,
+  context: UserDataHolder,
+): List<Sdk> {
+  if (module != null && module.isDisposed) {
+    return emptyList()
+  }
 
-  val detected = detectSystemWideSdksSuspended(module, existingSdks, target, context).filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
-  return existing + detected
-}
-
-private suspend fun detectSystemWideSdksSuspended(module: Module?,
-                                                  existingSdks: List<Sdk>,
-                                                  target: TargetEnvironmentConfiguration? = null,
-                                                  context: UserDataHolder): List<Sdk> {
-  if (module != null && module.isDisposed) return emptyList()
   val effectiveTarget = target ?: module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }?.asTargetConfig
   val baseDirFromContext = context.getUserData(BASE_DIR)
   return service<PySdks>().getOrDetectSdks(effectiveTarget, baseDirFromContext)
-    .filter { detectedSdk -> existingSdks.none(detectedSdk::isSameAs) }
-    .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
-                                         { it.homePath }).reversed())
+    .filter { detectedSdk ->
+      existingSdks.none { existingSdk ->
+        isSdkSameAs(existingSdk, detectedSdk)
+      }
+    }.sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
+                                          { it.homePath }).reversed())
 }
 
-private suspend fun detectSystemWideInterpreters(module: Module?,
-                                                  existingSdks: List<Sdk>,
-                                                  target: TargetEnvironmentConfiguration? = null,
-                                                  context: UserDataHolder): List<Sdk> {
-  if (module != null && module.isDisposed) return emptyList()
-  val effectiveTarget = target ?: module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }?.asTargetConfig
-  val baseDirFromContext = context.getUserData(BASE_DIR)
-  return service<PySdks>().getOrDetectSdks(effectiveTarget, baseDirFromContext)
-    .filter { detectedSdk -> existingSdks.none(detectedSdk::isSameAs) }
-    .sortedWith(compareBy<PyDetectedSdk>({ it.guessedLanguageLevel },
-                                         { it.homePath }).reversed())
+private fun isSdkSameAs(lhs: Sdk, rhs: Sdk): Boolean {
+  return lhs.targetEnvConfiguration == rhs.targetEnvConfiguration &&
+         lhs.homePath == rhs.homePath
 }
-
-private fun Sdk.isSameAs(another: Sdk): Boolean =
-  targetEnvConfiguration == another.targetEnvConfiguration && homePath == another.homePath
 
 @Service
 class PySdks {
   private val storage = TargetStorage()
 
-  fun getSdks(targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null): Set<PyDetectedSdk> =
-    storage.getUserData(targetEnvironmentConfiguration, DETECTED_PYTHON_INTERPRETERS_KEY) ?: emptySet()
-
-  suspend fun getOrDetectSdks(targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null,
-                              projectDir: Path? = null): Set<PyDetectedSdk> {
+  suspend fun getOrDetectSdks(
+    targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null,
+    projectDir: Path? = null,
+  ): Set<PyDetectedSdk> {
     val sdks = storage.getUserData(targetEnvironmentConfiguration, DETECTED_PYTHON_INTERPRETERS_KEY)
     return sdks ?: detectSdks(targetEnvironmentConfiguration, projectDir).also {
       storage.putUserData(targetEnvironmentConfiguration, DETECTED_PYTHON_INTERPRETERS_KEY, it)
-    }
-  }
-
-  fun rememberUserSelectedSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?, sdk: PyDetectedSdk) {
-    storage.updateUserData(targetEnvironmentConfiguration, DETECTED_PYTHON_INTERPRETERS_KEY) { sdks ->
-      sdks?.let { it + sdk } ?: linkedSetOf(sdk)
     }
   }
 }
