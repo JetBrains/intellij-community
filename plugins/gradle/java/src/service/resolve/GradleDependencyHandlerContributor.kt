@@ -43,7 +43,7 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
 
     for (configuration in configurations) {
       val configurationName = configuration.name ?: continue
-      if (!addMethod(manager, configurationName, clazz, place, objectVarargType, configuration.getDescription(), processor, state, configuration.declarationAlternatives)) return
+      if (!addMethod(manager, configurationName, clazz, place, objectVarargType, configuration.getConfigurationDescription(), processor, state, configuration.declarationAlternatives)) return
     }
   }
 
@@ -79,8 +79,8 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
     return place.parentOfType<GrFunctionalExpression>()?.ownerType?.resolve() is GroovyScriptClass
   }
 
-  private fun GradleConfiguration.getDescription(): String? {
-    if (description == null && scriptClasspath && name == "classpath") {
+  private fun GradleConfiguration.getConfigurationDescription(): String? {
+    if (description == null && isScriptClasspath && name == "classpath") {
       return GradleBundle.message("gradle.codeInsight.buildscript.classpath.description")
     }
     else {

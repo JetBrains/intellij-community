@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
@@ -103,31 +102,27 @@ public class GradleExtensionsSettings {
         extensionsData.parent = gradleExtensions.getParentProjectPath();
 
         for (org.jetbrains.plugins.gradle.model.GradleExtension extension : gradleExtensions.getExtensions()) {
-          GradleExtension gradleExtension = new GradleExtension();
-          gradleExtension.name = extension.getName();
-          gradleExtension.rootTypeFqn = extension.getTypeFqn();
+          GradleExtension gradleExtension = new GradleExtension(
+            extension.getName(),
+            extension.getTypeFqn()
+          );
           extensionsData.extensions.put(extension.getName(), gradleExtension);
         }
         for (org.jetbrains.plugins.gradle.model.GradleConvention convention : gradleExtensions.getConventions()) {
-          GradleConvention gradleConvention = new GradleConvention();
-          gradleConvention.name = convention.getName();
-          gradleConvention.typeFqn = convention.getTypeFqn();
+          GradleConvention gradleConvention = new GradleConvention(
+            convention.getName(),
+            convention.getTypeFqn()
+          );
           extensionsData.conventions.add(gradleConvention);
         }
         for (GradleProperty property : gradleExtensions.getGradleProperties()) {
-          GradleProp gradleProp = new GradleProp();
-          gradleProp.name = property.getName();
-          gradleProp.typeFqn = property.getTypeFqn();
+          GradleProp gradleProp = new GradleProp(
+            property.getName(),
+            property.getTypeFqn()
+          );
           extensionsData.properties.put(gradleProp.name, gradleProp);
         }
         for (ExternalTask task : gradleExtensions.getTasks()) {
-          GradleTask gradleTask = new GradleTask();
-          gradleTask.name = task.getName();
-          String type = task.getType();
-          if (type != null) {
-            gradleTask.typeFqn = type;
-          }
-
           StringBuilder description = new StringBuilder();
           if (task.getDescription() != null) {
             description.append(task.getDescription());
@@ -139,16 +134,23 @@ public class GradleExtensionsSettings {
             description.append("<i>Task group: ").append(task.getGroup()).append("<i>");
           }
 
-          gradleTask.description = description.toString();
+          GradleTask gradleTask = new GradleTask(
+            task.getName(),
+            Objects.requireNonNullElse(task.getType(), GradleCommonClassNames.GRADLE_API_DEFAULT_TASK),
+            description.toString()
+          );
+
           extensionsData.tasksMap.put(gradleTask.name, gradleTask);
         }
         for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
-          GradleConfiguration gradleConfiguration = new GradleConfiguration();
-          gradleConfiguration.name = configuration.getName();
-          gradleConfiguration.description = configuration.getDescription();
-          gradleConfiguration.visible = configuration.isVisible();
-          gradleConfiguration.scriptClasspath = configuration.isScriptClasspathConfiguration();
-          gradleConfiguration.declarationAlternatives = configuration.getDeclarationAlternatives();
+          GradleConfiguration gradleConfiguration = new GradleConfiguration(
+            configuration.getName(),
+            configuration.isVisible(),
+            configuration.isScriptClasspathConfiguration(),
+            configuration.getDescription(),
+            configuration.getDeclarationAlternatives()
+          );
+
           if (gradleConfiguration.scriptClasspath) {
             extensionsData.buildScriptConfigurations.put(configuration.getName(), gradleConfiguration);
           }
@@ -272,55 +274,125 @@ public class GradleExtensionsSettings {
   }
 
   public static class GradleExtension implements TypeAware {
-    public String name;
-    public String rootTypeFqn = CommonClassNames.JAVA_LANG_OBJECT_SHORT;
+    private final @NotNull String name;
+    private final @NotNull String typeFqn;
+
+    public GradleExtension(@NotNull String name, @NotNull String typeFqn) {
+      this.name = name;
+      this.typeFqn = typeFqn;
+    }
+
+    public @NotNull String getName() {
+      return name;
+    }
 
     @Override
-    public String getTypeFqn() {
-      return rootTypeFqn;
+    public @NotNull String getTypeFqn() {
+      return typeFqn;
     }
   }
 
   public static class GradleConvention implements TypeAware {
-    public String name;
-    public String typeFqn = CommonClassNames.JAVA_LANG_OBJECT_SHORT;
+    private final @NotNull String name;
+    private final @NotNull String typeFqn;
+
+    public GradleConvention(@NotNull String name, @NotNull String typeFqn) {
+      this.name = name;
+      this.typeFqn = typeFqn;
+    }
+
+    public @NotNull String getName() {
+      return name;
+    }
 
     @Override
-    public String getTypeFqn() {
+    public @NotNull String getTypeFqn() {
       return typeFqn;
     }
   }
 
   public static class GradleProp implements TypeAware {
-    public String name;
-    public String typeFqn = CommonClassNames.JAVA_LANG_STRING;
-    @Nullable
-    public String value;
+    private final @NotNull String name;
+    private final @NotNull String typeFqn;
+
+    public GradleProp(@NotNull String name, @NotNull String typeFqn) {
+      this.name = name;
+      this.typeFqn = typeFqn;
+    }
+
+    public @NotNull String getName() {
+      return name;
+    }
 
     @Override
-    public String getTypeFqn() {
+    public @NotNull String getTypeFqn() {
       return typeFqn;
     }
   }
 
   public static class GradleTask implements TypeAware {
-    public String name;
-    public String typeFqn = GradleCommonClassNames.GRADLE_API_DEFAULT_TASK;
-    @Nullable
-    public String description;
+    private final @NotNull String name;
+    private final @NotNull String typeFqn;
+    private final @Nullable String description;
+
+    public GradleTask(@NotNull String name, @NotNull String typeFqn, @Nullable String description) {
+      this.name = name;
+      this.typeFqn = typeFqn;
+      this.description = description;
+    }
+
+    public @NotNull String getName() {
+      return name;
+    }
 
     @Override
-    public String getTypeFqn() {
+    public @NotNull String getTypeFqn() {
       return typeFqn;
+    }
+
+    public @Nullable String getDescription() {
+      return description;
     }
   }
 
   public static class GradleConfiguration {
-    public String name;
-    public boolean visible = true;
-    public boolean scriptClasspath;
-    public String description;
-    public List<String> declarationAlternatives;
+    private final @NotNull String name;
+    private final boolean visible;
+    private final boolean scriptClasspath;
+    private final @Nullable String description;
+    private final @NotNull List<String> declarationAlternatives;
+
+    public GradleConfiguration(@NotNull String name,
+                               boolean visible,
+                               boolean scriptClasspath,
+                               @Nullable String description,
+                               @NotNull List<String> declarationAlternatives) {
+      this.name = name;
+      this.visible = visible;
+      this.scriptClasspath = scriptClasspath;
+      this.description = description;
+      this.declarationAlternatives = declarationAlternatives;
+    }
+
+    public @NotNull String getName() {
+      return name;
+    }
+
+    public boolean isVisible() {
+      return visible;
+    }
+
+    public boolean isScriptClasspath() {
+      return scriptClasspath;
+    }
+
+    public @Nullable String getDescription() {
+      return description;
+    }
+
+    public @NotNull List<String> getDeclarationAlternatives() {
+      return declarationAlternatives;
+    }
   }
 
   @Nullable
