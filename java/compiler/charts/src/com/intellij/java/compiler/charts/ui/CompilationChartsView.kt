@@ -84,6 +84,10 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       diagrams.cpuMemory = filter
       diagrams.forceRepaint()
     }
+
+    vm.scrollToEndEvent.advise(vm.lifetime) { _ ->
+      rightAdhesionScrollBarListener.scrollToEnd()
+    }
   }
 
   companion object {

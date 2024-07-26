@@ -47,6 +47,11 @@ internal class RightAdhesionScrollBarListener(private val viewport: JViewport) :
     shouldScroll = viewport.viewPosition.x + viewport.width + additionalValue >= viewport.viewSize.width
   }
 
+  fun scrollToEnd() {
+    shouldScroll = true
+    adjustHorizontalScrollToRightIfNeeded()
+  }
+
   companion object {
     val LOG = Logger.getInstance(RightAdhesionScrollBarListener::class.java)
   }
