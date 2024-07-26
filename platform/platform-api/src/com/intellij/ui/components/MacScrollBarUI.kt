@@ -80,8 +80,7 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
         if (event != null && MouseEvent.MOUSE_MOVED == event.id) {
           val source = event.source
           if (source is Component) {
-            val pane = ComponentUtil.getParentOfType(
-              JScrollPane::class.java as Class<out JScrollPane?>, source)
+            val pane = ComponentUtil.getParentOfType(JScrollPane::class.java, source)
             if (pane != null) {
               pauseThumbAnimation(pane.horizontalScrollBar)
               pauseThumbAnimation(pane.verticalScrollBar)
@@ -97,42 +96,47 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
        */
       private fun pauseThumbAnimation(bar: JScrollBar?) {
         val ui = bar?.ui
-        if (ui is MacScrollBarUI && 0 < ui.animationBehavior!!.thumbFrame) {
-          ui.animationBehavior!!.onThumbMove()
+        if (ui is MacScrollBarUI) {
+          val animationBehavior = ui.installedState!!.animationBehavior
+          if (0 < animationBehavior.thumbFrame) {
+            animationBehavior.onThumbMove()
+          }
         }
       }
     })
   }
 
-  override fun createBaseAnimationBehavior(): ScrollBarAnimationBehavior {
+  override fun createBaseAnimationBehavior(state: DefaultScrollbarUiInstalledState): ScrollBarAnimationBehavior {
     return MacScrollBarAnimationBehavior(
-      scrollBarComputable = { scrollBar },
-      trackAnimator = myTrack.animator,
-      thumbAnimator = thumb.animator,
+      scrollBarComputable = { state.scrollBar },
+      trackAnimator = state.track.animator,
+      thumbAnimator = state.thumb.animator,
     )
   }
 
   override fun isAbsolutePositioning(event: MouseEvent): Boolean = Behavior.JumpToSpot == Behavior.CURRENT_BEHAVIOR()
 
   override fun isTrackClickable(): Boolean {
-    return isOpaque(scrollBar!!) || (animationBehavior!!.trackFrame > 0 && animationBehavior!!.thumbFrame > 0)
+    val state = installedState ?: return false
+    return isOpaque(state.scrollBar) || (state.animationBehavior.trackFrame > 0 && state.animationBehavior.thumbFrame > 0)
   }
 
   override val isTrackExpandable: Boolean
-    get() = !isOpaque(scrollBar!!)
+    get() = !isOpaque(installedState!!.scrollBar)
 
   override fun paintTrack(g: Graphics2D, c: JComponent) {
-    if (animationBehavior!!.trackFrame > 0 && animationBehavior!!.thumbFrame > 0 || isOpaque(c)) {
+    val animationBehavior = installedState!!.animationBehavior
+    if (animationBehavior.trackFrame > 0 && animationBehavior.thumbFrame > 0 || isOpaque(c)) {
       super.paintTrack(g, c)
     }
   }
 
-  public override fun paintThumb(g: Graphics2D, c: JComponent) {
+  public override fun paintThumb(g: Graphics2D, c: JComponent, state: DefaultScrollbarUiInstalledState) {
     if (isOpaque(c)) {
-      paint(p = thumb, g = g, c = c, small = true)
+      paint(p = state.thumb, g = g, c = c, small = true)
     }
-    else if (animationBehavior!!.thumbFrame > 0) {
-      paint(p = thumb, g = g, c = c, small = false)
+    else if (state.animationBehavior.thumbFrame > 0) {
+      paint(p = state.thumb, g = g, c = c, small = false)
     }
   }
 
@@ -152,13 +156,12 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
   }
 
   protected open fun updateStyle(style: MacScrollbarStyle?) {
-    val scrollBar = scrollBar
-    if (scrollBar != null) {
-      scrollBar.isOpaque = style != MacScrollbarStyle.Overlay
-      scrollBar.revalidate()
-      scrollBar.repaint()
-      animationBehavior?.onThumbMove()
-    }
+    val state = installedState
+    val scrollBar = state?.scrollBar ?: return
+    scrollBar.isOpaque = style != MacScrollbarStyle.Overlay
+    scrollBar.revalidate()
+    scrollBar.repaint()
+    state.animationBehavior.onThumbMove()
   }
 }
 

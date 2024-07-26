@@ -18,18 +18,20 @@ internal open class ThinScrollBarUI : DefaultScrollBarUI {
     thicknessMin = thicknessMin,
   )
 
-  override fun createThumbPainter(): ScrollBarPainter.Thumb = ThinScrollBarThumb({ scrollBar }, false)
+  override fun createThumbPainter(state: DefaultScrollbarUiInstalledState): ScrollBarPainter.Thumb {
+    return ThinScrollBarThumb({ state.scrollBar }, false, state.coroutineScope)
+  }
 
   override fun paintTrack(g: Graphics2D, c: JComponent) {
     // track is not needed
   }
 
-  override fun paintThumb(g: Graphics2D, c: JComponent) {
+  override fun paintThumb(g: Graphics2D, c: JComponent, state: DefaultScrollbarUiInstalledState) {
     if (isOpaque(c)) {
-      paint(p = thumb, g = g, c = c, small = ScrollSettings.isThumbSmallIfOpaque.invoke())
+      paint(p = state.thumb, g = g, c = c, small = ScrollSettings.isThumbSmallIfOpaque.invoke())
     }
-    else if (animationBehavior != null && animationBehavior!!.thumbFrame > 0) {
-      paint(p = thumb, g = g, c = c, small = false)
+    else if (state.animationBehavior.thumbFrame > 0) {
+      paint(p = state.thumb, g = g, c = c, small = false)
     }
   }
 

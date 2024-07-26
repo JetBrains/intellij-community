@@ -6,15 +6,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
-import com.intellij.util.resettableLazy
 import com.jetbrains.cloudconfig.*
 import com.jetbrains.cloudconfig.auth.JbaJwtTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
 import com.jetbrains.cloudconfig.exception.UnauthorizedException
 import org.jdom.JDOMException
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -38,8 +37,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
   @Volatile
   internal var _currentIdTokenVar: String? = null
 
-  internal var _client = resettableLazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
-    @TestOnly set
+  private var _client = SynchronizedClearableLazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
   internal open val client get() = _client.value
 
   private val lastRemoteErrorRef = AtomicReference<Throwable>()
@@ -48,7 +46,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     SettingsSyncEvents.getInstance().addListener(
       object : SettingsSyncEventListener {
         override fun loginStateChanged() {
-          _client.reset()
+          _client.drop()
         }
       }
     )
@@ -357,7 +355,7 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
     private fun getProductionUrl(): String {
       val configUrl = HttpRequests.request(URL_PROVIDER)
         .productNameAsUserAgent()
-        .connect(HttpRequests.RequestProcessor { request: HttpRequests.Request ->
+        .connect({ request: HttpRequests.Request ->
           try {
             val documentElement = JDOMUtil.load(request.inputStream)
             documentElement.getAttributeValue("baseUrl")

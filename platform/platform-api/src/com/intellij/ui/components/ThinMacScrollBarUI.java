@@ -21,12 +21,12 @@ public class ThinMacScrollBarUI extends MacScrollBarUI {
   }
 
   @Override
-  protected ScrollBarPainter.Thumb createThumbPainter() {
-    return new ScrollBarPainter.ThinScrollBarThumb(() -> scrollBar, false);
+  public @NotNull ScrollBarPainter.Thumb createThumbPainter$intellij_platform_ide(@NotNull DefaultScrollbarUiInstalledState state) {
+    return new ScrollBarPainter.ThinScrollBarThumb(() -> state.scrollBar, false, state.coroutineScope);
   }
 
   @Override
-  public void paintTrack(Graphics2D g, JComponent c) {
+  public void paintTrack(@NotNull Graphics2D g, @NotNull JComponent c) {
     // Track is not needed
   }
 

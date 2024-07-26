@@ -28,7 +28,7 @@ internal class TabScrollBarUI(
     }
   }
 
-  override fun createWrapAnimationBehaviour(): ScrollBarAnimationBehavior {
+  override fun createWrapAnimationBehaviour(defaultScrollbarUiInstalledState: DefaultScrollbarUiInstalledState): ScrollBarAnimationBehavior {
     return object : ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(), myTrack.animator, thumb.animator) {
       override fun onThumbHover(hovered: Boolean) {
         super.onThumbHover(hovered)
@@ -42,7 +42,7 @@ internal class TabScrollBarUI(
   }
 
 
-  override fun paintThumb(g: Graphics2D, c: JComponent) {
+  override fun paintThumb(g: Graphics2D, c: JComponent, state: DefaultScrollbarUiInstalledState) {
     if (animationBehavior != null && animationBehavior!!.thumbFrame > 0) {
       paint(thumb, g, c, !isHovered)
     }

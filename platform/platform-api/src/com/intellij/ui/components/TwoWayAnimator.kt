@@ -19,6 +19,7 @@ abstract class TwoWayAnimator(
   durationForward: Int,
   pauseBackward: Int,
   durationBackward: Int,
+  private val coroutineScope: CoroutineScope,
 ) {
   private val animateRequests = MutableSharedFlow<MyAnimator>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -29,6 +30,7 @@ abstract class TwoWayAnimator(
       cycleDuration = durationForward,
       pauseInMs = pauseForward,
       forward = true,
+      coroutineScope = coroutineScope,
     )
   }
 
@@ -39,6 +41,7 @@ abstract class TwoWayAnimator(
       cycleDuration = durationBackward,
       pauseInMs = pauseBackward,
       forward = false,
+      coroutineScope = coroutineScope,
     )
   }
 
@@ -48,16 +51,14 @@ abstract class TwoWayAnimator(
   @JvmField
   var value: Float = 0f
 
-  private var coroutineScope: CoroutineScope? = null
+  private var job: Job? = null
 
   abstract fun onValueUpdate()
 
   fun start(forward: Boolean) {
-    @Suppress("SSBasedInspection")
-    if (coroutineScope == null) {
+    if (job == null) {
       val context = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()
-      coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("TwoWayAnimator"))
-      coroutineScope!!.launch {
+      job = coroutineScope.launch {
         animateRequests.collectLatest { animator ->
           delay(animator.pauseInMs.toLong())
           withContext(context) {
@@ -96,8 +97,8 @@ abstract class TwoWayAnimator(
   }
 
   fun stop() {
-    coroutineScope?.let {
-      coroutineScope = null
+    job?.let {
+      job = null
       it.cancel()
     }
     suspendAnimation()
@@ -124,12 +125,14 @@ abstract class TwoWayAnimator(
     cycleDuration: Int,
     @JvmField val pauseInMs: Int,
     forward: Boolean,
+    coroutineScope: CoroutineScope,
   ) : Animator(
     name = name,
     totalFrames = totalFrames,
     cycleDuration = cycleDuration,
     isRepeatable = false,
     isForward = forward,
+    coroutineScope = coroutineScope,
   ) {
     override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
       if (if (isForward) frame > this@TwoWayAnimator.frame else frame < this@TwoWayAnimator.frame) {

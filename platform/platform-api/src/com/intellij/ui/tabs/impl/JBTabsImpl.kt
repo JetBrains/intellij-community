@@ -286,12 +286,17 @@ open class JBTabsImpl internal constructor(
   internal val attractions: MutableSet<TabInfo> = HashSet()
 
   private val animator = lazy {
-    val result = object : Animator("JBTabs Attractions", 2, 500, true) {
+    val result = object : Animator(
+      name = "JBTabs Attractions",
+      totalFrames = 2,
+      cycleDuration = 500,
+      isRepeatable = true,
+      coroutineScope = coroutineScope,
+    ) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
         repaintAttractions()
       }
     }
-    Disposer.register(parentDisposable, result)
     result
   }
 
@@ -3029,19 +3034,19 @@ open class JBTabsImpl internal constructor(
     for (each in visibleInfos) {
       each.changeSupport.firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2")
     }
-    relayout(true, false)
+    relayout(forced = true, layoutNow = false)
     return this
   }
 
   final override fun setSideComponentOnTabs(onTabs: Boolean): JBTabsPresentation {
     isSideComponentOnTabs = onTabs
-    relayout(true, false)
+    relayout(forced = true, layoutNow = false)
     return this
   }
 
   final override fun setSideComponentBefore(before: Boolean): JBTabsPresentation {
     isSideComponentBefore = before
-    relayout(true, false)
+    relayout(forced = true, layoutNow = false)
     return this
   }
 
@@ -3137,10 +3142,12 @@ open class JBTabsImpl internal constructor(
 
   private class DefaultDecorator : UiDecorator {
     override fun getDecoration(): UiDecoration {
-      return UiDecoration(labelFont = null,
-                          labelInsets = JBUI.insets(5, 8),
-                          contentInsetsSupplier = java.util.function.Function { JBUI.insets(0, 4) },
-                          iconTextGap = JBUI.scale(4))
+      return UiDecoration(
+        labelFont = null,
+        labelInsets = JBUI.insets(5, 8),
+        contentInsetsSupplier = { JBUI.insets(0, 4) },
+        iconTextGap = JBUI.scale(4),
+      )
     }
   }
 

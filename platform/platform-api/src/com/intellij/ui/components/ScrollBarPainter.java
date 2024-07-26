@@ -12,6 +12,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.MixedColorProducer;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.RegionPainter;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,8 +131,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
   private static final int LIGHT_ALPHA = SystemInfoRt.isMac ? 120 : 160;
   private static final int DARK_ALPHA = SystemInfoRt.isMac ? 255 : 180;
 
-  ScrollBarPainter(@NotNull Supplier<? extends Component> supplier) {
-    animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125) {
+  ScrollBarPainter(@NotNull Supplier<? extends Component> supplier, @NotNull CoroutineScope coroutineScope) {
+    animator = new TwoWayAnimator(getClass().getName(), 11, 150, 125, 300, 125, coroutineScope) {
       @Override
       public void onValueUpdate() {
         Component component = supplier.get();
@@ -191,8 +192,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
   public static final class Track extends ScrollBarPainter {
     private final MixedColorProducer fillProducer;
 
-    public Track(@NotNull Supplier<? extends Component> supplier) {
-      super(supplier);
+    public Track(@NotNull Supplier<? extends Component> supplier, @NotNull CoroutineScope coroutineScope) {
+      super(supplier, coroutineScope);
       fillProducer = new MixedColorProducer(
         getColor(supplier, TRACK_BACKGROUND, TRACK_OPAQUE_BACKGROUND),
         getColor(supplier, TRACK_HOVERED_BACKGROUND, TRACK_OPAQUE_HOVERED_BACKGROUND));
@@ -217,8 +218,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     private final MixedColorProducer fillProducer;
     private final MixedColorProducer drawProducer;
 
-    Thumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
-      super(supplier);
+    Thumb(@NotNull Supplier<? extends Component> supplier, boolean opaque, @NotNull CoroutineScope coroutineScope) {
+      super(supplier, coroutineScope);
       fillProducer = new MixedColorProducer(
         opaque ? getColor(supplier, THUMB_OPAQUE_BACKGROUND)
                : getColor(supplier, THUMB_BACKGROUND, THUMB_OPAQUE_BACKGROUND),
@@ -266,8 +267,8 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
 
   @ApiStatus.Internal
   public static class ThinScrollBarThumb extends Thumb {
-    ThinScrollBarThumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
-      super(supplier, opaque);
+    ThinScrollBarThumb(@NotNull Supplier<? extends Component> supplier, boolean opaque, @NotNull CoroutineScope coroutineScope) {
+      super(supplier, opaque, coroutineScope);
     }
 
     @Override
