@@ -65,9 +65,13 @@ object InplaceExtractUtils {
     return true
   }
 
-  fun showExtractErrorHint(editor: Editor, exception: ExtractException){
-    val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (exception.message ?: "")
+  fun showExtractErrorHint(editor: Editor, error: @Nls String) {
+    val message: @Nls String = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + error
     IdeUiService.getInstance().showErrorHint(editor, message)
+  }
+
+  fun showExtractErrorHint(editor: Editor, exception: ExtractException){
+    showExtractErrorHint(editor, exception.message.orEmpty())
     highlightErrors(editor, exception.problems)
   }
 

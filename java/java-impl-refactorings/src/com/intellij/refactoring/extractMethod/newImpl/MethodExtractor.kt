@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -30,6 +31,7 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.find
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOption
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.inplace.*
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showExtractErrorHint
 import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ResultObjectExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -48,6 +50,7 @@ data class ExtractedElements(val callElements: List<PsiElement>, val method: Psi
 class MethodExtractor {
 
   fun doExtract(file: PsiFile, range: TextRange) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return
     val coroutineScope = ExtractMethodService.getInstance(file.project).scope
 
     val editor = PsiEditorUtil.findEditor(file) ?: return
@@ -57,15 +60,18 @@ class MethodExtractor {
       return
     }
 
+    val elements = ExtractSelector().suggestElementsToExtract(file, range)
+    if (elements.isEmpty()) {
+      showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
+      return
+    }
+
     try {
-      val elements = ExtractSelector().suggestElementsToExtract(file, range)
-      if (elements.isNotEmpty()) {
-        val analyzer = CodeFragmentAnalyzer(elements)
-        val outputVariables = analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset }
-        if (outputVariables.size > 1) {
-          ResultObjectExtractor.run(editor, outputVariables, elements)
-          return
-        }
+      val analyzer = CodeFragmentAnalyzer(elements)
+      val outputVariables = analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset }
+      if (outputVariables.size > 1) {
+        ResultObjectExtractor.run(editor, outputVariables, elements)
+        return
       }
     } catch (_: ExtractException) {
     }
@@ -73,7 +79,7 @@ class MethodExtractor {
     coroutineScope.launch {
       withContext(Dispatchers.EDT) { //TODO minimize edt context
         val prepareStart = System.currentTimeMillis()
-        val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(editor, file, range)
+        val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elements)
         if (descriptorsForAllTargetPlaces.isEmpty()) return@withContext
         val preparePlacesTime = System.currentTimeMillis() - prepareStart
 
@@ -100,6 +106,19 @@ class MethodExtractor {
     )
   }
 
+  private suspend fun prepareDescriptorsForAllTargetPlaces(project: Project, editor: Editor, elements: List<PsiElement>): List<ExtractOptions> {
+    val message = JavaRefactoringBundle.message("dialog.title.analyze.code.fragment.to.extract")
+    return withBackgroundProgress(project, message, true) {
+      try {
+        findAllOptionsToExtract(elements)
+      } catch (exception: ExtractException) {
+        showExtractErrorHint(editor, exception)
+        emptyList()
+      }
+    }
+  }
+
+  @Deprecated("")
   fun prepareDescriptorsForAllTargetPlaces(editor: Editor, file: PsiFile, range: TextRange): List<ExtractOptions> {
     try {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return emptyList()
