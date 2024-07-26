@@ -535,59 +535,60 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
     DaemonProgressIndicator progressIndicator = assertUnderDaemonProgress();
-    InspectionProfileWrapper.runWithCustomInspectionWrapper(file, __ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
-      try {
-        Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-          InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, true,
-                                     progressIndicator, PairProcessor.alwaysTrue());
-        for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
-          List<ProblemDescriptor> descriptors = entry.getValue();
-          if (descriptors.isEmpty()) continue;
-          final ProblemDescriptor firstDescriptor = descriptors.get(0);
-          LocalInspectionToolWrapper toolWrapper =
-            firstDescriptor instanceof ProblemDescriptorWithReporterName descriptor
-            ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolName()).getTool()
-            : entry.getKey();
-          InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
-          BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
+    HighlightingSessionImpl.runInsideHighlightingSession(file, null, new ProperTextRange(file.getTextRange()), false, session -> {
+      InspectionProfileWrapper.runWithCustomInspectionWrapper(file, __ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
+        try {
+          Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
+            InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, true,
+                                       progressIndicator, PairProcessor.alwaysTrue());
+          for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
+            List<ProblemDescriptor> descriptors = entry.getValue();
+            if (descriptors.isEmpty()) continue;
+            final ProblemDescriptor firstDescriptor = descriptors.get(0);
+            LocalInspectionToolWrapper toolWrapper =
+              firstDescriptor instanceof ProblemDescriptorWithReporterName descriptor
+              ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolName()).getTool()
+              : entry.getKey();
+            InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+            BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
+          }
+
+          assertUnderDaemonProgress();
+
+          JobLauncher.getInstance()
+            .invokeConcurrentlyUnderProgress(globalSimpleTools, progressIndicator, toolWrapper -> {
+              GlobalInspectionTool tool = toolWrapper.getTool();
+              ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
+              ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
+              InspectionEventsKt.reportToQodanaWhenInspectionFinished(
+                getInspectionEventPublisher(),
+                toolWrapper,
+                true,
+                file,
+                getProject(),
+                () -> {
+                  tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
+                  return holder.getResultCount();
+                });
+              InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
+              BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, toolPresentation, CONVERT);
+              return true;
+            });
+          VirtualFile virtualFile = file.getVirtualFile();
+          String displayUrl =
+            ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
+          incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, displayUrl);
         }
-
-        assertUnderDaemonProgress();
-
-        JobLauncher.getInstance()
-          .invokeConcurrentlyUnderProgress(globalSimpleTools, progressIndicator, toolWrapper -> {
-            GlobalInspectionTool tool = toolWrapper.getTool();
-            ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
-            ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
-            InspectionEventsKt.reportToQodanaWhenInspectionFinished(
-              getInspectionEventPublisher(),
-              toolWrapper,
-              true,
-              file,
-              getProject(),
-              () -> {
-                tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
-                return holder.getResultCount();
-              });
-            InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
-            BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, toolPresentation, CONVERT);
-            return true;
-          });
-        VirtualFile virtualFile = file.getVirtualFile();
-        String displayUrl =
-          ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
-        incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, displayUrl);
-      }
-      catch (ProcessCanceledException | IndexNotReadyException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        LOG.error("In file: " + file.getViewProvider().getVirtualFile().getPath(), e);
-      }
-      finally {
-        InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
-        HighlightingSessionImpl.clearHighlightingSession(progressIndicator, file);
-      }
+        catch (ProcessCanceledException | IndexNotReadyException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error("In file: " + file.getViewProvider().getVirtualFile().getPath(), e);
+        }
+        finally {
+          InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
+        }
+      });
     });
   }
 
