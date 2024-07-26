@@ -639,16 +639,21 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       }
 
       IdeaLogger.dropFrequentExceptionsCaches();
-      if (restart && Restarter.isSupported()) {
-        try {
-          Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
-        }
-        catch (Throwable t) {
-          logErrorDuringExit("Failed to restart the application", t);
-          StartupErrorReporter.showError(BootstrapBundle.message("restart.failed.title"), t);
-          if (exitCode == 0) {
-            exitCode = AppExitCodes.RESTART_FAILED;
+      if (restart) {
+        if (Restarter.isSupported()) {
+          try {
+            Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
           }
+          catch (Throwable t) {
+            logErrorDuringExit("Failed to restart the application", t);
+            StartupErrorReporter.showError(BootstrapBundle.message("restart.failed.title"), t);
+          }
+        }
+        else {
+          getLogger().warn("Restart not supported; exiting");
+        }
+        if (exitCode == 0) {
+          exitCode = AppExitCodes.RESTART_FAILED;
         }
       }
       return exitCode;
@@ -666,14 +671,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         super(cause);
       }
     }
-
-    if (err != null) {
-      try {
-        getLogger().error(message, new ApplicationExitException(err));
-      }
-      catch (Throwable ignored) {
-        // Do nothing.
-      }
+    try {
+      getLogger().error(message, new ApplicationExitException(err));
+    }
+    catch (Throwable ignored) {
+      // Do nothing.
     }
   }
 
