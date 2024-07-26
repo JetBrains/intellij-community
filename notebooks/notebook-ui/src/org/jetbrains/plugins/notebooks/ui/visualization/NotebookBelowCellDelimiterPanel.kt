@@ -7,10 +7,13 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.Nls
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Dimension
@@ -29,7 +32,8 @@ class NotebookBelowCellDelimiterPanel(
   executionCount: Int?,
   initStatusIcon: Icon?,
   initTooltipText: String?,
-  initExecutionDurationText: String?
+  initExecutionDurationText: String?,
+  private val scope: CoroutineScope,
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
   private val plusTagButtonSize = JBUI.scale(18)
@@ -40,9 +44,9 @@ class NotebookBelowCellDelimiterPanel(
   }
   private var executionLabel: JLabel? = null
 
-  private val updateAlarm = Alarm()  // PY-72226
   private var elapsedStartTime: ZonedDateTime? = null
-  private val updateElapsedTimeDelay = 100
+  private val updateElapsedTimeDelay = 100L
+  private var elapsedTimeJob: Job? = null
 
   init {
     updateBackgroundColor()
@@ -50,8 +54,8 @@ class NotebookBelowCellDelimiterPanel(
     cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
 
     val addingTagsRow = (cellTags.isNotEmpty() && !isRenderedMarkdown && Registry.`is`("jupyter.cell.metadata.tags", false))
-    if (addingTagsRow) add(createTagsRow(), BorderLayout.EAST)  // PY-72712
-    updateExecutionStatus(initTooltipText, executionCount, initStatusIcon, initExecutionDurationText)  // PY-73685
+    if (addingTagsRow) add(createTagsRow(), BorderLayout.EAST)
+    updateExecutionStatus(initTooltipText, executionCount, initStatusIcon, initExecutionDurationText)
   }
 
   private fun createExecutionLabel(): JLabel {
@@ -157,26 +161,28 @@ class NotebookBelowCellDelimiterPanel(
     }
   }
 
-  private fun updateElapsedTime(@Nls elapsedText: String) = getOrCreateExecutionLabel().apply { text = elapsedText }
+  private fun updateElapsedTime(@NlsSafe elapsedText: String) = getOrCreateExecutionLabel().apply { text = elapsedText }
 
   fun startElapsedTimeUpdate(startTime: ZonedDateTime?, diffFormatter: (ZonedDateTime, ZonedDateTime) -> String) {
-    // todo: do something about this formatter (circular dependencies issues)
     startTime ?: return
     elapsedStartTime = startTime
-    scheduleElapsedTimeUpdate(diffFormatter)
+    elapsedTimeJob?.cancel()
+
+    elapsedTimeJob = scope.launch {
+      val flow = flow {
+        while (true) {
+          elapsedStartTime?.let { startTime -> emit(diffFormatter(startTime, ZonedDateTime.now())) }
+          delay(updateElapsedTimeDelay)
+        }
+      }
+
+      flow.collect { elapsedText -> updateElapsedTime(elapsedText) }
+    }
   }
 
-  fun stopElapsedTimeUpdate() = updateAlarm.cancelAllRequests()
-
-  private fun scheduleElapsedTimeUpdate(diffFormatter: (ZonedDateTime, ZonedDateTime) -> String) {
-    if (updateAlarm.isDisposed) return  // PY-73962
-    updateAlarm.addRequest({
-      elapsedStartTime?.let { startTime ->
-        @NlsSafe val elapsedLabel = diffFormatter(startTime, ZonedDateTime.now())
-        updateElapsedTime(elapsedLabel)
-        updateAlarm.addRequest({ scheduleElapsedTimeUpdate(diffFormatter) }, updateElapsedTimeDelay)
-       }
-     }, updateElapsedTimeDelay)
+  fun stopElapsedTimeUpdate() {
+    elapsedTimeJob?.cancel()
+    elapsedTimeJob = null
   }
 
   private fun getOrCreateExecutionLabel(): JLabel {
