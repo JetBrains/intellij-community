@@ -13,7 +13,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.ui.IdeBorderFactory
@@ -23,18 +22,21 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.poetry.*
+import com.jetbrains.python.sdk.poetry.ui.PyAddNewPoetryFromFilePanel
 import java.awt.BorderLayout
-import java.awt.Insets
+import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.pathString
 
 /**
  *  This source code is created by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
 class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
-
-  private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
+  companion object {
+    private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
+  }
 
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, false)
 
@@ -45,12 +47,12 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
 
   private fun createAndAddSDk(module: Module, inspection: Boolean): Sdk? {
     val poetryEnvExecutable = askForEnvData(module, inspection) ?: return null
-    PropertiesComponent.getInstance().poetryPath = poetryEnvExecutable.poetryPath
+    PropertiesComponent.getInstance().poetryPath = poetryEnvExecutable.poetryPath.pathString
     return createPoetry(module)
   }
 
   private fun askForEnvData(module: Module, inspection: Boolean): PyAddNewPoetryFromFilePanel.Data? {
-    val poetryExecutable = getPoetryExecutable()?.absolutePath
+    val poetryExecutable = getPoetryExecutable()
 
     if (inspection && validatePoetryExecutable(poetryExecutable) == null) {
       return PyAddNewPoetryFromFilePanel.Data(poetryExecutable!!)
@@ -75,12 +77,12 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
     ProgressManager.progress(PyCharmCommunityCustomizationBundle.message("sdk.progress.text.setting.up.poetry.environment"))
     LOGGER.debug("Creating poetry environment")
 
-    val basePath = module.basePath ?: return null
+    val basePath = module.basePath?.let { Path.of(it) } ?: return null
     val poetry = try {
-      val init = StandardFileSystems.local().findFileByPath(basePath)?.findChild(PY_PROJECT_TOML)?.let {
+      val init = StandardFileSystems.local().findFileByPath(basePath.pathString)?.findChild(PY_PROJECT_TOML)?.let {
         getPyProjectTomlForPoetry(it)
       } == null
-      setupPoetry(FileUtil.toSystemDependentName(basePath), null, true, init)
+      setupPoetry(basePath, null, true, init)
     }
     catch (e: ExecutionException) {
       LOGGER.warn("Exception during creating poetry environment", e)
@@ -120,7 +122,7 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
     return sdk
   }
 
-  private class Dialog(module: Module) : DialogWrapper(module.project, false, IdeModalityType.PROJECT) {
+  private class Dialog(module: Module) : DialogWrapper(module.project, false, IdeModalityType.IDE) {
 
     private val panel = PyAddNewPoetryFromFilePanel(module)
 
@@ -134,7 +136,7 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
 
     override fun createCenterPanel(): JComponent {
       return JPanel(BorderLayout()).apply {
-        val border = IdeBorderFactory.createEmptyBorder(Insets(4, 0, 6, 0))
+        val border = IdeBorderFactory.createEmptyBorder(JBUI.insets(4, 0, 6, 0))
         val message = PyCharmCommunityCustomizationBundle.message("sdk.notification.label.set.up.poetry.environment.from.pyproject.toml.dependencies")
 
         add(

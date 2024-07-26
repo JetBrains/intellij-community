@@ -1,5 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package  com.jetbrains.python.sdk.poetry
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package  com.jetbrains.python.sdk.poetry.ui
 
 import com.intellij.application.options.ModuleListCellRenderer
 import com.intellij.ide.util.PropertiesComponent
@@ -25,26 +25,24 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addInterpretersAsync
+import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
 import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
+import kotlin.io.path.absolutePathString
 
 /**
  * The UI panel for adding the poetry interpreter for the project.
  *
  */
-
-/**
- *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
- */
-
 class PyAddNewPoetryPanel(private val project: Project?,
                           private val module: Module?,
                           private val existingSdks: List<Sdk>,
@@ -80,7 +78,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
     addBrowseFolderListener(null, null, null, FileChooserDescriptorFactory.createSingleFileDescriptor())
     val field = textField as? JBTextField ?: return@apply
     detectPoetryExecutable()?.let {
-      field.emptyText.text = "Auto-detected: ${it.absolutePath}"
+      field.emptyText.text = "Auto-detected: ${it.absolutePathString()}"
     }
     PropertiesComponent.getInstance().poetryPath?.let {
       field.text = it
@@ -129,8 +127,8 @@ class PyAddNewPoetryPanel(private val project: Project?,
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().poetryPath = poetryPathField.text.nullize()
     return setupPoetrySdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
-                                       baseSdkField.selectedSdk?.homePath, installPackagesCheckBox.isSelected)?.apply {
-      PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
+                                       baseSdkField.selectedSdk.homePath, installPackagesCheckBox.isSelected)?.apply {
+      PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk.homePath
     }
   }
 
@@ -143,7 +141,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    emptyList() // Pre target validation is not supported
+    emptyList() // Pre-target validation is not supported
 
   override fun addChangeListener(listener: Runnable) {
     poetryPathField.textField.document.addDocumentListener(object : DocumentAdapter() {
@@ -184,7 +182,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
   }
 
   private fun isVenvInProject(path: String): Boolean? {
-    return venvInProject.getOrPut(path) { isVirtualEnvsInProject(path) }
+    return venvInProject.getOrPut(path) { isVirtualEnvsInProject(Path.of(path)) }
   }
 
   /**

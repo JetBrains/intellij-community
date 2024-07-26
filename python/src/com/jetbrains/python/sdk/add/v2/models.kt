@@ -29,6 +29,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
+import kotlin.io.path.pathString
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -166,7 +167,7 @@ abstract class PythonMutableTargetAddInterpreterModel(scope: CoroutineScope, uiC
       scope.launch(Dispatchers.IO) {
         val poetryExecutable = com.jetbrains.python.sdk.poetry.detectPoetryExecutable()
         withContext(Dispatchers.EDT + modalityState) {
-          poetryExecutable?.let { state.poetryExecutable.set(it.path) }
+          poetryExecutable?.let { state.poetryExecutable.set(it.pathString) }
         }
       }
     }
