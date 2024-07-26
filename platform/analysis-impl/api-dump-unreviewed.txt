@@ -797,7 +797,6 @@ com.intellij.codeInsight.daemon.impl.HighlightingSession
 f:com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
 - com.intellij.codeInsight.daemon.impl.HighlightingSession
 - addFileLevelHighlight(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.editor.ex.RangeHighlighterEx):V
-- s:clearHighlightingSession(com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator,com.intellij.psi.PsiFile):V
 - getColorsScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - getDocument():com.intellij.openapi.editor.Document
 - getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator

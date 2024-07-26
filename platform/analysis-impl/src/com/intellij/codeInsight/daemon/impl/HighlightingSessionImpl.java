@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.function.Consumer;
@@ -86,7 +85,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     assert !(psiFile.getViewProvider() instanceof InjectedFileViewProvider) : "Expected top-level file, but got: " + psiFile.getViewProvider();
   }
 
-  private static final Key<ConcurrentMap<PsiFile, HighlightingSession>> HIGHLIGHTING_SESSION = Key.create("HIGHLIGHTING_SESSION");
+  /**
+   * PsiFile -> stack of recent HighlightSessions. May be more than one when several nested {@link #runInsideHighlightingSession} calls were made
+   */
+  private static final Key<Map<PsiFile, List<HighlightingSession>>> HIGHLIGHTING_SESSION = Key.create("HIGHLIGHTING_SESSION");
 
   boolean canChangeFileSilently() {
     return myCanChangeFileSilently.canIReally(myInContent, extensionsAllowToChangeFileSilently);
@@ -102,28 +104,28 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   static @NotNull HighlightingSession getFromCurrentIndicator(@NotNull PsiFile file) {
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    Map<PsiFile, HighlightingSession> map = indicator.getUserData(HIGHLIGHTING_SESSION);
+    Map<PsiFile, List<HighlightingSession>> map = indicator.getUserData(HIGHLIGHTING_SESSION);
     if (map == null) {
       throw new IllegalStateException("No HighlightingSession stored in "+indicator);
     }
-    HighlightingSession session = map.get(file);
-    if (session == null) {
+    List<HighlightingSession> sessions = map.get(file);
+    if (sessions == null) {
       String mapStr = map.entrySet().stream().map(e -> {
         PsiFile storedFile = e.getKey();
         return storedFile + ": " + System.identityHashCode(storedFile) + " (" + storedFile.getClass() + ") -> " + e.getValue();
       }).collect(Collectors.joining("; "));
-      throw new IllegalStateException("No HighlightingSession found for " + file +  ": " + System.identityHashCode(file) + " (" + file.getClass() + ") in " + indicator + " in map: " + mapStr);
+      throw new IllegalStateException("No HighlightingSession found for " + file +  ": " + System.identityHashCode(file) + " (" + file.getClass() + ") in " + indicator + " in map (" +map.size()+"): " + mapStr);
     }
-    return session;
+    return ContainerUtil.getLastItem(sessions);
   }
 
   static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
                                              @NotNull DaemonProgressIndicator progressIndicator,
                                              @NotNull ProperTextRange visibleRange,
                                              @NotNull TextRange compositeDocumentDirtyRange) {
-    Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
-    HighlightingSession session = map == null ? null : map.get(psiFile);
-    if (session == null) {
+    Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
+    List<HighlightingSession> sessions = map == null ? null : map.get(psiFile);
+    if (sessions == null) {
       createHighlightingSession(psiFile, progressIndicator, null, visibleRange, CanISilentlyChange.Result.UH_UH, 0, compositeDocumentDirtyRange);
     }
   }
@@ -151,12 +153,12 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                                             @NotNull Number daemonCancelEventCount,
                                                                             @NotNull TextRange compositeDocumentDirtyRange) {
     // no assertIsDispatchThread() is necessary
-    Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
+    Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map == null) {
       map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, new ConcurrentHashMap<>());
     }
     HighlightingSessionImpl session = new HighlightingSessionImpl(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently, daemonCancelEventCount, compositeDocumentDirtyRange);
-    map.put(psiFile, session);
+    map.compute(psiFile, (__, oldSessions) -> ContainerUtil.append(ContainerUtil.notNullize(oldSessions), session));
     return session;
   }
 
@@ -177,7 +179,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
       runnable.accept(session);
     }
     finally {
-      clearHighlightingSession(indicator, file);
+      clearHighlightingSession(indicator, file, session);
     }
   }
 
@@ -202,15 +204,17 @@ public final class HighlightingSessionImpl implements HighlightingSession {
       runnable.accept(session);
     }
     finally {
-      clearHighlightingSession(indicator, file);
+      clearHighlightingSession(indicator, file, session);
     }
   }
 
   static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
-    ConcurrentMap<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
+    Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map != null) {
-      for (HighlightingSession session : map.values()) {
-        ((HighlightingSessionImpl)session).applyFileLevelHighlightsRequests();
+      for (List<HighlightingSession> sessions : map.values()) {
+        for (HighlightingSession session : sessions) {
+          ((HighlightingSessionImpl)session).applyFileLevelHighlightsRequests();
+        }
       }
     }
   }
@@ -264,12 +268,16 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   // clear references to psiFile from progressIndicator
-  public static void clearHighlightingSession(@NotNull DaemonProgressIndicator progressIndicator, @NotNull PsiFile psiFile) {
-    Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
+  private static void clearHighlightingSession(@NotNull DaemonProgressIndicator progressIndicator,
+                                               @NotNull PsiFile psiFile,
+                                               @NotNull HighlightingSessionImpl session) {
+    Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map != null) {
-      boolean removed = map.remove(psiFile) != null;
+      map.compute(psiFile, (__, oldSessions) -> ContainerUtil.getLastItem(oldSessions) == session ?
+                                                ContainerUtil.nullize(List.copyOf(oldSessions.subList(0, oldSessions.size() - 1))) :
+                                                oldSessions);
       if (LOG.isTraceEnabled()) {
-        LOG.trace("HighlightingSessionImpl.clearHighlightingSession("+psiFile.getVirtualFile()+")="+removed+"; "+map.size()+" remain");
+        LOG.trace("HighlightingSessionImpl.clearHighlightingSession("+psiFile.getVirtualFile()+"); "+map.size()+" remain");
       }
     }
   }
@@ -312,7 +320,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     PsiFile psiFile = getPsiFile();
     boolean shouldUpdate = !fileLevelHighlights.isEmpty() || codeAnalyzer.hasFileLevelHighlights(group, psiFile);
     if (shouldUpdate) {
-      List<RangeHighlighter> reusedHighligters = ContainerUtil.map(fileLevelHighlights, __->recycler.pickupFileLevelRangeHighlighter(psiFile.getTextLength()));
+      List<RangeHighlighter> reusedHighlighters = ContainerUtil.map(fileLevelHighlights, __->recycler.pickupFileLevelRangeHighlighter(psiFile.getTextLength()));
 
       Future<?> future = EdtExecutorService.getInstance().submit(() -> {
         if (project.isDisposed() || isCanceled()) return;
@@ -321,7 +329,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
         }
         for (int i = 0; i < fileLevelHighlights.size(); i++) {
           HighlightInfo fileLevelInfo = fileLevelHighlights.get(i);
-          RangeHighlighter reused = reusedHighligters.get(i);
+          RangeHighlighter reused = reusedHighlighters.get(i);
           codeAnalyzer.addFileLevelHighlight(group, fileLevelInfo, psiFile, reused);
         }
       });
