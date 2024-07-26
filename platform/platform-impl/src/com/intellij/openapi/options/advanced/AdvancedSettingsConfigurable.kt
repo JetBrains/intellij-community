@@ -33,12 +33,6 @@ import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable, Configurable.NoScroll {
-  class Config {
-    companion object {
-      var showFederatedLearningSwitches = false
-    }
-  }
-
   private class SettingsGroup(val groupRow: Row, val title: JBLabel, val text: String, val settingsRows: Collection<SettingsRow>)
 
   private class SettingsRow(val row: Row, val component: JComponent, val id: String, val text: String, val isDefaultPredicate: ComponentPredicate) {
@@ -160,7 +154,6 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private fun AdvancedSettingBean.isApplicable(): Boolean =
     when {
       id == "project.view.do.not.autoscroll.to.libraries" -> !ProjectJdkTable.getInstance().allJdks.isEmpty()
-      id.startsWith("federated.learning") -> Config.showFederatedLearningSwitches
       else -> true
     }
 
