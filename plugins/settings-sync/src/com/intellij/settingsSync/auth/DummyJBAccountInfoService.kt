@@ -37,4 +37,8 @@ object DummyJBAccountInfoService : JBAccountInfoService {
     refreshIdToken()
     SettingsSyncEvents.getInstance().fireLoginStateChanged()
   }
+
+  override fun getServiceConfiguration(): CompletableFuture<JBAccountInfoService.JbaServiceConfiguration> {
+    TODO("Not yet implemented")
+  }
 }

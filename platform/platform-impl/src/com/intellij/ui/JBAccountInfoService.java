@@ -77,6 +77,19 @@ public interface JBAccountInfoService {
   }
 
   /**
+   * Returns the information retrieved from {@code JetBrainsAccount.xml}.
+   * This method can either perform a network operation or return a cached copy if it's fresh enough.
+   * <p>
+   * The returned future may complete exceptionally with a {@link java.util.concurrent.CompletionException} wrapping
+   * an {@link java.io.IOException} the caused the failure.
+   * Note that when awaiting the future from a coroutine using the standard {@code .await()} extension function,
+   * the original {@link java.io.IOException} is thrown in case of a failure, without an intermediate wrapper exception.
+   * <p>
+   * The future may also be cancelled in case of remote dev when the controlling client handling the request is disconnected.
+   */
+  @NotNull CompletableFuture<@NotNull JbaServiceConfiguration> getServiceConfiguration();
+
+  /**
    * Starts the auth flow by opening the browser and waiting for the user to proceed with logging in.
    */
   @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode);
@@ -105,6 +118,12 @@ public interface JBAccountInfoService {
     }
     return JBAccountInfoServiceHolder.INSTANCE;
   }
+
+  record JbaServiceConfiguration(
+    @NotNull String accountUrl,
+    @NotNull String signupUrl,
+    @NotNull String paymentMethodsUrl
+  ) { }
 
   enum LoginMode {
     /**
