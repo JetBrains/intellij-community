@@ -21,7 +21,7 @@ class MLEventLoggerProvider : StatisticsEventLoggerProvider(
   sendFrequencyMs = TimeUnit.MINUTES.toMillis(10),
   maxFileSizeInBytes = 100 * 1024,
   sendLogsOnIdeClose = true,
-  isCharsEscapingRequired = true
+  isCharsEscapingRequired = false
 ) {
 
   /**
