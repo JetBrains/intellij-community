@@ -677,4 +677,37 @@ public class QualifierCompletionTest extends NormalCompletionTestCase {
                                 """);
       });
   }
+  @NeedsIndex.Full
+  public void testStaticWithoutImplicitImports() {
+    ((AdvancedSettingsImpl)AdvancedSettings.getInstance()).setSetting("java.completion.qualifier.as.argument", true,
+                                                                      getTestRootDisposable());
+    IdeaTestUtil.withLevel(getModule(),
+                           JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+        myFixture.addClass("""
+                             package java.io;
+                             
+                             public final class IO {
+                                public static void println(Object obj) {}
+                             }
+                             """);
+        myFixture.configureByText("Test.java", """
+          public class Test{
+            public static void main(String[] args) {
+                "TEST".printl<caret>
+            }
+          }
+          """);
+        myFixture.complete(CompletionType.BASIC, 2);
+        myFixture.type('\n');
+        myFixture.checkResult("""
+                                import java.io.IO;
+                                
+                                public class Test{
+                                  public static void main(String[] args) {
+                                      IO.println("TEST");
+                                  }
+                                }
+                                """);
+      });
+  }
 }

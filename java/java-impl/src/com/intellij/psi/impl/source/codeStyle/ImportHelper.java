@@ -53,6 +53,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static com.intellij.psi.util.ImportsUtil.getAllImplicitImports;
 import static com.siyeh.ig.psiutils.ImportUtils.*;
 import static java.util.stream.Collectors.toSet;
 
