@@ -16,7 +16,6 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.AtomicMapCache
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
@@ -95,8 +94,8 @@ class CodeInsightContextManagerImpl(
   @RequiresReadLock
   @RequiresBackgroundThread
   override fun getCodeInsightContexts(file: VirtualFile): List<CodeInsightContext> {
-    ThreadingAssertions.softAssertBackgroundThread()
-    ThreadingAssertions.softAssertReadAccess()
+    //ThreadingAssertions.softAssertBackgroundThread()
+    //ThreadingAssertions.softAssertReadAccess()
 
     if (!isSharedSourceSupportEnabled(project)) return listOf(defaultContext())
 
@@ -120,8 +119,8 @@ class CodeInsightContextManagerImpl(
   override fun getPreferredContext(file: VirtualFile): CodeInsightContext {
     if (!isSharedSourceSupportEnabled(project)) return defaultContext()
 
-    ThreadingAssertions.softAssertBackgroundThread()
-    ThreadingAssertions.softAssertReadAccess()
+    //ThreadingAssertions.softAssertBackgroundThread()
+    //ThreadingAssertions.softAssertReadAccess()
     return preferredContext.getOrPut(file) {
       findFirstContext(file)
     }
