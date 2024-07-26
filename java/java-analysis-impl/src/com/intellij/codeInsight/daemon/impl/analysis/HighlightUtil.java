@@ -465,7 +465,9 @@ public final class HighlightUtil {
     if (expression == null) return false;
     PsiType rType = expression.getType();
     PsiType castType = GenericsUtil.getVariableTypeByExpressionType(toType);
-    return rType != null && toType != null && TypeConversionUtil.areTypesConvertible(rType, toType) && toType.isAssignableFrom(castType);
+    if (rType == null || toType == null) return false;
+    boolean convertible = expression instanceof PsiNewExpression ? toType.isAssignableFrom(rType) : toType.isConvertibleFrom(rType);
+    return convertible && toType.isAssignableFrom(castType);
   }
 
 
