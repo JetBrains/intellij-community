@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.j2k.post.processing.JKInMemoryFilesSearcher
@@ -577,11 +579,13 @@ private class ClassConverter(
                     ktProperty.addModifier(ABSTRACT_KEYWORD)
                     ktGetter.removeModifier(ABSTRACT_KEYWORD)
                 }
+
                 if (ktGetter.isRedundantGetter()) {
                     realGetter.function.deleteExplicitLabelComments()
                     val commentSaver = CommentSaver(realGetter.function)
                     commentSaver.restore(ktProperty)
                 }
+
                 realGetter.function.delete()
             }
 
@@ -591,6 +595,7 @@ private class ClassConverter(
                     val commentSaver = CommentSaver(realSetter.function)
                     commentSaver.restore(ktProperty)
                 }
+
                 realSetter.function.delete()
             }
         }
@@ -611,6 +616,14 @@ private class ClassConverter(
         }
 
         moveAccessorAnnotationsToProperty(ktProperty)
+        removeRedundantPropertyAccessors(ktProperty)
+    }
+
+    private fun removeRedundantPropertyAccessors(property: KtProperty) {
+        val getter = property.getter
+        val setter = property.setter
+        if (getter?.isRedundantGetter() == true) removeRedundantGetter(getter)
+        if (setter?.isRedundantSetter() == true) removeRedundantSetter(setter)
     }
 
     private fun addGetter(getter: Getter, ktProperty: KtProperty, isFakeProperty: Boolean): KtPropertyAccessor {
