@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,9 +70,7 @@ public final class ImportsUtil {
       PsiJavaFile file = (PsiJavaFile)expr.getContainingFile();
       final PsiImportList importList = file.getImportList();
       if (importList != null) {
-        List<PsiImportStaticStatement> additionalOnDemandImports = ContainerUtil.filterIsInstance(
-          ContainerUtil.map(file.getImplicitlyImportedElements(), impl -> impl.createImportStatement()),
-          PsiImportStaticStatement.class);
+        List<PsiImportStaticStatement> additionalOnDemandImports = ContainerUtil.filterIsInstance(getAllImplicitImports(file), PsiImportStaticStatement.class);
         final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
         for (PsiImportStaticStatement stmt : ContainerUtil.append(additionalOnDemandImports, importStaticStatements)) {
           final PsiClass containingClass = member.getContainingClass();
@@ -91,5 +90,27 @@ public final class ImportsUtil {
       }
     }
     return false;
+  }
+
+  /**
+   * Retrieves all implicit import statements associated with the given Java file.
+   *
+   * @param file the Java file for which to retrieve implicit import statements.
+   * @return a list of implicit import statements associated with the given Java file.
+   */
+  public static List<PsiImportStatementBase> getAllImplicitImports(@NotNull PsiJavaFile file) {
+    return CachedValuesManager.getProjectPsiDependentCache(file, javaFile -> {
+      List<PsiImportStatementBase> results = new ArrayList<>();
+      Project project = javaFile.getProject();
+      PsiElementFactory factory = PsiElementFactory.getInstance(project);
+      ImplicitlyImportedElement[] elements = javaFile.getImplicitlyImportedElements();
+      for (@NotNull ImplicitlyImportedElement element : elements) {
+        results.add(element.createImportStatement());
+      }
+      for (String aPackage : javaFile.getImplicitlyImportedPackages()) {
+        results.add(factory.createImportStatementOnDemand(aPackage));
+      }
+      return results;
+    });
   }
 }

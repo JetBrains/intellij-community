@@ -31,6 +31,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
+import static com.intellij.psi.util.ImportsUtil.getAllImplicitImports;
+
 public final class ImportUtils {
 
   private ImportUtils() {}
@@ -324,28 +326,6 @@ public final class ImportUtils {
       }
     }
     return ThreeState.UNSURE;
-  }
-
-  /**
-   * Retrieves all implicit import statements associated with the given Java file.
-   *
-   * @param file the Java file for which to retrieve implicit import statements.
-   * @return a list of implicit import statements associated with the given Java file.
-   */
-  public static List<PsiImportStatementBase> getAllImplicitImports(@NotNull PsiJavaFile file) {
-    return CachedValuesManager.getProjectPsiDependentCache(file, javaFile -> {
-      List<PsiImportStatementBase> results = new ArrayList<>();
-      Project project = javaFile.getProject();
-      PsiElementFactory factory = PsiElementFactory.getInstance(project);
-      ImplicitlyImportedElement[] elements = javaFile.getImplicitlyImportedElements();
-      for (@NotNull ImplicitlyImportedElement element : elements) {
-        results.add(element.createImportStatement());
-      }
-      for (String aPackage : javaFile.getImplicitlyImportedPackages()) {
-        results.add(factory.createImportStatementOnDemand(aPackage));
-      }
-      return results;
-    });
   }
 
   private static ThreeState hasOnDemandImportConflictInPackage(@NotNull PsiPackage aPackage,
