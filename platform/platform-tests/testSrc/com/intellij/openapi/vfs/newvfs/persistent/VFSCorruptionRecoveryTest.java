@@ -6,8 +6,8 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.NotClosedProperlyRecoverer;
-import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
+import com.intellij.testFramework.TemporaryDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -188,8 +188,6 @@ public class VFSCorruptionRecoveryTest {
         PersistentFSConnector.tryInit(
           cachesDir,
           FSRecordsImpl.currentImplementationVersion(),
-          false,
-          Collections.emptyList(),
           Collections.emptyList()
         );
         filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
@@ -292,8 +290,6 @@ public class VFSCorruptionRecoveryTest {
       PersistentFSConnection connection = PersistentFSConnector.tryInit(
         cachesDir,
         FSRecordsImpl.currentImplementationVersion(),
-        false,
-        Collections.emptyList(),
         Collections.emptyList()
       );
       PersistentFSConnector.disconnect(connection);
@@ -319,8 +315,6 @@ public class VFSCorruptionRecoveryTest {
     PersistentFSConnection connection = PersistentFSConnector.tryInit(
       cachesDir,
       FSRecordsImpl.currentImplementationVersion(),
-      false,
-      Collections.emptyList(),
       Collections.singletonList(new NotClosedProperlyRecoverer())
     );
     PersistentFSConnector.disconnect(connection);
@@ -353,8 +347,6 @@ public class VFSCorruptionRecoveryTest {
       PersistentFSConnection connection = PersistentFSConnector.tryInit(
         cachesDir,
         FSRecordsImpl.currentImplementationVersion(),
-        false,
-        Collections.emptyList(),
         List.of(new ContentStoragesRecoverer())
       );
       connection.close();
@@ -386,8 +378,6 @@ public class VFSCorruptionRecoveryTest {
       PersistentFSConnection connection = PersistentFSConnector.tryInit(
         cachesDir,
         FSRecordsImpl.currentImplementationVersion(),
-        false,
-        Collections.emptyList(),
         List.of(new ContentStoragesRecoverer())
       );
       try {

@@ -1,16 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.log.io
+package com.intellij.openapi.vfs.newvfs.persistent.dev
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.FIRST_INSTANCE_MARK
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.INVALID_CHECKSUM
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.SECOND_INSTANCE_MARK
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArrayImpl.Companion.CompactLayoutBuilder
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArrayImpl.Companion.LayoutHandler
+import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray.Companion.FIRST_INSTANCE_MARK
+import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray.Companion.INVALID_CHECKSUM
+import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray.Companion.OpenMode
+import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray.Companion.SECOND_INSTANCE_MARK
+import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArrayImpl.Companion.CompactLayoutBuilder
+import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArrayImpl.Companion.LayoutHandler
 import com.intellij.util.io.ResilientFileChannel
 import com.intellij.util.io.createParentDirectories
+import org.jetbrains.annotations.ApiStatus
 import java.io.Flushable
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -37,6 +38,7 @@ import kotlin.io.path.moveTo
  *
  * There should not exist more than one instance on the same path.
  */
+@ApiStatus.Internal
 interface DurablePersistentByteArray : AutoCloseable {
   fun getLastSnapshot(): ByteArray
   fun commitChange(modify: (ByteArray) -> Unit): ByteArray

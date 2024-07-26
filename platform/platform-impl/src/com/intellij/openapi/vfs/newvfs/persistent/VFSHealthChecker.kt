@@ -654,7 +654,7 @@ fun main(args: Array<String>) {
   }
   val path = Paths.get(args[0])
   println("Checking VFS [$path]")
-  val records = FSRecordsImpl.connect(path, emptyList(), false) { _, error ->
+  val records = FSRecordsImpl.connect(path) { _, error ->
     throw error
   }
   println("VFS roots:")

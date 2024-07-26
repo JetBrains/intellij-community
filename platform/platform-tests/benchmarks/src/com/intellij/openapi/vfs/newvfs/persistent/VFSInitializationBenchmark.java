@@ -134,7 +134,7 @@ public class VFSInitializationBenchmark {
 
   private static PersistentFSConnection initVFS(Path cachesDir,
                                                 int version) {
-    VFSInitializationResult initResult = PersistentFSConnector.connectWithoutVfsLog(
+    VFSInitializationResult initResult = PersistentFSConnector.connect(
       cachesDir,
       version
     );

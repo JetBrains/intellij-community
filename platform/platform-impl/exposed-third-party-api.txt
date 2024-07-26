@@ -37,7 +37,6 @@ javax/xml/stream/XMLStreamReader
 kotlin/jvm/internal/DefaultConstructorMarker
 kotlin/reflect/KMutableProperty0
 kotlin/reflect/KProperty
-kotlinx/collections/immutable/PersistentSet
 kotlinx/serialization/KSerializer
 kotlinx/serialization/descriptors/SerialDescriptor
 kotlinx/serialization/encoding/Decoder

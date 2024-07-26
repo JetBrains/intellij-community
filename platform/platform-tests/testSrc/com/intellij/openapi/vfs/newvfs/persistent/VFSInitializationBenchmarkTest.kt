@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -18,7 +18,7 @@ class VFSInitializationBenchmarkTest {
       val cachesDir: Path = temporaryDirectory
       val version = 1
 
-      val initializationResult = PersistentFSConnector.connectWithoutVfsLog(
+      val initializationResult = PersistentFSConnector.connect(
         cachesDir,
         version
       )
@@ -34,14 +34,14 @@ class VFSInitializationBenchmarkTest {
   fun benchmarkVfsInitializationTime_OpenExistingVfs(@TempDir temporaryDirectory: Path) {
     val cachesDir: Path = temporaryDirectory
     val version = 1
-    val result = PersistentFSConnector.connectWithoutVfsLog(
+    val result = PersistentFSConnector.connect(
       cachesDir,
       version
     )
     PersistentFSConnector.disconnect(result.connection)
 
     Benchmark.newBenchmark("open existing VFS files") {
-      val initResult = PersistentFSConnector.connectWithoutVfsLog(
+      val initResult = PersistentFSConnector.connect(
         cachesDir,
         version
       )

@@ -7,11 +7,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFact
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.OverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
-import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.IMPL_VERSION_MISMATCH;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
@@ -143,7 +145,7 @@ public class VFSInitializationTest {
     final String corruptionReason = "VFS corrupted because I said so";
     final String corruptionCauseMessage = "Something happens here";
 
-    final VFSInitializationResult initializationResult = PersistentFSConnector.connectWithoutVfsLog(
+    final VFSInitializationResult initializationResult = PersistentFSConnector.connect(
       cachesDir,
       /*version: */ 1
     );
@@ -393,8 +395,7 @@ public class VFSInitializationTest {
     PersistentFSConnection connection = PersistentFSConnector.tryInit(
       cachesDir,
       version,
-      false,
-      Collections.emptyList(), recoverers
+      recoverers
     );
     connectionsOpened.add(connection);
     return connection;

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.ide.actions.cache.RecoverVfsFromLogAction;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Forceable;
@@ -16,15 +15,16 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.GentleFlusherBase;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
-import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.ThreadSafeThrottler;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.ScannableDataEnumeratorEx;
+import com.intellij.util.io.SimpleStringPersistentEnumerator;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.VFSContentStorage;
@@ -42,9 +42,6 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -91,8 +88,6 @@ public final class PersistentFSConnection {
    */
   private final @NotNull SimpleStringPersistentEnumerator enumeratedAttributes;
 
-  private final @Nullable VfsLogEx vfsLog;
-
   private volatile boolean dirty = false;
   private volatile boolean closed = false;
 
@@ -107,10 +102,8 @@ public final class PersistentFSConnection {
                          @NotNull VFSAttributesStorage attributes,
                          @NotNull VFSContentStorage contents,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
-                         @Nullable VfsLogEx vfsLog,
                          @NotNull NotNullLazyValue<? extends IntList> freeRecords,
-                         @NotNull VFSRecoveryInfo info,
-                         @NotNull List<ConnectionInterceptor> interceptors) throws IOException {
+                         @NotNull VFSRecoveryInfo info) throws IOException {
     if (!(names instanceof Forceable) || !(names instanceof Closeable)) {
       //RC: there is no simple way to specify type like DataEnumerator & Forceable & Closeable in java,
       //    hence the runtime check here (and in methods below calling Forceable/Closeable methods).
@@ -118,45 +111,15 @@ public final class PersistentFSConnection {
       //    different names impls -- after we'll decide which impl is the best, explicit type could be specified here
       throw new IllegalArgumentException("names(" + names + ") must implement Forceable & Closeable");
     }
-    this.records = wrapRecords(records, interceptors);
+    this.records = records;
     namesEnumerator = names;
-    attributesStorage = wrapAttributes(attributes, interceptors);
-    contentStorage = wrapContents(contents, interceptors);
-    this.vfsLog = vfsLog;
+    attributesStorage = attributes;
+    contentStorage = contents;
     persistentFSPaths = paths;
     this.freeRecords = freeRecords;
     this.enumeratedAttributes = enumeratedAttributes;
     recoveryInfo = info;
   }
-
-  //It is 'second level' of wrapping, not really used today, but for the bright future:
-
-  private static VFSContentStorage wrapContents(VFSContentStorage contents, List<ConnectionInterceptor> interceptors) {
-    var contentInterceptors = interceptors.stream()
-      .filter(ContentsInterceptor.class::isInstance)
-      .map(ContentsInterceptor.class::cast)
-      .toList();
-    return InterceptorInjection.INSTANCE.injectInContents(contents, contentInterceptors);
-  }
-
-  private static VFSAttributesStorage wrapAttributes(VFSAttributesStorage attributes, List<ConnectionInterceptor> interceptors) {
-    var attributesInterceptors = interceptors.stream()
-      .filter(AttributesInterceptor.class::isInstance)
-      .map(AttributesInterceptor.class::cast)
-      .toList();
-    return InterceptorInjection.INSTANCE.injectInAttributes(attributes, attributesInterceptors);
-  }
-
-  private static PersistentFSRecordsStorage wrapRecords(PersistentFSRecordsStorage records, List<ConnectionInterceptor> interceptors) {
-    var recordsInterceptors = interceptors.stream()
-      .filter(RecordsInterceptor.class::isInstance)
-      .map(RecordsInterceptor.class::cast)
-      .toList();
-    return InterceptorInjection.INSTANCE.injectInRecords(records, recordsInterceptors);
-  }
-
-  @Nullable
-  VfsLogEx getVfsLog() { return vfsLog; }
 
   @NotNull("Vfs must be initialized")
   SimpleStringPersistentEnumerator getEnumeratedAttributes() {
@@ -263,8 +226,7 @@ public final class PersistentFSConnection {
     closeStorages(records,
                   namesEnumerator,
                   attributesStorage,
-                  contentStorage,
-                  vfsLog);
+                  contentStorage);
     closed = true;
   }
 
@@ -286,8 +248,7 @@ public final class PersistentFSConnection {
   static void closeStorages(@Nullable PersistentFSRecordsStorage records,
                             @Nullable ScannableDataEnumeratorEx<String> names,
                             @Nullable VFSAttributesStorage attributes,
-                            @Nullable VFSContentStorage contents,
-                            @Nullable VfsLogEx vfsLog) throws IOException {
+                            @Nullable VFSContentStorage contents) throws IOException {
     if (names instanceof Closeable) {//implies != null
       ((Closeable)names).close();
     }
@@ -302,10 +263,6 @@ public final class PersistentFSConnection {
 
     if (records != null) {
       records.close();
-    }
-
-    if (vfsLog != null) {
-      vfsLog.dispose();
     }
   }
 
@@ -414,16 +371,8 @@ public final class PersistentFSConnection {
   }
 
   private static void showCorruptionNotification(boolean insisting) {
+    AnAction restartIdeAction = ActionManager.getInstance().getAction("RestartIde");
     NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches");
-    var actions = new ArrayList<AnAction>();
-    { // collect available actions
-      AnAction recoverCachesFromLogAction = ActionManager.getInstance().getAction("RecoverCachesFromLog");
-      if (recoverCachesFromLogAction != null && RecoverVfsFromLogAction.isAvailable()) {
-        actions.add(recoverCachesFromLogAction);
-      }
-      AnAction restartIdeAction = ActionManager.getInstance().getAction("RestartIde");
-      actions.add(restartIdeAction);
-    }
     if (insisting) {
       notificationGroup.createNotification(
           CoreBundle.message("vfs.corruption.notification.title"),
@@ -431,7 +380,7 @@ public final class PersistentFSConnection {
           INFORMATION
         )
         .setImportant(true)
-        .addActions((Collection<? extends AnAction>)actions)
+        .addAction(restartIdeAction)
         .notify(null);
     }
     else {
@@ -440,7 +389,7 @@ public final class PersistentFSConnection {
           CoreBundle.message("vfs.corruption.notification.insist.text"),
           ERROR
         )
-        .addActions((Collection<? extends AnAction>)actions)
+        .addAction(restartIdeAction)
         .notify(null);
     }
   }

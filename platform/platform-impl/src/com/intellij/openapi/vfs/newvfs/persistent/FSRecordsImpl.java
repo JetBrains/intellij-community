@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -19,9 +17,6 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
-import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
@@ -150,32 +145,12 @@ public final class FSRecordsImpl implements Closeable {
     ExceptionUtil.rethrow(error);
   };
 
-  public static final ErrorHandler ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED =
-    (records, error) -> {
-      if (!records.isClosed()) {
-        records.connection.markAsCorruptedAndScheduleRebuild(error);
-        ApplicationManager.getApplication().getService(RecoverVfsFromLogService.class).suggestAutomaticRecoveryIfAllowed();
-      }
-      else {
-        error.addSuppressed(records.alreadyClosedException());
-      }
-      if (error instanceof IOException) {
-        throw new UncheckedIOException((IOException)error);
-      }
-      ExceptionUtil.rethrow(error);
-    };
-
   public static final ErrorHandler ON_ERROR_RETHROW = (__, error) -> {
     ExceptionUtil.rethrow(error);
   };
 
   public static ErrorHandler getDefaultErrorHandler() {
-    if (VfsLog.isVfsTrackingEnabled()) {
-      return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED;
-    }
-    else {
-      return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD;
-    }
+    return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD;
   }
 
   private final @NotNull PersistentFSConnection connection;
@@ -266,17 +241,10 @@ public final class FSRecordsImpl implements Closeable {
    * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
   public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath) throws UncheckedIOException {
-    return connect(storagesDirectoryPath, Collections.emptyList());
+    return connect(storagesDirectoryPath, getDefaultErrorHandler());
   }
 
   public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
-                                      @NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
-    return connect(storagesDirectoryPath, connectionInterceptors, VfsLog.isVfsTrackingEnabled(), getDefaultErrorHandler());
-  }
-
-  public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
-                                      @NotNull List<ConnectionInterceptor> connectionInterceptors,
-                                      boolean enableVfsLog,
                                       @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
@@ -285,9 +253,7 @@ public final class FSRecordsImpl implements Closeable {
       int currentVersion = currentImplementationVersion();
       VFSInitializationResult initializationResult = PersistentFSConnector.connect(
         storagesDirectoryPath,
-        currentVersion,
-        enableVfsLog,
-        connectionInterceptors
+        currentVersion
       );
 
       PersistentFSConnection connection = initializationResult.connection;
@@ -526,11 +492,6 @@ public final class FSRecordsImpl implements Closeable {
   boolean isDirty() {
     checkNotClosed();
     return connection.isDirty();
-  }
-
-  @Nullable
-  VfsLogEx getVfsLog() {
-    return connection.getVfsLog();
   }
 
   //========== record allocations: ========================================

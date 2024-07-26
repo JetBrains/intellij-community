@@ -23,7 +23,7 @@ object VfsDiffBuilder {
       OFFLINE_BY_DEFAULT(PersistentFS.Flags.OFFLINE_BY_DEFAULT)
     }
 
-    val status: Set<FileStatus> = FileStatus.values().filter { (it.bit and flags) != 0 }.toSortedSet().let {
+    val status: Set<FileStatus> = FileStatus.entries.filter { (it.bit and flags) != 0 }.toSortedSet().let {
       if (it.contains(FileStatus.FREE_RECORD_FLAG)) setOf(FileStatus.FREE_RECORD_FLAG)
       else it
     }
@@ -204,8 +204,8 @@ object VfsDiffBuilder {
     val baseCachesDir = Path.of(args[0])
     val targetCachesDir = Path.of(args[1])
 
-    val baseVfs = FSRecordsImpl.connect(baseCachesDir, emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW)
-    val targetVfs = FSRecordsImpl.connect(targetCachesDir, emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW)
+    val baseVfs = FSRecordsImpl.connect(baseCachesDir, FSRecordsImpl.ON_ERROR_RETHROW)
+    val targetVfs = FSRecordsImpl.connect(targetCachesDir, FSRecordsImpl.ON_ERROR_RETHROW)
     val diff: DiffResult
 
     AutoCloseable {

@@ -1,26 +1,27 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.util.io.DataOutputStream;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
+import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FSRecordsImplTest {
 
@@ -149,7 +150,7 @@ public class FSRecordsImplTest {
 
   @BeforeEach
   void setUp(@TempDir Path vfsDir) {
-    vfs = FSRecordsImpl.connect(vfsDir, Collections.emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW);
+    vfs = FSRecordsImpl.connect(vfsDir, FSRecordsImpl.ON_ERROR_RETHROW);
   }
 
   @AfterEach

@@ -10,18 +10,15 @@ import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.util.io.blobstorage.ByteBufferReader;
-import com.intellij.util.io.blobstorage.ByteBufferWriter;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
+import com.intellij.util.io.blobstorage.ByteBufferReader;
+import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.IntPredicate;
@@ -92,21 +89,20 @@ public final class FSRecords {
   /**
    * This method creates new {@link FSRecordsImpl} instance, and <b>set it as default instance, available
    * through {@link #getInstance()}</b>.
-   * If you want 'private' VFS instance -- e.g. for testing -- use {@link FSRecordsImpl#connect(Path, List, boolean, FSRecordsImpl.ErrorHandler)}
+   * If you want 'private' VFS instance -- e.g. for testing -- use {@link FSRecordsImpl#connect(Path, FSRecordsImpl.ErrorHandler)}
    * method(s) instead, because this method changes global state, hence could affect the tests following current.
    */
   public static synchronized FSRecordsImpl connect() throws UncheckedIOException {
-    return connect(VfsLog.isVfsTrackingEnabled(), FSRecordsImpl.getDefaultErrorHandler());
+    return connect(FSRecordsImpl.getDefaultErrorHandler());
   }
 
   /**
    * This method creates new {@link FSRecordsImpl} instance, and set it as default instance, available
    * through {@link #getInstance()}.
-   * If you want 'private' VFS instance -- e.g. for testing -- use {@link FSRecordsImpl#connect(Path, List, boolean, FSRecordsImpl.ErrorHandler)}
+   * If you want 'private' VFS instance -- e.g. for testing -- use {@link FSRecordsImpl#connect(Path, FSRecordsImpl.ErrorHandler)}
    * method(s) instead, because this method changes global state, hence could affect the tests following current.
    */
-  public static synchronized FSRecordsImpl connect(boolean enableVfsLog,
-                                                   @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
+  public static synchronized FSRecordsImpl connect(@NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
     FSRecordsImpl oldImpl = impl;
     if (oldImpl != null && !oldImpl.isClosed()) {
       //MAYBE RC: provide reconnect()
@@ -116,7 +112,7 @@ public final class FSRecords {
         "Current instance: " + oldImpl
       );
     }
-    FSRecordsImpl _impl = FSRecordsImpl.connect(getCacheDir(), Collections.emptyList(), enableVfsLog, errorHandler);
+    FSRecordsImpl _impl = FSRecordsImpl.connect(getCacheDir(), errorHandler);
     impl = _impl;
     return _impl;
   }
@@ -173,8 +169,6 @@ public final class FSRecords {
   static boolean isDirty() {
     return implOrFail().isDirty();
   }
-
-  static @Nullable VfsLogEx getVfsLog() { return implOrFail().getVfsLog(); }
 
   //========== record allocation/deletion: ====================================
 

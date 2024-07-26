@@ -12,21 +12,16 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.Enum;
-import java.lang.Long;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.intellij.internal.statistic.eventLog.events.EventFields.Boolean;
-import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
-import static com.intellij.internal.statistic.eventLog.events.EventFields.Long;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
 
 @ApiStatus.Internal
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 17);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 18);
 
   private static final LongEventField FIELD_WAIT_MS = Long("wait_ms");  // -1 for synchronous refresh/events
 
