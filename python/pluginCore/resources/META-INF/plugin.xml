@@ -741,6 +741,14 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <extensionPoint qualifiedName="Pythonid.customProcessHandlerProvider"
                     interface="com.jetbrains.python.run.PyCustomProcessHandlerProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.jetbrains.python.testing.pyTestLineMarkerContributorCustomizer"
+                    interface="com.jetbrains.python.testing.PyTestLineMarkerContributorCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.jetbrains.python.configuration.pyIntegratedToolsTestPanelCustomizer"
+                    interface="com.jetbrains.python.configuration.PyIntegratedToolsTestPanelCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
