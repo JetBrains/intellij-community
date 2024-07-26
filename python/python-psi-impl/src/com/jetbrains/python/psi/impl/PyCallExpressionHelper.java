@@ -886,20 +886,20 @@ public final class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static List<PyExpression> getArgumentsMappedToPositionalContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
+  public static <T> List<T> getArgumentsMappedToPositionalContainer(@NotNull Map<T, PyCallableParameter> mapping) {
     return StreamEx.ofKeys(mapping, PyCallableParameter::isPositionalContainer).toList();
   }
 
   @NotNull
-  public static List<PyExpression> getArgumentsMappedToKeywordContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
+  public static <T> List<T> getArgumentsMappedToKeywordContainer(@NotNull Map<T, PyCallableParameter> mapping) {
     return StreamEx.ofKeys(mapping, PyCallableParameter::isKeywordContainer).toList();
   }
 
   @NotNull
-  public static Map<PyExpression, PyCallableParameter> getRegularMappedParameters(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
-    final Map<PyExpression, PyCallableParameter> result = new LinkedHashMap<>();
-    for (Map.Entry<PyExpression, PyCallableParameter> entry : mapping.entrySet()) {
-      final PyExpression argument = entry.getKey();
+  public static <T> Map<T, PyCallableParameter> getRegularMappedParameters(@NotNull Map<T, PyCallableParameter> mapping) {
+    final Map<T, PyCallableParameter> result = new LinkedHashMap<>();
+    for (Map.Entry<T, PyCallableParameter> entry : mapping.entrySet()) {
+      final T argument = entry.getKey();
       final PyCallableParameter parameter = entry.getValue();
       if (!parameter.isPositionalContainer() && !parameter.isKeywordContainer()) {
         result.put(argument, parameter);
@@ -909,12 +909,12 @@ public final class PyCallExpressionHelper {
   }
 
   @Nullable
-  public static PyCallableParameter getMappedPositionalContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
+  public static <T> PyCallableParameter getMappedPositionalContainer(@NotNull Map<T, PyCallableParameter> mapping) {
     return ContainerUtil.find(mapping.values(), p -> p.isPositionalContainer());
   }
 
   @Nullable
-  public static PyCallableParameter getMappedKeywordContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
+  public static <T> PyCallableParameter getMappedKeywordContainer(@NotNull Map<T, PyCallableParameter> mapping) {
     return ContainerUtil.find(mapping.values(), p -> p.isKeywordContainer());
   }
 
