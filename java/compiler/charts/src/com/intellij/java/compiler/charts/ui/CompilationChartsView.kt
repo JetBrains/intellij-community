@@ -17,6 +17,7 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
   init {
     val zoom = Zoom()
 
+
     val scroll = object : JBScrollPane() {
       override fun createViewport(): JViewport = CompilationChartsViewport(zoom)
     }.apply {
@@ -24,13 +25,13 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
       border = JBUI.Borders.empty()
       viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE
+      horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
       name = "compilation-charts-scroll-pane"
-
-      val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(viewport)
-      addMouseWheelListener(rightAdhesionScrollBarListener)
-      horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     }
+    val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(scroll.viewport)
+    scroll.horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     val diagrams = CompilationChartsDiagramsComponent(vm, zoom, scroll.viewport).apply {
+      addMouseWheelListener(rightAdhesionScrollBarListener)
       name = "compilation-charts-diagrams-component"
       isFocusable = true
     }
