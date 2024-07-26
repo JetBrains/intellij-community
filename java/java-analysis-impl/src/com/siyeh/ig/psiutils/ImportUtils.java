@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -246,7 +247,13 @@ public final class ImportUtils {
         //can't process, let's assume that we have conflict because it is safe
         if (DumbService.isDumb(javaFile.getProject())) return ThreeState.YES;
         Ref<Boolean> result = new Ref<>(null);
+        PsiJavaModule module = moduleStatement.resolveTargetModule();
+        if (module == null) return ThreeState.UNSURE;
+        JavaModuleGraphUtil.JavaModuleScope scope = JavaModuleGraphUtil.JavaModuleScope.moduleWithTransitiveScope(module);
+        if (scope == null) return ThreeState.UNSURE;
         PsiShortNamesCache.getInstance(javaFile.getProject()).processClassesWithName(shortName, currentClass -> {
+          if (!currentClass.hasModifierProperty(PsiModifier.PUBLIC)) return true;
+          if (currentClass.getContainingClass() != null) return true;
           String qualifiedName = currentClass.getQualifiedName();
           if (qualifiedName == null) return true;
           String currentPackage = ClassUtil.extractPackageName(qualifiedName);
@@ -263,7 +270,7 @@ public final class ImportUtils {
             }
           }
           return true;
-        }, javaFile.getResolveScope(), null);
+        }, scope, null);
         if (result.get() != null) return ThreeState.fromBoolean(result.get());
       }
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
@@ -431,10 +438,10 @@ public final class ImportUtils {
   private static PsiImportStaticStatement findOnDemandImportStaticStatement(PsiImportList importList, String qualifierClass) {
     final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
     List<PsiImportStaticStatement> additionalOnDemandImports = new ArrayList<>();
-    if(importList.getContainingFile() instanceof  PsiJavaFile javaFile) {
+    if (importList.getContainingFile() instanceof PsiJavaFile javaFile) {
       additionalOnDemandImports = ContainerUtil.filterIsInstance(getAllImplicitImports(javaFile), PsiImportStaticStatement.class);
     }
-    for (PsiImportStaticStatement importStaticStatement : ContainerUtil.append(additionalOnDemandImports,  importStaticStatements)) {
+    for (PsiImportStaticStatement importStaticStatement : ContainerUtil.append(additionalOnDemandImports, importStaticStatements)) {
       if (!importStaticStatement.isOnDemand()) {
         continue;
       }
@@ -453,10 +460,11 @@ public final class ImportUtils {
   private static List<PsiImportStaticStatement> getMatchingImports(@NotNull PsiImportList importList, @NotNull String className) {
     final List<PsiImportStaticStatement> imports = new ArrayList<>();
     List<PsiImportStaticStatement> additionalOnDemandImports = new ArrayList<>();
-    if(importList.getContainingFile() instanceof  PsiJavaFile javaFile) {
+    if (importList.getContainingFile() instanceof PsiJavaFile javaFile) {
       additionalOnDemandImports = ContainerUtil.filterIsInstance(getAllImplicitImports(javaFile), PsiImportStaticStatement.class);
     }
-    for (PsiImportStaticStatement staticStatement : ContainerUtil.append(additionalOnDemandImports, importList.getImportStaticStatements())) {
+    for (PsiImportStaticStatement staticStatement : ContainerUtil.append(additionalOnDemandImports,
+                                                                         importList.getImportStaticStatements())) {
       final PsiClass psiClass = staticStatement.resolveTargetClass();
       if (psiClass == null) {
         continue;
