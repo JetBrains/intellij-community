@@ -3,27 +3,47 @@ package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class ShellCommandEndMarkerListener(private val session: BlockTerminalSession, private val onFound: () -> Unit) {
+internal class ShellCommandEndMarkerListener(
+  private val terminalTextBuffer: TerminalTextBuffer,
+  private val commandEndMarker: String?,
+  parentDisposable: Disposable,
+  private val onFound: () -> Unit,
+) {
 
-  private val disposable: Disposable = Disposer.newDisposable(session, ShellCommandEndMarkerListener::class.java.simpleName)
+  @Deprecated(
+    "Does not really requires session",
+    replaceWith = ReplaceWith(
+      "ShellCommandEndMarkerListener(session.model.textBuffer, session.commandBlockIntegration.commandEndMarker, session as Disposable, onFound)"
+    )
+  )
+  constructor(
+    session: BlockTerminalSession,
+    onFound: () -> Unit,
+  ) : this(
+    session.model.textBuffer,
+    session.commandBlockIntegration.commandEndMarker,
+    session as Disposable,
+    onFound
+  )
+
+  private val disposable: Disposable = Disposer.newDisposable(parentDisposable, ShellCommandEndMarkerListener::class.java.simpleName)
   private val found: AtomicBoolean = AtomicBoolean(false)
 
   init {
     if (!findCommandEndMarker()) {
-      TerminalUtil.addModelListener(session.model.textBuffer, disposable) {
+      TerminalUtil.addModelListener(terminalTextBuffer, disposable) {
         findCommandEndMarker()
       }
     }
   }
 
   private fun findCommandEndMarker(): Boolean {
-    val textBuffer = session.model.textBuffer
-    val commandEndMarker = session.commandBlockIntegration.commandEndMarker
-    val output = textBuffer.withLock { ShellCommandOutputScraperImpl.scrapeOutput(textBuffer, commandEndMarker) }
+    val output = terminalTextBuffer.withLock { ShellCommandOutputScraperImpl.scrapeOutput(terminalTextBuffer, commandEndMarker) }
     if (output.commandEndMarkerFound && found.compareAndSet(false, true)) {
       Disposer.dispose(disposable)
       onFound()

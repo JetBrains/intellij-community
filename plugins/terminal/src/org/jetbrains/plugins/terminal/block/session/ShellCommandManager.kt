@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
+import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
@@ -16,10 +17,23 @@ import kotlin.time.Duration
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-internal class ShellCommandManager(private val session: BlockTerminalSession) {
-  private val commandEndMarker: String? = session.commandBlockIntegration.commandEndMarker
-  private val terminal: Terminal = session.controller
-  private val shellIntegration: ShellIntegration = session.shellIntegration
+internal class ShellCommandManager(
+  private val session: BlockTerminalSession,
+  private val commandEndMarker: String?,
+  private val terminal: Terminal,
+  private val shellIntegration: ShellIntegration,
+  private val parentDisposable: Disposable,
+  private val terminalTextBuffer: TerminalTextBuffer
+) {
+
+  constructor(session: BlockTerminalSession) : this(
+    session,
+    session.commandBlockIntegration.commandEndMarker,
+    session.controller,
+    session.shellIntegration,
+    session as Disposable,
+    session.model.textBuffer
+  )
 
   private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
 
@@ -52,7 +66,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     val shellInfo = Param.SHELL_INFO.getDecodedValueOrNull(event.getOrNull(1)) ?: "{}"
     if (commandEndMarker != null) {
       debug { "Received initialized event, waiting for command end marker" }
-      ShellCommandEndMarkerListener(session) {
+      ShellCommandEndMarkerListener(terminalTextBuffer, commandEndMarker, parentDisposable) {
         fireInitialized(shellInfo)
       }
     }
@@ -111,7 +125,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     val exitCode = Param.EXIT_CODE.getIntValue(event.getOrNull(3))
     if (commandEndMarker != null) {
       debug { "Received generator_finished event, waiting for command end marker" }
-      ShellCommandEndMarkerListener(session) {
+      ShellCommandEndMarkerListener(terminalTextBuffer, commandEndMarker, parentDisposable) {
         fireGeneratorFinished(requestId, result, exitCode)
       }
     }
