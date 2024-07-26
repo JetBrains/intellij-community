@@ -134,6 +134,8 @@
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JsonTextVisualizer"/>
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JwtTextVisualizer"/>
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
+
+    <editorFloatingToolbarProvider implementation="com.intellij.xdebugger.impl.hotswap.HotSwapFloatingToolbarProvider"/>
   </extensions>
 
   <actions>
