@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl.storage;
 
@@ -22,7 +22,6 @@ import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetrie
 import com.intellij.util.indexing.storage.MapReduceIndexBase;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,13 +159,16 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
                                                         boolean isProvidedByInfrastructureExtension) {
     IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId, isProvidedByInfrastructureExtension);
     if (mySubIndexerRetriever != null) {
-      LOG.assertTrue(fileData != null,
-                     "getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + myIndexId.getName());
-      try {
-        mySubIndexerRetriever.setFileIndexerId(fileId, fileData.indexerId);
+      if (fileData == null) {
+        LOG.error("getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + myIndexId.getName());
       }
-      catch (IOException e) {
-        LOG.error(e);
+      else {
+        try {
+          mySubIndexerRetriever.setFileIndexerId(fileId, fileData.indexerId);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
     }
   }
