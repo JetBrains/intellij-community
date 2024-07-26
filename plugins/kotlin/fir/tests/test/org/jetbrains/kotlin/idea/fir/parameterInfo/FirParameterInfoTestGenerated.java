@@ -216,6 +216,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../../idea/tests/testData/parameterInfo/functionCall/InheritedWithCurrentFunctions.kt");
         }
 
+        @TestMetadata("InvalidCandidates.kt")
+        public void testInvalidCandidates() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/InvalidCandidates.kt");
+        }
+
         @TestMetadata("Invoke.kt")
         public void testInvoke() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/Invoke.kt");
