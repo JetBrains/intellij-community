@@ -112,7 +112,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   private static void cleanupOutdatedMetrics() {
     try {
       // force spans and meters to be exported and discarded to minimize interference of the same metric on different tests
-      TelemetryManager.getInstance().reset();
+      TelemetryManager.getInstance().resetExportersBlocking();
 
       // remove content of the previous tests from the idea.log
       IJPerfMetricsPublisher.Companion.truncateTestLog();
