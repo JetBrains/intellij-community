@@ -624,10 +624,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private suspend fun doOpenAsync(options: OpenProjectTask, projectStoreBaseDir: Path): Project? {
     val app = ApplicationManager.getApplication()
     val frameAllocator = if (app.isHeadlessEnvironment || app.isUnitTestMode) {
-      ProjectFrameAllocator(options)
+      HeadlessProjectFrameAllocator(options)
     }
     else {
-      ProjectUiFrameAllocator(options, projectStoreBaseDir)
+      IdeProjectFrameAllocator(options, projectStoreBaseDir)
     }
 
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()

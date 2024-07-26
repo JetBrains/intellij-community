@@ -43,6 +43,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ReadmeShownUsageCollector.README_OPENED_ON_START_TS
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.project.impl.ProjectFrameAllocator.Companion.scheduleSaveTemplate
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
@@ -89,26 +90,34 @@ internal sealed interface ProjectInitObserver {
   fun notifyProjectInit(project: Project)
 }
 
-internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
-  open suspend fun run(task: FrameAllocatorTask) {
+internal interface ProjectFrameAllocator {
+  suspend fun run(task: FrameAllocatorTask)
+  suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?)
+
+  companion object {
+    @JvmStatic
+    fun CoroutineScope.scheduleSaveTemplate(options: OpenProjectTask): Job? {
+      if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
+        return launch(CoroutineName("save default project") + Dispatchers.IO) {
+          saveSettings(serviceAsync<ProjectManager>().defaultProject, forceSavingAllSettings = true)
+        }
+      }
+      else {
+        return null
+      }
+    }
+  }
+}
+
+internal class HeadlessProjectFrameAllocator(private val options: OpenProjectTask) : ProjectFrameAllocator {
+  override suspend fun run(task: FrameAllocatorTask) {
     return coroutineScope {
       task.execute(scheduleSaveTemplate(options), null)
     }
   }
 
-  open suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
+  override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }
-  }
-}
-
-private fun CoroutineScope.scheduleSaveTemplate(options: OpenProjectTask): Job? {
-  if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
-    return launch(CoroutineName("save default project") + Dispatchers.IO) {
-      saveSettings(serviceAsync<ProjectManager>().defaultProject, forceSavingAllSettings = true)
-    }
-  }
-  else {
-    return null
   }
 }
 
@@ -159,10 +168,10 @@ private class FrameAllocatorProjectInitObserver(
   }
 }
 
-internal class ProjectUiFrameAllocator(
-  @JvmField val options: OpenProjectTask,
+internal class IdeProjectFrameAllocator(
+  private val options: OpenProjectTask,
   private val projectStoreBaseDir: Path,
-) : ProjectFrameAllocator(options) {
+) : ProjectFrameAllocator {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
 
   override suspend fun run(task: FrameAllocatorTask) {
