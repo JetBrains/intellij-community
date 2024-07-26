@@ -4,6 +4,7 @@ package com.intellij.refactoring.extractMethod.newImpl
 import com.intellij.codeInsight.Nullability
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -26,7 +27,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessMethodName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replaceWithMethod
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.findAllOptionsToExtract
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOption
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.inplace.*
 import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ResultObjectExtractor
@@ -36,6 +37,9 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.containers.MultiMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector as IEMC
 
@@ -44,6 +48,8 @@ data class ExtractedElements(val callElements: List<PsiElement>, val method: Psi
 class MethodExtractor {
 
   fun doExtract(file: PsiFile, range: TextRange) {
+    val coroutineScope = ExtractMethodService.getInstance(file.project).scope
+
     val editor = PsiEditorUtil.findEditor(file) ?: return
     val activeExtractor = InplaceMethodExtractor.getActiveExtractor(editor)
     if (activeExtractor != null) {
@@ -64,27 +70,24 @@ class MethodExtractor {
     } catch (_: ExtractException) {
     }
 
-    val prepareStart = System.currentTimeMillis()
-    val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(editor, file, range)
-    if (descriptorsForAllTargetPlaces.isEmpty()) return
-    val preparePlacesTime = System.currentTimeMillis() - prepareStart
-    val selectedDescriptorFuture = selectOptionWithTargetClass(editor, file.project, descriptorsForAllTargetPlaces)
-    if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-      selectedDescriptorFuture
-        .thenApply { options ->
+    coroutineScope.launch {
+      withContext(Dispatchers.EDT) { //TODO minimize edt context
+        val prepareStart = System.currentTimeMillis()
+        val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(editor, file, range)
+        if (descriptorsForAllTargetPlaces.isEmpty()) return@withContext
+        val preparePlacesTime = System.currentTimeMillis() - prepareStart
+
+        val options = selectOption(editor, descriptorsForAllTargetPlaces)
+        if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
           val templateStart = System.currentTimeMillis()
           runInplaceExtract(editor, range, options)
           val prepareTemplateTime = System.currentTimeMillis() - templateStart
           reportPerformanceStatistics(preparePlacesTime, prepareTemplateTime, descriptorsForAllTargetPlaces.size)
         }
-        .exceptionally { e -> LOG.error(e) }
-    }
-    else {
-      selectedDescriptorFuture
-        .thenApply { options ->
+        else {
           extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
         }
-        .exceptionally { e -> LOG.error(e) }
+      }
     }
   }
 
