@@ -60,24 +60,27 @@ class MethodExtractor {
       return
     }
 
-    val elements = ExtractSelector().suggestElementsToExtract(file, range)
-    if (elements.isEmpty()) {
-      showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
-      return
-    }
-
-    try {
-      val analyzer = CodeFragmentAnalyzer(elements)
-      val outputVariables = analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset }
-      if (outputVariables.size > 1) {
-        ResultObjectExtractor.run(editor, outputVariables, elements)
-        return
-      }
-    } catch (_: ExtractException) {
-    }
-
     coroutineScope.launch {
       withContext(Dispatchers.EDT) { //TODO minimize edt context
+
+        val elements = ExtractSelector().suggestElementsToExtract(file, range)
+        if (elements.isEmpty()) {
+          showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
+          return@withContext
+        }
+
+        val analyzer = CodeFragmentAnalyzer.createAnalyzer(elements)
+        if (analyzer == null) {
+          showExtractErrorHint(editor, JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"))
+          return@withContext
+        }
+
+        val outputVariables = analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset }
+        if (outputVariables.size > 1) {
+          ResultObjectExtractor.run(editor, outputVariables, elements)
+          return@withContext
+        }
+
         val prepareStart = System.currentTimeMillis()
         val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elements)
         if (descriptorsForAllTargetPlaces.isEmpty()) return@withContext

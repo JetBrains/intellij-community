@@ -269,5 +269,14 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       val artificialExpression = requireNotNull(artificialReturn.returnValue)
       return inferNullability(listOf(artificialExpression))
     }
+
+    fun createAnalyzer(elements: List<PsiElement>): CodeFragmentAnalyzer? {
+      return try {
+        CodeFragmentAnalyzer(elements)
+      }
+      catch (e: ExtractException) {
+        null
+      }
+    }
   }
 }
