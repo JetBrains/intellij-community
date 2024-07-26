@@ -1,25 +1,45 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
+
 
 abstract class GeneratedSourcesFilter {
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<GeneratedSourcesFilter> = ExtensionPointName("com.intellij.generatedSourcesFilter")
 
+    /**
+     * Checks whether the given files is considered a generated source file in the context of the given project.
+     *
+     * This method can block, if a write action is currently pending.
+     *
+     * @return {@code true} if the file is considered a generated source, {@code false} otherwise.
+     */
     @JvmStatic
     fun isGeneratedSourceByAnyFilter(file: VirtualFile, project: Project): Boolean {
-      return ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
-        !project.isDisposed && file.isValid && EP_NAME.extensionList.any { it.isGeneratedSource(file, project) }
-      }
+      return ReadAction.compute<Boolean, RuntimeException> { findFirstMatchingFilter(file, project) != null }
+    }
+
+    /**
+     * Returns the first source filter (in order of generated source filter extension traversal order) that considers this file
+     * to be generated. This method is non-blocking itself, but has to be called in the context of a read lock.
+     *
+     * @return the first `GeneratedSourcesFilter` that considered this file to be generated, `null` if none matches.
+     */
+    @RequiresReadLock
+    fun findFirstMatchingFilter(file: VirtualFile, project: Project): GeneratedSourcesFilter? {
+      if (project.isDisposed || !file.isValid) return null
+
+      return EP_NAME.extensionList.find { it.isGeneratedSource(file, project) }
     }
   }
 
@@ -54,4 +74,3 @@ data class GeneratedSourceFilterNotification(@NlsSafe val text: String, val acti
 @ApiStatus.Experimental
 @ApiStatus.Internal
 data class GeneratedSourceFilterHyperLinkAction(@NlsSafe val text: String, val link: String)
-

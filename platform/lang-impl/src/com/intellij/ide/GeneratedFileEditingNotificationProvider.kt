@@ -17,36 +17,27 @@ internal class GeneratedFileEditingNotificationProvider : EditorNotificationProv
   override fun collectNotificationData(
     project: Project,
     file: VirtualFile,
-  ): Function<in FileEditor, out JComponent?>? {
-    if (!GeneratedSourceFileChangeTracker.getInstance(project).isEditedGeneratedFile(file)) {
-      return null
-    }
+  ): Function<in FileEditor, out JComponent?> {
+    val notification = getNotification(file, project) ?: return Function { null }
 
-    val notification = getNotification(file, project)
     return Function { fileEditor ->
       val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning)
+
       panel.text = notification.text
+
       for (action in notification.actions) {
-        panel.createActionLabel(action.text) {
-          BrowserUtil.browse(action.link)
-        }
+        panel.createActionLabel(action.text) { BrowserUtil.browse(action.link) }
       }
+
       panel
     }
   }
 }
 
-private fun getNotification(file: VirtualFile, project: Project): GeneratedSourceFilterNotification {
-  if (!project.isDisposed && file.isValid) {
-    for (filter in GeneratedSourcesFilter.EP_NAME.extensionList) {
-      if (!filter.isGeneratedSource(file, project)) {
-        continue
-      }
+private fun getNotification(file: VirtualFile, project: Project): GeneratedSourceFilterNotification? {
+  val matchingFilter = GeneratedSourcesFilter.findFirstMatchingFilter(file, project) ?: return null
 
-      filter.getNotification(file, project)?.let {
-        return it
-      }
-    }
-  }
-  return GeneratedSourceFilterNotification(text = LangBundle.message("link.label.generated.source.files"), actions = emptyList())
+  return  matchingFilter.getNotification(file, project)
+            ?: GeneratedSourceFilterNotification(text = LangBundle.message("link.label.generated.source.files"),
+                                                 actions = emptyList())
 }
