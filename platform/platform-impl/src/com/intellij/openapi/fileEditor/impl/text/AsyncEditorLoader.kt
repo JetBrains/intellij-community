@@ -137,15 +137,15 @@ class AsyncEditorLoader internal constructor(
         indicatorJob.cancel()
       }
 
-      // mark as loaded before daemonCodeAnalyzer restart
-      val delayedActions = delayedActions.getAndSet(null)
-      textEditor.editor.putUserData(ASYNC_LOADER, null)
-
-      val scrollingModel = textEditor.editor.scrollingModel
       withContext(Dispatchers.EDT + CoroutineName("execute delayed actions")) {
+        // mark as loaded before daemonCodeAnalyzer restart
+        // do it from EDT to avoid execution of any following scroll requests before already scheduled delayedActions
+        textEditor.editor.putUserData(ASYNC_LOADER, null)
+
+        val scrollingModel = textEditor.editor.scrollingModel
         scrollingModel.disableAnimation()
         try {
-          executeDelayedActions(delayedActions)
+          executeDelayedActions(delayedActions.getAndSet(null))
         }
         finally {
           scrollingModel.enableAnimation()
@@ -219,7 +219,7 @@ private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedSc
 
   fun isReady(): Boolean {
     val extentSize = viewport.extentSize
-    return extentSize != null && extentSize.width != 0 && extentSize.height != 0
+    return extentSize.width != 0 && extentSize.height != 0
   }
 
   if (viewport.isShowing && isReady()) {
