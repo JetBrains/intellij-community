@@ -119,7 +119,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       }
     }
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-      helper.preprocessUsages(myProject, getPsiFiles(), refUsages.get(), myTargetDirectory, conflicts);
+      helper.preprocessUsages(myProject, getPsiFiles(), refUsages, myTargetDirectory, conflicts);
     }
   }
 

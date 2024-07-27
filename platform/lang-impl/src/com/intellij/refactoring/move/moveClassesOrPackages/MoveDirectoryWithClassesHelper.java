@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -45,6 +46,14 @@ public abstract class MoveDirectoryWithClassesHelper {
   public abstract void beforeMove(PsiFile psiFile);
 
   public abstract void afterMove(PsiElement newElement);
+
+  public void preprocessUsages(Project project,
+                               Set<PsiFile> files,
+                               Ref<UsageInfo[]> infos,
+                               PsiDirectory targetDirectory,
+                               MultiMap<PsiElement, String> conflicts) {
+    preprocessUsages(project, files, infos.get(), targetDirectory, conflicts);
+  }
 
   public void preprocessUsages(Project project,
                                Set<PsiFile> files,

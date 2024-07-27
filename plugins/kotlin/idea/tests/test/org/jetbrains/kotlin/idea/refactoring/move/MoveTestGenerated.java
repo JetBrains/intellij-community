@@ -105,6 +105,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("forLoop/forLoop.test")
+        public void testForLoop_ForLoop() throws Exception {
+            runTest("testData/refactoring/moveDirectory/forLoop/forLoop.test");
+        }
+
         @TestMetadata("mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test")
         public void testMixedJavaKotlinWithQuotation_MixedJavaKotlinWithQuotation() throws Exception {
             runTest("testData/refactoring/moveDirectory/mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test");
