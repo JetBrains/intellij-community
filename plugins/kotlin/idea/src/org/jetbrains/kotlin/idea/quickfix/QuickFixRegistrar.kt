@@ -96,7 +96,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS.registerFactory(RemoveModifierFixBase.removeAbstractModifier, addAbstractToClassFactory)
 
-        ABSTRACT_FUNCTION_WITH_BODY.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemoveFunctionBodyFix)
+        ABSTRACT_FUNCTION_WITH_BODY.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemoveFunctionBodyFixFactory)
 
         NON_ABSTRACT_FUNCTION_WITH_NO_BODY.registerFactory(addAbstractModifierFactory, AddFunctionBodyFix)
 
