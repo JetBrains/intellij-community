@@ -9,11 +9,11 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal object ElseMisplacedInWhenFixFactory {
 
-    val moveWhenElseBranch = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ElseMisplacedInWhen ->
-        val whenExpression = diagnostic.psi.getNonStrictParentOfType<KtWhenExpression>() ?: return@IntentionBased emptyList()
+    val moveWhenElseBranch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ElseMisplacedInWhen ->
+        val whenExpression = diagnostic.psi.getNonStrictParentOfType<KtWhenExpression>() ?: return@ModCommandBased emptyList()
 
-        listOf(
-            MoveWhenElseBranchFix(whenExpression)
+        listOfNotNull(
+            MoveWhenElseBranchFix.createIfApplicable(whenExpression)
         )
     }
 }
