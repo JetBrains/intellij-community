@@ -3,24 +3,29 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class MoveTypeParameterConstraintFix(element: KtTypeParameter) : KotlinQuickFixAction<KtTypeParameter>(element), CleanupFix {
-    override fun getText(): String = KotlinBundle.message("move.type.parameter.constraint.to.where.clause")
-    override fun getFamilyName(): String = text
+class MoveTypeParameterConstraintFix(
+    element: KtTypeParameter,
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtTypeParameter, Unit>(element, Unit) {
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
+    override fun getFamilyName(): String = KotlinBundle.message("move.type.parameter.constraint.to.where.clause")
+
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtTypeParameter,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         val typeParameterName = element.nameAsName ?: return
-        val psiFactory = KtPsiFactory(project)
+        val psiFactory = KtPsiFactory(actionContext.project)
         val templateClass = psiFactory.buildDeclaration {
             appendFixedText("class A<")
             appendName(typeParameterName)
@@ -44,7 +49,7 @@ class MoveTypeParameterConstraintFix(element: KtTypeParameter) : KotlinQuickFixA
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val typeParameter = diagnostic.psiElement as? KtTypeParameter ?: return null
-            return MoveTypeParameterConstraintFix(typeParameter)
+            return MoveTypeParameterConstraintFix(typeParameter).asIntention()
         }
     }
 }
