@@ -308,11 +308,6 @@ class SingleAlarm @Internal constructor(
     request(forceRun = false, delay = delay)
   }
 
-  @Internal
-  fun cancelAndRequestWithCustomDelay(delay: Int) {
-    request(forceRun = false, delay = delay, cancelCurrent = true)
-  }
-
   private fun request(forceRun: Boolean, delay: Int, cancelCurrent: Boolean = false) {
     if (isDisposed) {
       return
