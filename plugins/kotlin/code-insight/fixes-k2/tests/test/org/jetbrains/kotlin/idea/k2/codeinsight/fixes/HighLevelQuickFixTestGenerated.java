@@ -5637,7 +5637,34 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addConversionCall")
+    public static class AddConversionCall extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("toByte.kt")
+        public void testToByte() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConversionCall/toByte.kt");
+        }
+
+        @TestMetadata("toByteExtraParenthesis.kt")
+        public void testToByteExtraParenthesis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConversionCall/toByteExtraParenthesis.kt");
+        }
+
+        @TestMetadata("toShort.kt")
+        public void testToShort() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConversionCall/toShort.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/addCrossinline")
