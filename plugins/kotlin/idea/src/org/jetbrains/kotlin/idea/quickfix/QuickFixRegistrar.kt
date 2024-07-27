@@ -318,7 +318,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ELSE_MISPLACED_IN_WHEN.registerFactory(MoveWhenElseBranchFixFactory)
         REDUNDANT_ELSE_IN_WHEN.registerFactory(RemoveWhenBranchFix)
-        SENSELESS_NULL_IN_WHEN.registerFactory(RemoveWhenBranchFix, RemoveWhenConditionFix)
+        SENSELESS_NULL_IN_WHEN.registerFactory(RemoveWhenBranchFix, RemoveWhenConditionFixFactory)
         BREAK_OR_CONTINUE_IN_WHEN.registerFactory(AddLoopLabelFixFactory)
         NO_ELSE_IN_WHEN.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
         NO_ELSE_IN_WHEN_WARNING.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
