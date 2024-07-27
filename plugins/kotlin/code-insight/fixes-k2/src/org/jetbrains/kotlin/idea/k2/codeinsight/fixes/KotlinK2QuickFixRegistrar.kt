@@ -135,6 +135,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(IsEnumEntryFixFactory.factory)
         registerFactory(NoReturnInFunctionWithBlockBodyFixFactory.addReturnToLastExpression)
         registerFactory(InlineClassDeprecatedFixFactory.replaceWithValue)
+        registerFactory(MisplacedTypeParameterConstraintsFixFactory.moveConstraintToWhereClause)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

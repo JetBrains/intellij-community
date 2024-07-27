@@ -3,3 +3,4 @@ fun <T> foo() where T : Cloneable, T : Comparable<*> {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeParameterConstraintFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeParameterConstraintFix
