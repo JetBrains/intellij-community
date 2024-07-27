@@ -758,7 +758,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         COMPATIBILITY_WARNING.registerFactory(UseFullyQualifiedCallFix)
 
-        INLINE_CLASS_DEPRECATED.registerFactory(InlineClassDeprecatedFix)
+        INLINE_CLASS_DEPRECATED.registerFactory(InlineClassDeprecatedFixFactory)
 
         SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC.registerFactory(AddJvmStaticAnnotationFix)
 
