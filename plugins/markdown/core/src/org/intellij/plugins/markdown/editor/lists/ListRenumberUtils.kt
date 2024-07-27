@@ -18,8 +18,8 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListNumber
 
 internal object ListRenumberUtils {
-  fun MarkdownList.renumberInBulk(document: Document, recursive: Boolean, restart: Boolean, inWriteAction: Boolean = true) {
-    val replacementList = collectReplacements(document, recursive, restart).toList()
+  fun MarkdownList.renumberInBulk(document: Document, recursive: Boolean, restart: Boolean, inWriteAction: Boolean = true, sequentially: Boolean = true) {
+    val replacementList = collectReplacements(document, recursive, restart, sequentially).toList()
     if (inWriteAction) {
       runWriteAction {
         replacementList.replaceAllInBulk(document)
@@ -30,7 +30,7 @@ internal object ListRenumberUtils {
   }
 
 
-  private fun MarkdownList.collectReplacements(document: Document, recursive: Boolean, restart: Boolean): Sequence<Replacement> {
+  private fun MarkdownList.collectReplacements(document: Document, recursive: Boolean, restart: Boolean, sequentially: Boolean = true): Sequence<Replacement> {
     val line = document.getLineNumber(this.startOffset)
     val firstIndent = document.getLineIndentInnerSpacesLength(line, containingFile)!!
     return renumberingReplacements(
@@ -39,7 +39,8 @@ internal object ListRenumberUtils {
       document,
       containingFile,
       recursive,
-      restart
+      restart,
+      sequentially
     )
   }
 
@@ -47,12 +48,7 @@ internal object ListRenumberUtils {
     return (markerElement as? MarkdownListNumber)?.number
   }
 
-  private fun renumberingReplacements(list: MarkdownList,
-                                      listIndentInfo: ListItemIndentInfo,
-                                      document: Document,
-                                      file: PsiFile,
-                                      recursive: Boolean,
-                                      restart: Boolean): Sequence<Replacement> {
+  private fun renumberingReplacements(list: MarkdownList, listIndentInfo: ListItemIndentInfo, document: Document, file: PsiFile, recursive: Boolean, restart: Boolean, sequentially: Boolean = true): Sequence<Replacement> {
     val firstItem = list.items.first()
 
     val start = when {
@@ -69,7 +65,7 @@ internal object ListRenumberUtils {
 
       val marker = when (start) {
         null -> "$markerFlavor "
-        else -> "${start + i}$markerFlavor "
+        else -> "${if (sequentially) start + i else 1}$markerFlavor "
       }
 
       val newIndentInfo = listIndentInfo.subItem(marker.length)

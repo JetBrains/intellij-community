@@ -18,8 +18,12 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
   val statistics: Statistics = Statistics()
   val cpuMemory: RdProperty<CpuMemoryStatisticsType> = RdProperty(CpuMemoryStatisticsType.MEMORY)
   val filter: RdProperty<Filter> = RdProperty(Filter())
+  val scrollToEndEvent: RdProperty<ScrollToEndEvent> = RdProperty(ScrollToEndEvent())
 
   private val threadIndexes: MutableMap<Long, Int> = ConcurrentHashMap()
+
+  fun requestScrollToEnd() = scrollToEndEvent.set(ScrollToEndEvent())
+
   fun started(values: List<StartTarget>) {
     values.forEach { value ->
       modules.add(Modules.StartEvent(value, index(value.thread)))
@@ -117,6 +121,8 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
       return true
     }
   }
+
+  class ScrollToEndEvent
 
   enum class CpuMemoryStatisticsType {
     CPU, MEMORY

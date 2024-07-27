@@ -101,8 +101,9 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       if (!(containingFile instanceof PsiJavaFile psiJavaFile)) {
         return;
       }
-      List<ImplicitlyImportedStaticMember> imports =
-        ContainerUtil.filterIsInstance(psiJavaFile.getImplicitlyImportedElements(), ImplicitlyImportedStaticMember.class);
+      ImplicitlyImportedElement[] elements = psiJavaFile.getImplicitlyImportedElements();
+      List<ImplicitlyImportedStaticMember> staticImports = ContainerUtil.filterIsInstance(elements, ImplicitlyImportedStaticMember.class);
+      List<ImplicitlyImportedModule> moduleImports = ContainerUtil.filterIsInstance(elements, ImplicitlyImportedModule.class);
       PsiElement replaced = implicitClass.replace(newClass);
       PsiJavaFile newPsiJavaFile = PsiTreeUtil.getParentOfType(replaced, PsiJavaFile.class);
       if (newPsiJavaFile == null) {
@@ -112,15 +113,39 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       if (importList == null) {
         return;
       }
+      addImplicitStaticImports(project, staticImports, implicitClass, importList);
+      addImplicitJavaModuleImports(project, moduleImports, importList);
+      JavaCodeStyleManager.getInstance(project).optimizeImports(newPsiJavaFile);
+    }
+
+    private static void addImplicitJavaModuleImports(@NotNull Project project,
+                                                     @NotNull List<ImplicitlyImportedModule> moduleImports,
+                                                     @NotNull PsiImportList list) {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      for (@NotNull ImplicitlyImportedModule anImport : moduleImports) {
+        PsiImportModuleStatement moduleImportStatement = factory.createImportModuleStatementFromText(anImport.getModuleName());
+        PsiImportModuleStatement[] declarations = list.getImportModuleStatements();
+        if (declarations.length == 0) {
+          list.add(moduleImportStatement);
+        }
+        else {
+          list.addBefore(moduleImportStatement, declarations[0]);
+        }
+      }
+    }
+
+    private static void addImplicitStaticImports(@NotNull Project project,
+                                                 @NotNull List<ImplicitlyImportedStaticMember> staticImports,
+                                                 @NotNull PsiImplicitClass implicitClass,
+                                                 @NotNull PsiImportList importList) {
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      for (@NotNull ImplicitlyImportedStaticMember importMember : imports) {
+      for (@NotNull ImplicitlyImportedStaticMember importMember : staticImports) {
         PsiClass psiClass = psiFacade.findClass(importMember.getContainingClass(), implicitClass.getResolveScope());
         if (psiClass == null) {
           continue;
         }
         PsiReferenceExpressionImpl.bindToElementViaStaticImport(psiClass, importMember.getMemberName(), importList);
       }
-      JavaCodeStyleManager.getInstance(project).optimizeImports(newPsiJavaFile);
     }
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.table.JBTable
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -30,7 +29,6 @@ class CompilationChartsDiagramsComponent(
 ) : JBPanelWithEmptyText(BorderLayout()) {
   companion object {
     val ROW_HEIGHT = JBTable().rowHeight * 1.5
-    val LOG = Logger.getInstance(CompilationChartsDiagramsComponent::class.java)
   }
 
   val modules: CompilationChartsViewModel.ViewModules = CompilationChartsViewModel.ViewModules()
@@ -129,7 +127,7 @@ class CompilationChartsDiagramsComponent(
       }, 0, 1, TimeUnit.SECONDS)
   }
 
-  private fun forceRepaint() {
+  internal fun forceRepaint() {
     shouldRepaint = true
     revalidate()
     repaint()

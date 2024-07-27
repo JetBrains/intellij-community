@@ -21,7 +21,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import java.util.concurrent.ConcurrentHashMap
 
-class ChangeReferenceProcessor(private val project: Project, private val editor: Editor, private val files: List<PsiFile>, private val documents: List<Document>) {
+internal class ChangeReferenceProcessor(private val project: Project, private val editor: Editor, private val files: List<PsiFile>, private val documents: List<Document>) {
 
   private val innerDifferencesCache: MutableMap<TextMergeChange, MergeInnerDifferences?> = ConcurrentHashMap()
 

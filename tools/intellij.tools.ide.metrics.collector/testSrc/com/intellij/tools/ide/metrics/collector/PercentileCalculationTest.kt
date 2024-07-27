@@ -4,7 +4,9 @@ import com.intellij.tools.ide.metrics.collector.metrics.percentile
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class PercentileCalculationTest {
   @Test
@@ -106,6 +108,31 @@ class PercentileCalculationTest {
       data.percentile(-1)
     }
     shouldThrow<IllegalArgumentException> {
+      data.percentile(101)
+    }
+  }
+
+  @Test
+  fun `test single element`() {
+    val data = listOf(20)
+    assertEquals(20, data.percentile(50))
+    assertEquals(20, data.percentile(10))
+    assertEquals(20, data.percentile(90))
+  }
+
+  @Test
+  fun `test interpolated position 2`() {
+    val data = listOf(20, 21, 25, 21, 27, 21, 28, 29, 21, 29, 20, 30, 27, 30, 21, 33, 23, 36, 19, 39, 27, 40)
+    assertEquals(36, data.percentile(90))
+  }
+
+  @Test
+  fun `test invalid percentile`() {
+    val data = listOf(10, 20, 30, 40, 50)
+    assertThrows<IllegalArgumentException> {
+      data.percentile(-1)
+    }
+    assertThrows<IllegalArgumentException> {
       data.percentile(101)
     }
   }

@@ -74,14 +74,19 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
     return post("postAndWaitProcessing", objectMapper.writeValueAsString(sharedEventDto)).toBoolean()
   }
 
-  override fun newSubscriber(eventClass: Class<out Event>, timeout: Duration) {
+  override fun newSubscriber(eventClass: Class<out Event>, timeout: Duration, subscriberName: String) {
     val simpleName = eventClass.simpleName
     eventClassesLock.writeLock().withLock {
       eventClasses[simpleName] = eventClass.name
     }
 
     LOG.info("New subscriber $simpleName")
-    post("newSubscriber", objectMapper.writeValueAsString(SubscriberDto(simpleName, PROCESS_ID, timeout.inWholeMilliseconds))).toBoolean()
+    post("newSubscriber", objectMapper.writeValueAsString(SubscriberDto(subscriberName, simpleName, PROCESS_ID, timeout.inWholeMilliseconds))).toBoolean()
+  }
+
+  override fun unsubscribe(eventClass: Class<out Event>, subscriberName: String) {
+    val simpleName = eventClass.simpleName
+    post("unsubscribe", objectMapper.writeValueAsString(SubscriberDto(subscriberName, simpleName, PROCESS_ID))).toBoolean()
   }
 
   override fun getEvents(): Map<String, List<Pair<String, Event>>?> {

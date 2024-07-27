@@ -1,5 +1,4 @@
-// "Convert into implicitly declared class" "false"
-import org.junit.jupiter.api.Test;
+import org.<error descr="Cannot resolve symbol 'junit'">junit</error>.jupiter.api.Test;
 
 public class  EmptyTest<caret>
 {
@@ -8,7 +7,7 @@ public class  EmptyTest<caret>
 
   }
 
-  @Test
+  @<error descr="Cannot resolve symbol 'Test'">Test</error>
   public void test1() {
   }
 

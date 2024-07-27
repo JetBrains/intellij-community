@@ -9,6 +9,7 @@ import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.StatusData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -31,7 +32,7 @@ class JaegerJsonSpanExporter(
   val serviceVersion: String? = null,
   val serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  override val exporterVersion: Int = 2
+  val exporterVersion: Int = 2
 
   private val fileChannel: FileChannel
   private var writer: JsonGenerator
@@ -197,10 +198,12 @@ class JaegerJsonSpanExporter(
         return@withReentrantLock
       }
 
-      writer.flush()
-      fileChannel.write(ByteBuffer.wrap(jsonEnd))
-      fileChannel.force(false)
-      fileChannel.position(fileChannel.position() - jsonEnd.size)
+      runInterruptible {
+        writer.flush()
+        fileChannel.write(ByteBuffer.wrap(jsonEnd))
+        fileChannel.force(false)
+        fileChannel.position(fileChannel.position() - jsonEnd.size)
+      }
     }
   }
 
@@ -212,13 +215,15 @@ class JaegerJsonSpanExporter(
       }
 
       writer = initWriter()
-      fileChannel.truncate(0)
+      runInterruptible {
+        fileChannel.truncate(0)
 
-      beginWriter(w = writer,
-                  serviceName = serviceName,
-                  serviceVersion = serviceVersion,
-                  serviceNamespace = serviceNamespace,
-                  exporterVersion = exporterVersion)
+        beginWriter(w = writer,
+                    serviceName = serviceName,
+                    serviceVersion = serviceVersion,
+                    serviceNamespace = serviceNamespace,
+                    exporterVersion = exporterVersion)
+      }
     }
   }
 }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
 import java.util.function.Consumer
@@ -101,6 +102,7 @@ private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) ->
 }
 
 @VisibleForTesting
+@TestOnly
 fun currentThreadContextOrNull(): CoroutineContext? {
   return currentThreadContextOrFallback { null }
 }

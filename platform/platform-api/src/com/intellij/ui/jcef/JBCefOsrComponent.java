@@ -98,10 +98,7 @@ class JBCefOsrComponent extends JPanel {
 
     addAncestorListener(new AncestorListenerAdapter() {
       @Override
-      public void ancestorAdded(AncestorEvent event) { myRenderHandler.setLocationOnScreen(getLocationOnScreen()); }
-
-      @Override
-      public void ancestorMoved(AncestorEvent event) { myRenderHandler.setLocationOnScreen(getLocationOnScreen()); }
+      public void ancestorAdded(AncestorEvent event) { if (isShowing()) myRenderHandler.setLocationOnScreen(getLocationOnScreen()); }
     });
 
     try {

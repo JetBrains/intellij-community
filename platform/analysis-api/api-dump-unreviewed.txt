@@ -3286,6 +3286,7 @@ a:com.intellij.openapi.roots.GeneratedSourcesFilter
 - a:isGeneratedSource(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 - sf:isGeneratedSourceByAnyFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 f:com.intellij.openapi.roots.GeneratedSourcesFilter$Companion
+- f:findFirstMatchingFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.roots.GeneratedSourcesFilter
 - f:isGeneratedSourceByAnyFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 com.intellij.openapi.ui.InputValidatorEx
 - com.intellij.openapi.ui.InputValidator

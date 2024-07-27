@@ -4,7 +4,6 @@ package com.intellij.java.compiler.charts.ui
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -24,13 +23,13 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
       border = JBUI.Borders.empty()
       viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE
+      horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
       name = "compilation-charts-scroll-pane"
-
-      val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(viewport)
-      addMouseWheelListener(rightAdhesionScrollBarListener)
-      horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     }
+    val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(scroll.viewport)
+    scroll.horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     val diagrams = CompilationChartsDiagramsComponent(vm, zoom, scroll.viewport).apply {
+      addMouseWheelListener(rightAdhesionScrollBarListener)
       name = "compilation-charts-diagrams-component"
       isFocusable = true
     }
@@ -76,17 +75,17 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
     vm.filter.advise(vm.lifetime) { filter ->
       diagrams.modules.filter = filter
-      diagrams.updateView()
+      diagrams.forceRepaint()
     }
 
     vm.cpuMemory.advise(vm.lifetime) { filter ->
       diagrams.cpuMemory = filter
-      diagrams.updateView()
+      diagrams.forceRepaint()
     }
-  }
 
-  companion object {
-    val LOG = Logger.getInstance(CompilationChartsView::class.java)
+    vm.scrollToEndEvent.advise(vm.lifetime) { _ ->
+      rightAdhesionScrollBarListener.scrollToEnd()
+    }
   }
 }
 

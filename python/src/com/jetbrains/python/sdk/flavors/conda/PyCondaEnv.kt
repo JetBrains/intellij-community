@@ -5,13 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.gson.Gson
-import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.createProcessWithResult
+import com.intellij.execution.target.*
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
-import com.jetbrains.python.ui.pyModalSuspend
+import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv.Companion.getEnvs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -25,10 +25,14 @@ import kotlin.io.path.exists
  * TODO: Once we get rid of [TargetCommandExecutor] and have access to [com.intellij.execution.target.TargetEnvironmentConfiguration] use it validate conda binary in [getEnvs]
  * @see [com.jetbrains.env.conda.PyCondaTest]
  */
-data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
-                      val fullCondaPathOnTarget: FullPathOnTarget) {
+data class PyCondaEnv(
+  val envIdentity: PyCondaEnvIdentity,
+  val fullCondaPathOnTarget: FullPathOnTarget,
+) {
+
 
   companion object {
+
 
     /**
      * @return unparsed output of conda info --envs --json
@@ -41,8 +45,10 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
      * @return list of conda's envs_dirs directories
      */
     @ApiStatus.Internal
-    suspend fun getEnvsDirs(command: TargetCommandExecutor,
-                            fullCondaPathOnTarget: FullPathOnTarget): Result<Collection<String>> = withContext(Dispatchers.IO) {
+    suspend fun getEnvsDirs(
+      command: TargetCommandExecutor,
+      fullCondaPathOnTarget: FullPathOnTarget,
+    ): Result<Collection<String>> = withContext(Dispatchers.IO) {
       val json = getEnvsInfo(command, fullCondaPathOnTarget).getOrElse { return@withContext Result.failure(it) }
       return@withContext runCatching { // External command may return junk
         val info = Gson().fromJson(json, CondaInfoJson::class.java)
@@ -54,8 +60,10 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
      * @return list of conda environments
      */
     @ApiStatus.Internal
-    suspend fun getEnvs(command: TargetCommandExecutor,
-                        fullCondaPathOnTarget: FullPathOnTarget): Result<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
+    suspend fun getEnvs(
+      command: TargetCommandExecutor,
+      fullCondaPathOnTarget: FullPathOnTarget,
+    ): Result<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
       val json = getEnvsInfo(command, fullCondaPathOnTarget).getOrElse { return@withContext Result.failure(it) }
       return@withContext kotlin.runCatching { // External command may return junk
         val info = Gson().fromJson(json, CondaInfoJson::class.java)
@@ -92,6 +100,9 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
     }
 
   }
+
+  suspend fun createSdkFromThisEnv(targetConfig: TargetEnvironmentConfiguration?, existingSdk: List<Sdk>): Sdk =
+    PyCondaCommand(fullCondaPathOnTarget, targetConfig).createCondaSdkFromExistingEnv(envIdentity, existingSdk, null)
 
 
   /**

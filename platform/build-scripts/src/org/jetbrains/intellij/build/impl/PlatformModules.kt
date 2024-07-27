@@ -86,9 +86,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
 
   "intellij.platform.vcs.log",
 
-  "intellij.platform.compose",
-  "intellij.platform.compose.skikoRuntime",
-
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
 
@@ -148,12 +145,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.util.troveCompileOnly",
   ), productLayout = productLayout, layout = layout)
   layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_8_JAR)
-
-  layout.withModuleLibrary(
-    libraryName = "jetbrains.skiko.awt.runtime.all",
-    moduleName = "intellij.platform.compose.skikoRuntime",
-    relativeOutputPath = "skiko-runtime.jar"
-  )
 
   // maven uses JDOM in an external process
   addModule(UTIL_8_JAR, listOf(

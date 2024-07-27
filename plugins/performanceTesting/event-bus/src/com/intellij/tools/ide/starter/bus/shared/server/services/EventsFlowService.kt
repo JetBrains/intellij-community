@@ -12,8 +12,8 @@ private val LOG = EventBusLoggerFactory.getLogger(EventsFlowService::class.java)
 
 class EventsFlowService {
   // Key is processId. Necessary to avoid sending old events for processes that signed up later
-  private val eventsPerProcess = HashMap<String, HashMap<String, EventsWithTimeout>>()
-  private val eventsPerProcessLock = ReentrantReadWriteLock()
+  private val subscribersPerProcess = HashMap<String, HashMap<String, SubscribersWithEvents>>()
+  private val subscribersPerProcessLock = ReentrantReadWriteLock()
 
   private val eventsLatch = HashMap<String, CountDownLatch>()
   private val eventsLatchLock = ReentrantReadWriteLock()
@@ -31,15 +31,23 @@ class EventsFlowService {
     synchronized(getLock(sharedEventDto.eventId)) {
       LOG.debug("Start synchronized")
       var timeout: Long
-      val latch = CountDownLatch(eventsPerProcessLock.readLock().withLock {
-        val subscribers = eventsPerProcess.values.filter { it[sharedEventDto.eventName] != null }
-        // Sum of all subscriber timeouts
-        timeout = subscribers.flatMap { subscribersPerProcess -> subscribersPerProcess.values.map { it.timeoutMs } }.sum()
+      val latch = CountDownLatch(subscribersPerProcessLock.readLock().withLock {
+        // One process with many subscribers == one subscriber
+        val subscribers = subscribersPerProcess.values.filter { it[sharedEventDto.eventName] != null }
+        // Sum of all timeouts of all subscribers for all processes
+        timeout = subscribers
+          .flatMap { subscribersPerProcess ->
+            subscribersPerProcess.values
+              .flatMap { subscribers ->
+                subscribers.subscribers.map { subscriber -> subscriber.timeoutMs }
+              }
+          }
+          .sum()
         subscribers.size
       })
       eventsLatchLock.writeLock().withLock { eventsLatch[sharedEventDto.eventId] = latch }
-      eventsPerProcessLock.writeLock().withLock {
-        eventsPerProcess.values.forEach { it[sharedEventDto.eventName]?.events?.add(sharedEventDto) }
+      subscribersPerProcessLock.writeLock().withLock {
+        subscribersPerProcess.values.forEach { it[sharedEventDto.eventName]?.events?.add(sharedEventDto) }
       }
       LOG.debug("Before latch awaiting. Count ${latch.count}")
       latch.await(timeout, TimeUnit.MILLISECONDS)
@@ -49,21 +57,35 @@ class EventsFlowService {
 
   fun newSubscriber(subscriber: SubscriberDto) {
     synchronized(subscriber.eventName) {
-      eventsPerProcessLock.writeLock().withLock {
-        eventsPerProcess
+      subscribersPerProcessLock.writeLock().withLock {
+        subscribersPerProcess
           .computeIfAbsent(subscriber.processId) { HashMap() }
-          .computeIfAbsent(subscriber.eventName) { EventsWithTimeout(subscriber.timeoutMs, mutableListOf()) }
+          .computeIfAbsent(subscriber.eventName) { SubscribersWithEvents(mutableListOf(), mutableListOf()) }
+          .subscribers.add(subscriber)
       }
     }
     LOG.info("New subscriber $subscriber")
   }
 
+  fun unsubscribe(subscriber: SubscriberDto) {
+    synchronized(subscriber.eventName) {
+      subscribersPerProcessLock.writeLock().withLock {
+        val data = subscribersPerProcess[subscriber.processId]
+        data?.get(subscriber.eventName)?.subscribers?.removeIf { it.subscriberName == subscriber.subscriberName }
+      }
+    }
+    LOG.debug("Unsubscribed $subscriber")
+  }
+
   fun getEvents(processId: String): Map<String, MutableList<SharedEventDto>> {
-    return eventsPerProcessLock.readLock().withLock {
-      eventsPerProcess.getOrDefault(processId, HashMap()).map { it.key to it.value.events }.toMap()
+    return subscribersPerProcessLock.readLock().withLock {
+      subscribersPerProcess.getOrDefault(processId, HashMap()).entries.associate { it.key to it.value.events }
     }
   }
 
+  /**
+   * Called after all subscribers in the process have processed the event
+   */
   fun processedEvent(eventId: String) {
     eventsLatchLock.readLock().withLock {
       eventsLatch[eventId]?.countDown()
@@ -74,11 +96,14 @@ class EventsFlowService {
     eventsLatchLock.writeLock().withLock {
       eventsLatch.clear()
     }
-    eventsPerProcessLock.writeLock().withLock {
-      eventsPerProcess.clear()
+    subscribersPerProcessLock.writeLock().withLock {
+      subscribersPerProcess.clear()
     }
     lockByEvent.clear()
   }
 
-  private data class EventsWithTimeout(val timeoutMs: Long, val events: MutableList<SharedEventDto>)
+  private data class SubscribersWithEvents(
+    val subscribers: MutableList<SubscriberDto>,
+    val events: MutableList<SharedEventDto>,
+  )
 }

@@ -35,6 +35,7 @@ private inline fun <T> withClientId(clientId: String?, action: () -> T): T {
 internal fun withClientId(clientId: String?, action: Runnable) = withClientId(clientId, action::run)
 internal fun <T> withClientId(clientId: String?, callable: Callable<T>) = withClientId(clientId, callable::call)
 
+@ApiStatus.Internal
 fun captureClientIdInRunnable(runnable: Runnable): Runnable {
   if (!propagateClientIdAcrossThreads) return runnable
   val currentId = currentClientIdString
@@ -45,6 +46,7 @@ fun captureClientIdInRunnable(runnable: Runnable): Runnable {
   }
 }
 
+@ApiStatus.Internal
 fun <T> captureClientIdInCallable(callable: Callable<T>): Callable<T> {
   if (!propagateClientIdAcrossThreads) return callable
   val currentId = currentClientIdString
@@ -55,6 +57,7 @@ fun <T> captureClientIdInCallable(callable: Callable<T>): Callable<T> {
   }
 }
 
+@ApiStatus.Internal
 fun <T> captureClientIdInProcessor(processor: Processor<T>): Processor<T> {
   if (!propagateClientIdAcrossThreads) return processor
   val currentId = currentClientIdString
@@ -65,6 +68,7 @@ fun <T> captureClientIdInProcessor(processor: Processor<T>): Processor<T> {
   }
 }
 
+@ApiStatus.Internal
 fun <T> captureClientId(action: () -> T): () -> T {
   if (propagateClientIdAcrossThreads) return action
   val currentId = currentClientIdString
@@ -75,6 +79,7 @@ fun <T> captureClientId(action: () -> T): () -> T {
   }
 }
 
+@ApiStatus.Internal
 fun <T, R> captureClientIdInFunction(function: Function<T, R>): Function<T, R> {
   if (!propagateClientIdAcrossThreads) return function
   val currentId = currentClientIdString
@@ -85,6 +90,7 @@ fun <T, R> captureClientIdInFunction(function: Function<T, R>): Function<T, R> {
   }
 }
 
+@ApiStatus.Internal
 fun <T, U> captureClientIdInBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
   if (!propagateClientIdAcrossThreads) return biConsumer
   val currentId = currentClientIdString

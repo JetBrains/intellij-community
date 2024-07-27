@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.psi.util.ImportsUtil.getAllImplicitImports;
+
 class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final PsiJavaFile myFile;
@@ -42,7 +44,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     } else {
       final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
       this.importStatements = new ArrayList<>(Arrays.asList(importStatements));
-      this.implicitlyUsedImportStatements.addAll(ImportUtils.getAllImplicitImports(file));
+      this.implicitlyUsedImportStatements.addAll(getAllImplicitImports(file));
       this.importStatements.sort(ImportStatementComparator.getInstance());
     }
   }

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="library" exported="" name="jetbrains.compose.foundation.desktop" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.jewel" type="repository">
+        <properties maven-id="org.jetbrains.jewel:jewel-ide-laf-bridge-241:0.19.7">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-241/0.19.7/jewel-ide-laf-bridge-241-0.19.7.jar">
+              <sha256sum>4d036de01b2503385a0954a4b9227bc1aa05f74241ba1388bd49dae1ca8c9f4a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ui-241/0.19.7/jewel-ui-241-0.19.7.jar">
+              <sha256sum>82ca281594b47d75db6951c12e872e03859ee129c3c898986427b141efaf641a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-foundation-241/0.19.7/jewel-foundation-241-0.19.7.jar">
+              <sha256sum>9ae37fc841c4bf540120583e4c469fe1f5359228ef304c8a2f7f83a5407c1150</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.compose.foundation:foundation-desktop" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-241/0.19.7/jewel-ide-laf-bridge-241-0.19.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ui-241/0.19.7/jewel-ui-241-0.19.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-foundation-241/0.19.7/jewel-foundation-241-0.19.7.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-241/0.19.7/jewel-ide-laf-bridge-241-0.19.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ui-241/0.19.7/jewel-ui-241-0.19.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-foundation-241/0.19.7/jewel-foundation-241-0.19.7-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.desktop.skikoRuntime" scope="RUNTIME" />
+  </component>
+</module>

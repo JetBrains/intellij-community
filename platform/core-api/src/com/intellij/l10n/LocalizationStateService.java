@@ -22,6 +22,7 @@ public interface LocalizationStateService {
 
   @NotNull String getSelectedLocale();
   void setSelectedLocale(@NotNull String locale);
+  void setSelectedLocale(@NotNull String locale, Boolean ignoreRestart);
   @NotNull String getLastSelectedLocale();
   Boolean isRestartRequired();
   void resetLocaleIfNeeded();

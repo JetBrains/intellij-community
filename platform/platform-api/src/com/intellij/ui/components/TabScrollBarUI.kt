@@ -7,40 +7,44 @@ import java.awt.Graphics2D
 import java.awt.Insets
 import javax.swing.JComponent
 
-internal class TabScrollBarUI(thickness: Int, thicknessMax: Int, thicknessMin: Int) : ThinScrollBarUI(thickness, thicknessMax, thicknessMin) {
+internal class TabScrollBarUI(
+  thickness: Int,
+  thicknessMax: Int,
+  thicknessMin: Int,
+) : ThinScrollBarUI(thickness = thickness, thicknessMax = thicknessMax, thicknessMin = thicknessMin) {
   private var isHovered: Boolean = false
 
   private val defaultColorProducer: MixedColorProducer = MixedColorProducer(
-    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_TRANSPARENT_THUMB_BACKGROUND),
-    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND))
+    ScrollBarPainter.getColor({ scrollBar }, ScrollBarPainter.TABS_TRANSPARENT_THUMB_BACKGROUND),
+    ScrollBarPainter.getColor({ scrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND))
 
   private val hoveredColorProducer: MixedColorProducer = MixedColorProducer(
-    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND),
-    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_THUMB_HOVERED_BACKGROUND))
+    ScrollBarPainter.getColor({ scrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND),
+    ScrollBarPainter.getColor({ scrollBar }, ScrollBarPainter.TABS_THUMB_HOVERED_BACKGROUND))
 
   override fun createThumbPainter(): ScrollBarPainter.Thumb {
-    return object : ScrollBarPainter.ThinScrollBarThumb({ myScrollBar }, false) {
+    return object : ScrollBarPainter.ThinScrollBarThumb({ scrollBar }, false) {
       override fun getFillProducer() = if (isHovered) hoveredColorProducer else defaultColorProducer
     }
   }
 
   override fun createWrapAnimationBehaviour(): ScrollBarAnimationBehavior {
-    return object : ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(), myTrack.animator, myThumb.animator) {
+    return object : ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(), myTrack.animator, thumb.animator) {
       override fun onThumbHover(hovered: Boolean) {
         super.onThumbHover(hovered)
         if (isHovered != hovered) {
           isHovered = hovered
-          myScrollBar.revalidate()
-          myScrollBar.repaint()
+          scrollBar!!.revalidate()
+          scrollBar!!.repaint()
         }
       }
     }
   }
 
 
-  override fun paintThumb(g: Graphics2D?, c: JComponent?) {
-    if (myAnimationBehavior != null && myAnimationBehavior!!.thumbFrame > 0) {
-      paint(myThumb, g, c, !isHovered)
+  override fun paintThumb(g: Graphics2D, c: JComponent) {
+    if (animationBehavior != null && animationBehavior!!.thumbFrame > 0) {
+      paint(thumb, g, c, !isHovered)
     }
   }
 

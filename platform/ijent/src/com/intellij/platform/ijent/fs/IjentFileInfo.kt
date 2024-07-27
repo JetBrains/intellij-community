@@ -17,7 +17,9 @@ sealed interface IjentFileInfo {
   val creationTime: ZonedDateTime?
 
   sealed interface Type {
-    interface Directory : Type, IjentPosixFileInfo.Type
+    interface Directory : Type, IjentPosixFileInfo.Type {
+      val sensitivity: CaseSensitivity
+    }
 
     interface Regular : Type, IjentPosixFileInfo.Type {
       val size: Long
@@ -27,6 +29,12 @@ sealed interface IjentFileInfo {
   }
 
   sealed interface Permissions
+
+  enum class CaseSensitivity {
+    SENSITIVE,
+    INSENSITIVE,
+    UNKNOWN,
+  }
 }
 
 interface IjentPosixFileInfo : IjentFileInfo {

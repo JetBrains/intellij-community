@@ -1697,7 +1697,6 @@ f:com.intellij.openapi.fileEditor.impl.LoadTextUtil
 - s:getTextByBinaryPresentation(B[],com.intellij.openapi.vfs.VirtualFile):java.lang.CharSequence
 - s:getTextByBinaryPresentation(B[],com.intellij.openapi.vfs.VirtualFile,Z,Z):java.lang.CharSequence
 - s:getTextByBinaryPresentation(B[],java.nio.charset.Charset):java.lang.CharSequence
-- s:guessFromContent(com.intellij.openapi.vfs.VirtualFile,B[]):com.intellij.openapi.fileEditor.impl.LoadTextUtil$DetectResult
 - s:loadText(com.intellij.openapi.vfs.VirtualFile):java.lang.CharSequence
 - s:loadText(com.intellij.openapi.vfs.VirtualFile,I):java.lang.CharSequence
 - s:processTextFromBinaryPresentationOrNull(com.intellij.openapi.util.io.ByteSequence,com.intellij.openapi.vfs.VirtualFile,Z,Z,com.intellij.openapi.fileTypes.FileType,com.intellij.util.NotNullFunction):com.intellij.openapi.fileTypes.FileType
@@ -1708,10 +1707,6 @@ e:com.intellij.openapi.fileEditor.impl.LoadTextUtil$AutoDetectionReason
 - sf:FROM_BYTES:com.intellij.openapi.fileEditor.impl.LoadTextUtil$AutoDetectionReason
 - s:valueOf(java.lang.String):com.intellij.openapi.fileEditor.impl.LoadTextUtil$AutoDetectionReason
 - s:values():com.intellij.openapi.fileEditor.impl.LoadTextUtil$AutoDetectionReason[]
-c:com.intellij.openapi.fileEditor.impl.LoadTextUtil$DetectResult
-- f:BOM:B[]
-- f:guessed:com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- f:hardCodedCharset:java.nio.charset.Charset
 f:com.intellij.openapi.fileTypes.PlainTextFileType
 - com.intellij.openapi.fileTypes.LanguageFileType
 - com.intellij.openapi.fileTypes.OSFileIdeAssociation

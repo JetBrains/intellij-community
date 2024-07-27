@@ -23,8 +23,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public final class JavaResolveUtil {
   public static PsiClass getContextClass(@NotNull PsiElement element) {
@@ -372,19 +371,42 @@ public final class JavaResolveUtil {
     return results;
   }
 
-  private static List<PsiPackageAccessibilityStatement> getAllDeclaredExports(@NotNull PsiJavaModule module) {
-    Project project = module.getProject();
+  public static Set<PsiJavaModule> getAllTransitiveModulesIncludeCurrent(@NotNull PsiJavaModule module){
+    return CachedValuesManager.getCachedValue(module, ()->{
+      Project project = module.getProject();
+      Set<PsiJavaModule> collected = new HashSet<>();
+      collectAllTransitiveModulesIncludeCurrent(module, collected);
+      return CachedValueProvider.Result.create(collected,
+                                               PsiJavaModuleModificationTracker.getInstance(project),
+                                               ProjectRootModificationTracker.getInstance(project));
+    });
+  }
 
-    return CachedValuesManager.getCachedValue(module, () -> {
-      List<PsiPackageAccessibilityStatement> exports = new ArrayList<>();
-      for (PsiPackageAccessibilityStatement export : module.getExports()) {
-        exports.add(export);
-      }
-      for (PsiRequiresStatement require : module.getRequires()) {
+  private static void collectAllTransitiveModulesIncludeCurrent(@NotNull PsiJavaModule module, @NotNull Set<PsiJavaModule> collected) {
+    Queue<PsiJavaModule> queue = new ArrayDeque<>();
+    queue.add(module);
+    collected.add(module);
+    while (!queue.isEmpty()) {
+      PsiJavaModule current = queue.poll();
+      for (PsiRequiresStatement require : current.getRequires()) {
         if (!require.hasModifierProperty(PsiModifier.TRANSITIVE)) continue;
         PsiJavaModule resolved = require.resolve();
         if (resolved == null) continue;
-        exports.addAll(getAllDeclaredExports(resolved));
+        if (collected.add(resolved)) {
+          queue.add(resolved);
+        }
+      }
+    }
+  }
+
+  private static List<PsiPackageAccessibilityStatement> getAllDeclaredExports(@NotNull PsiJavaModule module) {
+    Project project = module.getProject();
+    return CachedValuesManager.getCachedValue(module, () -> {
+      List<PsiPackageAccessibilityStatement> exports = new ArrayList<>();
+      for (PsiJavaModule javaModule : getAllTransitiveModulesIncludeCurrent(module)) {
+        for (PsiPackageAccessibilityStatement export : javaModule.getExports()) {
+          exports.add(export);
+        }
       }
       return CachedValueProvider.Result.create(exports,
                                         PsiJavaModuleModificationTracker.getInstance(project),

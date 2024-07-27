@@ -92,11 +92,7 @@ interface TelemetryManager {
   @TestOnly
   suspend fun forceFlushMetrics()
 
-  /**
-   * Blocking forceFlushMetrics function for test purposes.
-   *
-   * @see forceFlushMetrics
-   */
+  /** Blocking [forceFlushMetrics] function for test purposes. */
   @Suppress("unused")
   @TestOnly
   fun forceFlushMetricsBlocking() {
@@ -110,18 +106,11 @@ interface TelemetryManager {
   @TestOnly
   suspend fun resetExporters()
 
-  /**
-   * Discard previously collected metrics and invoke flush.
-   * @see resetExporters
-   * @see forceFlushMetrics
-   */
+  /** Blocking [resetExporters] counterpart for test purposes and for simplicity of use from Java. */
   @Suppress("unused")
   @TestOnly
-  fun reset() {
-    runBlocking {
-      resetExporters()
-      forceFlushMetrics()
-    }
+  fun resetExportersBlocking() {
+    runBlocking { resetExporters() }
   }
 }
 

@@ -21,7 +21,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.TimeUnit
-import java.util.function.Predicate
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
@@ -124,7 +123,7 @@ private data class OpentelemetryJsonData(
 )
 
 open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
-  fun getSpanElements(file: Path, spanElementFilter: Predicate<SpanElement> = Predicate { true }): Set<SpanElement> {
+  fun getSpanElements(file: Path, spanElementFilter: (SpanElement) -> Boolean = { true }): Set<SpanElement> {
     var jsonData = getSpans(file, jsonSerializerNanoseconds)
     val exporterVersion = jsonData.exporterVersion
 
@@ -136,7 +135,7 @@ open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
     val index = getParentToSpanMap(spans)
     val result = ObjectLinkedOpenHashSet<SpanElement>()
 
-    for (span in spans.asSequence().filter(spanFilter.rawFilter::test).map { toSpanElement(it) }.filter { spanElementFilter.test(it) }) {
+    for (span in spans.filter(spanFilter.rawFilter::test).map { toSpanElement(it) }.filter { spanElementFilter(it) }) {
       result.add(span)
       processChild(result, span, index)
     }

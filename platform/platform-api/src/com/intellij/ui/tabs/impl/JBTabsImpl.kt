@@ -436,8 +436,12 @@ open class JBTabsImpl internal constructor(
       }
 
       private fun createUI(): ScrollBarUI {
-        return if (SystemInfo.isMac) TabMacScrollBarUI(SCROLL_BAR_THICKNESS, SCROLL_BAR_THICKNESS, SCROLL_BAR_THICKNESS)
-        else TabScrollBarUI(SCROLL_BAR_THICKNESS, SCROLL_BAR_THICKNESS, SCROLL_BAR_THICKNESS)
+        return if (SystemInfo.isMac) {
+          TabMacScrollBarUI(thickness = SCROLL_BAR_THICKNESS, thicknessMax = SCROLL_BAR_THICKNESS, thicknessMin = SCROLL_BAR_THICKNESS)
+        }
+        else {
+          TabScrollBarUI(thickness = SCROLL_BAR_THICKNESS, thicknessMax = SCROLL_BAR_THICKNESS, thicknessMin = SCROLL_BAR_THICKNESS)
+        }
       }
     }
     fakeScrollPane.verticalScrollBar = scrollBar

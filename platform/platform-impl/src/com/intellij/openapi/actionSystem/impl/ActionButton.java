@@ -32,6 +32,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -295,7 +296,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanged);
     }
     if (ActionToolbar.findToolbarBy(this) == null) {
-      ActionManagerEx.doWithLazyActionManager(__ -> update());
+      ActionManagerEx.withLazyActionManager(null, __ -> { update(); return Unit.INSTANCE; });
     }
     else {
       updateToolTipText();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.util.ui.JBUI;
@@ -22,11 +22,11 @@ public class ThinMacScrollBarUI extends MacScrollBarUI {
 
   @Override
   protected ScrollBarPainter.Thumb createThumbPainter() {
-    return new ScrollBarPainter.ThinScrollBarThumb(() -> myScrollBar, false);
+    return new ScrollBarPainter.ThinScrollBarThumb(() -> scrollBar, false);
   }
 
   @Override
-  void paintTrack(Graphics2D g, JComponent c) {
+  public void paintTrack(Graphics2D g, JComponent c) {
     // Track is not needed
   }
 
@@ -36,7 +36,7 @@ public class ThinMacScrollBarUI extends MacScrollBarUI {
   }
 
   @Override
-  protected void updateStyle(MacScrollBarUI.Style style) {
-    super.updateStyle(Style.Overlay);
+  protected void updateStyle(MacScrollbarStyle style) {
+    super.updateStyle(MacScrollbarStyle.Overlay);
   }
 }

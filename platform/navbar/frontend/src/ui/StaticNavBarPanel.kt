@@ -1,40 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend.ui
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.frontend.vm.NavBarVm
 import com.intellij.platform.navbar.frontend.vm.impl.NavBarVmImpl
-import com.intellij.platform.util.coroutines.attachAsChildTo
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.JBPanel
-import kotlinx.coroutines.*
+import com.intellij.util.ui.showingScope
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.supervisorScope
 import java.awt.BorderLayout
 import java.awt.Window
 import javax.swing.JComponent
 
-// GlobalScope is used to avoid attaching a child, which is never cancelled, to a service scope.
-// Without GlobalScope, each call to `staticNavBarPanel` produces a new child coroutine,
-// which may leak because the component is never disposed, as it's simply removed from the UI hierarchy.
-// Removal from the hierarchy triggers `window.value = null`,
-//   which cancels the `handleWindow` coroutine,
-//   which triggers `staticNavBarVm.value = null`,
-//   which cancels `StaticNavBarPanel.handleVm` coroutine.
-// Once the component is removed from hierarchy, `window` and `staticNavBarVm` flows never emit,
-// their subscriptions are never resumed (and never scheduled), so they are GC-ed together with the component.
-@OptIn(DelicateCoroutinesApi::class)
 fun staticNavBarPanel(
   project: Project,
-  cs: CoroutineScope,
   initialItems: suspend () -> List<NavBarVmItem>,
   contextItems: (Window, JComponent) -> Flow<List<NavBarVmItem>>,
   requestNavigation: (NavBarVmItem) -> Unit,
 ): JComponent {
 
   val staticNavBarVm: MutableStateFlow<NavBarVm?> = MutableStateFlow(null)
-  val panel: JComponent = StaticNavBarPanel(project, GlobalScope, staticNavBarVm)
-  val window: StateFlow<Window?> = trackCurrentWindow(panel)
+  val panel: JComponent = StaticNavBarPanel(project, staticNavBarVm)
 
   suspend fun handleWindow(window: Window): Nothing = supervisorScope {
     val vm = NavBarVmImpl(
@@ -52,20 +41,8 @@ fun staticNavBarPanel(
     }
   }
 
-  // This coroutine will GC-ed together with the `StaticNavBarPanel` instance as long as it isn't referenced by anything else,
-  // `attachAsChildTo` makes sure the coroutine refs are cleaned.
-  GlobalScope.launch {
-    window.collectLatest { window ->
-      if (window != null) {
-        coroutineScope {
-          val windowScope = this@coroutineScope
-          cs.launch(start = CoroutineStart.UNDISPATCHED) {
-            attachAsChildTo(windowScope)
-            handleWindow(window)
-          }
-        }
-      }
-    }
+  panel.showingScope("static nav bar window", uiData = ComponentUtil::getWindow) { window ->
+    handleWindow(window)
   }
 
   return panel
@@ -75,14 +52,13 @@ internal typealias StaticNavBarPanelVm = StateFlow<NavBarVm?>
 
 class StaticNavBarPanel(
   private val project: Project,
-  cs: CoroutineScope,
   private val _vm: StaticNavBarPanelVm,
 ) : JBPanel<StaticNavBarPanel>(BorderLayout()) {
 
   val model: NavBarVm? get() = _vm.value
 
   init {
-    cs.launch(Dispatchers.EDT) {
+    showingScope("static nav bar vm") {
       _vm.collectLatest { vm ->
         if (vm != null) {
           handleVm(vm)

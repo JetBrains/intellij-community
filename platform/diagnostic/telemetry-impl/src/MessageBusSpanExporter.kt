@@ -16,8 +16,6 @@ class MessageBusSpanExporter : AsyncSpanExporter {
     private fun initPublisher() = ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC)
   }
 
-  override val exporterVersion: Int = 0
-
   override suspend fun export(spans: Collection<SpanData>) {
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
       val dataToSend = mutableListOf<SpanData>()

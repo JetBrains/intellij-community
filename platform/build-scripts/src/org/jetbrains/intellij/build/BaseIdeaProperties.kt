@@ -14,12 +14,12 @@ import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 private val BASE_CLASS_VERSIONS: Map<String, String> = java.util.Map.copyOf(hashMapOf(
   "" to "17",
   "lib/idea_rt.jar" to "1.7",
-  "lib/forms_rt.jar" to "1.7",
+  "lib/forms_rt.jar" to "1.8",
   "lib/annotations.jar" to "1.8",
   "lib/util_rt.jar" to "1.7",
   "lib/util-8.jar" to "1.8",
-  "lib/external-system-rt.jar" to "1.7",
-  "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.7",
+  "lib/external-system-rt.jar" to "1.8",
+  "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.8",
   "plugins/junit/lib/junit-rt.jar" to "1.7",
   "plugins/junit/lib/junit5-rt.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
@@ -28,7 +28,7 @@ private val BASE_CLASS_VERSIONS: Map<String, String> = java.util.Map.copyOf(hash
   "plugins/maven-model/lib/maven-model.jar" to "1.8",
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
   "plugins/maven/lib/maven3-server.jar" to "1.8",
-  "plugins/maven/lib/artifact-resolver-m31.jar" to "1.7",
+  "plugins/maven/lib/artifact-resolver-m31.jar" to "1.8",
 ))
 
 /**

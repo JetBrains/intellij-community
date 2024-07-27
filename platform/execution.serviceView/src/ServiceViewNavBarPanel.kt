@@ -35,7 +35,7 @@ internal class ServiceViewNavBarPanel(
   val model: NavBarVm? get() = _vm.value
 
   init {
-    add(StaticNavBarPanel(project, cs, _vm), BorderLayout.CENTER)
+    add(StaticNavBarPanel(project, _vm), BorderLayout.CENTER)
     cs.launch {
       visible.collectLatest {
         if (it) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.execution.ExecutionException
@@ -21,17 +21,17 @@ class PyPoetryPackageManagementService(project: Project, sdk: Sdk) : PyPackageMa
   override fun canInstallToUser() = false
 
   override fun getAllPackages(): List<RepoPackage> {
-    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(sdk.poetrySources, false)
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(poetrySources, false)
     return allPackagesCached
   }
 
   override fun reloadAllPackages(): List<RepoPackage> {
-    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(sdk.poetrySources, true)
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(poetrySources, true)
     return allPackagesCached
   }
 
   override fun getAllPackagesCached(): List<RepoPackage> =
-    PyPIPackageUtil.INSTANCE.getAdditionalPackages(sdk.poetrySources)
+    PyPIPackageUtil.INSTANCE.getAdditionalPackages(poetrySources)
 
   override fun installPackage(repoPackage: RepoPackage,
                               version: String?,
@@ -56,4 +56,10 @@ class PyPoetryPackageManagementService(project: Project, sdk: Sdk) : PyPackageMa
     ui.install(listOf(requirement), extraArgs)
   }
 
+  /**
+   * The URLs of package sources configured in the Pipfile.lock of the module associated with this SDK.
+   */
+  private val poetrySources: List<String>
+    // TODO parse pyproject.toml for tool.poetry.source.url
+    get() = listOf(POETRY_DEFAULT_SOURCE_URL)
 }

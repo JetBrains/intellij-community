@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorSchemesSorter
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -701,17 +702,22 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun patchLafFonts(uiDefaults: UIDefaults) {
     val uiSettings = UISettings.getInstance()
     val currentScale = uiSettings.currentIdeScale
-    if (uiSettings.overrideLafFonts || currentScale != 1f) {
+    val overrideLafFonts = uiSettings.overrideLafFonts
+    LOG.debug { "patchLafFonts: scale=$currentScale, overrideLafFonts=$overrideLafFonts" }
+    if (overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
-      val fontFace = if (uiSettings.overrideLafFonts) uiSettings.fontFace else defaultFont.family
-      val fontSize = (if (uiSettings.overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
+      val fontFace = if (overrideLafFonts) uiSettings.fontFace else defaultFont.family
+      val fontSize = (if (overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
+      LOG.debug { "patchLafFonts: using font '$fontFace' with size $fontSize" }
       initFontDefaults(uiDefaults, getFontWithFallback(fontFace, Font.PLAIN, fontSize))
       val userScaleFactor = if (useInterFont()) fontSize / INTER_SIZE else getFontScale(fontSize)
       setUserScaleFactor(userScaleFactor)
     }
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults)
-      initFontDefaults(uiDefaults, defaultInterFont)
+      val interFont = defaultInterFont
+      LOG.debug { "patchLafFonts: using Inter font with size ${interFont.size2D}" }
+      initFontDefaults(uiDefaults, interFont)
       setUserScaleFactor(defaultUserScaleFactor)
     }
     else {

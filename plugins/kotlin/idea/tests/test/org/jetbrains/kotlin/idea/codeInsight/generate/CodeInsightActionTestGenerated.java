@@ -75,6 +75,11 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
         runTest("testData/codeInsight/generate/secondaryConstructors/propertiesWithSupers.kt");
     }
 
+    @TestMetadata("superInvisible.kt")
+    public void testSuperInvisible() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/superInvisible.kt");
+    }
+
     @TestMetadata("supers.kt")
     public void testSupers() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/supers.kt");

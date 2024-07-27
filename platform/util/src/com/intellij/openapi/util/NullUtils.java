@@ -44,19 +44,5 @@ public final class NullUtils {
     return ArrayUtil.contains(null, objects);
   }
 
-  /**
-   * Returns <tt>true</tt> if and only if at least one object is not <tt>null</tt>
-   *
-   * @param objects objects to check
-   * @return <tt>false</tt> if all objects are <tt>null</tt>,
-   *         otherwise <tt>true</tt>
-   */
-  public static boolean hasNotNull(Object @NotNull ... objects) {
-    for (Object object : objects) {
-      if (object != null) return true;
-    }
-    return false;
-  }
-
   private NullUtils() {}
 }

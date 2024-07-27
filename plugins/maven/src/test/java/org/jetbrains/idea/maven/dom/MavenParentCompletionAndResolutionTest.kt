@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.ElementManipulators
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +27,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
@@ -489,6 +492,9 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
     importProjectAsync()
+    val isDumb = DumbService.isDumb(project)
+    MavenLog.LOG.warn("isDumb = $isDumb")
+    project.waitForSmartMode()
     checkHighlighting(projectPom,
                       Highlight(text="parent", description = "'groupId' child tag should be defined"),
                       Highlight(text="junit"),

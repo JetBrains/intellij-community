@@ -244,6 +244,8 @@
   </extensions>
   <actions>
     <group id="KotlinGenerateGroup">
+      <action id="KotlinGenerateSecondaryConstructor"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateSecondaryConstructorAction"/>
       <action id="KotlinGenerateEqualsAndHashCode"
               class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction"/>
       <action id="KotlinGenerateToString"

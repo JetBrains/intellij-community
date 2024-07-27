@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.openapi.util.io.FileAttributes
+import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.platform.ijent.fs.IjentFileInfo
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo
@@ -68,7 +70,7 @@ internal data class IjentUnixFileKey(val dev: Long, val ino: Long)
 @VisibleForTesting
 class IjentNioPosixFileAttributes(
   private val fileInfo: IjentPosixFileInfo,
-) : PosixFileAttributes, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {
+) : CaseSensitivityAttribute, PosixFileAttributes, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {
   override fun owner(): UserPrincipal =
     IjentPosixUserPrincipal(fileInfo.permissions.owner)
 
@@ -90,6 +92,15 @@ class IjentNioPosixFileAttributes(
       }
     }
     return if (permissions.isEmpty()) EnumSet.noneOf(PosixFilePermission::class.java) else EnumSet.copyOf(permissions)
+  }
+
+  override fun getCaseSensitivity(): FileAttributes.CaseSensitivity = when (val type = fileInfo.type) {
+    is Directory -> when (type.sensitivity) {
+      IjentFileInfo.CaseSensitivity.SENSITIVE -> FileAttributes.CaseSensitivity.SENSITIVE
+      IjentFileInfo.CaseSensitivity.INSENSITIVE -> FileAttributes.CaseSensitivity.INSENSITIVE
+      IjentFileInfo.CaseSensitivity.UNKNOWN -> FileAttributes.CaseSensitivity.UNKNOWN
+    }
+    else -> FileAttributes.CaseSensitivity.UNKNOWN
   }
 }
 

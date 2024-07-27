@@ -23,6 +23,8 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
@@ -177,5 +179,16 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
   @Override
   public String toString() {
     return "PsiJavaModule:" + getName();
+  }
+
+  public boolean equals(Object o) {
+    if (!(o instanceof PsiJavaModuleImpl)) return false;
+    PsiJavaModuleImpl other = (PsiJavaModuleImpl)o;
+    return getName().equals(other.getName()) &&
+           Objects.equals(getContainingFile(), other.getContainingFile());
+  }
+
+  public int hashCode() {
+    return getName().hashCode();
   }
 }

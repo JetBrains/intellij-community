@@ -49,7 +49,7 @@ class SessionAsMultipleEventsLoggingStrategy<P : Any, F>(
   }
 
   companion object {
-    val DOUBLE: MLSessionLoggingStrategy<Double> = SessionAsMultipleEventsLoggingStrategy(DoubleEventField("prediction", null)) { it }
+    val DOUBLE: MLSessionLoggingStrategy<Double> = SessionAsMultipleEventsLoggingStrategy(DoubleEventField("prediction", NO_DESCRIPTION)) { it }
   }
 }
 
@@ -61,11 +61,11 @@ private const val COMPONENT_NAME_SOLITARY_LEAF = "solitary_leaf"
 private const val COMPONENT_NAME_LEAF = "leaf"
 private const val COMPONENT_NAME_SESSION = "session"
 
-private val FIELD_SESSION_ID = IntEventField("session_id", null)
-private val FIELD_LOCATION_IN_TREE = IntListEventField("location_in_tree", null)
-private val FIELD_ADDITIONAL_INSTANCES = IntEventField("n_additional_instances", null)
-private val FIELD_MAIN_INSTANCES = IntEventField("n_main_instances", null)
-private val FIELD_N_NESTED = IntEventField("n_nested", null)
+private val FIELD_SESSION_ID = IntEventField("session_id", NO_DESCRIPTION)
+private val FIELD_LOCATION_IN_TREE = IntListEventField("location_in_tree", NO_DESCRIPTION)
+private val FIELD_ADDITIONAL_INSTANCES = IntEventField("n_additional_instances", NO_DESCRIPTION)
+private val FIELD_MAIN_INSTANCES = IntEventField("n_main_instances", NO_DESCRIPTION)
+private val FIELD_N_NESTED = IntEventField("n_nested", NO_DESCRIPTION)
 
 private const val FIELD_NAME_DESCRIPTION = "description"
 private const val FIELD_NAME_ANALYSIS = "analysis"
@@ -75,8 +75,8 @@ private object ComponentMainInstance {
   fun register(eventRegister: MLSessionComponentRegister, levelI: Int, tier: Tier<*>, scheme: AnalysedTierScheme) = run {
     val objectDescription = TierDescriptionFields(scheme.description)
     val objectAnalysis = FeatureSet(scheme.analysis)
-    val fieldDescription = ObjectEventField(FIELD_NAME_DESCRIPTION, null, objectDescription)
-    val fieldAnalysis = ObjectEventField(FIELD_NAME_ANALYSIS, null, objectAnalysis)
+    val fieldDescription = ObjectEventField(FIELD_NAME_DESCRIPTION, NO_DESCRIPTION, objectDescription)
+    val fieldAnalysis = ObjectEventField(FIELD_NAME_ANALYSIS, NO_DESCRIPTION, objectAnalysis)
 
     val event = eventRegister.registerComponent(COMPONENT_NAME_MAIN_INSTANCE(levelI, tier.name), listOf(
       FIELD_SESSION_ID,
@@ -99,7 +99,7 @@ private object ComponentMainInstance {
 private object ComponentAdditionalInstance {
   fun register(eventRegister: MLSessionComponentRegister, levelI: Int, tier: Tier<*>, scheme: DescribedTierScheme) = run {
     val objectDescription = TierDescriptionFields(scheme.description)
-    val fieldDescription = ObjectEventField(FIELD_NAME_DESCRIPTION, null, objectDescription)
+    val fieldDescription = ObjectEventField(FIELD_NAME_DESCRIPTION, NO_DESCRIPTION, objectDescription)
 
     val event = eventRegister.registerComponent(
       COMPONENT_NAME_ADDITIONAL_INSTANCE(levelI, tier.name),

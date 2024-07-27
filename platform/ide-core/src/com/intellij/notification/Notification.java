@@ -105,6 +105,7 @@ public class Notification {
     return mySuggestionType;
   }
 
+  @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setSuggestionType(boolean suggestionType) {
     mySuggestionType = suggestionType;
     return this;
@@ -114,6 +115,7 @@ public class Notification {
     return myImportantSuggestion;
   }
 
+  @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setImportantSuggestion(boolean importantSuggestion) {
     myImportantSuggestion = importantSuggestion;
     return this;
@@ -133,6 +135,7 @@ public class Notification {
     return myDisplayId;
   }
 
+  @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setDisplayId(@NotNull String displayId) {
     myDisplayId = displayId;
     return this;
@@ -142,6 +145,7 @@ public class Notification {
     return myIcon;
   }
 
+  @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setIcon(@Nullable Icon icon) {
     myIcon = icon;
     return this;
@@ -184,6 +188,7 @@ public class Notification {
   }
 
   @ApiStatus.Internal
+  @Contract(value = "_ -> this")
   public Notification setDoNotAskFor(@Nullable Project project) {
     PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
@@ -212,6 +217,7 @@ public class Notification {
    *
    * @see NotificationRemindLaterHandler
    */
+  @Contract(value = "_ -> this", mutates = "this")
   public Notification setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
     myRemindLaterHandlerId = remindLaterHandlerId;
     return this;

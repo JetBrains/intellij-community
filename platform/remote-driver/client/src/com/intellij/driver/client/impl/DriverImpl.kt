@@ -1,6 +1,8 @@
 package com.intellij.driver.client.impl
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.client.PolymorphRef
+import com.intellij.driver.client.PolymorphRefRegistry
 import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.Timed
@@ -26,6 +28,8 @@ open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : D
   private val appServices: MutableMap<AppServiceId, Any> = ConcurrentHashMap()
   private val projectServices: MutableMap<ProjectServiceId, Any> = ConcurrentHashMap()
   private val utils: MutableMap<UtilityId, Any> = ConcurrentHashMap()
+
+  protected open val polymorphRegistry: PolymorphRefRegistry? = null
 
   override val isConnected: Boolean
     get() {
@@ -88,8 +92,8 @@ open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : D
       dispatcher,
       semantics,
       remote.value,
-      if (rdTarget == RdTarget.DEFAULT) RdTarget.FRONTEND else rdTarget,
-      convertArgsToPass(args)
+      rdTarget,
+      convertArgsToPass(rdTarget, args)
     )
     val callResult = makeCall(call)
     return convertResult(callResult, clazz.java, getPluginId(remote)) as T
@@ -107,10 +111,11 @@ open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : D
     return refBridge(clazz.java, ref, refPluginId) as T
   }
 
-  private fun convertArgsToPass(args: Array<out Any?>?): Array<Any?> {
+  private fun convertArgsToPass(rdTarget: RdTarget, args: Array<out Any?>?): Array<Any?> {
     if (args == null) return emptyArray()
 
     return args
+      .map { if (it is PolymorphRef && polymorphRegistry != null) polymorphRegistry?.convert(it, rdTarget) else it }
       .map { if (it is RefWrapper) it.getRef() else it }
       .toTypedArray()
   }
@@ -187,7 +192,7 @@ open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : D
             semantics,
             remote.value,
             method.name,
-            convertArgsToPass(args),
+            convertArgsToPass(rdTarget, args),
             (project as? RefWrapper?)?.getRef(),
             remote.serviceInterface.takeIf { it.isNotBlank() },
             rdTarget
@@ -228,7 +233,7 @@ open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : D
             remote.value,
             method.name,
             rdTarget,
-            convertArgsToPass(args),
+            convertArgsToPass(rdTarget, args),
           )
           val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
@@ -258,7 +263,7 @@ open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : D
             semantics,
             remote.value,
             method.name,
-            convertArgsToPass(args),
+            convertArgsToPass(ref.rdTarget(), args),
             ref
           )
           val callResult = makeCall(call)
@@ -334,7 +339,7 @@ private fun mergeRdTargets(
   remote: Remote,
   vararg args: Any?
 ): RdTarget {
-  val argsRdTargets = args.filterIsInstance<RefWrapper>()
+  val argsRdTargets = args.filterIsInstance<RefWrapper>().filter { it !is PolymorphRef }
     .map { it.getRef().rdTarget() }
 
   return (argsRdTargets + forceRdTarget + remote.rdTarget).reduce { acc, b ->

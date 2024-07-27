@@ -24,6 +24,7 @@ import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -58,6 +59,7 @@ private val priorityComparator = Comparator.comparingInt<Update> { it.priority }
  * @param activationComponent    if not `null` the tasks will be processing only when the given component is showing
  * @param thread                 specifies on which thread the tasks are executed
  */
+@Obsolete
 open class MergingUpdateQueue @JvmOverloads constructor(
   private val name: @NonNls String,
   private var mergingTimeSpan: Int,

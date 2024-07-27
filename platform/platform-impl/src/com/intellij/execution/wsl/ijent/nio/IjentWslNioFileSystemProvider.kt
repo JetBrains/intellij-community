@@ -1,13 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
+import com.intellij.openapi.util.io.CaseSensitivityAttribute
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
-import com.intellij.platform.ijent.IjentId
-import com.intellij.platform.ijent.IjentInfo
-import com.intellij.platform.ijent.IjentPosixInfo
-import com.intellij.platform.ijent.IjentSessionRegistry
-import com.intellij.platform.ijent.IjentWindowsInfo
+import com.intellij.platform.ijent.*
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixUserPrincipal
@@ -20,11 +18,7 @@ import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.DosFileAttributes
-import java.nio.file.attribute.FileAttribute
-import java.nio.file.attribute.FileAttributeView
-import java.nio.file.attribute.PosixFileAttributes
+import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ExecutorService
@@ -120,11 +114,11 @@ internal class IjentWslNioFileSystemProvider(
   override fun checkAccess(path: Path, vararg modes: AccessMode): Unit =
     ijentFsProvider.checkAccess(path.toIjentPath(), *modes)
 
-  override fun newInputStream(path: Path?, vararg options: OpenOption?): InputStream =
-    originalFsProvider.newInputStream(path, *options)
+  override fun newInputStream(path: Path, vararg options: OpenOption?): InputStream =
+    ijentFsProvider.newInputStream(path.toIjentPath(), *options)
 
-  override fun newOutputStream(path: Path?, vararg options: OpenOption?): OutputStream =
-    originalFsProvider.newOutputStream(path, *options)
+  override fun newOutputStream(path: Path, vararg options: OpenOption?): OutputStream =
+    ijentFsProvider.newOutputStream(path.toIjentPath(), *options)
 
   override fun newFileChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): FileChannel =
     ijentFsProvider.newFileChannel(path.toIjentPath(), options, *attrs)
@@ -154,8 +148,8 @@ internal class IjentWslNioFileSystemProvider(
   override fun getPath(uri: URI): Path =
     originalFsProvider.getPath(uri)
 
-  override fun newByteChannel(path: Path?, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
-    originalFsProvider.newByteChannel(path, options, *attrs)
+  override fun newByteChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
+    ijentFsProvider.newByteChannel(path.toIjentPath(), options, *attrs)
 
   override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>?): DirectoryStream<Path> =
     object : DirectoryStream<Path> {
@@ -258,7 +252,7 @@ class IjentNioPosixFileAttributesWithDosAdapter(
   private val userInfo: IjentPosixInfo.User,
   private val fileInfo: PosixFileAttributes,
   private val nameStartsWithDot: Boolean,
-) : PosixFileAttributes by fileInfo, DosFileAttributes {
+) : CaseSensitivityAttribute, PosixFileAttributes by fileInfo, DosFileAttributes {
   /**
    * Returns `false` if the corresponding file or directory can be modified.
    * Note that returning `true` does not mean that the corresponding file can be read or the directory can be listed.
@@ -283,4 +277,8 @@ class IjentNioPosixFileAttributesWithDosAdapter(
   override fun isArchive(): Boolean = false
 
   override fun isSystem(): Boolean = false
+
+  override fun getCaseSensitivity(): FileAttributes.CaseSensitivity {
+    if (fileInfo is CaseSensitivityAttribute) return fileInfo.caseSensitivity else return FileAttributes.CaseSensitivity.UNKNOWN
+  }
 }
