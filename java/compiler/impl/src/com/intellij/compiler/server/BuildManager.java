@@ -1884,9 +1884,9 @@ public final class BuildManager implements Disposable {
   }
 
   private abstract class BuildManagerPeriodicTask implements Runnable {
-    private final Alarm myAlarm;
+    private final Alarm alarm;
     private final AtomicBoolean myInProgress = new AtomicBoolean(false);
-    private final Runnable myTaskRunnable = () -> {
+    private final Runnable taskRunnable = () -> {
       try {
         runTask();
       }
@@ -1895,8 +1895,11 @@ public final class BuildManager implements Disposable {
       }
     };
 
+    private final @NotNull CoroutineScope coroutineScope;
+
     BuildManagerPeriodicTask(@NotNull CoroutineScope coroutineScope) {
-      myAlarm = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
+      this.coroutineScope = coroutineScope;
+      alarm = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
     }
 
     final void schedule() {
@@ -1905,11 +1908,11 @@ public final class BuildManager implements Disposable {
 
     private void schedule(boolean increasedDelay) {
       cancelPendingExecution();
-      myAlarm.addRequest(this, Math.max(100, increasedDelay ? 10 * getDelay() : getDelay()));
+      alarm.addRequest(this, Math.max(100, increasedDelay ? 10 * getDelay() : getDelay()));
     }
 
     void cancelPendingExecution() {
-      myAlarm.cancelAllRequests();
+      alarm.cancelAllRequests();
     }
 
     protected boolean shouldPostpone() {
@@ -1925,7 +1928,7 @@ public final class BuildManager implements Disposable {
       final boolean shouldPostponeAllTasks = HeavyProcessLatch.INSTANCE.isRunning() || mySuspendBackgroundTasksCounter.get() > 0;
       if (!shouldPostponeAllTasks && !shouldPostpone() && !myInProgress.getAndSet(true)) {
         try {
-          AppJavaExecutorUtil.executeOnPooledIoThread(myTaskRunnable);
+          AppJavaExecutorUtil.executeOnPooledIoThread(coroutineScope, taskRunnable);
         }
         catch (CancellationException ignored) {
           // we were shut down
