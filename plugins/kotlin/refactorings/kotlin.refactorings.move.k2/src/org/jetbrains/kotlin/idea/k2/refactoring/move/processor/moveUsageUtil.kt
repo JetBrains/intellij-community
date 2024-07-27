@@ -87,7 +87,7 @@ internal val KtNamedDeclaration.needsReferenceUpdate: Boolean
         return when (this) {
             is KtFunction -> !isLocal && !isClassMember
             is KtProperty -> !isLocal && !isClassMember
-            is KtClassOrObject -> true
+            is KtClassLikeDeclaration -> true
             else -> false
         }
     }

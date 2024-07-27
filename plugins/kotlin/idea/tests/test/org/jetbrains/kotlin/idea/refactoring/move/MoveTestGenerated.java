@@ -114,6 +114,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         public void testMixedJavaKotlin_MixedJavaKotlin() throws Exception {
             runTest("testData/refactoring/moveDirectory/mixedJavaKotlin/mixedJavaKotlin.test");
         }
+
+        @TestMetadata("withTypeAliases/withTypeAliases.test")
+        public void testWithTypeAliases_WithTypeAliases() throws Exception {
+            runTest("testData/refactoring/moveDirectory/withTypeAliases/withTypeAliases.test");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

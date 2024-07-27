@@ -39,4 +39,9 @@ public class K2MoveDirectoryTestGenerated extends AbstractK2MoveDirectoryTest {
     public void testMixedJavaKotlin_MixedJavaKotlin() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveDirectory/mixedJavaKotlin/mixedJavaKotlin.test");
     }
+
+    @TestMetadata("withTypeAliases/withTypeAliases.test")
+    public void testWithTypeAliases_WithTypeAliases() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveDirectory/withTypeAliases/withTypeAliases.test");
+    }
 }
