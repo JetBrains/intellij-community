@@ -37,10 +37,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -1275,16 +1272,24 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES);
     }
     else if (myRole2 == ChildRole.RPARENTH) {
-      createParenthSpace(mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+      createParenthSpaceInMethodParameters(list, mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE);
     }
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
     }
     else if (myRole1 == ChildRole.LPARENTH) {
-      createParenthSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+      createParenthSpaceInMethodParameters(list, mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE);
     }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+  }
+
+  private void createParenthSpaceInMethodParameters(@NotNull PsiParameterList list, boolean shouldUseDependentSpacing) {
+    if (shouldUseDependentSpacing && list.getParametersCount() > 1) {
+      createSpaceWithLinefeedIfListWrapped(list.getParameters(), mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+    } else {
+      createParenthSpace(shouldUseDependentSpacing, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     }
   }
 
@@ -1375,7 +1380,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.RPARENTH) {
       boolean space = myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
       if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
-        createSpaceWithLinefeedIfListWrapped(list, space);
+        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space);
         return;
       }
       createSpaceInCode(space);
@@ -1383,7 +1388,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.LPARENTH) {
       boolean space = mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
       if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
-        createSpaceWithLinefeedIfListWrapped(list, space);
+        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space);
         return;
       }
       createSpaceInCode(space);
@@ -1406,15 +1411,14 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  private void createSpaceWithLinefeedIfListWrapped(@NotNull PsiExpressionList list, boolean space) {
-    PsiExpression[] expressions = list.getExpressions();
-    int length = expressions.length;
+  private void createSpaceWithLinefeedIfListWrapped(PsiElement @NotNull[] psiElementList, boolean space) {
+    int length = psiElementList.length;
     assert length > 1;
 
     List<TextRange> ranges = new ArrayList<>();
     for (int i = 0; i < length - 1; i++) {
-      int startOffset = expressions[i].getTextRange().getEndOffset();
-      int endOffset = expressions[i + 1].getTextRange().getStartOffset();
+      int startOffset = psiElementList[i].getTextRange().getEndOffset();
+      int endOffset = psiElementList[i + 1].getTextRange().getStartOffset();
       ranges.add(new TextRange(startOffset, endOffset));
     }
 
