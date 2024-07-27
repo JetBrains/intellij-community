@@ -130,13 +130,11 @@ class AsyncEditorLoader internal constructor(
       )
       // await instead of join to get errors here
       try {
-        LOG.trace { "async editor task awaiting for $editorFileName" }
         task.await()
         LOG.trace { "async editor task finished for $editorFileName" }
       }
       finally {
         indicatorJob.cancel()
-        LOG.trace { "spinner icon canceled for $editorFileName" }
       }
 
       // mark as loaded before daemonCodeAnalyzer restart
@@ -256,12 +254,9 @@ private fun CoroutineScope.showLoadingIndicator(
   require(startDelay >= Duration.ZERO)
 
   val scheduleTimeMs = System.currentTimeMillis()
-  LOG.trace { "spinner icon scheduled for $editorFileName at $scheduleTimeMs ms" }
 
   return launch {
     val delayBeforeIcon = max(0, startDelay.inWholeMilliseconds - (System.currentTimeMillis() - scheduleTimeMs))
-    LOG.trace { "spinner icon delaying $delayBeforeIcon ms for $editorFileName" }
-
     delay(delayBeforeIcon)
 
     val processIconRef = AtomicReference<AnimatedIcon>()
