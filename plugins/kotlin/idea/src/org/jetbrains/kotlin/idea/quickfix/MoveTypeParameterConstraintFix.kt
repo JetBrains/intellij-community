@@ -3,53 +3,12 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class MoveTypeParameterConstraintFix(
-    element: KtTypeParameter,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtTypeParameter, Unit>(element, Unit) {
-
-    override fun getFamilyName(): String = KotlinBundle.message("move.type.parameter.constraint.to.where.clause")
-
-    override fun invoke(
-        actionContext: ActionContext,
-        element: KtTypeParameter,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
-    ) {
-        val typeParameterName = element.nameAsName ?: return
-        val psiFactory = KtPsiFactory(actionContext.project)
-        val templateClass = psiFactory.buildDeclaration {
-            appendFixedText("class A<")
-            appendName(typeParameterName)
-            appendFixedText("> where ")
-            appendName(typeParameterName)
-            appendFixedText(":")
-            appendTypeReference(element.extendsBound)
-        } as KtTypeParameterListOwner
-        val templateConstraintList = templateClass.typeConstraintList!!
-
-        val declaration = element.getStrictParentOfType<KtTypeParameterListOwner>() ?: return
-        val constraintList = declaration.typeConstraintList ?: return
-        constraintList.addAfter(psiFactory.createComma(), null)
-        constraintList.addAfter(templateConstraintList.constraints[0], null)
-
-        element.extendsBound?.delete()
-        val colon = element.node.findChildByType(KtTokens.COLON)
-        colon?.psi?.delete()
-    }
-
-    companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val typeParameter = diagnostic.psiElement as? KtTypeParameter ?: return null
-            return MoveTypeParameterConstraintFix(typeParameter).asIntention()
-        }
+internal object MoveTypeParameterConstraintFixFactory : KotlinSingleIntentionActionFactory() {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+        val typeParameter = diagnostic.psiElement as? KtTypeParameter ?: return null
+        return MoveTypeParameterConstraintFix(typeParameter).asIntention()
     }
 }
