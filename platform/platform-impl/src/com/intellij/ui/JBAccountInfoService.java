@@ -122,7 +122,7 @@ public interface JBAccountInfoService {
   record JbaServiceConfiguration(
     @NotNull String accountUrl,
     @NotNull String signupUrl,
-    @NotNull String paymentMethodsUrl
+    @Nullable String paymentMethodsUrl // TODO nullable during the transition period
   ) { }
 
   enum LoginMode {
