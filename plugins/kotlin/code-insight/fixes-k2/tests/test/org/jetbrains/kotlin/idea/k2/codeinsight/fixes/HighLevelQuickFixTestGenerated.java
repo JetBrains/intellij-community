@@ -9004,7 +9004,39 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/inlineClass")
+    public static class InlineClass extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inlineClassDeprecated.kt")
+        public void testInlineClassDeprecated() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/inlineClassDeprecated.kt");
+        }
+
+        @TestMetadata("inlineClassDeprecated_js.kt")
+        public void testInlineClassDeprecated_js() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/inlineClassDeprecated_js.kt");
+        }
+
+        @TestMetadata("inlineClassWithGeneric.kt")
+        public void testInlineClassWithGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/inlineClassWithGeneric.kt");
+        }
+
+        @TestMetadata("publicInlineClass.kt")
+        public void testPublicInlineClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineClass/publicInlineClass.kt");
+        }
+    }
 
 
 
