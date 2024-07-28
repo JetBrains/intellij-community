@@ -104,11 +104,15 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     close(persistentMap)
   }
 
-  private fun close(persistentMap: PersistentMapBase<K, V>) {
+  private fun close(persistentMap: PersistentMapBase<K, V>, delete: Boolean = false) {
     ThreadingAssertions.assertBackgroundThread()
-    LOG.info("closing $name with ${persistentMap.keysCount()} elements")
+    LOG.info("${if (delete) "deleting" else "closing"} $name with ${persistentMap.keysCount()} elements")
     try {
-      persistentMap.close()
+      if (delete) {
+        persistentMap.closeAndDelete()
+      } else {
+        persistentMap.close()
+      }
     } catch (e: Exception) {
       LOG.warn("error closing $name", e)
     }
@@ -184,7 +188,7 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
           if (persistentMapRef.compareAndSet(persistentMap, null)) {
             // IJPL-158564 unregister tracked cache if too many io errors occurred
             TRACKED_CACHES.remove(this@ManagedPersistentCache)
-            close(persistentMap)
+            close(persistentMap, delete=true)
           }
         }
         return@withContext null
