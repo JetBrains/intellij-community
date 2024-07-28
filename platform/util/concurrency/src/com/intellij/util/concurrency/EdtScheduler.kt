@@ -40,8 +40,7 @@ class EdtScheduler(@JvmField val coroutineScope: CoroutineScope) {
   }
 
   fun schedule(delayMillis: Int, task: Runnable): Job {
-    // same behavior as EdtExecutorServiceImpl - any modality if not specified explicitly
-    return schedule(delay = delayMillis.milliseconds, task = task, modality = ModalityState.any())
+    return schedule(delay = delayMillis.milliseconds, task = task, modality = ModalityState.defaultModalityState())
   }
 
   fun schedule(delay: Duration, task: Runnable): Job {
