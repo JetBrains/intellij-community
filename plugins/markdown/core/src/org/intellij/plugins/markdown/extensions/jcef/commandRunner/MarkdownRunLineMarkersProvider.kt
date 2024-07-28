@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.jcef.commandRunner
 
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -7,8 +7,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiElement
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
@@ -19,6 +25,9 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import java.awt.Dimension
+import java.util.*
+import kotlin.collections.ArrayList
 
 internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor() {
   override fun getInfo(element: PsiElement): Info? {
@@ -71,11 +80,85 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor() {
         val project = event.getData(CommonDataKeys.PROJECT) ?: return
         TrustedProjectUtil.executeIfTrusted(project) {
           RUNNER_EXECUTED.log(project, RunnerPlace.EDITOR, RunnerType.BLOCK, runner.javaClass)
-          runner.run(text, project, dir, DefaultRunExecutor.getRunExecutorInstance())
+          val command = collectCommand(project, text) ?: return@executeIfTrusted
+          runner.run(command, project, dir, DefaultRunExecutor.getRunExecutorInstance())
         }
       }
     }
     return Info(AllIcons.RunConfigurations.TestState.Run_run, { runner.title() }, runAction)
+  }
+
+  /**
+   * @return command with `%placeholders%` replaced with values from the user,
+   *         or null if the user has canceled the placeholder dialog.
+   */
+  private fun collectCommand(project: Project, text: String): String? {
+    val placeholders = collectPlaceholders(text)
+    if (placeholders.isEmpty()) {
+      return text
+    }
+
+    val placeholdersValues = PlaceholdersDialog.getPlaceholders(project, placeholders) ?: return null
+
+    return placeholdersValues.entries.fold(text) { command, entry ->
+      command.replace("%${entry.key}%", entry.value)
+    }
+  }
+
+  private class PlaceholdersDialog(project: Project, private val placeholders: Set<String>) : DialogWrapper(project) {
+    private val values = ArrayList<String>(Collections.nCopies(placeholders.size, ""))
+
+    init {
+      title = MarkdownBundle.message("markdown.runner.launch.placeholder.dialog.title")
+      init()
+    }
+
+    override fun createCenterPanel() = panel {
+      placeholders.forEachIndexed { index, placeholder ->
+        row("$placeholder:") {
+          expandableTextField()
+            .bindText({ values[index] }, { values[index] = it })
+            .horizontalAlign(HorizontalAlign.FILL)
+        }
+      }
+    }.apply {
+      preferredSize = Dimension(300, 30)
+    }
+
+    companion object {
+      /**
+       * @return map of placeholders and their values or null if dialog was cancelled.
+       */
+      fun getPlaceholders(project: Project, placeholders: Set<String>): Map<String, String>? {
+        val dialog = PlaceholdersDialog(project, placeholders)
+        if (!dialog.showAndGet()) {
+          return null
+        }
+        return placeholders.zip(dialog.values).toMap()
+      }
+    }
+  }
+
+  /**
+   * @return set of placeholders in the given command.
+   */
+  private fun collectPlaceholders(command: String): Set<String> {
+    val isWindows = SystemInfo.isWindows
+    return PLACEHOLDER_REGEXP.findAll(command)
+      .mapNotNull {
+        val raw = it.groupValues[0]
+        val name = raw.substring(1, raw.length - 1)
+
+        // On Windows syntax %NAME% is used for ENV variables, so skip the defined ones.
+        if (isWindows) {
+          val envValue = System.getenv(name)
+          if (envValue != null) {
+            return@mapNotNull null
+          }
+        }
+
+        name
+      }.toSet()
   }
 
   private fun getText(element: PsiElement): @NlsSafe String {
@@ -85,5 +168,9 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor() {
       return codeSpanText.substring(1, codeSpanText.length - 1).trim()
     }
     return ""
+  }
+
+  companion object {
+    private val PLACEHOLDER_REGEXP = Regex("%([\\w\\d_\\-]+)%")
   }
 }
