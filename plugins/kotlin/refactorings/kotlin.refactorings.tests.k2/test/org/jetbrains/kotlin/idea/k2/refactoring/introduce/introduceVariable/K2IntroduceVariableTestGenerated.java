@@ -252,6 +252,100 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/qualifiers")
+    public static class Qualifiers extends AbstractK2IntroduceVariableTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("callableReferenceReceiverClass1.kt")
+        public void testCallableReferenceReceiverClass1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass1.kt");
+        }
+
+        @TestMetadata("callableReferenceReceiverClass1WithoutSelection.kt")
+        public void testCallableReferenceReceiverClass1WithoutSelection() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass1WithoutSelection.kt");
+        }
+
+        @TestMetadata("callableReferenceReceiverClass2.kt")
+        public void testCallableReferenceReceiverClass2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass2.kt");
+        }
+
+        @TestMetadata("callableReferenceReceiverClass2WithoutSelection.kt")
+        public void testCallableReferenceReceiverClass2WithoutSelection() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass2WithoutSelection.kt");
+        }
+
+        @TestMetadata("callableReferenceReceiverClass3.kt")
+        public void testCallableReferenceReceiverClass3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass3.kt");
+        }
+
+        @TestMetadata("callableReferenceReceiverClass3WithoutSelection.kt")
+        public void testCallableReferenceReceiverClass3WithoutSelection() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/callableReferenceReceiverClass3WithoutSelection.kt");
+        }
+
+        @TestMetadata("classLiteral1.kt")
+        public void testClassLiteral1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral1.kt");
+        }
+
+        @TestMetadata("classLiteral1WithoutSelection.kt")
+        public void testClassLiteral1WithoutSelection() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral1WithoutSelection.kt");
+        }
+
+        @TestMetadata("classLiteral2.kt")
+        public void testClassLiteral2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral2.kt");
+        }
+
+        @TestMetadata("classLiteral2WithoutSelection.kt")
+        public void testClassLiteral2WithoutSelection() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral2WithoutSelection.kt");
+        }
+
+        @TestMetadata("classLiteral3.kt")
+        public void testClassLiteral3() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral3.kt");
+        }
+
+        @TestMetadata("classLiteral3WithoutSelection.kt")
+        public void testClassLiteral3WithoutSelection() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/classLiteral3WithoutSelection.kt");
+        }
+
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/companionObject.kt");
+        }
+
+        @TestMetadata("companionObjectWithoutSelection.kt")
+        public void testCompanionObjectWithoutSelection() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/companionObjectWithoutSelection.kt");
+        }
+
+        @TestMetadata("nestedObject.kt")
+        public void testNestedObject() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/nestedObject.kt");
+        }
+
+        @TestMetadata("nestedObjectWithoutSelection.kt")
+        public void testNestedObjectWithoutSelection() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifiers/nestedObjectWithoutSelection.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/script")
     public static class Script extends AbstractK2IntroduceVariableTest {
         @java.lang.Override

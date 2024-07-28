@@ -1,0 +1,8 @@
+class A {
+    companion object
+}
+
+fun test() {
+    val companion = A.Companion
+    companion::class.java.getDeclaredField("name")
+}
