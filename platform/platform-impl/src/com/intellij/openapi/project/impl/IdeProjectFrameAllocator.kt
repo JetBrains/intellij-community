@@ -69,7 +69,6 @@ import java.awt.GraphicsDevice
 import java.awt.Rectangle
 import java.nio.file.Path
 import java.time.Instant
-import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JFrame
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.min
@@ -85,30 +84,22 @@ internal class IdeProjectFrameAllocator(
     (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
   }
 
-  override suspend fun run(projectInitObservable: ProjectInitObservable, projectInitTask: suspend () -> Unit) {
+  override suspend fun runInBackground(projectInitObservable: ProjectInitObservable) {
     coroutineScope {
-      val debugTask = launch {
+      launch {
         delay(10.seconds)
         logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
       }
 
-      val hideSplashTask = launch {
+      launch {
         val project = projectInitObservable.awaitProjectInit()
         val connection = project.messageBus.connect(this)
         hideSplashWhenEditorOrToolWindowShown(connection)
       }
-
-      try {
-        doRun(projectInitObservable, projectInitTask)
-      }
-      finally {
-        debugTask.cancel()
-        hideSplashTask.cancel()
-      }
     }
   }
 
-  private suspend fun doRun(projectInitObservable: ProjectInitObservable, projectInitTask: suspend () -> Unit) {
+  override suspend fun run(projectInitObservable: ProjectInitObservable) {
     coroutineScope {
       val job = currentCoroutineContext().job
 
@@ -144,8 +135,6 @@ internal class IdeProjectFrameAllocator(
         }
       }
 
-      val startOfWaitingForReadyFrame = AtomicLong(-1)
-
       val reopeningEditorJob = launch {
         val project = projectInitObservable.awaitProjectInit()
         span("restoreEditors") {
@@ -153,7 +142,7 @@ internal class IdeProjectFrameAllocator(
           restoreEditors(project = project, fileEditorManager = fileEditorManager)
         }
 
-        val start = startOfWaitingForReadyFrame.get()
+        val start = projectInitObservable.projectInitTimestamp
         if (start != -1L) {
           StartUpMeasurer.addCompletedActivity(start, "editor reopening and frame waiting", getTraceActivity())
         }
@@ -205,9 +194,6 @@ internal class IdeProjectFrameAllocator(
           }
         }
       }
-
-      projectInitTask()
-      startOfWaitingForReadyFrame.set(System.nanoTime())
     }
   }
 
