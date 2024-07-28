@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -233,6 +234,9 @@ abstract class ScriptClassRootsUpdater(
             shouldRescheduleOnException = true
             throw ex
         } catch (ex: Exception) {
+            if (ex is ControlFlowException) {
+                throw ex
+            }
             LOG.error("Exception during script roots update", ex)
             onUpdateException(ex)
         } finally {
@@ -312,6 +316,9 @@ abstract class ScriptClassRootsUpdater(
                 runCatching {
                     updateHighlighting(project) { file -> updates.isScriptChanged(file.path) }
                 }.onFailure {
+                    if (it is ControlFlowException) {
+                        throw it
+                    }
                     LOG.error("Failed to update highlighting", it)
                 }
             }
