@@ -6,24 +6,20 @@ package com.intellij.openapi.project.impl
 import com.intellij.conversion.CannotConvertException
 import com.intellij.openapi.project.Project
 
-internal fun interface FrameAllocatorTask {
-  suspend fun execute(projectInitObserver: ProjectInitObserver?)
-}
-
-internal sealed interface ProjectInitObserver {
-  fun notifyProjectPreInit(project: Project)
-  fun notifyProjectInit(project: Project)
+internal sealed interface ProjectInitObservable {
+  suspend fun awaitProjectPreInit(): Project
+  suspend fun awaitProjectInit(): Project
 }
 
 internal interface ProjectFrameAllocator {
-  suspend fun run(task: FrameAllocatorTask)
+  suspend fun run(projectInitObservable: ProjectInitObservable, projectInitTask: suspend () -> Unit)
   suspend fun preInitProject(project: Project)
   suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?)
 }
 
 internal class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
-  override suspend fun run(task: FrameAllocatorTask) {
-    task.execute( null)
+  override suspend fun run(projectInitObservable: ProjectInitObservable, projectInitTask: suspend () -> Unit) {
+    projectInitTask()
   }
 
   override suspend fun preInitProject(project: Project) = Unit

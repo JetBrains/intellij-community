@@ -85,22 +85,21 @@ internal class IdeProjectFrameAllocator(
     (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
   }
 
-  override suspend fun run(task: FrameAllocatorTask) {
+  override suspend fun run(projectInitObservable: ProjectInitObservable, projectInitTask: suspend () -> Unit) {
     coroutineScope {
-      val projectInitObserver = InitObserver()
       val debugTask = launch {
         delay(10.seconds)
         logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
       }
 
       val hideSplashTask = launch {
-        val project = projectInitObserver.awaitProjectInit()
+        val project = projectInitObservable.awaitProjectInit()
         val connection = project.messageBus.connect(this)
         hideSplashWhenEditorOrToolWindowShown(connection)
       }
 
       try {
-        doRun(task, projectInitObserver)
+        doRun(projectInitObservable, projectInitTask)
       }
       finally {
         debugTask.cancel()
@@ -109,7 +108,7 @@ internal class IdeProjectFrameAllocator(
     }
   }
 
-  private suspend fun doRun(task: FrameAllocatorTask, projectInitObserver: InitObserver) {
+  private suspend fun doRun(projectInitObservable: ProjectInitObservable, projectInitTask: suspend () -> Unit) {
     coroutineScope {
       val job = currentCoroutineContext().job
 
@@ -119,7 +118,7 @@ internal class IdeProjectFrameAllocator(
       }
 
       launch {
-        val project = projectInitObserver.awaitProjectPreInit()
+        val project = projectInitObservable.awaitProjectPreInit()
         val frameHelper = deferredProjectFrameHelper.await()
 
         launch {
@@ -148,7 +147,7 @@ internal class IdeProjectFrameAllocator(
       val startOfWaitingForReadyFrame = AtomicLong(-1)
 
       val reopeningEditorJob = launch {
-        val project = projectInitObserver.awaitProjectInit()
+        val project = projectInitObservable.awaitProjectInit()
         span("restoreEditors") {
           val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
           restoreEditors(project = project, fileEditorManager = fileEditorManager)
@@ -161,7 +160,7 @@ internal class IdeProjectFrameAllocator(
       }
 
       val toolWindowInitJob = launch {
-        val project = projectInitObserver.awaitProjectInit()
+        val project = projectInitObservable.awaitProjectInit()
         span<Unit>("initFrame") {
           launch(CoroutineName("tool window pane creation")) {
             val toolWindowManager = async { project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl }
@@ -178,7 +177,7 @@ internal class IdeProjectFrameAllocator(
       }
 
       launch {
-        val project = projectInitObserver.awaitProjectInit()
+        val project = projectInitObservable.awaitProjectInit()
         val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
 
         val onNoEditorsLeft = blockingContext {
@@ -207,7 +206,7 @@ internal class IdeProjectFrameAllocator(
         }
       }
 
-      task.execute(projectInitObserver)
+      projectInitTask()
       startOfWaitingForReadyFrame.set(System.nanoTime())
     }
   }
@@ -314,23 +313,6 @@ internal class IdeProjectFrameAllocator(
         // projectLoaded was called, but then due to some error, say cancellation, still projectNotLoaded is called
         (serviceAsync<WindowManager>() as WindowManagerImpl).releaseFrame(frameHelper)
       }
-    }
-  }
-
-  private class InitObserver : ProjectInitObserver {
-    private val preInitProjectDeferred = CompletableDeferred<Project>()
-    private val initProjectDeferred = CompletableDeferred<Project>()
-
-    suspend fun awaitProjectPreInit(): Project = preInitProjectDeferred.await()
-
-    override fun notifyProjectPreInit(project: Project) {
-      preInitProjectDeferred.complete(project)
-    }
-
-    suspend fun awaitProjectInit(): Project = initProjectDeferred.await()
-
-    override fun notifyProjectInit(project: Project) {
-      initProjectDeferred.complete(project)
     }
   }
 }

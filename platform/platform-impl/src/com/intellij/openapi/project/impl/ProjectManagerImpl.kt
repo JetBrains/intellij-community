@@ -634,9 +634,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     var module: Module? = null
     var result: Project? = null
     try {
-      frameAllocator.run { projectInitObserver ->
-        coroutineScope {
-          val initHelper = projectInitObserver?.let { ProjectInitHelper(this, frameAllocator, it) }
+      coroutineScope {
+        val initHelper = ProjectInitHelper(this, frameAllocator)
+        frameAllocator.run(initHelper) {
           val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
           val project = when {
             options.project != null -> options.project!!
@@ -672,7 +672,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
           // The project is loaded and is initialized, project services and components can be accessed.
           // But start-up and post start-up activities are not yet executed.
-          if (!initFrameEarly && initHelper != null) {
+          if (!initFrameEarly) {
             initHelper.launchPreInit(project)
             initHelper.notifyInit(project)
           }
@@ -1221,15 +1221,21 @@ private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStor
 private class ProjectInitHelper(
   private val cs: CoroutineScope,
   private val frameAllocator: ProjectFrameAllocator,
-  private val initObserver: ProjectInitObserver,
-) {
+) : ProjectInitObservable {
+  private val preInitProjectDeferred = CompletableDeferred<Project>()
+  private val initProjectDeferred = CompletableDeferred<Project>()
+
+  override suspend fun awaitProjectPreInit(): Project = preInitProjectDeferred.await()
+
+  override suspend fun awaitProjectInit(): Project = initProjectDeferred.await()
+
   fun launchPreInit(project: Project): Job = cs.launch {
     frameAllocator.preInitProject(project)
-    initObserver.notifyProjectPreInit(project)
+    preInitProjectDeferred.complete(project)
   }
 
   fun notifyInit(project: Project) {
-    initObserver.notifyProjectInit(project)
+    initProjectDeferred.complete(project)
   }
 }
 
