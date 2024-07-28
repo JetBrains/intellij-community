@@ -635,48 +635,51 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     var result: Project? = null
     try {
       frameAllocator.run { projectInitObserver ->
-        val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
-        val project = when {
-          options.project != null -> options.project!!
-          options.isNewProject -> prepareNewProject(options = options,
-                                                    projectStoreBaseDir = projectStoreBaseDir)
-          else -> prepareProject(options = options,
-                                 projectStoreBaseDir = projectStoreBaseDir,
-                                 projectInitObserver = projectInitObserver.takeIf { initFrameEarly })
-        }
-        result = project
-        // must be under try-catch to dispose project on beforeOpen or preparedToOpen callback failures
-        if (options.project == null) {
-          val beforeOpen = options.beforeOpen
-          if (beforeOpen != null && !beforeOpen(project)) {
-            throw CancellationException("beforeOpen callback returned false")
+        coroutineScope {
+          val initHelper = projectInitObserver?.let { ProjectInitHelper(this, frameAllocator, it) }
+          val initFrameEarly = !options.isNewProject && options.beforeOpen == null && options.project == null
+          val project = when {
+            options.project != null -> options.project!!
+            options.isNewProject -> prepareNewProject(options = options,
+                                                      projectStoreBaseDir = projectStoreBaseDir)
+            else -> prepareProject(options = options,
+                                   projectStoreBaseDir = projectStoreBaseDir,
+                                   projectInitHelper = initHelper.takeIf { initFrameEarly })
+          }
+          result = project
+          // must be under try-catch to dispose project on beforeOpen or preparedToOpen callback failures
+          if (options.project == null) {
+            val beforeOpen = options.beforeOpen
+            if (beforeOpen != null && !beforeOpen(project)) {
+              throw CancellationException("beforeOpen callback returned false")
+            }
+
+            if (options.runConfigurators &&
+                (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) ||
+                project.isLoadedFromCacheButHasNoModules()) {
+              module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+                baseDir = projectStoreBaseDir,
+                project = project,
+                newProject = options.isProjectCreatedWithWizard
+              )
+              options.preparedToOpen?.invoke(module!!)
+            }
           }
 
-          if (options.runConfigurators &&
-              (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) ||
-              project.isLoadedFromCacheButHasNoModules()) {
-            module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-              baseDir = projectStoreBaseDir,
-              project = project,
-              newProject = options.isProjectCreatedWithWizard
-            )
-            options.preparedToOpen?.invoke(module!!)
+          if (!addToOpened(project)) {
+            throw CancellationException("project is already opened")
           }
-        }
 
-        if (!addToOpened(project)) {
-          throw CancellationException("project is already opened")
-        }
+          // The project is loaded and is initialized, project services and components can be accessed.
+          // But start-up and post start-up activities are not yet executed.
+          if (!initFrameEarly && initHelper != null) {
+            initHelper.launchPreInit(project)
+            initHelper.notifyInit(project)
+          }
 
-        // The project is loaded and is initialized, project services and components can be accessed.
-        // But start-up and post start-up activities are not yet executed.
-        if (!initFrameEarly && projectInitObserver != null) {
-          projectInitObserver.scheduleProjectPreInit(project)
-          projectInitObserver.notifyProjectInit(project)
-        }
-
-        span("project startup") {
-          runInitProjectActivities(project)
+          span("project startup") {
+            runInitProjectActivities(project)
+          }
         }
       }
     }
@@ -874,7 +877,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun prepareProject(options: OpenProjectTask,
                                      projectStoreBaseDir: Path,
-                                     projectInitObserver: ProjectInitObserver?): Project {
+                                     projectInitHelper: ProjectInitHelper?): Project {
     var conversionResult: ConversionResult? = null
     if (options.runConversionBeforeOpen) {
       val conversionService = (ApplicationManager.getApplication() as ComponentManagerEx)
@@ -898,7 +901,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       isRefreshVfsNeeded = options.isRefreshVfsNeeded,
       preloadServices = options.preloadServices,
       template = null,
-      projectInitObserver = projectInitObserver,
+      projectInitHelper = projectInitHelper,
       isTrustCheckNeeded = true,
     )
 
@@ -1215,6 +1218,21 @@ private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStor
   )
 }
 
+private class ProjectInitHelper(
+  private val cs: CoroutineScope,
+  private val frameAllocator: ProjectFrameAllocator,
+  private val initObserver: ProjectInitObserver,
+) {
+  fun launchPreInit(project: Project): Job = cs.launch {
+    frameAllocator.preInitProject(project)
+    initObserver.notifyProjectPreInit(project)
+  }
+
+  fun notifyInit(project: Project) {
+    initObserver.notifyProjectInit(project)
+  }
+}
+
 private suspend fun initProject(
   file: Path,
   project: ProjectImpl,
@@ -1222,7 +1240,7 @@ private suspend fun initProject(
   preloadServices: Boolean,
   template: Project?,
   isTrustCheckNeeded: Boolean,
-  projectInitObserver: ProjectInitObserver? = null,
+  projectInitHelper: ProjectInitHelper? = null,
 ) {
   LOG.assertTrue(!project.isDefault)
 
@@ -1250,11 +1268,11 @@ private suspend fun initProject(
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
-      val beforeComponentCreation = projectInitObserver?.scheduleProjectPreInit(project)
+      val preInitJob = projectInitHelper?.launchPreInit(project)
       val workspaceIndexReady = CompletableDeferred<Unit>()
       launch {
         workspaceIndexReady.join()
-        projectInitObserver?.notifyProjectInit(project)
+        projectInitHelper?.notifyInit(project)
         if (preloadServices) {
           schedulePreloadServices(project)
         }
@@ -1266,7 +1284,7 @@ private suspend fun initProject(
       workspaceIndexReady.complete(Unit)
 
       launch {
-        beforeComponentCreation?.join()
+        preInitJob?.join()
         project.createComponentsNonBlocking()
       }
 

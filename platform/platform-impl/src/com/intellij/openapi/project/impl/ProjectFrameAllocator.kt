@@ -5,19 +5,19 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.CannotConvertException
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.Job
 
 internal fun interface FrameAllocatorTask {
   suspend fun execute(projectInitObserver: ProjectInitObserver?)
 }
 
 internal sealed interface ProjectInitObserver {
-  fun scheduleProjectPreInit(project: Project): Job
+  fun notifyProjectPreInit(project: Project)
   fun notifyProjectInit(project: Project)
 }
 
 internal interface ProjectFrameAllocator {
   suspend fun run(task: FrameAllocatorTask)
+  suspend fun preInitProject(project: Project)
   suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?)
 }
 
@@ -25,6 +25,8 @@ internal class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
   override suspend fun run(task: FrameAllocatorTask) {
     task.execute( null)
   }
+
+  override suspend fun preInitProject(project: Project) = Unit
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
     cannotConvertException?.let { throw cannotConvertException }

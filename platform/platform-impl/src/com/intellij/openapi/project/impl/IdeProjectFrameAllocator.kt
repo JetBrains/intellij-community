@@ -81,6 +81,10 @@ internal class IdeProjectFrameAllocator(
 ) : ProjectFrameAllocator {
   private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
 
+  override suspend fun preInitProject(project: Project) {
+    (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
+  }
+
   override suspend fun run(task: FrameAllocatorTask) {
     coroutineScope {
       val debugTask = launch {
@@ -100,11 +104,38 @@ internal class IdeProjectFrameAllocator(
   private suspend fun doRun(outOfLoadingScope: CoroutineScope, task: FrameAllocatorTask) {
     coroutineScope {
       val loadingScope = this
-      val projectInitObserver = InitObserver(coroutineScope = loadingScope)
+      val projectInitObserver = InitObserver()
 
       async(CoroutineName("project frame creating")) {
         val loadingState = MutableLoadingState(done = loadingScope.coroutineContext.job)
         createFrameManager(loadingState)
+      }
+
+      launch {
+        val project = projectInitObserver.awaitProjectPreInit()
+        val frameHelper = deferredProjectFrameHelper.await()
+
+        launch {
+          val windowManager = serviceAsync<WindowManager>() as WindowManagerImpl
+          withContext(Dispatchers.EDT) {
+            windowManager.assignFrame(frameHelper, project)
+            frameHelper.setRawProject(project)
+          }
+        }
+
+        launch {
+          val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
+          fileEditorManager.initJob.join()
+          withContext(Dispatchers.EDT) {
+            frameHelper.rootPane.getToolWindowPane().setDocumentComponent(fileEditorManager.mainSplitters)
+          }
+        }
+
+        launch {
+          span("project frame assigning") {
+            frameHelper.setProject(project)
+          }
+        }
       }
 
       val startOfWaitingForReadyFrame = AtomicLong(-1)
@@ -290,49 +321,20 @@ internal class IdeProjectFrameAllocator(
     }
   }
 
-  private inner class InitObserver(
-    private val coroutineScope: CoroutineScope,
-  ) : ProjectInitObserver {
-    private val rawProjectDeferred = CompletableDeferred<Project>()
+  private class InitObserver : ProjectInitObserver {
+    private val preInitProjectDeferred = CompletableDeferred<Project>()
+    private val initProjectDeferred = CompletableDeferred<Project>()
 
-    override fun scheduleProjectPreInit(project: Project): Job {
-      val task = coroutineScope.launch {
-        (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
-      }
+    suspend fun awaitProjectPreInit(): Project = preInitProjectDeferred.await()
 
-      coroutineScope.launch {
-        val frameHelper = deferredProjectFrameHelper.await()
-
-        launch {
-          val windowManager = serviceAsync<WindowManager>() as WindowManagerImpl
-          withContext(Dispatchers.EDT) {
-            windowManager.assignFrame(frameHelper, project)
-            frameHelper.setRawProject(project)
-          }
-        }
-
-        launch {
-          task.join()
-          val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
-          withContext(Dispatchers.EDT) {
-            frameHelper.rootPane.getToolWindowPane().setDocumentComponent(fileEditorManager.mainSplitters)
-          }
-        }
-
-        launch {
-          span("project frame assigning") {
-            frameHelper.setProject(project)
-          }
-        }
-      }
-
-      return task
+    override fun notifyProjectPreInit(project: Project) {
+      preInitProjectDeferred.complete(project)
     }
 
-    suspend fun awaitProjectInit(): Project = rawProjectDeferred.await()
+    suspend fun awaitProjectInit(): Project = initProjectDeferred.await()
 
     override fun notifyProjectInit(project: Project) {
-      rawProjectDeferred.complete(project)
+      initProjectDeferred.complete(project)
     }
   }
 }
