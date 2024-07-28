@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 /**
  * Assorted utility methods for Python code insight.
+ *
  * These methods don't depend on the Python runtime.
  *
  * @see PyPsiUtilsCore for utilities used in Python PSI API
@@ -98,13 +99,11 @@ public final class PyUtilCore {
 
   public static boolean isTopLevel(@NotNull PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
-      final StubElement<?> stub = ((StubBasedPsiElement<?>)element).getStub();
+      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
-        for (StubElement<?> parentStub = stub.getParentStub(); parentStub != null; parentStub = parentStub.getParentStub()) {
-          PsiElement psi = parentStub.getPsi();
-          if (!(psi instanceof PyAstIfPart || psi instanceof PyAstElsePart)) {
-            return psi instanceof PsiFile;
-          }
+        final StubElement parentStub = stub.getParentStub();
+        if (parentStub != null) {
+          return parentStub.getPsi() instanceof PsiFile;
         }
       }
     }

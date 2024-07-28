@@ -33,8 +33,4 @@ public interface PyStubElementTypes {
   PyStubElementType<PyTypeParameterStub, PyTypeParameter> TYPE_PARAMETER = new PyTypeParameterElementType();
   PyStubElementType<PyTypeParameterListStub, PyTypeParameterList> TYPE_PARAMETER_LIST = new PyTypeParameterListElementType();
   PyStubElementType<PyTypeAliasStatementStub, PyTypeAliasStatement> TYPE_ALIAS_STATEMENT = new PyTypeAliasStatementElementType();
-
-  PyStubElementType<PyIfPartIfStub, PyIfPartIf> IF_PART_IF = new PyIfPartIfElementType();
-  PyStubElementType<PyIfPartElifStub, PyIfPartElif> IF_PART_ELIF = new PyIfPartElifElementType();
-  PyStubElementType<PyElsePartStub, PyElsePart> ELSE_PART = new PyElsePartElementType();
 }

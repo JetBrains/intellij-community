@@ -11,20 +11,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.stubs.PyElsePartStub;
-import com.jetbrains.python.psi.stubs.PyIfPartElifStub;
-import com.jetbrains.python.psi.stubs.PyIfPartIfStub;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -631,60 +625,5 @@ public final class PyPsiUtils {
     }
     while (next != null);
     return null;
-  }
-
-  /**
-   * @see <a href="https://typing.readthedocs.io/en/latest/source/stubs.html#version-and-platform-checks">Version and Platform Checks</a>
-   */
-  @ApiStatus.Internal
-  @Nullable
-  public static StubElement<?> getParentStubSkippingVersionChecks(@Nullable StubElement<?> stub) {
-    if (stub != null) {
-      for (StubElement<?> e = stub.getParentStub(); e != null; e = e.getParentStub()) {
-        boolean isVersionCheck = e instanceof PyIfPartIfStub || e instanceof PyIfPartElifStub || e instanceof PyElsePartStub;
-        if (!isVersionCheck) {
-          return e;
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
-   * @see <a href="https://typing.readthedocs.io/en/latest/source/stubs.html#version-and-platform-checks">Version and Platform Checks</a>
-   */
-  @ApiStatus.Internal
-  public static boolean processChildrenStubs(@NotNull StubElement<?> stub,
-                                             @NotNull LanguageLevel languageLevel,
-                                             @NotNull Processor<? super StubElement<?>> processor) {
-    boolean recurse = false;
-    for (StubElement<?> child : stub.getChildrenStubs()) {
-      if (child instanceof PyIfPartIfStub ifStub) {
-        if (ifStub.getVersionCheck().matches(languageLevel)) {
-          recurse = false;
-          if (!processChildrenStubs(child, languageLevel, processor)) return false;
-        }
-        else {
-          recurse = true;
-        }
-      }
-      else if (child instanceof PyIfPartElifStub elifStub) {
-        if (recurse && elifStub.getVersionCheck().matches(languageLevel)) {
-          recurse = false;
-          if (!processChildrenStubs(child, languageLevel, processor)) return false;
-        }
-      }
-      else if (child instanceof PyElsePartStub) {
-        if (recurse) {
-          recurse = false;
-          if (!processChildrenStubs(child, languageLevel, processor)) return false;
-        }
-      }
-      else {
-        recurse = false;
-        if (!processor.process(child)) return false;
-      }
-    }
-    return true;
   }
 }

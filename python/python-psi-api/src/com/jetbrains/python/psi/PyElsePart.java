@@ -15,12 +15,10 @@
  */
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.ast.PyAstElsePart;
-import com.jetbrains.python.psi.stubs.PyElsePartStub;
 
 /**
  * The 'else:' part of various compound statements.
  */
-public interface PyElsePart extends PyAstElsePart, PyStatementPart, StubBasedPsiElement<PyElsePartStub> {
+public interface PyElsePart extends PyAstElsePart, PyStatementPart {
 }

@@ -4,7 +4,6 @@ package com.jetbrains.python
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IReparseableElementType
 import com.jetbrains.python.psi.impl.*
 import java.util.function.Function
@@ -52,12 +51,6 @@ class PyElementTypesFacadeImpl : PyElementTypesFacade() {
     get() = PyStubElementTypes.TYPE_PARAMETER_LIST
   override val typeAliasStatement: IStubElementType<*, *>
     get() = PyStubElementTypes.TYPE_ALIAS_STATEMENT
-  override val ifPartIf: IElementType
-    get() = PyStubElementTypes.IF_PART_IF
-  override val ifPartElif: IElementType
-    get() = PyStubElementTypes.IF_PART_ELIF
-  override val elsePart: IElementType
-    get() = PyStubElementTypes.ELSE_PART
 
   override val statementList: IReparseableElementType
     get() = PyStatementListElementType()
@@ -177,6 +170,10 @@ class PyElementTypesFacadeImpl : PyElementTypesFacade() {
     get() = F { node -> PySetCompExpressionImpl(node) }
   override val dictCompExpressionConstructor: F
     get() = F { node -> PyDictCompExpressionImpl(node) }
+  override val ifPartIfConstructor: F
+    get() = F { node -> PyIfPartIfImpl(node) }
+  override val ifPartElifConstructor: F
+    get() = F { node -> PyIfPartElifImpl(node) }
   override val forPartConstructor: F
     get() = F { node -> PyForPartImpl(node) }
   override val whilePartConstructor: F
@@ -185,6 +182,8 @@ class PyElementTypesFacadeImpl : PyElementTypesFacade() {
     get() = F { node -> PyTryPartImpl(node) }
   override val finallyPartConstructor: F
     get() = F { node -> PyFinallyPartImpl(node) }
+  override val elsePartConstructor: F
+    get() = F { node -> PyElsePartImpl(node) }
   override val fStringNodeConstructor: F
     get() = F { node -> PyFormattedStringElementImpl(node) }
   override val fStringFragmentConstructor: F

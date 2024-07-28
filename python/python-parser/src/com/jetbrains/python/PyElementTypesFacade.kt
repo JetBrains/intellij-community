@@ -31,9 +31,6 @@ abstract class PyElementTypesFacade {
   abstract val typeParameter: IElementType
   abstract val typeParameterList: IElementType
   abstract val typeAliasStatement: IElementType
-  abstract val ifPartIf: IElementType
-  abstract val ifPartElif: IElementType
-  abstract val elsePart: IElementType
 
   // reparseable elements
   abstract val statementList: IElementType
@@ -97,10 +94,13 @@ abstract class PyElementTypesFacade {
   abstract val setLiteralExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val setCompExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val dictCompExpressionConstructor: Function<in ASTNode, out PsiElement>
+  abstract val ifPartIfConstructor: Function<in ASTNode, out PsiElement>
+  abstract val ifPartElifConstructor: Function<in ASTNode, out PsiElement>
   abstract val forPartConstructor: Function<in ASTNode, out PsiElement>
   abstract val whilePartConstructor: Function<in ASTNode, out PsiElement>
   abstract val tryPartConstructor: Function<in ASTNode, out PsiElement>
   abstract val finallyPartConstructor: Function<in ASTNode, out PsiElement>
+  abstract val elsePartConstructor: Function<in ASTNode, out PsiElement>
   abstract val fStringNodeConstructor: Function<in ASTNode, out PsiElement>
   abstract val fStringFragmentConstructor: Function<in ASTNode, out PsiElement>
   abstract val fStringFragmentFormatPartConstructor: Function<in ASTNode, out PsiElement>

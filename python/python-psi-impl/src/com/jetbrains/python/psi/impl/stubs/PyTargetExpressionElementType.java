@@ -15,12 +15,8 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
-import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
-import com.jetbrains.python.psi.stubs.PyFileStub;
-import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.stubs.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,10 +55,12 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     final String docString = DocStringUtil.getDocStringValue(psi);
     final String typeComment = psi.getTypeCommentAnnotation();
     final String annotation = psi.getAnnotationValue();
+    final PyVersionRange versionRange = PyVersionSpecificStubBaseKt.evaluateVersionRangeForElement(psi);
 
     CustomTargetExpressionStub customStub = createCustomStub(psi);
     if (customStub != null) {
-      return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, psi.hasAssignedValue(), customStub, parentStub);
+      return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, psi.hasAssignedValue(), customStub, parentStub,
+                                            versionRange);
     }
 
     PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.Other;
@@ -80,7 +78,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       }
     }
     return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, psi.isQualified(), typeComment, annotation,
-                                          psi.hasAssignedValue(), parentStub);
+                                          psi.hasAssignedValue(), parentStub, versionRange);
   }
 
   @Override
@@ -92,6 +90,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     stream.writeName(stub.getTypeComment());
     stream.writeName(stub.getAnnotation());
     stream.writeBoolean(stub.hasAssignedValue());
+    PyVersionSpecificStubBaseKt.serializeVersionRange(stub.getVersionRange(), stream);
     final CustomTargetExpressionStub customStub = stub.getCustomStub(CustomTargetExpressionStub.class);
     if (customStub != null) {
       serializeCustomStub(customStub, stream);
@@ -114,14 +113,15 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     String typeComment = stream.readNameString();
     String annotation = stream.readNameString();
     final boolean hasAssignedValue = stream.readBoolean();
+    PyVersionRange versionRange = PyVersionSpecificStubBaseKt.deserializeVersionRange(stream);
     if (initializerType == PyTargetExpressionStub.InitializerType.Custom) {
       CustomTargetExpressionStub stub = deserializeCustomStub(stream);
-      return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, hasAssignedValue, stub, parentStub);
+      return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, hasAssignedValue, stub, parentStub, versionRange);
     }
     QualifiedName initializer = QualifiedName.deserialize(stream);
     boolean isQualified = stream.readBoolean();
     return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, isQualified, typeComment, annotation,
-                                          hasAssignedValue, parentStub);
+                                          hasAssignedValue, parentStub, versionRange);
   }
 
   @Override
@@ -150,7 +150,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   public void indexStub(@NotNull PyTargetExpressionStub stub, @NotNull IndexSink sink) {
     String name = stub.getName();
     if (name != null && PyUtil.getInitialUnderscores(name) == 0) {
-      if (PyPsiUtils.getParentStubSkippingVersionChecks(stub) instanceof PyFileStub) {
+      if (stub.getParentStub() instanceof PyFileStub) {
         sink.occurrence(PyVariableNameIndex.KEY, name);
         sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
       }

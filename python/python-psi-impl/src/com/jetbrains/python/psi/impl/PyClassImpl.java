@@ -37,6 +37,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
+import com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -642,9 +643,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final Property decoratedProperty = processDecoratedProperties(filter);
     if (decoratedProperty != null) return decoratedProperty;
 
-    PyClassStub stub = getStub();
-    if (stub != null) {
-      return processStubProperties(stub, filter);
+    if (getStub() != null) {
+      return processStubProperties(filter);
     }
     else {
       // name = property(...) assignments from PSI
@@ -722,12 +722,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Nullable
-  private Property processStubProperties(@NotNull PyClassStub stub, @Nullable Processor<? super Property> filter) {
-    class StubPropertiesProcessor implements Processor<StubElement<?>> {
-      private @Nullable Property myResult;
-
-      @Override
-      public boolean process(StubElement<?> subStub) {
+  private Property processStubProperties(@Nullable Processor<? super Property> filter) {
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      LanguageLevel languageLevel = PyiUtil.getOriginalLanguageLevel(this);
+      for (StubElement<?> subStub : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
         if (subStub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
           final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)subStub;
           final PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
@@ -738,19 +737,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             final String doc = prop.getDoc();
             if (getter != NONE || setter != NONE || deleter != NONE) {
               final PropertyImpl property = new PropertyImpl(targetStub.getName(), getter, setter, deleter, doc, targetStub.getPsi());
-              if (filter == null || filter.process(property)) {
-                myResult = property;
-                return false;
-              }
+              if (filter == null || filter.process(property)) return property;
             }
           }
         }
-        return true;
       }
     }
-    StubPropertiesProcessor processor = new StubPropertiesProcessor();
-    PyPsiUtils.processChildrenStubs(stub, PyiUtil.getOriginalLanguageLevel(this), processor);
-    return processor.myResult;
+    return null;
   }
 
   @Nullable
@@ -1023,16 +1016,15 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public List<PyTargetExpression> getClassAttributes() {
+    final List<PyTargetExpression> result = new ArrayList<>();
     LanguageLevel languageLevel = PyiUtil.getOriginalLanguageLevel(this);
-    final ArrayList<PyTargetExpression> result = new ArrayList<>();
     PyClassStub stub = getStub();
     if (stub != null) {
-      PyPsiUtils.processChildrenStubs(stub, languageLevel, child -> {
-        if (child.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
-          result.add((PyTargetExpression)child.getPsi());
+      for (StubElement<?> element : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
+        if (element.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
+          result.add((PyTargetExpression)element.getPsi());
         }
-        return true;
-      });
+      }
     }
     else {
       getStatementList().acceptChildren(new PyVersionAwareTopLevelElementVisitor(languageLevel) {
@@ -1055,7 +1047,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         }
       });
     }
-    result.trimToSize();
     return result;
   }
 
@@ -1254,8 +1245,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyClassStub stub = getStub();
     if (stub != null) {
       LanguageLevel languageLevel = PyiUtil.getOriginalLanguageLevel(this);
-      if (!PyPsiUtils.processChildrenStubs(stub, languageLevel, child -> processor.execute(child.getPsi(), ResolveState.initial()))) {
-        return false;
+      for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
+        if (!processor.execute(child.getPsi(), ResolveState.initial())) {
+          return false;
+        }
       }
     }
     else {

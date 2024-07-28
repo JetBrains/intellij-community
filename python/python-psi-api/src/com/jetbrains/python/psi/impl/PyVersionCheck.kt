@@ -13,7 +13,7 @@ import java.math.BigInteger
 @ApiStatus.Internal
 data class PyVersionCheck(val version: Version, val isLessThan: Boolean) {
   fun matches(languageLevel: LanguageLevel): Boolean {
-    return isLessThan == version.compareTo(languageLevel.majorVersion, languageLevel.minorVersion) > 0
+    return isLessThan == languageLevel.isLessThan(version)
   }
 
   companion object {
@@ -78,4 +78,8 @@ data class PyVersionCheck(val version: Version, val isLessThan: Boolean) {
       return if (BigInteger.valueOf(intValue.toLong()) == value) intValue else null
     }
   }
+}
+
+fun LanguageLevel.isLessThan(version: Version): Boolean {
+  return version.compareTo(majorVersion, minorVersion) > 0
 }

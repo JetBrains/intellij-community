@@ -16,16 +16,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyElsePart;
-import com.jetbrains.python.psi.stubs.PyElsePartStub;
 
-public class PyElsePartImpl extends PyBaseElementImpl<PyElsePartStub> implements PyElsePart {
+public class PyElsePartImpl extends PyElementImpl implements PyElsePart {
+  
   public PyElsePartImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  public PyElsePartImpl(PyElsePartStub stub) {
-    super(stub, PyStubElementTypes.ELSE_PART);
   }
 }

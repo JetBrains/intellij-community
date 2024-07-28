@@ -55,6 +55,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
                                psi.getDeprecationMessage(),
                                getStubElementType(),
+                               PyVersionSpecificStubBaseKt.evaluateVersionRangeForElement(psi),
                                createCustomStub(psi));
   }
 
@@ -135,6 +136,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     dataStream.writeUTFFast(docString != null ? docString : "");
     dataStream.writeName(pyClassStub.getDeprecationMessage());
 
+    PyVersionSpecificStubBaseKt.serializeVersionRange(pyClassStub.getVersionRange(), dataStream);
+
     serializeCustomStub(pyClassStub.getCustomStub(PyCustomClassStub.class), dataStream);
   }
 
@@ -161,14 +164,16 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     final List<String> slots = PyFileElementType.readNullableList(dataStream);
 
     final String docStringInStub = dataStream.readUTFFast();
-    final String docString = !docStringInStub.isEmpty() ? docStringInStub : null;
+    final String docString = StringUtil.nullize(docStringInStub);
 
     final String deprecationMessage = dataStream.readNameString();
+
+    final PyVersionRange versionRange = PyVersionSpecificStubBaseKt.deserializeVersionRange(dataStream);
 
     final PyCustomClassStub customStub = deserializeCustomStub(dataStream);
 
     return new PyClassStubImpl(name, parentStub, superClasses, baseClassesText, metaClass, slots, docString, deprecationMessage,
-                               getStubElementType(), customStub);
+                               getStubElementType(), versionRange, customStub);
   }
 
   @Override
@@ -177,7 +182,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     if (name != null) {
       sink.occurrence(PyClassNameIndex.KEY, name);
       sink.occurrence(PyClassNameIndexInsensitive.KEY, StringUtil.toLowerCase(name));
-      if (PyPsiUtils.getParentStubSkippingVersionChecks(stub) instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
+      if (stub.getParentStub() instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
         sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
       }
     }

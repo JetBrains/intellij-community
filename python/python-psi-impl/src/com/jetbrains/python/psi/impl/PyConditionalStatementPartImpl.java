@@ -2,20 +2,12 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyElementVisitor;
 
-public abstract class PyConditionalStatementPartImpl<T extends StubElement<? extends PsiElement>> extends PyBaseElementImpl<T>
-  implements PyConditionalStatementPart {
+public abstract class PyConditionalStatementPartImpl extends PyElementImpl implements PyConditionalStatementPart {
   public PyConditionalStatementPartImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  protected PyConditionalStatementPartImpl(T stub, IStubElementType<?, ?> elementType) {
-    super(stub, elementType);
   }
 
   @Override

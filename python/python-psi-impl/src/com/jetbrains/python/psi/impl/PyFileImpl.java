@@ -33,6 +33,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
+import com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -852,26 +853,19 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @NotNull
   private <T extends PyElement> List<T> collectChildren(Class<T> type) {
-    return collectChildren(this, getGreenStub(), PyiUtil.getOriginalLanguageLevel(this), type);
-  }
-
-  @NotNull
-  private static <T extends PyElement> List<T> collectChildren(@NotNull PsiElement element,
-                                                               @Nullable StubElement<?> stub,
-                                                               @NotNull LanguageLevel languageLevel,
-                                                               @NotNull Class<T> type) {
+    @Nullable StubElement<?> stub = getGreenStub();
+    @NotNull LanguageLevel languageLevel = PyiUtil.getOriginalLanguageLevel(this);
     final List<T> result = new ArrayList<>();
     if (stub != null) {
-      PyPsiUtils.processChildrenStubs(stub, languageLevel, child -> {
+      for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
         PsiElement childPsi = child.getPsi();
         if (type.isInstance(childPsi)) {
           result.add(type.cast(childPsi));
         }
-        return true;
-      });
+      }
     }
     else {
-      element.acceptChildren(new PyVersionAwareTopLevelElementVisitor(languageLevel) {
+      acceptChildren(new PyVersionAwareTopLevelElementVisitor(languageLevel) {
         @Override
         protected void checkAddElement(PsiElement node) {
           if (type.isInstance(node)) {
@@ -898,10 +892,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
                                                      @NotNull LanguageLevel languageLevel) {
     List<PsiElement> result = new ArrayList<>();
     if (stub != null) {
-      PyPsiUtils.processChildrenStubs(stub, languageLevel, child -> {
+      for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
         result.add(child.getPsi());
-        return true;
-      });
+      }
     }
     else {
       element.acceptChildren(new PyVersionAwareTopLevelElementVisitor(languageLevel) {

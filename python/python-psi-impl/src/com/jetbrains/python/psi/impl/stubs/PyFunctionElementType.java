@@ -26,10 +26,7 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
-import com.jetbrains.python.psi.stubs.PyFileStub;
-import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import com.jetbrains.python.psi.stubs.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +60,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
     final String typeComment = function.getTypeCommentAnnotation();
     final String annotationContent = function.getAnnotationValue();
+    final PyVersionRange versionRange = PyVersionSpecificStubBaseKt.evaluateVersionRangeForElement(psi);
     return new PyFunctionStubImpl(psi.getName(),
                                   PyPsiUtils.strValue(docStringExpression),
                                   message,
@@ -72,7 +70,8 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   typeComment,
                                   annotationContent,
                                   parentStub,
-                                  getStubElementType());
+                                  getStubElementType(),
+                                  versionRange);
   }
 
   @Override
@@ -85,6 +84,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     dataStream.writeBoolean(stub.onlyRaisesNotImplementedError());
     dataStream.writeName(stub.getTypeComment());
     dataStream.writeName(stub.getAnnotation());
+    PyVersionSpecificStubBaseKt.serializeVersionRange(stub.getVersionRange(), dataStream);
   }
 
   @Override
@@ -98,6 +98,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final boolean onlyRaisesNotImplementedError = dataStream.readBoolean();
     String typeComment = dataStream.readNameString();
     String annotationContent = dataStream.readNameString();
+    PyVersionRange versionRange = PyVersionSpecificStubBaseKt.deserializeVersionRange(dataStream);
     return new PyFunctionStubImpl(name,
                                   StringUtil.nullize(docString),
                                   deprecationMessage,
@@ -107,7 +108,8 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   typeComment,
                                   annotationContent,
                                   parentStub,
-                                  getStubElementType());
+                                  getStubElementType(),
+                                  versionRange);
   }
 
   @Override
@@ -115,7 +117,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyFunctionNameIndex.KEY, name);
-      if (PyPsiUtils.getParentStubSkippingVersionChecks(stub) instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
+      if (stub.getParentStub() instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
         sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
       }
     }

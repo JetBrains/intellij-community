@@ -8,7 +8,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 
-public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression>, PyTypeCommentOwnerStub, PyAnnotationOwnerStub {
+public interface PyTargetExpressionStub
+  extends NamedStub<PyTargetExpression>, PyTypeCommentOwnerStub, PyAnnotationOwnerStub, PyVersionSpecificStub {
   enum InitializerType {
     ReferenceExpression(1),
     CallExpression(2),

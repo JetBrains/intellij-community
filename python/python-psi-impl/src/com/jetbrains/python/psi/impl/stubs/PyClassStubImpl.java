@@ -2,19 +2,19 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.stubs.PyVersionRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 
-public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
+public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implements PyClassStub {
 
   @Nullable
   private final String myName;
@@ -49,8 +49,9 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
                          @Nullable String docString,
                          @Nullable String deprecationMessage,
                          @NotNull IStubElementType stubElementType,
+                         @NotNull PyVersionRange versionRange,
                          @Nullable PyCustomClassStub customStub) {
-    super(parentStub, stubElementType);
+    super(parentStub, stubElementType, versionRange);
     myName = name;
     mySuperClasses = superClasses;
     mySuperClassesText = superClassesText;

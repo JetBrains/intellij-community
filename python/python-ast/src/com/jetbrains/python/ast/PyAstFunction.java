@@ -2,10 +2,7 @@
 package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
@@ -14,9 +11,9 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
 import com.jetbrains.python.ast.docstring.DocStringUtilCore;
-import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -234,7 +231,7 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
   @Override
   @Nullable
   default PyAstClass getContainingClass() {
-    final PsiElement parent = PsiTreeUtil.getParentOfType(this, AstScopeOwner.class);
+    final PsiElement parent = PsiTreeUtil.getParentOfType(this, StubBasedPsiElement.class);
     if (parent instanceof PyAstClass) {
       return (PyAstClass)parent;
     }

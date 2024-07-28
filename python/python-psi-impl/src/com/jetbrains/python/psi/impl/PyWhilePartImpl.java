@@ -16,10 +16,9 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyWhilePart;
 
-public class PyWhilePartImpl extends PyConditionalStatementPartImpl<StubElement<PyWhilePart>> implements PyWhilePart {
+public class PyWhilePartImpl extends PyConditionalStatementPartImpl implements PyWhilePart {
   public PyWhilePartImpl(ASTNode astNode) {
     super(astNode);
   }

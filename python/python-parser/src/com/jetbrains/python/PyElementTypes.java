@@ -100,8 +100,8 @@ public interface PyElementTypes {
   TokenSet STATEMENT_LISTS = TokenSet.create(STATEMENT_LIST);
 
   // Parts
-  IElementType IF_PART_IF = Companion.getINSTANCE().getIfPartIf();
-  IElementType IF_PART_ELIF = Companion.getINSTANCE().getIfPartElif();
+  PyElementType IF_PART_IF = new PyElementType("IF_IF", Companion.getINSTANCE().getIfPartIfConstructor());
+  PyElementType IF_PART_ELIF = new PyElementType("IF_ELIF", Companion.getINSTANCE().getIfPartElifConstructor());
 
   PyElementType FOR_PART = new PyElementType("FOR_PART", Companion.getINSTANCE().getForPartConstructor());
   PyElementType WHILE_PART = new PyElementType("WHILE_PART", Companion.getINSTANCE().getWhilePartConstructor());
@@ -109,7 +109,7 @@ public interface PyElementTypes {
   PyElementType TRY_PART = new PyElementType("TRY_PART", Companion.getINSTANCE().getTryPartConstructor());
   PyElementType FINALLY_PART = new PyElementType("FINALLY_PART", Companion.getINSTANCE().getFinallyPartConstructor());
 
-  IElementType ELSE_PART = Companion.getINSTANCE().getElsePart();
+  PyElementType ELSE_PART = new PyElementType("ELSE_PART", Companion.getINSTANCE().getElsePartConstructor());
 
   TokenSet PARTS = TokenSet.create(IF_PART_IF, IF_PART_ELIF, FOR_PART, WHILE_PART, TRY_PART, FINALLY_PART, ELSE_PART, EXCEPT_PART);
   TokenSet ELIFS = TokenSet.create(IF_PART_ELIF);
