@@ -12183,9 +12183,10 @@ f:com.intellij.find.impl.livePreview.SelectionManager
 - <init>(com.intellij.find.impl.livePreview.SearchResults):V
 - isSelected(com.intellij.find.FindResult):Z
 - updateSelection(Z,Z,Z):V
-f:com.intellij.find.replaceInProject.ReplaceInProjectManager
+c:com.intellij.find.replaceInProject.ReplaceInProjectManager
 - <init>(com.intellij.openapi.project.Project):V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.find.replaceInProject.ReplaceInProjectManager
+- p:initModel(com.intellij.find.FindModel,com.intellij.openapi.actionSystem.DataContext):V
 - isEnabled():Z
 - isWorkInProgress():Z
 - replaceInPath(com.intellij.find.FindModel):V
