@@ -14,12 +14,12 @@ The release process is mostly automated, but it requires manual prep steps.
 4. _For every branch in `releases/`_:
    a. Check out the branch
    b. Merge the `main` branch in using the _Merge_ dialog and these options:
-      ![The merge dialog showing the --ff option and a custom commit message for the merge commit](docs/merge-dialog.png)
+   ![The merge dialog showing the --ff option and a custom commit message for the merge commit](art/docs/merge-dialog.png)
    c. If needed, solve merge conflicts, as it makes sense
-      > [!CAUTION]
-      > Merging is the most delicate part. Not all changes need backporting, and not all changes can be
-      > backported without adapting to how an older IJP version works. **Triple check all backports!**
-   
+   > [!CAUTION]
+   > Merging is the most delicate part. Not all changes need backporting, and not all changes can be
+   > backported without adapting to how an older IJP version works. **Triple check all backports!**
+
    d. Repeat step 3 for this branch
 5. Once all branches are ready, run the `:tagRelease` task, which will validate that the merge was done properly, and
    that the version has been bumped
