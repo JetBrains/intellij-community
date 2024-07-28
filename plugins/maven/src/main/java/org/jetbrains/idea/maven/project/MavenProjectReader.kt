@@ -280,7 +280,7 @@ class MavenProjectReader(private val myProject: Project) {
     val result = MavenModel()
     val xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX)
     if (xmlProject == null || "project" != xmlProject.name) {
-      MavenLog.LOG.warn("Invalid Maven project model: project '$xmlProject', name '${xmlProject?.name}'")
+      MavenLog.LOG.warn("Invalid Maven project model: project '$xmlProject', name '${xmlProject?.name}', file ${file.path}")
       result.packaging = MavenConstants.TYPE_JAR
       return RawModelReadResult(result, problems, alwaysOnProfiles)
     }
