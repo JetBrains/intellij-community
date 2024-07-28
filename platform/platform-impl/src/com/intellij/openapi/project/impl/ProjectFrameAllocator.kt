@@ -13,7 +13,6 @@ internal fun interface FrameAllocatorTask {
 
 internal sealed interface ProjectInitObserver {
   fun scheduleProjectPreInit(project: Project): Job
-  suspend fun awaitProjectInit(): Project
   fun notifyProjectInit(project: Project)
 }
 

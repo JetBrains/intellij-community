@@ -132,11 +132,22 @@ internal class IdeProjectFrameAllocator(
         }
       }
 
-      val toolWindowInitJob = scheduleInitFrame(
-        projectInitObserver = projectInitObserver,
-        reopeningEditorJob = reopeningEditorJob,
-        deferredProjectFrameHelper = deferredProjectFrameHelper,
-      )
+      val toolWindowInitJob = launch {
+        val project = projectInitObserver.awaitProjectInit()
+        span<Unit>("initFrame") {
+          launch(CoroutineName("tool window pane creation")) {
+            val toolWindowManager = async { project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl }
+            val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
+              computeToolWindowBeans(project = project)
+            }
+            toolWindowManager.await()?.init(
+              deferredProjectFrameHelper,
+              reopeningEditorJob = reopeningEditorJob,
+              taskListDeferred = taskListDeferred,
+            )
+          }
+        }
+      }
 
       launch {
         val project = projectInitObserver.awaitProjectInit()
@@ -323,7 +334,7 @@ internal class IdeProjectFrameAllocator(
       return task
     }
 
-    override suspend fun awaitProjectInit(): Project = rawProjectDeferred.await()
+    suspend fun awaitProjectInit(): Project = rawProjectDeferred.await()
 
     override fun notifyProjectInit(project: Project) {
       rawProjectDeferred.complete(project)
@@ -351,29 +362,6 @@ private suspend fun hideSplashWhenEditorOrToolWindowShown(connection: SimpleMess
     }
   })
   splashHiddenDeferred.await()
-}
-
-private fun CoroutineScope.scheduleInitFrame(
-  projectInitObserver: ProjectInitObserver,
-  reopeningEditorJob: Job,
-  deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
-): Job {
-  return launch {
-    val project = projectInitObserver.awaitProjectInit()
-    span("initFrame") {
-      launch(CoroutineName("tool window pane creation")) {
-        val toolWindowManager = async { project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl }
-        val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
-          computeToolWindowBeans(project = project)
-        }
-        toolWindowManager.await()?.init(
-          deferredProjectFrameHelper,
-          reopeningEditorJob = reopeningEditorJob,
-          taskListDeferred = taskListDeferred,
-        )
-      }
-    }
-  }
 }
 
 private suspend fun restoreEditors(project: Project, fileEditorManager: FileEditorManagerImpl) {
