@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackageDescriptor) : BaseRefactoringProcessor(descriptor.project) {
     override fun getCommandName(): String = KotlinBundle.message(
@@ -45,13 +44,8 @@ class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackag
         }
         val toContinue = showConflicts(conflicts, usages)
         if (!toContinue) return false
-        val movedDeclarations = descriptor.files.flatMap { file ->
-            file.declarations.filterIsInstance<KtNamedDeclaration>().flatMap { topLevelDecl ->
-                topLevelDecl.withChildDeclarations()
-            }
-        }
-        unMarkNonUpdatableUsages(movedDeclarations)
-        refUsages.set(usages.toList().filterUpdatable(movedDeclarations).toTypedArray())
+        unMarkNonUpdatableUsages(descriptor.files)
+        refUsages.set(K2MoveRenameUsageInfo.filterUpdatable(descriptor.files, usages).toTypedArray())
         return true
     }
 

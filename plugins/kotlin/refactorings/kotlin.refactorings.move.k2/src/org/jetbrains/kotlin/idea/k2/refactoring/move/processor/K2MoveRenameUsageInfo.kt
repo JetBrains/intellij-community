@@ -257,14 +257,25 @@ sealed class K2MoveRenameUsageInfo(
          * In [markInternalUsages] we marked all internal usages, but some of these usages don't need to be updated.
          * Like, for example, instance methods.
          */
-        fun unMarkNonUpdatableUsages(movedElements: List<KtNamedDeclaration>) {
-            for (declaration in movedElements) {
-                declaration.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
+        fun unMarkNonUpdatableUsages(topLevelMovedElements: Iterable<PsiElement>) {
+            val allMovedDeclarations = topLevelMovedElements.flatMap { it.withChildDeclarations() }
+            for (element in topLevelMovedElements) {
+                element.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
                     val usageInfo = refExpr.internalUsageInfo ?: return@forEachDescendantOfType
-                    if (!usageInfo.isUpdatable(movedElements)) refExpr.internalUsageInfo = null
+                    if (!usageInfo.isUpdatable(allMovedDeclarations)) refExpr.internalUsageInfo = null
                 }
             }
         }
+
+        /**
+         * Filters out usages that are not updatable, such usages might be needed for conflict checking but don't need to be touched during the
+         * retargeting process.
+         */
+        internal fun filterUpdatable(topLevelMovedElements: Iterable<PsiElement>, usages: Array<out UsageInfo>): List<UsageInfo> {
+            val allMovedDeclarations = topLevelMovedElements.flatMap { it.withChildDeclarations() }
+            return usages.filter { if (it is K2MoveRenameUsageInfo) it.isUpdatable(allMovedDeclarations) else true }
+        }
+
 
         /**
          * Finds usages to [declaration] excluding the usages inside [declaration].

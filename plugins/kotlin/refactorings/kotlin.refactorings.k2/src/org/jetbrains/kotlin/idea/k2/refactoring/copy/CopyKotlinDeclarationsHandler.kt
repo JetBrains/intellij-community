@@ -173,8 +173,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
                 collectConflicts(sourceData, targetData)
             }
 
-        val topLevelDeclarationsToMove = elementsToCopy.flatMap { it.getDeclarationsToCopy() }.filterIsInstance<KtNamedDeclaration>()
-        unMarkNonUpdatableUsages(topLevelDeclarationsToMove)
+        unMarkNonUpdatableUsages(elementsToCopy)
 
         project.checkConflictsInteractively(conflicts) {
             try {

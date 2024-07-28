@@ -17,9 +17,6 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import kotlin.collections.filter
-import kotlin.collections.flatMap
 
 /**
  * Called when moving packages.
@@ -68,17 +65,12 @@ class K2MoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
         targetDirectory: PsiDirectory,
         conflicts: MultiMap<PsiElement, String>
     ) {
-        val declarationsToMove = files.filterIsInstance<KtFile>()
-            .flatMap { file -> file.declarations }
-            .flatMap { declaration -> (declaration as? KtNamedDeclaration)?.withChildDeclarations() ?: emptyList() }
-        unMarkNonUpdatableUsages(declarationsToMove)
-        val updatableUsages = infos.get()
-            ?.filter { if (it is K2MoveRenameUsageInfo) it.isUpdatable(declarationsToMove) else true }
-            ?: return
+        val movedFiles = files.filterIsInstance<KtFile>()
+        unMarkNonUpdatableUsages(movedFiles)
 
         // processing kotlin usages from Java declarations will result in non-deterministic retargeting of the references
         // to fix this, all usages are sorted by start offset
-        infos.set(updatableUsages.sortedBy { it.element?.startOffset ?: -1 }.toTypedArray())
+        infos.set(K2MoveRenameUsageInfo.filterUpdatable(movedFiles, infos.get()).sortedBy { it.element?.startOffset ?: -1 }.toTypedArray())
         moveFileHandler.detectConflicts(conflicts, files.filterIsInstance<KtFile>().toTypedArray(), infos.get(), targetDirectory)
     }
 

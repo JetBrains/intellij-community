@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -29,7 +30,7 @@ internal fun Iterable<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNa
     return oldToNewMap
 }
 
-internal fun KtNamedDeclaration.withChildDeclarations() = collectDescendantsOfType<KtNamedDeclaration>().toList()
+internal fun PsiElement.withChildDeclarations() = collectDescendantsOfType<KtNamedDeclaration>().toList()
 
 internal fun K2ChangePackageDescriptor.usageViewDescriptor(): MoveMultipleElementsViewDescriptor {
     return MoveMultipleElementsViewDescriptor(files.toTypedArray(), target.presentablePkgName())
