@@ -160,15 +160,15 @@ internal class IdeProjectFrameAllocator(
 
         @Suppress("UsagesOfObsoleteApi")
         (project as ComponentManagerEx).getCoroutineScope().launch(startUpContextElementToPass + rootTask()) {
+          val frameHelper = deferredProjectFrameHelper.await()
           launch {
-            val frameHelper = deferredProjectFrameHelper.await()
             frameHelper.installDefaultProjectStatusBarWidgets(project)
             frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
           }
 
           reopeningEditorJob.join()
           postOpenEditors(
-            deferredProjectFrameHelper = deferredProjectFrameHelper,
+            frameHelper = frameHelper,
             fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
             toolWindowInitJob = toolWindowInitJob,
             project = project,
@@ -401,12 +401,11 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
 }
 
 private suspend fun postOpenEditors(
-  deferredProjectFrameHelper: Deferred<ProjectFrameHelper>,
+  frameHelper: ProjectFrameHelper,
   fileEditorManager: FileEditorManagerImpl,
   project: Project,
   toolWindowInitJob: Job,
 ) {
-  val frameHelper = deferredProjectFrameHelper.await()
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     // read the state of dockable editors
     fileEditorManager.initDockableContentFactory()
