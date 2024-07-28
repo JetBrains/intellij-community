@@ -350,6 +350,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/classImport.before.Main.kt");
             }
 
+            @TestMetadata("constructorCallToObject.test")
+            public void testConstructorCallToObject() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/constructorCallToObject.test");
+            }
+
             @TestMetadata("constructorParameterAnnotation.test")
             public void testConstructorParameterAnnotation() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/constructorParameterAnnotation.test");
@@ -398,6 +403,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("dslMarkersOnReceiver.before.Main.kt")
             public void testDslMarkersOnReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/dslMarkersOnReceiver.before.Main.kt");
+            }
+
+            @TestMetadata("extensionErroneousReceiver.test")
+            public void testExtensionErroneousReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/extensionErroneousReceiver.test");
             }
 
             @TestMetadata("extensionFunctionImport.before.Main.kt")
@@ -913,6 +923,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("postfixOperator.before.Main.kt")
             public void testPostfixOperator() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/postfixOperator.before.Main.kt");
+            }
+
+            @TestMetadata("privateConstructor.test")
+            public void testPrivateConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/privateConstructor.test");
             }
 
             @TestMetadata("propertyImport.before.Main.kt")

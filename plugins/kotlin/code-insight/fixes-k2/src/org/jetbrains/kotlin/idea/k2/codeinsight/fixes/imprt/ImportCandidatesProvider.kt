@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
@@ -12,6 +13,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.util.positionContext.KDocLinkNamePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -20,21 +23,29 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.resolve.ImportPath
 
 internal abstract class ImportCandidatesProvider(
     protected val indexProvider: KtSymbolFromIndexProvider,
 ) {
     protected abstract val positionContext: KotlinNameReferencePositionContext
 
+    private val file: KtFile get() = positionContext.nameExpression.containingKtFile
+    private val fileImports: List<ImportPath> by lazy { file.importDirectives.mapNotNull { it.importPath } }
+
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     protected fun KaSymbol.isVisible(fileSymbol: KaFileSymbol): Boolean =
         this is KaDeclarationSymbol && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
+
+    protected fun PsiElement.isImported(): Boolean =
+        kotlinFqName?.let { ImportPath(it, isAllUnder = false).isImported(fileImports, excludedFqNames = emptyList()) } == true
 
     protected fun PsiMember.canBeImported(): Boolean {
         return when (this) {
@@ -56,7 +67,7 @@ internal abstract class ImportCandidatesProvider(
     }
 
     context(KaSession)
-    protected fun getFileSymbol(): KaFileSymbol = positionContext.nameExpression.containingKtFile.symbol
+    protected fun getFileSymbol(): KaFileSymbol = file.symbol
 
     private val KtClassLikeDeclaration.isInner: Boolean get() = hasModifier(KtTokens.INNER_KEYWORD)
 

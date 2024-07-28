@@ -19,8 +19,11 @@ internal open class CallableImportCandidatesProvider(
     override val positionContext: KotlinNameReferencePositionContext,
     indexProvider: KtSymbolFromIndexProvider,
 ) : ImportCandidatesProvider(indexProvider) {
-    protected open fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean = kotlinCallable.canBeImported()
-    protected open fun acceptsJavaCallable(javaCallable: PsiMember): Boolean = javaCallable.canBeImported()
+    protected open fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
+        !kotlinCallable.isImported() && kotlinCallable.canBeImported()
+
+    protected open fun acceptsJavaCallable(javaCallable: PsiMember): Boolean =
+        !javaCallable.isImported() && javaCallable.canBeImported()
 
     context(KaSession)
     override fun collectCandidates(): List<KaCallableSymbol> {
