@@ -103,7 +103,8 @@ internal class IdeProjectFrameAllocator(
       val projectInitObserver = InitObserver(coroutineScope = loadingScope)
 
       async(CoroutineName("project frame creating")) {
-        createFrameManager(loadingScope = loadingScope, deferredProjectFrameHelper = deferredProjectFrameHelper)
+        val loadingState = MutableLoadingState(done = loadingScope.coroutineContext.job)
+        createFrameManager(loadingState)
       }
 
       val startOfWaitingForReadyFrame = AtomicLong(-1)
@@ -184,15 +185,11 @@ internal class IdeProjectFrameAllocator(
     }
   }
 
-  private suspend fun createFrameManager(
-    loadingScope: CoroutineScope,
-    deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>,
-  ) {
+  private suspend fun createFrameManager(loadingState: FrameLoadingState) {
     val frame = options.frame
                 ?: (ApplicationManager.getApplication().serviceIfCreated<WindowManager>() as? WindowManagerImpl)?.removeAndGetRootFrame()
 
     if (frame != null) {
-      val loadingState = MutableLoadingState(done = loadingScope.coroutineContext.job)
       withContext(Dispatchers.EDT) {
         val frameHelper = ProjectFrameHelper(frame = frame, loadingState = loadingState)
 
@@ -210,7 +207,6 @@ internal class IdeProjectFrameAllocator(
 
     val preAllocated = getAndUnsetSplashProjectFrame() as IdeFrameImpl?
     if (preAllocated != null) {
-      val loadingState = MutableLoadingState(done = loadingScope.coroutineContext.job)
       val frameHelper = withContext(Dispatchers.EDT) {
         val frameHelper = ProjectFrameHelper(frame = preAllocated, loadingState = loadingState)
         frameHelper.init()
@@ -222,7 +218,6 @@ internal class IdeProjectFrameAllocator(
 
     val frameInfo = getFrameInfo()
     val frameProducer = createNewProjectFrameProducer(frameInfo = frameInfo)
-    val loadingState = MutableLoadingState(done = loadingScope.coroutineContext.job)
     withContext(Dispatchers.EDT) {
       val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
       // must be after preInit (frame decorator is required to set a full-screen mode)
