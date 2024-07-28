@@ -73,7 +73,7 @@ data class PyVersionCheck(val version: Version, val isLessThan: Boolean) {
     private fun evaluateNumber(expression: PyAstExpression?): Int? {
       if (expression !is PyAstNumericLiteralExpression) return null
       if (!expression.isIntegerLiteral) return null
-      val value = expression.bigIntegerValue ?: return null
+      val value = expression.bigIntegerValue
       val intValue = value.toInt()
       return if (BigInteger.valueOf(intValue.toLong()) == value) intValue else null
     }
