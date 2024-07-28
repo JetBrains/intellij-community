@@ -16,11 +16,12 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -480,8 +481,23 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     checkHighlighting()
   }
 
+  private class LoggingLocalInspectionTool : LocalInspectionTool() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+      MavenLog.LOG.warn("Creating visitor")
+      return PsiFileElementVisitor()
+    }
+
+    class PsiFileElementVisitor : PsiElementVisitor() {
+      override fun visitFile(file: PsiFile) {
+        MavenLog.LOG.warn("Visiting file $file, text ${file.text}")
+      }
+    }
+  }
+
   @Test
   fun testHighlightingAbsentGroupId() = runBlocking {
+    fixture.enableInspections(LoggingLocalInspectionTool())
+
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -492,9 +508,6 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
     importProjectAsync()
-    val isDumb = DumbService.isDumb(project)
-    MavenLog.LOG.warn("isDumb = $isDumb")
-    project.waitForSmartMode()
     checkHighlighting(projectPom,
                       Highlight(text="parent", description = "'groupId' child tag should be defined"),
                       Highlight(text="junit"),
