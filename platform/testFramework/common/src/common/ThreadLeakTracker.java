@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
+import java.util.concurrent.locks.LockSupport;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -179,6 +180,8 @@ public final class ThreadLeakTracker {
       // after some time, the submitted task can finish and the thread can become idle
       stackTrace = thread.getStackTrace();
       if (shouldIgnore(thread, stackTrace)) break;
+      // avoid busy-waiting, otherwise other threads might yield priority to this one (see sleepIfNeededToGivePriorityToAnotherThread)
+      LockSupport.parkNanos(10_000_000);
     }
 
     // check once more because the thread name may be set via race
