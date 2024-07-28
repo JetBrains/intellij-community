@@ -87,27 +87,34 @@ internal class IdeProjectFrameAllocator(
 
   override suspend fun run(task: FrameAllocatorTask) {
     coroutineScope {
+      val projectInitObserver = InitObserver()
       val debugTask = launch {
         delay(10.seconds)
         logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
       }
 
+      val hideSplashTask = launch {
+        val project = projectInitObserver.awaitProjectInit()
+        val connection = project.messageBus.connect(this)
+        hideSplashWhenEditorOrToolWindowShown(connection)
+      }
+
       try {
-        doRun(outOfLoadingScope = this, task = task)
+        doRun(task, projectInitObserver)
       }
       finally {
         debugTask.cancel()
+        hideSplashTask.cancel()
       }
     }
   }
 
-  private suspend fun doRun(outOfLoadingScope: CoroutineScope, task: FrameAllocatorTask) {
+  private suspend fun doRun(task: FrameAllocatorTask, projectInitObserver: InitObserver) {
     coroutineScope {
-      val loadingScope = this
-      val projectInitObserver = InitObserver()
+      val job = currentCoroutineContext().job
 
       async(CoroutineName("project frame creating")) {
-        val loadingState = MutableLoadingState(done = loadingScope.coroutineContext.job)
+        val loadingState = MutableLoadingState(done = job)
         createFrameManager(loadingState)
       }
 
@@ -139,17 +146,6 @@ internal class IdeProjectFrameAllocator(
       }
 
       val startOfWaitingForReadyFrame = AtomicLong(-1)
-
-      // Wait for opening editor or any tool window in the outer scope, to not block the completion of the loading scope.
-      val hideSplashTask = outOfLoadingScope.launch {
-        val project = projectInitObserver.awaitProjectInit()
-        val connection = project.messageBus.connect(this)
-        hideSplashWhenEditorOrToolWindowShown(connection)
-      }
-      // Stop waiting for opening editor or any tool window if loading is finished to not block outer scope completion.
-      loadingScope.coroutineContext.job.invokeOnCompletion {
-        hideSplashTask.cancel()
-      }
 
       val reopeningEditorJob = launch {
         val project = projectInitObserver.awaitProjectInit()
