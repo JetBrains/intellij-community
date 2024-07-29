@@ -41,6 +41,7 @@ interface IjentExecApi {
   /**
    * Gets the same environment variables on the remote machine as the user would get if they run the shell.
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun fetchLoginShellEnvVariables(): Map<String, String>
 
   sealed interface ExecuteProcessResult {
@@ -53,6 +54,7 @@ interface IjentExecApi {
 }
 
 /** Docs: [IjentExecApi.executeProcessBuilder] */
+@Throws(IjentUnavailableException::class)
 suspend fun IjentExecApi.executeProcess(exe: String, vararg args: String): IjentExecApi.ExecuteProcessResult =
   executeProcessBuilder(exe).args(listOf(*args)).execute()
 

@@ -40,6 +40,7 @@ sealed interface IjentTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun getConnectionToRemotePort(address: HostAddress): IjentNetworkResult<Connection, IjentConnectionError>
 
   /**
@@ -120,41 +121,48 @@ sealed interface IjentTunnelsApi {
      * Sets the size of send buffer of the socket
      * @see java.net.SocketOptions.SO_SNDBUF
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setSendBufferSize(size: UInt)
 
     /**
      * Sets the receive buffer size of the socket
      * @see java.net.SocketOptions.SO_RCVBUF
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setReceiveBufferSize(size: UInt)
 
     /**
      * Sets the keep alive option for the socket
      * @see java.net.SocketOptions.SO_KEEPALIVE
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setKeepAlive(keepAlive: Boolean)
 
     /**
      * Sets the possibility to reuse address of the socket
      * @see java.net.SocketOptions.SO_REUSEADDR
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setReuseAddr(reuseAddr: Boolean)
 
     /**
      * Sets linger timeout for the socket
      * @see java.net.SocketOptions.SO_LINGER
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setLinger(lingerInterval: Duration)
 
     /**
      * Disables pending data until acknowledgement
      * @see java.net.SocketOptions.TCP_NODELAY
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setNoDelay(noDelay: Boolean)
 
     /**
      * Closes the connection to the socket.
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun close()
   }
 
@@ -204,6 +212,7 @@ interface IjentTunnelsPosixApi : IjentTunnelsApi {
    * }
    * ```
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
 
   data class ListenOnUnixSocketResult(
@@ -243,6 +252,7 @@ interface IjentTunnelsWindowsApi : IjentTunnelsApi
  *
  * @see com.intellij.platform.ijent.IjentTunnelsApi.getConnectionToRemotePort for more details on the behavior of [Connection]
  */
+@Throws(IjentUnavailableException::class)
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   hostAddress: IjentTunnelsApi.HostAddress,
   errorHandler: suspend (IjentConnectionError) -> T,
@@ -258,12 +268,14 @@ suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
     }
   }
 
+@Throws(IjentUnavailableException::class)
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   host: String, port: UShort,
   errorHandler: suspend (IjentConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
 ): T = withConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build(), errorHandler, action)
 
+@Throws(IjentUnavailableException::class)
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   remotePort: UShort,
   errorHandler: suspend (IjentConnectionError) -> T,

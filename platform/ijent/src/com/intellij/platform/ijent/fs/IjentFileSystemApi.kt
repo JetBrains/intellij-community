@@ -2,10 +2,7 @@
 package com.intellij.platform.ijent.fs
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.ijent.IjentId
-import com.intellij.platform.ijent.IjentInfo
-import com.intellij.platform.ijent.IjentPosixInfo
-import com.intellij.platform.ijent.IjentWindowsInfo
+import com.intellij.platform.ijent.*
 import kotlinx.coroutines.CoroutineScope
 import java.nio.ByteBuffer
 
@@ -36,11 +33,13 @@ sealed interface IjentFileSystemApi {
   /**
    * A user may have no home directory on Unix-like systems, for example, the user `nobody`.
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun userHome(): IjentPath.Absolute?
 
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun listDirectory(path: IjentPath.Absolute): IjentFsResult<
     Collection<String>,
     ListDirectoryError>
@@ -53,6 +52,7 @@ sealed interface IjentFileSystemApi {
    * [resolveSymlinks] controls resolution of symlinks among children.
    *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean = true,
@@ -71,6 +71,7 @@ sealed interface IjentFileSystemApi {
   /**
    * Resolves all symlinks in the path. Corresponds to realpath(3) on Unix and GetFinalPathNameByHandle on Windows.
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun canonicalize(path: IjentPath.Absolute): IjentFsResult<
     IjentPath.Absolute,
     CanonicalizeError>
@@ -86,6 +87,7 @@ sealed interface IjentFileSystemApi {
   /**
    * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [IjentFileInfo.fileType] if [path] points on a symlink.
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<out IjentFileInfo, StatError>
 
   sealed interface StatError : IjentFsError {
@@ -100,6 +102,7 @@ sealed interface IjentFileSystemApi {
    * on Unix return true if both paths have the same inode.
    * On Windows some heuristics are used, for more details see https://docs.rs/same-file/1.0.6/same_file/
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun sameFile(source: IjentPath.Absolute, target: IjentPath.Absolute): IjentFsResult<
     Boolean,
     SameFileError>
@@ -115,6 +118,7 @@ sealed interface IjentFileSystemApi {
   /**
    * Opens file only for reading
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun openForReading(path: IjentPath.Absolute): IjentFsResult<
     IjentOpenedFile.Reader,
     FileReaderError>
@@ -131,6 +135,7 @@ sealed interface IjentFileSystemApi {
   /**
    * Opens file only for writing
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun openForWriting(
     options: WriteOptions,
   ): IjentFsResult<
@@ -176,10 +181,11 @@ sealed interface IjentFileSystemApi {
     interface Other : FileWriterError, IjentFsError.Other
   }
 
+  @Throws(IjentUnavailableException::class)
   suspend fun openForReadingAndWriting(options: WriteOptions): IjentFsResult<IjentOpenedFile.ReaderWriter, FileWriterError>
 
 
-  @Throws(DeleteException::class)
+  @Throws(DeleteException::class, IjentUnavailableException::class)
   suspend fun deleteDirectory(path: IjentPath.Absolute, removeContent: Boolean)
 
   sealed class DeleteException(
@@ -194,7 +200,7 @@ sealed interface IjentFileSystemApi {
   }
 
 
-  @Throws(CopyException::class)
+  @Throws(CopyException::class, IjentUnavailableException::class)
   suspend fun copy(options: CopyOptions)
 
   interface CopyOptions
@@ -224,7 +230,7 @@ sealed interface IjentFileSystemApi {
 sealed interface IjentOpenedFile {
   val path: IjentPath.Absolute
 
-  @Throws(CloseException::class)
+  @Throws(CloseException::class, IjentUnavailableException::class)
   suspend fun close()
 
   sealed class CloseException(
@@ -235,6 +241,7 @@ sealed interface IjentOpenedFile {
       : CloseException(where, additionalMessage), IjentFsError.Other
   }
 
+  @Throws(IjentUnavailableException::class)
   suspend fun tell(): IjentFsResult<
     Long,
     TellError>
@@ -243,6 +250,7 @@ sealed interface IjentOpenedFile {
     interface Other : TellError, IjentFsError.Other
   }
 
+  @Throws(IjentUnavailableException::class)
   suspend fun seek(offset: Long, whence: SeekWhence): IjentFsResult<
     Long,
     SeekError>
@@ -271,6 +279,7 @@ sealed interface IjentOpenedFile {
      *
      * It reads not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun read(buf: ByteBuffer): IjentFsResult<ReadResult, ReadError>
 
     /**
@@ -280,6 +289,7 @@ sealed interface IjentOpenedFile {
      *
      * It reads not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun read(buf: ByteBuffer, offset: Long): IjentFsResult<ReadResult, ReadError>
 
     sealed interface ReadResult {
@@ -302,6 +312,7 @@ sealed interface IjentOpenedFile {
      *
      * It writes not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun write(buf: ByteBuffer): IjentFsResult<
       Int,
       WriteError>
@@ -311,6 +322,7 @@ sealed interface IjentOpenedFile {
      *
      * It writes not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun write(buf: ByteBuffer, pos: Long): IjentFsResult<
       Int,
       WriteError>
@@ -327,7 +339,7 @@ sealed interface IjentOpenedFile {
       interface Other : WriteError, IjentFsError.Other
     }
 
-    @Throws(FlushException::class)
+    @Throws(FlushException::class, IjentUnavailableException::class)
     suspend fun flush()
 
     sealed class FlushException(
@@ -338,7 +350,7 @@ sealed interface IjentOpenedFile {
         : FlushException(where, additionalMessage), IjentFsError.Other
     }
 
-    @Throws(TruncateException::class)
+    @Throws(TruncateException::class, IjentUnavailableException::class)
     suspend fun truncate(size: Long)
 
     sealed class TruncateException(
@@ -364,7 +376,7 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
     // todo
   }
 
-  @kotlin.jvm.Throws(CreateDirectoryException::class)
+  @Throws(CreateDirectoryException::class, IjentUnavailableException::class)
   suspend fun createDirectory(path: IjentPath.Absolute, attributes: List<CreateDirAttributePosix>)
 
   sealed class CreateDirectoryException(
@@ -378,6 +390,7 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
     class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateDirectoryException(where, additionalMessage), IjentFsError.Other
   }
 
+  @Throws(IjentUnavailableException::class)
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean,
@@ -385,6 +398,7 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
     Collection<Pair<String, IjentPosixFileInfo>>,
     IjentFileSystemApi.ListDirectoryError>
 
+  @Throws(IjentUnavailableException::class)
   override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<
     IjentPosixFileInfo,
     IjentFileSystemApi.StatError>
@@ -393,8 +407,10 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
 interface IjentFileSystemWindowsApi : IjentFileSystemApi {
   override val user: IjentWindowsInfo.User
 
+  @Throws(IjentUnavailableException::class)
   suspend fun getRootDirectories(): Collection<IjentPath.Absolute>
 
+  @Throws(IjentUnavailableException::class)
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean,
@@ -402,6 +418,7 @@ interface IjentFileSystemWindowsApi : IjentFileSystemApi {
     Collection<Pair<String, IjentWindowsFileInfo>>,
     IjentFileSystemApi.ListDirectoryError>
 
+  @Throws(IjentUnavailableException::class)
   override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<
     IjentWindowsFileInfo,
     IjentFileSystemApi.StatError>
