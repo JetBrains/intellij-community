@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Converts the String to the int id and back.
  * It guarantees to return the same id for the equals Strings.
- * Used for compression: instead of keeping many (maybe equal) String references it sometimes cheaper to keep int ids in a packed array.
+ * Used for compression: instead of keeping many (maybe equal) String references, it is sometimes cheaper to keep int ids in a packed array.
  */
 final class IndexedCharsInterner {
   private int[] idToIndex = new int[10];

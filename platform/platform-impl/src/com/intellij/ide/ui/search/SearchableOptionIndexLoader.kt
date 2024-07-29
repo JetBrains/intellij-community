@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.lang.UrlClassLoader
@@ -37,7 +36,7 @@ private val LOG = logger<MySearchableOptionProcessor>()
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache = HashSet<String>()
-  val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap(20, 0.9f, true)
+  @JvmField val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap(20, 0.9f, true)
   @JvmField val identifierTable: IndexedCharsInterner = IndexedCharsInterner()
 
   override fun addOptions(
@@ -109,8 +108,8 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
       if (configs == null) {
         storage.put(word, longArrayOf(packed))
       }
-      else if (configs.indexOf(packed) == -1) {
-        storage.put(word, ArrayUtil.append(configs, packed))
+      else if (!configs.contains(packed)) {
+        storage.put(word, configs + packed)
       }
     }
   }
@@ -125,7 +124,7 @@ data class ConfigurableEntry(
 )
 
 @Internal
-val INDEX_ENTRY_REGEXP = Regex("""\|b\|([^|]+)\|k\|([^|]+)\|""")
+val INDEX_ENTRY_REGEXP: Regex = Regex("""\|b\|([^|]+)\|k\|([^|]+)\|""")
 
 private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("com.intellij.search.additionalOptionsLocation")
 

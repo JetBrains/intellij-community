@@ -133,7 +133,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     // index
     highlightOptionToSynonym = processor.computeHighlightOptionToSynonym();
 
-    storage = processor.getStorage();
+    storage = processor.storage;
     identifierTable = processor.identifierTable;
   }
 
