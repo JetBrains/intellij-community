@@ -1281,10 +1281,6 @@
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.GCTroubleInfoCollector"/>
 
     <!-- experiments -->
-    <experimentalFeature id="wsl.legacy.distribution" percentOfUsers="0">
-      <description>Makes legacy Ubuntu distribution (bash.exe) available</description>
-    </experimentalFeature>
-
     <experimentalFeature id="linux.native.menu" percentOfUsers="100" requireRestart="true">
       <description>Integration with global menu in Linux</description>
     </experimentalFeature>

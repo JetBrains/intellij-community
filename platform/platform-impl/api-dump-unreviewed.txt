@@ -3276,10 +3276,6 @@ c:com.intellij.execution.wsl.WSLDistribution
 - resolveSymlink(java.lang.String):java.lang.String
 - resolveSymlink(java.lang.String,I):java.lang.String
 - s:testOverriddenWslExe(java.nio.file.Path,com.intellij.openapi.Disposable):V
-f:com.intellij.execution.wsl.WSLDistributionLegacy
-- com.intellij.execution.wsl.WSLDistribution
-- s:getInstance():com.intellij.execution.wsl.WSLDistributionLegacy
-- getWslPath(java.nio.file.Path):java.lang.String
 f:com.intellij.execution.wsl.WSLUtil
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
 - <init>():V
