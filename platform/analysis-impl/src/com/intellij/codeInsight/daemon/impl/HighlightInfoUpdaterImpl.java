@@ -183,7 +183,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     }
 
     for (InvalidPsi entry : invalidPsiElements) {
-      RangeHighlighter highlighter = entry.highlighter();
+      RangeHighlighterEx highlighter = entry.highlighter();
       boolean disposed;
       if (invalidPsiRecycler.remove(highlighter)) {
         disposed = invalidPsiRecycler.tryIncinerate(highlighter);
@@ -213,7 +213,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       }
     }
   }
-  private record InvalidPsi(@NotNull Object toolId, @NotNull PsiElement psiElement, @NotNull RangeHighlighter highlighter) {}
+  private record InvalidPsi(@NotNull Object toolId, @NotNull PsiElement psiElement, @NotNull RangeHighlighterEx highlighter) {}
 
   @NotNull
   private synchronized List<InvalidPsi> recycleInvalidPsiElements(@NotNull PsiFile psiFile,

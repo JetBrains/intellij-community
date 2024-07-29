@@ -230,12 +230,12 @@ public final class UpdateHighlightersUtil {
     }
   }
 
-  static boolean shouldRemoveHighlighter(@NotNull RangeHighlighter highlighter, @NotNull HighlightingSession session) {
+  static boolean shouldRemoveHighlighter(@NotNull RangeHighlighterEx highlighter, @NotNull HighlightingSession session) {
     return !session.isEssentialHighlightingOnly()
            || shouldRemoveInfoEvenInEssentialMode(highlighter);
   }
 
-  private static boolean shouldRemoveInfoEvenInEssentialMode(@NotNull RangeHighlighter highlighter) {
+  private static boolean shouldRemoveInfoEvenInEssentialMode(@NotNull RangeHighlighterEx highlighter) {
     HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
     if (info == null) return true;
     int group = info.getGroup();
