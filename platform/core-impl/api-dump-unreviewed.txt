@@ -231,7 +231,6 @@ c:com.intellij.core.CoreProjectEnvironment
 - <init>(com.intellij.openapi.Disposable,com.intellij.core.CoreApplicationEnvironment):V
 - addProjectExtension(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Object):V
 - p:createFileIndexFacade():com.intellij.openapi.roots.FileIndexFacade
-- p:createProject(org.picocontainer.PicoContainer,com.intellij.openapi.Disposable):com.intellij.mock.MockProject
 - p:createProjectScopeBuilder():com.intellij.psi.search.ProjectScopeBuilder
 - p:createResolveScopeManager(com.intellij.psi.PsiManager):com.intellij.psi.impl.ResolveScopeManager
 - getEnvironment():com.intellij.core.CoreApplicationEnvironment
@@ -964,7 +963,6 @@ c:com.intellij.mock.MockApplication
 c:com.intellij.mock.MockComponentManager
 - com.intellij.openapi.components.ComponentManager
 - com.intellij.openapi.util.UserDataHolderBase
-- <init>(org.picocontainer.PicoContainer,com.intellij.openapi.Disposable):V
 - addComponent(java.lang.Class,java.lang.Object):V
 - createError(java.lang.String,com.intellij.openapi.extensions.PluginId):java.lang.RuntimeException
 - createError(java.lang.String,java.lang.Throwable,com.intellij.openapi.extensions.PluginId,java.util.Map):java.lang.RuntimeException
@@ -1058,7 +1056,6 @@ c:com.intellij.mock.MockFileIndexFacade
 c:com.intellij.mock.MockProject
 - com.intellij.mock.MockComponentManager
 - com.intellij.openapi.project.Project
-- <init>(org.picocontainer.PicoContainer,com.intellij.openapi.Disposable):V
 - f:getActivityCategory(Z):com.intellij.diagnostic.ActivityCategory
 - getActualComponentManager():com.intellij.openapi.components.ComponentManager
 - getBaseDir():com.intellij.openapi.vfs.VirtualFile
@@ -4624,7 +4621,6 @@ f:org.jetbrains.ide.PooledThreadExecutor
 - sf:INSTANCE:java.util.concurrent.ExecutorService
 - <init>():V
 org.picocontainer.MutablePicoContainer
-- org.picocontainer.PicoContainer
 - a:getComponentAdapter(java.lang.Object):org.picocontainer.ComponentAdapter
 - registerComponentImplementation(java.lang.Class):org.picocontainer.ComponentAdapter
 - a:registerComponentImplementation(java.lang.Object,java.lang.Class):org.picocontainer.ComponentAdapter

@@ -86,12 +86,19 @@ class LoadingOrder {
   }
 
   companion object {
+    @Internal
     const val FIRST_STR: @NonNls String = "first"
+    @Internal
     const val LAST_STR: @NonNls String = "last"
+    @Internal
     const val BEFORE_STR: @NonNls String = "before "
+    @Internal
     const val BEFORE_STR_OLD: @NonNls String = "before:"
+    @Internal
     const val AFTER_STR: @NonNls String = "after "
+    @Internal
     const val AFTER_STR_OLD: @NonNls String = "after:"
+    @Internal
     const val ORDER_RULE_SEPARATOR: Char = ','
 
     @JvmField

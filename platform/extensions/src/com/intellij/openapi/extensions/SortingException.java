@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public final class SortingException extends RuntimeException {
   private final LoadingOrder.Orderable[] myConflictingElements;
 
@@ -15,7 +16,6 @@ public final class SortingException extends RuntimeException {
     myConflictingElements = conflictingElements;
   }
 
-  @Internal
   public LoadingOrder.Orderable @NotNull [] getConflictingElements() {
     return myConflictingElements;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -7,12 +7,16 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.KeyedLazyInstance;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
 public final class ExtensionPointUtil {
+
+  private ExtensionPointUtil() { }
+
   public static @NotNull <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
                                                                                    @NotNull ExtensionPointName<?> extensionPointName,
                                                                                    @Nullable Disposable parentDisposable) {
@@ -20,15 +24,18 @@ public final class ExtensionPointUtil {
     return lazyValue;
   }
 
+  @Internal
   public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject,
                                                                   @NotNull ExtensionPointName<T> extensionPointName) {
     return createExtensionDisposable(extensionObject, extensionPointName.getPoint());
   }
 
+  @Internal
   public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<@NotNull T> extensionPoint) {
     return createExtensionDisposable(extensionObject, extensionPoint, removed -> removed == extensionObject);
   }
 
+  @Internal
   public static @NotNull <T, U> Disposable createExtensionDisposable(@NotNull T extensionObject,
                                                                      @NotNull ExtensionPoint<@NotNull U> extensionPoint,
                                                                      @NotNull Predicate<? super U> removePredicate) {

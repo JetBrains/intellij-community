@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -40,6 +41,7 @@ public abstract class AbstractExtensionPointBean implements PluginAware {
     return (Class<T>)Class.forName(className, true, classLoader);
   }
 
+  @Internal
   public final @NotNull <T> T instantiate(@NotNull String className, @NotNull PicoContainer container) throws ClassNotFoundException {
     //noinspection CastToIncompatibleInterface
     return ((ComponentManager)container).instantiateClass(className, myPluginDescriptor);

@@ -12,7 +12,6 @@ a:com.intellij.openapi.extensions.AbstractExtensionPointBean
 - f:findClass(java.lang.String):java.lang.Class
 - getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - getPluginId():com.intellij.openapi.extensions.PluginId
-- f:instantiate(java.lang.String,org.picocontainer.PicoContainer):java.lang.Object
 - f:setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 f:com.intellij.serviceContainer.ComponentManagerImplKt
 - sf:handleComponentError(java.lang.Throwable,java.lang.String,com.intellij.openapi.extensions.PluginId):V

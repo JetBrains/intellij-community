@@ -1,14 +1,6 @@
 com.intellij.ide.plugins.cl.PluginAwareClassLoader
-- sf:ACTIVE:I
-- sf:UNLOAD_IN_PROGRESS:I
-- a:getBackgroundTime():J
-- a:getEdtTime():J
-- a:getFiles():java.util.Collection
-- a:getLoadedClassCount():J
-- a:getPackagePrefix():java.lang.String
 - a:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - a:getPluginId():com.intellij.openapi.extensions.PluginId
-- a:getState():I
 *e:com.intellij.openapi.client.ClientKind
 - java.lang.Enum
 - sf:ALL:com.intellij.openapi.client.ClientKind
@@ -36,7 +28,6 @@ com.intellij.openapi.components.ComponentManager
 - a:getMessageBus():com.intellij.util.messages.MessageBus
 - a:getService(java.lang.Class):java.lang.Object
 - getServiceIfCreated(java.lang.Class):java.lang.Object
-- *:getServices(java.lang.Class,com.intellij.openapi.client.ClientKind):java.util.List
 - a:hasComponent(java.lang.Class):Z
 - a:isDisposed():Z
 com.intellij.openapi.components.NamedComponent
@@ -80,11 +71,8 @@ com.intellij.openapi.extensions.ExtensionPoint
 - a:addChangeListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
 - a:addChangeListener(kotlinx.coroutines.CoroutineScope,java.lang.Runnable):V
 - a:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener,Z,com.intellij.openapi.Disposable):V
-- *a:getByKey(java.lang.Object,java.lang.Class,java.util.function.Function):java.lang.Object
 - a:getExtensionList():java.util.List
 - a:getExtensions():java.lang.Object[]
-- a:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
-- a:isDynamic():Z
 - a:registerExtension(java.lang.Object):V
 - a:registerExtension(java.lang.Object,com.intellij.openapi.Disposable):V
 - a:registerExtension(java.lang.Object,com.intellij.openapi.extensions.LoadingOrder,com.intellij.openapi.Disposable):V
@@ -109,11 +97,8 @@ com.intellij.openapi.extensions.ExtensionPointAndAreaListener
 - com.intellij.openapi.extensions.ExtensionPointListener
 - areaReplaced(com.intellij.openapi.extensions.ExtensionsArea):V
 com.intellij.openapi.extensions.ExtensionPointListener
-- sf:Companion:com.intellij.openapi.extensions.ExtensionPointListener$Companion
 - extensionAdded(java.lang.Object,com.intellij.openapi.extensions.PluginDescriptor):V
 - extensionRemoved(java.lang.Object,com.intellij.openapi.extensions.PluginDescriptor):V
-f:com.intellij.openapi.extensions.ExtensionPointListener$Companion
-- f:emptyArray():com.intellij.openapi.extensions.ExtensionPointListener[]
 f:com.intellij.openapi.extensions.ExtensionPointName
 - com.intellij.openapi.extensions.BaseExtensionPointName
 - sf:Companion:com.intellij.openapi.extensions.ExtensionPointName$Companion
@@ -123,9 +108,7 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - f:addExtensionPointListener(com.intellij.openapi.extensions.AreaInstance,com.intellij.openapi.extensions.ExtensionPointListener):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener,com.intellij.openapi.Disposable):V
-- f:addExtensionPointListener(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.extensions.ExtensionPointListener):V
 - *f:computeIfAbsent(java.lang.Class,java.util.function.Supplier):java.lang.Object
-- *f:computeIfAbsent(java.lang.Object,java.lang.Class,java.util.function.Function):java.lang.Object
 - f:computeSafeIfAny(java.util.function.Function):java.lang.Object
 - sf:create(java.lang.String):com.intellij.openapi.extensions.ExtensionPointName
 - f:extensions():java.util.stream.Stream
@@ -134,9 +117,6 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - f:findFirstAssignableExtension(java.lang.Class):java.lang.Object
 - f:findFirstSafe(java.util.function.Predicate):java.lang.Object
 - f:forEachExtensionSafe(java.util.function.Consumer):V
-- *f:getByGroupingKey(java.lang.Object,java.lang.Class,java.util.function.Function):java.util.List
-- *f:getByKey(java.lang.Object,java.lang.Class,java.util.function.Function):java.lang.Object
-- *f:getByKey(java.lang.Object,java.lang.Class,java.util.function.Function,java.util.function.Function):java.lang.Object
 - f:getExtensionList():java.util.List
 - f:getExtensionList(com.intellij.openapi.extensions.AreaInstance):java.util.List
 - f:getExtensions():java.lang.Object[]
@@ -149,16 +129,9 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - f:removeExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener):V
 f:com.intellij.openapi.extensions.ExtensionPointName$Companion
 - f:create(java.lang.String):com.intellij.openapi.extensions.ExtensionPointName
-com.intellij.openapi.extensions.ExtensionPointPriorityListener
 f:com.intellij.openapi.extensions.ExtensionPointUtil
-- <init>():V
-- s:createExtensionDisposable(java.lang.Object,com.intellij.openapi.extensions.ExtensionPoint):com.intellij.openapi.Disposable
-- s:createExtensionDisposable(java.lang.Object,com.intellij.openapi.extensions.ExtensionPoint,java.util.function.Predicate):com.intellij.openapi.Disposable
-- s:createExtensionDisposable(java.lang.Object,com.intellij.openapi.extensions.ExtensionPointName):com.intellij.openapi.Disposable
 - s:createKeyedExtensionDisposable(java.lang.Object,com.intellij.openapi.extensions.ExtensionPoint):com.intellij.openapi.Disposable
 - s:dropLazyValueOnChange(com.intellij.openapi.util.ClearableLazyValue,com.intellij.openapi.extensions.ExtensionPointName,com.intellij.openapi.Disposable):com.intellij.openapi.util.ClearableLazyValue
-f:com.intellij.openapi.extensions.ExtensionPointUtilKt
-- sf:createExtensionDisposable(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Object,com.intellij.openapi.Disposable):com.intellij.openapi.Disposable
 f:com.intellij.openapi.extensions.Extensions
 - s:findExtension(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Class):java.lang.Object
 - s:getArea(com.intellij.openapi.extensions.AreaInstance):com.intellij.openapi.extensions.ExtensionsArea
@@ -177,17 +150,10 @@ com.intellij.openapi.extensions.ExtensionsArea
 @:com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 - java.lang.annotation.Annotation
 f:com.intellij.openapi.extensions.LoadingOrder
-- sf:AFTER_STR:java.lang.String
-- sf:AFTER_STR_OLD:java.lang.String
 - sf:ANY:com.intellij.openapi.extensions.LoadingOrder
-- sf:BEFORE_STR:java.lang.String
-- sf:BEFORE_STR_OLD:java.lang.String
 - sf:Companion:com.intellij.openapi.extensions.LoadingOrder$Companion
 - sf:FIRST:com.intellij.openapi.extensions.LoadingOrder
-- sf:FIRST_STR:java.lang.String
 - sf:LAST:com.intellij.openapi.extensions.LoadingOrder
-- sf:LAST_STR:java.lang.String
-- sf:ORDER_RULE_SEPARATOR:C
 - sf:after(java.lang.String):com.intellij.openapi.extensions.LoadingOrder
 - sf:before(java.lang.String):com.intellij.openapi.extensions.LoadingOrder
 - equals(java.lang.Object):Z
@@ -230,14 +196,12 @@ com.intellij.openapi.extensions.PluginDescriptor
 - a:setEnabled(Z):V
 f:com.intellij.openapi.extensions.PluginId
 - java.lang.Comparable
-- sf:EMPTY_ARRAY:com.intellij.openapi.extensions.PluginId[]
 - compareTo(com.intellij.openapi.extensions.PluginId):I
 - equals(java.lang.Object):Z
 - s:findId(java.lang.String):com.intellij.openapi.extensions.PluginId
 - s:findId(java.lang.String[]):com.intellij.openapi.extensions.PluginId
 - s:getId(java.lang.String):com.intellij.openapi.extensions.PluginId
 - getIdString():java.lang.String
-- s:getRegisteredIds():java.util.Set
 - hashCode():I
 f:com.intellij.openapi.extensions.ProjectExtensionPointName
 - com.intellij.openapi.extensions.BaseExtensionPointName
@@ -252,8 +216,6 @@ f:com.intellij.openapi.extensions.ProjectExtensionPointName
 - f:getExtensions(com.intellij.openapi.extensions.AreaInstance):java.util.List
 - f:getPoint(com.intellij.openapi.extensions.AreaInstance):com.intellij.openapi.extensions.ExtensionPoint
 - f:hasAnyExtensions(com.intellij.openapi.extensions.AreaInstance):Z
-f:com.intellij.openapi.extensions.SortingException
-- java.lang.RuntimeException
 com.intellij.util.KeyedLazyInstance
 - a:getInstance():java.lang.Object
 - a:getKey():java.lang.String
@@ -287,9 +249,7 @@ Fc:com.intellij.util.messages.Topic
 - <init>(java.lang.String,java.lang.Class,com.intellij.util.messages.Topic$BroadcastDirection):V
 - s:create(java.lang.String,java.lang.Class):com.intellij.util.messages.Topic
 - s:create(java.lang.String,java.lang.Class,com.intellij.util.messages.Topic$BroadcastDirection):com.intellij.util.messages.Topic
-- getBroadcastDirection():com.intellij.util.messages.Topic$BroadcastDirection
 - getDisplayName():java.lang.String
-- getListenerClass():java.lang.Class
 @:com.intellij.util.messages.Topic$AppLevel
 - java.lang.annotation.Annotation
 e:com.intellij.util.messages.Topic$BroadcastDirection
@@ -306,6 +266,3 @@ org.picocontainer.ComponentAdapter
 - a:getComponentImplementation():java.lang.Class
 - a:getComponentInstance():java.lang.Object
 - a:getComponentKey():java.lang.Object
-org.picocontainer.PicoContainer
-- a:getComponentInstance(java.lang.Object):java.lang.Object
-- a:getComponentInstanceOfType(java.lang.Class):java.lang.Object
