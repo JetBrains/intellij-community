@@ -760,7 +760,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         INLINE_CLASS_DEPRECATED.registerFactory(InlineClassDeprecatedFixFactory)
 
-        SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC.registerFactory(AddJvmStaticAnnotationFix)
+        SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC.registerFactory(AddJvmStaticAnnotationFixFactory)
 
         SEALED_INHERITOR_IN_DIFFERENT_PACKAGE.registerFactory(MoveToSealedMatchingPackageFix)
         SEALED_INHERITOR_IN_DIFFERENT_MODULE.registerFactory(MoveToSealedMatchingPackageFix)
