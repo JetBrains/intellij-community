@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsi
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenConditionIsPattern
 
-class RemoveIsFix(
+class RemoveIsFromIsEnumEntryFix(
     element: KtWhenConditionIsPattern,
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtWhenConditionIsPattern, Unit>(element, Unit) {
 

@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 
-class ReplaceWithComparisonFix(
+class ReplaceIsEnumEntryWithComparisonFix(
     element: KtIsExpression,
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtIsExpression, Unit>(element, Unit) {
     private val comparison = if (element.isNegated) "!=" else "=="

@@ -10,8 +10,8 @@ object IsEnumEntryFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val element = diagnostic.psiElement.safeAs<KtTypeReference>()?.parent ?: return null
         return when (element) {
-            is KtIsExpression -> if (element.typeReference == null) null else ReplaceWithComparisonFix(element).asIntention()
-            is KtWhenConditionIsPattern -> if (element.typeReference == null || element.isNegated) null else RemoveIsFix(element).asIntention()
+            is KtIsExpression -> if (element.typeReference == null) null else ReplaceIsEnumEntryWithComparisonFix(element).asIntention()
+            is KtWhenConditionIsPattern -> if (element.typeReference == null || element.isNegated) null else RemoveIsFromIsEnumEntryFix(element).asIntention()
             else -> null
         }
     }
