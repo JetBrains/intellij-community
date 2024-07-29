@@ -1287,7 +1287,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private void createParenthSpaceInMethodParameters(@NotNull PsiParameterList list, boolean shouldUseDependentSpacing) {
     if (shouldUseDependentSpacing && list.getParametersCount() > 1) {
-      createSpaceWithLinefeedIfListWrapped(list.getParameters(), mySettings.SPACE_WITHIN_METHOD_PARENTHESES, true);
+      createSpaceWithLinefeedIfListWrapped(list.getParameters(), mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     } else {
       createParenthSpace(shouldUseDependentSpacing, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     }
@@ -1380,7 +1380,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.RPARENTH) {
       boolean space = myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
       if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
-        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space, false);
+        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space);
         return;
       }
       createSpaceInCode(space);
@@ -1388,7 +1388,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.LPARENTH) {
       boolean space = mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
       if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
-        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space, false);
+        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space);
         return;
       }
       createSpaceInCode(space);
@@ -1411,25 +1411,15 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  private void createSpaceWithLinefeedIfListWrapped(PsiElement @NotNull[] psiElementList, boolean space, boolean shouldCreateSingleRange) {
+  private void createSpaceWithLinefeedIfListWrapped(PsiElement @NotNull[] psiElementList, boolean space) {
     int length = psiElementList.length;
     assert length > 1;
     int spaces = space ? 1 : 0;
 
-    if (shouldCreateSingleRange) {
-      int startOffset = psiElementList[0].getTextRange().getStartOffset();
-      int endOffset = psiElementList[length - 1].getTextRange().getEndOffset();
-      myResult = Spacing.createDependentLFSpacing(spaces, spaces, new TextRange(startOffset, endOffset), mySettings.KEEP_LINE_BREAKS,
-                                                  mySettings.KEEP_BLANK_LINES_IN_CODE);
-    } else {
-      List<TextRange> ranges = new ArrayList<>();
-      for (int i = 0; i < length - 1; i++) {
-        int startOffset = psiElementList[i].getTextRange().getEndOffset();
-        int endOffset = psiElementList[i + 1].getTextRange().getStartOffset();
-        ranges.add(new TextRange(startOffset, endOffset));
-      }
-      myResult = Spacing.createDependentLFSpacing(spaces, spaces, ranges, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-    }
+    int startOffset = psiElementList[0].getTextRange().getStartOffset();
+    int endOffset = psiElementList[length - 1].getTextRange().getEndOffset();
+    myResult = Spacing.createDependentLFSpacing(spaces, spaces, new TextRange(startOffset, endOffset), mySettings.KEEP_LINE_BREAKS,
+                                                mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   @Override
