@@ -129,7 +129,13 @@ internal class UsedReferencesCollector(private val file: KtFile) {
         target is KaConstructorSymbol -> {
             val targetClass = target.containingSymbol as? KaClassLikeSymbol
 
-            targetClass?.let { resolveTypeAliasedConstructorReference(reference, it) } ?: targetClass
+            // if constructor is typealiased, it can be imported in any scenario
+            val typeAlias = targetClass?.let { resolveTypeAliasedConstructorReference(reference, it) }
+
+            // if constructor leads to inner class, it cannot be resolved by import
+            val notInnerTargetClass = targetClass?.takeUnless { it is KaNamedClassSymbol && it.isInner }
+
+            typeAlias ?: notInnerTargetClass
         }
 
         target is KaSamConstructorSymbol -> {

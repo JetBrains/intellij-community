@@ -371,6 +371,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/FunctionalTypeVal_qualified.kt");
             }
 
+            @TestMetadata("InnerClassConstructor_superType.kt")
+            public void testInnerClassConstructor_superType() throws Exception {
+                runTest("testData/editor/optimizeImports/common/InnerClassConstructor_superType.kt");
+            }
+
             @TestMetadata("InvokeFunction.kt")
             public void testInvokeFunction() throws Exception {
                 runTest("testData/editor/optimizeImports/common/InvokeFunction.kt");
@@ -534,6 +539,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
             @TestMetadata("TypeAliasedConstructor_annotation.kt")
             public void testTypeAliasedConstructor_annotation() throws Exception {
                 runTest("testData/editor/optimizeImports/common/TypeAliasedConstructor_annotation.kt");
+            }
+
+            @TestMetadata("TypeAliasedConstructor_innerClass.kt")
+            public void testTypeAliasedConstructor_innerClass() throws Exception {
+                runTest("testData/editor/optimizeImports/common/TypeAliasedConstructor_innerClass.kt");
             }
 
             @TestMetadata("TypeAliasedConstructor_samConstructor.kt")
