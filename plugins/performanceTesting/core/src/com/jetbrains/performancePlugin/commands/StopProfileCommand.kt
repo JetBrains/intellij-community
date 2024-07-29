@@ -24,7 +24,9 @@ class StopProfileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
     }
 
     val reportPath = getCurrentProfilerHandler().stopProfileAsyncWithNotification(extractCommandArgument(PREFIX))
-    profilerController.reportsPath = reportPath
-    profilerController.isStoppedByScript = true
+    if(reportPath != null) {
+      profilerController.reportsPath = reportPath
+      profilerController.isStoppedByScript = true
+    }
   }
 }
