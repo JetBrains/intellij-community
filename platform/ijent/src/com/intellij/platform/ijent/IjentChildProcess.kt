@@ -47,11 +47,25 @@ interface IjentChildProcess {
   }
 
   /**
-   * Send `SIGINT` on Unix.
+   * Sends `SIGINT` on Unix.
+   *
+   * Does nothing yet on Windows.
    */
   suspend fun interrupt()
 
+  /**
+   * Sends `SIGTERM` on Unix.
+   *
+   * Calls [`ExitProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-exitprocess) on Windows.
+   */
   suspend fun terminate()
+
+  /**
+   * Sends `SIGKILL` on Unix.
+   *
+   * Calls [`TerminateProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
+   * on Windows.
+   */
   suspend fun kill()
 
   @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
