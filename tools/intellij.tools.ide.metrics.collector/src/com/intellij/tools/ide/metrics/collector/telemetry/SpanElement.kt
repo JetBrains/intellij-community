@@ -38,7 +38,7 @@ internal fun toSpanElement(span: SpanData): SpanElement {
   return SpanElement(
     isWarmup = isWarmup(tags),
     name = span.operationName,
-    duration = span.durationNano,
+    duration = span.durationNano ?: (span.duration.times(1000)),
     startTimestamp = span.startTimeNano,
     spanId = span.spanID,
     parentSpanId = span.getParentSpanId(),
@@ -54,8 +54,8 @@ data class SpanData(
 
   // see com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter.export
   //@Serializable(with = DurationSerializer::class)
-  @JsonNames("duration")
-  @Contextual val durationNano: Duration,
+  @Contextual val duration: Duration,
+  @Contextual val durationNano: Duration? = null,
   //@Serializable(with = InstantSerializer::class)
   @JsonNames("startTime")
   @Contextual val startTimeNano: Instant,
