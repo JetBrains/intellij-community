@@ -62,41 +62,45 @@ class MethodExtractor {
     }
 
     coroutineScope.launch {
-      withContext(Dispatchers.EDT) { //TODO minimize edt context
+      doExtract(editor, file, range)
+    }
+  }
 
-        val elements = ExtractSelector().suggestElementsToExtract(file, range)
-        if (elements.isEmpty()) {
-          InplaceExtractUtils.showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
-          return@withContext
-        }
+  private suspend fun doExtract(editor: Editor, file: PsiFile, range: TextRange){
+    withContext(Dispatchers.EDT) { //TODO minimize edt context
 
-        val analyzer = CodeFragmentAnalyzer.createAnalyzer(elements)
-        if (analyzer == null) {
-          InplaceExtractUtils.showExtractErrorHint(editor, JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"))
-          return@withContext
-        }
+      val elements = ExtractSelector().suggestElementsToExtract(file, range)
+      if (elements.isEmpty()) {
+        InplaceExtractUtils.showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
+        return@withContext
+      }
 
-        val outputVariables = analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset }
-        if (outputVariables.size > 1) {
-          ResultObjectExtractor.run(editor, outputVariables, elements)
-          return@withContext
-        }
+      val analyzer = CodeFragmentAnalyzer.createAnalyzer(elements)
+      if (analyzer == null) {
+        InplaceExtractUtils.showExtractErrorHint(editor, JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"))
+        return@withContext
+      }
 
-        val prepareStart = System.currentTimeMillis()
-        val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elements)
-        if (descriptorsForAllTargetPlaces.isEmpty()) return@withContext
-        val preparePlacesTime = System.currentTimeMillis() - prepareStart
+      val outputVariables = analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset }
+      if (outputVariables.size > 1) {
+        ResultObjectExtractor.run(editor, outputVariables, elements)
+        return@withContext
+      }
 
-        val options = selectOption(editor, descriptorsForAllTargetPlaces)
-        if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-          val templateStart = System.currentTimeMillis()
-          runInplaceExtract(editor, range, options)
-          val prepareTemplateTime = System.currentTimeMillis() - templateStart
-          reportPerformanceStatistics(preparePlacesTime, prepareTemplateTime, descriptorsForAllTargetPlaces.size)
-        }
-        else {
-          extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
-        }
+      val prepareStart = System.currentTimeMillis()
+      val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elements)
+      if (descriptorsForAllTargetPlaces.isEmpty()) return@withContext
+      val preparePlacesTime = System.currentTimeMillis() - prepareStart
+
+      val options = selectOption(editor, descriptorsForAllTargetPlaces)
+      if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
+        val templateStart = System.currentTimeMillis()
+        runInplaceExtract(editor, range, options)
+        val prepareTemplateTime = System.currentTimeMillis() - templateStart
+        reportPerformanceStatistics(preparePlacesTime, prepareTemplateTime, descriptorsForAllTargetPlaces.size)
+      }
+      else {
+        extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
       }
     }
   }
