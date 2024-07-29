@@ -39,7 +39,6 @@ import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
-import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.ui.ComponentUtil;
@@ -651,7 +650,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
           }
           catch (Throwable t) {
             logErrorDuringExit("Failed to restart the application", t);
-            StartupErrorReporter.showError(BootstrapBundle.message("restart.failed.title"), t);
           }
         }
         else {
