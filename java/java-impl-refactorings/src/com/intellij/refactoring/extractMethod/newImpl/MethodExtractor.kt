@@ -82,9 +82,7 @@ class MethodExtractor {
 
       val outputVariables = readAction { analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset } }
       if (outputVariables.size > 1) {
-        withContext(Dispatchers.EDT) {
-          ResultObjectExtractor.run(editor, outputVariables, elements)
-        }
+        ResultObjectExtractor.run(editor, outputVariables, elements)
         return
       }
 
