@@ -43,6 +43,11 @@ class AutoConfigurationSettings(
 interface KotlinProjectConfigurator {
 
     /**
+     * Returns false if the Kotlin not configured dialog should be suppressed even when Kotlin is not configured.
+     */
+    fun shouldShowNotConfiguredDialog(): Boolean = true
+
+    /**
      * Checks if the [module] can be automatically configured with Kotlin.
      * Returns the settings that can be configured, or null if automatic configuration is not possible.
      *
