@@ -710,7 +710,10 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     if (compilerVersion <= 11) {
       return targetPlatformVersion >= 6;
     }
-    return targetPlatformVersion >= 7;
+    if (compilerVersion <= 19) {
+      return targetPlatformVersion >= 7;
+    }
+    return targetPlatformVersion >= 8;
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
