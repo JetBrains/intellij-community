@@ -21,7 +21,9 @@ f:com.intellij.diagnostic.PerformanceWatcher$Companion
 - f:takeSnapshot():com.intellij.diagnostic.PerformanceWatcher$Snapshot
 com.intellij.diagnostic.PerformanceWatcher$Snapshot
 - a:getLogResponsivenessSinceCreationMessage(java.lang.String):java.lang.String
+- a:getLogResponsivenessSinceCreationMessage(java.lang.String,java.lang.String):java.lang.String
 - a:logResponsivenessSinceCreation(java.lang.String):V
+- a:logResponsivenessSinceCreation(java.lang.String,java.lang.String):V
 com.intellij.ide.fileTemplates.FileTemplate
 - java.lang.Cloneable
 - sf:ATTRIBUTE_CALL_SUPER:java.lang.String
