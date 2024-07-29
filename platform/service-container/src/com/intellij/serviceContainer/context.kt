@@ -9,6 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -59,6 +60,7 @@ private object ComponentManagerElementKey : CoroutineContext.Key<ComponentManage
  * @see withContext
  * @see attachAsChildTo
  */
+@Internal
 @TestOnly // Originally implemented to bind the test coroutine to the container. This can be lifted later
 suspend fun <T> withContainerContext(container: ComponentManager, action: suspend CoroutineScope.() -> T): T {
   val containerScope = (container as ComponentManagerImpl).getCoroutineScope()
