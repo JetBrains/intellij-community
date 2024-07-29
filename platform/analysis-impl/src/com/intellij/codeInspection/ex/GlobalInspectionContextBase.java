@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -272,6 +273,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
   }
 
+  @RequiresBackgroundThread
   public void performInspectionsWithProgress(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (!(myProgressIndicator instanceof ProgressIndicatorEx) || !(myProgressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
@@ -311,6 +313,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   }
 
+  @RequiresBackgroundThread
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
   }
 

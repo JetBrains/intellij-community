@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
@@ -111,7 +112,8 @@ class DeclarativeHintsProviderSettingsModel(
       isEnabled
     }
 
-    val pass = DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(object : InlayHintsProvider {
+    val pass = ActionUtil.underModalProgress(project, "") {
+      DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(object : InlayHintsProvider {
       override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
         return object: OwnBypassCollector {
           override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
@@ -125,7 +127,7 @@ class DeclarativeHintsProviderSettingsModel(
         }
       }
     }, providerId, enabledOptions)), false, !enabled)
-
+    }
 
     pass.doCollectInformation(EmptyProgressIndicator())
     return Runnable {
