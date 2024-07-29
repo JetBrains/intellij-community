@@ -1,12 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vsmac.mappings
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.mappings
 
-import com.intellij.ide.startup.importSettings.db.KnownColorSchemes
 import com.intellij.ide.startup.importSettings.models.BundledEditorColorScheme
-
+import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSchemes
 
 object SchemesMappings {
-  fun schemeMap(scheme: String): BundledEditorColorScheme = when (scheme) {
+  fun schemeMap(scheme: String): BundledEditorColorScheme? = when (scheme) {
     "Light" -> KnownColorSchemes.Light
     "Dark" -> KnownColorSchemes.Darcula
     "Gruvbox" -> KnownColorSchemes.Darcula

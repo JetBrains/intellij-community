@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vsmac
 
-import com.intellij.ide.startup.importSettings.db.KnownColorSchemes
 import com.intellij.ide.startup.importSettings.db.KnownKeymaps
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.providers.vsmac.parsers.GeneralSettingsParser
 import com.intellij.ide.startup.importSettings.providers.vsmac.parsers.KeyBindingsParser
 import com.intellij.ide.startup.importSettings.providers.vsmac.parsers.RecentProjectsParser
+import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSchemes
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.parsers.GeneralSettingsParser
 import java.io.File
 
 class VSMacSettingsProcessor {
