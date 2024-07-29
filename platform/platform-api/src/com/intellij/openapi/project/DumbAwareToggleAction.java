@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.actionSystem.ToggleAction;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +12,7 @@ import static com.intellij.openapi.util.NlsActions.ActionDescription;
 import static com.intellij.openapi.util.NlsActions.ActionText;
 
 public abstract class DumbAwareToggleAction extends ToggleAction implements DumbAware {
-  protected DumbAwareToggleAction() {
-  }
+  protected DumbAwareToggleAction() { }
 
   protected DumbAwareToggleAction(@Nullable @ActionText String text) {
     this(() -> text);
@@ -25,8 +22,7 @@ public abstract class DumbAwareToggleAction extends ToggleAction implements Dumb
     super(text);
   }
 
-  protected DumbAwareToggleAction(@Nullable @ActionText String text,
-                                  @Nullable @ActionDescription String description, @Nullable Icon icon) {
+  protected DumbAwareToggleAction(@Nullable @ActionText String text, @Nullable @ActionDescription String description, @Nullable Icon icon) {
     this(() -> text, () -> description, icon);
   }
 
