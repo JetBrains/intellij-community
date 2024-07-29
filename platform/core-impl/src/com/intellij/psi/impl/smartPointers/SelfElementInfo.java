@@ -1,6 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -21,11 +24,14 @@ import java.util.List;
 @ApiStatus.Internal
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
+  private final @NotNull CodeInsightContext myContext;
   private volatile Identikit myIdentikit;
   private final VirtualFile myFile;
   private final boolean myForInjected;
   private int myStartOffset;
   private int myEndOffset;
+
+  // todo ijpl-339 layout of the object got bigger +8bytes
 
   SelfElementInfo(@Nullable ProperTextRange range,
                   @NotNull Identikit identikit,
@@ -35,7 +41,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     myIdentikit = identikit;
 
     myFile = containingFile.getViewProvider().getVirtualFile();
+    myContext = FileViewProviderUtil.getCodeInsightContext(containingFile);
     setRange(range);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CodeInsightContext getContext() {
+    return myContext;
   }
 
   void switchToAnchor(@NotNull PsiElement element) {
@@ -132,7 +144,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
     Language language = myIdentikit.getFileLanguage();
     if (language == null) return null;
-    return restoreFileFromVirtual(getVirtualFile(), manager.getProject(), language);
+    return restoreFileFromVirtual(getVirtualFile(), getContext() ,manager.getProject(), language);
   }
 
   @Override
@@ -140,12 +152,22 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     setRange(null);
   }
 
-  public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull Language language) {
+  public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile,
+                                                         @NotNull Project project,
+                                                         @NotNull Language language) {
+    return restoreFileFromVirtual(virtualFile, CodeInsightContextKt.anyContext(), project, language);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile,
+                                                         @NotNull CodeInsightContext context,
+                                                         @NotNull Project project,
+                                                         @NotNull Language language) {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
       if (child == null || !child.isValid()) return null;
-      PsiFile file = PsiManager.getInstance(project).findFile(child);
+      PsiFile file = PsiManager.getInstance(project).findFile(child, context);
       if (file != null) {
         return file.getViewProvider().getPsi(language == Language.ANY ? file.getViewProvider().getBaseLanguage() : language);
       }
