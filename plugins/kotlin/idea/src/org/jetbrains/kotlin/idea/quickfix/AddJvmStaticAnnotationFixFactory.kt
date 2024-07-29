@@ -3,20 +3,11 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
 
 internal object AddJvmStaticAnnotationFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val nameReference = diagnostic.psiElement as? KtNameReferenceExpression ?: return null
-        val resolved = nameReference.mainReference.resolve() ?: return null
-        return if (resolved is KtProperty || resolved is KtNamedFunction) {
-            AddJvmStaticAnnotationFix(resolved as KtCallableDeclaration)
-        } else {
-            null
-        }
+        return AddJvmStaticAnnotationFix.createIfApplicable(nameReference)
     }
 }
