@@ -60,7 +60,7 @@ internal fun detectPoetryExecutable(): Path? {
     else -> "poetry"
   }
   return PathEnvironmentVariableUtil.findInPath(name)?.toPath() ?: System.getProperty("user.home")?.let { homePath ->
-    Path.of(homePath,".poetry", "bin", name).takeIf { it.exists() }
+    Path.of(homePath, ".poetry", "bin", name).takeIf { it.exists() }
   }
 }
 

@@ -309,10 +309,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     }
   }
 
-  public @Nullable BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(final @Nullable Sdk sdk) {
-    return null;
-  }
-
   public void afterProjectGenerated(final @NotNull Project project) {
   }
 

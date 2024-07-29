@@ -56,7 +56,7 @@ class PoetryNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel)
   }
 
 
-  override fun getOrCreateSdk(): Sdk? {
+  override fun getOrCreateSdk(): Sdk {
     if (model is PythonLocalAddInterpreterModel) {
       PropertiesComponent.getInstance().poetryPath = model.state.poetryExecutable.get().nullize()
     }
