@@ -28,5 +28,13 @@ The release process is mostly automated, but it requires manual prep steps.
    the `v1.0.0-*` sub-tags)
 8. Create a release from the tag, using the auto-generated release notes. Add any further information that may be useful
    to users, including any breaking API or behaviour changes
+    * You can use an LLM to help you with this step if you want. Use the [generate-release-patch.sh] script to generate
+      a
+      patch file with all the changes since the last tag (make sure to run it on main!). You can then use a service like
+      Gemini Advanced or ChatGPT to generate release notes from it.
+    * An example prompt that produces decent results with Gemini
+      Advanced: https://gist.github.com/rock3r/3ed8ec836143049da834505ce5315fce
+    * **ALWAYS double check** the LLM output. Don't trust it! Treat it only a starting point to help you, not the end
+      result.
 9. Wait for the [publishing CI job](https://github.com/JetBrains/jewel/actions/workflows/publish.yml) to finish running
 10. Done!

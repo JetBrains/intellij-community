@@ -98,3 +98,6 @@ $RECYCLE.BIN/
 
 # Ignore IJP temp folder
 /.intellijPlatform
+
+# Ignore release patch generator output
+/this-release.txt
