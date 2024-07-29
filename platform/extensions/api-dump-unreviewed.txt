@@ -110,8 +110,6 @@ a:com.intellij.openapi.extensions.ExtensionPointAdapter
 com.intellij.openapi.extensions.ExtensionPointAndAreaListener
 - com.intellij.openapi.extensions.ExtensionPointListener
 - areaReplaced(com.intellij.openapi.extensions.ExtensionsArea):V
-com.intellij.openapi.extensions.ExtensionPointChangeListener
-- a:extensionListChanged():V
 com.intellij.openapi.extensions.ExtensionPointListener
 - sf:Companion:com.intellij.openapi.extensions.ExtensionPointListener$Companion
 - extensionAdded(java.lang.Object,com.intellij.openapi.extensions.PluginDescriptor):V
