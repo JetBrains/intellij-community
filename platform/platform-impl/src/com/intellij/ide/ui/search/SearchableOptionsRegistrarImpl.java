@@ -366,12 +366,12 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   private @Nullable Set<String> findConfigurablesByDescriptions(@NotNull Set<String> descriptionOptions) {
     Set<String> helpIds = null;
     for (String prefix : descriptionOptions) {
-      final Set<OptionDescription> optionIds = getAcceptableDescriptions(prefix);
+      Set<OptionDescription> optionIds = getAcceptableDescriptions(prefix);
       if (optionIds == null) {
         return null;
       }
 
-      final Set<String> ids = new HashSet<>();
+      Set<String> ids = new HashSet<>();
       for (OptionDescription id : optionIds) {
         ids.add(id.getConfigurableId());
       }
@@ -388,8 +388,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
       return null;
     }
 
-    final String stemmedPrefix = PorterStemmerUtil.stem(prefix);
-    if (StringUtil.isEmptyOrSpaces(stemmedPrefix)) {
+    String stemmedPrefix = PorterStemmerUtil.stem(prefix);
+    if (stemmedPrefix == null || stemmedPrefix.isBlank()) {
       return null;
     }
 
@@ -397,10 +397,10 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
     Set<OptionDescription> result = null;
     for (Map.Entry<CharSequence, long[]> entry : storage.entrySet()) {
-      final long[] descriptions = entry.getValue();
-      final CharSequence option = entry.getKey();
+      long[] descriptions = entry.getValue();
+      CharSequence option = entry.getKey();
       if (!StringUtil.startsWith(option, prefix) && !StringUtil.startsWith(option, stemmedPrefix)) {
-        final String stemmedOption = PorterStemmerUtil.stem(option.toString());
+        String stemmedOption = PorterStemmerUtil.stem(option.toString());
         if (stemmedOption != null && !stemmedOption.startsWith(prefix) && !stemmedOption.startsWith(stemmedPrefix)) {
           continue;
         }
@@ -409,8 +409,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
         result = new HashSet<>();
       }
       for (long description : descriptions) {
-        OptionDescription desc = unpack(description);
-        result.add(desc);
+        result.add(unpack(description));
       }
     }
     return result;
@@ -421,9 +420,11 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
     for (String word : words) {
       Set<OptionDescription> configs = getAcceptableDescriptions(word);
-      if (configs == null) return null;
+      if (configs == null) {
+        return null;
+      }
 
-      final Set<OptionDescription> paths = new HashSet<>();
+      Set<OptionDescription> paths = new HashSet<>();
       for (OptionDescription config : configs) {
         if (Comparing.strEqual(config.getConfigurableId(), configurable.getId())) {
           paths.add(config);
