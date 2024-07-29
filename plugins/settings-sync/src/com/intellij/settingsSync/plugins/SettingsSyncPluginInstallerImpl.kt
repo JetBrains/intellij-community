@@ -45,7 +45,7 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
 
   internal open suspend fun installCollected(installers: List<PluginDownloader>, settingsAlreadyChanged: Boolean) {
     withModalProgress(ModalTaskOwner.guess(), SettingsSyncBundle.message("installing.plugins.indicator"), TaskCancellation.nonCancellable()) {
-      installCollected(installers, settingsAlreadyChanged)
+      doInstallCollected(installers, settingsAlreadyChanged)
     }
   }
 

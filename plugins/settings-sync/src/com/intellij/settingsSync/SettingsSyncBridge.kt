@@ -405,7 +405,7 @@ class SettingsSyncBridge(
     }
     SettingsSyncSettings.getInstance().syncEnabled = false
     if (exception != null) {
-      SettingsSyncStatusTracker.getInstance().updateOnError(exception.localizedMessage)
+      SettingsSyncStatusTracker.getInstance().updateOnError(exception.localizedMessage ?: exception.toString())
     }
 
     ideMediator.removeStreamProvider()
