@@ -11,7 +11,7 @@ internal object WorkspaceModelMessageDeliveryListener: MessageDeliveryListener {
   override fun messageDelivered(topic: Topic<*>, messageName: String, handler: Any, durationNanos: Long) {
     if (topic == WorkspaceModelTopics.CHANGED) {
       if (TimeUnit.NANOSECONDS.toMillis(durationNanos) > 200) {
-        thisLogger().warn(String.format("Long WSM event processing. Topic=%s, offender=%s, message=%s, time=%dms",
+        thisLogger().error(String.format("Long WSM event processing. Topic=%s, offender=%s, message=%s, time=%dms",
                                         topic.displayName, handler.javaClass, messageName, TimeUnit.NANOSECONDS.toMillis(durationNanos)));
       }
     }
