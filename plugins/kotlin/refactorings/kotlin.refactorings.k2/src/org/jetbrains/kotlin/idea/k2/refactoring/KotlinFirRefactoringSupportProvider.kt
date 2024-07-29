@@ -8,6 +8,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceConstant.KotlinIntroduceConstantHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceLambdaParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinIntroducePropertyHandler
 
@@ -32,6 +33,8 @@ class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun getChangeSignatureHandler(): ChangeSignatureHandler = KotlinChangeSignatureHandler
 
     override fun getIntroduceParameterHandler(): RefactoringActionHandler = KotlinFirIntroduceParameterHandler()
+
+    override fun getIntroduceFunctionalParameterHandler(): RefactoringActionHandler = KotlinFirIntroduceLambdaParameterHandler()
 
     override fun getIntroduceConstantHandler(): RefactoringActionHandler = KotlinIntroduceConstantHandler()
 

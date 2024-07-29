@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -41,11 +42,22 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptorWithConflicts
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionDataAnalyzer
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionEngine
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -57,10 +69,10 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 
 
-class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()) : RefactoringActionHandler {
+open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()) : RefactoringActionHandler {
 
     context(KaSession)
-    private fun findInternalUsagesOfParametersAndReceiver(
+    protected fun findInternalUsagesOfParametersAndReceiver(
         targetParent: KtNamedDeclaration
     ): MultiMap<KtElement, KtElement> {
         val usages = MultiMap<KtElement, KtElement>()
@@ -117,7 +129,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         return approximateWithResolvableType(type, physicalExpression)
     }
 
-    operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
+    open operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
         val expressionTypeEvaluator: KaSession.() -> KaType? = {
             val physicalExpression = expression.substringContextOrThis
             getExpressionType(physicalExpression, expression)
@@ -439,4 +451,104 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(onExit: 
             onExit?.invoke()
         }
     }.run()
+}
+
+open class KotlinFirIntroduceLambdaParameterHandler(
+    private val helper: KotlinIntroduceParameterHelper<KtNamedDeclaration> = KotlinIntroduceParameterHelper.Default()
+) : KotlinFirIntroduceParameterHandler(helper) {
+    @OptIn(KaExperimentalApi::class)
+    private val extractLambdaHelper = object : ExtractionEngineHelper(INTRODUCE_LAMBDA_PARAMETER) {
+        private fun createDialog(
+            project: Project,
+            editor: Editor,
+            lambdaExtractionDescriptor: ExtractableCodeDescriptor
+        ): KotlinIntroduceParameterDialog? {
+            val callable = lambdaExtractionDescriptor.extractionData.targetSibling as KtNamedDeclaration
+            val originalRange = lambdaExtractionDescriptor.extractionData.originalRange
+            val (parametersUsages, returnType) = analyzeInModalWindow(callable, KotlinBundle.message("fix.change.signature.prepare")) {
+                findInternalUsagesOfParametersAndReceiver(callable) to calculateFunctionalType(lambdaExtractionDescriptor)
+            }
+            val introduceParameterDescriptor = IntroduceParameterDescriptor(
+                originalRange = originalRange,
+                callable = callable,
+                callableDescriptor = callable,
+                newParameterName = "", // to be chosen in the dialog
+                newParameterTypeText = "", // to be chosen in the dialog
+                argumentValue = KtPsiFactory(project).createExpression("{}"), // substituted later
+                withDefaultValue = false,
+                parametersUsages = parametersUsages,
+                occurrencesToReplace = listOf(originalRange),
+                parametersToRemove = listOf()
+            )
+            return KotlinIntroduceParameterDialog(project, editor, introduceParameterDescriptor,
+                                                  lambdaExtractionDescriptor.suggestedNames.toTypedArray(),
+                                                  listOf(returnType),
+                                                  helper,
+                                                  lambdaExtractionDescriptor)
+        }
+
+        context(KaSession)
+        fun calculateFunctionalType(
+            oldDescriptor: ExtractableCodeDescriptor,
+        ): String {
+            val receiverText = oldDescriptor.receiverParameter?.parameterType?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)?.let { "$it." } ?: ""
+            val parameters =
+                oldDescriptor.parameters.joinToString(", ", "(", ")") { it.parameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE) }
+
+            val returnTypeText = oldDescriptor.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE)
+            return "$receiverText$parameters -> $returnTypeText"
+        }
+
+        override fun configureAndRun(
+            project: Project,
+            editor: Editor,
+            descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
+            onFinish: (ExtractionResult) -> Unit
+        ) {
+            val lambdaExtractionDescriptor = descriptorWithConflicts.descriptor
+            if (!ExtractionTarget.FAKE_LAMBDALIKE_FUNCTION.isAvailable(lambdaExtractionDescriptor)) {
+                showErrorHint(
+                    project,
+                    editor,
+                    KotlinBundle.message("error.text.can.t.introduce.lambda.parameter.for.this.expression"),
+                    INTRODUCE_LAMBDA_PARAMETER
+                )
+                return
+            }
+
+            val dialog = createDialog(project, editor, lambdaExtractionDescriptor) ?: return
+            if (isUnitTestMode()) {
+                dialog.performRefactoring()
+            } else {
+                dialog.showAndGet()
+            }
+        }
+    }
+
+    override fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
+        val duplicateContainer =
+            when (targetParent) {
+                is KtFunction -> targetParent.bodyExpression
+                is KtClass -> targetParent.body
+                else -> null
+            } ?: throw AssertionError("Body element is not found: ${targetParent.getElementTextWithContext()}")
+        val extractionData = ActionUtil.underModalProgress(project, KotlinBundle.message("fix.change.signature.prepare")) {
+            ExtractionData(
+                targetParent.containingKtFile,
+                expression.toRange(),
+                targetParent,
+                duplicateContainer,
+                ExtractionOptions.DEFAULT
+            )
+        }
+        val engine = object :
+            IExtractionEngine<KaType, ExtractionData, ExtractionGeneratorConfiguration, ExtractionResult, ExtractableCodeDescriptor, ExtractableCodeDescriptorWithConflicts>(
+                extractLambdaHelper
+            ) {
+            override fun performAnalysis(extractionData: ExtractionData): AnalysisResult<KaType> {
+                return ExtractionDataAnalyzer(extractionData).performAnalysis()
+            }
+        }
+        engine.run(editor, extractionData)
+    }
 }
