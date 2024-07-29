@@ -282,10 +282,11 @@ public final class ImportHelper{
 
   private static Set<String> calculateOnDemandImportConflicts(@NotNull PsiJavaFile file, @NotNull Map<String, Boolean> onDemandImports) {
     if (file instanceof PsiCompiledElement) return Collections.emptySet();
+    List<PsiImportStatementBase> implicitImports = getAllImplicitImports(file);
     List<PsiImportModuleStatement> implicitModuleImports =
-      ContainerUtil.filterIsInstance(getAllImplicitImports(file),  PsiImportModuleStatement.class);
+      ContainerUtil.filterIsInstance(implicitImports, PsiImportModuleStatement.class);
     List<String> onDemands =
-      StreamEx.of(getAllImplicitImports(file))
+      StreamEx.of(implicitImports)
         .filter(implicit -> implicit.isOnDemand() &&
                             !(implicit instanceof PsiImportModuleStatement) && implicit.getImportReference()!=null)
         .map(t -> t.getImportReference().getQualifiedName())
@@ -350,18 +351,26 @@ public final class ImportHelper{
           super.visitReferenceElement(reference);
           if (reference.getQualifier() != null) return;
           JavaResolveResult resolveResult = reference.advancedResolve(false);
-          if (resolveResult.getElement() instanceof PsiClass psiClass &&
-              ((!implicitModuleImports.isEmpty() && psiClass.getQualifiedName() != null &&
-                hasOnDemandImportConflictWithImports(file, implicitModuleImports, psiClass.getQualifiedName())) ||
-               conflicts.contains(psiClass.getName()))) {
-            if (resolveResult.getCurrentFileResolveScope() instanceof PsiImportStatementBase ||
-                isImplicitlyImported(psiClass, checker)) {
-              String fqn = psiClass.getQualifiedName();
-              if (fqn != null && !PsiTreeUtil.isAncestor(file, psiClass, true) && !packageName.equals(StringUtil.getPackageName(fqn))) {
-                result.add(fqn);
-              }
-            }
+          if (!(resolveResult.getElement() instanceof PsiClass psiClass)) return;
+          String qualifiedName = psiClass.getQualifiedName();
+          if(qualifiedName == null) return;
+          //conflict with packages
+          boolean hasConflict = conflicts.contains(psiClass.getName());
+          if (!hasConflict) {
+            //conflict with implicit module imports
+            hasConflict =
+              !implicitModuleImports.isEmpty() && hasOnDemandImportConflictWithImports(file, implicitModuleImports, qualifiedName);
           }
+          if(!hasConflict) return;
+          if (!(resolveResult.getCurrentFileResolveScope() instanceof PsiImportStatementBase) &&
+              !isImplicitlyImported(psiClass, checker)) {
+            return;
+          }
+          if (PsiTreeUtil.isAncestor(file, psiClass, true) ||
+              packageName.equals(StringUtil.getPackageName(qualifiedName))) {
+            return;
+          }
+          result.add(qualifiedName);
         }
       });
     }
