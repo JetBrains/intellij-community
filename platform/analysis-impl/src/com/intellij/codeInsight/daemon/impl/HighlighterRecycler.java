@@ -137,7 +137,7 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
     return changed;
   }
 
-  boolean tryIncinerate(@NotNull RangeHighlighter highlighter) {
+  boolean tryIncinerate(@NotNull RangeHighlighterEx highlighter) {
     boolean shouldRemove = UpdateHighlightersUtil.shouldRemoveHighlighter(highlighter, myHighlightingSession);
     if (HighlightInfoUpdaterImpl.LOG.isDebugEnabled()) {
       HighlightInfoUpdaterImpl.LOG.debug("incinerateObsoleteHighlighters " + highlighter + "; shouldRemove:" + shouldRemove);
@@ -167,7 +167,7 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
   boolean isEmpty() {
     return incinerator.isEmpty();
   }
-  boolean remove(@NotNull RangeHighlighter highlighter) {
+  boolean remove(@NotNull RangeHighlighterEx highlighter) {
     List<RangeHighlighterEx> list = incinerator.get(TextRangeScalarUtil.toScalarRange(highlighter.getTextRange()));
     if (list != null) {
       return list.remove(highlighter);
