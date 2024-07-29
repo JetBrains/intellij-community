@@ -18,7 +18,7 @@ internal class SurroundingComponent private constructor(private val innerCompone
 
   init {
     isOpaque = true
-    border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(10))
+    border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(JBUI.scale(4)))
     add(innerComponent, BorderLayout.CENTER)
   }
 
@@ -40,6 +40,7 @@ internal class SurroundingComponent private constructor(private val innerCompone
   }
 
   companion object {
+
     @JvmStatic
     fun create(editor: EditorImpl, innerComponent: InnerComponent) = SurroundingComponent(innerComponent).also {
       registerEditorSizeWatcher(it) {
