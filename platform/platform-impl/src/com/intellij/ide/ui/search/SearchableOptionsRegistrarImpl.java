@@ -45,7 +45,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     new ExtensionPointName<>("com.intellij.search.optionContributor");
 
   // option => array of packed OptionDescriptor
-  private volatile Map<CharSequence, long[]> storage = Collections.emptyMap();
+  private volatile @NotNull Map<@NotNull String, long @NotNull []> storage = Collections.emptyMap();
 
   private final Set<String> stopWords;
 
@@ -141,7 +141,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
    * Retrieves all searchable option names.
    */
   @ApiStatus.Internal
-  public @NotNull Set<CharSequence> getAllOptionNames() {
+  public Set<@NotNull String> getAllOptionNames() {
     return storage.keySet();
   }
 
@@ -396,11 +396,11 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     initialize();
 
     Set<OptionDescription> result = null;
-    for (Map.Entry<CharSequence, long[]> entry : storage.entrySet()) {
+    for (Map.Entry<@NotNull String, long @NotNull []> entry : storage.entrySet()) {
       long[] descriptions = entry.getValue();
-      CharSequence option = entry.getKey();
-      if (!StringUtil.startsWith(option, prefix) && !StringUtil.startsWith(option, stemmedPrefix)) {
-        String stemmedOption = PorterStemmerUtil.stem(option.toString());
+      String option = entry.getKey();
+      if (!option.startsWith(prefix) && !option.startsWith(stemmedPrefix)) {
+        String stemmedOption = PorterStemmerUtil.stem(option);
         if (stemmedOption != null && !stemmedOption.startsWith(prefix) && !stemmedOption.startsWith(stemmedPrefix)) {
           continue;
         }

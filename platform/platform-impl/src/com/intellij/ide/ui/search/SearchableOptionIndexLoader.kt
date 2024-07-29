@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ResourceUtil
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -36,7 +35,7 @@ private val LOG = logger<MySearchableOptionProcessor>()
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache = HashSet<String>()
-  @JvmField val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap(20, 0.9f, true)
+  @JvmField val storage: MutableMap<String, LongArray> = HashMap()
   @JvmField val identifierTable: IndexedCharsInterner = IndexedCharsInterner()
 
   override fun addOptions(
@@ -64,7 +63,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
 
   private fun loadSynonyms(): Map<Pair<String, String>, MutableSet<String>> {
     val result = HashMap<Pair<String, String>, MutableSet<String>>()
-    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java.classLoader, "/search/", "synonyms.xml"))
+    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java.classLoader, "search", "synonyms.xml"))
     val cache = HashSet<String>()
     for (configurable in root.getChildren("configurable")) {
       val id = configurable.getAttributeValue("id") ?: continue
