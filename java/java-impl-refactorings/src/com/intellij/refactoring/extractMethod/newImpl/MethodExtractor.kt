@@ -67,32 +67,35 @@ class MethodExtractor {
   }
 
   private suspend fun doExtract(editor: Editor, file: PsiFile, range: TextRange){
-    withContext(Dispatchers.EDT) { //TODO minimize edt context
 
-      val elements = ExtractSelector().suggestElementsToExtract(file, range)
+      val elements = readAction { ExtractSelector().suggestElementsToExtract(file, range) }
       if (elements.isEmpty()) {
         InplaceExtractUtils.showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
-        return@withContext
+        return
       }
 
-      val analyzer = CodeFragmentAnalyzer.createAnalyzer(elements)
+      val analyzer = readAction { CodeFragmentAnalyzer.createAnalyzer(elements) }
       if (analyzer == null) {
         InplaceExtractUtils.showExtractErrorHint(editor, JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"))
-        return@withContext
+        return
       }
 
-      val outputVariables = analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset }
+      val outputVariables = readAction { analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset } }
       if (outputVariables.size > 1) {
-        ResultObjectExtractor.run(editor, outputVariables, elements)
-        return@withContext
+        withContext(Dispatchers.EDT) {
+          ResultObjectExtractor.run(editor, outputVariables, elements)
+        }
+        return
       }
 
       val prepareStart = System.currentTimeMillis()
       val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elements)
-      if (descriptorsForAllTargetPlaces.isEmpty()) return@withContext
+      if (descriptorsForAllTargetPlaces.isEmpty()) return
       val preparePlacesTime = System.currentTimeMillis() - prepareStart
 
-      val options = selectOption(editor, descriptorsForAllTargetPlaces)
+      val options = withContext(Dispatchers.EDT) {
+        selectOption(editor, descriptorsForAllTargetPlaces)
+      }
       if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
         val templateStart = System.currentTimeMillis()
         runInplaceExtract(editor, range, options)
@@ -100,9 +103,10 @@ class MethodExtractor {
         reportPerformanceStatistics(preparePlacesTime, prepareTemplateTime, descriptorsForAllTargetPlaces.size)
       }
       else {
-        extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
+        withContext(Dispatchers.EDT) {
+          extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
+        }
       }
-    }
   }
 
   private fun reportPerformanceStatistics(preparePlacesMs: Long, prepareTemplateMs: Long, numberOfTargetPlaces: Int){
@@ -118,7 +122,7 @@ class MethodExtractor {
     val message = JavaRefactoringBundle.message("dialog.title.analyze.code.fragment.to.extract")
     return withBackgroundProgress(project, message, true) {
       try {
-        findAllOptionsToExtract(elements)
+        readAction { findAllOptionsToExtract(elements) }
       } catch (exception: ExtractException) {
         InplaceExtractUtils.showExtractErrorHint(editor, exception)
         emptyList()

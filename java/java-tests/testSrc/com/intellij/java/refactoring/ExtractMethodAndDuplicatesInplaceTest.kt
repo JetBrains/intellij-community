@@ -18,6 +18,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -26,6 +27,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintE
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ui.UIUtil
@@ -629,6 +631,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     throwHintError {
       MethodExtractor().doExtract(file, selection)
       UIUtil.dispatchAllInvocationEvents()
+      waitCoroutinesBlocking(ExtractMethodService.getInstance(project).scope)
     }
     val templateState = getActiveTemplate()
     require(templateState != null) { "Failed to start refactoring" }
@@ -637,7 +640,11 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   private fun getActiveTemplate() = TemplateManagerImpl.getTemplateState(editor)
 
-  private fun nextTemplateVariable(): Boolean = nextTemplateVariable(getActiveTemplate())
+  private fun nextTemplateVariable(): Boolean {
+    return nextTemplateVariable(getActiveTemplate()).also {
+      waitCoroutinesBlocking(ExtractMethodService.getInstance(project).scope)
+    }
+  }
 
   private fun renameTemplate(name: String)  = renameTemplate(getActiveTemplate(), name)
 
