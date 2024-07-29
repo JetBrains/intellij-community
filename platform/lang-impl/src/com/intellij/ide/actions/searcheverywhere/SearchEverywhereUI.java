@@ -496,15 +496,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     if (SELECTED_ITEM_INFO.is(dataId)) {
       return ContainerUtil.getOnlyItem(getSelectedInfos());
     }
-    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      SearchEverywhereFoundElementInfo info = ContainerUtil.getOnlyItem(getSelectedInfos());
-      return info == null ? null : info.getElement();
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
-      if (selection.isEmpty()) return null;
-      return ContainerUtil.map2Array(selection, Object.class, SearchEverywhereFoundElementInfo::getElement);
-    }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
       return (DataProvider)slowId -> getSlowData(slowId, selection);
@@ -532,6 +523,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         return psi instanceof Navigatable ? (Navigatable)psi : null;
       });
       return list.isEmpty() ? null : list.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    }
+    else if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+      SearchEverywhereFoundElementInfo info = ContainerUtil.getOnlyItem(selection);
+      return info == null ? null : info.getElement();
+    }
+    else if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+      if (selection.isEmpty()) return null;
+      return ContainerUtil.map2Array(selection, Object.class, SearchEverywhereFoundElementInfo::getElement);
     }
     SearchEverywhereFoundElementInfo single = ContainerUtil.getOnlyItem(selection);
     return single == null ? null : getDataFromElementInfo(dataId, single);
