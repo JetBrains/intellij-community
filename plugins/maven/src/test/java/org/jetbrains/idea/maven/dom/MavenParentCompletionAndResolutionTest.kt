@@ -117,7 +117,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
