@@ -12,7 +12,7 @@ import java.awt.*;
 
 @ApiStatus.Internal
 public abstract class AbstractEditor extends JPanel implements Disposable {
-  volatile boolean myDisposed;
+  volatile boolean isDisposed;
 
   AbstractEditor(@NotNull Disposable parent) {
     super(new BorderLayout());
@@ -22,8 +22,8 @@ public abstract class AbstractEditor extends JPanel implements Disposable {
 
   @Override
   public final void dispose() {
-    if (!myDisposed) {
-      myDisposed = true;
+    if (!isDisposed) {
+      isDisposed = true;
       disposeOnce();
     }
   }

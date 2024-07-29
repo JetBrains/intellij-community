@@ -21,10 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.RelativeFont;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -45,10 +42,6 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
 import static com.intellij.openapi.options.newEditor.ConfigurablesListPanelKt.createConfigurablesListPanel;
-import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
-import static java.awt.Toolkit.getDefaultToolkit;
-import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
-import static javax.swing.SwingUtilities.isDescendingFrom;
 
 class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
@@ -103,7 +96,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     MessageBusConnection messageBus = ApplicationManager.getApplication().getMessageBus().connect(this);
     messageBus.subscribe(AnActionListener.TOPIC, this);
     messageBus.subscribe(ExternalUpdateRequest.TOPIC, conf -> updateCurrent(conf, false));
-    getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
       myConfigurable = configurable;
       myCardPanel.select(configurable, true).doWhenDone(() -> postUpdateCurrent(configurable));
@@ -113,7 +106,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   @Override
   void disposeOnce() {
-    getDefaultToolkit().removeAWTEventListener(this);
+    Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     myCardPanel.removeAll();
   }
 
@@ -174,13 +167,13 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     switch (event.getID()) {
       case MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_DRAGGED -> {
         MouseEvent me = (MouseEvent)event;
-        if (isDescendingFrom(me.getComponent(), this) || isPopupOverEditor(me.getComponent())) {
+        if (SwingUtilities.isDescendingFrom(me.getComponent(), this) || isPopupOverEditor(me.getComponent())) {
           requestUpdate();
         }
       }
       case KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED -> {
         KeyEvent ke = (KeyEvent)event;
-        if (isDescendingFrom(ke.getComponent(), this)) {
+        if (SwingUtilities.isDescendingFrom(ke.getComponent(), this)) {
           requestUpdate();
         }
       }
@@ -240,7 +233,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   final @NotNull Promise<? super Object> select(final Configurable configurable) {
-    assert !myDisposed : "Already disposed";
+    assert !isDisposed : "Already disposed";
     long startTime = System.currentTimeMillis();
     final boolean loadedFromCache = myCardPanel.getValue(configurable, false) != null;
     ActionCallback callback = myCardPanel.select(configurable, false);
@@ -303,8 +296,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       content.add(BorderLayout.CENTER, createConfigurablesListPanel(description, Arrays.asList(compositeGroup.getConfigurables()), this));
     }
 
-    JScrollPane pane = createScrollPane(content, true);
-    pane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(content, true);
+    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     return pane;
   }
 

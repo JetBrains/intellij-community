@@ -40,36 +40,36 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
 public class SettingsDialog extends DialogWrapper implements UiCompatibleDataProvider {
   public static final String DIMENSION_KEY = "SettingsEditor";
 
-  private final String myDimensionServiceKey;
-  private final AbstractEditor myEditor;
-  private final boolean myApplyButtonNeeded;
-  private final boolean myResetButtonNeeded;
+  private final String dimensionServiceKey;
+  private final AbstractEditor editor;
+  private final boolean isApplyButtonNeeded;
+  private final boolean isResetButtonNeeded;
   private final JLabel myHintLabel = new JLabel();
 
   public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(project, true);
-    myDimensionServiceKey = key;
-    myEditor = new SingleSettingEditor(myDisposable, configurable);
-    myApplyButtonNeeded = showApplyButton;
-    myResetButtonNeeded = showResetButton;
+    dimensionServiceKey = key;
+    editor = new SingleSettingEditor(myDisposable, configurable);
+    isApplyButtonNeeded = showApplyButton;
+    isResetButtonNeeded = showResetButton;
     init(configurable, project);
   }
 
   public SettingsDialog(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(parent, true);
-    myDimensionServiceKey = key;
-    myEditor = new SingleSettingEditor(myDisposable, configurable);
-    myApplyButtonNeeded = showApplyButton;
-    myResetButtonNeeded = showResetButton;
+    dimensionServiceKey = key;
+    editor = new SingleSettingEditor(myDisposable, configurable);
+    isApplyButtonNeeded = showApplyButton;
+    isResetButtonNeeded = showResetButton;
     init(configurable, null);
   }
 
   public SettingsDialog(@NotNull Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
     super(project, true);
-    myDimensionServiceKey = DIMENSION_KEY;
-    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
-    myApplyButtonNeeded = true;
-    myResetButtonNeeded = false;
+    dimensionServiceKey = DIMENSION_KEY;
+    editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
+    isApplyButtonNeeded = true;
+    isResetButtonNeeded = false;
     init(null, project);
   }
 
@@ -79,15 +79,15 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
                         @Nullable Configurable configurable,
                         @Nullable String filter) {
     super(project, parentComponent, true, IdeModalityType.IDE);
-    myDimensionServiceKey = DIMENSION_KEY;
-    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
-    myApplyButtonNeeded = true;
-    myResetButtonNeeded = false;
+    dimensionServiceKey = DIMENSION_KEY;
+    editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
+    isApplyButtonNeeded = true;
+    isResetButtonNeeded = false;
     init(null, project);
   }
 
   protected final AbstractEditor getEditor() {
-    return myEditor;
+    return editor;
   }
 
   protected @NotNull SettingsTreeView treeViewFactory(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
@@ -132,17 +132,17 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    DataSink.uiDataSnapshot(sink, myEditor);
+    DataSink.uiDataSnapshot(sink, editor);
   }
 
   @Override
   protected String getDimensionServiceKey() {
-    return myDimensionServiceKey;
+    return dimensionServiceKey;
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myEditor.getPreferredFocusedComponent();
+    return editor.getPreferredFocusedComponent();
   }
 
   @Override
@@ -152,7 +152,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @Override
   protected JComponent createCenterPanel() {
-    return myEditor;
+    return editor;
   }
 
   @Override
@@ -166,8 +166,8 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @SuppressWarnings("unused") // used in Rider
   protected void tryAddOptionsListener(OptionsEditorColleague colleague) {
-    if (myEditor instanceof SettingsEditor) {
-      ((SettingsEditor)myEditor).addOptionsListener(colleague);
+    if (editor instanceof SettingsEditor) {
+      ((SettingsEditor)editor).addOptionsListener(colleague);
     }
   }
 
@@ -176,12 +176,12 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     ArrayList<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     actions.add(getCancelAction());
-    Action apply = myEditor.getApplyAction();
-    if (apply != null && myApplyButtonNeeded) {
+    Action apply = editor.getApplyAction();
+    if (apply != null && isApplyButtonNeeded) {
       actions.add(new ApplyActionWrapper(apply));
     }
-    Action reset = myEditor.getResetAction();
-    if (reset != null && myResetButtonNeeded) {
+    Action reset = editor.getResetAction();
+    if (reset != null && isResetButtonNeeded) {
       actions.add(reset);
     }
     if (getHelpId() != null) {
@@ -192,7 +192,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @Override
   protected @Nullable String getHelpId() {
-    return myEditor.getHelpTopic();
+    return editor.getHelpTopic();
   }
 
   @Override
@@ -205,7 +205,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     if (window != null) {
       UIUtil.stopFocusedEditing(window);
     }
-    if (myEditor.apply()) {
+    if (editor.apply()) {
       if (scheduleSave) {
         SaveAndSyncHandler.getInstance().scheduleSave(new SaveAndSyncHandler.SaveTask(null, /* forceSavingAllSettings = */ true));
       }
@@ -216,7 +216,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   @Override
   public void doCancelAction(AWTEvent source) {
     if (source instanceof KeyEvent || source instanceof ActionEvent) {
-      if (!myEditor.cancel(source)) {
+      if (!editor.cancel(source)) {
         return;
       }
     }
@@ -257,7 +257,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     @Override
     public void actionPerformed(ActionEvent e) {
       delegate.actionPerformed(e);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(SettingsDialogListener.getTOPIC()).afterApply(myEditor);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(SettingsDialogListener.getTOPIC()).afterApply(editor);
     }
 
     @Override

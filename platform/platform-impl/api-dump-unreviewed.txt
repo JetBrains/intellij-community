@@ -16311,8 +16311,12 @@ f:com.intellij.openapi.options.newEditor.SettingsDialogFactory$Companion
 - f:getInstance():com.intellij.openapi.options.newEditor.SettingsDialogFactory
 a:com.intellij.openapi.options.newEditor.SettingsFilter
 - com.intellij.ui.speedSearch.ElementFilter$Active$Impl
-- isEmptyFilter():Z
+- f:contains(com.intellij.openapi.options.Configurable):Z
+- f:isEmptyFilter():Z
+- f:reload():V
+- f:setFilterText(java.lang.String):V
 - shouldBeShowing(com.intellij.ui.treeStructure.SimpleNode):Z
+- f:update(java.lang.String):V
 c:com.intellij.openapi.options.newEditor.SettingsTreeView
 - javax.swing.JComponent
 - com.intellij.openapi.Disposable

@@ -1,279 +1,249 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.options.newEditor;
+package com.intellij.openapi.options.newEditor
 
-import com.intellij.ide.ui.search.ConfigurableHit;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
-import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.SearchTextField;
-import com.intellij.ui.speedSearch.ElementFilter;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.util.Alarm;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.ui.search.ConfigurableHit
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableGroup
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.LightColors
+import com.intellij.ui.SearchTextField
+import com.intellij.ui.speedSearch.ElementFilter
+import com.intellij.ui.treeStructure.SimpleNode
+import com.intellij.util.Alarm
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import javax.swing.event.DocumentEvent
 
-import javax.swing.event.DocumentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.List;
-import java.util.Set;
+abstract class SettingsFilter @ApiStatus.Internal protected constructor(
+  project: Project?,
+  groups: List<ConfigurableGroup>,
+  search: SearchTextField
+) : ElementFilter.Active.Impl<SimpleNode?>() {
+  @JvmField
+  internal val context: OptionsEditorContext = OptionsEditorContext()
+  private val project: Project?
 
-public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
-  final OptionsEditorContext myContext = new OptionsEditorContext();
-  private final @Nullable Project myProject;
+  private val search: SearchTextField
+  private val groups: List<ConfigurableGroup>
 
-  private final SearchTextField mySearch;
-  private final List<? extends ConfigurableGroup> myGroups;
+  private var filtered: Set<Configurable>? = null
+  private var hits: ConfigurableHit? = null
 
-  private Set<Configurable> myFiltered;
-  private ConfigurableHit myHits;
+  private var isUpdateRejected = false
+  private var isLastSelected: Configurable? = null
 
-  private boolean myUpdateRejected;
-  private Configurable myLastSelected;
+  @Volatile
+  private var searchableOptionRegistrar: SearchableOptionsRegistrar? = null
+  private val updatingAlarm = Alarm(if (project == null) ApplicationManager.getApplication() else project)
 
-  private volatile SearchableOptionsRegistrar searchableOptionRegistrar;
-  private final Alarm myUpdatingAlarm;
-
-  @ApiStatus.Internal
-  protected SettingsFilter(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, SearchTextField search) {
-    myUpdatingAlarm = new Alarm(project != null ? project : ApplicationManager.getApplication());
-    SearchableOptionsRegistrarImpl optionRegistrar =
-      (SearchableOptionsRegistrarImpl)ApplicationManager.getApplication().getServiceIfCreated(SearchableOptionsRegistrar.class);
-    if (optionRegistrar == null || !optionRegistrar.isInitialized()) {
+  init {
+    val optionRegistrar = serviceIfCreated<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl?
+    if (optionRegistrar == null || !optionRegistrar.isInitialized) {
       // if not yet computed, preload it to ensure that will be no delay on user typing
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
-        SearchableOptionsRegistrarImpl r = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
-        r.initialize();
+      AppExecutorUtil.getAppExecutorService().execute {
+        val r = SearchableOptionsRegistrar.getInstance() as SearchableOptionsRegistrarImpl
+        r.initialize()
         // must be set only after initializing (to avoid concurrent modifications)
-        searchableOptionRegistrar = r;
-        ApplicationManager.getApplication().invokeLater(() -> {
-           update(DocumentEvent.EventType.CHANGE, false, true);
-        }, ModalityState.any(), project == null ? ApplicationManager.getApplication().getDisposed() : project.getDisposed());
-      });
+        searchableOptionRegistrar = r
+        ApplicationManager.getApplication().invokeLater(Runnable {
+          update(type = DocumentEvent.EventType.CHANGE, adjustSelection = false, now = true)
+        }, ModalityState.any(), if (project == null) ApplicationManager.getApplication().getDisposed() else project.getDisposed())
+      }
     }
     else {
-      searchableOptionRegistrar = optionRegistrar;
+      searchableOptionRegistrar = optionRegistrar
     }
 
-    myProject = project;
-    myGroups = groups;
-    mySearch = search;
-    mySearch.addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull DocumentEvent event) {
-        update(event.getType(), true, false);
+    this@SettingsFilter.project = project
+    this@SettingsFilter.groups = groups
+    this@SettingsFilter.search = search
+    search.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(event: DocumentEvent) {
+        update(type = event.type, adjustSelection = true, now = false)
         // request focus if needed on changing the filter text
-        IdeFocusManager manager = IdeFocusManager.findInstanceByComponent(mySearch);
-        if (manager.getFocusedDescendantFor(mySearch) == null) {
-          manager.requestFocus(mySearch, true);
+        val manager = IdeFocusManager.findInstanceByComponent(this@SettingsFilter.search)
+        if (manager.getFocusedDescendantFor(this@SettingsFilter.search) == null) {
+          manager.requestFocus(this@SettingsFilter.search, true)
         }
       }
-    });
-    mySearch.getTextEditor().addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent event) {
-        if (!mySearch.getText().isEmpty()) {
-          if (!myContext.isHoldingFilter()) {
-            setHoldingFilter(true);
+    })
+    search.textEditor.addMouseListener(object : MouseAdapter() {
+      override fun mousePressed(event: MouseEvent?) {
+        if (!search.text.isEmpty()) {
+          if (!context.isHoldingFilter) {
+            setHoldingFilter(true)
           }
-          if (!mySearch.getTextEditor().isFocusOwner()) {
-            mySearch.selectText();
+          if (!search.textEditor.isFocusOwner) {
+            search.selectText()
           }
         }
       }
-    });
+    })
   }
 
   @ApiStatus.Internal
-  protected abstract Configurable getConfigurable(SimpleNode node);
+  protected abstract fun getConfigurable(node: SimpleNode?): Configurable?
 
   @ApiStatus.Internal
-  protected abstract SimpleNode findNode(Configurable configurable);
+  protected abstract fun findNode(configurable: Configurable?): SimpleNode?
 
   @ApiStatus.Internal
-  protected abstract void updateSpotlight(boolean now);
+  protected abstract fun updateSpotlight(now: Boolean)
 
-  @Override
-  public boolean shouldBeShowing(SimpleNode node) {
-    if (myFiltered != null) {
-      Configurable configurable = getConfigurable(node);
-      if (configurable != null) {
-        if (!myFiltered.contains(configurable)) {
-          if (myHits != null) {
-            Set<Configurable> configurables = myHits.getNameFullHits();
-            while (node != null) {
-              if (configurable != null) {
-                if (configurables.contains(configurable)) {
-                  return true;
-                }
-              }
-              node = node.getParent();
-              configurable = getConfigurable(node);
+  override fun shouldBeShowing(node: SimpleNode?): Boolean {
+    var node = node
+    val filtered = filtered ?: return true
+    var configurable = getConfigurable(node)
+    if (configurable != null) {
+      if (!filtered.contains(configurable)) {
+        if (hits != null) {
+          val configurables = hits!!.nameFullHits
+          while (node != null) {
+            if (configurable != null && configurables.contains(configurable)) {
+              return true
             }
+            node = node.parent
+            configurable = getConfigurable(node)
           }
-          return false;
         }
+        return false
       }
     }
-    return true;
+    return true
   }
 
-  void setFilterText(@NotNull String text) {
-    mySearch.setText(text);
+  fun setFilterText(text: String) {
+    search.text = text
   }
 
-  public boolean isEmptyFilter() {
-    return StringUtil.isEmpty(mySearch.getText());
-  }
+  fun isEmptyFilter(): Boolean = search.text.isNullOrEmpty()
 
-  @NotNull
   @ApiStatus.Internal
-  public String getFilterText() {
-    String text = mySearch.getText();
-    return text == null ? "" : text.trim();
-  }
+  fun getFilterText(): String = search.text?.trim() ?: ""
 
-  @NotNull
   @ApiStatus.Internal
-  public String getSpotlightFilterText() {
-    if (myHits != null) {
-      return myHits.getSpotlightFilter();
-    }
-    return getFilterText();
+  fun getSpotlightFilterText(): String = if (hits == null) getFilterText() else hits!!.spotlightFilter
+
+  private fun setHoldingFilter(holding: Boolean) {
+    context.isHoldingFilter = holding
+    updateSpotlight(false)
   }
 
-  private void setHoldingFilter(boolean holding) {
-    myContext.setHoldingFilter(holding);
-    updateSpotlight(false);
-  }
+  fun contains(configurable: Configurable): Boolean = hits != null && hits!!.nameHits.contains(configurable)
 
-  boolean contains(@NotNull Configurable configurable) {
-    return myHits != null && myHits.getNameHits().contains(configurable);
-  }
-
-  void update(@Nullable String text) {
+  fun update(text: String?) {
     try {
-      myUpdateRejected = true;
-      mySearch.setText(text);
+      isUpdateRejected = true
+      search.text = text
     }
     finally {
-      myUpdateRejected = false;
+      isUpdateRejected = false
     }
-    update(DocumentEvent.EventType.CHANGE, false, true);
+    update(type = DocumentEvent.EventType.CHANGE, adjustSelection = false, now = true)
   }
 
-  private void update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
-    myUpdatingAlarm.cancelAllRequests();
-    myUpdatingAlarm.addRequest(() -> {
-      SearchableOptionsRegistrar registrar = searchableOptionRegistrar;
-      if (registrar != null) update(registrar, type, adjustSelection, now);
-    }, 100, ModalityState.any());
+  private fun update(type: DocumentEvent.EventType, adjustSelection: Boolean, now: Boolean) {
+    updatingAlarm.cancelAllRequests()
+    updatingAlarm.addRequest(Runnable {
+      val registrar = searchableOptionRegistrar
+      if (registrar != null) update(registrar, type, adjustSelection, now)
+    }, 100, ModalityState.any())
   }
 
-  private void update(@NotNull SearchableOptionsRegistrar optionRegistrar, @NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
-    if (myUpdateRejected) {
-      return;
+  private fun update(optionRegistrar: SearchableOptionsRegistrar, type: DocumentEvent.EventType, adjustSelection: Boolean, now: Boolean) {
+    if (isUpdateRejected) {
+      return
     }
 
-    String text = getFilterText();
+    val text = getFilterText()
     if (text.isEmpty()) {
-      myContext.setHoldingFilter(false);
-      myHits = null;
-      myFiltered = null;
+      context.isHoldingFilter = false
+      hits = null
+      filtered = null
     }
     else {
-      myContext.setHoldingFilter(true);
-      myHits = optionRegistrar.getConfigurables(myGroups, type, null, text, myProject);
-      myFiltered = myHits.getAll();
+      context.isHoldingFilter = true
+      hits = optionRegistrar.getConfigurables(groups, type, null, text, project)
+      filtered = hits!!.all
     }
-    mySearch.getTextEditor().setBackground(myFiltered != null && myFiltered.isEmpty()
-                                           ? LightColors.RED
-                                           : UIUtil.getTextFieldBackground());
+    search.textEditor.setBackground(if (filtered != null && filtered!!.isEmpty())LightColors.RED else UIUtil.getTextFieldBackground())
 
 
-    Configurable current = myContext.getCurrentConfigurable();
+    val current = context.currentConfigurable
+    var shouldMoveSelection = hits == null || !hits!!.nameFullHits.contains(current) && !hits!!.contentHits.contains(current)
 
-    boolean shouldMoveSelection = myHits == null || !myHits.getNameFullHits().contains(current) &&
-                                                    !myHits.getContentHits().contains(current);
-
-    if (shouldMoveSelection && type != DocumentEvent.EventType.INSERT && (myFiltered == null || myFiltered.contains(current))) {
-      shouldMoveSelection = false;
+    if (shouldMoveSelection && type != DocumentEvent.EventType.INSERT && (filtered == null || filtered!!.contains(current))) {
+      shouldMoveSelection = false
     }
 
-    Configurable candidate = adjustSelection ? current : null;
-    if (shouldMoveSelection && myHits != null) {
-      if (!myHits.getNameHits().isEmpty()) {
-        candidate = findConfigurable(myHits.getNameHits(), myHits.getNameFullHits());
+    var candidate = if (adjustSelection) current else null
+    if (shouldMoveSelection && hits != null) {
+      if (!hits!!.nameHits.isEmpty()) {
+        candidate = findConfigurable(hits!!.nameHits, hits!!.nameFullHits)
       }
-      else if (!myHits.getContentHits().isEmpty()) {
-        candidate = findConfigurable(myHits.getContentHits(), null);
+      else if (!hits!!.contentHits.isEmpty()) {
+        candidate = findConfigurable(hits!!.contentHits, null)
       }
     }
-    updateSpotlight(false);
+    updateSpotlight(false)
 
-    if ((myFiltered == null || !myFiltered.isEmpty()) && candidate == null && myLastSelected != null) {
-      candidate = myLastSelected;
-      myLastSelected = null;
+    if ((filtered == null || !filtered!!.isEmpty()) && candidate == null && isLastSelected != null) {
+      candidate = isLastSelected
+      isLastSelected = null
     }
     if (candidate == null && current != null) {
-      myLastSelected = current;
+      isLastSelected = current
     }
 
-    if (myFiltered != null &&
-        candidate != null) {
-      SettingsCounterUsagesCollector.SEARCH.log(getUnnamedConfigurable(candidate).getClass(),
-                                                myFiltered.size(),
-                                                text.length());
+    if (filtered != null && candidate != null) {
+      SettingsCounterUsagesCollector.SEARCH.log(getUnnamedConfigurable(candidate).javaClass, filtered!!.size, text.length)
     }
 
-    SimpleNode node = !adjustSelection ? null : findNode(candidate);
-    fireUpdate(node, adjustSelection, now);
+    val node = if (adjustSelection) findNode(candidate) else null
+    fireUpdate(node, adjustSelection, now)
   }
 
-  private static @NotNull UnnamedConfigurable getUnnamedConfigurable(@NotNull Configurable candidate) {
-    return candidate instanceof ConfigurableWrapper ?
-           ((ConfigurableWrapper)candidate).getConfigurable() :
-           candidate;
+  fun reload() {
+    isLastSelected = null
+    filtered = null
+    hits = null
+    search.text = ""
+    context.reload()
   }
+}
 
-  private static Configurable findConfigurable(Set<? extends Configurable> configurables, Set<? extends Configurable> hits) {
-    Configurable candidate = null;
-    for (Configurable configurable : configurables) {
-      if (hits != null && hits.contains(configurable)) {
-        return configurable;
-      }
-      if (candidate == null && !isEmptyParent(configurable)) {
-        candidate = configurable;
-      }
+private fun getUnnamedConfigurable(candidate: Configurable): UnnamedConfigurable {
+  return if (candidate is ConfigurableWrapper) candidate.getConfigurable() else candidate
+}
+
+private fun findConfigurable(configurables: Set<Configurable>, hits: Set<Configurable>?): Configurable? {
+  var candidate: Configurable? = null
+  for (configurable in configurables) {
+    if (hits != null && hits.contains(configurable)) {
+      return configurable
     }
-    return candidate;
+    if (candidate == null && !isEmptyParent(configurable)) {
+      candidate = configurable
+    }
   }
+  return candidate
+}
 
-  private static boolean isEmptyParent(Configurable configurable) {
-    SearchableConfigurable.Parent parent = ConfigurableWrapper.cast(SearchableConfigurable.Parent.class, configurable);
-    return parent != null && !parent.hasOwnContent();
-  }
-
-  void reload() {
-    myLastSelected = null;
-    myFiltered = null;
-    myHits = null;
-    mySearch.setText("");
-    myContext.reload();
-  }
+private fun isEmptyParent(configurable: Configurable?): Boolean {
+  val parent = ConfigurableWrapper.cast(SearchableConfigurable.Parent::class.java, configurable)
+  return parent != null && !parent.hasOwnContent()
 }
