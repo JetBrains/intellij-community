@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.script
+package org.jetbrains.kotlin.idea.script.k2
 
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -11,13 +11,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.LightVirtualFileBase
+import com.intellij.ui.EditorNotifications
+import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
-import org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDependenciesSource
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import java.util.concurrent.ConcurrentHashMap
 
-internal class RefreshMainKtsScriptAction : AnAction() {
+internal class ReloadDependenciesMainKtsScriptAction : AnAction() {
 
     private val lastModifiedPerScript = ConcurrentHashMap<VirtualFile, Long>()
 
@@ -28,11 +30,15 @@ internal class RefreshMainKtsScriptAction : AnAction() {
 
         runWithModalProgressBlocking(
             project,
-            "Compiling script..."
+            KotlinBaseScriptingBundle.message("progress.title.loading.script.dependencies")
         ) {
             MainKtsScriptDependenciesSource.getInstance(project)?.updateDependenciesAndCreateModules(
                 listOf(BaseScriptModel(file))
             )
+
+            ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+            lastModifiedPerScript[file] = file.modificationStamp
+            EditorNotifications.getInstance(project).updateNotifications(file)
         }
     }
 
@@ -66,5 +72,3 @@ private fun getKotlinScriptFile(editor: Editor): VirtualFile? = FileDocumentMana
                 && it.isKotlinFileType()
                 && isMainKtsScript(it)
     }
-
-private fun isMainKtsScript(virtualFile: VirtualFile) = virtualFile.name.endsWith(".main.kts")

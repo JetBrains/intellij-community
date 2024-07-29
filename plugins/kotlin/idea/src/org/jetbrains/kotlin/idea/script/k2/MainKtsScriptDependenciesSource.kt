@@ -50,13 +50,12 @@ class MainKtsScriptDependenciesSource(override val project: Project) : ScriptDep
     }
 
     override suspend fun updateModules(dependencies: ScriptDependenciesData, storage: MutableEntityStorage?) {
-        val workspaceModel = project.workspaceModel
-        val storageSnapshot = workspaceModel.currentSnapshot
+        val storageSnapshot = project.workspaceModel.currentSnapshot
         val tempStorage = MutableEntityStorage.from(storageSnapshot)
 
         creteScriptModules(project, dependencies, tempStorage)
 
-        workspaceModel.update("Updating MainKts Kotlin Scripts modules") {
+        project.workspaceModel.update("Updating MainKts Kotlin Scripts modules") {
             it.applyChangesFrom(tempStorage)
         }
     }

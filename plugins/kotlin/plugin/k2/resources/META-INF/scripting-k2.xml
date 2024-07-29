@@ -63,6 +63,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptNotificationProvider"/>
+
     <registryKey defaultValue="false"
                  key="kotlin.k2.scripting.show.modules"
                  description="Enable displaying Kotlin Script modules in 'Project Structure' | 'Modules' view "/>
@@ -105,6 +107,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <newFileHook implementation="org.jetbrains.kotlin.idea.script.k2.NewMainKtsFileHook"/>
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
 
     <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>
@@ -118,7 +121,7 @@
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
       <action id="LoadMainKtsConfiguration"
-              class="org.jetbrains.kotlin.idea.script.RefreshMainKtsScriptAction"
+              class="org.jetbrains.kotlin.idea.script.k2.ReloadDependenciesMainKtsScriptAction"
               icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
         <add-to-group group-id="EditorContextBarMenu"/>
       </action>
