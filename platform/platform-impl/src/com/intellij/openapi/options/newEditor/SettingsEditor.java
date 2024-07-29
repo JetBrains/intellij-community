@@ -196,7 +196,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     treeView.getTree().addKeyListener(mySearch);
     editor = new ConfigurableEditor(this, null) {
       @Override
-      boolean apply() {
+      protected boolean apply() {
         checkModified(SettingsEditor.this.filter.context.getCurrentConfigurable());
         if (SettingsEditor.this.filter.context.getModified().isEmpty()) {
           return true;
@@ -400,23 +400,23 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   @Override
-  void disposeOnce() {
+  protected void disposeOnce() {
     if (myProperties == null || mySplitter == null) return; // if constructor failed
     myProperties.setValue(SPLITTER_PROPORTION, mySplitter.getProportion(), SPLITTER_PROPORTION_DEFAULT_VALUE);
   }
 
   @Override
-  Action getApplyAction() {
+  protected Action getApplyAction() {
     return editor.getApplyAction();
   }
 
   @Override
-  Action getResetAction() {
+  protected Action getResetAction() {
     return null;
   }
 
   @Override
-  String getHelpTopic() {
+  protected String getHelpTopic() {
     Configurable configurable = filter.context.getCurrentConfigurable();
     while (configurable != null) {
       String topic = configurable.getHelpTopic();
@@ -429,12 +429,12 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   @Override
-  boolean apply() {
+  protected boolean apply() {
     return editor.apply();
   }
 
   @Override
-  boolean cancel(AWTEvent source) {
+  protected boolean cancel(AWTEvent source) {
     if (source instanceof KeyEvent && filter.context.isHoldingFilter()) {
       mySearch.setText("");
       return false;
@@ -446,7 +446,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   @Override
-  JComponent getPreferredFocusedComponent() {
+  protected JComponent getPreferredFocusedComponent() {
     return treeView != null ? treeView.getTree() : editor;
   }
 

@@ -164,7 +164,6 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     return panel;
   }
 
-  @SuppressWarnings("unused") // used in Rider
   protected void tryAddOptionsListener(OptionsEditorColleague colleague) {
     if (editor instanceof SettingsEditor) {
       ((SettingsEditor)editor).addOptionsListener(colleague);
@@ -227,7 +226,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     return EventHandler.getShortcuts(ACTION_FIND);
   }
 
-  private class ApplyActionWrapper extends AbstractAction {
+  private final class ApplyActionWrapper extends AbstractAction {
     private final @NotNull Action delegate;
 
     ApplyActionWrapper(@NotNull Action delegate) {
@@ -257,7 +256,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     @Override
     public void actionPerformed(ActionEvent e) {
       delegate.actionPerformed(e);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(SettingsDialogListener.getTOPIC()).afterApply(editor);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(SettingsDialogListener.TOPIC).afterApply(editor);
     }
 
     @Override

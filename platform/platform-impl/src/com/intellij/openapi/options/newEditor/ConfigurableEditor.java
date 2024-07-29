@@ -105,35 +105,35 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @Override
-  void disposeOnce() {
+  protected void disposeOnce() {
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     myCardPanel.removeAll();
   }
 
   @Override
-  String getHelpTopic() {
+  protected String getHelpTopic() {
     return myConfigurable == null ? null : myConfigurable.getHelpTopic();
   }
 
   @Override
-  Action getApplyAction() {
+  protected Action getApplyAction() {
     return myApplyAction;
   }
 
   @Override
-  Action getResetAction() {
+  protected Action getResetAction() {
     return myResetAction;
   }
 
   @Override
-  boolean apply() {
+  protected boolean apply() {
     // do not apply changes of a single configurable if it is not modified
     updateIfCurrent(myConfigurable);
     return setError(apply(myApplyAction.isEnabled() ? myConfigurable : null));
   }
 
   @Override
-  boolean cancel(AWTEvent source) {
+  protected boolean cancel(AWTEvent source) {
     myConfigurable.cancel();
     return super.cancel(source);
   }

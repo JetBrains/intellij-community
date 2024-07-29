@@ -1,46 +1,44 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.options.newEditor;
+package com.intellij.openapi.options.newEditor
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.*;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.awt.AWTEvent
+import java.awt.BorderLayout
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 @ApiStatus.Internal
-public abstract class AbstractEditor extends JPanel implements Disposable {
-  volatile boolean isDisposed;
+abstract class AbstractEditor internal constructor(parent: Disposable) : JPanel(BorderLayout()), Disposable {
+  @Volatile
+  @JvmField
+  var isDisposed: Boolean = false
 
-  AbstractEditor(@NotNull Disposable parent) {
-    super(new BorderLayout());
-
-    Disposer.register(parent, this);
+  init {
+    Disposer.register(parent, this)
   }
 
-  @Override
-  public final void dispose() {
+  override fun dispose() {
     if (!isDisposed) {
-      isDisposed = true;
-      disposeOnce();
+      isDisposed = true
+      disposeOnce()
     }
   }
 
-  abstract void disposeOnce();
+  protected abstract fun disposeOnce()
 
-  abstract Action getApplyAction();
+  protected abstract fun getApplyAction(): Action?
 
-  abstract Action getResetAction();
+  protected abstract fun getResetAction(): Action?
 
-  abstract @NonNls String getHelpTopic();
+  protected abstract fun getHelpTopic(): @NonNls String?
 
-  abstract boolean apply();
+  protected abstract fun apply(): Boolean
 
-  boolean cancel(AWTEvent source) {
-    return true;
-  }
+  protected open fun cancel(source: AWTEvent?): Boolean = true
 
-  abstract JComponent getPreferredFocusedComponent();
+  protected abstract fun getPreferredFocusedComponent(): JComponent?
 }
