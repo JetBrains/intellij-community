@@ -23,5 +23,7 @@ abstract class ScriptBase(override val type: Script.Type,
 
   override var sourceMap: SourceMap? = null
 
+  override val sourceMapUrl: String? = null
+
   override fun toString(): String = "[url=$url, lineRange=[$line;$endLine]]"
 }
