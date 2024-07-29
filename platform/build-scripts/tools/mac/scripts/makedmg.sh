@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+# Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #immediately exit script with an error if a command fails
 set -euo pipefail
@@ -61,7 +61,8 @@ function generate_DS_Store() {
   fi
   log "ds_store library is required for DMG/DS_Store generation, installing in a Python virtual environment"
   python3 -m venv .
-  ./bin/pip3 install mac-alias==2.2.0 ds-store==1.3.0
+  ./bin/pip3 install "setuptools<72"
+  ./bin/pip3 install --no-build-isolation mac-alias==2.2.0 ds-store==1.3.0
   ./bin/python3 makedmg.py "$VOLNAME" "$BG_PIC" "$1"
   log "DMG/DS_Store is generated"
   rm -rf "$MOUNT_POINT/.fseventsd"
