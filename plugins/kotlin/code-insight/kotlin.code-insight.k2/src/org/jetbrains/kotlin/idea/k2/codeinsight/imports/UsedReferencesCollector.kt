@@ -123,7 +123,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             (target as? KaNamedClassSymbol)?.containingSymbol
         }
 
-        reference is KaConstructorSymbol -> target.containingSymbol
+        target is KaConstructorSymbol -> target.containingSymbol
 
         else -> target
     }
