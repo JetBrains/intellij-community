@@ -107,8 +107,8 @@ public final class PersistentFSRecordAccessor {
     }
   }
 
-  private static void checkNewRecordIsZero(PersistentFSRecordsStorage records,
-                                           int newRecordId) throws IOException {
+  private void checkNewRecordIsZero(PersistentFSRecordsStorage records,
+                                    int newRecordId) throws IOException {
     int parentId = records.getParent(newRecordId);
     int nameId = records.getNameId(newRecordId);
     int contentId = records.getContentRecordId(newRecordId);
@@ -129,11 +129,25 @@ public final class PersistentFSRecordAccessor {
         "wasClosedProperly=" + records.wasClosedProperly()
       );
 
-      FSRecords.LOG.error(exception);
+      //IJPL-1016: statistical analysis shows that it is quite likely an OS crash is responsible for most (if not all) of
+      //           those 'non-zero records in un-allocated area' errors. So our current approach to that issue:
+      //           1) We don't bother reporting these errors in EA anymore, if !wasClosedProperly: consider it
+      //              'known issue, won't fix'.
+      //           2) We still _do_ report them if there are no signs of a crash, though: maybe there are other causes?
+      //           3) We try to fix the problem here -- clean the record -- but we can't be sure that record id wasn't
+      //              already used somewhere (i.e. in a children list), so we mark VFS as corrupted anyway, because
+      //              these cases are definitely a failure of VFS recovery procedure.
 
-      //try fixing the error: clean the record (modCount can't be cleaned, ok, let it be off)
-      records.fillRecord(newRecordId, 0, 0, 0, 0, 0, true);
-      records.setContentRecordId(newRecordId, 0);
+      if (records.wasClosedProperly()) {
+        FSRecords.LOG.error(exception);
+      }
+      else {
+        FSRecords.LOG.warn(exception);
+      }
+      connection.markAsCorruptedAndScheduleRebuild(exception);
+
+      records.cleanRecord(newRecordId);
+
     }
   }
 
