@@ -273,6 +273,7 @@ public final class LoadTextUtil {
     return new DetectResult(result, guessed, detectedBOM);
   }
 
+  /** detects the charset, and update it in {@link VirtualFile#setCharset(Charset)} */
   public static @NotNull Charset detectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, byte @NotNull [] content, @NotNull FileType fileType) {
     Charset internalCharset = detectInternalCharsetAndSetBOM(virtualFile, content, content.length, true, fileType).hardCodedCharset;
     return internalCharset instanceof SevenBitCharset ? ((SevenBitCharset)internalCharset).myBaseCharset : internalCharset;
