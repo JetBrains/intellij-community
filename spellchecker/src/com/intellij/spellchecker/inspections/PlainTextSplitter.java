@@ -131,7 +131,7 @@ public class PlainTextSplitter extends BaseSplitter {
         if (matcher.hitEnd()) break;
       }
     }
-    catch (ProcessCanceledException ignored) {
+    catch (TooLongBombedMatchingException ignored) {
     }
   }
 

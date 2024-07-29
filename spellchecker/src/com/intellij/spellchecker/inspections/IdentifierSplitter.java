@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.Consumer;
@@ -22,8 +21,6 @@ public class IdentifierSplitter extends BaseSplitter {
   }
 
   private static final @NonNls Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
-
-
   private static final @NonNls Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
 
   @Override
@@ -37,7 +34,7 @@ public class IdentifierSplitter extends BaseSplitter {
     for (TextRange textRange : extracted) {
       List<TextRange> words = splitByCase(text, textRange);
 
-      if (words.size() == 0) {
+      if (words.isEmpty()) {
         continue;
       }
 
@@ -65,7 +62,7 @@ public class IdentifierSplitter extends BaseSplitter {
             addWord(consumer, flag, found);
           }
         }
-        catch (ProcessCanceledException e) {
+        catch (TooLongBombedMatchingException e) {
           return;
         }
       }
@@ -138,7 +135,7 @@ public class IdentifierSplitter extends BaseSplitter {
 
   private static void add(String text, List<TextRange> result, int i, int s) {
     if (i - s > 3) {
-      final TextRange textRange = new TextRange(s, i);
+      TextRange textRange = new TextRange(s, i);
       //System.out.println("textRange = " + textRange + " = "+ textRange.substring(text));
       result.add(textRange);
     }

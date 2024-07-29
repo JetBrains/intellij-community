@@ -4,6 +4,7 @@ package com.intellij.spellchecker.inspections;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -29,6 +30,8 @@ public abstract class BaseSplitter implements Splitter {
     if (tooShort) {
       return;
     }
+
+    ProgressManager.checkCanceled();
     consumer.consume(found);
   }
 
@@ -109,19 +112,27 @@ public abstract class BaseSplitter implements Splitter {
     }
   }
 
+  private static final int PROCESSING_TIME_LIMIT = 500;
+
+  /**
+   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT}
+   */
   protected static CharSequence newBombedCharSequence(String text, TextRange range) {
     return newBombedCharSequence(range.substring(text));
   }
 
-  protected static CharSequence newBombedCharSequence(final String substring) {
-    final long myTime = System.currentTimeMillis() + 500;
+  /**
+   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT}
+   */
+  protected static CharSequence newBombedCharSequence(String substring) {
     return new StringUtil.BombedCharSequence(substring) {
+      final long myTime = System.currentTimeMillis() + PROCESSING_TIME_LIMIT;
+
       @Override
       protected void checkCanceled() {
-        //todo[anna] if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
         long l = System.currentTimeMillis();
         if (l >= myTime) {
-          throw new ProcessCanceledException();
+          throw new TooLongBombedMatchingException();
         }
       }
     };
@@ -131,5 +142,8 @@ public abstract class BaseSplitter implements Splitter {
     if (ApplicationManager.getApplication() != null) {
       ProgressIndicatorProvider.checkCanceled();
     }
+  }
+
+  public static class TooLongBombedMatchingException extends ProcessCanceledException {
   }
 }

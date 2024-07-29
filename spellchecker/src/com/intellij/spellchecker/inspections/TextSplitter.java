@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -51,7 +50,7 @@ public class TextSplitter extends BaseSplitter {
         ws.split(text, found, consumer);
       }
     }
-    catch (ProcessCanceledException ignored) {
+    catch (TooLongBombedMatchingException ignored) {
     }
   }
 
