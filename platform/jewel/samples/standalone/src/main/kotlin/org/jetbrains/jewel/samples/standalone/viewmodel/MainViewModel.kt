@@ -9,6 +9,10 @@ import org.jetbrains.jewel.samples.standalone.IntUiThemes
 import org.jetbrains.jewel.samples.standalone.reflection.findViews
 
 object MainViewModel {
+    fun onNavigateTo(destination: String) {
+        currentView = views.first { viewInfo -> viewInfo.title == destination }
+    }
+
     var theme: IntUiThemes by mutableStateOf(IntUiThemes.Light)
 
     var swingCompat: Boolean by mutableStateOf(false)

@@ -1,6 +1,12 @@
 package org.jetbrains.jewel.samples.standalone
 
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.text.font.FontFamily
@@ -22,6 +28,7 @@ import org.jetbrains.jewel.intui.window.styling.light
 import org.jetbrains.jewel.intui.window.styling.lightWithLightHeader
 import org.jetbrains.jewel.samples.standalone.view.TitleBarView
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel
+import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel.currentView
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.window.DecoratedWindow
 import org.jetbrains.jewel.window.styling.TitleBarStyle
@@ -68,11 +75,48 @@ fun main() {
                 onCloseRequest = { exitApplication() },
                 title = "Jewel standalone sample",
                 icon = icon,
-            ) {
-                TitleBarView()
-                MainViewModel.currentView.content()
-            }
+                onKeyEvent = { keyEvent ->
+                    processKeyShortcuts(
+                        keyEvent = keyEvent,
+                        onNavigateTo = MainViewModel::onNavigateTo,
+                    )
+                },
+                content = {
+                    TitleBarView()
+                    currentView.content()
+                },
+            )
         }
+    }
+}
+
+/*
+    Alt + W -> Welcome
+    Alt + M -> Markdown
+    Alt + C -> Components
+ */
+private fun processKeyShortcuts(
+    keyEvent: KeyEvent,
+    onNavigateTo: (String) -> Unit,
+): Boolean {
+    if (!keyEvent.isAltPressed || keyEvent.type != KeyEventType.KeyDown) return false
+    return when (keyEvent.key) {
+        Key.W -> {
+            onNavigateTo("Welcome")
+            true
+        }
+
+        Key.M -> {
+            onNavigateTo("Markdown")
+            true
+        }
+
+        Key.C -> {
+            onNavigateTo("Components")
+            true
+        }
+
+        else -> false
     }
 }
 
