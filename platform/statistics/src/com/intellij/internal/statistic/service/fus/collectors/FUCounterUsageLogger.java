@@ -57,6 +57,9 @@ public final class FUCounterUsageLogger {
     for (CounterUsageCollectorEP ep : COUNTER_EP_NAME.getExtensionList()) {
       registerGroupFromEP(ep);
     }
+
+    registerEventLogSystemCollectors();
+
     ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(COUNTER_EP_NAME).addExtensionPointListener(
       new ExtensionPointListener<>() {
         @Override
@@ -78,6 +81,17 @@ public final class FUCounterUsageLogger {
       if (StringUtil.isNotEmpty(id)) {
         register(new EventLogGroup(id, ep.version));
       }
+    }
+  }
+
+  /**
+   * Event log counter-system collectors aren't registered in EP,
+   * so we register each such collector for every StatisticsEventLoggerProvider.
+   * @see StatisticsEventLoggerProvider#getEventLogSystemLogger$intellij_platform_statistics()
+   */
+  private void registerEventLogSystemCollectors() {
+    for (StatisticsEventLoggerProvider statisticsEventLoggerProvider: StatisticsEventLogProviderUtil.getEventLogProviders()) {
+      register(statisticsEventLoggerProvider.getEventLogSystemLogger$intellij_platform_statistics().getGroup());
     }
   }
 
