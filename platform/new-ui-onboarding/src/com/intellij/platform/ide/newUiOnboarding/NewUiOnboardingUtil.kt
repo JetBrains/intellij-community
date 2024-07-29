@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -168,7 +169,9 @@ object NewUiOnboardingUtil {
   private suspend fun performActionUpdate(action: AnAction, event: AnActionEvent) {
     val dispatcher = if (action.actionUpdateThread == ActionUpdateThread.BGT) Dispatchers.Default else Dispatchers.EDT
     withContext(dispatcher) {
-      ActionUtil.performDumbAwareUpdate(action, event, false)
+      readAction {
+        ActionUtil.performDumbAwareUpdate(action, event, false)
+      }
     }
   }
 
