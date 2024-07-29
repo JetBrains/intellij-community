@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -617,6 +618,7 @@ private class ClassConverter(
 
         moveAccessorAnnotationsToProperty(ktProperty)
         removeRedundantPropertyAccessors(ktProperty)
+        convertGetterToSingleExpressionBody(ktProperty.getter)
     }
 
     private fun removeRedundantPropertyAccessors(property: KtProperty) {
@@ -821,6 +823,24 @@ private class ClassConverter(
             }
             accessor.annotationEntries.forEach { it.delete() }
         }
+    }
+
+    private fun convertGetterToSingleExpressionBody(getter: KtPropertyAccessor?) {
+        fun KtPropertyAccessor.singleBodyStatementExpression(): KtExpression? =
+            bodyBlockExpression?.statements
+                ?.singleOrNull()
+                ?.safeAs<KtReturnExpression>()
+                ?.takeIf { it.labeledExpression == null }
+                ?.returnedExpression
+
+        if (getter == null) return
+        val body = getter.bodyExpression ?: return
+        val returnedExpression = getter.singleBodyStatementExpression() ?: return
+
+        val commentSaver = CommentSaver(body)
+        getter.addBefore(KtPsiFactory(getter.project).createEQ(), body)
+        val newBody = body.replaced(returnedExpression)
+        commentSaver.restore(newBody)
     }
 }
 
