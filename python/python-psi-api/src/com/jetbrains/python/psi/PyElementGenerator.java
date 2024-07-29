@@ -40,9 +40,6 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
                                                                           @NotNull String unescaped,
                                                                           boolean preferUTF8, boolean preferDoubleQuotes);
 
-  public abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, String unescaped,
-                                                                          boolean preferUTF8);
-
   public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped, boolean preferDoubleQuotes);
 
   public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped);

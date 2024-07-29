@@ -64,7 +64,7 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
 
   @Override
   public PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped) {
-    return createStringLiteralFromString(null, unescaped, true);
+    return createStringLiteralFromString(null, unescaped, true, true);
   }
 
   @Override
@@ -138,13 +138,6 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
     if (unicode) buf.insert(0, "u");
 
     return createStringLiteralAlreadyEscaped(buf.toString());
-  }
-
-  @Override
-  public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
-                                                                 @NotNull String unescaped,
-                                                                 final boolean preferUTF8) {
-    return createStringLiteralFromString(destination, unescaped, preferUTF8, true);
   }
 
   @Override
