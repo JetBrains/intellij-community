@@ -267,7 +267,7 @@ private fun JobTree.toRepresentation(stripTrace: Boolean): JobRepresentationTree
     job is CoroutineScope -> job.coroutineContext
     debugInfo !== null -> debugInfo.context
     else -> EmptyCoroutineContext
-  }
+  } ?: EmptyCoroutineContext // shouldn't be necessary but see IJPL-158517
   val name = if (job is AbstractCoroutine<*> && DEBUG) {
     // in DEBUG the name is displayed as part of `job.toString()` for AbstractCoroutine
     // see kotlinx.coroutines.AbstractCoroutine.nameString
