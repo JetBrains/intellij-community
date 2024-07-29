@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.hotswap
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -15,6 +14,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
+import icons.PlatformDebuggerImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +61,7 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
 
   fun update(inProgress: Boolean, presentation: Presentation) {
     presentation.isEnabled = !inProgress
-    presentation.icon = if (inProgress) AnimatedIcon.Default.INSTANCE else AllIcons.Actions.Rebuild
+    presentation.icon = if (inProgress) AnimatedIcon.Default.INSTANCE else PlatformDebuggerImplIcons.Actions.Hot_swap
     // Force animation in the disabled state
     presentation.disabledIcon = presentation.icon
   }
