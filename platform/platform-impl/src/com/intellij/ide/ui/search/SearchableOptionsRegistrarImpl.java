@@ -234,11 +234,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     }
     else {
       for (Configurable each : effectiveConfigurables) {
-        if (each.getDisplayName() == null) {
-          continue;
-        }
-        final String displayName = Strings.toLowerCase(each.getDisplayName());
-        if (displayName.contains(optionToCheck)) {
+        String displayName = each.getDisplayName();
+        if (displayName != null && StringUtil.containsIgnoreCase(displayName, optionToCheck)) {
           nameFullHits.add(each);
           nameHits.add(each);
         }
