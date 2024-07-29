@@ -356,7 +356,7 @@ final class SearchForUsagesRunnable implements Runnable {
     searchUsages();
     endSearchForUsages();
 
-    snapshot.logResponsivenessSinceCreation("Find Usages in " + myProject.getName(), true);
+    snapshot.logResponsivenessSinceCreation("Find Usages in " + myProject.getName(), "FindUsagesTotal");
   }
 
   private void searchUsages() {

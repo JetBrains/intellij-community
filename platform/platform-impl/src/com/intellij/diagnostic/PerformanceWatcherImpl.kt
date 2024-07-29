@@ -417,22 +417,22 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     private val startMillis = System.currentTimeMillis()
 
     override fun logResponsivenessSinceCreation(activityName: @NonNls String) {
-      logResponsivenessSinceCreation(activityName, false)
+      logResponsivenessSinceCreation(activityName, null)
     }
 
-    override fun logResponsivenessSinceCreation(activityName: @NonNls String, withSpan: Boolean) {
-      LOG.info(getLogResponsivenessSinceCreationMessage(activityName, withSpan))
+    override fun logResponsivenessSinceCreation(activityName: @NonNls String, spanName: String?) {
+      LOG.info(getLogResponsivenessSinceCreationMessage(activityName, spanName))
     }
 
     override fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String): String {
-      return getLogResponsivenessSinceCreationMessage(activityName, false)
+      return getLogResponsivenessSinceCreationMessage(activityName, null)
     }
 
-    override fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String, withSpan: Boolean): String {
+    override fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String, spanName: String?): String {
       val currentTime = System.currentTimeMillis()
-      if (withSpan) {
+      if (spanName != null) {
         TelemetryManager.getTracer(Scope("PerformanceWatcher"))
-          .spanBuilder(activityName)
+          .spanBuilder(spanName)
           .setStartTimestamp(startMillis, TimeUnit.MILLISECONDS)
           .startSpan()
           .end(currentTime, TimeUnit.MILLISECONDS)
