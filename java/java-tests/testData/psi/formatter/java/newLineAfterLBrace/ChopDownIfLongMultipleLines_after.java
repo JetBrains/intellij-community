@@ -8,4 +8,12 @@ public class Main {
             1,
             2,
             3);
+
+    public void foo(
+            int longArgument1,
+            int longArgument2,
+            int longArgument3,
+            int short4,
+            int receiver1) {
+    }
 }

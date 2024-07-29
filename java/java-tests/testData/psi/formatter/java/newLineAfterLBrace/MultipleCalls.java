@@ -15,4 +15,13 @@ public class Test {
     public void fooBarBaz(int... args) {
         fooBarBaz(100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000, 100000);
     }
+
+    public void foo(int longArgument1, int longArgument2, int longArgument3, int short4, int receiver1) {
+    }
+
+    static void vertLongMethodName(int longArgument1, int longArgument2, int longArgument3, int short4) {
+    }
+
+    public <T, V extends Test> void typedMethod(@Deprecated List<? extends T> field1, @Deprecated List<? super T> field2) {
+    }
 }
