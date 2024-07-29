@@ -4832,11 +4832,6 @@ f:com.intellij.ide.actions.QuickChangeColorSchemeAction
 - <init>():V
 - s:changeLafIfNecessary(com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - s:changeLafIfNecessary(com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.openapi.editor.colors.EditorColorsScheme,java.lang.Runnable):V
-f:com.intellij.ide.actions.QuickChangeIdeScaleAction
-- com.intellij.ide.actions.QuickSwitchSchemeAction
-- sf:Companion:com.intellij.ide.actions.QuickChangeIdeScaleAction$Companion
-- <init>():V
-f:com.intellij.ide.actions.QuickChangeIdeScaleAction$Companion
 f:com.intellij.ide.actions.QuickChangeKeymapAction
 - com.intellij.ide.actions.QuickSwitchSchemeAction
 - <init>():V
