@@ -8479,6 +8479,7 @@ c:com.intellij.ui.components.JBTextField
 - <init>(I):V
 - <init>(java.lang.String):V
 - <init>(java.lang.String,I):V
+- p:createDefaultModel():javax.swing.text.Document
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getEmptyText():com.intellij.util.ui.StatusText
