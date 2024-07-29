@@ -2522,6 +2522,10 @@
       "since": "2024.2"
     },
     {
+      "key": "LicenseDialog.waitingLabelForeground",
+      "since": "2024.2"
+    },
+    {
       "key": "LicenseDialog.separatorColor",
       "since": "2024.2"
     },

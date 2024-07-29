@@ -920,6 +920,7 @@
 
     "LicenseDialog": {
       "termsAndConditionsForeground": "Gray8",
+      "waitingLabelForeground": "Gray8",
       "separatorColor": "Gray12",
       "LicenseList": {
         "licenseDetailsForeground": "Gray6",

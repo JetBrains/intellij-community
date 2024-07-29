@@ -869,6 +869,7 @@
 
     "LicenseDialog": {
       "termsAndConditionsForeground": "Gray7",
+      "waitingLabelForeground": "Gray7",
       "separatorColor": "Gray3",
       "LicenseList": {
         "licenseDetailsForeground": "Gray9",

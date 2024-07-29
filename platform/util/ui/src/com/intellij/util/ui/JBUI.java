@@ -2457,11 +2457,18 @@ public final class JBUI {
       private static final @NotNull Color TERMS_AND_CONDITIONS_COLOR =
         JBColor.namedColor("LicenseDialog.termsAndConditionsForeground", 0x818594, 0x6F737A);
 
+      private static final @NotNull Color WAITING_LABEL_COLOR =
+        JBColor.namedColor("LicenseDialog.waitingLabelForeground", 0x818594, 0x6F737A);
+
       private static final @NotNull Color SEPARATOR_COLOR =
         JBColor.namedColor("LicenseDialog.separatorColor", 0xEBECF0, 0x393B40);
 
       public static @NotNull Color getTermsAndConditionsForeground() {
         return TERMS_AND_CONDITIONS_COLOR;
+      }
+
+      public static @NotNull Color getWaitingLabelColor() {
+        return WAITING_LABEL_COLOR;
       }
 
       public static @NotNull Color getSeparatorColor() {
