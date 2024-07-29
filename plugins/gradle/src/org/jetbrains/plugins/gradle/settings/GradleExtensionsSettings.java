@@ -287,20 +287,9 @@ public class GradleExtensionsSettings {
     }
 
     private static @NotNull GradleTask convertGradleTask(@NotNull ExternalTask task) {
-      StringBuilder description = new StringBuilder();
-      if (task.getDescription() != null) {
-        description.append(task.getDescription());
-        if (task.getGroup() != null) {
-          description.append("<p>");
-        }
-      }
-      if (task.getGroup() != null) {
-        description.append("<i>Task group: ").append(task.getGroup()).append("<i>");
-      }
       return new GradleTask(
         task.getName(),
-        Objects.requireNonNullElse(task.getType(), GradleCommonClassNames.GRADLE_API_DEFAULT_TASK),
-        description.toString()
+        Objects.requireNonNullElse(task.getType(), GradleCommonClassNames.GRADLE_API_DEFAULT_TASK)
       );
     }
 
@@ -381,12 +370,10 @@ public class GradleExtensionsSettings {
   public static class GradleTask implements TypeAware {
     private final @NotNull String name;
     private final @NotNull String typeFqn;
-    private final @Nullable String description;
 
-    public GradleTask(@NotNull String name, @NotNull String typeFqn, @Nullable String description) {
+    public GradleTask(@NotNull String name, @NotNull String typeFqn) {
       this.name = name;
       this.typeFqn = typeFqn;
-      this.description = description;
     }
 
     public @NotNull String getName() {
@@ -396,10 +383,6 @@ public class GradleExtensionsSettings {
     @Override
     public @NotNull String getTypeFqn() {
       return typeFqn;
-    }
-
-    public @Nullable String getDescription() {
-      return description;
     }
   }
 
