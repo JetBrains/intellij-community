@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.withClassId
@@ -131,6 +132,12 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             targetClass?.let { resolveTypeAliasedConstructorReference(reference, it) } ?: targetClass
         }
 
+        target is KaSamConstructorSymbol -> {
+            val targetClass = findSamClassFor(target)
+
+            targetClass?.let { resolveTypeAliasedConstructorReference(reference, it) } ?: targetClass
+        }
+
         else -> target
     }
 
@@ -164,6 +171,20 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
         return dispatchReceiver
     }
+}
+
+/**
+ * Finds the original SAM type by the [samConstructorSymbol].
+ *
+ * A workaround for the KT-70301.
+ */
+private fun KaSession.findSamClassFor(samConstructorSymbol: KaSamConstructorSymbol): KaClassSymbol? {
+    val samCallableId = samConstructorSymbol.callableId ?: return null
+    if (samCallableId.isLocal) return null
+
+    val samClassId = ClassId.fromString(samCallableId.toString())
+
+    return findClass(samClassId)
 }
 
 /**
