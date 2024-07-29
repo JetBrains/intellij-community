@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
@@ -42,8 +43,9 @@ import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.suppressedByNotPropertyList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
 
+@Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
+@ApiStatus.ScheduledForRemoval
 @OptIn(FrontendInternals::class)
 class ReferenceVariantsHelper(
     private val bindingContext: BindingContext,

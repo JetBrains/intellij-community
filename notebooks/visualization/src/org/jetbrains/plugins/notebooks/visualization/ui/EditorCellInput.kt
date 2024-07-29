@@ -30,7 +30,7 @@ class EditorCellInput(
     if (shouldShowRunButton) EditorCellRunGutterButton(editor, cell)
     else null
 
-  var component: EditorCellViewComponent = componentFactory(this, null)
+  var component: EditorCellViewComponent = componentFactory(this, null).also { add(it) }
     private set(value) {
       if (value != field) {
         field.dispose()

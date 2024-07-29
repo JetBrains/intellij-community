@@ -19,8 +19,10 @@ const val IJENT_BOOT_CLASSPATH_MODULE = "intellij.platform.core.nio.fs"
 
 const val IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY = "wsl.use.remote.agent.for.nio.filesystem"
 
+const val IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS = "com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider"
+
 val ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS: List<String> = listOf(
-  "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
+  "-Djava.nio.file.spi.DefaultFileSystemProvider=$IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS",
   "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
   "-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=true"
 )

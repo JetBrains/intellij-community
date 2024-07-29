@@ -62,13 +62,15 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
       if (reversedChain.asSequence().distinctBy { it.type }.count() < uniqueTypeCount) return
 
       for ((expression, type) in reversedChain) {
-        sink.addPresentation(InlineInlayPosition(expression.textRange.endOffset, relatedToPrevious = true), hasBackground = true) {
+        sink.addPresentation(InlineInlayPosition(expression.textRange.endOffset, relatedToPrevious = true), hintFormat = getHintFormat()) {
           type.buildTree(expression, file.project, context, this)
         }
       }
       return
     }
   }
+
+  protected open fun getHintFormat(): HintFormat = HintFormat.default
 
   protected abstract fun ExpressionType.buildTree(
     expression: PsiElement,

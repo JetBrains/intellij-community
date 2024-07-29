@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.model.Pointer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
@@ -49,9 +51,12 @@ public abstract class HintUpdateSupply {
   }
 
   public static void installDataContextHintUpdateSupply(@NotNull JComponent component) {
-    installHintUpdateSupply(component, o ->
-      o instanceof PsiElement ? (PsiElement)o :
-      CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(component)));
+    installHintUpdateSupply(component, o -> {
+      ActivityTracker.getInstance().inc();
+      return o instanceof PsiElement ? (PsiElement)o :
+             o instanceof Pointer<?> p && p.dereference() instanceof PsiElement e ? e :
+             CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(component));
+    });
   }
 
   public static void installHintUpdateSupply(final @NotNull JComponent component, final Function<Object, ? extends PsiElement> provider) {

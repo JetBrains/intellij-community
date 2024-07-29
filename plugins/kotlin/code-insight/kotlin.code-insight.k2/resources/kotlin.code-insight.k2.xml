@@ -130,11 +130,6 @@
 
     <registryKey key="kotlin.k2.allow.constant.computation.on.EDT" defaultValue="true" description="When enabled, error about analysis on EDT is disabled"/>
 
-    <registryKey key="kotlin.k2.kmp.enabled"
-                 description="Enable KMP support in the Kotlin K2 plugin for all platforms"
-                 defaultValue="false"
-                 restartRequired="true"/>
-
     <registryKey key="kotlin.k2.kmp.wasm.enabled"
                  description="Enable KMP support in the K2 mode for WASM platform"
                  defaultValue="false"
@@ -245,7 +240,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>
 
-    <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.MultiplatformSupportAvailability"/>
+    <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.WasmMultiplatformSupportAvailability"/>
     <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.WasmMultiplatformSupportAvailability"/>
   </extensions>
 </idea-plugin>

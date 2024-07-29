@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.gradle.multiplatformTests
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runC
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.WorkspaceChecksDsl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
@@ -30,7 +28,7 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.enableKmpSupport
+import org.jetbrains.kotlin.idea.test.enableKmpWasmSupport
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -208,7 +206,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             // @Parametrized
             (this as GradleImportingTestCase).gradleVersion = context.gradleVersion.version
             super.setUp()
-            enableKmpSupport()
+            enableKmpWasmSupport()
         }
 
         context.testProject = myProject

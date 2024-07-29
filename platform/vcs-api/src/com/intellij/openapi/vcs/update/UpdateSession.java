@@ -53,6 +53,8 @@ public interface UpdateSession {
 
   /**
    * Returns additional information which should be displayed in the post-update notification, or {@code null}.
+   * <p>
+   * May contain HTML markup.
    */
   @Nullable
   default String getAdditionalNotificationContent() {

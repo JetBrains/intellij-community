@@ -8,6 +8,8 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.UpdateSession
@@ -15,6 +17,7 @@ import com.intellij.util.containers.MultiMap
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
 /**
@@ -40,18 +43,26 @@ class GitUpdateSession(private val project: Project,
     if (skippedRoots.isEmpty()) return null
 
     if (skippedRoots.size == 1) {
-      val repo = skippedRoots.keys.first()
-      return GitBundle.message("git.update.repo.was.skipped", getShortRepositoryName(repo), skippedRoots[repo])
+      val (repo, reason) = skippedRoots.entries.first()
+      return GitBundle.message("git.update.repo.was.skipped", HtmlChunk.text(getShortRepositoryName(repo)), HtmlChunk.text(reason))
     }
 
-    val prefix = GitBundle.message("git.update.skipped.repositories", skippedRoots.size) + " <br/>" // NON-NLS
+    val prefix = HtmlChunk.text(GitBundle.message("git.update.skipped.repositories", skippedRoots.size)) // NON-NLS
     val grouped = groupByReasons(skippedRoots)
-    if (grouped.keySet().size == 1) {
-      val reason = grouped.keySet().first()
-      return prefix + getShortNames(grouped.get(reason)) + " (" + reason + ")"
+    if (grouped.entrySet().size == 1) {
+      val (reason, repos) = grouped.entrySet().first()
+      return HtmlBuilder().append(prefix).br()
+        .append(mentionSkippedRoots(repos, reason))
+        .toString()
     }
 
-    return prefix + grouped.keySet().joinToString("<br/>") { reason -> getShortNames(grouped.get(reason)) + " (" + reason + ")" } // NON-NLS
+    return HtmlBuilder().append(prefix).br()
+      .appendWithSeparators(HtmlChunk.br(), grouped.entrySet().map { (reason, repos) -> mentionSkippedRoots(repos, reason) })
+      .toString()
+  }
+
+  private fun mentionSkippedRoots(repos: Collection<GitRepository>, reason: @Nls String): HtmlChunk {
+    return HtmlChunk.text(getShortNames(repos) + " (" + reason + ")")
   }
 
   private fun groupByReasons(skippedRoots: Map<GitRepository, String>): MultiMap<String, GitRepository> {

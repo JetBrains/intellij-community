@@ -2,7 +2,10 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.client.ClientSystemInfo
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorComponentImpl
@@ -13,24 +16,31 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
+import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
+import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.setMode
+import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
-import java.awt.AWTEvent
-import java.awt.BorderLayout
-import java.awt.GraphicsEnvironment
-import java.awt.Point
+import java.awt.*
+import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JLayer
 import javax.swing.SwingUtilities
 import javax.swing.plaf.LayerUI
+import kotlin.math.max
+import kotlin.math.min
 
-private class DecoratedEditor(private val original: TextEditor, private val manager: NotebookCellInlayManager) : TextEditor by original {
+private class DecoratedEditor(private val original: TextEditor, private val manager: NotebookCellInlayManager) : TextEditor by original, NotebookEditor {
 
   private var mouseOverCell: EditorCellView? = null
 
   private val component = NestedScrollingSupport.addNestedScrollingSupport(createLayer(original.component))
+
+  private val selectionModel = EditorCellSelectionModel(manager)
+
+  private var selectionUpdateScheduled: AtomicBoolean = AtomicBoolean(false)
 
   init {
     if (!GraphicsEnvironment.isHeadless()) {
@@ -51,6 +61,67 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
         }
       }
     }, this)
+    original.editor.addEditorMouseListener(object : EditorMouseListener {
+      override fun mousePressed(event: EditorMouseEvent) {
+        if (!event.isConsumed && event.mouseEvent.button == MouseEvent.BUTTON1) {
+          val point = getEditorPoint(event.mouseEvent)?.second ?: return
+
+          val selectedCell = getCellViewByPoint(point)?.cell ?: return
+
+          if (event.area == EditorMouseEventArea.EDITING_AREA && event.inlay == null) {
+            editor.setMode(NotebookEditorMode.EDIT)
+          }
+          else {
+            editor.setMode(NotebookEditorMode.COMMAND)
+          }
+          if (event.area != EditorMouseEventArea.EDITING_AREA)
+            mousePressed(selectedCell.interval, event.isCtrlPressed(), event.isShiftPressed())
+
+        }
+      }
+    }, this)
+
+    editor.caretModel.addCaretListener(object : CaretListener {
+      override fun caretAdded(event: CaretEvent) {
+        scheduleSelectionUpdate()
+      }
+
+      override fun caretPositionChanged(event: CaretEvent) {
+        scheduleSelectionUpdate()
+      }
+
+      override fun caretRemoved(event: CaretEvent) {
+        scheduleSelectionUpdate()
+      }
+    })
+
+    updateSelectionByCarets()
+
+    notebookEditorKey.set(original.editor, this)
+  }
+
+  private fun scheduleSelectionUpdate() {
+    if (selectionUpdateScheduled.compareAndSet(false, true)) {
+      SwingUtilities.invokeLater {
+        try {
+          updateSelectionByCarets()
+        }
+        finally {
+          selectionUpdateScheduled.set(false)
+        }
+      }
+    }
+  }
+
+  private fun updateSelectionByCarets() {
+    selectionModel.replaceSelection(
+      editor.caretModel.allCarets.flatMap { getCellsByCaretSelection(it) }
+    )
+  }
+
+  private fun getCellsByCaretSelection(caret: Caret): List<EditorCell> {
+    val lines = editor.document.getSelectionLines(caret)
+    return manager.cells.filter { it.interval.lines.hasIntersectionWith(lines) }
   }
 
   private fun setupScrollPaneListener() {
@@ -58,10 +129,10 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
     val scrollPane = editorEx.scrollPane
     scrollPane.viewport.addChangeListener {
       editorEx.contentComponent.mousePosition?.let {
-        updateMouseOverCell(editorEx.contentComponent, it)
+        updateMouseOverCell(it)
       }
       editorEx.gutterComponentEx.mousePosition?.let {
-        updateMouseOverCell(editorEx.gutterComponentEx, it)
+        updateMouseOverCell(it)
       }
     }
   }
@@ -106,33 +177,34 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
 
     override fun eventDispatched(e: AWTEvent, l: JLayer<out JComponent?>?) {
       if (e is MouseEvent) {
-
-        val editorEx = original.editor as EditorEx
-        val component = if (SwingUtilities.isDescendingFrom(e.component, editorEx.contentComponent)) {
-          editorEx.contentComponent
-        }
-        else if (SwingUtilities.isDescendingFrom(e.component, editorEx.gutterComponentEx)) {
-          editorEx.gutterComponentEx
-        }
-        else {
-          null
-        }
-        if (component != null) {
-          updateMouseOverCell(component, SwingUtilities.convertPoint(e.component, e.point, component))
+        getEditorPoint(e)?.let { (_, point) ->
+          updateMouseOverCell(point)
         }
       }
     }
   })
 
-  private fun updateMouseOverCell(component: JComponent, point: Point) {
-    val cells = manager.cells
-    val currentOverCell = cells.filter { it.visible }.mapNotNull { it.view }.firstOrNull {
-      val viewLeft = 0
-      val viewTop = it.bounds.y
-      val viewRight = component.size.width
-      val viewBottom = viewTop + it.bounds.height
-      viewLeft <= point.x && viewTop <= point.y && viewRight >= point.x && viewBottom >= point.y
+  private fun getEditorPoint(e: MouseEvent): Pair<Component, Point>? {
+    val editorEx = original.editor as EditorEx
+    val component = if (SwingUtilities.isDescendingFrom(e.component, editorEx.contentComponent)) {
+      editorEx.contentComponent
     }
+    else if (SwingUtilities.isDescendingFrom(e.component, editorEx.gutterComponentEx)) {
+      editorEx.gutterComponentEx
+    }
+    else {
+      null
+    }
+    return if (component != null) {
+      component to SwingUtilities.convertPoint(e.component, e.point, component)
+    }
+    else {
+      null
+    }
+  }
+
+  private fun updateMouseOverCell(point: Point) {
+    val currentOverCell = getCellViewByPoint(point)
 
     if (mouseOverCell != currentOverCell) {
       mouseOverCell?.mouseExited()
@@ -140,6 +212,63 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
       mouseOverCell?.mouseEntered()
     }
   }
+
+  private fun getCellViewByPoint(point: Point): EditorCellView? {
+    val cells = manager.cells
+    val currentOverCell = cells.filter { it.visible }.mapNotNull { it.view }.firstOrNull {
+      val viewTop = it.bounds.y
+      val viewBottom = viewTop + it.bounds.height
+      point.y in viewTop..<viewBottom
+    }
+    return currentOverCell
+  }
+
+  override fun inlayClicked(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean) {
+    editor.setMode(NotebookEditorMode.COMMAND)
+    mousePressed(clickedCell, ctrlPressed, shiftPressed)
+  }
+
+  private fun mousePressed(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean) {
+    val model = editor.cellSelectionModel!!
+    when {
+      ctrlPressed -> {
+        if (model.isSelectedCell(clickedCell)) {
+          model.removeSelection(clickedCell)
+        }
+        else {
+          model.selectCell(clickedCell, makePrimary = true)
+        }
+      }
+      shiftPressed -> {
+        // select or deselect all cells from primary to selected
+        val primaryCell = model.primarySelectedCell
+        val line1 = primaryCell.lines.first
+        val line2 = clickedCell.lines.first
+        val range = IntRange(min(line1, line2), max(line1, line2))
+
+        val cellsInRange = editor.getCells(range)
+        val affectedSelectedCells = model.selectedRegions.filter { hasIntersection(it, cellsInRange) }.flatten()
+
+        if (affectedSelectedCells == cellsInRange) {
+          for (cell in (cellsInRange - primaryCell)) {
+            model.removeSelection(cell)
+          }
+        }
+        else {
+          for (cell in (affectedSelectedCells - cellsInRange)) {
+            model.removeSelection(cell)
+          }
+          for (cell in (cellsInRange - affectedSelectedCells)) {
+            model.selectCell(cell)
+          }
+        }
+      }
+      else -> {
+        model.selectSingleCell(clickedCell)
+      }
+    }
+  }
+
 }
 
 fun decorateTextEditor(textEditor: TextEditor, manager: NotebookCellInlayManager): TextEditor {
@@ -185,3 +314,13 @@ class EditorComponentWrapper(
     }
   }
 }
+
+/** lists assumed to be ordered and non-empty  */
+private fun hasIntersection(cells: List<NotebookCellLines.Interval>, others: List<NotebookCellLines.Interval>): Boolean =
+  !(cells.last().ordinal < others.first().ordinal || cells.first().ordinal > others.last().ordinal)
+
+private fun EditorMouseEvent.isCtrlPressed(): Boolean =
+  (mouseEvent.modifiersEx and if (ClientSystemInfo.isMac()) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK) != 0
+
+private fun EditorMouseEvent.isShiftPressed(): Boolean =
+  (mouseEvent.modifiersEx and InputEvent.SHIFT_DOWN_MASK) != 0

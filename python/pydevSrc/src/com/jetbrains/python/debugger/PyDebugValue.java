@@ -242,7 +242,7 @@ public class PyDebugValue extends XNamedValue {
     else {
       myParent.buildExpression(result);
       if (("dict".equals(myParent.getType()) || "list".equals(myParent.getType()) || "tuple".equals(myParent.getType())
-           || "NestedOrderedDict".equals(myParent.getType())
+           || "NestedOrderedDict".equals(myParent.getType()) || "DatasetDict".equals(myParent.getType())
           ) && !isLen(myName)) {
         result.append('[').append(removeLeadingZeros(removeId(myName))).append(']');
       }

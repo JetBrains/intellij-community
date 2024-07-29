@@ -48,7 +48,7 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
   override fun setSelectedLocale(locale: String) {
     localizationState.lastSelectedLocale = localizationState.selectedLocale
     localizationState.selectedLocale = locale
-    ApplicationManager.getApplication().messageBus.syncPublisher(LocalizationListener.Companion.UPDATE_TOPIC).run()
+    ApplicationManager.getApplication().messageBus.syncPublisher(LocalizationListener.Companion.UPDATE_TOPIC).localeChanged()
   }
 }
 

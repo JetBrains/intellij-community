@@ -16,7 +16,7 @@ class LocalizationUsageCollector : ApplicationUsagesCollector() {
                                "ne", "nl", "nn", "no", "or", "pa", "pl", "pt", "ro", "ru", "rw", "sd", "si", "so",
                                "sv", "ta", "te", "th", "tr", "uk", "ur", "uz", "vi", "yo", "zh", "zh-CN", "zu", "other")
 
-  private val GROUP = EventLogGroup("localization.info", 4)
+  private val GROUP = EventLogGroup("localization.info", 5)
   private val selectedLanguage = GROUP.registerEvent("selected.language", StringEventField.ValidatedByAllowedValues("value", LOCALES))
   private val selectedRegion = GROUP.registerEvent("selected.region", EventFields.Enum("value", Region::class.java))
 

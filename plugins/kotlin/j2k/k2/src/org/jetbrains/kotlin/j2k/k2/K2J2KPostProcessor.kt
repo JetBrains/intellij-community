@@ -113,6 +113,11 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
     NamedPostProcessingGroup(
         KotlinJ2KK2Bundle.message("processing.step.optimizing.imports"),
         listOf(
+            @Suppress("UNCHECKED_CAST")
+            K2DiagnosticBasedPostProcessingGroup(
+                unnecessaryNotNullAssertionProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
+            ),
+
             // OptimizeImportsProcessing depends on the results of K2ShortenReferenceProcessing,
             // that's why it currently has to be in a separate group: KTIJ-29644
             OptimizeImportsProcessing()

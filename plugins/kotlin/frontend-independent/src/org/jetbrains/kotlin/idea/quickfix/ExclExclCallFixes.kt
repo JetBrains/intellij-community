@@ -27,12 +27,17 @@ class RemoveExclExclCallFix(
     override fun getText(): String = KotlinBundle.message("fix.remove.non.null.assertion")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val postfixExpression = element as? KtPostfixExpression ?: return
-        val baseExpression = postfixExpression.baseExpression ?: return
-        postfixExpression.replace(baseExpression)
+        val element = element ?: return
+        invoke(element)
     }
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        fun invoke(element: PsiElement) {
+            val postfixExpression = element as? KtPostfixExpression ?: return
+            val baseExpression = postfixExpression.baseExpression ?: return
+            postfixExpression.replace(baseExpression)
+        }
+
         override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
             val postfixExpression = psiElement.getNonStrictParentOfType<KtPostfixExpression>() ?: return emptyList()
             return listOfNotNull(RemoveExclExclCallFix(postfixExpression))

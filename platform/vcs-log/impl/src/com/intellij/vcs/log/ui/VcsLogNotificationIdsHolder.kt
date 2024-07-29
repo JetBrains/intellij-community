@@ -5,7 +5,13 @@ import com.intellij.notification.impl.NotificationIdsHolder
 
 class VcsLogNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
-    return listOf(LOG_NOT_AVAILABLE, FATAL_ERROR, COMMIT_NOT_FOUND, NAVIGATION_ERROR, FILE_HISTORY_ACTION_LOAD_DETAILS_ERROR)
+    return listOf(
+      LOG_NOT_AVAILABLE,
+      FATAL_ERROR,
+      COMMIT_NOT_FOUND,
+      NAVIGATION_ERROR,
+      FILE_HISTORY_ACTION_LOAD_DETAILS_ERROR
+    )
   }
 
   companion object {

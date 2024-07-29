@@ -24,8 +24,6 @@ internal class KotlinForwardDeclarationsWorkspaceFileIndexContributor :
         registrar: WorkspaceFileSetRegistrar,
         storage: EntityStorage,
     ) {
-        if (!Registry.`is`("kotlin.k2.kmp.enabled")) return
-
         entity.forwardDeclarationRoots.forEach { fwdDeclarationRootUrl ->
             registrar.registerFileSet(fwdDeclarationRootUrl, WorkspaceFileKind.EXTERNAL, entity, customData = null)
         }

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.InlayActionHandler
-import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
+import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -20,7 +20,7 @@ sealed class InlayPresentationEntry(
 ) {
   abstract fun render(
     graphics: Graphics2D,
-    fontMetricsStorage: InlayTextMetricsStorage,
+    metrics: InlayTextMetrics,
     attributes: TextAttributes,
     isDisabled: Boolean,
     yOffset: Int,
@@ -28,9 +28,9 @@ sealed class InlayPresentationEntry(
     editor: Editor
   )
 
-  abstract fun computeWidth(fontMetricsStorage: InlayTextMetricsStorage): Int
+  abstract fun computeWidth(metrics: InlayTextMetrics): Int
 
-  abstract fun computeHeight(fontMetricsStorage: InlayTextMetricsStorage): Int
+  abstract fun computeHeight(metrics: InlayTextMetrics): Int
 
   abstract fun handleClick(editor: Editor, list: InlayPresentationList, controlDown: Boolean)
 
@@ -63,20 +63,19 @@ class TextInlayPresentationEntry(
   }
 
   override fun render(graphics: Graphics2D,
-                      fontMetricsStorage: InlayTextMetricsStorage,
+                      metrics: InlayTextMetrics,
                       attributes: TextAttributes,
                       isDisabled: Boolean,
                       yOffset: Int,
                       rectHeight: Int,
                       editor: Editor) {
-    val metrics = fontMetricsStorage.getFontMetrics(small = false)
     val savedHint = graphics.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING)
     val savedColor = graphics.color
     try {
       val foreground = attributes.foregroundColor
       if (foreground != null) {
-        val width = computeWidth(fontMetricsStorage)
-        val height = computeHeight(fontMetricsStorage)
+        val width = computeWidth(metrics)
+        val height = computeHeight(metrics)
         val font = metrics.font
         graphics.font = font
         graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
@@ -96,13 +95,9 @@ class TextInlayPresentationEntry(
     }
   }
 
-  override fun computeWidth(fontMetricsStorage: InlayTextMetricsStorage): Int {
-    return fontMetricsStorage.getFontMetrics(small = false).getStringWidth(text)
-  }
+  override fun computeWidth(metrics: InlayTextMetrics): Int = metrics.getStringWidth(text)
 
-  override fun computeHeight(fontMetricsStorage: InlayTextMetricsStorage): Int {
-    return fontMetricsStorage.getFontMetrics(small = false).fontHeight
-  }
+  override fun computeHeight(metrics: InlayTextMetrics): Int = metrics.fontHeight
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

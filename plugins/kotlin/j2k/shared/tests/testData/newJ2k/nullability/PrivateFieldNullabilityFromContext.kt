@@ -14,11 +14,11 @@ class Foo {
         println(j + j) // used as a not-null type
 
         if (k != null) {
-            println(k!! + k!!)
+            println(k + k)
         }
 
         if (l != null) {
-            println(l!! + l!!)
+            println(l + l)
         }
     }
 }

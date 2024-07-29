@@ -24,9 +24,12 @@ object DummyJBAccountInfoService : JBAccountInfoService {
     TODO("Not yet implemented")
   }
 
-  override fun getAvailableLicenses(
-    productCode: String,
-  ): CompletableFuture<JBAccountInfoService.LicenseListResult> {
+  override fun getAvailableLicenses(productCode: String): CompletableFuture<JBAccountInfoService.LicenseListResult> {
+    TODO("Not yet implemented")
+  }
+
+  override fun issueTrialLicense(productCode: String,
+                                 consentOptions: List<String>): CompletableFuture<JBAccountInfoService.LicenseListResult> {
     TODO("Not yet implemented")
   }
 

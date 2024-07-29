@@ -14,7 +14,7 @@ interface InlayTreeSink {
     addPresentation(position,
                     payloads,
                     tooltip,
-                    if (hasBackground) HintColorKind.Default else HintColorKind.TextWithoutBackground,
+                    if (hasBackground) HintFormat.default else HintFormat.default.withColorKind(HintColorKind.TextWithoutBackground),
                     builder)
   }
 
@@ -25,7 +25,7 @@ interface InlayTreeSink {
   fun addPresentation(position: InlayPosition,
                       payloads: List<InlayPayload>? = null,
                       tooltip: String? = null,
-                      hintColorKind: HintColorKind,
+                      hintFormat: HintFormat,
                       builder: PresentationTreeBuilder.() -> Unit)
 
   /**

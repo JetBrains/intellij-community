@@ -30,6 +30,9 @@ interface NotebookIntervalPointerFactory {
   @RequiresReadLock
   fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer
 
+  @RequiresReadLock
+  fun getForOrdinalIfExists(ordinal: Int): NotebookIntervalPointer?
+
   /**
    * Undo and redo will be added automatically.
    */

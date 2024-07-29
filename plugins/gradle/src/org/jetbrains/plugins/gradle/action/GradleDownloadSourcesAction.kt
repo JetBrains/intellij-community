@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 class GradleDownloadSourcesAction : ExternalSystemAction() {
 
   override fun actionPerformed(event: AnActionEvent) {
-    val project = event.getProject()
+    val project = event.project
     if (project == null) {
       event.presentation.isEnabled = false
       return
@@ -24,7 +25,9 @@ class GradleDownloadSourcesAction : ExternalSystemAction() {
     GradleCoroutineScopeProvider.getInstance(project).cs
       .launch {
         if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProjectAsync(project, GradleConstants.SYSTEM_ID)) {
-          ExternalSystemActionsCollector.trigger(project, GradleConstants.SYSTEM_ID, this@GradleDownloadSourcesAction, event)
+          readAction {
+            ExternalSystemActionsCollector.trigger(project, GradleConstants.SYSTEM_ID, this@GradleDownloadSourcesAction, event)
+          }
           val spec = ImportSpecBuilder(project, GradleConstants.SYSTEM_ID).withVmOptions("-Didea.gradle.download.sources.force=true")
           ExternalSystemUtil.refreshProjects(spec)
         }

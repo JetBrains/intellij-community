@@ -39,7 +39,7 @@ class GroovyLambdaParameterTypeHintsInlayProvider : InlayHintsProvider {
         sink: InlayTreeSink,
         suffixText: String) {
         val type = getRepresentableType(parameter) ?: return
-        sink.addPresentation(InlineInlayPosition(offset, relatedToPrevious = true), null, null, HintColorKind.Default) {
+        sink.addPresentation(InlineInlayPosition(offset, relatedToPrevious = true), null, null, HintFormat.default) {
           JavaTypeHintsFactory.typeHint(type, this)
           text(suffixText)
         }

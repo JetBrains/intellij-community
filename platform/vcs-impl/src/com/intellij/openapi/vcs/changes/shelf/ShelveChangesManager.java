@@ -27,6 +27,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -910,7 +912,11 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       VcsNotifier.getInstance(myProject).notifyError(
         SHELVE_FAILED,
         VcsBundle.message("shelve.failed.title"),
-        VcsBundle.message("shelve.failed.message", failedChangeLists.size(), StringUtil.join(failedChangeLists, ",")));
+        VcsBundle.message("shelve.failed.message",
+                          failedChangeLists.size(),
+                          new HtmlBuilder().appendWithSeparators(HtmlChunk.text(","),
+                                                                 ContainerUtil.map(failedChangeLists, HtmlChunk::text))
+                            .toString()));
     }
     return result;
   }

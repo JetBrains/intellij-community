@@ -46,6 +46,7 @@ internal class SmoothRobot : Robot {
   init {
     settings().delayBetweenEvents(10)
     basicRobot.settings().simpleWaitForIdle(true)
+    basicRobot.settings().timeoutToFindPopup(1000)
   }
 
   override fun moveMouse(component: Component) {

@@ -51,6 +51,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
+import static org.jetbrains.idea.devkit.run.ProductInfoKt.resolveIdeHomeVariable;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
 
@@ -176,8 +177,10 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         // use product-info.json values if found, otherwise fallback to defaults
         ProductInfo productInfo = ProductInfoKt.loadProductInfo(ideaJdkHome);
 
-        if (productInfo != null && !productInfo.getAdditionalJvmArguments().isEmpty()) {
-          productInfo.getAdditionalJvmArguments().forEach(vm::add);
+        if (productInfo != null && !productInfo.getCurrentLaunch().getAdditionalJvmArguments().isEmpty()) {
+          productInfo.getCurrentLaunch().getAdditionalJvmArguments().forEach(item -> {
+            vm.add(resolveIdeHomeVariable(item, ideaJdkHome));
+          });
         }
         else {
           String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
@@ -250,8 +253,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
 
           if (productInfo != null) {
-            for (String moduleJarPath: productInfo.getProductModuleJarPaths()) {
-              params.getClassPath().add(ideaJdkHome + FileUtil.toSystemIndependentName("/"+ moduleJarPath));
+            for (String moduleJarPath : productInfo.getProductModuleJarPaths()) {
+              params.getClassPath().add(ideaJdkHome + FileUtil.toSystemIndependentName("/" + moduleJarPath));
             }
           }
         }
@@ -263,8 +266,11 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
       }
 
       private static List<String> getJarFileNames(@Nullable ProductInfo productInfo) {
-        if (productInfo != null && !productInfo.getBootClassPathJarNames().isEmpty()) {
-          return productInfo.getBootClassPathJarNames();
+        if (productInfo != null) {
+          List<String> jarNames = productInfo.getCurrentLaunch().getBootClassPathJarNames();
+          if (!jarNames.isEmpty()) {
+            return jarNames;
+          }
         }
 
         return List.of(

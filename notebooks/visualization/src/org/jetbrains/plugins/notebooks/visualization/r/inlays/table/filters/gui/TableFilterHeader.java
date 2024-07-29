@@ -16,9 +16,7 @@ import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 public class TableFilterHeader extends AdditionalTableHeader {
   /** Flag to handle instant filtering support. */
@@ -39,10 +37,7 @@ public class TableFilterHeader extends AdditionalTableHeader {
    */
   private final AbstractFiltersHandler filtersHandler;
 
-  /** The set of currently subscribed observers. */
-  private final Set<IFilterHeaderObserver> observers = new HashSet<>();
-
-  /** Basic constructor, requires an attached table. */
+  /** Basic constructor requires an attached table. */
   public TableFilterHeader() {
     this(null, null, null);
   }
@@ -299,10 +294,6 @@ public class TableFilterHeader extends AdditionalTableHeader {
         add(editor, BorderLayout.CENTER);
         editor.getFilter().addFilterObserver(this);
 
-        for (IFilterHeaderObserver observer : observers) {
-          observer.tableFilterEditorCreated(TableFilterHeader.this,
-                                            editor, tc);
-        }
 
         this.editor = editor;
         tc.addPropertyChangeListener(this);
@@ -314,10 +305,6 @@ public class TableFilterHeader extends AdditionalTableHeader {
           filtersHandler.removeFilterEditor(editor);
           remove(editor);
           editor.getFilter().removeFilterObserver(this);
-          for (IFilterHeaderObserver observer : observers) {
-            observer.tableFilterEditorExcluded(
-              TableFilterHeader.this, editor, getTableColumn());
-          }
         }
 
         getTableColumn().removePropertyChangeListener(this);
@@ -330,13 +317,7 @@ public class TableFilterHeader extends AdditionalTableHeader {
         revalidate();
       }
 
-      @Override public void filterUpdated(IFilter obs) {
-        if (editor != null) { // avoid sending the first update
-          for (IFilterHeaderObserver observer : observers) {
-            observer.tableFilterUpdated(TableFilterHeader.this, editor, getTableColumn());
-          }
-        }
-      }
+      @Override public void filterUpdated(IFilter obs) {}
     }
   }
 }

@@ -6602,10 +6602,13 @@ f:com.intellij.ide.impl.ProjectUtil
 - f:showYesNoDialog(java.lang.String,java.lang.String):Z
 - sf:updateLastProjectLocation(java.nio.file.Path):V
 c:com.intellij.ide.impl.ProjectUtilService
+- sf:Companion:com.intellij.ide.impl.ProjectUtilService$Companion
 - <init>(com.intellij.openapi.project.Project):V
 - focusProjectWindow(Z):V
 - bs:focusProjectWindow$default(com.intellij.ide.impl.ProjectUtilService,Z,I,java.lang.Object):V
 - pf:getProject():com.intellij.openapi.project.Project
+f:com.intellij.ide.impl.ProjectUtilService$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.impl.ProjectUtilService
 f:com.intellij.ide.impl.SelectInEditorManagerImpl
 - com.intellij.ide.SelectInEditorManager
 - com.intellij.openapi.Disposable
@@ -10919,6 +10922,7 @@ f:com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowC
 - s:getInstance():com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 - recordActivation(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.wm.impl.WindowInfoImpl,com.intellij.toolWindow.ToolWindowEventSource):V
 - recordHidden(com.intellij.openapi.project.Project,com.intellij.openapi.wm.impl.WindowInfoImpl,com.intellij.toolWindow.ToolWindowEventSource):V
+- recordResized(com.intellij.openapi.project.Project,com.intellij.openapi.wm.impl.WindowInfoImpl,java.lang.Boolean):V
 - recordShown(com.intellij.openapi.project.Project,com.intellij.toolWindow.ToolWindowEventSource,com.intellij.openapi.wm.impl.WindowInfoImpl):V
 f:com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator
 - com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
@@ -16305,6 +16309,12 @@ f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$AdvancedSet
 - f:getReset():kotlin.jvm.functions.Function0
 - hashCode():I
 - f:isDefault():com.intellij.ui.layout.ComponentPredicate
+f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$Config
+- sf:Companion:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$Config$Companion
+- <init>():V
+f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$Config$Companion
+- f:getShowFederatedLearningSwitches():Z
+- f:setShowFederatedLearningSwitches(Z):V
 f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurableKt
 - sf:updateMatchText(javax.swing.JComponent,java.lang.String,java.lang.String):V
 f:com.intellij.openapi.options.advanced.AdvancedSettingsImpl
@@ -22335,6 +22345,10 @@ f:com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantStat
 f:com.intellij.platform.ide.impl.presentationAssistant.WinKeyStrokePresentationKt
 - sf:getWinKeyText(I):java.lang.String
 - sf:getWinModifiersText(I):java.lang.String
+f:com.intellij.platform.ide.impl.statistic.ToolWindowStateListener
+- com.intellij.openapi.wm.ex.ToolWindowManagerListener
+- <init>(com.intellij.openapi.project.Project):V
+- stateChanged(com.intellij.openapi.wm.ToolWindowManager,com.intellij.openapi.wm.ToolWindow,com.intellij.openapi.wm.ex.ToolWindowManagerListener$ToolWindowManagerEventType):V
 f:com.intellij.platform.ide.menu.GlobalMenuLinux
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.wm.impl.LinuxGlobalMenuEventHandler
@@ -29251,15 +29265,19 @@ a:com.intellij.util.ui.ReloadablePanel
 com.intellij.util.ui.ReloadablePanel$DataProvider
 - a:getCachedValues():java.util.Set
 - a:updateValuesAsynchronously():V
-*f:com.intellij.util.ui.RestartDialog
-- *sf:Companion:com.intellij.util.ui.RestartDialog$Companion
+*:com.intellij.util.ui.RestartDialog
+- a:showRestartRequired():V
+*f:com.intellij.util.ui.RestartDialogImpl
+- com.intellij.util.ui.RestartDialog
+- *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V
 - sf:restartWithConfirmation():V
+- showRestartRequired():V
 - sf:showRestartRequired(Z,Z):I
-*f:com.intellij.util.ui.RestartDialog$Companion
+*f:com.intellij.util.ui.RestartDialogImpl$Companion
 - f:restartWithConfirmation():V
 - f:showRestartRequired(Z,Z):I
-- bs:showRestartRequired$default(com.intellij.util.ui.RestartDialog$Companion,Z,Z,I,java.lang.Object):I
+- bs:showRestartRequired$default(com.intellij.util.ui.RestartDialogImpl$Companion,Z,Z,I,java.lang.Object):I
 f:com.intellij.util.ui.SwingHelper
 - sf:ELLIPSIS:java.lang.String
 - sf:ERROR_STR:java.lang.String

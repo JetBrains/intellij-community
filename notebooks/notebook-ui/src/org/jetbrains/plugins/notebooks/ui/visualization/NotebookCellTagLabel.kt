@@ -4,12 +4,12 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -17,7 +17,7 @@ import java.awt.RenderingHints
 import javax.swing.BorderFactory
 import javax.swing.JLabel
 
-class NotebookCellTagLabel(@Nls val tag: String, val cellNum: Int) : JLabel(tag) {  // PY-72712
+class NotebookCellTagLabel(@NlsSafe val tag: String, val cellNum: Int) : JLabel(tag) {  // PY-72712
   private var backgroundColor = JBColor.namedColor("Tag.background", Gray.xDF)
   private var foregroundColor = JBColor.BLACK
 

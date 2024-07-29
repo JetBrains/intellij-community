@@ -288,6 +288,9 @@ Android Studio: b/282808067 -->
     <cachesInvalidator id="rootCachesInvalidator" implementation="com.intellij.ide.actions.RootCachesInvalidator" order="first"/>
     <logsPreprocessor implementation="com.intellij.ide.logsUploader.DefaultLogsProcessor"/>
 
+    <applicationService serviceInterface="com.intellij.util.ui.RestartDialog"
+                        serviceImplementation="com.intellij.util.ui.RestartDialogImpl"/>
+
     <applicationService serviceImplementation="com.intellij.ui.popup.LocalPopupComponentFactory"
                         serviceInterface="com.intellij.ui.popup.PopupComponentFactory"
                         client="all"/>
@@ -1645,8 +1648,6 @@ Android Studio: b/285867050 -->
     <advancedSetting id="search.everywhere.show.results.notification" default="true" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.contributors.wait.timeout" default="2000" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.recent.at.top" default="true" groupKey="group.advanced.settings.se"/>
-    <advancedSetting id="federated.learning" default="true" groupKey="group.advanced.settings.federated.learning"/>
-    <advancedSetting id="federated.learning.search.everywhere" default="true" groupKey="group.advanced.settings.federated.learning"/>
 
     <applicationInitializedListener implementation="com.intellij.lang.documentation.ide.impl.QuickDocAutoPopupInEAPInitializer"/>
 

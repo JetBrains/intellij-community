@@ -8,10 +8,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
@@ -349,9 +346,7 @@ fun initOutputTextConsole(editor: Editor,
                           scrollPaneTopBorderHeight: Int) {
   updateOutputTextConsoleUI(consoleEditor, editor)
   consoleEditor.apply {
-    isRendererMode = true
     scrollPane.border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(scrollPaneTopBorderHeight))
-    contentComponent.putClientProperty("AuxEditorComponent", true)
     putUserData(NOTEBOOKS_CONSOLE_OUTPUT_KEY, true)
   }
 

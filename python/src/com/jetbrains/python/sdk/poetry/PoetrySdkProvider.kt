@@ -32,7 +32,7 @@ class PoetrySdkProvider : PySdkProvider {
           PyBundle.message("python.sdk.inspection.message.poetry.interpreter.associated.with.another.project", projectUnit, associatedModulePath)
         else -> PyBundle.message("python.sdk.inspection.message.poetry.interpreter.not.associated.with.any.project", projectUnit)
       }
-      return PyInterpreterInspectionQuickFixData(UsePoetryQuickFix(sdk, module), message)
+      return PyInterpreterInspectionQuickFixData(PoetryAssociationQuickFix(), message)
     }
     return null
   }

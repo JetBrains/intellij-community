@@ -1,5 +1,6 @@
 internal interface I {
     val something: Int
+
     fun setSomething(value: String?)
 }
 

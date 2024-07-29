@@ -58,7 +58,7 @@ fun Document.getText(interval: NotebookCellLines.Interval): String =
     getLineEndOffset(interval.lines.last)
   ))
 
-private fun Document.getLineText(line: Int): String =
+fun Document.getLineText(line: Int): String =
   getText(TextRange(getLineStartOffset(line), getLineEndOffset(line)))
 
 fun Editor.getCell(line: Int): NotebookCellLines.Interval =

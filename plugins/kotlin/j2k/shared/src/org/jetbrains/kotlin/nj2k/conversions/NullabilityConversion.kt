@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
-import org.jetbrains.kotlin.nj2k.getDfaNullability
+import org.jetbrains.kotlin.nj2k.getExpressionDfaNullability
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.updateNullability
@@ -56,7 +56,7 @@ class NullabilityConversion(context: NewJ2kConverterContext) : RecursiveConversi
 
             // If Java DFA knows that the cast expression is not null, it is safe to cast to the not-null type
             psiCastedExpression != null -> {
-                val dfaNullability = getDfaNullability(psiCastedExpression)
+                val dfaNullability = getExpressionDfaNullability(psiCastedExpression)
                 dfaNullability == DfaNullability.NOT_NULL
             }
 

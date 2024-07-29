@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -58,12 +59,12 @@ public final class ApplyPatchUtil {
     String patchPath = file.getPath();
     if (vFile == null) {
       VcsNotifier.getInstance(project).notifyWeakError(PATCH_APPLY_CANNOT_FIND_PATCH_FILE,
-                                                       VcsBundle.message("patch.apply.can.t.find.patch.file.warning", patchPath));
+                                                       VcsBundle.message("patch.apply.can.t.find.patch.file.warning", HtmlChunk.text(patchPath)));
       return false;
     }
     if (!isPatchFile(vFile)) {
       VcsNotifier.getInstance(project).notifyWeakError(PATCH_APPLY_NOT_PATCH_FILE,
-                                                       VcsBundle.message("patch.apply.not.patch.type.file.error", vFile.getPath()));
+                                                       VcsBundle.message("patch.apply.not.patch.type.file.error", HtmlChunk.text(vFile.getPath())));
       return false;
     }
 

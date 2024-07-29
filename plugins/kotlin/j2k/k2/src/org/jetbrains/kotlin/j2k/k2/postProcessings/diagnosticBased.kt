@@ -6,11 +6,14 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.*
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExclExclCallFixFactories
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.TypeMismatchFactories
+import org.jetbrains.kotlin.idea.quickfix.RemoveExclExclCallFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
 import org.jetbrains.kotlin.j2k.k2.K2AddExclExclDiagnosticBasedProcessing
 import org.jetbrains.kotlin.j2k.k2.K2CustomDiagnosticBasedProcessing
 import org.jetbrains.kotlin.j2k.k2.K2DiagnosticFix
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
+import org.jetbrains.kotlin.psi.KtPostfixExpression
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal val argumentTypeMismatchProcessing: K2AddExclExclDiagnosticBasedProcessing<ArgumentTypeMismatch> =
     K2AddExclExclDiagnosticBasedProcessing(
@@ -74,6 +77,16 @@ internal val uselessCastProcessing: K2CustomDiagnosticBasedProcessing<UselessCas
             override fun apply(element: PsiElement) {
                 if (element !is KtBinaryExpressionWithTypeRHS) return
                 RemoveUselessCastFix.invoke(element)
+            }
+        }
+    }
+
+internal val unnecessaryNotNullAssertionProcessing: K2CustomDiagnosticBasedProcessing<UnnecessaryNotNullAssertion> =
+    K2CustomDiagnosticBasedProcessing(UnnecessaryNotNullAssertion::class) {
+        object : K2DiagnosticFix {
+            override fun apply(element: PsiElement) {
+                val postfixExpression = element.getNonStrictParentOfType<KtPostfixExpression>() ?: return
+                RemoveExclExclCallFix.invoke(postfixExpression)
             }
         }
     }

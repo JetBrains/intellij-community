@@ -69,10 +69,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None):
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_rows', max_rows)
-    try:
-        pd.set_option('display.max_colwidth', max_colwidth)
-    except ValueError:
-        pd.set_option('display.max_colwidth', MAX_COLWIDTH_PYTHON_2)
+    pd.set_option('display.max_colwidth', max_colwidth)
 
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
@@ -261,4 +258,10 @@ def __get_tables_display_options():
     import sys
     if sys.version_info < (3, 0):
         return None, MAX_COLWIDTH_PYTHON_2, None
+    try:
+        import pandas as pd
+        if int(pd.__version__.split('.')[0]) < 1:
+            return None, MAX_COLWIDTH_PYTHON_2, None
+    except ImportError:
+        pass
     return None, None, None

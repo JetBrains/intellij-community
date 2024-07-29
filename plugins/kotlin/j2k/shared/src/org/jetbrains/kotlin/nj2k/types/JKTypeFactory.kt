@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.types
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
@@ -12,7 +13,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.Nullability.*
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.nj2k.DeclarationNullabilityInfo
+import org.jetbrains.kotlin.nj2k.NullabilityInfo
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 
 class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
-    internal var declarationNullabilityInfo: DeclarationNullabilityInfo? = null
+    internal var nullabilityInfo: NullabilityInfo? = null
 
     fun fromPsiType(type: PsiType): JKType = createPsiType(type)
 
@@ -68,13 +69,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
     val types by lazy(LazyThreadSafetyMode.NONE) { DefaultTypes() }
 
     private fun createPsiType(type: PsiType): JKType {
-        val nullability = declarationNullabilityInfo?.let {
-            when {
-                it.nullableTypes.contains(type) -> Nullable
-                it.notNullTypes.contains(type) -> NotNull
-                else -> Default
-            }
-        } ?: Default
+        val nullability = getNullability(type)
 
         return when (type) {
             is PsiClassType -> {
@@ -145,6 +140,17 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
 
             else -> JKNoType
         }
+    }
+
+    private fun getNullability(type: PsiType): Nullability {
+        val info = nullabilityInfo ?: return Default
+        val referenceElement = if (type is PsiClassReferenceType) type.reference else null
+        val nullability = when {
+            info.nullableTypes.contains(type) || info.nullableElements.contains(referenceElement) -> Nullable
+            info.notNullTypes.contains(type) || info.notNullElements.contains(referenceElement) -> NotNull
+            else -> Default
+        }
+        return nullability
     }
 
     context(KaSession)

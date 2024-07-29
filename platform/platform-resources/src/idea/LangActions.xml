@@ -502,9 +502,7 @@
 
     <group id="InlineCompletion" popup="true">
       <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction">
-        <keyboard-shortcut first-keystroke="alt BACK_SLASH" keymap="$default"/>
-        <keyboard-shortcut first-keystroke="alt SLASH" keymap="Visual Studio" replace-all="true"/>
-        <keyboard-shortcut first-keystroke="alt SLASH" keymap="Visual Studio OSX" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="shift alt BACK_SLASH" keymap="$default"/>
       </action>
       <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
         <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>

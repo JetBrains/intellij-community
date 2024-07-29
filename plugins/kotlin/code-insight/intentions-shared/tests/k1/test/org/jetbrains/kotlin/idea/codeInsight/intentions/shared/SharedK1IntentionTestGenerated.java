@@ -2204,6 +2204,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             runTest("../testData/intentions/specifyAllRemainingArgumentsByName/noArgumentsWithReceiver.kt");
         }
 
+        @TestMetadata("noNameProvided.kt")
+        public void testNoNameProvided() throws Exception {
+            runTest("../testData/intentions/specifyAllRemainingArgumentsByName/noNameProvided.kt");
+        }
+
         @TestMetadata("onlyVararg.kt")
         public void testOnlyVararg() throws Exception {
             runTest("../testData/intentions/specifyAllRemainingArgumentsByName/onlyVararg.kt");

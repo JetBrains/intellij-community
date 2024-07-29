@@ -333,6 +333,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/classWithInitializer/classWithInitializer.test");
         }
 
+        @TestMetadata("kotlin/classWithPrimaryConstructor/classWithPrimaryConstructor.test")
+        public void testKotlin_classWithPrimaryConstructor_ClassWithPrimaryConstructor() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/classWithPrimaryConstructor/classWithPrimaryConstructor.test");
+        }
+
         @TestMetadata("kotlin/companionExtensionMemberRef/companionExtensionMemberRef.test")
         public void testKotlin_companionExtensionMemberRef_CompanionExtensionMemberRef() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/companionExtensionMemberRef/companionExtensionMemberRef.test");

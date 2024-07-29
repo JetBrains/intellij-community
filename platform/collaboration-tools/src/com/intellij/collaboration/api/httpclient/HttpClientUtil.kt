@@ -81,7 +81,7 @@ object HttpClientUtil {
       // and: jdk.internal.net.http.Http1AsyncReceiver.handlePendingDelegate
       // and: https://youtrack.jetbrains.com/issue/IJPL-148688
       try {
-        if (it.ready()) it.copyTo(Writer.nullWriter())
+        it.copyTo(Writer.nullWriter())
       }
       catch (ioe: IOException) {
         // thrown if the stream was closed, so we don't need to do anything more

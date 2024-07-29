@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import org.jetbrains.plugins.notebooks.visualization.UpdateContext
 import java.awt.Rectangle
 
 abstract class EditorCellViewComponent {
@@ -71,4 +72,9 @@ abstract class EditorCellViewComponent {
   }
 
   open fun doInvalidate() = Unit
+  open fun updateCellFolding(updateContext: UpdateContext) {
+    children.forEach {
+      it.updateCellFolding(updateContext)
+    }
+  }
 }

@@ -21,7 +21,7 @@ class InlayTreeSinkTest : LightPlatformCodeInsightFixture4TestCase() {
     val data = inlayData.single()
     assertEquals(providerId, data.providerId)
     assertEquals(false, data.disabled)
-    assertEquals(HintColorKind.TextWithoutBackground, data.hintColorKind)
+    assertEquals(HintColorKind.TextWithoutBackground, data.hintFormat.colorKind)
   }
 
   @Test

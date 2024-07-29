@@ -2,13 +2,18 @@
 package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.SideBorder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.hover.TableHoverListener
@@ -16,6 +21,7 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -77,17 +83,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
           controller.packagingScope.launch(Dispatchers.IO) {
             val details = service.detailsForPackage(selectedPackage)
             withContext(Dispatchers.Main) {
-              JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<String>(null, details.availableVersions) {
-                override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
-                  return doFinalStep {
-                    val specification = (selectedPackage as InstallablePackage).repository.createPackageSpecification(selectedPackage.name,
-                                                                                                                      selectedValue)
-                    controller.packagingScope.launch(Dispatchers.IO) {
-                      project.service<PyPackagingToolWindowService>().installPackage(specification)
-                    }
-                  }
-                }
-              }, 8).show(RelativePoint(e))
+              createAvailableVersionsPopup(selectedPackage, details, project, controller).show(RelativePoint(e))
             }
           }
         }
@@ -117,6 +113,48 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
         return true
       }
     }.installOn(this)
+
+        PopupHandler.installPopupMenu(this, DefaultActionGroup(object : DumbAwareAction({
+                                                                                   val pkg = model.items[selectedRow]
+                                                                                   if (pkg is InstalledPackage) {
+                                                                                     message("python.toolwindow.packages.delete.package")
+                                                                                   }
+                                                                                   else {
+                                                                                     message("python.toolwindow.packages.install.link")
+                                                                                   }
+        }) {
+          override fun actionPerformed(e: AnActionEvent) {
+            controller.packagingScope.launch(Dispatchers.Main) {
+              val pkg = model.items[selectedRow]
+              if (pkg is InstalledPackage) {
+                withContext(Dispatchers.IO) {
+                  service.deletePackage(pkg)
+                }
+              }
+              else if (pkg is InstallablePackage) {
+                controller.packagingScope.launch(Dispatchers.IO) {
+                  val details = service.detailsForPackage(pkg)
+                  withContext(Dispatchers.Main) {
+                    createAvailableVersionsPopup(pkg as InstallablePackage, details, project, controller).show(RelativePoint(e.inputEvent as MouseEvent))
+                  }
+                }
+              }
+            }
+          }
+        }), "PackagePopup")
+  }
+
+  private fun createAvailableVersionsPopup(selectedPackage: InstallablePackage, details: PythonPackageDetails, project: Project, controller: PyPackagingToolWindowPanel): ListPopup {
+    return JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<String>(null, details.availableVersions) {
+      override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
+        return doFinalStep {
+          val specification = selectedPackage.repository.createPackageSpecification(selectedPackage.name, selectedValue)
+          controller.packagingScope.launch(Dispatchers.IO) {
+            project.service<PyPackagingToolWindowService>().installPackage(specification)
+          }
+        }
+      }
+    }, 8)
   }
 
   private fun initCrossNavigation(service: PyPackagingToolWindowService, tablesView: PyPackagingTablesView) {

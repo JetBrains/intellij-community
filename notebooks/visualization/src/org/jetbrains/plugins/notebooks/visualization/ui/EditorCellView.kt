@@ -92,7 +92,7 @@ class EditorCellView(
                           currentComponent
                         }
                         else {
-                          ControllerEditorCellViewComponent(controller, parent)
+                          ControllerEditorCellViewComponent(controller, parent, editor, cell)
                         }
                       }
                       else {
@@ -131,9 +131,10 @@ class EditorCellView(
   }
 
   // Force == true only from disableMarkdownRenderingIfEnabled and caused recreation of components in EditorCellInput.updateInput.
-  fun update(force: Boolean = false) {
+  fun update(updateContext: UpdateContext) {
     recreateControllers()
-    updateControllers(force)
+    updateControllers(updateContext.force)
+    updateCellFolding(updateContext)
   }
 
   private fun updateControllers(force: Boolean = false) {
@@ -360,8 +361,9 @@ class EditorCellView(
           foldingModel.removeFoldRegion(it)
         }
       }
-
-      update(true)
+      cellInlayManager.update(true) { ctx ->
+        update(ctx)
+      }
       cell.putUserData(WAS_FOLDED_IN_RENDERED_STATE_KEY, true)
     }
   }
@@ -414,7 +416,8 @@ class EditorCellView(
   val shouldUpdateFolding: Boolean
     get() = controllers.any { it.shouldUpdateInlay }
 
-  fun updateCellFolding() {
+  override fun updateCellFolding(updateContext: UpdateContext) {
+    super.updateCellFolding(updateContext)
     controllers.forEach { it.updateCellFolding() }
   }
 

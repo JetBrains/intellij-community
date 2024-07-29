@@ -18,7 +18,8 @@ import javaApi.E
 @Anon5(1)
 @Anon6("x", "y")
 @Anon7(
-    String::class, StringBuilder::class
+    String::class,
+    StringBuilder::class
 )
 @Anon8(classes = [String::class, StringBuilder::class])
 internal class C {

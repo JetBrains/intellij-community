@@ -17,12 +17,9 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
@@ -41,7 +38,9 @@ object CodeReviewCommentTextFieldFactory {
         awaitCancellation()
       }
       finally {
-        EditorFactory.getInstance().releaseEditor(editor)
+        withContext(NonCancellable) {
+          EditorFactory.getInstance().releaseEditor(editor)
+        }
       }
     }
     // also forces component revalidation on newline

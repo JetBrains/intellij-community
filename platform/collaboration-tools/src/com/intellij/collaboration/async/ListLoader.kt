@@ -24,8 +24,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface ListLoader<V> {
   data class State<V>(
-    val list: List<V>?,
-    val error: Throwable?
+    val list: List<V>? = null,
+    val error: Throwable? = null
   )
 
   /**
@@ -73,7 +73,7 @@ abstract class MutableListLoader<V> : ListLoader<V> {
   /**
    * Mutable version of the state flow. To be directly modified only by calls to [update].
    */
-  protected val mutableStateFlow: MutableStateFlow<State<V>> = MutableStateFlow(State(null, null))
+  protected val mutableStateFlow: MutableStateFlow<State<V>> = MutableStateFlow(State())
 
   override val stateFlow: Flow<State<V>> = mutableStateFlow.asStateFlow()
 
@@ -159,11 +159,9 @@ interface ReloadablePotentiallyInfiniteListLoader<V>
 
 @ApiStatus.Internal
 abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
-  cs: CoroutineScope,
-
   private val initialPageInfo: PI,
-  private val extractKey: (V) -> K,
 
+  private val extractKey: (V) -> K,
   private var shouldTryToLoadAll: Boolean = false,
 ) : MutableListLoader<V>(), ReloadablePotentiallyInfiniteListLoader<V> {
   interface PageInfo<PI : PageInfo<PI>> {
@@ -184,7 +182,7 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
   /**
    * The pages that are currently tracked.
    */
-  private val pagesFlow: MutableStateFlow<State<Page<PI, V>>> = MutableStateFlow(State(null, null))
+  private var pages: State<Page<PI, V>> = State()
 
   /**
    * Lock for operating on the list of pages.
@@ -194,18 +192,10 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
   private val _isBusyFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   override val isBusyFlow: StateFlow<Boolean> = _isBusyFlow.asStateFlow()
 
-  init {
-    cs.launch {
-      pagesFlow.collectLatest { st ->
-        mutableStateFlow.emit(State(st.list?.flatMap { it.list }?.distinctBy(extractKey), st.error))
-      }
-    }
-  }
-
   override suspend fun reload() {
     withLock {
       // Reset any errors that were present
-      pagesFlow.emit(State(null, null))
+      doEmitPages(State())
 
       // Perform 2 loads by default to start seeing data.
       var loadedMoreData = loadMoreImpl()
@@ -219,8 +209,8 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
 
   private suspend fun doRefresh() {
     coroutineScope {
-      val currentPages = pagesFlow.value.list ?: listOf()
-      pagesFlow.emit(
+      val currentPages = pages.list ?: listOf()
+      doEmitPages(
         runCatchingUser {
           State(currentPages.mapNotNull { page ->
             if (page.info == null) return@mapNotNull null
@@ -261,7 +251,7 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
    * Loads the next page of data.
    */
   private suspend fun loadMoreImpl(): Boolean {
-    val latestPages = pagesFlow.value.list ?: listOf()
+    val latestPages = pages.list ?: listOf()
     val nextPageInfo =
       if (latestPages.isEmpty()) initialPageInfo
       else latestPages.lastOrNull()?.info?.createNextPageInfo()
@@ -272,11 +262,11 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
         Page(pageInfo, results ?: return@performRequestAndProcess null)
       } ?: return false
     }.getOrElse {
-      pagesFlow.emit(State(latestPages, it))
+      doEmitPages(State(latestPages, it))
       return false
     }
 
-    pagesFlow.emit(State(latestPages + listOf(nextPage), pagesFlow.value.error))
+    doEmitPages(State(latestPages + listOf(nextPage), pages.error))
     return true
   }
 
@@ -286,6 +276,11 @@ abstract class PaginatedPotentiallyInfiniteListLoader<PI : PageInfo<PI>, K, V>(
       val loadedMoreData = loadMoreImpl()
     }
     while (loadedMoreData)
+  }
+
+  private fun doEmitPages(st: State<Page<PI, V>>) {
+    pages = st
+    mutableStateFlow.value = State(st.list?.flatMap { it.list }?.distinctBy(extractKey), st.error)
   }
 
   /**

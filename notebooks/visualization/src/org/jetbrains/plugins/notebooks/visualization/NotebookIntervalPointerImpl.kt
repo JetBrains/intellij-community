@@ -102,6 +102,11 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
   }
 
+  override fun getForOrdinalIfExists(ordinal: Int): NotebookIntervalPointer? {
+    ThreadingAssertions.assertReadAccess()
+    return pointers.getOrNull(ordinal)
+  }
+
   override fun modifyPointers(changes: Iterable<NotebookIntervalPointerFactory.Change>) {
     ThreadingAssertions.assertWriteAccess()
 

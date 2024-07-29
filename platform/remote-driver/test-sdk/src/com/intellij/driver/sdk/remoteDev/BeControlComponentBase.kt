@@ -105,6 +105,10 @@ open class BeControlComponentBase(
     return frontendComponent.getParent()
   }
 
+  override fun isDisplayable(): Boolean {
+    return frontendComponent.isDisplayable()
+  }
+
   override fun getRef() = getFrontendRef()
 
   override fun getRefPluginId() = ""

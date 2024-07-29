@@ -50,7 +50,8 @@ internal class Java8Class {
     }
 
     fun testMemberFunctionThroughClass() {
-        val memberFunFromClass = JFunction2 { obj: Java8Class -> obj.memberFun() }
+        val memberFunFromClass =
+            JFunction2 { obj: Java8Class -> obj.memberFun() }
         memberFunFromClass.foo(Java8Class())
         MethodReferenceHelperClass.staticFun2 { obj: Java8Class -> obj.memberFun() }
         h.memberFun2 { obj: Java8Class -> obj.memberFun() }

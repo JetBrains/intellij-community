@@ -15,7 +15,9 @@ public enum Region {
   AMERICAS("americas", "title.region.america", 1),
   APAC("apac", "title.region.asia", 2),
   CHINA("china", "title.region.china", 3),
-  EUROPE("europe", "title.region.europe", 4);
+  EUROPE("europe", "title.region.europe", 4),
+  MIDDLE_EAST("middle_east", "title.region.middle_east", 5),
+  OCEANIA("oceania", "title.region.oceania", 6);
 
   private final String extName;
   private final String displayKey;

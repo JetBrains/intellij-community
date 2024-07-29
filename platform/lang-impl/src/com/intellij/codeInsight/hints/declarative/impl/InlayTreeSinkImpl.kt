@@ -29,7 +29,7 @@ class InlayTreeSinkImpl(
   override fun addPresentation(position: InlayPosition,
                                payloads: List<InlayPayload>?,
                                @NlsContexts.HintText tooltip: String?,
-                               hintColorKind: HintColorKind,
+                               hintFormat: HintFormat,
                                builder: PresentationTreeBuilder.() -> Unit) {
     val b = PresentationTreeBuilderImpl.createRoot()
     b.builder()
@@ -44,7 +44,7 @@ class InlayTreeSinkImpl(
     else {
       false
     }
-    inlayDataToPresentation.add(InlayData(position, tooltip, hintColorKind, tree, providerId, disabled, payloads, providerClass, sourceId))
+    inlayDataToPresentation.add(InlayData(position, tooltip, hintFormat, tree, providerId, disabled, payloads, providerClass, sourceId))
   }
 
   override fun whenOptionEnabled(optionId: String, block: () -> Unit) {

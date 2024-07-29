@@ -5,14 +5,18 @@ import com.intellij.driver.sdk.ui.Finder
 import org.intellij.lang.annotations.Language
 
 
-fun Finder.editorTabs(@Language("xpath") xpath: String? = null) =
-  x(xpath ?: "//div[@class='EditorTabs']", EditorTabsUiComponent::class.java)
+fun Finder.editorTabs(@Language("xpath") xpath: String? = null, action: EditorTabsUiComponent.() -> Unit = {}) =
+  x(xpath ?: "//div[@class='EditorTabs']", EditorTabsUiComponent::class.java).apply(action)
 
 class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
 
   private val editorTabsComponent by lazy { driver.cast(component, EditorTabsRef::class) }
 
   fun getTabs() = editorTabsComponent.getTabs().map { Tab(it) }
+
+  fun getTabsComponents(): List<UiComponent> = xx { byType("com.intellij.openapi.fileEditor.impl.EditorTabLabel") }.list().filter {
+    it.component.width > 0 && it.component.height > 0
+  }
 
   fun clickTab(text: String) {
     x("//div[@class='EditorTabLabel'][.//div[@visible_text='$text']]").click()
