@@ -10,5 +10,9 @@ internal interface TerminalLinesCollector {
       addLine(linesBuffer.getLine(i))
     }
   }
+
   fun addLine(line: TerminalLine)
+
+  fun flush() {}
+
 }
