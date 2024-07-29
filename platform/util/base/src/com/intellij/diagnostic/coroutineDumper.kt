@@ -48,16 +48,24 @@ fun enableCoroutineDump(): Result<Unit> {
  */
 //@JvmOverloads
 fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true, deduplicateTrees: Boolean = true): String? {
-  if (!isCoroutineDumpEnabled()) {
-    return null
+  try {
+    if (!isCoroutineDumpEnabled()) {
+      return null
+    }
+    val charset = StandardCharsets.UTF_8.name()
+    val outputStream = ByteArrayOutputStream()
+    PrintStream(BufferedOutputStream(outputStream), true, charset).use { out ->
+      val jobTree = jobTrees(scope).toList()
+      dumpCoroutines(jobTree, out, stripDump, deduplicateTrees)
+    }
+    return outputStream.toString(charset)
+  } catch (e: Throwable) {
+    // if there is an unexpected exception, we won't be able to provide meaningful information anyway,
+    // but the exception should not prevent other diagnostic tools from collecting data
+    return "Coroutine dump has failed: ${e.message}\n" +
+           "Please report this issue to the developers.\n" +
+           e.stackTraceToString()
   }
-  val charset = StandardCharsets.UTF_8.name()
-  val outputStream = ByteArrayOutputStream()
-  PrintStream(BufferedOutputStream(outputStream), true, charset).use { out ->
-    val jobTree = jobTrees(scope).toList()
-    dumpCoroutines(jobTree, out, stripDump, deduplicateTrees)
-  }
-  return outputStream.toString(charset)
 }
 
 /**
