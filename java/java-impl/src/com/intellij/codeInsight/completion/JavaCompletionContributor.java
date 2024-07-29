@@ -96,7 +96,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
     or(psiElement(PsiIdentifier.class).withParent(NAME_VALUE_PAIR),
-       psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
+       psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)),
+       psiElement().afterLeaf(",").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
     psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
       psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));

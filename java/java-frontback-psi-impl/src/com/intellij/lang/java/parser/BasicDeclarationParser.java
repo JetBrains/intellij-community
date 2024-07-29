@@ -492,8 +492,8 @@ public class BasicDeclarationParser {
     myParser.getReferenceParser()
       .parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, myJavaElementTypeContainer.THROWS_LIST, JavaTokenType.COMMA);
 
-    if (anno && expect(builder, JavaTokenType.DEFAULT_KEYWORD)) {
-      parseAnnotationValue(builder);
+    if (anno && expect(builder, JavaTokenType.DEFAULT_KEYWORD) && parseAnnotationValue(builder) == null) {
+      error(builder, JavaPsiBundle.message("expected.value"));
     }
 
     return parseMethodBody(builder, declaration, anno);
@@ -935,107 +935,85 @@ public class BasicDeclarationParser {
   private void parseAnnotationParameterList(final PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
 
-    if (!expect(builder, JavaTokenType.LPARENTH)) {
+    if (!expect(builder, JavaTokenType.LPARENTH) || expect(builder, JavaTokenType.RPARENTH)) {
       done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, myWhiteSpaceAndCommentSetHolder);
       return;
     }
 
-    if (expect(builder, JavaTokenType.RPARENTH)) {
+    if (builder.getTokenType() == null) {
+      error(builder, JavaPsiBundle.message("expected.parameter.or.rparen"));
       done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, myWhiteSpaceAndCommentSetHolder);
       return;
     }
-
-    final boolean isFirstParamNamed = parseAnnotationParameter(builder, true);
-    boolean isFirstParamWarned = false;
-
-    boolean afterBad = false;
+    PsiBuilder.Marker elementMarker = parseAnnotationElement(builder);
     while (true) {
-      final IElementType tokenType = builder.getTokenType();
+      IElementType tokenType = builder.getTokenType();
       if (tokenType == null) {
-        error(builder, JavaPsiBundle.message("expected.parameter"));
+        error(builder, JavaPsiBundle.message(elementMarker == null ? "expected.parameter.or.rparen" : "expected.comma.or.rparen"));
         break;
       }
       else if (expect(builder, JavaTokenType.RPARENTH)) {
         break;
       }
       else if (tokenType == JavaTokenType.COMMA) {
-        final PsiBuilder.Marker errorStart = builder.mark();
-        final PsiBuilder.Marker errorEnd = builder.mark();
         builder.advanceLexer();
-        final boolean hasParamName = parseAnnotationParameter(builder, false);
-        if (!isFirstParamNamed && hasParamName && !isFirstParamWarned) {
-          errorStart.errorBefore(JavaPsiBundle.message("annotation.name.is.missing"), errorEnd);
-          isFirstParamWarned = true;
+        elementMarker = parseAnnotationElement(builder);
+        if (elementMarker == null) {
+          error(builder, JavaPsiBundle.message("annotation.name.is.missing"));
+          tokenType = builder.getTokenType();
+          if (tokenType != JavaTokenType.COMMA && tokenType != JavaTokenType.RPARENTH) {
+            break;
+          }
         }
-        else {
-          errorStart.drop();
-        }
-        errorEnd.drop();
-      }
-      else if (!afterBad) {
-        error(builder, JavaPsiBundle.message("expected.comma.or.rparen"));
-        builder.advanceLexer();
-        afterBad = true;
       }
       else {
-        afterBad = false;
-        parseAnnotationParameter(builder, false);
+        error(builder, JavaPsiBundle.message(elementMarker == null ? "expected.parameter.or.rparen" : "expected.comma.or.rparen"));
+        tokenType = builder.lookAhead(1);
+        if (tokenType != JavaTokenType.COMMA && tokenType != JavaTokenType.RPARENTH) break;
+        builder.advanceLexer();
       }
     }
 
     done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, myWhiteSpaceAndCommentSetHolder);
   }
 
-  private boolean parseAnnotationParameter(final PsiBuilder builder, final boolean mayBeSimple) {
+  private PsiBuilder.Marker parseAnnotationElement(final PsiBuilder builder) {
     PsiBuilder.Marker pair = builder.mark();
 
-    if (mayBeSimple) {
-      parseAnnotationValue(builder);
-      if (builder.getTokenType() != JavaTokenType.EQ) {
-        done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, myWhiteSpaceAndCommentSetHolder);
-        return false;
-      }
-
-      pair.rollbackTo();
-      pair = builder.mark();
+    PsiBuilder.Marker valueMarker = parseAnnotationValue(builder);
+    if (valueMarker == null && builder.getTokenType() != JavaTokenType.EQ) {
+      pair.drop();
+      return null;
+    }
+    if (builder.getTokenType() != JavaTokenType.EQ) {
+      done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, myWhiteSpaceAndCommentSetHolder);
+      return pair;
     }
 
-    final boolean hasName = expectOrError(builder, JavaTokenType.IDENTIFIER, "expected.identifier");
+    pair.rollbackTo();
+    pair = builder.mark();
 
-    expectOrError(builder, JavaTokenType.EQ, "expected.eq");
-
-    parseAnnotationValue(builder);
+    expectOrError(builder, JavaTokenType.IDENTIFIER, "expected.identifier");
+    expect(builder, JavaTokenType.EQ);
+    valueMarker = parseAnnotationValue(builder);
+    if (valueMarker == null) error(builder, JavaPsiBundle.message("expected.value"));
 
     done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, myWhiteSpaceAndCommentSetHolder);
-
-    return hasName;
-  }
-
-  public void parseAnnotationValue(PsiBuilder builder) {
-    PsiBuilder.Marker result = doParseAnnotationValue(builder);
-
-    if (result == null) {
-      result = builder.mark();
-      result.error(JavaPsiBundle.message("expected.value"));
-    }
+    return pair;
   }
 
   @Nullable
-  private PsiBuilder.Marker doParseAnnotationValue(PsiBuilder builder) {
-    PsiBuilder.Marker result;
-
+  public PsiBuilder.Marker parseAnnotationValue(PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.AT) {
-      result = parseAnnotation(builder);
+      return parseAnnotation(builder);
     }
     else if (tokenType == JavaTokenType.LBRACE) {
-      result = myParser.getExpressionParser().parseArrayInitializer(
-        builder, myJavaElementTypeContainer.ANNOTATION_ARRAY_INITIALIZER, this::doParseAnnotationValue, "expected.value");
+      return myParser.getExpressionParser().parseArrayInitializer(
+        builder, myJavaElementTypeContainer.ANNOTATION_ARRAY_INITIALIZER, this::parseAnnotationValue, "expected.value");
     }
     else {
-      result = myParser.getExpressionParser().parseConditional(builder);
+      return myParser.getExpressionParser().parseConditional(builder);
     }
-
-    return result;
   }
 }
