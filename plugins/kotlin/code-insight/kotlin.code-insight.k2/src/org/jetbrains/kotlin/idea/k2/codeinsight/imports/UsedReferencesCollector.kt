@@ -7,6 +7,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -123,7 +125,11 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             (target as? KaNamedClassSymbol)?.containingSymbol
         }
 
-        target is KaConstructorSymbol -> target.containingSymbol
+        target is KaConstructorSymbol -> {
+            val targetClass = target.containingSymbol as? KaClassLikeSymbol
+
+            targetClass?.let { resolveTypeAliasedConstructorReference(reference, it) } ?: targetClass
+        }
 
         else -> target
     }
@@ -158,6 +164,35 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
         return dispatchReceiver
     }
+}
+
+/**
+ * Takes a [reference] pointing to a typealiased constructor call like `FooAlias()`,
+ * and [expandedClassSymbol] pointing to the expanded class `Foo`.
+ *
+ * Returns a `FooAlias` typealias symbol if it is resolvable at this position, and `null` otherwise.
+ *
+ * This is a workaround function until KTIJ-26098 is fixed.
+ */
+private fun KaSession.resolveTypeAliasedConstructorReference(
+    reference: KtReference,
+    expandedClassSymbol: KaClassLikeSymbol,
+): KaClassLikeSymbol? {
+    val referencedType = resolveReferencedType(reference) ?: return null
+    if (referencedType.symbol != expandedClassSymbol) return null
+
+    val typealiasType = referencedType.abbreviation ?: return null
+
+    return typealiasType.symbol
+}
+
+private fun KaSession.resolveReferencedType(reference: KtReference): KaType? {
+    val originalReferenceName = reference.resolvesByNames.singleOrNull() ?: return null
+
+    val psiFactory = KtPsiFactory.contextual(reference.element)
+    val psiType = psiFactory.createTypeCodeFragment(originalReferenceName.asString(), context = reference.element).getContentElement()
+
+    return psiType?.type
 }
 
 private fun collectImportAliases(file: KtFile): Map<FqName, List<Name>> = if (file.hasImportAlias()) {

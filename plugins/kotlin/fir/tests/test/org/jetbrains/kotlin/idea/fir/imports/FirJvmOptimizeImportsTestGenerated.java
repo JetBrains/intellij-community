@@ -284,6 +284,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/TypeAliasVsUnderlyingClass.kt");
             }
 
+            @TestMetadata("TypeAliasedConstructor_annotation_volatile.kt")
+            public void testTypeAliasedConstructor_annotation_volatile() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/TypeAliasedConstructor_annotation_volatile.kt");
+            }
+
             @TestMetadata("UnusedImports.kt")
             public void testUnusedImports() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/UnusedImports.kt");
@@ -777,6 +782,21 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
             @TestMetadata("TwoConstructors.kt")
             public void testTwoConstructors() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/TwoConstructors.kt");
+            }
+
+            @TestMetadata("TypeAliasedConstructor.kt")
+            public void testTypeAliasedConstructor() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/TypeAliasedConstructor.kt");
+            }
+
+            @TestMetadata("TypeAliasedConstructor_annotation.kt")
+            public void testTypeAliasedConstructor_annotation() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/TypeAliasedConstructor_annotation.kt");
+            }
+
+            @TestMetadata("TypeAliasedConstructor_sameName.kt")
+            public void testTypeAliasedConstructor_sameName() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/TypeAliasedConstructor_sameName.kt");
             }
 
             @TestMetadata("UnresolvedImport.kt")

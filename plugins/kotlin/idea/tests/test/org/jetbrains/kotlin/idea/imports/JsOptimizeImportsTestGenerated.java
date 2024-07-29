@@ -521,6 +521,21 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/TwoConstructors.kt");
             }
 
+            @TestMetadata("TypeAliasedConstructor.kt")
+            public void testTypeAliasedConstructor() throws Exception {
+                runTest("testData/editor/optimizeImports/common/TypeAliasedConstructor.kt");
+            }
+
+            @TestMetadata("TypeAliasedConstructor_annotation.kt")
+            public void testTypeAliasedConstructor_annotation() throws Exception {
+                runTest("testData/editor/optimizeImports/common/TypeAliasedConstructor_annotation.kt");
+            }
+
+            @TestMetadata("TypeAliasedConstructor_sameName.kt")
+            public void testTypeAliasedConstructor_sameName() throws Exception {
+                runTest("testData/editor/optimizeImports/common/TypeAliasedConstructor_sameName.kt");
+            }
+
             @TestMetadata("UnresolvedImport.kt")
             public void testUnresolvedImport() throws Exception {
                 runTest("testData/editor/optimizeImports/common/UnresolvedImport.kt");
