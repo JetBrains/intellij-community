@@ -44,7 +44,7 @@ class EdtScheduler(@JvmField val coroutineScope: CoroutineScope) {
   }
 
   fun schedule(delay: Duration, task: Runnable): Job {
-    return schedule(delay = delay, task = task, modality = ModalityState.any())
+    return schedule(delay = delay, task = task, modality = ModalityState.defaultModalityState())
   }
 
   fun schedule(delay: Int, modality: ModalityState, task: Runnable): Job {
