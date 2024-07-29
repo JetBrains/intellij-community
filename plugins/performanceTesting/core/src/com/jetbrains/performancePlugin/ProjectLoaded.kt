@@ -36,6 +36,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
+import com.jetbrains.performancePlugin.commands.CodeAnalysisStateListener
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
 import com.jetbrains.performancePlugin.commands.takeFullScreenshot
 import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
@@ -73,9 +74,6 @@ private fun getTestFile(): Path {
 }
 
 private object ProjectLoadedService {
-  val alarm by lazy {
-    Alarm()
-  }
 
   @JvmField
   var scriptStarted = false
@@ -143,11 +141,14 @@ private fun runOnProjectInit(project: Project) {
       ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
     }
   }
+
+  fun createAlarm(): Alarm = Alarm(project.service<CodeAnalysisStateListener>().cs, Alarm.ThreadToUse.SWING_THREAD)
+
   if (shouldOpenInSmartMode(project)) {
-    runScriptWhenInitializedAndIndexed(project, ProjectLoadedService.alarm)
+    runScriptWhenInitializedAndIndexed(project, createAlarm())
   }
   else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
-    runScriptDuringIndexing(project, ProjectLoadedService.alarm)
+    runScriptDuringIndexing(project, createAlarm())
   }
   else {
     runScriptFromFile(project)
@@ -173,7 +174,7 @@ private fun runScriptWhenInitializedAndIndexed(project: Project, alarm: Alarm) {
           val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcesses.isNotEmpty()
           if (isDumb(project) || hasUserVisibleIndicators ||
               !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
-            runScriptWhenInitializedAndIndexed(project, ProjectLoadedService.alarm)
+            runScriptWhenInitializedAndIndexed(project, alarm)
           }
           else {
             runScriptFromFile(project)
@@ -224,7 +225,7 @@ class ProjectLoaded : ApplicationInitializedListener {
         }
       })
     }
-    if (ApplicationManagerEx.isInIntegrationTest() && AppMode.isHeadless() && AppMode.isCommandLine()){
+    if (ApplicationManagerEx.isInIntegrationTest() && AppMode.isHeadless() && AppMode.isCommandLine()) {
       MessagePool.getInstance().addListener { reportErrorsFromMessagePool() }
       LOG.info("Error watcher has started in headless mode")
     }
@@ -306,7 +307,7 @@ private fun initializeProfilerSettingsForIndexing(): Pair<String, List<String>>?
       }
     }
   }
-  catch (ignored: IOException) {
+  catch (_: IOException) {
     System.err.println(PerformanceTestingBundle.message("startup.script.read.error"))
     ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
   }
