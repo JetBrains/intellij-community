@@ -6,6 +6,7 @@ package com.intellij.ide.ui.search
 import com.intellij.IntelliJResourceBundle
 import com.intellij._doResolveBundle
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar.AdditionalLocationProvider
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.diagnostic.debug
@@ -136,25 +137,45 @@ private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: 
   val result = StringBuilder()
   for (match in matches) {
     val groups = match.groups
-    val bundlePath = groups[1]!!.value
-    val messageKey = groups[2]!!.value
-    val bundle = try {
-      _doResolveBundle(loader = classLoader, locale = locale, pathToBundle = bundlePath)
-    }
-    catch (_: MissingResourceException) {
-      continue
-    }
-
+    val bundle = findBundle(classLoader = classLoader, locale = locale, bundlePath = groups[1]!!.value) ?: continue
     if (bundle !is IntelliJResourceBundle) {
       // todo we should fix resolveResourceBundleWithFallback and do not try to load bundle if we cannot find it in localization plugin
       LOG.debug { "Unexpected bundle type due to fallback: ${bundle.javaClass.name}" }
       continue
     }
 
+    val messageKey = groups[2]!!.value
     val resolvedMessage = bundle.getMessageOrNull(messageKey) ?: continue
     result.append(resolvedMessage)
   }
   return result.toString()
+}
+
+private fun findBundle(classLoader: ClassLoader, locale: Locale, bundlePath: String): ResourceBundle? {
+  try {
+    return _doResolveBundle(loader = classLoader, locale = locale, pathToBundle = bundlePath)
+  }
+  catch (_: MissingResourceException) {
+    if (classLoader is PluginAwareClassLoader) {
+      return null
+    }
+
+    val visited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
+    visited.add(classLoader)
+    for (descriptor in getPluginSet().getEnabledModules()) {
+      if (visited.contains(descriptor.classLoader)) {
+        continue
+      }
+
+      try {
+        val b = _doResolveBundle(loader = descriptor.classLoader, locale = locale, pathToBundle = bundlePath)
+        return b
+      }
+      catch (_: MissingResourceException) {
+      }
+    }
+    return null
+  }
 }
 
 private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
@@ -240,6 +261,8 @@ private fun doRegisterIndex(
   processor: MySearchableOptionProcessor,
   localeSpecificLoader: ClassLoader?,
 ) {
+  val groupName = getMessageByCoordinate(item.name, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT)
+  val id = getMessageByCoordinate(item.id, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT)
   for (entry in item.entries) {
     processor.putOptionWithHelpId(
       words = Iterable {
@@ -254,8 +277,8 @@ private fun doRegisterIndex(
           Stream.concat(s2, s1).iterator()
         }
       },
-      id = getMessageByCoordinate(item.id, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT),
-      groupName = getMessageByCoordinate(item.name, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT),
+      id = id,
+      groupName = groupName,
       hit = getMessageByCoordinate(entry.hit, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT),
       path = entry.path?.let { getMessageByCoordinate(it, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT) },
     )
