@@ -7,7 +7,7 @@ org.jetbrains.debugger.DebugEventListener
 - errorOccurred(java.lang.String):V
 - navigated(java.lang.String):V
 - resumed(org.jetbrains.debugger.Vm):V
-- scriptAdded(org.jetbrains.debugger.Vm,org.jetbrains.debugger.Script,java.lang.String):V
+- scriptAdded(org.jetbrains.debugger.Vm,org.jetbrains.debugger.Script):V
 - scriptContentChanged(org.jetbrains.debugger.Script):V
 - scriptRemoved(org.jetbrains.debugger.Script):V
 - scriptsCleared():V
