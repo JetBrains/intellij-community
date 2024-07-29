@@ -290,8 +290,17 @@ class JarPackager private constructor(
     // must be before module output to override
     moduleSources.addAll(extraContent)
 
+    val jarAsset by lazy(LazyThreadSafetyMode.NONE) {
+      if (packToDir) {
+        getJarAsset(targetFile = outFile, relativeOutputFile = item.relativeOutputFile, metaInfDir = moduleOutDir.resolve("META-INF"))
+      }
+      else {
+        asset
+      }
+    }
+
     if (searchableOptionSet != null) {
-      addSearchableOptionSources(layout = layout, moduleName = moduleName, module = module, moduleSources = moduleSources, searchableOptionSet = searchableOptionSet)
+      addSearchableOptionSources(layout = layout, moduleName = moduleName, module = module, sources = jarAsset.sources, searchableOptionSet = searchableOptionSet)
     }
 
     val excludes = if (extraExcludes.isEmpty()) {
@@ -307,12 +316,6 @@ class JarPackager private constructor(
     moduleSources.add(DirSource(dir = moduleOutDir, excludes = excludes))
 
     if (layout != null && !layout.modulesWithExcludedModuleLibraries.contains(moduleName)) {
-      val jarAsset = if (packToDir) {
-        getJarAsset(targetFile = outFile, relativeOutputFile = item.relativeOutputFile, metaInfDir = moduleOutDir.resolve("META-INF"))
-      }
-      else {
-        asset
-      }
       computeSourcesForModuleLibs(item = item, module = module, layout = layout, copiedFiles = copiedFiles, asset = jarAsset)
     }
   }
@@ -321,7 +324,7 @@ class JarPackager private constructor(
     layout: BaseLayout?,
     moduleName: String,
     module: JpsModule,
-    moduleSources: MutableList<Source>,
+    sources: MutableList<Source>,
     searchableOptionSet: SearchableOptionSetDescriptor
   ) {
     if (layout is PluginLayout) {
@@ -331,17 +334,17 @@ class JarPackager private constructor(
 
       if (moduleName == layout.mainModule) {
         val pluginId = helper.getPluginIdByModule(module)
-        moduleSources.addAll(searchableOptionSet.createSourceByPlugin(pluginId))
+        sources.addAll(searchableOptionSet.createSourceByPlugin(pluginId))
       }
       else {
         // is it a product module?
         context.findFileInModuleSources(module, "$moduleName.xml")?.let {
-          moduleSources.addAll(searchableOptionSet.createSourceByModule(moduleName))
+          sources.addAll(searchableOptionSet.createSourceByModule(moduleName))
         }
       }
     }
     else if (moduleName == context.productProperties.applicationInfoModule) {
-      moduleSources.addAll(searchableOptionSet.createSourceByPlugin("com.intellij"))
+      sources.addAll(searchableOptionSet.createSourceByPlugin("com.intellij"))
     }
   }
 

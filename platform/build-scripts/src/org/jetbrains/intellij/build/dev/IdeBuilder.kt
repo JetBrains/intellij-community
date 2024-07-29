@@ -432,7 +432,7 @@ private suspend fun createBuildContext(
           projectHome = request.projectDir,
           tempDir = tempDir,
           artifactDir = buildDir.resolve("artifacts"),
-          searchableOptionDir = request.projectDir.normalize().toAbsolutePath().resolve("out/dev-data/searchable-options"),
+          searchableOptionDir = request.projectDir.resolve("out/dev-data/searchable-options"),
         )
         Files.createDirectories(tempDir)
 
