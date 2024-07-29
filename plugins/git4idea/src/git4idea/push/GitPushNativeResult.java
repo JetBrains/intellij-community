@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,10 +61,10 @@ public class GitPushNativeResult {
   }
 
   boolean isNonFFUpdate() {
-    return myType == Type.REJECTED && myReason != null &&
-           (StringUtil.containsIgnoreCase(myReason, NO_FF_REJECT_REASON) ||
-            StringUtil.containsIgnoreCase(myReason, FETCH_FIRST_REASON)) ||
-            StringUtil.containsIgnoreCase(myReason, FAILED_LOCK_REASON);
+    if (myReason == null || myType != Type.REJECTED) return false;
+    return StringUtil.containsIgnoreCase(myReason, NO_FF_REJECT_REASON) ||
+           StringUtil.containsIgnoreCase(myReason, FETCH_FIRST_REASON) ||
+           StringUtil.containsIgnoreCase(myReason, FAILED_LOCK_REASON);
   }
 
   boolean isStaleInfo() {
