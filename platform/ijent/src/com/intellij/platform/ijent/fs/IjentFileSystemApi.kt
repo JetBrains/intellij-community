@@ -3,6 +3,9 @@ package com.intellij.platform.ijent.fs
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.IjentInfo
+import com.intellij.platform.ijent.IjentPosixInfo
+import com.intellij.platform.ijent.IjentWindowsInfo
 import kotlinx.coroutines.CoroutineScope
 import java.nio.ByteBuffer
 
@@ -19,6 +22,16 @@ sealed interface IjentFileSystemApi {
    */
   @Deprecated("API should avoid exposing coroutine scopes")
   val coroutineScope: CoroutineScope
+
+  /**
+   * The same as the user from [com.intellij.platform.ijent.IjentApi.info].
+   *
+   * There's a duplication of methods because [user] is required for checking file permissions correctly, but also it can be required
+   * in other cases outside the filesystem.
+   *
+   * TODO If `user` is non-suspendable, then `userHome` should be non-suspendable too. Or not?
+   */
+  val user: IjentInfo.User
 
   /**
    * A user may have no home directory on Unix-like systems, for example, the user `nobody`.
@@ -330,6 +343,7 @@ sealed interface IjentOpenedFile {
 }
 
 interface IjentFileSystemPosixApi : IjentFileSystemApi {
+  override val user: IjentPosixInfo.User
 
   enum class CreateDirAttributePosix {
     // todo
@@ -362,6 +376,8 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
 }
 
 interface IjentFileSystemWindowsApi : IjentFileSystemApi {
+  override val user: IjentWindowsInfo.User
+
   suspend fun getRootDirectories(): Collection<IjentPath.Absolute>
 
   override suspend fun listDirectoryWithAttrs(

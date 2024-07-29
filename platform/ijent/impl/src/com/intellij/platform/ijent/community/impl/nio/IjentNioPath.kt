@@ -12,17 +12,17 @@ import java.nio.file.*
  * How to get a path:
  * ```kotlin
  * val ijent: IjentApi = getIjentFromSomewhere()
- * val path: Path = ijent.fs.asNioFileSystem().getPath("/usr/bin/cowsay")
+ * val path: Path = ijentFs.asNioFileSystem().getPath("/usr/bin/cowsay")
  * ```
  */
 class IjentNioPath internal constructor(
   val ijentPath: IjentPath,
   internal val nioFs: IjentNioFileSystem,
 ) : Path {
-  val ijentId: IjentId get() = nioFs.ijent.fs.id
+  val ijentId: IjentId get() = nioFs.ijentFs.id
 
   private val isWindows
-    get() = when (nioFs.ijent.fs) {
+    get() = when (nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> false
       is IjentFileSystemWindowsApi -> true
     }
@@ -135,7 +135,7 @@ class IjentNioPath internal constructor(
               normalizedPath
             else
               fsBlocking {
-                nioFs.ijent.fs.canonicalize(normalizedPath)
+                nioFs.ijentFs.canonicalize(normalizedPath)
               }
                 .getOrThrowFileSystemException()
           }

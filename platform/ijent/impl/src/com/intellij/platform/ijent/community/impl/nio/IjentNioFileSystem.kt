@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.ijent.*
 import com.intellij.platform.ijent.fs.*
 import kotlinx.coroutines.isActive
 import java.nio.file.FileStore
@@ -12,27 +11,9 @@ import java.nio.file.attribute.UserPrincipalLookupService
 
 class IjentNioFileSystem internal constructor(
   private val fsProvider: IjentNioFileSystemProvider,
-  internal val ijent: FsAndUserApi,
+  internal val ijentFs: IjentFileSystemApi,
   private val onClose: () -> Unit,
 ) : FileSystem() {
-  /**
-   * Just a bunch of parts of [com.intellij.platform.ijent.IjentApi] with proper types. It was introduced to avoid type upcasting.
-   */
-  internal sealed interface FsAndUserApi {
-    val fs: IjentFileSystemApi
-    val userInfo: IjentInfo.User
-
-    data class Posix(override val fs: IjentFileSystemPosixApi, override val userInfo: IjentPosixInfo.User) : FsAndUserApi
-    data class Windows(override val fs: IjentFileSystemWindowsApi, override val userInfo: IjentWindowsInfo.User) : FsAndUserApi
-
-    companion object {
-      fun create(ijentApi: IjentApi): FsAndUserApi = when (ijentApi) {
-        is IjentPosixApi -> Posix(ijentApi.fs, ijentApi.info.user)
-        is IjentWindowsApi -> Windows(ijentApi.fs, ijentApi.info.user)
-      }
-    }
-  }
-
   override fun close() {
     onClose()
   }
@@ -40,31 +21,31 @@ class IjentNioFileSystem internal constructor(
   override fun provider(): IjentNioFileSystemProvider = fsProvider
 
   override fun isOpen(): Boolean =
-    ijent.fs.coroutineScope.isActive
+    ijentFs.coroutineScope.isActive
 
   override fun isReadOnly(): Boolean = false
 
   override fun getSeparator(): String =
-    when (ijent) {
-      is FsAndUserApi.Posix -> "/"
-      is FsAndUserApi.Windows -> "\\"
+    when (ijentFs) {
+      is IjentFileSystemPosixApi -> "/"
+      is IjentFileSystemWindowsApi -> "\\"
     }
 
   override fun getRootDirectories(): Iterable<IjentNioPath> = fsBlocking {
-    when (val fs = ijent.fs) {
+    when (val fs = ijentFs) {
       is IjentFileSystemPosixApi -> listOf(getPath("/"))
       is IjentFileSystemWindowsApi -> fs.getRootDirectories().map { it.toNioPath() }
     }
   }
 
   override fun getFileStores(): Iterable<FileStore> =
-    listOf(IjentNioFileStore(ijent.fs))
+    listOf(IjentNioFileStore(ijentFs))
 
   override fun supportedFileAttributeViews(): Set<String> =
-    when (ijent) {
-      is FsAndUserApi.Windows ->
+    when (ijentFs) {
+      is IjentFileSystemWindowsApi ->
         setOf("basic", "dos", "acl", "owner", "user")
-      is FsAndUserApi.Posix ->
+      is IjentFileSystemPosixApi ->
         setOf(
           "basic", "posix", "unix", "owner",
           "user",  // TODO Works only on BSD/macOS.
@@ -72,9 +53,9 @@ class IjentNioFileSystem internal constructor(
     }
 
   override fun getPath(first: String, vararg more: String): IjentNioPath {
-    val os = when (ijent) {
-      is FsAndUserApi.Posix -> IjentPath.Absolute.OS.UNIX
-      is FsAndUserApi.Windows -> IjentPath.Absolute.OS.WINDOWS
+    val os = when (ijentFs) {
+      is IjentFileSystemPosixApi -> IjentPath.Absolute.OS.UNIX
+      is IjentFileSystemWindowsApi -> IjentPath.Absolute.OS.WINDOWS
     }
     return IjentPath.parse(first, os)
       .getOrThrow()

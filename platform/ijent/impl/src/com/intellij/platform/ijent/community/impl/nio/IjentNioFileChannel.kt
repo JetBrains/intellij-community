@@ -18,21 +18,21 @@ internal class IjentNioFileChannel private constructor(
   companion object {
     @JvmStatic
     internal suspend fun createReading(nioFs: IjentNioFileSystem, path: IjentPath.Absolute): IjentNioFileChannel =
-      IjentNioFileChannel(nioFs, nioFs.ijent.fs.openForReading(path).getOrThrowFileSystemException())
+      IjentNioFileChannel(nioFs, nioFs.ijentFs.openForReading(path).getOrThrowFileSystemException())
 
     @JvmStatic
     internal suspend fun createWriting(
       nioFs: IjentNioFileSystem,
       options: IjentFileSystemApi.WriteOptions
     ): IjentNioFileChannel =
-      IjentNioFileChannel(nioFs, nioFs.ijent.fs.openForWriting(options).getOrThrowFileSystemException())
+      IjentNioFileChannel(nioFs, nioFs.ijentFs.openForWriting(options).getOrThrowFileSystemException())
 
     @JvmStatic
     internal suspend fun createReadingWriting(
       nioFs: IjentNioFileSystem,
       options: IjentFileSystemApi.WriteOptions
     ): IjentNioFileChannel {
-      return IjentNioFileChannel(nioFs, nioFs.ijent.fs.openForReadingAndWriting(options).getOrThrowFileSystemException())
+      return IjentNioFileChannel(nioFs, nioFs.ijentFs.openForReadingAndWriting(options).getOrThrowFileSystemException())
     }
   }
 
@@ -130,7 +130,7 @@ internal class IjentNioFileChannel private constructor(
   override fun size(): Long {
     checkClosed()
     return fsBlocking {
-      return@fsBlocking when (val type = nioFs.ijent.fs.stat(ijentOpenedFile.path, false).getOrThrowFileSystemException().type) {
+      return@fsBlocking when (val type = nioFs.ijentFs.stat(ijentOpenedFile.path, false).getOrThrowFileSystemException().type) {
         is IjentFileInfo.Type.Regular -> type.size
         is IjentFileInfo.Type.Directory, is IjentFileInfo.Type.Other -> throw IOException("This file channel is opened for a directory")
         is IjentPosixFileInfo.Type.Symlink -> throw IllegalStateException("Internal error: symlink should be resolved for a file channel")

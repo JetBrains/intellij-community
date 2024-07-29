@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.IjentSessionRegistry
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
-import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem.FsAndUserApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
@@ -54,15 +53,14 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     require(ijentApi != null) {
       "$ijentApi is not registered in ${IjentSessionRegistry::class.java.simpleName}"
     }
-    val ijentFsAndUser = FsAndUserApi.create(ijentApi)
 
-    val fs = IjentNioFileSystem(this, ijentFsAndUser, onClose = { registeredFileSystems.remove(ijentId) })
+    val fs = IjentNioFileSystem(this, ijentApi.fs, onClose = { registeredFileSystems.remove(ijentId) })
 
     if (registeredFileSystems.putIfAbsent(ijentId, fs) != null) {
       throw FileSystemAlreadyExistsException("A filesystem for $ijentId is already registered")
     }
 
-    fs.ijent.fs.coroutineScope.coroutineContext.job.invokeOnCompletion {
+    fs.ijentFs.coroutineScope.coroutineContext.job.invokeOnCompletion {
       registeredFileSystems.remove(ijentId)
     }
 
@@ -80,9 +78,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun getPath(uri: URI): IjentNioPath =
     getFileSystem(uri).run {
       getPath(
-        when (ijent) {
-          is FsAndUserApi.Posix -> uri.path
-          is FsAndUserApi.Windows -> uri.path.trimStart('/')
+        when (ijentFs) {
+          is IjentFileSystemPosixApi -> uri.path
+          is IjentFileSystemWindowsApi -> uri.path.trimStart('/')
         }
       )
     }
@@ -103,7 +101,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       if (DELETE_ON_CLOSE in options) TODO("WRITE + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("WRITE + NOFOLLOW_LINKS")
 
-      val writeOptions = fs.ijent.fs
+      val writeOptions = fs.ijentFs
         .writeOptionsBuilder(path.ijentPath)
         .append(APPEND in options)
         .truncateExisting(TRUNCATE_EXISTING in options)
@@ -141,7 +139,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     return fsBlocking {
       // TODO listDirectoryWithAttrs+sun.nio.fs.BasicFileAttributesHolder
-      val childrenNames = nioFs.ijent.fs.listDirectory(ensurePathIsAbsolute(dir.ijentPath)).getOrThrowFileSystemException()
+      val childrenNames = nioFs.ijentFs.listDirectory(ensurePathIsAbsolute(dir.ijentPath)).getOrThrowFileSystemException()
 
       val nioPathList = childrenNames.asSequence()
         .map { childName ->
@@ -171,7 +169,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
     try {
       fsBlocking {
-        when (val fsApi = dir.nioFs.ijent.fs) {
+        when (val fsApi = dir.nioFs.ijentFs) {
           is IjentFileSystemPosixApi -> fsApi.createDirectory(path, emptyList())
           is IjentFileSystemWindowsApi -> TODO()
         }
@@ -192,7 +190,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureIjentNioPath(path)
     fsBlocking {
       try {
-        path.nioFs.ijent.fs.deleteDirectory(path.ijentPath as IjentPath.Absolute, false)
+        path.nioFs.ijentFs.deleteDirectory(path.ijentPath as IjentPath.Absolute, false)
       }
       catch (e: IjentFileSystemApi.DeleteException.DirNotEmpty) {
         val exception = DirectoryNotEmptyException(path.toString())
@@ -213,7 +211,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensurePathIsAbsolute(sourcePath)
     ensurePathIsAbsolute(targetPath)
     fsBlocking {
-      var builder = source.nioFs.ijent.fs.copyOptionsBuilder(sourcePath, targetPath)
+      var builder = source.nioFs.ijentFs.copyOptionsBuilder(sourcePath, targetPath)
       for (option in options) {
         builder = when (option) {
           StandardCopyOption.REPLACE_EXISTING -> builder.replaceExisting()
@@ -225,7 +223,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
           }
         }
       }
-      source.nioFs.ijent.fs.copy(builder.build())
+      source.nioFs.ijentFs.copy(builder.build())
     }
   }
 
@@ -239,7 +237,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val nioFs = path.nioFs
 
     return fsBlocking {
-      nioFs.ijent.fs.sameFile(ensurePathIsAbsolute(path.ijentPath), ensurePathIsAbsolute(path2.ijentPath))
+      nioFs.ijentFs.sameFile(ensurePathIsAbsolute(path.ijentPath), ensurePathIsAbsolute(path2.ijentPath))
     }
       .getOrThrowFileSystemException()
   }
@@ -249,21 +247,21 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun getFileStore(path: Path): FileStore =
-    IjentNioFileStore(ensureIjentNioPath(path).nioFs.ijent.fs)
+    IjentNioFileStore(ensureIjentNioPath(path).nioFs.ijentFs)
 
   private enum class UnixFilePermissionBranch { OWNER, GROUP, OTHER }
 
   override fun checkAccess(path: Path, vararg modes: AccessMode) {
     val fs = ensureIjentNioPath(path).nioFs
     fsBlocking {
-      when (val ijent = fs.ijent) {
-        is FsAndUserApi.Posix -> {
+      when (val ijentFs = fs.ijentFs) {
+        is IjentFileSystemPosixApi -> {
           // According to the javadoc, this method must follow symlinks.
-          val fileInfo = ijent.fs.stat(ensurePathIsAbsolute(path.ijentPath), resolveSymlinks = true).getOrThrowFileSystemException()
+          val fileInfo = ijentFs.stat(ensurePathIsAbsolute(path.ijentPath), resolveSymlinks = true).getOrThrowFileSystemException()
           // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
           val filePermissionBranch = when {
-            ijent.userInfo.uid == fileInfo.permissions.owner -> OWNER
-            ijent.userInfo.gid == fileInfo.permissions.group -> GROUP
+            ijentFs.user.uid == fileInfo.permissions.owner -> OWNER
+            ijentFs.user.gid == fileInfo.permissions.group -> GROUP
             else -> OTHER
           }
 
@@ -298,7 +296,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             }
           }
         }
-        is FsAndUserApi.Windows -> TODO()
+        is IjentFileSystemWindowsApi -> TODO()
       }
     }
   }
@@ -310,13 +308,13 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     val fs = ensureIjentNioPath(path).nioFs
 
-    val result = when (fs.ijent) {
-      is FsAndUserApi.Posix ->
+    val result = when (fs.ijentFs) {
+      is IjentFileSystemPosixApi ->
         IjentNioPosixFileAttributes(fsBlocking {
-          statPosix(path.ijentPath, fs.ijent.fs, LinkOption.NOFOLLOW_LINKS in options)
+          statPosix(path.ijentPath, fs.ijentFs, LinkOption.NOFOLLOW_LINKS in options)
         })
 
-      is FsAndUserApi.Windows -> TODO()
+      is IjentFileSystemWindowsApi -> TODO()
     }
 
     @Suppress("UNCHECKED_CAST")
