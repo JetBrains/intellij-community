@@ -18,9 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
-import org.jetbrains.plugins.gradle.model.ExternalTask;
-import org.jetbrains.plugins.gradle.model.GradleExtensions;
-import org.jetbrains.plugins.gradle.model.GradleProperty;
+import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -77,7 +75,6 @@ public class GradleExtensionsSettings {
 
   public static class Settings {
     private final @NotNull Map<String, GradleProject> projects = new HashMap<>();
-    private final @NotNull GradleExtensionDataFactory extensionDataFactory = new GradleExtensionDataFactory();
 
     public void add(@NotNull String rootPath,
                     @NotNull Collection<? extends DataNode<GradleExtensions>> extensionsData) {
@@ -95,8 +92,9 @@ public class GradleExtensionsSettings {
 
     public void add(@NotNull String rootPath, @NotNull Map<String, GradleExtensions> extensions) {
       GradleProject gradleProject = new GradleProject();
+      GradleExtensionDataFactory factory = new GradleExtensionDataFactory();
       for (Map.Entry<String, GradleExtensions> entry : extensions.entrySet()) {
-        GradleExtensionsData extensionsData = extensionDataFactory.getGradleExtensionsData(entry.getValue(), gradleProject);
+        GradleExtensionsData extensionsData = factory.getGradleExtensionsData(entry.getValue(), gradleProject);
         gradleProject.extensions.put(entry.getKey(), extensionsData);
       }
       projects.put(rootPath, gradleProject);
@@ -220,36 +218,62 @@ public class GradleExtensionsSettings {
 
   private static class GradleExtensionDataFactory {
 
+    private final @NotNull Map<DefaultGradleExtension, GradleExtension> extensionCache = new HashMap<>();
+    private final @NotNull Map<DefaultGradleConvention, GradleConvention> conventionCache = new HashMap<>();
+    private final @NotNull Map<DefaultGradleProperty, GradleProp> propertyCache = new HashMap<>();
+    // Task name + fqdn -> GradleTask.
+    // We're not interested in the task description because it will lead to a cache miss in the majority of cases.
+    private final @NotNull Map<String, GradleTask> taskCache = new HashMap<>();
+    private final @NotNull Map<DefaultGradleConfiguration, GradleConfiguration> configurationCache = new HashMap<>();
+
+    /**
+     * It is safe to cache GradleExtensionsData.
+     * All the extension data objects are parts of the same GradleProject.
+     */
+    private final @NotNull Map<DefaultGradleExtensions, GradleExtensionsData> gradleExtensionsCache = new HashMap<>();
+
     public @NotNull GradleExtensionsData getGradleExtensionsData(@NotNull GradleExtensions gradleExtensions,
                                                                  @NotNull GradleProject gradleProject) {
+      return gradleExtensionsCache.computeIfAbsent(
+        (DefaultGradleExtensions)gradleExtensions,
+        e -> convertGradleExtensionsData(e, gradleProject)
+      );
+    }
+
+    private @NotNull GradleExtensionsData convertGradleExtensionsData(@NotNull GradleExtensions gradleExtensions,
+                                                                      @NotNull GradleProject gradleProject) {
       Map<String, GradleExtension> extensions = new HashMap<>();
       for (org.jetbrains.plugins.gradle.model.GradleExtension extension : gradleExtensions.getExtensions()) {
-        GradleExtension gradleExtension = convertGradleExtension(extension);
+        GradleExtension gradleExtension = extensionCache.computeIfAbsent((DefaultGradleExtension)extension,
+                                                                         GradleExtensionDataFactory::convertGradleExtension);
         extensions.put(gradleExtension.getName(), gradleExtension);
       }
 
       List<GradleConvention> conventions = new SmartList<>();
       for (org.jetbrains.plugins.gradle.model.GradleConvention convention : gradleExtensions.getConventions()) {
-        GradleConvention gradleConvention = convertGradleConvention(convention);
+        GradleConvention gradleConvention = conventionCache.computeIfAbsent((DefaultGradleConvention)convention,
+                                                                            GradleExtensionDataFactory::convertGradleConvention);
         conventions.add(gradleConvention);
       }
 
       Map<String, GradleProp> properties = new HashMap<>();
       for (GradleProperty property : gradleExtensions.getGradleProperties()) {
-        GradleProp gradleProp = convertGradleProp(property);
+        GradleProp gradleProp = propertyCache.computeIfAbsent((DefaultGradleProperty)property,
+                                                              GradleExtensionDataFactory::convertGradleProp);
         properties.put(gradleProp.getName(), gradleProp);
       }
 
       Map<String, GradleTask> tasksMap = new LinkedHashMap<>();
       for (ExternalTask task : gradleExtensions.getTasks()) {
-        GradleTask gradleTask = convertGradleTask(task);
+        GradleTask gradleTask = taskCache.computeIfAbsent(task.getName() + task.getType(), __ -> convertGradleTask(task));
         tasksMap.put(gradleTask.getName(), gradleTask);
       }
 
       Map<String, GradleConfiguration> configurations = new HashMap<>();
       Map<String, GradleConfiguration> buildScriptConfigurations = new HashMap<>();
       for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
-        GradleConfiguration gradleConfiguration = convertGradleConfiguration(configuration);
+        GradleConfiguration gradleConfiguration = configurationCache.computeIfAbsent((DefaultGradleConfiguration)configuration,
+                                                                                     GradleExtensionDataFactory::convertGradleConfiguration);
         if (gradleConfiguration.scriptClasspath) {
           buildScriptConfigurations.put(gradleConfiguration.getName(), gradleConfiguration);
         }
