@@ -501,7 +501,7 @@ public class HighlightInfo implements Segment {
     if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
       s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
     }
-    if (highlighter != null) s += " text='" + getText() + "'";
+    if (highlighter != null) s += " text='" + StringUtil.first(getText(), 40, true) + "'";
     if (getDescription() != null) s += ", description='" + getDescription() + "'";
     s += "; severity=" + getSeverity();
     synchronized (this) {
