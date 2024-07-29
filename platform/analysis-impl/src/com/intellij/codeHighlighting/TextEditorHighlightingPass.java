@@ -25,6 +25,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * The highlighting pass which is associated with {@link Document} and its markup model.
+ * The instantiation of this class must happen in the background thread, under {@link com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator}
+ * which has corresponding {@link com.intellij.codeInsight.daemon.impl.HighlightingSession}.
+ * It's discouraged to do all that manually, please register your {@link TextEditorHighlightingPassFactory} in plugin.xml instead, e.g. like this:
+ * <pre>
+ *   {@code <highlightingPassFactory implementation="com.a.b.MyPassFactory"/>}
+ * </pre>
+ */
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
   protected final @NotNull Document myDocument;
@@ -44,6 +53,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myRunIntentionPassAfter = runIntentionPassAfter;
     myInitialDocStamp = document.getModificationStamp();
     myInitialPsiStamp = PsiModificationTracker.getInstance(project).getModificationCount();
+    ThreadingAssertions.assertBackgroundThread();
   }
   protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document) {
     this(project, document, true);
