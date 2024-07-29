@@ -79,7 +79,7 @@ private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
 private val minIconHeight: Int
   get() = JBUIScale.scale(18 + 1 + 1)
 
-open class IdeStatusBarImpl internal constructor(
+open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   parentCs: CoroutineScope,
   private val getProject : () -> Project?,
   addToolWindowWidget: Boolean,

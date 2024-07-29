@@ -18268,7 +18268,6 @@ c:com.intellij.openapi.wm.impl.ProjectFrameHelper
 - com.intellij.openapi.wm.IdeFrame
 - com.intellij.util.ui.accessibility.AccessibleContextAccessor
 - sf:Companion:com.intellij.openapi.wm.impl.ProjectFrameHelper$Companion
-- <init>(com.intellij.openapi.wm.impl.IdeFrameImpl):V
 - f:appClosing():V
 - dispose():V
 - getBalloonLayout():com.intellij.ui.BalloonLayout
@@ -18280,7 +18279,6 @@ c:com.intellij.openapi.wm.impl.ProjectFrameHelper
 - getProject():com.intellij.openapi.project.Project
 - getStatusBar():com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - p:getTitleInfoProviders():java.util.List
-- f:init():javax.swing.JFrame
 - installDefaultProjectStatusBarWidgets(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - isInFullScreen():Z
 - notifyProjectActivation():V

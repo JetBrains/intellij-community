@@ -74,6 +74,7 @@ open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
   loadingState: FrameLoadingState? = null,
 ) : IdeFrameEx, AccessibleContextAccessor, UiDataProvider {
+  @Internal
   constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null)
 
   @Suppress("SSBasedInspection")
@@ -208,6 +209,7 @@ open class ProjectFrameHelper internal constructor(
   // purpose of delayed init -
   // to show project frame as early as possible (and start loading of a project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
+  @Internal
   fun init(): JFrame {
     if (!isInitialized.compareAndSet(false, true)) {
       return frame
