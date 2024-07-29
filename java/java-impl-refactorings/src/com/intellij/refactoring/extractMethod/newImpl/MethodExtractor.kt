@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -156,16 +155,13 @@ class MethodExtractor {
   }
 
   private suspend fun runInplaceExtract(editor: Editor, range: TextRange, options: ExtractOptions){
-    val project = options.project
     val popupSettings = readAction { createInplaceSettingsPopup(options) }
     val guessedNames = readAction { suggestSafeMethodNames(options) }
     val methodName = guessedNames.first()
     val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
-    writeCommandAction(project,  ExtractMethodHandler.getRefactoringName()) {
-      val extractor = DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic)
-      val inplaceExtractor = InplaceMethodExtractor(editor, range, popupSettings, extractor)
-      inplaceExtractor.extractAndRunTemplate(suggestedNames)
-    }
+    val extractor = readAction { DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic) }
+    val inplaceExtractor = readAction { InplaceMethodExtractor(editor, range, popupSettings, extractor) }
+    inplaceExtractor.extractAndRunTemplate(suggestedNames)
   }
 
   private fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
