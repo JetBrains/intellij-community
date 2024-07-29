@@ -8,12 +8,12 @@ import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
-import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
-import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSParser
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSPossibleVersionsEnumerator
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSProfileDetectorUtils
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSParser
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
