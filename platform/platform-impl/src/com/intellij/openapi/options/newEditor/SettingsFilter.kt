@@ -5,8 +5,10 @@ import com.intellij.ide.ui.search.ConfigurableHit
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
@@ -20,18 +22,29 @@ import com.intellij.ui.LightColors
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.speedSearch.ElementFilter
 import com.intellij.ui.treeStructure.SimpleNode
-import com.intellij.util.Alarm
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.event.DocumentEvent
+import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.milliseconds
 
 abstract class SettingsFilter @ApiStatus.Internal protected constructor(
   project: Project?,
   groups: List<ConfigurableGroup>,
-  search: SearchTextField
+  search: SearchTextField,
+  private val coroutineScope: CoroutineScope,
 ) : ElementFilter.Active.Impl<SimpleNode?>() {
   @JvmField
   internal val context: OptionsEditorContext = OptionsEditorContext()
@@ -46,26 +59,21 @@ abstract class SettingsFilter @ApiStatus.Internal protected constructor(
   private var isUpdateRejected = false
   private var isLastSelected: Configurable? = null
 
-  @Volatile
-  private var searchableOptionRegistrar: SearchableOptionsRegistrar? = null
-  private val updatingAlarm = Alarm(if (project == null) ApplicationManager.getApplication() else project)
+  private val searchableOptionRegistrar: Deferred<SearchableOptionsRegistrar>
+  private var job: Job? = null
 
   init {
     val optionRegistrar = serviceIfCreated<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl?
     if (optionRegistrar == null || !optionRegistrar.isInitialized) {
       // if not yet computed, preload it to ensure that will be no delay on user typing
-      AppExecutorUtil.getAppExecutorService().execute {
-        val r = SearchableOptionsRegistrar.getInstance() as SearchableOptionsRegistrarImpl
+      searchableOptionRegistrar = coroutineScope.async {
+        val r = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl
         r.initialize()
-        // must be set only after initializing (to avoid concurrent modifications)
-        searchableOptionRegistrar = r
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          update(type = DocumentEvent.EventType.CHANGE, adjustSelection = false, now = true)
-        }, ModalityState.any(), if (project == null) ApplicationManager.getApplication().getDisposed() else project.getDisposed())
+        r
       }
     }
     else {
-      searchableOptionRegistrar = optionRegistrar
+      searchableOptionRegistrar = CompletableDeferred(optionRegistrar)
     }
 
     this@SettingsFilter.project = project
@@ -85,7 +93,8 @@ abstract class SettingsFilter @ApiStatus.Internal protected constructor(
       override fun mousePressed(event: MouseEvent?) {
         if (!search.text.isEmpty()) {
           if (!context.isHoldingFilter) {
-            setHoldingFilter(true)
+            context.isHoldingFilter = true
+            updateSpotlight(false)
           }
           if (!search.textEditor.isFocusOwner) {
             search.selectText()
@@ -138,11 +147,6 @@ abstract class SettingsFilter @ApiStatus.Internal protected constructor(
   @ApiStatus.Internal
   fun getSpotlightFilterText(): String = if (hits == null) getFilterText() else hits!!.spotlightFilter
 
-  private fun setHoldingFilter(holding: Boolean) {
-    context.isHoldingFilter = holding
-    updateSpotlight(false)
-  }
-
   fun contains(configurable: Configurable): Boolean = hits != null && hits!!.nameHits.contains(configurable)
 
   fun update(text: String?) {
@@ -157,14 +161,22 @@ abstract class SettingsFilter @ApiStatus.Internal protected constructor(
   }
 
   private fun update(type: DocumentEvent.EventType, adjustSelection: Boolean, now: Boolean) {
-    updatingAlarm.cancelAllRequests()
-    updatingAlarm.addRequest(Runnable {
-      val registrar = searchableOptionRegistrar
-      if (registrar != null) update(registrar, type, adjustSelection, now)
-    }, 100, ModalityState.any())
+    job?.cancel()
+    job = coroutineScope.launch {
+      delay(100.milliseconds)
+      val registrar = searchableOptionRegistrar.await()
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        update(optionRegistrar = registrar, type = type, adjustSelection = adjustSelection, now = now)
+      }
+    }
   }
 
-  private fun update(optionRegistrar: SearchableOptionsRegistrar, type: DocumentEvent.EventType, adjustSelection: Boolean, now: Boolean) {
+  private suspend fun update(
+    optionRegistrar: SearchableOptionsRegistrar,
+    type: DocumentEvent.EventType,
+    adjustSelection: Boolean,
+    now: Boolean,
+  ) {
     if (isUpdateRejected) {
       return
     }
@@ -180,8 +192,10 @@ abstract class SettingsFilter @ApiStatus.Internal protected constructor(
       hits = optionRegistrar.getConfigurables(groups, type, null, text, project)
       filtered = hits!!.all
     }
-    search.textEditor.setBackground(if (filtered != null && filtered!!.isEmpty())LightColors.RED else UIUtil.getTextFieldBackground())
 
+    coroutineContext.ensureActive()
+
+    search.textEditor.setBackground(if (filtered != null && filtered!!.isEmpty()) LightColors.RED else UIUtil.getTextFieldBackground())
 
     val current = context.currentConfigurable
     var shouldMoveSelection = hits == null || !hits!!.nameFullHits.contains(current) && !hits!!.contentHits.contains(current)
@@ -199,7 +213,7 @@ abstract class SettingsFilter @ApiStatus.Internal protected constructor(
         candidate = findConfigurable(hits!!.contentHits, null)
       }
     }
-    updateSpotlight(false)
+    updateSpotlight(now = false)
 
     if ((filtered == null || !filtered!!.isEmpty()) && candidate == null && isLastSelected != null) {
       candidate = isLastSelected

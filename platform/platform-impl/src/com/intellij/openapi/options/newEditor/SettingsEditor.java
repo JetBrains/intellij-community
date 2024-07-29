@@ -76,7 +76,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
                  @NotNull Project project,
                  @NotNull List<? extends ConfigurableGroup> groups,
                  @Nullable Configurable configurable,
-                 final String filter,
+                 String filter,
                  @NotNull ISettingsTreeViewFactory factory,
                  @NotNull SpotlightPainterFactory spotlightPainterFactory) {
     super(parent);
@@ -126,7 +126,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
     JPanel searchPanel = new JPanel(new VerticalLayout(0));
     searchPanel.add(VerticalLayout.CENTER, mySearch);
-    this.filter = new SettingsFilter(project, groups, mySearch) {
+    this.filter = new SettingsFilter(project, groups, mySearch, coroutineScope) {
       @Override
       protected Configurable getConfigurable(SimpleNode node) {
         return SettingsTreeView.getConfigurable(node);

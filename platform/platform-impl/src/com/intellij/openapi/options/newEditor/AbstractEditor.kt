@@ -1,8 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.AWTEvent
@@ -17,6 +22,10 @@ abstract class AbstractEditor internal constructor(parent: Disposable) : JPanel(
   @JvmField
   var isDisposed: Boolean = false
 
+  @Suppress("SSBasedInspection")
+  @JvmField
+  protected val coroutineScope = CoroutineScope(SupervisorJob() + ClientId.current.asContextElement())
+
   init {
     Disposer.register(parent, this)
   }
@@ -24,6 +33,7 @@ abstract class AbstractEditor internal constructor(parent: Disposable) : JPanel(
   override fun dispose() {
     if (!isDisposed) {
       isDisposed = true
+      coroutineScope.cancel()
       disposeOnce()
     }
   }
