@@ -7,7 +7,9 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -147,13 +149,13 @@ class MethodExtractor {
     })
   }
 
-  private fun runInplaceExtract(editor: Editor, range: TextRange, options: ExtractOptions){
+  private suspend fun runInplaceExtract(editor: Editor, range: TextRange, options: ExtractOptions){
     val project = options.project
-    val popupSettings = createInplaceSettingsPopup(options)
-    val guessedNames = suggestSafeMethodNames(options)
+    val popupSettings = readAction { createInplaceSettingsPopup(options) }
+    val guessedNames = readAction { suggestSafeMethodNames(options) }
     val methodName = guessedNames.first()
     val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
-    executeRefactoringCommand(project) {
+    writeCommandAction(project,  ExtractMethodHandler.getRefactoringName()) {
       val extractor = DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic)
       val inplaceExtractor = InplaceMethodExtractor(editor, range, popupSettings, extractor)
       inplaceExtractor.extractAndRunTemplate(suggestedNames)
