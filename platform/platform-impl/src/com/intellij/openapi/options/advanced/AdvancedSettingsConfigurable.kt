@@ -7,6 +7,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
@@ -21,7 +22,8 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
-import com.intellij.util.SingleEdtTaskScheduler
+import com.intellij.util.Alarm
+import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
@@ -57,14 +59,20 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private lateinit var nothingFoundRow: Row
   private var onlyShowModified = false
 
-  private val searchAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler()
+  private var searchAlarm = SingleAlarm(
+    task = ::updateSearch,
+    delay = 300,
+    parentDisposable = null,
+    threadToUse = Alarm.ThreadToUse.SWING_THREAD,
+    modalityState = ModalityState.defaultModalityState(),
+  )
 
   private val searchField = SearchTextField().apply {
     textEditor.emptyText.text = ApplicationBundle.message("search.advanced.settings")
 
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        searchAlarm.cancelAndRequest(300, Runnable { updateSearch() })
+        searchAlarm.cancelAndRequest()
       }
     })
   }
