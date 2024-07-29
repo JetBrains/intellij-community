@@ -17,15 +17,19 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Service(Service.Level.PROJECT)
 class HotSwapSessionManager(private val project: Project, private val parentScope: CoroutineScope) {
   private val listeners = DisposableWrapperList<HotSwapChangesListener>()
+  private val sessions = DisposableWrapperList<HotSwapSession<*>>()
 
   fun <T> createSession(provider: HotSwapProvider<T>, disposable: Disposable) {
     val hotSwapSession = HotSwapSession(project, provider, parentScope)
     Disposer.register(disposable, hotSwapSession)
+    sessions.add(hotSwapSession, disposable)
     hotSwapSession.init()
   }
 
   internal fun addListener(listener: HotSwapChangesListener, disposable: Disposable) {
     listeners.add(listener, disposable)
+    val currentSession = sessions.lastOrNull() ?: return
+    listener.onStatusChanged(currentSession, currentSession.currentStatus)
   }
 
   internal fun fireStatusChanged(session: HotSwapSession<*>, status: HotSwapVisibleStatus) {
@@ -50,30 +54,36 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
   internal val coroutineScope = parentScope.childScope("HotSwapSession $this")
   private val hasActiveChanges = AtomicBoolean()
   private lateinit var changesCollector: SourceFileChangesCollector<T>
+  @Volatile
+  internal var currentStatus: HotSwapVisibleStatus = HotSwapVisibleStatus.NO_CHANGES
+    private set(value) {
+      field = value
+      HotSwapSessionManager.getInstance(project).fireStatusChanged(this, value)
+    }
 
   internal fun init() {
     changesCollector = provider.createChangesCollector(this, coroutineScope, SourceFileChangesListener {
       if (hasActiveChanges.compareAndSet(false, true)) {
-        HotSwapSessionManager.getInstance(project).fireStatusChanged(this@HotSwapSession, HotSwapVisibleStatus.CHANGES_READY)
+        currentStatus = HotSwapVisibleStatus.CHANGES_READY
       }
     })
     Disposer.register(this, changesCollector)
   }
 
   override fun dispose() {
-    HotSwapSessionManager.getInstance(project).fireStatusChanged(this, HotSwapVisibleStatus.SESSION_COMPLETED)
+    currentStatus = HotSwapVisibleStatus.SESSION_COMPLETED
     coroutineScope.cancel()
   }
 
   private fun completeHotSwap() {
     if (hasActiveChanges.compareAndSet(true, false)) {
       changesCollector.resetChanges()
-      HotSwapSessionManager.getInstance(project).fireStatusChanged(this, HotSwapVisibleStatus.NO_CHANGES)
+      currentStatus = HotSwapVisibleStatus.NO_CHANGES
     }
   }
 
   internal fun startHotSwap() {
-    HotSwapSessionManager.getInstance(project).fireStatusChanged(this, HotSwapVisibleStatus.IN_PROGRESS)
+    currentStatus = HotSwapVisibleStatus.IN_PROGRESS
   }
 
   fun getChanges() = changesCollector.getChanges()
