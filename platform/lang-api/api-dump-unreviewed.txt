@@ -1466,6 +1466,12 @@ f:com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 - equals(java.lang.Object):Z
 - f:getText():java.lang.String
 - hashCode():I
+f:com.intellij.codeInsight.hints.declarative.SymbolPointerInlayActionPayload
+- com.intellij.codeInsight.hints.declarative.InlayActionPayload
+- <init>(com.intellij.model.Pointer):V
+- equals(java.lang.Object):Z
+- f:getPointer():com.intellij.model.Pointer
+- hashCode():I
 a:com.intellij.codeInsight.hints.presentation.BasePresentation
 - com.intellij.codeInsight.hints.presentation.InlayPresentation
 - <init>():V
