@@ -34,7 +34,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.SwingUndoUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +52,7 @@ import static java.awt.FlowLayout.CENTER;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.META_DOWN_MASK;
 
-public final class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
+public final class SearchReplaceComponent extends EditorHeaderComponent implements UiDataProvider {
   public static final int RIGHT_PANEL_WEST_OFFSET = 13;
   private static final float MAX_LEFT_PANEL_PROP = 0.9F;
   private static final float DEFAULT_PROP = 0.33F;
@@ -392,13 +391,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myStatusColor = NamedColorUtil.getErrorForeground();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
-      return mySearchTextComponent.getText();
-    }
-    return myDataProviderDelegate != null ? myDataProviderDelegate.getData(dataId) : null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.SPEED_SEARCH_TEXT, mySearchTextComponent.getText());
+    DataSink.uiDataSnapshot(sink, myDataProviderDelegate);
   }
 
   public Project getProject() {

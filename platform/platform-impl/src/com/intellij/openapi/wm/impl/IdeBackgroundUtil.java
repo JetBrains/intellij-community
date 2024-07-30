@@ -4,8 +4,6 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -399,9 +397,8 @@ public final class IdeBackgroundUtil {
 
     private static @Nullable Editor obtainEditor(@Nullable JComponent c) {
       Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
-      //noinspection CastConflictsWithInstanceof
-      return view instanceof EditorComponentImpl ? ((EditorComponentImpl)view).getEditor() :
-             view instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)view) :
+      return view instanceof EditorComponentImpl o ? o.getEditor() :
+             view instanceof EditorGutterComponentEx o ? o.getEditor() :
              null;
     }
 

@@ -15,6 +15,7 @@ import com.intellij.debugger.memory.utils.AndroidUtil;
 import com.intellij.debugger.memory.utils.LowestPriorityCommand;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -247,18 +248,16 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
-      TypeInfo selectedClass = getTable().getSelectedClass();
-      if (selectedClass != null) {
-        TrackerForNewInstances strategy = getStrategy(selectedClass);
-        if (strategy != null && strategy.isReady()) {
-          List<ObjectReference> newInstances = strategy.getNewInstances();
-          return (InstancesProvider)limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new);
-        }
-      }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TypeInfo selectedClass = getTable().getSelectedClass();
+    if (selectedClass == null) {
+      return;
     }
-    return null;
+    TrackerForNewInstances strategy = getStrategy(selectedClass);
+    if (strategy != null && strategy.isReady()) {
+      List<ObjectReference> newInstances = strategy.getNewInstances();
+      sink.set(NEW_INSTANCES_PROVIDER_KEY, limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new));
+    }
   }
 
   @Nullable

@@ -82,7 +82,8 @@ private class ElementInfoManager(private val seUI: SearchEverywhereUI) {
       override fun updatePopup(element: Any?) {
         val popup = myPopup
         if (popup?.isVisible == true) {
-          seUI.getData(SearchEverywhereUI.SELECTED_ITEM_INFO.name)?.let { fillContent(popup.component as JEditorPane, it as SearchEverywhereFoundElementInfo) }
+          val single = seUI.selectedInfos.singleOrNull() ?: return
+          fillContent(popup.component as JEditorPane, single)
         }
       }
     }

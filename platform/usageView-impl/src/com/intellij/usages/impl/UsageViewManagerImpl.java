@@ -2,7 +2,6 @@
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.notebook.editor.BackedVirtualFile;
@@ -217,7 +216,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @NotNull Supplier<SearchScope> getMaxSearchScopeToWarnOfFallingOutOf(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor.length > 0 ? searchFor[0] : null;
-    DataProvider dataProvider = DataManagerImpl.getDataProviderEx(target);
+    DataProvider dataProvider = target instanceof DataProvider o ? o : null;
     SearchScope scope = dataProvider != null ? UsageView.USAGE_SCOPE.getData(dataProvider) : null;
     if (scope != null) {
       return () -> scope;

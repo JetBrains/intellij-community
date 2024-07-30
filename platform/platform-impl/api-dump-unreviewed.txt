@@ -12647,6 +12647,7 @@ a:com.intellij.openapi.editor.ex.EditorGutterComponentEx
 - a:getAnnotationsAreaOffset():I
 - a:getAnnotationsAreaWidth():I
 - a:getCenterPoint(com.intellij.openapi.editor.markup.GutterIconRenderer):java.awt.Point
+- a:getEditor():com.intellij.openapi.editor.ex.EditorEx
 - a:getFoldingAreaOffset():I
 - a:getGutterRenderer(java.awt.Point):com.intellij.codeInsight.daemon.GutterMark
 - a:getGutterRenderers(I):java.util.List
@@ -13868,9 +13869,9 @@ c:com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 - toggleShowTextField():V
 pf:com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl$MyPanel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl):V
-- getData(java.lang.String):java.lang.Object
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.openapi.fileChooser.ex.FileChooserKeys
 - sf:DELETE_ACTION_AVAILABLE:com.intellij.openapi.actionSystem.DataKey
 - sf:NEW_FILE_TEMPLATE_TEXT:com.intellij.openapi.actionSystem.DataKey
@@ -20400,7 +20401,7 @@ f:com.intellij.openapi.wm.impl.status.FatalErrorWidgetFactory
 - isConfigurable():Z
 c:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - javax.swing.JComponent
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.openapi.wm.ex.StatusBarEx
 - javax.accessibility.Accessible
 - sf:Companion:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl$Companion
@@ -20420,7 +20421,6 @@ c:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - getComponent():javax.swing.JComponent
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getCurrentEditor():kotlin.jvm.functions.Function0
-- getData(java.lang.String):java.lang.Object
 - getInfo():java.lang.String
 - getPreferredSize():java.awt.Dimension
 - getProject():com.intellij.openapi.project.Project
@@ -20439,6 +20439,7 @@ c:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - setVisible(Z):V
 - startRefreshIndication(java.lang.String):V
 - stopRefreshIndication():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateUI():V
 - updateWidget(java.lang.String):V
 pf:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl$AccessibleIdeStatusBarImpl
@@ -22052,9 +22053,8 @@ f:com.intellij.toolWindow.StripeActionGroup
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.toolWindow.StripeButton
 - com.intellij.openapi.wm.impl.AnchoredButton
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - getAnchor():com.intellij.openapi.wm.ToolWindowAnchor
-- getData(java.lang.String):java.lang.Object
 - f:getId():java.lang.String
 - getMnemonic():I
 - getMnemonic2():I
@@ -22062,6 +22062,7 @@ f:com.intellij.toolWindow.StripeButton
 - f:isFirst():Z
 - f:isLast():Z
 - setMnemonic(I):java.lang.Void
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - f:updateIcon(javax.swing.Icon):V
 - f:updatePresentation():V
 - updateUI():V

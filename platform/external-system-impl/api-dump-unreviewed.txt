@@ -1633,7 +1633,6 @@ c:com.intellij.openapi.externalSystem.view.ExternalProjectsViewAdapter
 f:com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl
 - com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.externalSystem.view.ExternalProjectsView
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.wm.ex.ToolWindowEx,com.intellij.openapi.externalSystem.model.ProjectSystemId):V

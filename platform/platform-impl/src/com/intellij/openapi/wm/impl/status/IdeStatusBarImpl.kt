@@ -84,7 +84,7 @@ open class IdeStatusBarImpl internal constructor(
   private val coroutineScope: CoroutineScope,
   private val frameHelper: ProjectFrameHelper,
   addToolWindowWidget: Boolean,
-) : JComponent(), Accessible, StatusBarEx, DataProvider {
+) : JComponent(), Accessible, StatusBarEx, UiDataProvider {
   private var infoAndProgressPanel: InfoAndProgressPanel? = null
 
   internal enum class WidgetEffect {
@@ -229,13 +229,10 @@ open class IdeStatusBarImpl internal constructor(
     return Dimension(size.width, size.height.coerceAtLeast(minHeight))
   }
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      CommonDataKeys.PROJECT.`is`(dataId) -> project
-      PlatformDataKeys.STATUS_BAR.`is`(dataId) -> this
-      HOVERED_WIDGET_ID.`is`(dataId) -> ClientProperty.get(effectComponent, WIDGET_ID)
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[CommonDataKeys.PROJECT] = project
+    sink[PlatformDataKeys.STATUS_BAR] = this
+    sink[HOVERED_WIDGET_ID] = ClientProperty.get(effectComponent, WIDGET_ID)
   }
 
   override fun setVisible(aFlag: Boolean) {

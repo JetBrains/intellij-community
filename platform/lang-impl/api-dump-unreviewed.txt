@@ -1291,11 +1291,11 @@ f:com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupi
 - setRules(java.util.List):V
 f:com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesPanel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager,com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider):V
-- getData(java.lang.String):java.lang.Object
 - getRules():java.util.List
 - setRules(java.util.List):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.application.options.codeStyle.arrangement.match.ArrangementEditorComponent
 - com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationManager$Callback
 - com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware
@@ -1360,14 +1360,14 @@ f:com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchi
 - setValueAt(java.lang.Object,I,I):V
 f:com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesPanel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.lang.Language,com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager,com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider):V
-- getData(java.lang.String):java.lang.Object
 - getRulesAliases():java.util.Collection
 - getSections():java.util.List
 - hideEditor():V
 - setRulesAliases(java.util.Collection):V
 - setSections(java.util.List):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesValidator
 - p:myRulesModel:com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel
 - <init>(com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel):V
@@ -1429,11 +1429,11 @@ f:com.intellij.application.options.codeStyle.arrangement.match.tokens.Arrangemen
 - getDisplayName():java.lang.String
 f:com.intellij.application.options.codeStyle.arrangement.match.tokens.ArrangementRuleAliasesPanel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager,com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider):V
-- getData(java.lang.String):java.lang.Object
 - getRuleSequences():java.util.List
 - setRuleSequences(java.util.Collection):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware
 - a:getComponent():javax.swing.JComponent
 com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware
@@ -4585,7 +4585,7 @@ com.intellij.codeInsight.documentation.DocumentationActionProvider
 c:com.intellij.codeInsight.documentation.DocumentationComponent
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.ui.WidthBasedLayout
 - sf:COLOR_KEY:com.intellij.openapi.editor.colors.ColorKey
 - sf:SECTION_COLOR:java.awt.Color
@@ -4595,7 +4595,6 @@ c:com.intellij.codeInsight.documentation.DocumentationComponent
 - s:createAndFetch(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.openapi.Disposable):javax.swing.JComponent
 - dispose():V
 - getComponent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - getDecoratedText():java.lang.String
 - getElement():com.intellij.psi.PsiElement
 - getFontSizeAction():com.intellij.openapi.actionSystem.AnAction
@@ -4622,6 +4621,7 @@ c:com.intellij.codeInsight.documentation.DocumentationComponent
 - p:showHint():V
 - p:showHint(java.awt.Rectangle,java.lang.String):V
 - startWait():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pf:com.intellij.codeInsight.documentation.DocumentationComponent$BackAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore
@@ -9991,7 +9991,7 @@ f:com.intellij.codeInspection.ui.InspectionResultsView
 - javax.swing.JPanel
 - com.intellij.ide.OccurenceNavigator
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:HELP_ID:java.lang.String
 - <init>(com.intellij.codeInspection.ex.GlobalInspectionContextImpl,com.intellij.codeInspection.ex.InspectionRVContentProvider):V
@@ -10001,7 +10001,6 @@ f:com.intellij.codeInspection.ui.InspectionResultsView
 - dispatchTreeUpdate():V
 - dispose():V
 - getCurrentProfile():com.intellij.codeInspection.ex.InspectionProfileImpl
-- getData(java.lang.String):java.lang.Object
 - getGlobalInspectionContext():com.intellij.codeInspection.ex.GlobalInspectionContextImpl
 - getNextOccurenceActionName():java.lang.String
 - getPreviousOccurenceActionName():java.lang.String
@@ -10028,6 +10027,7 @@ f:com.intellij.codeInspection.ui.InspectionResultsView
 - setUpdating(Z):V
 - s:showPopup(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.ui.popup.JBPopup):V
 - syncRightPanel():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - update():V
 - updateResults(java.util.Collection):V
 f:com.intellij.codeInspection.ui.InspectionResultsViewComparator
@@ -11258,7 +11258,7 @@ c:com.intellij.find.EditorSearchSession
 - com.intellij.find.SearchReplaceComponent$Listener
 - com.intellij.find.SearchSession
 - com.intellij.find.impl.livePreview.SearchResults$SearchResultsListener
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.editor.event.SelectionListener
 - sf:SESSION_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):V
@@ -11274,7 +11274,6 @@ c:com.intellij.find.EditorSearchSession
 - p:disposeLivePreview():V
 - s:get(com.intellij.openapi.editor.Editor):com.intellij.find.EditorSearchSession
 - getComponent():com.intellij.find.SearchReplaceComponent
-- getData(java.lang.String):java.lang.Object
 - getEditor():com.intellij.openapi.editor.Editor
 - s:getEmptyText(com.intellij.find.FindModel,com.intellij.openapi.editor.Editor):java.lang.String
 - getFindModel():com.intellij.find.FindModel
@@ -11299,6 +11298,7 @@ c:com.intellij.find.EditorSearchSession
 - s:start(com.intellij.openapi.editor.Editor,com.intellij.find.FindModel,com.intellij.openapi.project.Project):com.intellij.find.EditorSearchSession
 - s:start(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):com.intellij.find.EditorSearchSession
 - toggleSearchReplaceMode():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - s:updateEmptyText(com.intellij.find.SearchReplaceComponent,com.intellij.find.FindModel,com.intellij.openapi.editor.Editor):V
 - s:updateUIWithFindModel(com.intellij.find.SearchReplaceComponent,com.intellij.find.FindModel,com.intellij.openapi.editor.Editor):V
 f:com.intellij.find.FindAllAction
@@ -11334,13 +11334,12 @@ com.intellij.find.FindUtil$ReplaceDelegate
 - a:shouldReplace(com.intellij.openapi.util.TextRange,java.lang.String):Z
 f:com.intellij.find.SearchReplaceComponent
 - com.intellij.openapi.editor.impl.EditorHeaderComponent
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - sf:RIGHT_PANEL_WEST_OFFSET:I
 - addListener(com.intellij.find.SearchReplaceComponent$Listener):V
 - addTextToRecent(javax.swing.text.JTextComponent):V
 - s:buildFor(com.intellij.openapi.project.Project,javax.swing.JComponent):com.intellij.find.SearchReplaceComponent$Builder
 - close():V
-- getData(java.lang.String):java.lang.Object
 - getProject():com.intellij.openapi.project.Project
 - getReplaceTextComponent():javax.swing.text.JTextComponent
 - getSearchTextComponent():javax.swing.text.JTextComponent
@@ -11353,6 +11352,7 @@ f:com.intellij.find.SearchReplaceComponent
 - setNotFoundBackground():V
 - setRegularBackground():V
 - setStatusText(java.lang.String):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - update(java.lang.String,java.lang.String,Z,Z):V
 - updateActions():V
 - updateUI():V
@@ -11518,11 +11518,11 @@ f:com.intellij.find.actions.ShowUsagesParameters
 - withUsages(I):com.intellij.find.actions.ShowUsagesParameters
 f:com.intellij.find.actions.ShowUsagesTable
 - com.intellij.ui.table.JBTable
-- com.intellij.openapi.actionSystem.DataProvider
-- getData(java.lang.String):java.lang.Object
+- com.intellij.openapi.actionSystem.UiDataProvider
 - getRowHeight():I
 - getScrollableTracksViewportWidth():Z
 - isFullLineNode(com.intellij.usages.impl.UsageNode):Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.find.actions.ShowUsagesUtilsKt
 - sf:getEditorFor(com.intellij.usages.Usage):com.intellij.openapi.editor.Editor
 - sf:navigateAndHint(com.intellij.openapi.project.Project,com.intellij.usages.Usage,java.lang.String,com.intellij.find.actions.ShowUsagesParameters,com.intellij.find.actions.ShowUsagesActionHandler,java.lang.Runnable):V
@@ -14157,7 +14157,7 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereRemoteSupportService
 f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - com.intellij.ide.actions.BigPopupUI
 - com.intellij.ide.util.gotoByName.QuickSearchComponent
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - sf:MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT:I
 - sf:SEARCH_EVENTS:com.intellij.util.messages.Topic
 - sf:SEARCH_EVERYWHERE_SEARCH_FILED_KEY:java.lang.String
@@ -14171,7 +14171,6 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - createList():com.intellij.ui.components.JBList
 - dispose():V
 - findElementsForPattern(java.lang.String):java.util.concurrent.Future
-- getData(java.lang.String):java.lang.Object
 - getFoundElementsInfo():java.util.List
 - getSelectedTabID():java.lang.String
 - getSelectionIdentity():java.lang.Object
@@ -14181,6 +14180,7 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - sendStatisticsAndClose():V
 - switchToTab(java.lang.String):V
 - toggleEverywhereFilter():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - unregisterHint():V
 com.intellij.ide.actions.searcheverywhere.SearchListener
 - s:combine(java.util.Collection):com.intellij.ide.actions.searcheverywhere.SearchListener
@@ -15189,7 +15189,6 @@ a:com.intellij.ide.hierarchy.HierarchyBrowserBase
 - com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.ide.hierarchy.HierarchyBrowser
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
 - p:myContent:com.intellij.ui.content.Content
 - pf:myProject:com.intellij.openapi.project.Project
 - p:<init>(com.intellij.openapi.project.Project):V
@@ -18003,19 +18002,19 @@ a:com.intellij.ide.util.gotoByName.ChooseByNameBase
 f:com.intellij.ide.util.gotoByName.ChooseByNameBase$JPanelProvider
 - javax.swing.JPanel
 - com.intellij.ide.util.gotoByName.QuickSearchComponent
-- com.intellij.openapi.actionSystem.DataProvider
-- getData(java.lang.String):java.lang.Object
+- com.intellij.openapi.actionSystem.UiDataProvider
 - getHint():com.intellij.openapi.ui.popup.JBPopup
 - hideHint():V
 - registerHint(com.intellij.openapi.ui.popup.JBPopup):V
 - requestFocus():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - unregisterHint():V
 pf:com.intellij.ide.util.gotoByName.ChooseByNameBase$MyTextField
 - javax.swing.JTextField
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.ui.popup.PopupOwner
 - getBestPopupPosition():java.awt.Point
-- getData(java.lang.String):java.lang.Object
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ide.util.gotoByName.ChooseByNameFactoryImpl
 - com.intellij.ide.util.gotoByName.ChooseByNameFactory
 - <init>(com.intellij.openapi.project.Project):V
@@ -22105,14 +22104,14 @@ a:com.intellij.packageDependencies.actions.DependenciesHandlerBase
 f:com.intellij.packageDependencies.ui.DependenciesPanel
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.packageDependencies.DependenciesBuilder):V
 - <init>(com.intellij.openapi.project.Project,java.util.List,java.util.Set):V
 - dispose():V
-- getData(java.lang.String):java.lang.Object
 - getLeftTree():javax.swing.JTree
 - getRightTree():javax.swing.JTree
 - setContent(com.intellij.ui.content.Content):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.packageDependencies.ui.DependenciesPanel$DependencyPanelSettings
 - SCOPE_TYPE:java.lang.String
 - UI_COMPACT_EMPTY_MIDDLE_PACKAGES:Z
@@ -22353,16 +22352,16 @@ f:com.intellij.packageDependencies.ui.TreeModel
 a:com.intellij.packageDependencies.ui.UsagesPanel
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - pf:myAlarm:com.intellij.util.Alarm
 - <init>(com.intellij.openapi.project.Project):V
 - dispose():V
 - a:getCodeUsagesString():java.lang.String
-- getData(java.lang.String):java.lang.Object
 - a:getInitialPositionText():java.lang.String
 - setToInitialPosition():V
 - p:showUsages(com.intellij.psi.PsiElement[],com.intellij.usageView.UsageInfo[]):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.patterns.compiler.PatternClassBean
 - alias:java.lang.String
 - className:java.lang.String
@@ -26113,7 +26112,7 @@ a:com.intellij.refactoring.ui.AbstractMemberSelectionPanel
 - a:getTable():com.intellij.refactoring.ui.AbstractMemberSelectionTable
 a:com.intellij.refactoring.ui.AbstractMemberSelectionTable
 - com.intellij.ui.table.JBTable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - psf:ABSTRACT_COLUMN:I
 - psf:CHECKED_COLUMN:I
 - psf:DISPLAY_NAME_COLUMN:I
@@ -26132,7 +26131,6 @@ a:com.intellij.refactoring.ui.AbstractMemberSelectionTable
 - fireExternalDataChange():V
 - p:fireMemberInfoChange(java.util.Collection):V
 - pa:getAbstractColumnValue(com.intellij.refactoring.classMembers.MemberInfoBase):java.lang.Object
-- getData(java.lang.String):java.lang.Object
 - ps:getDisplayNameColumnHeader():java.lang.String
 - p:getMemberIcon(com.intellij.refactoring.classMembers.MemberInfoBase,I):javax.swing.Icon
 - getMemberInfoModel():com.intellij.refactoring.classMembers.MemberInfoModel
@@ -26146,6 +26144,7 @@ a:com.intellij.refactoring.ui.AbstractMemberSelectionTable
 - setMemberInfos(java.util.Collection):V
 - p:setVisibilityIcon(com.intellij.refactoring.classMembers.MemberInfoBase,com.intellij.ui.RowIcon):V
 - p:setVisibilityIcon(com.intellij.refactoring.classMembers.MemberInfoBase,com.intellij.ui.icons.RowIcon):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pf:com.intellij.refactoring.ui.AbstractMemberSelectionTable$MyTableModel
 - javax.swing.table.AbstractTableModel
 - <init>(com.intellij.refactoring.ui.AbstractMemberSelectionTable):V
@@ -26526,17 +26525,17 @@ c:com.intellij.slicer.SliceNode
 a:com.intellij.slicer.SlicePanel
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - p:<init>(com.intellij.openapi.project.Project,Z,com.intellij.slicer.SliceNode,Z,com.intellij.openapi.wm.ToolWindow):V
 - p:close():V
 - dispose():V
-- getData(java.lang.String):java.lang.Object
 - a:isAutoScroll():Z
 - a:isPreview():Z
 - isToShowAutoScrollButton():Z
 - isToShowPreviewButton():Z
 - a:setAutoScroll(Z):V
 - a:setPreview(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.slicer.SliceRootNode
 - com.intellij.slicer.SliceNode
 - <init>(com.intellij.openapi.project.Project,com.intellij.slicer.DuplicateMap,com.intellij.slicer.SliceUsage):V
@@ -27404,15 +27403,15 @@ com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory
 f:com.intellij.unscramble.AnalyzeStacktraceUtil$StacktraceEditorPanel
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - dispose():V
-- getData(java.lang.String):java.lang.Object
 - getEditor():com.intellij.openapi.editor.Editor
 - getEditorComponent():javax.swing.JComponent
 - getText():java.lang.String
 - pasteTextFromClipboard():V
 - setText(java.lang.String):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.usageView.impl.SelectInEditorHandler
 - <init>():V
 - s:installKeyListener(javax.swing.JComponent):V

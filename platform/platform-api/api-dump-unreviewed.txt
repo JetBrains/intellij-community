@@ -4603,16 +4603,16 @@ com.intellij.openapi.ui.Painter$Listener
 a:com.intellij.openapi.ui.PanelWithActionsAndCloseButton
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - pf:myContentManager:com.intellij.ui.content.ContentManager
 - <init>(com.intellij.ui.content.ContentManager,java.lang.String):V
 - <init>(com.intellij.ui.content.ContentManager,java.lang.String,Z):V
 - p:addActionsTo(com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - pa:createCenterPanel():javax.swing.JComponent
 - p:disableClose():V
-- getData(java.lang.String):java.lang.Object
 - getHelpId():java.lang.String
 - p:init():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.openapi.ui.PanelWithText
 - javax.swing.JPanel
 - <init>():V
@@ -10232,8 +10232,7 @@ c:com.intellij.ui.speedSearch.FilteringTableModel
 - setValueAt(java.lang.Object,I,I):V
 f:com.intellij.ui.speedSearch.ListWithFilter
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
-- getData(java.lang.String):java.lang.Object
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - getInputMethodRequests():java.awt.im.InputMethodRequests
 - getList():javax.swing.JList
 - getScrollPane():javax.swing.JScrollPane
@@ -10242,6 +10241,7 @@ f:com.intellij.ui.speedSearch.ListWithFilter
 - requestFocus():V
 - resetFilter():Z
 - setAutoPackHeight(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - s:wrap(javax.swing.JList,javax.swing.JScrollPane,com.intellij.util.Function):javax.swing.JComponent
 - s:wrap(javax.swing.JList,javax.swing.JScrollPane,com.intellij.util.Function,Z):javax.swing.JComponent
 - s:wrap(javax.swing.JList,javax.swing.JScrollPane,com.intellij.util.Function,Z,Z,Z):javax.swing.JComponent

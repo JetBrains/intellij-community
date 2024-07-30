@@ -3,10 +3,7 @@ package com.intellij.terminal;
 
 import com.intellij.execution.filters.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,7 +49,7 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.List;
 
-public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
+public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCompatibleDataProvider {
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
 
   public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
@@ -294,14 +291,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
-      return getSelectedText();
-    }
-    if (TERMINAL_DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(SELECTED_TEXT_DATA_KEY, getSelectedText());
+    sink.set(TERMINAL_DATA_KEY, this);
   }
 
   static @Nullable String getSelectedText(@NotNull TerminalPanel terminalPanel) {

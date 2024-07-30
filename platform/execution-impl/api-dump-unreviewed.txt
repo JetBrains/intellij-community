@@ -3767,7 +3767,7 @@ c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 c:com.intellij.terminal.JBTerminalWidget
 - com.jediterm.terminal.ui.JediTermWidget
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:SELECTED_TEXT_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:TERMINAL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,I,I,com.intellij.terminal.JBTerminalSystemSettingsProviderBase,com.intellij.terminal.TerminalExecutionConsole,com.intellij.openapi.Disposable):V
@@ -3782,7 +3782,6 @@ c:com.intellij.terminal.JBTerminalWidget
 - dispose():V
 - p:executeCommand(java.lang.String):V
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
-- getData(java.lang.String):java.lang.Object
 - getDefaultSessionName(com.jediterm.terminal.TtyConnector):java.lang.String
 - getFontSize():I
 - getFontSize2D():F
@@ -3803,6 +3802,7 @@ c:com.intellij.terminal.JBTerminalWidget
 - p:setShellCommand(java.util.List):V
 - setTtyConnector(com.jediterm.terminal.TtyConnector):V
 - start(com.jediterm.terminal.TtyConnector):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - writePlainMessage(java.lang.String):V
 com.intellij.terminal.JBTerminalWidgetListener
 - canMoveTabLeft():Z

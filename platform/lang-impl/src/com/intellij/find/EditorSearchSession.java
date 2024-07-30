@@ -8,7 +8,9 @@ import com.intellij.find.impl.HelpID;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -41,7 +43,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ import java.util.regex.PatternSyntaxException;
  * @author max, andrey.zaytsev
  */
 public class EditorSearchSession implements SearchSession,
-                                            DataProvider,
+                                            UiCompatibleDataProvider,
                                             SelectionListener,
                                             SearchResults.SearchResultsListener,
                                             SearchReplaceComponent.Listener {
@@ -271,7 +272,9 @@ public class EditorSearchSession implements SearchSession,
   public static EditorSearchSession get(@Nullable Editor editor) {
     JComponent headerComponent = editor != null ? editor.getHeaderComponent() : null;
     SearchReplaceComponent searchReplaceComponent = ObjectUtils.tryCast(headerComponent, SearchReplaceComponent.class);
-    return searchReplaceComponent != null ? SESSION_KEY.getData(searchReplaceComponent) : null;
+    DataContext dataContext = searchReplaceComponent == null ? null :
+                              IdeUiService.getInstance().createUiDataContext(searchReplaceComponent);
+    return dataContext == null ? null : SESSION_KEY.getData(dataContext);
   }
 
   @NotNull
@@ -314,21 +317,11 @@ public class EditorSearchSession implements SearchSession,
 
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls final String dataId) {
-    if (SearchSession.KEY.is(dataId)) {
-      return this;
-    }
-    if (SESSION_KEY.is(dataId)) {
-      return this;
-    }
-    if (CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
-      return myEditor;
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return myFindModel.isReplaceState() ? HelpID.REPLACE_IN_EDITOR : HelpID.FIND_IN_EDITOR;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(SearchSession.KEY, this);
+    sink.set(SESSION_KEY, this);
+    sink.set(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE, myEditor);
+    sink.set(PlatformCoreDataKeys.HELP_ID, myFindModel.isReplaceState() ? HelpID.REPLACE_IN_EDITOR : HelpID.FIND_IN_EDITOR);
   }
 
   @Override

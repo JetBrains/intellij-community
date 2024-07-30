@@ -35,7 +35,6 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -261,21 +260,15 @@ public class ContentEntryTreeEditor {
     }
   }
 
-  private final class MyPanel extends JPanel implements DataProvider {
+  private final class MyPanel extends JPanel implements UiDataProvider {
     private MyPanel(final LayoutManager layout) {
       super(layout);
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls final String dataId) {
-      if (FileSystemTree.DATA_KEY.is(dataId)) {
-        return myFileSystemTree;
-      }
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles();
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
+      sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());
     }
   }
 

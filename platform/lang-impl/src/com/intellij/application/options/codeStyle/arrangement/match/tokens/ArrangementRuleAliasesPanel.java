@@ -6,13 +6,13 @@ import com.intellij.application.options.codeStyle.arrangement.color.ArrangementC
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public final class ArrangementRuleAliasesPanel extends JPanel implements DataProvider {
+public final class ArrangementRuleAliasesPanel extends JPanel implements UiDataProvider {
   @NotNull private final ArrangementRuleAliasControl myControl;
 
   public ArrangementRuleAliasesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
@@ -77,12 +77,8 @@ public final class ArrangementRuleAliasesPanel extends JPanel implements DataPro
     myControl.setRuleSequences(rules);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (ArrangementRuleAliasControl.KEY.is(dataId)) {
-      return myControl;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(ArrangementRuleAliasControl.KEY, myControl);
   }
 }

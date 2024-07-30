@@ -4,12 +4,12 @@ package com.intellij.application.options.codeStyle.arrangement.group;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.util.ui.GridBag;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public final class ArrangementGroupingRulesPanel extends JPanel implements DataProvider {
+public final class ArrangementGroupingRulesPanel extends JPanel implements UiDataProvider {
 
   @NotNull private final ArrangementGroupingRulesControl myControl;
 
@@ -48,12 +48,8 @@ public final class ArrangementGroupingRulesPanel extends JPanel implements DataP
     return myControl.getRules();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (ArrangementGroupingRulesControl.KEY.is(dataId)) {
-      return myControl;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(ArrangementGroupingRulesControl.KEY, myControl);
   }
 }

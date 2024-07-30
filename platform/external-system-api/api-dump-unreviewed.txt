@@ -304,7 +304,7 @@ com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProjec
 - a:getModule():com.intellij.openapi.module.Module
 - a:getTitle():java.lang.String
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:ACTION_PLACE:java.lang.String
 - sf:Companion:com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView$Companion
 - a:setSelectedDependency(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Data):V
@@ -312,6 +312,7 @@ com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 - a:setSelectedDependency(com.intellij.openapi.module.Module,java.util.List):V
 - a:setSelectedDependency(com.intellij.openapi.module.Module,java.util.List,java.lang.String):V
 - a:setSelectedExternalProject(com.intellij.openapi.module.Module):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView$Companion
 - sf:ACTION_PLACE:java.lang.String
 - f:getDEPENDENCIES():com.intellij.openapi.actionSystem.DataKey

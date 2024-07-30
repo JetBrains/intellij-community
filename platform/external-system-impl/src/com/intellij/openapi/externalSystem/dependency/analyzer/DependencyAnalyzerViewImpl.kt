@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
@@ -143,14 +144,11 @@ class DependencyAnalyzerViewImpl(
     return dependencyModel.flatMap { it.variances }
   }
 
-  override fun getData(dataId: String): Any? {
-    return when (dataId) {
-      DependencyAnalyzerView.VIEW.name -> this
-      CommonDataKeys.PROJECT.name -> project
-      ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.name -> systemId
-      PlatformCoreDataKeys.MODULE.name -> externalProject?.module
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[DependencyAnalyzerView.VIEW] = this
+    sink[CommonDataKeys.PROJECT] = project
+    sink[ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID] = systemId
+    sink[PlatformCoreDataKeys.MODULE] = externalProject?.module
   }
 
   private fun updateViewModel() {
@@ -368,11 +366,21 @@ class DependencyAnalyzerViewImpl(
       .bindVisible(reloadNotificationProperty)
 
     val dependencyTitle = label(ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.title"))
-    val dependencyList = DependencyList(dependencyListModel, showDependencyGroupIdProperty, this)
+    val dependencyList = object : DependencyList(dependencyListModel, showDependencyGroupIdProperty) {
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        DataSink.uiDataSnapshot(sink, this@DependencyAnalyzerViewImpl)
+      }
+    }
       .bindEmptyText(dependencyEmptyTextProperty)
       .bindDependency(dependencyProperty)
       .bindEnabled(!dependencyLoadingProperty)
-    val dependencyTree = DependencyTree(dependencyTreeModel, showDependencyGroupIdProperty, this)
+    val dependencyTree = object : DependencyTree(dependencyTreeModel, showDependencyGroupIdProperty) {
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        DataSink.uiDataSnapshot(sink, this@DependencyAnalyzerViewImpl)
+      }
+    }
       .bindEmptyText(dependencyEmptyTextProperty)
       .bindDependency(dependencyProperty)
       .bindEnabled(!dependencyLoadingProperty)
@@ -395,7 +403,12 @@ class DependencyAnalyzerViewImpl(
       .bindEnabled(showDependencyTreeProperty and !dependencyLoadingProperty)
 
     val usagesTitle = label(usagesTitleProperty)
-    val usagesTree = UsagesTree(usagesTreeModel, showDependencyGroupIdProperty, this)
+    val usagesTree = object : UsagesTree(usagesTreeModel, showDependencyGroupIdProperty) {
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        DataSink.uiDataSnapshot(sink, this@DependencyAnalyzerViewImpl)
+      }
+    }
       .apply { emptyText.text = "" }
       .bindEnabled(!dependencyLoadingProperty)
     val expandUsagesTreeButton = expandTreeAction(usagesTree)

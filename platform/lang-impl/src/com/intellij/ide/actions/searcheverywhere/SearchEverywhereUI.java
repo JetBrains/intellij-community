@@ -129,7 +129,7 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
  */
-public final class SearchEverywhereUI extends BigPopupUI implements DataProvider, QuickSearchComponent {
+public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvider, QuickSearchComponent {
 
   public static final Topic<SearchListener> SEARCH_EVENTS = Topic.create("Search events", SearchListener.class);
 
@@ -483,47 +483,28 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
-      return getSearchPattern();
-    }
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    if (SELECTED_ITEM_INFO.is(dataId)) {
-      return ContainerUtil.getOnlyItem(getSelectedInfos());
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
-      SearchEverywhereFoundElementInfo info = ContainerUtil.getOnlyItem(selection);
-      return info == null ? null : info.getElement();
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
-      if (selection.isEmpty()) return null;
-      return ContainerUtil.map2Array(selection, Object.class, SearchEverywhereFoundElementInfo::getElement);
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
-      return (DataProvider)slowId -> getSlowData(slowId, selection);
-    }
-    return null;
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
+    SearchEverywhereFoundElementInfo onlyItem = ContainerUtil.getOnlyItem(selection);
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<? extends SearchEverywhereFoundElementInfo> selection) {
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    sink.set(PlatformDataKeys.PREDEFINED_TEXT, getSearchPattern());
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(SELECTED_ITEM_INFO, onlyItem);
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEM, onlyItem == null ? null : onlyItem.getElement());
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS,
+             ContainerUtil.map2Array(selection, Object.class, SearchEverywhereFoundElementInfo::getElement));
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       List<PsiElement> list =
         ContainerUtil.mapNotNull(selection, o -> (PsiElement)getDataFromElementInfo(CommonDataKeys.PSI_ELEMENT.getName(), o));
       return list.isEmpty() ? null : list.toArray(PsiElement.EMPTY_ARRAY);
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       List<VirtualFile> list =
         ContainerUtil.mapNotNull(selection, o -> (VirtualFile)getDataFromElementInfo(CommonDataKeys.VIRTUAL_FILE.getName(), o));
       return list.isEmpty() ? null : list.toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
       List<Navigatable> list = ContainerUtil.mapNotNull(selection, o -> {
         Navigatable navigatable = (Navigatable)getDataFromElementInfo(CommonDataKeys.NAVIGATABLE.getName(), o);
         if (navigatable != null) return navigatable;
@@ -532,9 +513,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         return psi instanceof Navigatable ? (Navigatable)psi : null;
       });
       return list.isEmpty() ? null : list.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    });
+    if (onlyItem != null) {
+      sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, dataId -> {
+        return getDataFromElementInfo(dataId, onlyItem);
+      });
     }
-    SearchEverywhereFoundElementInfo single = ContainerUtil.getOnlyItem(selection);
-    return single == null ? null : getDataFromElementInfo(dataId, single);
   }
 
   private static @Nullable Object getDataFromElementInfo(@NotNull String dataId, SearchEverywhereFoundElementInfo info) {
@@ -545,7 +529,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     return contributor.getDataForItem(info.getElement(), dataId);
   }
 
-  private @NotNull List<SearchEverywhereFoundElementInfo> getSelectedInfos() {
+  @NotNull List<SearchEverywhereFoundElementInfo> getSelectedInfos() {
     return Arrays.stream(myResultsList.getSelectedIndices())
       .mapToObj(myListModel::getRawFoundElementAt)
       .filter(o -> o.getElement() != SearchListModel.MORE_ELEMENT

@@ -68,7 +68,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 
-public final class DependenciesPanel extends JPanel implements Disposable, DataProvider {
+public final class DependenciesPanel extends JPanel implements Disposable, UiDataProvider {
   private final Map<PsiFile, Set<PsiFile>> myDependencies;
   private Map<VirtualFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
   private final MyTree myLeftTree = new MyTree();
@@ -491,16 +491,9 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return myRightTree.getData(dataId);
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return "dependency.viewer.tool.window";
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, "dependency.viewer.tool.window");
+    DataSink.uiDataSnapshot(sink, myRightTree);
   }
 
   private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -805,31 +798,23 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private static final class MyTree extends Tree implements DataProvider {
+  private static final class MyTree extends Tree implements UiDataProvider {
     @Override
-    public Object getData(@NotNull String dataId) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
       PackageDependenciesNode node = getSelectedNode();
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        return node;
-      }
-      if (node != null && PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowDataId -> {
-          if (CommonDataKeys.PSI_ELEMENT.is(slowDataId)) {
-            final PsiElement element = node.getPsiElement();
-            return element != null && element.isValid() ? element : null;
-          }
-          return null;
-        };
-      }
-      if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-        TreePath[] paths = getSelectionPaths();
-        return paths != null ? ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()) : null;
-      }
-      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-        TreePath path = getSelectionPath();
-        return path != null ? path.getLastPathComponent() : null;
-      }
-      return null;
+      sink.set(CommonDataKeys.NAVIGATABLE, node);
+      TreePath[] paths = getSelectionPaths();
+      TreePath path = getSelectionPath();
+      sink.set(PlatformCoreDataKeys.SELECTED_ITEMS,
+               paths != null ? ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()) : null);
+      sink.set(PlatformCoreDataKeys.SELECTED_ITEM,
+               path != null ? path.getLastPathComponent() : null);
+      if (node == null) return;
+
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        PsiElement element = node.getPsiElement();
+        return element != null && element.isValid() ? element : null;
+      });
     }
 
     @Nullable

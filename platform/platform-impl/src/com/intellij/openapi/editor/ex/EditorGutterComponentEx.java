@@ -38,6 +38,8 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
    */
   public static final DataKey<Point> ICON_CENTER_POSITION = DataKey.create("EditorGutter.ICON_CENTER_POSITION");
 
+  public abstract @NotNull EditorEx getEditor();
+
   public abstract @Nullable FoldRegion findFoldingAnchorAt(int x, int y);
 
   public abstract @NotNull List<GutterMark> getGutterRenderers(int line);

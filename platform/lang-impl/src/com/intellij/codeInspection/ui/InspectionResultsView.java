@@ -75,7 +75,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
-public final class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
+public final class InspectionResultsView extends JPanel implements Disposable, UiCompatibleDataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(InspectionResultsView.class);
 
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
@@ -714,88 +714,63 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return HELP_ID;
-    }
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
-      return myExclusionHandler;
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      TreePath[] paths = myTree.getSelectionPaths();
-      if (paths == null || paths.length == 0) return null;
-      return paths[0].getLastPathComponent();
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      TreePath[] paths = myTree.getSelectionPaths();
-      if (paths == null || paths.length == 0) return null;
-      return ContainerUtil.map2Array(paths, p -> p.getLastPathComponent());
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      TreePath[] paths = myTree.getSelectionPaths();
-      if (paths == null || paths.length == 0) return null;
-      return (DataProvider)slowId -> getSlowData(slowId, paths);
-    }
-    return null;
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath[] paths = myTree.getSelectionPaths();
+    sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
+    sink.set(DATA_KEY, this);
+    sink.set(ExclusionHandler.EXCLUSION_HANDLER, myExclusionHandler);
 
-  private @Nullable Object getSlowData(@NotNull String dataId, TreePath @NotNull [] paths) {
-    if (paths.length > 1) {
-      if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        RefEntity[] refElements = myTree.getElementsFromSelection(paths);
-        List<PsiElement> psiElements = new ArrayList<>();
-        for (RefEntity refElement : refElements) {
-          PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
-          if (psiElement != null && psiElement.isValid()) {
-            psiElements.add(psiElement);
-          }
+    if (paths == null || paths.length == 0) return;
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEM,
+             paths[0].getLastPathComponent());
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS,
+             ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()));
+
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+      RefEntity[] refElements = myTree.getElementsFromSelection(paths);
+      List<PsiElement> psiElements = new ArrayList<>();
+      for (RefEntity refElement : refElements) {
+        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
+        if (psiElement != null && psiElement.isValid()) {
+          psiElements.add(psiElement);
         }
-
-        return PsiUtilCore.toPsiElementArray(psiElements);
       }
-      return null;
-    }
+      return PsiUtilCore.toPsiElementArray(psiElements);
+    });
 
     TreePath path = paths[0];
     InspectionTreeNode selectedNode = (InspectionTreeNode)path.getLastPathComponent();
 
-    if (!CommonDataKeys.NAVIGATABLE.is(dataId) && !CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return null;
-    }
-
     if (selectedNode instanceof RefElementNode refElementNode) {
-      RefEntity refElement = refElementNode.getElement();
-      if (refElement == null || !refElement.isValid()) return null;
-      final RefEntity item = refElement.getRefManager().getRefinedElement(refElement);
-
-      if (!item.isValid()) return null;
-
-      PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getPsiElement() : null;
-      if (psiElement == null) return null;
-
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        return getSelectedNavigatable(null, psiElement);
-      }
-      else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        return psiElement.isValid() ? psiElement : null;
-      }
+      sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+        PsiElement psi = getPsiElement(refElementNode);
+        return getSelectedNavigatable(null, psi);
+      });
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        PsiElement psi = getPsiElement(refElementNode);
+        return psi != null && psi.isValid() ? psi : null;
+      });
     }
-    else if (selectedNode instanceof ProblemDescriptionNode) {
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        Navigatable navigatable = getSelectedNavigatable(((ProblemDescriptionNode)selectedNode).getDescriptor());
+    else if (selectedNode instanceof ProblemDescriptionNode problemNode) {
+      sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+        Navigatable navigatable = getSelectedNavigatable(problemNode.getDescriptor());
         return navigatable == null
-               ? InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)selectedNode)
+               ? InspectionResultsViewUtil.getNavigatableForInvalidNode(problemNode)
                : navigatable;
-      }
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      });
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         RefEntity item = ((ProblemDescriptionNode)selectedNode).getElement();
         return item instanceof RefElement ? ((RefElement)item).getPsiElement() : null;
-      }
+      });
+
     }
-    return null;
+  }
+
+  private static @Nullable PsiElement getPsiElement(@NotNull RefElementNode refElementNode) {
+    RefEntity refElement = refElementNode.getElement();
+    if (refElement == null || !refElement.isValid()) return null;
+    RefEntity item = refElement.getRefManager().getRefinedElement(refElement);
+    return item instanceof RefElement o && item.isValid() ? o.getPsiElement() : null;
   }
 
   public @NlsContexts.TabTitle String getViewTitle() {
@@ -819,14 +794,15 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
 
   @Nullable
   static Navigatable getSelectedNavigatable(final CommonProblemDescriptor descriptor) {
-    return getSelectedNavigatable(descriptor,
-                                  descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null);
+    return getSelectedNavigatable(
+      descriptor, descriptor instanceof ProblemDescriptor o ? o.getPsiElement() : null);
   }
 
   @Nullable
-  private static Navigatable getSelectedNavigatable(CommonProblemDescriptor descriptor, PsiElement psiElement) {
-    if (descriptor instanceof ProblemDescriptorBase) {
-      Navigatable navigatable = ((ProblemDescriptorBase)descriptor).getNavigatable();
+  private static Navigatable getSelectedNavigatable(@Nullable CommonProblemDescriptor descriptor,
+                                                    @Nullable PsiElement psiElement) {
+    if (descriptor instanceof ProblemDescriptorBase problem) {
+      Navigatable navigatable = problem.getNavigatable();
       if (navigatable != null) {
         return navigatable;
       }
@@ -835,20 +811,20 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
     PsiFile containingFile = psiElement.getContainingFile();
     VirtualFile virtualFile = containingFile == null ? null : containingFile.getVirtualFile();
 
-    if (virtualFile != null) {
-      int startOffset = psiElement.getTextOffset();
-      if (descriptor instanceof ProblemDescriptorBase) {
-        final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRangeForNavigation();
-        if (textRange != null) {
-          if (virtualFile instanceof VirtualFileWindow) {
-            virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
-          }
-          startOffset = textRange.getStartOffset();
-        }
-      }
-      return PsiNavigationSupport.getInstance().createNavigatable(psiElement.getProject(), virtualFile, startOffset);
+    if (virtualFile == null) {
+      return null;
     }
-    return null;
+    int startOffset = psiElement.getTextOffset();
+    if (descriptor instanceof ProblemDescriptorBase problem) {
+      TextRange textRange = problem.getTextRangeForNavigation();
+      if (textRange != null) {
+        if (virtualFile instanceof VirtualFileWindow window) {
+          virtualFile = window.getDelegate();
+        }
+        startOffset = textRange.getStartOffset();
+      }
+    }
+    return PsiNavigationSupport.getInstance().createNavigatable(psiElement.getProject(), virtualFile, startOffset);
   }
 
   @NotNull
