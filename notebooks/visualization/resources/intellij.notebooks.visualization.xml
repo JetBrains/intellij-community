@@ -1,5 +1,4 @@
 <idea-plugin package="org.jetbrains.plugins.notebooks.visualization">
-  <module value="com.intellij.modules.notebooks.visualization" />
   <dependencies>
     <module name="intellij.notebooks.ui"/>
   </dependencies>
