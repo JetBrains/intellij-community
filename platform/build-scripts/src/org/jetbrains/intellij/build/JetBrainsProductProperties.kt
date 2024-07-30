@@ -39,9 +39,23 @@ abstract class JetBrainsProductProperties : ProductProperties() {
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
   }
 
-  override fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+  override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
     return buildList {
-      addAll(super.validatePlugin(result, context))
+      val problems = super.validatePlugin(pluginId, result, context).filterNot {
+        (
+          // FIXME IDEA-356970
+          pluginId == "com.intellij.plugins.projectFragments" ||
+          // FIXME IJPL-159498
+          pluginId == "org.jetbrains.plugins.docker.gateway"
+        ) && it.message.contains("Service preloading is deprecated") ||
+        (
+          // FIXME PY-74322
+          pluginId == "com.intellij.python.frontend" ||
+          // FIXME AE-121
+          pluginId == "com.jetbrains.personalization"
+        ) && it.message.contains("Plugin has no dependencies")
+      }
+      addAll(problems)
       if (result is PluginCreationSuccess && result.plugin.vendor?.contains("JetBrains") != true) {
         add(object : InvalidDescriptorProblem(
           descriptorPath = "",

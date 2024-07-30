@@ -12,6 +12,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import io.opentelemetry.api.common.AttributeKey
@@ -494,12 +495,12 @@ private suspend fun validatePlugin(path: Path, context: BuildContext) {
     val pluginManager = IdePluginManager.createManager()
     val result = pluginManager.createPlugin(path, validateDescriptor = true)
     // todo fix AddStatisticsEventLogListenerTemporary
-    val problems = context.productProperties.validatePlugin(result, context)
-      .filter {
-        !it.message.contains("Service preloading is deprecated in the") && !it.message.contains("Plugin has no dependencies")
-      }
+    val id = when (result) {
+      is PluginCreationSuccess -> result.plugin.pluginId
+      is PluginCreationFail -> (pluginManager.createPlugin(path, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
+    }
+    val problems = context.productProperties.validatePlugin(id, result, context)
     if (problems.isNotEmpty()) {
-      val id = (pluginManager.createPlugin(path, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
       context.messages.reportBuildProblem(problems.joinToString(
         prefix = "${id ?: path}: ",
         separator = ". ",

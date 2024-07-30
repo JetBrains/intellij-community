@@ -428,9 +428,10 @@ abstract class ProductProperties {
   /**
    * Additional validation can be performed here for [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
    * Please do not ignore validation failures here, they will fail CI builds anyway.
+   * @param pluginId may be null if missing or a plugin descriptor is malformed
    * @return list of plugin validation errors.
    */
-  open fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+  open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
     return when (result) {
       is PluginCreationSuccess -> result.unacceptableWarnings
       is PluginCreationFail -> result.errorsAndWarnings
