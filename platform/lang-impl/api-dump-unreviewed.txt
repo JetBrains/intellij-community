@@ -20516,10 +20516,6 @@ c:com.intellij.openapi.fileTypes.impl.associate.macos.MacOSFileTypeAssociator
 - <init>():V
 - associateFileTypes(java.util.List):V
 - isOsRestartRequired():Z
-c:com.intellij.openapi.fileTypes.impl.associate.macos.PListBuddyWrapper
-- sf:PLIST_PATH:java.lang.String
-- sf:UTIL_PATH:java.lang.String
-- <init>():V
 f:com.intellij.openapi.fileTypes.impl.associate.ui.FileTypeAssociationDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>():V
