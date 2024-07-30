@@ -114,34 +114,62 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
       }
     }.installOn(this)
 
-        PopupHandler.installPopupMenu(this, DefaultActionGroup(object : DumbAwareAction({
-                                                                                   val pkg = model.items[selectedRow]
-                                                                                   if (pkg is InstalledPackage) {
-                                                                                     message("python.toolwindow.packages.delete.package")
-                                                                                   }
-                                                                                   else {
-                                                                                     message("python.toolwindow.packages.install.link")
-                                                                                   }
-        }) {
-          override fun actionPerformed(e: AnActionEvent) {
-            controller.packagingScope.launch(Dispatchers.Main) {
-              val pkg = model.items[selectedRow]
-              if (pkg is InstalledPackage) {
-                withContext(Dispatchers.IO) {
-                  service.deletePackage(pkg)
-                }
-              }
-              else if (pkg is InstallablePackage) {
-                controller.packagingScope.launch(Dispatchers.IO) {
-                  val details = service.detailsForPackage(pkg)
-                  withContext(Dispatchers.Main) {
-                    createAvailableVersionsPopup(pkg as InstallablePackage, details, project, controller).show(RelativePoint(e.inputEvent as MouseEvent))
-                  }
-                }
+    PopupHandler.installPopupMenu(this, DefaultActionGroup(object : DumbAwareAction({
+                                                                                      val pkg = model.items[selectedRow]
+                                                                                      if (pkg is InstalledPackage) {
+                                                                                        message("python.toolwindow.packages.delete.package")
+                                                                                      }
+                                                                                      else {
+                                                                                        message("python.toolwindow.packages.install.link")
+                                                                                      }
+                                                                                    }) {
+      override fun actionPerformed(e: AnActionEvent) {
+        controller.packagingScope.launch(Dispatchers.Main) {
+          val pkg = model.items[selectedRow]
+          if (pkg is InstalledPackage) {
+            withContext(Dispatchers.IO) {
+              service.deletePackage(pkg)
+            }
+          }
+          else if (pkg is InstallablePackage) {
+            controller.packagingScope.launch(Dispatchers.IO) {
+              val details = service.detailsForPackage(pkg)
+              withContext(Dispatchers.Main) {
+                createAvailableVersionsPopup(pkg as InstallablePackage, details, project, controller).show(RelativePoint(e.inputEvent as MouseEvent))
               }
             }
           }
-        }), "PackagePopup")
+        }
+      }
+    }, object : DumbAwareAction({
+                                  val pkg = model.items[selectedRow]
+                                  if (pkg is InstalledPackage && pkg.canBeUpdated) {
+                                    message("python.toolwindow.packages.update.package")
+                                  }
+                                  else {
+                                    ""
+                                  }
+                                }) {
+      override fun actionPerformed(e: AnActionEvent) {
+        controller.packagingScope.launch(Dispatchers.Main) {
+          val pkg = model.items[selectedRow]
+          if (pkg is InstalledPackage && pkg.canBeUpdated) {
+            controller.packagingScope.launch(Dispatchers.IO) {
+              val specification = pkg.repository.createPackageSpecification(pkg.name, pkg.nextVersion!!.presentableText)
+              service.updatePackage(specification)
+            }
+          }
+          else if (pkg is InstallablePackage) {
+            controller.packagingScope.launch(Dispatchers.IO) {
+              val details = service.detailsForPackage(pkg)
+              withContext(Dispatchers.Main) {
+                createAvailableVersionsPopup(pkg as InstallablePackage, details, project, controller).show(RelativePoint(e.inputEvent as MouseEvent))
+              }
+            }
+          }
+        }
+      }
+    }), "PackagePopup")
   }
 
   private fun createAvailableVersionsPopup(selectedPackage: InstallablePackage, details: PythonPackageDetails, project: Project, controller: PyPackagingToolWindowPanel): ListPopup {
