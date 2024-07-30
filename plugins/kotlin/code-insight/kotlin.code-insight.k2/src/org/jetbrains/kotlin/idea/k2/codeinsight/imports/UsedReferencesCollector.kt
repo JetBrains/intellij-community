@@ -64,25 +64,15 @@ internal class UsedReferencesCollector(private val file: KtFile) {
         if (element is KtLabelReferenceExpression) return
 
         val references = element.references
+            .filterIsInstance<KtReference>()
+            .mapNotNull { UsedReference.run { createFrom(it) } }
+
         if (references.isEmpty()) return
 
         for (reference in references) {
             ProgressIndicatorProvider.checkCanceled()
 
-            if (reference !is KtReference) continue
-            if (isEmptyInvokeReference(reference)) continue
-
-            val resolvedSymbols = reference.resolveToSymbols()
-            val isResolved = resolvedSymbols.isNotEmpty()
-
-            ProgressIndicatorProvider.checkCanceled()
-
-            val dispatchReceiver = resolveDispatchReceiver(element)
-            if (dispatchReceiver != null && isDispatchedCall(element, dispatchReceiver, file)) {
-                continue
-            }
-
-            ProgressIndicatorProvider.checkCanceled()
+            val isResolved = reference.run { isResolved() }
 
             val names = reference.resolvesByNames
             if (!isResolved) {
@@ -90,12 +80,12 @@ internal class UsedReferencesCollector(private val file: KtFile) {
                 continue
             }
 
-            val importableSymbols = resolvedSymbols.mapNotNull { toImportableSymbol(it, reference, file) }
+            val symbols = reference.run { resolveToImportableSymbols() }
 
-            for (symbol in importableSymbols) {
-                if (!canBeResolvedViaImport(reference, symbol)) continue
+            for (symbol in symbols) {
+                if (!symbol.run { isResolvedWithImport() }) continue
 
-                val importableName = computeImportableName(symbol, dispatchReceiver as? KaImplicitReceiverValue) ?: continue
+                val importableName = symbol.run { computeImportableFqName() } ?: continue
 
                 ProgressIndicatorProvider.checkCanceled()
 
@@ -103,6 +93,46 @@ internal class UsedReferencesCollector(private val file: KtFile) {
                 usedDeclarations.getOrPut(importableName) { hashSetOf() } += newNames
             }
         }
+    }
+}
+
+internal class UsedReference private constructor(val reference: KtReference) {
+    val resolvesByNames: Collection<Name>
+        get() = reference.resolvesByNames
+
+    fun KaSession.isResolved(): Boolean {
+        val resolvedSymbols = reference.resolveToSymbols()
+        val isResolved = resolvedSymbols.isNotEmpty()
+
+        return isResolved
+    }
+
+    fun KaSession.resolveToImportableSymbols(): Collection<UsedSymbol> {
+        return reference.resolveToSymbols().mapNotNull { toImportableSymbol(it, reference) }.map { UsedSymbol(reference, it) }
+    }
+
+    companion object {
+        fun KaSession.createFrom(reference: KtReference): UsedReference? {
+            if (isEmptyInvokeReference(reference)) return null
+
+            return UsedReference(reference)
+        }
+    }
+}
+
+internal class UsedSymbol(val reference: KtReference, val symbol: KaSymbol) {
+    val name: Name?
+        get() = symbol.name
+
+    fun KaSession.computeImportableFqName(): FqName? {
+        return computeImportableName(symbol, resolveDispatchReceiver(reference.element) as? KaImplicitReceiverValue?)
+    }
+
+    fun KaSession.isResolvedWithImport(): Boolean {
+        val dispatchReceiver = resolveDispatchReceiver(reference.element)
+        if (dispatchReceiver != null && isDispatchedCall(reference.element, dispatchReceiver)) return false
+
+        return canBeResolvedViaImport(reference, symbol)
     }
 }
 
