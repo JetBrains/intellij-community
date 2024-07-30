@@ -78,7 +78,8 @@ public final class ClassFileDecompilers {
   public final ExtensionPointName<Decompiler> EP_NAME = new ExtensionPointName<>("com.intellij.psi.classFileDecompiler");
 
   private ClassFileDecompilers() {
-    EP_NAME.addChangeListener(() -> BinaryFileTypeDecompilers.getInstance().notifyDecompilerSetChange(), null);
+    Runnable runnable = () -> BinaryFileTypeDecompilers.getInstance().notifyDecompilerSetChange();
+    EP_NAME.addChangeListener(runnable, null);
   }
 
   @SuppressWarnings("unchecked")

@@ -40,4 +40,8 @@ class LanguageLevelHolder(val languageLevel: LanguageLevel)
 class NullableLanguageLevelHolder(val languageLevel: LanguageLevel?)
 
 @Serializable
-class ClassFileInformation(val isClassFile: Boolean?)
+enum class ClassFileInformationType {
+  JAVA_CLASS_FILE, JAVA_CLASS_FILE_OUTSIDE
+}
+@Serializable
+class ClassFileInformation(val classFileInformationType: ClassFileInformationType?)
