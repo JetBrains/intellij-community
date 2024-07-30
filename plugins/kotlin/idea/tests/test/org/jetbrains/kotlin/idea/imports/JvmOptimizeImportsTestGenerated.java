@@ -639,6 +639,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/common/FunctionalTypeVal_qualified.kt");
             }
 
+            @TestMetadata("ImplicitCompanionReceiverInClass.kt")
+            public void testImplicitCompanionReceiverInClass() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ImplicitCompanionReceiverInClass.kt");
+            }
+
             @TestMetadata("InnerClassConstructor_superType.kt")
             public void testInnerClassConstructor_superType() throws Exception {
                 runTest("testData/editor/optimizeImports/common/InnerClassConstructor_superType.kt");
