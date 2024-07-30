@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Maps;
@@ -8,11 +8,15 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypeShedConditionChecker;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.pyi.PyiUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +31,7 @@ public class PyResolveProcessor implements PsiScopeProcessor {
   @NotNull private final Map<PsiElement, PyImportedNameDefiner> myResults = Maps.newLinkedHashMap();
   @NotNull private final Map<PsiElement, PyImportedNameDefiner> myImplicitlyImportedResults = Maps.newLinkedHashMap();
   @Nullable protected ScopeOwner myOwner;
+  @Nullable private PyTypeShedConditionChecker myTypeShedChecker;
 
   public PyResolveProcessor(@NotNull String name) {
     this(name, false);
@@ -98,8 +103,14 @@ public class PyResolveProcessor implements PsiScopeProcessor {
 
   protected boolean tryAddResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(definer != null ? definer : element);
-    if (myOwner == null) {
+    if (myOwner == null && owner != null) {
       myOwner = owner;
+      if (myOwner.getContainingFile()  instanceof PyiFile) {
+        var sdk = PythonSdkUtil.findPythonSdk(myOwner);
+        if (sdk != null) {
+          myTypeShedChecker = new PyTypeShedConditionChecker(sdk, PyiUtil.getOriginalLanguageLevel(myOwner));
+        }
+      }
     }
     final boolean sameScope = owner == myOwner;
     if (sameScope) {
@@ -114,6 +125,7 @@ public class PyResolveProcessor implements PsiScopeProcessor {
       myImplicitlyImportedResults.put(element, definer);
     }
     else {
+      if (element != null && myTypeShedChecker != null && Boolean.FALSE.equals(myTypeShedChecker.allOuterIfStatementsAreSatisfied(element))) return;
       myResults.put(element, definer);
     }
   }
