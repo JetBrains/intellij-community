@@ -346,27 +346,47 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
     @Override
     public void finished(@NotNull ProjectTaskManager.Result result) {
-      if (myProject.isDisposed()) return;
-      if (!hasCompilationResults(result)) return;
-
       ProjectTaskContext context = result.getContext();
-      if (result.hasErrors() || result.isAborted()) return;
-      if (SKIP_HOT_SWAP_KEY.getRequired(context)) return;
+      HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
+      if (myProject.isDisposed()) {
+        notifyCancelled(callback, Collections.emptyList());
+        return;
+      }
+      List<DebuggerSession> sessions = getHotSwappableDebugSessions(myProject);
+      if (result.hasErrors()) {
+        if (callback != null) {
+          callback.onFailure(sessions);
+        }
+        return;
+      }
+      if (!hasCompilationResults(result)
+          || result.isAborted()
+          || SKIP_HOT_SWAP_KEY.getRequired(context)
+          || sessions.isEmpty()
+      ) {
+        notifyCancelled(callback, sessions);
+        return;
+      }
 
       HotSwapUIImpl instance = (HotSwapUIImpl)getInstance(myProject);
       for (HotSwapVetoableListener listener : instance.myListeners) {
-        if (!listener.shouldHotSwap(context)) return;
+        if (!listener.shouldHotSwap(context)) {
+          notifyCancelled(callback, sessions);
+          return;
+        }
       }
 
-      List<DebuggerSession> sessions = getHotSwappableDebugSessions(myProject);
-      if (sessions.isEmpty()) return;
-
       Map<String, Collection<String>> generatedPaths = collectGeneratedPaths(context);
-      HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
       NotNullLazyValue<List<String>> outputRoots = context.getDirtyOutputPaths()
         .map(stream -> NotNullLazyValue.createValue(() -> stream.collect(Collectors.toList())))
         .orElse(null);
       instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback);
+    }
+
+    private static void notifyCancelled(@Nullable HotSwapStatusListener callback, List<DebuggerSession> sessions) {
+      if (callback != null) {
+        callback.onCancel(sessions);
+      }
     }
 
     @NotNull
