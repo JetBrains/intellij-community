@@ -89,3 +89,9 @@ suspend fun <TInput, TOutput> Iterable<TInput>.mapConcurrently(
     }
   }.awaitAll()
 }
+
+/** @see [mapConcurrently]] */
+suspend fun <TInput, TOutput> Sequence<TInput>.mapConcurrently(
+  maxConcurrency: Int,
+  transform: suspend (TInput) -> TOutput,
+) = this.asIterable().mapConcurrently(maxConcurrency, transform)
