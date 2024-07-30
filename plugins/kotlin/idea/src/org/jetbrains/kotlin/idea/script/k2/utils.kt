@@ -9,7 +9,9 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.kotlin.lexer.KtTokens.SHEBANG_COMMENT
 
-fun isMainKtsScript(virtualFile: VirtualFile) = virtualFile.name.endsWith(".main.kts")
+private const val MAIN_KTS = "main.kts"
+
+fun isMainKtsScript(virtualFile: VirtualFile) = virtualFile.name == MAIN_KTS || virtualFile.name.endsWith(".$MAIN_KTS")
 
 fun PsiFile.hasShebangComment(): Boolean =
     SyntaxTraverser.psiTraverser(/* root = */ this)
