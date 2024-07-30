@@ -592,12 +592,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     action()
 
     assertWithinTimeout {
-      assertTrue(
-        importStarted.get()
-        && importFinished.get()
-        && pluginResolutionFinished.get()
-        && artifactDownloadingFinished.get()
-      )
+      assertTrue("Import failed: start", importStarted.get())
+      assertTrue("Import failed: finish", importFinished.get())
+      assertTrue("Import failed: plugins", pluginResolutionFinished.get())
+      assertTrue("Import failed: artifacts", artifactDownloadingFinished.get())
       MavenLog.LOG.warn("waitForImportWithinTimeout finished")
     }
   }
