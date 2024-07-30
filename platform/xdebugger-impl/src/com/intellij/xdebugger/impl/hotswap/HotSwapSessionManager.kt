@@ -90,12 +90,12 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
   fun startHotSwapListening(): HotSwapResultListener {
     currentStatus = HotSwapVisibleStatus.IN_PROGRESS
     return object : HotSwapResultListener {
-      override fun onCompleted() {
+      override fun onSuccessfulReload() {
         completeHotSwap()
         HotSwapStatusNotificationManager.getInstance(project).showSuccessNotification(coroutineScope)
       }
 
-      override fun onFailed() {
+      override fun onFinish() {
         completeHotSwap()
       }
 

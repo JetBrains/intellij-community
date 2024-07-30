@@ -57,14 +57,18 @@ internal class HotSwapDebugSessionListener : DebuggerManagerListener {
 
 private class HotSwapStatusListenerAdapter(private val listener: HotSwapResultListener) : HotSwapStatusListener {
   override fun onSuccess(sessions: MutableList<DebuggerSession>?) {
-    listener.onCompleted()
+    listener.onSuccessfulReload()
   }
 
   override fun onFailure(sessions: MutableList<DebuggerSession>?) {
-    listener.onFailed()
+    listener.onFinish()
   }
 
   override fun onCancel(sessions: MutableList<DebuggerSession>?) {
     listener.onCanceled()
+  }
+
+  override fun onNothingToReload(sessions: MutableList<DebuggerSession>?) {
+    listener.onFinish()
   }
 }

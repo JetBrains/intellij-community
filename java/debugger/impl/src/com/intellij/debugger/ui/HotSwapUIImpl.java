@@ -145,7 +145,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       if (modifiedClasses.isEmpty()) {
         String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
         HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
-        statusListener.onSuccess(sessions);
+        statusListener.onNothingToReload(sessions);
         return;
       }
 
@@ -331,6 +331,12 @@ public final class HotSwapUIImpl extends HotSwapUI {
       }
 
       @Override
+      public void onNothingToReload(List<DebuggerSession> sessions) {
+        callback1.onNothingToReload(sessions);
+        callback2.onNothingToReload(sessions);
+      }
+
+      @Override
       public void onCancel(List<DebuggerSession> sessions) {
         callback1.onCancel(sessions);
         callback2.onCancel(sessions);
@@ -456,6 +462,11 @@ public final class HotSwapUIImpl extends HotSwapUI {
       @Override
       public void onSuccess(List<DebuggerSession> sessions) {
         if (listener != null) listener.onSuccess(sessions);
+      }
+
+      @Override
+      public void onNothingToReload(List<DebuggerSession> sessions) {
+        if (listener != null) listener.onNothingToReload(sessions);
       }
 
       @Override

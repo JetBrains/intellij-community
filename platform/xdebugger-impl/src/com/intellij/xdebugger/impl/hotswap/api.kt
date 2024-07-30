@@ -19,8 +19,8 @@ interface HotSwapProvider<T> {
 
 @ApiStatus.Internal
 interface HotSwapResultListener {
-  fun onCompleted()
-  fun onFailed()
+  fun onSuccessfulReload()
+  fun onFinish()
   fun onCanceled()
 }
 
