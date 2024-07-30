@@ -130,7 +130,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             val targetClass = target.containingSymbol as? KaClassLikeSymbol
 
             // if constructor is typealiased, it can be imported in any scenario
-            val typeAlias = targetClass?.let { resolveTypeAliasedConstructorReference(reference, it) }
+            val typeAlias = targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, file) }
 
             // if constructor leads to inner class, it cannot be resolved by import
             val notInnerTargetClass = targetClass?.takeUnless { it is KaNamedClassSymbol && it.isInner }
@@ -141,7 +141,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
         target is KaSamConstructorSymbol -> {
             val targetClass = findSamClassFor(target)
 
-            targetClass?.let { resolveTypeAliasedConstructorReference(reference, it) } ?: targetClass
+            targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, file) } ?: targetClass
         }
 
         else -> target
@@ -204,13 +204,26 @@ private fun KaSession.findSamClassFor(samConstructorSymbol: KaSamConstructorSymb
 private fun KaSession.resolveTypeAliasedConstructorReference(
     reference: KtReference,
     expandedClassSymbol: KaClassLikeSymbol,
+    containingFile: KtFile,
 ): KaClassLikeSymbol? {
+    val originalReferenceName = reference.resolvesByNames.singleOrNull() ?: return null
+
+    // optimization to avoid resolving typealiases which are not available
+    if (!typeAliasIsAvailable(originalReferenceName, containingFile)) return null
+
     val referencedType = resolveReferencedType(reference) ?: return null
     if (referencedType.symbol != expandedClassSymbol) return null
 
     val typealiasType = referencedType.abbreviation ?: return null
 
     return typealiasType.symbol
+}
+
+private fun KaSession.typeAliasIsAvailable(name: Name, containingFile: KtFile): Boolean {
+    val importingScope = containingFile.importingScopeContext
+    val foundClassifiers = importingScope.compositeScope().classifiers(name)
+
+    return foundClassifiers.any { it is KaTypeAliasSymbol }
 }
 
 private fun KaSession.resolveReferencedType(reference: KtReference): KaType? {
