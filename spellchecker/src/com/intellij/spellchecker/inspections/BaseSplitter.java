@@ -107,7 +107,7 @@ public abstract class BaseSplitter implements Splitter {
       }
       return toCheck;
     }
-    catch (ProcessCanceledException e) {
+    catch (TooLongBombedMatchingException e) {
       return Collections.singletonList(range);
     }
   }
