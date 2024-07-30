@@ -20,7 +20,7 @@ class RemoveFunctionBodyFix(
         elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
-        val bodyExpression = element.bodyExpression!!
+        val bodyExpression = element.bodyExpression ?: return
         val equalsToken = element.equalsToken
         if (equalsToken != null) {
             val commentSaver = CommentSaver(PsiChildRange(equalsToken.nextSibling, bodyExpression.prevSibling), true)
