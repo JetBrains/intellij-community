@@ -6,7 +6,6 @@ import com.intellij.configurationStore.*
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
@@ -22,6 +21,9 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.*
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write
@@ -38,7 +40,6 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
-import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isHidden
 import kotlin.io.path.readBytes
@@ -55,8 +56,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   private val fileChangeSubscriber: FileChangeSubscriber? = null,
   private val settingsCategory: SettingsCategory = SettingsCategory.OTHER,
 ) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
-  internal val isUseVfs: Boolean
-    get() = fileChangeSubscriber != null
+  private val isUpdateVfs: Boolean = fileChangeSubscriber != null
 
   internal val isOldSchemeNaming: Boolean = schemeNameToFileName == OLD_NAME_CONVERTER
 
@@ -67,6 +67,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   internal val schemes: MutableList<T>
     get() = schemeListManager.schemes
 
+  @Volatile
   internal var cachedVirtualDirectory: VirtualFile? = null
 
   internal val schemeExtension: String
@@ -84,7 +85,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       updateExtension = false
     }
 
-    if (isUseVfs) {
+    if (isUpdateVfs) {
       runCatching { refreshVirtualDirectory() }.getOrLogException(LOG)
     }
   }
@@ -335,6 +336,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 
   override fun save() {
+    val events = if (isUpdateVfs) mutableListOf<VFileEvent>() else Collections.emptyList()
+    saveImpl(events)
+    if (events.isNotEmpty()) {
+      RefreshQueue.getInstance().processEvents(false, events)
+    }
+  }
+
+  internal fun saveImpl(events: MutableList<VFileEvent>) {
     if (isLoadingSchemes.get()) {
       LOG.warn("Skip save - schemes are loading")
     }
@@ -365,7 +374,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     val filesToDelete = HashSet(filesToDelete)
     for (scheme in changedSchemes) {
       try {
-        saveScheme(scheme, nameGenerator, filesToDelete)
+        saveScheme(scheme, nameGenerator, filesToDelete, events)
       }
       catch (e: CancellationException) { throw e }
       catch (e: ProcessCanceledException) { throw e }
@@ -378,11 +387,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       schemeListManager.data.schemeToInfo.values.removeIf { filesToDelete.contains(it.fileName) }
 
       this.filesToDelete.removeAll(filesToDelete)
-      deleteFiles(errorCollector, filesToDelete)
+      deleteFiles(errorCollector, filesToDelete, events)
 
       // remove empty directory only if some file was deleted - avoid check on each save
       if (!hasSchemes && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
-        removeDirectoryIfEmpty(errorCollector)
+        removeDirectoryIfEmpty(errorCollector, events)
       }
     }
 
@@ -393,7 +402,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun getSettingsCategory(): SettingsCategory = settingsCategory
 
-  private fun removeDirectoryIfEmpty(errorCollector: ErrorCollector) {
+  private fun removeDirectoryIfEmpty(errorCollector: ErrorCollector, events: MutableList<VFileEvent>) {
     ioDirectory.directoryStreamIfExists {
       for (file in it) {
         if (!file.isHidden()) {
@@ -405,31 +414,23 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
     LOG.info("Remove scheme directory ${ioDirectory.fileName}")
 
-    if (isUseVfs) {
+    try {
+      NioFiles.deleteRecursively(ioDirectory)
+    }
+    catch (e: Throwable) {
+      errorCollector.addError(e)
+    }
+
+    if (isUpdateVfs) {
       val dir = getVirtualDirectory()
       cachedVirtualDirectory = null
       if (dir != null) {
-        runWriteAction {
-          try {
-            dir.delete(this)
-          }
-          catch (e: Throwable) {
-            errorCollector.addError(e)
-          }
-        }
-      }
-    }
-    else {
-      try {
-        NioFiles.deleteRecursively(ioDirectory)
-      }
-      catch (e: Throwable) {
-        errorCollector.addError(e)
+        events += VFileDeleteEvent(/*requestor =*/ this, dir)
       }
     }
   }
 
-  private fun saveScheme(scheme: MUTABLE_SCHEME, nameGenerator: UniqueNameGenerator, filesToDelete: MutableSet<String>) {
+  private fun saveScheme(scheme: MUTABLE_SCHEME, nameGenerator: UniqueNameGenerator, filesToDelete: MutableSet<String>, events: MutableList<VFileEvent>) {
     var externalInfo: ExternalInfo? = schemeListManager.getExternalInfo(scheme)
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
     val element = processor.writeScheme(scheme)?.let { it as? Element ?: (it as Document).detachRootElement() }
@@ -484,45 +485,30 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
                   currentFileNameWithoutExtension != null &&
                   nameGenerator.isUnique(currentFileNameWithoutExtension)
     if (providerPath == null) {
-      if (isUseVfs) {
-        var file: VirtualFile? = null
-        var dir = getVirtualDirectory()
-        if (dir == null || !dir.isValid) {
-          dir = createDir(ioDirectory, this)
+      if (renamed) {
+        externalInfo!!.scheduleDelete(filesToDelete, "renamed")
+      }
+
+      var dir = if (isUpdateVfs) getVirtualDirectory() else null
+
+      val ioFile = ioDirectory.resolve(fileName)
+      ioFile.write(byteOut.internalBuffer, 0, byteOut.size())
+
+      if (isUpdateVfs) {
+        if (dir == null) {
+          dir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioDirectory)
           cachedVirtualDirectory = dir
         }
-
-        if (renamed) {
-          val oldFile = dir.findChild(externalInfo!!.fileName)
-          if (oldFile != null) {
-            // VFS doesn't allow renaming to an existing file, so, check it
-            if (dir.findChild(fileName) == null) {
-              runWriteAction {
-                oldFile.rename(this, fileName)
-              }
-              file = oldFile
-            }
-            else {
-              externalInfo.scheduleDelete(filesToDelete, "renamed")
-            }
+        if (dir != null) {
+          val file = dir.findChild(fileName)
+          if (file != null) {
+            events += updatingEvent(ioFile, file)
+          }
+          else {
+            // an old file deletion event is generated by `deleteFiles`
+            events += creationEvent(ioFile, dir)
           }
         }
-
-        if (file == null) {
-          file = SlowOperations.knownIssue("IDEA-338219, EA-867032").use {
-            dir.getOrCreateChild(requestor = this, fileName, directory = false)
-          }
-        }
-
-        runWriteAction {
-          file.getOutputStream(this).use { byteOut.writeTo(it) }
-        }
-      }
-      else {
-        if (renamed) {
-          externalInfo!!.scheduleDelete(filesToDelete, "renamed")
-        }
-        ioDirectory.resolve(fileName).write(byteOut.internalBuffer, 0, byteOut.size())
       }
     }
     else {
@@ -582,7 +568,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     return info != null && processor.getSchemeKey(scheme) != info.schemeKey
   }
 
-  private fun deleteFiles(errorCollector: ErrorCollector, filesToDelete: MutableSet<String>) {
+  private fun deleteFiles(errorCollector: ErrorCollector, filesToDelete: MutableSet<String>, events: MutableList<VFileEvent>) {
     if (provider != null) {
       val iterator = filesToDelete.iterator()
       for (name in iterator) {
@@ -605,30 +591,22 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
     LOG.debug { "Delete scheme files: ${filesToDelete.joinToString()}" }
 
-    if (isUseVfs) {
-      getVirtualDirectory()?.let { virtualDir ->
-        val childrenToDelete = virtualDir.children.filter { filesToDelete.contains(it.name) }
-        if (childrenToDelete.isNotEmpty()) {
-          runWriteAction {
-            for (file in childrenToDelete) {
-              try {
-                file.delete(this)
-              }
-              catch (e: Throwable) {
-                errorCollector.addError(e)
-              }
-            }
-          }
-        }
+    for (name in filesToDelete) {
+      try {
+        NioFiles.deleteRecursively(ioDirectory.resolve(name))
+      }
+      catch (e: Throwable) {
+        errorCollector.addError(e)
       }
     }
-    else {
-      for (name in filesToDelete) {
-        try {
-          NioFiles.deleteRecursively(ioDirectory.resolve(name))
-        }
-        catch (e: Throwable) {
-          errorCollector.addError(e)
+
+    if (isUpdateVfs) {
+      val dir = getVirtualDirectory()
+      if (dir != null) {
+        for (file in dir.children) {
+          if (file.isValid && file.name in filesToDelete) {
+            events += VFileDeleteEvent(/*requestor =*/ this, file)
+          }
         }
       }
     }

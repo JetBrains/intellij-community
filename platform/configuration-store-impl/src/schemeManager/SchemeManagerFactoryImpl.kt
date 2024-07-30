@@ -3,7 +3,6 @@ package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
@@ -14,12 +13,14 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.addSuppressed
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -104,16 +105,11 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   final override suspend fun save() {
     var error: Throwable? = null
+    val events = mutableListOf<VFileEvent>()
+
     for (registeredManager in managers) {
       try {
-        if (registeredManager.isUseVfs) {
-          withContext(Dispatchers.EDT) {
-            registeredManager.save()
-          }
-        }
-        else {
-          registeredManager.save()
-        }
+        registeredManager.saveImpl(events)
       }
       catch (e: CancellationException) {
         throw e
@@ -122,14 +118,16 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
         throw e
       }
       catch (e: Throwable) {
-        if (error == null) {
-          error = e
-        }
-        else {
-          error.addSuppressed(e)
-        }
+        error = addSuppressed(error, e)
       }
     }
+
+    if (events.isNotEmpty()) {
+      blockingContext {
+        RefreshQueue.getInstance().processEvents(false, events)
+      }
+    }
+
     error?.let {
       throw it
     }
