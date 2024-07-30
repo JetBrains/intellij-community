@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -20,7 +20,7 @@ import java.util.concurrent.CancellationException;
  * </p>
  *
  * @see com.intellij.openapi.progress.ProgressIndicator#checkCanceled()
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
  */
 public class ProcessCanceledException extends CancellationException implements ControlFlowException {
   public ProcessCanceledException() { }
