@@ -28,7 +28,7 @@ class ClearOutputAction private constructor() : DumbAwareAction() {
 }
 
 
-internal class SaveOutputAction private constructor() : DumbAwareAction() {
+class SaveOutputAction private constructor() : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = getInlayOutput<InlayOutput.WithSaveAs>(e) != null
   }

@@ -2,7 +2,7 @@
  * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-package org.jetbrains.plugins.notebooks.visualization.r.inlays.components
+package com.intellij.notebooks.images
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -30,7 +30,9 @@ import org.intellij.images.ui.ImageComponent
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.runAsync
 import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
-import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.EmptyComponentPanel
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsManager
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ImageInverter
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -253,7 +255,7 @@ class GraphicsPanel(private val project: Project, private val disposableParent: 
         return@runInEdt
       }
       closeEditor(VisualizationBundle.message("graphics.not.available"))
-      val editor = UiCustomizer.instance.createImageEditor(project, file, this)
+      val editor = ImageEditorFactory.instance.createImageEditor(project, file, this)
       adjustImageZoom(editor.zoomModel)
       removeImageInfoLabelAndActionToolBar(editor)
       currentImageFile = file
