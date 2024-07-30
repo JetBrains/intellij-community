@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.hotswap
 
+import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -50,13 +51,21 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
 private class HotSwapToolbarComponent(action: AnAction, presentation: Presentation, place: String)
   : JPanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(4), 0)) {
 
-  val button = ActionButton(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+  private val tooltip = createHelpTooltip()
+  val button = ActionButton(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
+    tooltip.installOn(this)
+  }
 
   init {
     isOpaque = false
     add(JBLabel(XDebuggerBundle.message("xdebugger.hotswap.code.changed")))
     add(button)
+    tooltip.installOn(this)
   }
+
+  private fun createHelpTooltip() = HelpTooltip()
+    .setTitle(XDebuggerBundle.message("xdebugger.hotswap.tooltip.apply"))
+    .setDescription(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
 
   fun update(inProgress: Boolean, presentation: Presentation) {
     presentation.isEnabled = !inProgress
