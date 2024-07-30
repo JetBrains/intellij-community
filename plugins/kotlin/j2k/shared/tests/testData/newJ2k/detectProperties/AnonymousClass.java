@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class X {
     void foo() {
         Runnable runnable = new Runnable() {

@@ -1,1 +1,1 @@
-class AppInfo(var mName: String, var mIcon: String, var mLastUpdateTime: Long)
+class AppInfo(var mName: String?, var mIcon: String?, var mLastUpdateTime: Long)

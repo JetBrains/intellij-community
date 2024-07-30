@@ -1,1 +1,1 @@
-internal class C(var x: String)
+internal class C(var x: String?)

@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 class Outer {
     void test(C c) {
         System.out.println(c.myString);

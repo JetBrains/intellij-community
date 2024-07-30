@@ -1,4 +1,3 @@
-// IGNORE_K2
 package org.test.customer
 
 class Customer {

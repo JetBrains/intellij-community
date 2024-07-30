@@ -1,7 +1,7 @@
 class C {
-    private var xx = ""
+    private var xx: String? = ""
 
-    var x: String
+    var x: String?
         get() = xx
         set(value) {
             println("setter invoked")

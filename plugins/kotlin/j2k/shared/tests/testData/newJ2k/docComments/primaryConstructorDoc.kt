@@ -2,7 +2,7 @@
  * This constructor is especially useful
  */
 internal class CtorComment {
-    var myA: String = "str"
+    var myA: String? = "str"
 }
 
 internal class CtorComment2
