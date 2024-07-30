@@ -181,9 +181,6 @@
   - name: kotlin.features-trainer
   - name: kotlin.fir
   - name: kotlin.fir.fir-low-level-api-ide-impl
-    libraries:
-      opentest4j:
-      - name: $MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1/opentest4j-1.jar
   - name: kotlin.fir.frontend-independent
   - name: kotlin.formatter
   - name: kotlin.git

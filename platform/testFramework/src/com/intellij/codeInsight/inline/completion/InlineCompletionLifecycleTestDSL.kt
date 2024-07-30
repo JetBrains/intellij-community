@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.completion.CompletionType
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
@@ -21,16 +22,13 @@ import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.EditorMouseFixture
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.annotations.ApiStatus
-import org.junit.Assert.assertNull
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.*
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.event.KeyEvent
@@ -57,12 +55,12 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @ICRequest
   suspend fun pickLookupElement(element: String) {
     withContext(Dispatchers.EDT) {
-      assertNotNull(fixture.lookup)
-      assertInstanceOf(LookupImpl::class.java, fixture.lookup)
-      assertNotNull(fixture.lookupElementStrings)
+      assertThat(fixture.lookup).isNotNull()
+      assertThat(fixture.lookup).isInstanceOf(LookupImpl::class.java)
+      assertThat(fixture.lookupElementStrings).isNotNull()
 
       val lookupElement = fixture.lookupElements!!.find { it.lookupString == element }
-      assertNotNull(lookupElement)
+      assertThat(lookupElement).isNotNull()
       fixture.lookup.currentItem = lookupElement
     }
   }
@@ -71,7 +69,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   suspend fun insertLookupElement() {
     withContext(Dispatchers.EDT) {
       val lookup = fixture.lookup as? LookupImpl
-      assertNotNull(lookup?.currentItem)
+      assertThat(lookup?.currentItem).isNotNull()
       lookup!!.finishLookup('\n')
     }
   }
@@ -80,7 +78,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   suspend fun hideLookup() {
     withContext(Dispatchers.EDT) {
       val lookup = fixture.lookup as? LookupImpl
-      assertNotNull(lookup)
+      assertThat(lookup).isNotNull()
       lookup!!.hideLookup(false)
     }
   }
@@ -220,13 +218,13 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
 
   @ICAssert
   suspend fun assertNoLookup() = readAction {
-    assertNull(fixture.lookup)
+    assertThat(fixture.lookup).isNull()
   }
 
   @ICAssert
   suspend fun assertFileContent(context: String) {
     coroutineToIndicator {
-      application.runReadAction {
+      ApplicationManager.getApplication().runReadAction {
         compareContents(context)
         compareCaretPosition(context)
       }
@@ -237,9 +235,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   suspend fun assertInlineRender(context: String) {
     withContext(Dispatchers.EDT) {
       val ctx = assertContextExists()
-      assertEquals(context, ctx.textToInsert()) {
-        "Expected and actual inline is shown and visible."
-      }
+      assertThat(ctx.textToInsert()).describedAs { "Expected and actual inline is shown and visible." }.isEqualTo(context)
     }
   }
 
@@ -249,9 +245,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
       val expected = ExpectedInlineCompletionElementsBuilderImpl().apply(builder).build()
       assertInlineRender(expected.joinToString("") { it.text })
       val actual = assertContextExists().state.elements
-      assertEquals(expected.size, actual.size) {
+      assertThat(actual.size).describedAs {
         "Unexpected number of inline elements. Expected: ${expected.map { it.text }}, found: ${actual.map { it.element.text }}."
-      }
+      }.isEqualTo(expected.size)
       (expected zip actual).forEach { (elem1, elem2) ->
         elem1.assertMatches(elem2)
       }
@@ -262,7 +258,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @ICAssert
   suspend fun assertContextExists(): InlineCompletionContext = withContext(Dispatchers.EDT) {
     val contextOrNull = InlineCompletionContext.getOrNull(fixture.editor)
-    assertNotNull(contextOrNull) { "There are no inline completion context." }
+    assertThat(contextOrNull).describedAs { "There are no inline completion context." }.isNotNull()
     contextOrNull!!
   }
 
@@ -270,7 +266,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   suspend fun assertInlineHidden() {
     withContext(Dispatchers.EDT) {
       val ctx = InlineCompletionContext.getOrNull(fixture.editor)
-      Assertions.assertNull(ctx)
+      assertThat(ctx).isNull()
     }
   }
 
@@ -278,18 +274,18 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @RequiresReadLock
   @RequiresBlockingContext
   private fun compareContents(expectedLine: String) {
-    assertEquals(expectedLine.removeCaret(), fixture.editor.document.text.removeCaret()) {
+    assertThat(fixture.editor.document.text.removeCaret()).describedAs {
       "Expected and actual contents are different."
-    }
+    }.isEqualTo(expectedLine.removeCaret())
   }
 
   @RequiresReadLock
   @RequiresBlockingContext
   private fun compareCaretPosition(expectedLine: String) {
     val actualLineWithCaret = StringBuilder(fixture.editor.document.text).insert(fixture.caretOffset, "<caret>").toString()
-    assertEquals(expectedLine, actualLineWithCaret) {
+    assertThat(actualLineWithCaret).describedAs {
       "Expected and actual caret positions are different."
-    }
+    }.isEqualTo(expectedLine)
   }
 
   private fun String.removeCaret() = replace("<caret>", "")
@@ -339,12 +335,12 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   ) : InlineCompletionElementPredicate(text) {
     @ICUtil
     override fun assertMatches(actual: InlineCompletionElement.Presentable) {
-      assertInstanceOf(clazz.java, actual) {
+      assertThat(actual).describedAs {
         "Expected '${clazz.simpleName}' inline completion element, but '${actual::class.simpleName}' found."
-      }
-      assertEquals(text, actual.element.text) {
+      }.isInstanceOf(clazz.java)
+      assertThat(actual.element.text).describedAs {
         "Expected inline completion element with '$text' content, but '${actual.element.text}' found."
-      }
+      }.isEqualTo(text)
     }
   }
 

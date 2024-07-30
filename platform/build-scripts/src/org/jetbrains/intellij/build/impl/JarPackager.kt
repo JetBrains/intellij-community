@@ -358,7 +358,7 @@ class JarPackager private constructor(
     val moduleName = module.name
     val includeProjectLib = if (layout is PluginLayout) layout.auto else item.reason == ModuleIncludeReasons.PRODUCT_MODULES
 
-    val excluded = (layout.excludedLibraries.get(moduleName) ?: emptyList()) + (layout.excludedLibraries.get(null) ?: emptyList())
+    val excluded = if (layout is PluginLayout) (layout.excludedLibraries.get(moduleName) ?: emptyList()) + (layout.excludedLibraries.get(null) ?: emptyList()) else emptySet()
     for (element in helper.getLibraryDependencies(module)) {
       var projectLibraryData: ProjectLibraryData? = null
       val libRef = element.libraryReference

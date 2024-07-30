@@ -102,16 +102,27 @@ val CE_CLASS_VERSIONS: Map<String, String> = BASE_CLASS_VERSIONS.withAll(hashMap
   "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.7",
 ))
 
-val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
-  for (name in listOf("intellij.platform.testFramework.common",
-                      "intellij.platform.testFramework.junit5",
-                      "intellij.platform.testFramework",
-                      "intellij.platform.testFramework.core",
-                      "intellij.platform.testFramework.impl",
-                      "intellij.tools.testsBootstrap",
-                      "intellij.java.rt")) {
+val TEST_FRAMEWORK_LAYOUT_CUSTOMIZER: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
+  for (name in listOf(
+    "intellij.platform.testFramework.common",
+    "intellij.platform.testFramework.junit5",
+    "intellij.platform.testFramework",
+    "intellij.platform.testFramework.core",
+    "intellij.platform.testFramework.impl",
+    "intellij.tools.testsBootstrap",
+  )) {
     layout.withModule(name, TEST_FRAMEWORK_JAR)
   }
+  layout.withoutProjectLibrary("JUnit4")
+  layout.withoutProjectLibrary("JUnit5")
+  layout.withoutProjectLibrary("JUnit5Jupiter")
+  @Suppress("SpellCheckingInspection")
+  layout.withoutProjectLibrary("opentest4j")
+}
+
+val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layout, context ->
+  TEST_FRAMEWORK_LAYOUT_CUSTOMIZER(layout, context)
+  layout.withModule("intellij.java.rt", TEST_FRAMEWORK_JAR)
 }
 
 /**
@@ -119,22 +130,18 @@ val TEST_FRAMEWORK_WITH_JAVA_RT: (PlatformLayout, BuildContext) -> Unit = { layo
  */
 abstract class BaseIdeaProperties : JetBrainsProductProperties() {
   init {
+    productLayout.addPlatformSpec(TEST_FRAMEWORK_LAYOUT_CUSTOMIZER)
     productLayout.addPlatformSpec { layout, _ ->
       layout.withModule("intellij.java.ide.resources")
 
       if (!productLayout.productApiModules.contains("intellij.jsp.base")) {
         layout.withModule("intellij.jsp.base")
       }
+
       for (moduleName in arrayOf(
         "intellij.java.testFramework",
-        "intellij.platform.testFramework.core",
-        "intellij.platform.testFramework.impl",
-        "intellij.platform.testFramework.common",
-        "intellij.platform.testFramework.junit5",
-        "intellij.platform.testFramework",
         "intellij.platform.debugger.testFramework",
         "intellij.platform.uast.testFramework",
-        "intellij.tools.testsBootstrap",
       )) {
         if (!productLayout.productApiModules.contains(moduleName) && !productLayout.productImplementationModules.contains(moduleName)) {
           layout.withModule(moduleName, TEST_FRAMEWORK_JAR)

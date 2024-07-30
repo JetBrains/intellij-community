@@ -14,8 +14,8 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5Launcher" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit5Jupiter" level="project" />
+    <orderEntry type="library" name="JUnit5" level="project" />
+    <orderEntry type="library" name="JUnit5Jupiter" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="library" name="opentest4j" level="project" />
   </component>
 </module>

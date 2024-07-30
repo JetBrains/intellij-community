@@ -3,9 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.BuildContext
-import java.util.function.BiConsumer
 
 sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   /**
@@ -77,14 +75,6 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     )
   }
 
-  fun excludeModuleLibrary(libraryName: String, moduleName: String) {
-    layout.excludedLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
-  }
-
-  fun excludeProjectLibrary(libraryName: String) {
-    layout.excludedLibraries.computeIfAbsent(null) { ArrayList() }.add(libraryName)
-  }
-
   /**
    * Exclude the specified files when [moduleName] is packed into JAR file.
    * <strong>This is a temporary method added to keep the layout of some old plugins. If some files from a module shouldn't be included in the
@@ -122,10 +112,5 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
 
   fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
     layout.withPatch { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
-  }
-
-  @Obsolete
-  fun withSyncPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
-    layout.withPatch { moduleOutputPatcher, _, buildContext -> patcher.accept(moduleOutputPatcher, buildContext) }
   }
 }

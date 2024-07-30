@@ -678,13 +678,15 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
     }
   }
 
-  checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", context = context)
-  for ((key, value) in layout.excludedLibraries.entries) {
-    val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
-    for (libraryName in value) {
-      check(libraries.any { getLibraryFileName(it) == libraryName }) {
-        val where = key?.let { "module \'$it\'" } ?: "project"
-        "Cannot find library \'$libraryName\' in $where (used in \'excludedModuleLibraries\' in $description)"
+  if (layout is PluginLayout) {
+    checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", context = context)
+    for ((key, value) in layout.excludedLibraries.entries) {
+      val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
+      for (libraryName in value) {
+        check(libraries.any { getLibraryFileName(it) == libraryName }) {
+          val where = key?.let { "module \'$it\'" } ?: "project"
+          "Cannot find library \'$libraryName\' in $where (used in \'excludedModuleLibraries\' in $description)"
+        }
       }
     }
   }
