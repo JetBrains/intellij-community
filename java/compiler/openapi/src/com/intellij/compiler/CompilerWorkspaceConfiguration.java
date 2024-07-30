@@ -36,6 +36,8 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
   @Deprecated(forRemoval = true)
   public Boolean PARALLEL_COMPILATION = null;
 
+  public JpsParallelCompilationOption JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.AUTOMATIC;
+
   public int COMPILER_PROCESS_HEAP_SIZE = 0;
   public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "";
   public boolean REBUILD_ON_DEPENDENCY_CHANGE = true;
