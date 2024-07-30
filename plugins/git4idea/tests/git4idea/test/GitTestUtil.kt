@@ -130,7 +130,7 @@ internal fun createRepository(project: Project, root: Path, makeInitialCommit: B
 
 internal fun GitRepository.createSubRepository(name: String): GitRepository {
   val childRoot = File(this.root.path, name)
-  HeavyPlatformTestCase.assertTrue(childRoot.mkdir())
+  HeavyPlatformTestCase.assertTrue(childRoot.mkdirs())
   val repo = createRepository(this.project, childRoot.path)
   this.tac(".gitignore", name)
   return repo

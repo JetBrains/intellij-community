@@ -168,15 +168,15 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
-  public @NotNull Collection<FilePath> getUntrackedFilePaths() {
+  public @NotNull Set<FilePath> getUntrackedFilePaths() {
     synchronized (LOCK) {
-      return new ArrayList<>(myUntrackedFiles);
+      return new HashSet<>(myUntrackedFiles);
     }
   }
 
-  public @NotNull Collection<FilePath> getIgnoredFilePaths() {
+  public @NotNull Set<FilePath> getIgnoredFilePaths() {
     synchronized (LOCK) {
-      return new ArrayList<>(myIgnoredFiles.filePaths());
+      return new HashSet<>(myIgnoredFiles.filePaths());
     }
   }
 
@@ -253,11 +253,11 @@ public class GitUntrackedFilesHolder implements Disposable {
       }
 
       Set<FilePath> oldIgnored;
-      List<FilePath> newIgnored;
+      Set<FilePath> newIgnored;
       synchronized (LOCK) {
-        oldIgnored = new HashSet<>(myIgnoredFiles.filePaths());
+        oldIgnored = getIgnoredFilePaths();
         applyRefreshResult(result, dirtyScope, oldIgnored);
-        newIgnored = new ArrayList<>(myIgnoredFiles.filePaths());
+        newIgnored = getIgnoredFilePaths();
 
         myInUpdate = isDirty();
       }
@@ -265,7 +265,8 @@ public class GitUntrackedFilesHolder implements Disposable {
       BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).repositoryUpdated(myRepository);
       BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
       ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
-      notifyExcludedSynchronizer(oldIgnored, newIgnored);
+
+      myProject.getService(IgnoredToExcludedSynchronizer.class).onIgnoredFilesUpdate(newIgnored, oldIgnored);
     }
     finally {
       BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStopped();
@@ -297,18 +298,6 @@ public class GitUntrackedFilesHolder implements Disposable {
       myUntrackedFiles.addAll(result.untracked);
       myIgnoredFiles.clear();
       myIgnoredFiles.addAll(result.ignored);
-    }
-  }
-
-  private void notifyExcludedSynchronizer(@NotNull Set<FilePath> oldIgnored, @NotNull List<FilePath> newIgnored) {
-    List<FilePath> addedIgnored = new ArrayList<>();
-    for (FilePath filePath : newIgnored) {
-      if (!oldIgnored.contains(filePath)) {
-        addedIgnored.add(filePath);
-      }
-    }
-    if (!addedIgnored.isEmpty()) {
-      myProject.getService(IgnoredToExcludedSynchronizer.class).ignoredUpdateFinished(addedIgnored);
     }
   }
 

@@ -862,6 +862,8 @@
     <settingsEntryPointActionProvider os="windows" implementation="git4idea.config.GitVersionUpdateSettingsEntryProvider"/>
 
     <history.activityPresentationProvider implementation="git4idea.GitActivityPresentationProvider"/>
+
+    <searchScopesProvider implementation="git4idea.search.GitSearchScopeProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

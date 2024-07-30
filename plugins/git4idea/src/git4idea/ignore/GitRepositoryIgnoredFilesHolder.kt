@@ -9,7 +9,7 @@ import org.jetbrains.annotations.TestOnly
 class GitRepositoryIgnoredFilesHolder(private val repository: GitRepository) {
   fun isInUpdateMode(): Boolean = repository.untrackedFilesHolder.isInUpdateMode
   fun containsFile(file: FilePath): Boolean = repository.untrackedFilesHolder.containsIgnoredFile(file)
-  val ignoredFilePaths: Set<FilePath> get() = repository.untrackedFilesHolder.ignoredFilePaths.toSet()
+  val ignoredFilePaths: Set<FilePath> get() = repository.untrackedFilesHolder.ignoredFilePaths
   fun retrieveIgnoredFilePaths(): Collection<FilePath> = repository.untrackedFilesHolder.retrieveIgnoredFilePaths()
 
   fun removeIgnoredFiles(filePaths: Collection<FilePath>) {

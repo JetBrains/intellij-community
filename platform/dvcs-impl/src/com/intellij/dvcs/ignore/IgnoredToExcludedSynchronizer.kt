@@ -136,7 +136,14 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
 
   override fun needDoForCurrentProject() = VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED
 
-  fun ignoredUpdateFinished(ignoredPaths: Collection<FilePath>) {
+  fun onIgnoredFilesUpdate(ignoredFilePaths: Set<FilePath>, previouslyIgnoredFilePaths: Set<FilePath>) {
+    val addedIgnored = ignoredFilePaths.filter { it !in previouslyIgnoredFilePaths }
+    if (!addedIgnored.isEmpty()) {
+      ignoredUpdateFinished(addedIgnored)
+    }
+  }
+
+  private fun ignoredUpdateFinished(ignoredPaths: Collection<FilePath>) {
     ProgressManager.checkCanceled()
     if (synchronizationTurnOff()) return
     if (mutedForCurrentProject()) return
@@ -294,7 +301,7 @@ internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
 // do not use SelectFilesDialog.init because it doesn't provide clear statistic: what exactly dialog shown/closed, action clicked
 private class IgnoredToExcludeSelectDirectoriesDialog(
   project: Project?,
-  files: List<VirtualFile>
+  files: List<VirtualFile>,
 ) : SelectFilesDialog(project, files, message("ignore.to.exclude.notification.notice"), null, true, true) {
   init {
     title = message("ignore.to.exclude.view.dialog.title")

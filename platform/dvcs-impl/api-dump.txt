@@ -242,10 +242,10 @@ f:com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer
 - doActionOnChosenFiles(java.util.Collection):V
 - doFilterFiles(java.util.Collection):java.util.List
 - f:getValidFiles():java.util.List
-- f:ignoredUpdateFinished(java.util.Collection):V
 - f:isNotEmpty():Z
 - f:muteForCurrentProject():V
 - f:mutedForCurrentProject():Z
+- f:onIgnoredFilesUpdate(java.util.Set,java.util.Set):V
 a:com.intellij.dvcs.ignore.VcsIgnoredFilesHolderBase
 - com.intellij.dvcs.repo.VcsManagedFilesHolderBase
 - <init>(com.intellij.dvcs.repo.AbstractRepositoryManager):V
