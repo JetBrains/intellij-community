@@ -24,11 +24,11 @@ import java.util.concurrent.Future;
  * <p>
  * The thread model defines three types of locks which provide access to the PSI and other IDE data structures:
  * <ul>
- *   <li><b>Read lock</b> provides read access to the data. Can be obtained from any thread concurrently with other Read locks
+ *   <li><b>Read lock</b> provides read access to the data. Can be acquired from any thread concurrently with other Read locks
  *   and Write Intent lock.</li>
- *   <li><b>Write Intent lock</b> provides read access to the data and the ability to acquire Write lock. Can be obtained from
+ *   <li><b>Write Intent lock</b> provides read access to the data and the ability to acquire Write lock. Can be acquired from
  *   any thread concurrently with Read locks, but cannot be acquired if another Write Intent lock is held on another thread.</li>
- *   <li><b>Write lock</b> provides read and write access to the data. Can only be obtained from under Write Intent lock.
+ *   <li><b>Write lock</b> provides read and write access to the data. Can only be acquired from under Write Intent lock.
  *   Cannot be acquired if a Read lock is held on another thread.</li>
  * </ul>
  * <p>
@@ -40,10 +40,11 @@ import java.util.concurrent.Future;
  *   <tr><th>W</th><td>-</td><td>-</td><td>-</td></tr>
  * </table>
  * <p>
- * Obtaining locks manually is not recommended. The recommended way to obtain read and write locks is to run so-called
- * "read actions" and write-actions via {@link #runReadAction} and {@link #runWriteAction}, respectively.
+ * Acquiring locks manually is not recommended.
+ * The recommended way to acquire read and write locks is to run so-called "read actions" and "write actions"
+ * via {@link #runReadAction} and {@link #runWriteAction}, respectively.
  * <p>
- * The recommended way to obtain Write Intent lock is to schedule execution on so-called "write thread" (i.e. thread with Write Intent lock)
+ * The recommended way to acquire Write Intent lock is to schedule execution on so-called "write thread" (i.e. thread with Write Intent lock)
  * via {@link #invokeLaterOnWriteThread} or {@link AppUIExecutor#onWriteThread} asynchronous API.
  * <p>
  * Multiple read actions can run at the same time without locking each other.
