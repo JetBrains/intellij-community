@@ -508,11 +508,18 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
     importProjectAsync()
-    checkHighlighting(projectPom,
-                      Highlight(text="parent", description = "'groupId' child tag should be defined"),
-                      Highlight(text="junit"),
-                      Highlight(text="4.0"),
+
+    val expectedHighlights = arrayOf(
+      Highlight(text = "parent", description = "'groupId' child tag should be defined"),
+      Highlight(text = "junit"),
+      Highlight(text = "4.0"),
     )
+
+    val highlights1 = doHighlighting(projectPom)
+    val highlights2 = doHighlighting(projectPom)
+
+    assertHighlighting(highlights1, *expectedHighlights)
+    assertHighlighting(highlights2, *expectedHighlights)
   }
 
   @Test

@@ -566,19 +566,23 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected suspend fun checkHighlighting(file: VirtualFile, vararg expectedHighlights: Highlight) {
-    withContext(Dispatchers.EDT) {
+    assertHighlighting(doHighlighting(file), *expectedHighlights)
+  }
+
+  protected suspend fun doHighlighting(file: VirtualFile): Collection<HighlightInfo> {
+    return withContext(Dispatchers.EDT) {
       refreshFiles(listOf(file))
       val content = String(file.contentsToByteArray())
-      MavenLog.LOG.debug("Checking highlighting in file $file:\n$content")
+      MavenLog.LOG.warn("Checking highlighting in file $file:\n$content")
       fixture.openFileInEditor(file)
-      MavenLog.LOG.debug("Text in editor: ${fixture.editor.document.text}")
+      MavenLog.LOG.warn("Text in editor: ${fixture.editor.document.text}")
       val highlightingInfos = fixture.doHighlighting()
-      MavenLog.LOG.debug("Highlighting results: ${highlightingInfos.joinToString { "\n${it.severity} ${it.description} (${it.startOffset}, ${it.endOffset})" }}")
-      assertHighlighting(highlightingInfos, *expectedHighlights)
+      MavenLog.LOG.warn("Highlighting results: ${highlightingInfos.joinToString { "\n${it.severity} ${it.description} (${it.startOffset}, ${it.endOffset})" }}")
+      highlightingInfos
     }
   }
 
-  private fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, vararg expectedHighlights: Highlight) {
+  protected fun assertHighlighting(highlightingInfos: Collection<HighlightInfo>, vararg expectedHighlights: Highlight) {
     expectedHighlights.forEach { assertHighlighting(highlightingInfos, it) }
   }
 
