@@ -114,21 +114,21 @@ public abstract class BaseSplitter implements Splitter {
     }
   }
 
-  private static final int PROCESSING_TIME_LIMIT = 500;
+  private static final int PROCESSING_TIME_LIMIT_MS = 500;
 
   /**
-   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT}
+   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT_MS}
    */
   protected static CharSequence newBombedCharSequence(String text, TextRange range) {
     return newBombedCharSequence(range.substring(text));
   }
 
   /**
-   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT}
+   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT_MS}
    */
   protected static CharSequence newBombedCharSequence(String substring) {
     return new StringUtil.BombedCharSequence(substring) {
-      final long myTime = System.currentTimeMillis() + PROCESSING_TIME_LIMIT;
+      final long myTime = System.currentTimeMillis() + PROCESSING_TIME_LIMIT_MS;
 
       @Override
       protected void checkCanceled() {
