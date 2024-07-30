@@ -6,7 +6,9 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.LightweightHint
+import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
@@ -43,11 +45,16 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
         }
       }
 
-      val newEntries = mouseArea?.entries
-      if (newEntries != null) {
-        for (entry in newEntries) {
-          entry.isHoveredWithCtrl = ctrlDown
-        }
+      val newEntries = mouseArea?.entries ?: emptyList()
+      for (entry in newEntries) {
+        entry.isHoveredWithCtrl = ctrlDown
+      }
+
+      if (ctrlDown && newEntries.isNotEmpty()) {
+        (e.editor as? EditorEx)?.setCustomCursor(DeclarativeInlayHintsMouseMotionListener::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
+      }
+      else {
+        (e.editor as? EditorEx)?.setCustomCursor(DeclarativeInlayHintsMouseMotionListener::class.java, null)
       }
 
       inlayUnderCursor?.get()?.update()
