@@ -482,7 +482,21 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   @Override
   public void saveTo(@NotNull DataOutput out,
                      @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
-    DataInputOutputUtil.writeINT(out, size());
+    int size = size();
+    DataInputOutputUtil.writeINT(out, size);
+
+    if (size == 0) {
+      return;
+    }
+
+
+    if (asMapping() == null) {
+      //single entry: skip creating iterator for a most frequent case
+      Value value = unwrap(asValue());
+      externalizer.save(out, value);
+      storeFileSet(out, myInputIdMappingValue);
+      return;
+    }
 
     for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       final Value value = valueIterator.next();
