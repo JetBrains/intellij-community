@@ -23,10 +23,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.List;
 
 @Deprecated
 public abstract class DebuggerSupport {
-  private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.debuggerSupport");
+  private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = new ExtensionPointName<>("com.intellij.xdebugger.debuggerSupport");
 
   protected static final class DisabledActionHandler extends DebuggerActionHandler {
     public static final DisabledActionHandler INSTANCE = new DisabledActionHandler();
@@ -41,8 +42,8 @@ public abstract class DebuggerSupport {
     }
   }
 
-  public static DebuggerSupport @NotNull [] getDebuggerSupports() {
-    return EXTENSION_POINT.getExtensions();
+  public static @NotNull List<@NotNull DebuggerSupport> getDebuggerSupports() {
+    return EXTENSION_POINT.getExtensionList();
   }
 
   private static final BreakpointPanelProvider<?> EMPTY_PANEL_PROVIDER = new BreakpointPanelProvider<>() {
