@@ -5,5 +5,11 @@ package com.intellij.ide.ui.search
  * An extension allowing plugins to provide the data at runtime for the setting search to work on.
  */
 abstract class SearchableOptionContributor {
-  abstract fun processOptions(processor: SearchableOptionProcessor)
+  open suspend fun contribute(processor: SearchableOptionProcessor) {
+    processOptions(processor)
+  }
+
+  open fun processOptions(processor: SearchableOptionProcessor) {
+    throw AbstractMethodError()
+  }
 }

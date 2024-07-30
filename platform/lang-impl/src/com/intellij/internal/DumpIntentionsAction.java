@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 final class DumpIntentionsAction extends AnAction implements DumbAware {
@@ -43,11 +42,10 @@ final class DumpIntentionsAction extends AnAction implements DumbAware {
       return;
     }
 
-    List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
     File root = VfsUtilCore.virtualToIoFile(file);
     Element el = new Element("root");
     Map<String, Element> categoryMap = new HashMap<>();
-    for (IntentionActionMetaData metaData : list) {
+    for (IntentionActionMetaData metaData : IntentionManagerSettings.getInstance().getMetaData()) {
       try {
         Element metadataElement = new Element("intention");
         metadataElement.setAttribute("family", metaData.getFamily());

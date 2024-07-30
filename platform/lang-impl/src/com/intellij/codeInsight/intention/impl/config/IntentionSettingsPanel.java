@@ -15,10 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class IntentionSettingsPanel implements MasterDetails {
   private JPanel myPanel;
@@ -55,15 +53,15 @@ public final class IntentionSettingsPanel implements MasterDetails {
       }
 
       @Override
-      protected List<IntentionActionMetaData> filterModel(String filter, boolean force) {
-        List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
-        if (filter == null || filter.length() == 0) {
+      protected Collection<IntentionActionMetaData> filterModel(String filter, boolean force) {
+        Collection<@NotNull IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
+        if (filter == null || filter.isEmpty()) {
           return list;
         }
 
         Set<String> quoted = new HashSet<>();
         List<Set<String>> keySetList = SearchUtil.findKeys(filter, quoted);
-        List<IntentionActionMetaData> result = new ArrayList<>();
+        Collection<IntentionActionMetaData> result = new ArrayList<>();
         for (IntentionActionMetaData metaData : list) {
           if (isIntentionAccepted(metaData, filter, force, keySetList, quoted)) {
             result.add(metaData);

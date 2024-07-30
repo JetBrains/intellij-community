@@ -111,6 +111,16 @@ object LocalizationUtil {
 
   @Internal
   @JvmOverloads
+  fun getResourceAsStream(defaultLoader: ClassLoader?, path: String, specialLocale: Locale? = null): InputStream? {
+    val locale = specialLocale ?: getLocale()
+    for (localizedPath in getLocalizedPaths(Paths.get(path), locale)) {
+      defaultLoader?.getResourceAsStream(localizedPath.invariantSeparatorsPathString)?.let { return it }
+    }
+    return getPluginClassLoader()?.getResourceAsStream(path) ?: defaultLoader?.getResourceAsStream(path)
+  }
+
+  @Internal
+  @JvmOverloads
   fun getLocalizedPathsWithDefault(path: Path, specialLocale: Locale? = null): List<Path> {
     val locale = specialLocale ?: getLocale()
     return getLocalizedPaths(path, locale).toMutableList().plusElement(path).distinct()

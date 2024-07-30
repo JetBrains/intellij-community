@@ -4,16 +4,17 @@
 package com.intellij.codeInsight.intention.impl.config
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings.Companion.getInstance
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import kotlinx.coroutines.ensureActive
 import org.jdom.Element
 import java.io.IOException
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.coroutines.coroutineContext
 
 private const val IGNORE_ACTION_TAG = "ignoreAction"
 private const val NAME_ATT = "name"
@@ -79,8 +80,10 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
 private class IntentionSearchableOptionContributor : SearchableOptionContributor() {
   private val HTML_PATTERN = Pattern.compile("<[^<>]*>")
 
-  override fun processOptions(processor: SearchableOptionProcessor) {
-    for (metaData in getInstance().getMetaData()) {
+  override suspend fun contribute(processor: SearchableOptionProcessor) {
+    for (metaData in serviceAsync<IntentionsMetadataService>().getUniqueMetadata()) {
+      coroutineContext.ensureActive()
+
       try {
         val descriptionText = HTML_PATTERN.matcher(metaData.description.text.lowercase(Locale.ENGLISH)).replaceAll(" ")
         val displayName = IntentionSettingsConfigurable.getDisplayNameText()

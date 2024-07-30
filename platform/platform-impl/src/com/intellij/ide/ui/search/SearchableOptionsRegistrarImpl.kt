@@ -16,7 +16,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.NlsSafe
@@ -139,7 +138,7 @@ class SearchableOptionsRegistrarImpl : SearchableOptionsRegistrar() {
         coroutineContext.ensureActive()
 
         try {
-          extension.instance?.processOptions(processor)
+          extension.instance?.contribute(processor)
         }
         catch (e: Throwable) {
           LOG.error(PluginException(e, extension.pluginDescriptor.pluginId))
@@ -297,17 +296,13 @@ class SearchableOptionsRegistrarImpl : SearchableOptionsRegistrar() {
 
   @Synchronized
   fun getAcceptableDescriptions(prefix: String?): Set<OptionDescription>? {
-    if (prefix == null) {
+    if (prefix == null || !isInitialized()) {
       return null
     }
 
     val stemmedPrefix = PorterStemmerUtil.stem(prefix)
     if (stemmedPrefix == null || stemmedPrefix.isBlank()) {
       return null
-    }
-
-    runBlockingMaybeCancellable {
-      initialize()
     }
 
     var result: MutableSet<OptionDescription>? = null
