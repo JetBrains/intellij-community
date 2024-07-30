@@ -212,9 +212,9 @@ class KtSymbolFromIndexProvider private constructor(
                     KotlinTopLevelExtensionsByReceiverTypeIndex,
                     KotlinExtensionsInObjectsByReceiverTypeIndex,
                 ).flatMap { indexHelper ->
-                    val key = indexHelper.buildKey(receiverTypeName, name.asString())
+                    val key = KotlinExtensionsByReceiverTypeStubIndexHelper.Companion.Key(receiverTypeName, name)
 
-                    indexHelper.getAllElements(key, project, scope) {
+                    indexHelper.getAllElements(key.key, project, scope) {
                         psiFilter(it)
                                 && useSiteFilter(it)
                                 && !it.isKotlinBuiltins()
@@ -239,9 +239,9 @@ class KtSymbolFromIndexProvider private constructor(
         if (receiverTypeNames.isEmpty()) return emptySequence()
 
         val keyFilter: (String) -> Boolean = { key ->
-            val receiverTypeName = KotlinTopLevelExtensionsByReceiverTypeIndex.receiverTypeNameFromKey(key)
-            val callableName = KotlinTopLevelExtensionsByReceiverTypeIndex.callableNameFromKey(key)
-            receiverTypeName in receiverTypeNames && nameFilter(Name.identifier(callableName))
+            val (receiverTypeName, callableName) = KotlinExtensionsByReceiverTypeStubIndexHelper.Companion.Key(key)
+            receiverTypeName in receiverTypeNames
+                    && nameFilter(callableName)
         }
 
         val values = sequenceOf(
@@ -284,16 +284,16 @@ class KtSymbolFromIndexProvider private constructor(
     private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
 
     context(KaSession)
-    private fun findAllNamesForType(type: KaType): Set<String> = buildSet {
+    private fun findAllNamesForType(type: KaType): Set<Name> = buildSet {
         if (type is KaFlexibleType) {
             return findAllNamesForType(type.lowerBound)
         }
         if (type !is KaClassType) return@buildSet
 
-        val typeName = type.classId.shortClassName.let {
-            if (it.isSpecial) return@buildSet
-            it.identifier
-        }
+        val typeName = type.classId
+            .shortClassName
+            .takeUnless { it.isSpecial }
+            ?: return@buildSet
 
         add(typeName)
         addAll(getPossibleTypeAliasExpansionNames(typeName))
@@ -304,13 +304,13 @@ class KtSymbolFromIndexProvider private constructor(
         }
     }
 
-    private fun getPossibleTypeAliasExpansionNames(originalTypeName: String): Set<String> = buildSet {
-        fun searchRecursively(typeName: String) {
+    private fun getPossibleTypeAliasExpansionNames(originalTypeName: Name): Set<Name> = buildSet {
+        fun searchRecursively(typeName: Name) {
             ProgressManager.checkCanceled()
-            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope]
+            KotlinTypeAliasByExpansionShortNameIndex[typeName.identifier, project, scope]
                 .asSequence()
-                .mapNotNull { it.name }
-                .filter { add(it) }
+                .mapNotNull { it.nameAsName }
+                .filter(::add)
                 .forEach(::searchRecursively)
         }
 

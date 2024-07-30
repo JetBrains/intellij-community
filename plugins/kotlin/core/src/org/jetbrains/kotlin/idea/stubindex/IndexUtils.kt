@@ -33,7 +33,8 @@ private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTyp
     val callableName = declaration.name ?: return
     val containingTypeReference = declaration.receiverTypeReference!!
     containingTypeReference.typeElement?.index(declaration, containingTypeReference) { typeName ->
-        sink.occurrence(indexKey, buildKey(typeName, callableName))
+        val key = KotlinExtensionsByReceiverTypeStubIndexHelper.Companion.Key(typeName, callableName)
+        sink.occurrence(indexKey, key.key)
     }
 }
 
