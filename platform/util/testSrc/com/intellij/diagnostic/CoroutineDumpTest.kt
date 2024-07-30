@@ -3,14 +3,23 @@ package com.intellij.diagnostic
 
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.LockSupport
+import kotlin.concurrent.thread
 
 class CoroutineDumpTest {
   companion object {
+    // for `testDeduplicationPreservesAddressOfBlockingCoroutines`
+    //init {
+    //  System.setProperty("kotlinx.coroutines.debug", "off")
+    //}
+
     @JvmStatic
     @BeforeAll
     fun enableDumps() {
@@ -42,5 +51,50 @@ class CoroutineDumpTest {
 """, dumpCoroutines(pluginScope, true, true))
     projectScope.cancel()
     pluginScope.cancel()
+  }
+
+  // IJPL-159382
+  @Timeout(value = 5, unit = TimeUnit.SECONDS)
+  @Test
+  fun testDeduplicationPreservesAddressOfBlockingCoroutines() {
+    val b1 = CompletableDeferred<Unit>()
+    val blockingCoroutine = AtomicReference<Job?>()
+    val b2 = CompletableDeferred<Unit>()
+    val t = thread {
+      runBlocking {
+        blockingCoroutine.set(coroutineContext[Job])
+        // TODO currently CoroutineId prevents deduplication in tests,
+        //  uncomment three following parts that check that deduplication still works if CoroutineId is no longer present
+        //val awaitingCoros = ArrayList<Continuation<Unit>>()
+        //repeat(10) {
+        //  launch(CoroutineName("test coro")) {
+        //    suspendCancellableCoroutine { // only one thread, so no concurrency issues
+        //      awaitingCoros.add(it)
+        //    }
+        //  }
+        //}
+        //while (awaitingCoros.size != 10) {
+        //  yield()
+        //}
+        b1.complete(Unit)
+        b2.await()
+        //awaitingCoros.forEach { it.resumeWith(Result.success(Unit)) }
+      }
+    }
+    runBlocking {
+      b1.await()
+    }
+    try {
+      // kind of an implementation detail, not really required for the test,
+      // but if it fails, then the thread dump lacks the information about which exactly blocking coroutine it awaits
+      assertEquals(blockingCoroutine.get(), LockSupport.getBlocker(t))
+      val dumpWithDeduplication = dumpCoroutines(blockingCoroutine.get()!! as CoroutineScope, stripDump = false, deduplicateTrees = true)!!
+      assert(dumpWithDeduplication.contains(blockingCoroutine.get()!!.toString())) { dumpWithDeduplication }
+      assert(blockingCoroutine.get()!!.toString().contains("}@")) { dumpWithDeduplication }
+      //assert(dumpWithDeduplication.contains("[x10 of]")) { dumpWithDeduplication }
+    } finally {
+      b2.complete(Unit)
+      t.join()
+    }
   }
 }
