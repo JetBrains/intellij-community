@@ -9,6 +9,7 @@ import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.StatusData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
@@ -199,10 +200,12 @@ class JaegerJsonSpanExporter(
       }
 
       runInterruptible {
-        writer.flush()
-        fileChannel.write(ByteBuffer.wrap(jsonEnd))
-        fileChannel.force(false)
-        fileChannel.position(fileChannel.position() - jsonEnd.size)
+        runBlocking(Dispatchers.IO) {
+          writer.flush()
+          fileChannel.write(ByteBuffer.wrap(jsonEnd))
+          fileChannel.force(false)
+          fileChannel.position(fileChannel.position() - jsonEnd.size)
+        }
       }
     }
   }
@@ -216,13 +219,15 @@ class JaegerJsonSpanExporter(
 
       writer = initWriter()
       runInterruptible {
-        fileChannel.truncate(0)
+        runBlocking(Dispatchers.IO) {
+          fileChannel.truncate(0)
 
-        beginWriter(w = writer,
-                    serviceName = serviceName,
-                    serviceVersion = serviceVersion,
-                    serviceNamespace = serviceNamespace,
-                    exporterVersion = exporterVersion)
+          beginWriter(w = writer,
+                      serviceName = serviceName,
+                      serviceVersion = serviceVersion,
+                      serviceNamespace = serviceNamespace,
+                      exporterVersion = exporterVersion)
+        }
       }
     }
   }
