@@ -47,8 +47,8 @@ internal class SchemeFileTracker<T : Scheme, M : T>(
           else if (schemeManager.canRead(event.childName) && isMyDirectory(event.parent)) {
             val virtualFile = event.file
             LOG.debug { "CREATED ${event.path} (virtualFile: ${if (virtualFile == null) "not " else ""}found)" }
-            virtualFile?.let {
-              list.add(AddScheme(it))
+            if (virtualFile != null) {
+              list.add(AddScheme(virtualFile))
             }
           }
         }

@@ -43,22 +43,7 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
     if (isUseVfsForWrite) {
       writeAction {
         for (saveSession in saveSessions) {
-          try {
-            saveSession.saveBlocking()
-          }
-          catch (e: ReadOnlyModificationException) {
-            LOG.warn(e)
-            saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
-          }
-          catch (e: ProcessCanceledException) {
-            throw e
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: Exception) {
-            saveResult.addError(e)
-          }
+          saveSessionBlocking(saveSession, saveResult)
         }
       }
     }
@@ -66,28 +51,43 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
       val events = if (collectVfsEvents) ArrayList<VFileEvent>() else null
       val syncList = if (events == null) null else Collections.synchronizedList(events)
       for (saveSession in saveSessions) {
-        try {
-          saveSession.save(syncList)
-        }
-        catch (e: ReadOnlyModificationException) {
-          LOG.warn(e)
-          saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Exception) {
-          saveResult.addError(e)
-        }
+        saveSession(saveSession, syncList, saveResult)
       }
       if (!events.isNullOrEmpty()) {
         blockingContext {
           RefreshQueue.getInstance().processEvents(false, events)
         }
       }
+    }
+  }
+
+  private fun saveSessionBlocking(saveSession: SaveSession, saveResult: SaveResult) {
+    try {
+      saveSession.saveBlocking()
+    }
+    catch (e: ReadOnlyModificationException) {
+      LOG.warn(e)
+      saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
+    }
+    catch (e: ProcessCanceledException) { throw e }
+    catch (e: CancellationException) { throw e }
+    catch (e: Exception) {
+      saveResult.addError(e)
+    }
+  }
+
+  private suspend fun saveSession(saveSession: SaveSession, events: MutableList<VFileEvent>?, saveResult: SaveResult) {
+    try {
+      saveSession.save(events)
+    }
+    catch (e: ReadOnlyModificationException) {
+      LOG.warn(e)
+      saveResult.addReadOnlyFile(SaveSessionAndFile(e.session ?: saveSession, e.file))
+    }
+    catch (e: ProcessCanceledException) { throw e }
+    catch (e: CancellationException) { throw e }
+    catch (e: Exception) {
+      saveResult.addError(e)
     }
   }
 }

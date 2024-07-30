@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -112,7 +110,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
 
       if (isUnitTestMode) {
-        // we don't load default state in tests as app store does, because:
+        // we don't load the default state in tests as the app store does, because:
         // 1) we should not do it
         // 2) it was so before, so, we preserve the old behavior (otherwise RunManager will load template run configurations)
         // load state only if there are existing files
@@ -211,14 +209,13 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     return "$prefix${Integer.toHexString(path.invariantSeparatorsPathString.hashCode())}"
   }
 
-  final override fun getPresentableUrl(): String {
+  final override fun getPresentableUrl(): String =
     if (isDirectoryBased) {
-      return (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).invariantSeparatorsPathString
+      (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).invariantSeparatorsPathString
     }
     else {
-      return projectFilePath.invariantSeparatorsPathString
+      projectFilePath.invariantSeparatorsPathString
     }
-  }
 
   final override fun getProjectWorkspaceId(): String? = ProjectIdManager.getInstance(project).id
 
@@ -388,8 +385,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     saveResult: SaveResult,
     forceSavingAllSettings: Boolean,
     projectSessionManager: ProjectSaveSessionProducerManager
-  ) {
-  }
+  ) { }
 
   override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager = ProjectSaveSessionProducerManager(project, storageManager.isUseVfsForWrite)
 
@@ -411,33 +407,24 @@ private class ProjectStateStorageManager(private val project: Project) : StateSt
 
   override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = PROJECT_CONFIG_DIR)
 
-  override fun expandMacro(collapsedPath: String): Path {
-    if (collapsedPath[0] == '$') {
-      return super.expandMacro(collapsedPath)
-    }
-    else {
-      // PROJECT_CONFIG_DIR is the first macro
-      return macros.get(0).value.resolve(collapsedPath)
-    }
-  }
+  override fun expandMacro(collapsedPath: String): Path =
+    if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
+    else macros[0].value.resolve(collapsedPath)  // PROJECT_CONFIG_DIR is the first macro
 
   override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
     rootAttributes.put(VERSION_OPTION, "4")
   }
 
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
-    return if (ComponentManagerImpl.badWorkspaceComponents.contains(componentName)) StoragePathMacros.WORKSPACE_FILE else PROJECT_FILE
-  }
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
+    if (ComponentManagerImpl.badWorkspaceComponents.contains(componentName)) StoragePathMacros.WORKSPACE_FILE else PROJECT_FILE
 
   override val isExternalSystemStorageEnabled: Boolean
     get() = project.isExternalStorageEnabled
 }
 
 @CalledInAny
-internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus {
-  return withContext(Dispatchers.EDT) {
-    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
-  }
+internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus = withContext(Dispatchers.EDT) {
+  ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
 }
 
 internal val useBackgroundSave: Boolean

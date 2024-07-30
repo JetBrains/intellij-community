@@ -69,7 +69,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
 
     coroutineScope {
       launch {
-        super.doSave(saveResult = saveResult, forceSavingAllSettings = forceSavingAllSettings)
+        super.doSave(saveResult, forceSavingAllSettings)
       }
 
       val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
@@ -110,7 +110,7 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
           Files.deleteIfExists(storage.file)
         }
         else {
-          writer.writeTo(file = storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
+          writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
         }
       }.getOrLogException(LOG)
     }
