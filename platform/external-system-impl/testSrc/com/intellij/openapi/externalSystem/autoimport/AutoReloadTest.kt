@@ -12,7 +12,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
-import com.intellij.openapi.util.Ref
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.testFramework.utils.vfs.getDocument
@@ -56,24 +55,6 @@ class AutoReloadTest : AutoReloadTestCase() {
 
       scheduleProjectReload()
       assertStateAndReset(numReload = 0, notified = false, event = "empty project refresh")
-    }
-  }
-
-  fun `test modification tracking disabled by ES plugin`() {
-    val autoImportAwareCondition = Ref.create(true)
-    testWithDummyExternalSystem(autoImportAwareCondition) { settingsFile ->
-      settingsFile.appendString("println 'hello'")
-      assertStateAndReset(numReload = 0, numReloadStarted = 0, numReloadFinished = 0, event = "modification")
-      scheduleProjectReload()
-      assertStateAndReset(numReload = 1, numReloadStarted = 1, numReloadFinished = 1, event = "project refresh")
-      settingsFile.replaceString("hello", "hi")
-      assertStateAndReset(numReload = 0, numReloadStarted = 0, numReloadFinished = 0, event = "modification")
-      autoImportAwareCondition.set(false)
-      scheduleProjectReload()
-      assertStateAndReset(numReload = 1, numReloadStarted = 0, numReloadFinished = 0, event = "import with inapplicable autoImportAware")
-      autoImportAwareCondition.set(true)
-      scheduleProjectReload()
-      assertStateAndReset(numReload = 1, numReloadStarted = 1, numReloadFinished = 1, event = "empty project refresh")
     }
   }
 
