@@ -168,14 +168,14 @@ object SearchUtil {
     val words = searchableOptionsRegistrar.getProcessedWords(option)
     val options = if (configurable == null) words else searchableOptionsRegistrar.replaceSynonyms(words, configurable)
     if (options.isEmpty()) {
-      return text.lowercase().contains(option.lowercase())
+      return text.contains(option, ignoreCase = true)
     }
 
     val tokens = searchableOptionsRegistrar.getProcessedWords(text)
     if (!force) {
       options.retainAll(tokens)
       val highlight = !options.isEmpty()
-      return highlight || text.lowercase().contains(option.lowercase())
+      return highlight || text.contains(option, ignoreCase = true)
     }
     else {
       options.removeAll(tokens)
