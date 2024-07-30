@@ -15086,7 +15086,7 @@ c:com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 - getChangedFiles():java.util.List
 - p:getFileEditorManager():com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - p:getSelectedEditor():com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
-- getState():com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentlyChangedFilesState
+- getState():java.lang.Object
 - gotoPlaceInfo(com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$PlaceInfo):V
 - gotoPlaceInfo(com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$PlaceInfo,Z):V
 - f:includeCurrentCommandAsNavigation():V
@@ -15096,7 +15096,7 @@ c:com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 - isNavigateNextChangeAvailable():Z
 - f:isNavigatePreviousChangeAvailable():Z
 - isSame(com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$PlaceInfo,com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$PlaceInfo):Z
-- loadState(com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentlyChangedFilesState):V
+- loadState(java.lang.Object):V
 - navigateNextChange():V
 - f:navigatePreviousChange():V
 - f:onSelectionChanged():V

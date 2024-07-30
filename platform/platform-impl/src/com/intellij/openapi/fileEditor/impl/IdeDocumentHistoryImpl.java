@@ -65,7 +65,7 @@ import java.util.function.Predicate;
 
 @State(name = "IdeDocumentHistory", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), reportStatistic = false)
 public class IdeDocumentHistoryImpl extends IdeDocumentHistory
-  implements Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
+  implements Disposable, PersistentStateComponent<Object> {
   private static final Logger LOG = Logger.getInstance(IdeDocumentHistoryImpl.class);
 
   private static final int BACK_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
@@ -75,8 +75,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
 
   private FileDocumentManager myFileDocumentManager;
 
-  private final LinkedList<PlaceInfo> backPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
-  private final LinkedList<PlaceInfo> forwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
+  private final Deque<PlaceInfo> backPlaces = new ArrayDeque<>();
+  private final Deque<PlaceInfo> forwardPlaces = new ArrayDeque<>();
   private boolean myBackInProgress;
   private boolean forwardInProgress;
   private Object myCurrentCommandGroupId;
@@ -84,7 +84,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
   private boolean registeredBackPlaceInLastGroup;
 
   // change's navigation
-  private final LinkedList<PlaceInfo> changePlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
+  private final Deque<PlaceInfo> changePlaces = new ArrayDeque<>();
   private int currentIndex;
 
   private PlaceInfo commandStartPlace;
@@ -231,29 +231,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
     }
   }
 
-  static final class RecentlyChangedFilesState {
+  private record RecentlyChangedFilesState(
     @XCollection(style = XCollection.Style.v2)
-    public final List<String> changedPaths = new ArrayList<>();
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      return changedPaths.equals(((RecentlyChangedFilesState)o).changedPaths);
-    }
-
-    @Override
-    public int hashCode() {
-      return changedPaths.hashCode();
+    List<String> changedPaths) {
+    RecentlyChangedFilesState() {
+      this(new ArrayList<>());
     }
   }
 
   @Override
-  public RecentlyChangedFilesState getState() {
+  public Object getState() {
     synchronized (state) {
       RecentlyChangedFilesState stateSnapshot = new RecentlyChangedFilesState();
       stateSnapshot.changedPaths.addAll(state.changedPaths);
@@ -262,10 +249,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
   }
 
   @Override
-  public void loadState(@NotNull RecentlyChangedFilesState state) {
+  public void loadState(@NotNull Object state) {
     synchronized (this.state) {
       this.state.changedPaths.clear();
-      this.state.changedPaths.addAll(state.changedPaths);
+      this.state.changedPaths.addAll(((RecentlyChangedFilesState)state).changedPaths);
     }
   }
 
@@ -301,7 +288,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
     return createPlaceInfo(selectedEditorWithProvider.getFileEditor(), selectedEditorWithProvider.getProvider());
   }
 
-  private static @Nullable PlaceInfo getPlaceInfoFromFocus(Project project) {
+  private @Nullable PlaceInfo getPlaceInfoFromFocus(Project project) {
     FileEditor fileEditor = new FocusBasedCurrentEditorProvider().getCurrentEditor(project);
     if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
       VirtualFile file = fileEditor.getFile();
@@ -500,6 +487,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
     removeInvalidFilesFromStacks();
     if (currentIndex == 0) return;
     PlaceInfo currentPlace = getCurrentPlaceInfo();
+    List<PlaceInfo> changePlaces = getChangePlaces();
     for (int i = currentIndex - 1; i >= 0; i--) {
       PlaceInfo info = changePlaces.get(i);
       if (currentPlace == null || !isSame(currentPlace, info)) {
@@ -511,13 +499,29 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
   }
 
   @Override
+  public void navigateNextChange() {
+    removeInvalidFilesFromStacks();
+    if (currentIndex >= changePlaces.size()) return;
+    PlaceInfo currentPlace = getCurrentPlaceInfo();
+    List<PlaceInfo> changePlaces = getChangePlaces();
+    for (int i = currentIndex; i < changePlaces.size(); i++) {
+      PlaceInfo info = changePlaces.get(i);
+      if (currentPlace == null || !isSame(currentPlace, info)) {
+        executeCommand(() -> gotoPlaceInfo(info), "", null);
+        currentIndex = i + 1;
+        break;
+      }
+    }
+  }
+
+  @Override
   public @NotNull List<PlaceInfo> getBackPlaces() {
-    return Collections.unmodifiableList(backPlaces);
+    return List.copyOf(backPlaces);
   }
 
   @Override
   public List<PlaceInfo> getChangePlaces() {
-    return Collections.unmodifiableList(changePlaces);
+    return List.copyOf(changePlaces);
   }
 
   @Override
@@ -552,26 +556,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
   }
 
   @Override
-  public void navigateNextChange() {
-    removeInvalidFilesFromStacks();
-    if (currentIndex >= changePlaces.size()) return;
-    PlaceInfo currentPlace = getCurrentPlaceInfo();
-    for (int i = currentIndex; i < changePlaces.size(); i++) {
-      PlaceInfo info = changePlaces.get(i);
-      if (currentPlace == null || !isSame(currentPlace, info)) {
-        executeCommand(() -> gotoPlaceInfo(info), "", null);
-        currentIndex = i + 1;
-        break;
-      }
-    }
-  }
-
-  @Override
   public boolean isNavigateNextChangeAvailable() {
     return currentIndex < changePlaces.size();
   }
 
-  private boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
+  private boolean removeInvalidFilesFrom(@NotNull Deque<PlaceInfo> backPlaces) {
     return backPlaces
       .removeIf(info -> (info.myFile instanceof OptionallyIncluded &&
                          !((OptionallyIncluded)info.myFile).isIncludedInDocumentHistory(project)) ||
@@ -647,19 +636,18 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
                          getCaretPosition(fileEditor), System.currentTimeMillis());
   }
 
-  private static @Nullable RangeMarker getCaretPosition(@NotNull FileEditor fileEditor) {
+  private @Nullable RangeMarker getCaretPosition(@NotNull FileEditor fileEditor) {
     if (!(fileEditor instanceof TextEditor)) {
       return null;
     }
 
     Editor editor = ((TextEditor)fileEditor).getEditor();
     int offset = editor.getCaretModel().getOffset();
-
     return editor.getDocument().createRangeMarker(offset, offset);
   }
 
   private void putLastOrMerge(@NotNull PlaceInfo next, int limit, boolean isChanged, Object groupId) {
-    LinkedList<PlaceInfo> list = isChanged ? changePlaces : backPlaces;
+    Deque<PlaceInfo> list = isChanged ? changePlaces : backPlaces;
     MessageBus messageBus = project.getMessageBus();
     RecentPlacesListener listener = messageBus.syncPublisher(RecentPlacesListener.TOPIC);
     if (!list.isEmpty()) {
