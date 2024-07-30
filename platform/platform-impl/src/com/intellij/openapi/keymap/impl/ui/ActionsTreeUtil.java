@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -455,7 +456,7 @@ public final class ActionsTreeUtil {
     Group group = new Group(KeyMapBundle.message("quick.lists.group.title"));
     for (QuickList quickList : quickLists) {
       if (filtered != null && filtered.value(ActionManagerEx.getInstanceEx().getAction(quickList.getActionId())) ||
-          SearchUtil.isComponentHighlighted(quickList.getName(), filter, forceFiltering, null) ||
+          SearchUtil.INSTANCE.isComponentHighlighted(quickList.getName(), filter, forceFiltering, null, SearchableOptionsRegistrar.getInstance()) ||
           filtered == null && StringUtil.isEmpty(filter)) {
         group.addQuickList(quickList);
       }
@@ -615,13 +616,13 @@ public final class ActionsTreeUtil {
     mainGroup.addGroup(createQuickListsGroup(wrappedFilter, filter, forceFiltering, quickLists));
     mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter));
     mainGroup.addGroup(createOtherGroup(wrappedFilter, mainGroup, keymap));
-    if (!StringUtil.isEmpty(filter) || filtered != null) {
-      final ArrayList<Object> list = mainGroup.getChildren();
+    if (!Strings.isEmpty(filter) || filtered != null) {
+      List<Object> list = mainGroup.getChildren();
       for (Iterator<Object> i = list.iterator(); i.hasNext(); ) {
-        final Object o = i.next();
+        Object o = i.next();
         if (o instanceof Group group) {
           if (group.getSize() == 0) {
-            if (!SearchUtil.isComponentHighlighted(group.getName(), filter, forceFiltering, null)) {
+            if (!SearchUtil.INSTANCE.isComponentHighlighted(group.getName(), filter, forceFiltering, null, SearchableOptionsRegistrar.getInstance())) {
               i.remove();
             }
           }
@@ -636,31 +637,40 @@ public final class ActionsTreeUtil {
 
     ActionManager actionManager = ActionManager.getInstance();
     AbbreviationManager abbreviationManager = AbbreviationManager.getInstance();
-    String insensitiveFilter = StringUtil.toLowerCase(filter);
-    Condition<? super String> condition = text -> {
-      String lowerText = text == null ? null : StringUtil.toLowerCase(text);
-      return lowerText != null && (
-             SearchUtil.isComponentHighlighted(lowerText, insensitiveFilter, force, null) ||
-             lowerText.contains(insensitiveFilter));
+    String insensitiveFilter = Strings.toLowerCase(filter);
+    SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    Predicate<? super String> condition = text -> {
+      String lowerText = Strings.toLowerCase(text);
+      return lowerText != null &&
+             (SearchUtil.INSTANCE.isComponentHighlighted(lowerText, insensitiveFilter, force, null, searchableOptionsRegistrar) ||
+              lowerText.contains(insensitiveFilter));
     };
 
     return action -> {
-      if (action == null) return false;
+      if (action == null) {
+        return false;
+      }
 
       Presentation presentation = getTemplatePresentation(action);
-      if (condition.test(presentation.getText())) return true;
-      if (condition.test(presentation.getDescription())) return true;
+      if (condition.test(presentation.getText()) || condition.test(presentation.getDescription())) {
+        return true;
+      }
 
       for (Supplier<String> synonym : action.getSynonyms()) {
-        if (condition.test(synonym.get())) return true;
+        if (condition.test(synonym.get())) {
+          return true;
+        }
       }
 
       String actionId = actionManager.getId(action);
-      if (condition.test(actionId)) return true;
-      Set<String> abbreviations = actionId == null ? Collections.emptySet() :
-                                  abbreviationManager.getAbbreviations(actionId);
+      if (condition.test(actionId)) {
+        return true;
+      }
+      Set<String> abbreviations = actionId == null ? Collections.emptySet() : abbreviationManager.getAbbreviations(actionId);
       for (String abbreviation : abbreviations) {
-        if (condition.test(abbreviation)) return true;
+        if (condition.test(abbreviation)) {
+          return true;
+        }
       }
 
       return false;

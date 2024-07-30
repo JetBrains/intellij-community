@@ -296,8 +296,12 @@ class SearchableOptionsRegistrarImpl : SearchableOptionsRegistrar() {
 
   @Synchronized
   fun getAcceptableDescriptions(prefix: String?): MutableSet<OptionDescription>? {
-    if (prefix == null || !isInitialized()) {
+    if (prefix == null) {
       return null
+    }
+
+    if (!isInitialized()) {
+      LOG.warn("Not yet initialized")
     }
 
     val stemmedPrefix = PorterStemmerUtil.stem(prefix)

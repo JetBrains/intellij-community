@@ -99,10 +99,17 @@ object SearchUtil {
       return false
     }
 
+    val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val label = getLabelsFromComponent(rootComponent)
     if (!label.isEmpty()) {
       for (each in label) {
-        if (isComponentHighlighted(each, option, force, configurable)) {
+        if (isComponentHighlighted(
+            text = each,
+            option = option,
+            force = force,
+            configurable = configurable,
+            searchableOptionsRegistrar = searchableOptionsRegistrar,
+          )) {
           highlightComponent(rootComponent, option)
           // do not visit children of a highlighted component
           return true
@@ -111,7 +118,15 @@ object SearchUtil {
     }
     else if (rootComponent is JComboBox<*>) {
       val labels = getItemsFromComboBox(rootComponent)
-      if (labels.any { isComponentHighlighted(text = it, option = option, force = force, configurable = configurable) }) {
+      if (labels.any {
+        isComponentHighlighted(
+          text = it,
+          option = option,
+          force = force,
+          configurable = configurable,
+          searchableOptionsRegistrar = searchableOptionsRegistrar,
+        )
+      }) {
         highlightComponent(rootComponent, option)
         // do not visit children of a highlighted component
         return true
@@ -146,7 +161,13 @@ object SearchUtil {
     val border = rootComponent.border
     if (border is TitledBorder) {
       val title = border.title
-      if (isComponentHighlighted(text = title, option = option, force = force, configurable = configurable)) {
+      if (isComponentHighlighted(
+          text = title,
+          option = option,
+          force = force,
+          configurable = configurable,
+          searchableOptionsRegistrar = searchableOptionsRegistrar,
+        )) {
         highlightComponent(rootComponent, option)
         rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, true)
         // do not visit children of a highlighted component
@@ -158,13 +179,18 @@ object SearchUtil {
     }
   }
 
-  @JvmStatic
-  fun isComponentHighlighted(text: String?, option: String?, force: Boolean, configurable: SearchableConfigurable?): Boolean {
+  @Internal
+  fun isComponentHighlighted(
+    text: String?,
+    option: String?,
+    force: Boolean,
+    configurable: SearchableConfigurable?,
+    searchableOptionsRegistrar: SearchableOptionsRegistrar,
+  ): Boolean {
     if (text == null || option.isNullOrEmpty()) {
       return false
     }
 
-    val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val words = searchableOptionsRegistrar.getProcessedWords(option)
     val options = if (configurable == null) words else searchableOptionsRegistrar.replaceSynonyms(words, configurable)
     if (options.isEmpty()) {

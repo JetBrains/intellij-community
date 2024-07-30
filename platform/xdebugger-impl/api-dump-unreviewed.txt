@@ -105,7 +105,6 @@ a:com.intellij.xdebugger.impl.DebuggerSupport
 - getAddToWatchesActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getBreakpointPanelProvider():com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
 - s:getDebuggerSupport(java.lang.Class):com.intellij.xdebugger.impl.DebuggerSupport
-- s:getDebuggerSupports():com.intellij.xdebugger.impl.DebuggerSupport[]
 - getEditBreakpointAction():com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
 - getEvaluateHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getEvaluateInConsoleActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler

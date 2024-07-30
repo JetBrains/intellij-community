@@ -10053,7 +10053,6 @@ f:com.intellij.ide.ui.search.SearchUtil
 - sf:expand(com.intellij.openapi.options.ConfigurableGroup[]):java.util.List
 - f:expandGroup(com.intellij.openapi.options.ConfigurableGroup):java.util.List
 - sf:findKeys(java.lang.String,java.util.Set):java.util.List
-- sf:isComponentHighlighted(java.lang.String,java.lang.String,Z,com.intellij.openapi.options.SearchableConfigurable):Z
 - sf:markup(java.lang.String,java.lang.String):java.lang.String
 - sf:markup(java.lang.String,java.lang.String,java.awt.Color,java.awt.Color):java.lang.String
 - sf:processComponent(com.intellij.openapi.options.SearchableConfigurable,java.util.Set,javax.swing.JComponent,Z):V
