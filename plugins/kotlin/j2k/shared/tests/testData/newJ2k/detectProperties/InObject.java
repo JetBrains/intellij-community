@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class AAA {
     private static int ourX = 42;
     private static int y = 0;

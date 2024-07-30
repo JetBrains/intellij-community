@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class Foo {
     private Integer someInt;
     public void setState(Integer state) {

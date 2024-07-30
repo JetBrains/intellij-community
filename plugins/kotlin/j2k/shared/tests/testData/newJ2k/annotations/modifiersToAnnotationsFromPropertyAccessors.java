@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class WithModifiersOnAccessors {
     private synchronized void methSync() {}
     protected strictfp void methStrict() {}

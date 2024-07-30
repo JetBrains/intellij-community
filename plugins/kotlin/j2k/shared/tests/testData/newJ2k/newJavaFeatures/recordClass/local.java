@@ -1,4 +1,3 @@
-// IGNORE_K2
 // JVM_TARGET: 17
 class A {
     void foo() {

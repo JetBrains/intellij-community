@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class J {
     private String x;
     @Inapplicable
