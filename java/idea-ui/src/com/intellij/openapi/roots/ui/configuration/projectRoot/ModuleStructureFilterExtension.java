@@ -9,11 +9,18 @@ import org.jetbrains.annotations.NotNull;
   Allows to exclude modules from 'Project Structure' | 'Modules' view
  */
 public abstract class ModuleStructureFilterExtension {
-
-  public static final ExtensionPointName<ModuleStructureFilterExtension> EP_NAME =
+  private static final ExtensionPointName<ModuleStructureFilterExtension> EP_NAME =
     ExtensionPointName.create("com.intellij.configuration.moduleStructureFilterExtension");
 
-  public boolean accepts(@NotNull Module module) {
+  protected abstract boolean accepts(@NotNull Module module);
+
+  static boolean isAllowed(@NotNull Module module) {
+    for (var filter : EP_NAME.getExtensionList()) {
+      if (!filter.accepts(module)) {
+        return false;
+      }
+    }
+
     return true;
   }
 }

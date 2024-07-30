@@ -239,8 +239,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                                                                     ModuleGroupingTreeHelper.createDefaultGrouping(moduleGrouper),
                                                                                     ModuleStructureConfigurable::createModuleGroupNode,
                                                                                     m -> createModuleNode(m, moduleGrouper), getNodeComparator());
-    var filters = ModuleStructureFilterExtension.EP_NAME.getExtensionList();
-    var modules = Arrays.stream(myModuleManager.getModules()).filter(module -> ContainerUtil.and(filters, filter -> filter.accepts(module))).toList();
+    var modules = Arrays.stream(myModuleManager.getModules()).filter(module -> ModuleStructureFilterExtension.isAllowed(module)).toList();
     helper.createModuleNodes(modules, myRoot, getTreeModel());
     if (containsSecondLevelNodes(myRoot)) {
       myTree.setShowsRootHandles(true);
