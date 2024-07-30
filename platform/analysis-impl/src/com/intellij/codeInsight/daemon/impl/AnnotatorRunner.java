@@ -53,6 +53,7 @@ final class AnnotatorRunner {
     myBatchMode = batchMode;
   }
 
+  // run annotators on PSI elements inside/outside while running `runnable` in parallel
   boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside, @NotNull Runnable runnable,
                              @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
@@ -61,7 +62,7 @@ final class AnnotatorRunner {
     // TODO move inside Divider to calc only once
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
     Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside);
-    Processor<? super Annotator> processor = (annotator) ->
+    Processor<? super Annotator> processor = annotator ->
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages, resultSink));
     boolean result = JobLauncher.getInstance().processConcurrentlyAsync(indicator, new ArrayList<>(supportedLanguages.keySet()), processor, runnable);
     myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myAnnotationSession, myPsiFile);

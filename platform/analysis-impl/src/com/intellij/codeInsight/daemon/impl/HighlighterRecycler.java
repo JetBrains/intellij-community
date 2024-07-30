@@ -34,7 +34,7 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
   private static final Key<ProgressIndicator> BEING_RECYCLED_KEY = Key.create("RECYCLED_KEY"); // set when the highlighter is just recycled, but not yet transferred to EDT to change its attributes. used to prevent double recycling the same RH
   @NotNull private final HighlightingSession myHighlightingSession;
 
-  // do not instantiate, use runWithRecycler
+  /** do not instantiate, use {@link #runWithRecycler} instead */
   private HighlighterRecycler(@NotNull HighlightingSession session) {
     myHighlightingSession = session;
   }
@@ -151,7 +151,9 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
   }
 
   /**
-   * create {@link HighlighterRecycler}, run {@code consumer } which could call {@link HighlighterRecycler#recycleHighlighter(RangeHighlighterEx)} and {@link HighlighterRecyclerPickup#pickupHighlighterFromGarbageBin(int, int, int)} and then correctly destroys/incinerate all remaining highlighters
+   * - create {@link HighlighterRecycler},
+   * - run {@code consumer} which usually calls {@link HighlighterRecycler#recycleHighlighter(RangeHighlighterEx)} and {@link HighlighterRecyclerPickup#pickupHighlighterFromGarbageBin(int, int, int)}
+   * - and then incinerate all remaining highlighters, or in the case of PCE, release them back to recyclable state
    */
   static boolean runWithRecycler(@NotNull HighlightingSession session, @NotNull Processor<? super HighlighterRecycler> consumer) {
     HighlighterRecycler recycler = new HighlighterRecycler(session);
