@@ -16,7 +16,7 @@ envs {
   zipRepository = URL(System.getenv().getOrDefault("PYCHARM_ZIP_REPOSITORY", defaultArchiveWindows))
   shouldUseZipsFromRepository = isWindows
 
-  fun testHelpers(pythonName: String, pythonVersion: String): Unit {
+  fun testHelpers(pythonName: String, pythonVersion: String) {
     python(pythonName, pythonVersion, defaultPackages)
 
     val pythonExecutable = pythonsDirectory.resolve(pythonName).resolve(pythonExecutableName).path
