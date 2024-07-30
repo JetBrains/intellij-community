@@ -109,6 +109,7 @@
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
     <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.debugger.messages"/>
+    <notificationGroup id="HotSwap Messages" displayType="BALLOON" bundle="messages.XDebuggerBundle" key="notification.group.debugger.hotswap.messages"/>
     <notificationGroup id="Breakpoint hit" displayType="NONE" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.breakpoint.hit"/>
     <notificationGroup id="Attach to Process action" displayType="BALLOON" bundle="messages.XDebuggerBundle" key="notification.group.attach.to.process"/>
 

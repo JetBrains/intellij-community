@@ -45,10 +45,6 @@ class ReloadClassesWorker {
   }
 
   private void processException(@NotNull Throwable e) {
-    if (e.getMessage() != null) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, e.getMessage());
-    }
-
     if (e instanceof ProcessCanceledException) {
       myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, JavaDebuggerBundle.message("error.operation.canceled"));
       return;
@@ -56,7 +52,7 @@ class ReloadClassesWorker {
 
     String message =
       e instanceof UnsupportedOperationException
-      ? JavaDebuggerBundle.message("error.operation.not.supported.by.vm")
+      ? JavaDebuggerBundle.message("error.operation.not.supported.by.vm", e.getLocalizedMessage())
       : e instanceof NoClassDefFoundError
         ? JavaDebuggerBundle.message("error.class.def.not.found", e.getLocalizedMessage())
         : e instanceof VerifyError

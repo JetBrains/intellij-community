@@ -203,7 +203,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
       @Override
       public void onFinish() {
-        if (progress.getMessages(MessageCategory.ERROR).isEmpty()) {
+        if (!progress.hasErrors()) {
           statusListener.onSuccess(sessions);
         }
         else {
