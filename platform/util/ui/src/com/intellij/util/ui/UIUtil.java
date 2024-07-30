@@ -3347,9 +3347,12 @@ public final class UIUtil {
     return gd.isFullScreenSupported();
   }
 
-  @SuppressWarnings("StaticNonFinalField")
+  private static boolean DISABLE_LAYOUT_IN_TEXT_COMPONENTS = false;
+
   @ApiStatus.Internal
-  public static boolean DISABLE_LAYOUT_IN_TEXT_COMPONENTS = false;
+  public static void disableLayoutInTextComponents() {
+    DISABLE_LAYOUT_IN_TEXT_COMPONENTS = true;
+  }
 
   /**
    * Disables performing text layout for 'complex' text in the document, if configured globally.
