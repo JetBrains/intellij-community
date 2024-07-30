@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections.unresolvedReference;
 
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
@@ -69,7 +70,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   private final ImmutableSet<String> myIgnoredIdentifiers;
   private final PyInspection myInspection;
   private volatile Boolean myIsEnabled = null;
-
+  protected final Set<String> myUnresolvedNames = Collections.synchronizedSet(new HashSet<>());
   protected PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
                                           List<String> ignoredIdentifiers,
                                           @NotNull PyInspection inspection,
@@ -386,7 +387,12 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
     ContainerUtil.addAll(fixes, getImportStatementQuickFixes(element));
     ContainerUtil.addAll(fixes, getAddIgnoredIdentifierQuickFixes(qualifiedNames));
-    ContainerUtil.addAll(fixes, getInstallPackageQuickFixes(node, reference, refName));
+    var installPackageQuickFixes = getInstallPackageQuickFixes(node, reference, refName);
+    if (Iterables.size(installPackageQuickFixes) > 0) {
+      ContainerUtil.addAll(fixes, getInstallPackageQuickFixes(node, reference, refName));
+      myUnresolvedNames.add(refName);
+      ContainerUtil.addAll(fixes, getInstallAllPackagesQuickFixes());
+    }
 
     if (reference instanceof PySubstitutionChunkReference) {
       return;
@@ -890,6 +896,10 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   protected Iterable<LocalQuickFix> getInstallPackageQuickFixes(@NotNull PyElement node,
                                                                 @NotNull PsiReference reference,
                                                                 String refName) {
+    return Collections.emptyList();
+  }
+
+  protected Iterable<LocalQuickFix> getInstallAllPackagesQuickFixes() {
     return Collections.emptyList();
   }
 
