@@ -174,7 +174,6 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
           IntentionPreviewComponent.NO_PREVIEW_LABEL
         }
         else {
-          val size = component.preferredSize
           val location = popup.locationOnScreen
           val screen = ScreenUtil.getScreenRectangle(location)
 
@@ -185,13 +184,15 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
           if (origLocation != null && location.x < origLocation.x) {
             delta = delta.coerceAtMost(origLocation.x - screen.x - PositionAdjuster.DEFAULT_GAP)
           }
-          size.width = size.width.coerceAtMost(delta)
 
           for (editor in editors) {
             editor.softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
               override fun recalculationEnds() {
                 val height = (editor as EditorImpl).offsetToXY(editor.document.textLength).y + editor.lineHeight + 6
-                editor.component.preferredSize = Dimension(editor.component.preferredSize.width, min(height, MAX_HEIGHT))
+                editor.component.preferredSize = Dimension(
+                  max(editor.component.preferredSize.width, MIN_WIDTH).coerceAtMost(delta),
+                  min(height, MAX_HEIGHT)
+                )
                 editor.component.parent?.invalidate()
                 popup.pack(true, true)
               }
@@ -199,7 +200,10 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
               override fun softWrapsChanged() {}
             })
 
-            editor.component.preferredSize = Dimension(max(size.width, MIN_WIDTH), min(editor.component.preferredSize.height, MAX_HEIGHT))
+            editor.component.preferredSize = Dimension(
+              max(editor.component.preferredSize.width, MIN_WIDTH).coerceAtMost(delta),
+              min(editor.component.preferredSize.height, MAX_HEIGHT)
+            )
           }
 
           editorsToRelease.addAll(editors)
