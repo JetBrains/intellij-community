@@ -2,10 +2,6 @@ package org.jetbrains.plugins.notebooks.visualization.r.ui
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import org.intellij.images.editor.ImageEditor
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsPanel
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ToolbarPane
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import java.awt.Color
@@ -13,9 +9,6 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 interface UiCustomizer {
-  fun createImageEditor(project: Project,
-                        file: VirtualFile,
-                        graphicsPanel: GraphicsPanel): ImageEditor
 
   fun toolbarPaneToolbarComponentChanged(toolbarPane: ToolbarPane, component: JComponent?)
 
