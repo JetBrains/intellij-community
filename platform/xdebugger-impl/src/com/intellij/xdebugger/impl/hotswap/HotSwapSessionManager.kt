@@ -58,6 +58,7 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
   @Volatile
   internal var currentStatus: HotSwapVisibleStatus = HotSwapVisibleStatus.NO_CHANGES
     private set(value) {
+      if (field == value) return
       field = value
       HotSwapSessionManager.getInstance(project).fireStatusChanged(this, value)
     }
@@ -100,6 +101,7 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
     }
 
     override fun onCanceled() {
+      currentStatus = HotSwapVisibleStatus.CHANGES_READY
     }
   }
 }

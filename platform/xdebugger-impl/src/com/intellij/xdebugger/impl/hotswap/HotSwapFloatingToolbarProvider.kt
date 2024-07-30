@@ -88,6 +88,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     override fun onStatusChanged(session: HotSwapSession<*>, status: HotSwapVisibleStatus) {
       if (status == HotSwapVisibleStatus.IN_PROGRESS) {
         hotSwapAction.inProgress = true
+        hotSwapAction.session = null
         return
       }
 
