@@ -118,13 +118,13 @@ object LocalizationUtil {
 
   @Internal
   @JvmOverloads
-  fun getLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
+  fun getLocalizedPaths(path: Path, specialLocale: Locale? = null): Collection<Path> {
     val locale = specialLocale ?: getLocale()
     if (locale == Locale.ROOT) {
       return emptyList()
     }
 
-    return listOf(
+    return linkedSetOf(
       //localizations/zh/CN/inspectionDescriptions/name.html
       convertToLocalizationFolderUsage(paths = path, locale = locale, withRegion = true),
 
@@ -136,7 +136,7 @@ object LocalizationUtil {
 
       //inspectionDescriptions/name_zh.html
       convertPathToLocaleSuffixUsage(file = path, locale = locale, withRegion = false),
-    ).distinct()
+    )
   }
   
   @Internal

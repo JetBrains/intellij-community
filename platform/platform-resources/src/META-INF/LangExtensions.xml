@@ -209,7 +209,7 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings"/>
     <search.optionContributor
-      implementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings$IntentionSearchableOptionContributor"/>
+      implementation="com.intellij.codeInsight.intention.impl.config.IntentionSearchableOptionContributor"/>
 
     <applicationService serviceInterface="com.intellij.find.FindSettings"
                         serviceImplementation="com.intellij.find.impl.LangFindSettingsImpl"/>
