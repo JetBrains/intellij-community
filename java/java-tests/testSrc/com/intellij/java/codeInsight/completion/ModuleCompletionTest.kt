@@ -3,10 +3,13 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.ui.JBColor
 import org.assertj.core.api.Assertions.assertThat
+import java.awt.Color
 import java.util.jar.JarFile
 
 class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -249,6 +252,74 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.assertPreferredCompletionItems(0, "MyClassC", "MyClassB", "MyClassA")
   }
 
+  fun testReadableCompletion1() {
+    addFile("module-info.java", "module current.module.name { requires first.module.name; }")
+    addFile("module-info.java", "module first.module.name { }", M2)
+    addFile("module-info.java", "module second.module.name { }", M4)
+
+    fileComplete("MyClass.java", """
+      import module module<caret>
+      public class MyClass { }
+    """.trimIndent(), mapOf("current.module.name" to JBColor.foreground(),
+                            "first.module.name" to JBColor.foreground(),
+                            "second.module.name" to JBColor.RED))
+  }
+
+  fun testReadableCompletion2() {
+    addFile("module-info.java", "module current.module.name { requires first.module.name; }")
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: first.module.name\n", M2)
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: second.module.name\n", M4)
+
+    fileComplete("MyClass.java", """
+      import module module<caret>
+      public class MyClass { }
+    """.trimIndent(), mapOf("current.module.name" to JBColor.foreground(),
+                            "first.module.name" to JBColor.foreground(),
+                            "second.module.name" to JBColor.RED))
+  }
+
+  fun testReadableCompletion3() {
+    addFile("module-info.java", "module first.module.name { }", M2)
+    addFile("module-info.java", "module second.module.name { }", M3)
+
+    fileComplete("MyClass.java", """
+      import module module<caret>
+      public class MyClass { }
+    """.trimIndent(), mapOf("first.module.name" to JBColor.foreground(),
+                            "second.module.name" to JBColor.RED))
+  }
+
+  fun testReadableCompletion4() {
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: first.module.name\n", M2)
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: second.module.name\n", M3)
+
+    fileComplete("MyClass.java", """
+      import module module<caret>
+      public class MyClass { }
+    """.trimIndent(), mapOf("first.module.name" to JBColor.foreground(),
+                            "second.module.name" to JBColor.RED))
+  }
+
+  fun testReadableCompletionTransitive() {
+    addFile("module-info.java", "module current.module.name { requires first.module.name; }")
+    addFile("module-info.java", "module first.module.name { requires transitive second.module.name; }", M2)
+    addFile("module-info.java", "module second.module.name { requires transitive third.module.name; }", M4)
+    addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: third.module.name\n", M5)
+    ModuleRootModificationUtil.addDependency(ModuleManager.getInstance(project).findModuleByName(M2.moduleName)!!,
+                                             ModuleManager.getInstance(project).findModuleByName(M4.moduleName)!!)
+    ModuleRootModificationUtil.addDependency(ModuleManager.getInstance(project).findModuleByName(M4.moduleName)!!,
+                                             ModuleManager.getInstance(project).findModuleByName(M5.moduleName)!!)
+
+    fileComplete("MyClass.java", """
+      import module module<caret>
+      public class MyClass { }
+    """.trimIndent(), mapOf("current.module.name" to JBColor.foreground(),
+                            "first.module.name" to JBColor.foreground(),
+                            "second.module.name" to JBColor.foreground(),
+                            "third.module.name" to JBColor.foreground()))
+  }
+
+
   //<editor-fold desc="Helpers.">
   private fun complete(text: String, expected: String) = fileComplete("module-info.java", text, expected)
   private fun fileComplete(fileName: String, text: String, expected: String) {
@@ -257,12 +328,38 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.checkResult(expected)
   }
 
+  private fun fileComplete(fileName: String, text: String, expected: Map<String, Color>) {
+    myFixture.configureByText(fileName, text)
+    myFixture.completeBasic()
+
+    myFixture.lookup
+
+    val items = myFixture.lookupElements?.map { lookup ->
+      NormalCompletionTestCase.renderElement(lookup).let { element ->
+        element.itemText to element.itemTextForeground
+      }
+    }?.toMap() ?: emptyMap()
+
+    val error = StringBuilder()
+    expected.forEach { (name, color) ->
+      if (color != items[name]) error.append("""
+        ${name}: 
+        expected: ${color}
+        actual: ${items[name]}
+        
+        """.trimIndent())
+    }
+
+    if (error.isNotBlank()) {
+      fail(error.toString())
+    }
+  }
+
   private fun variants(text: String, vararg variants: String) = fileVariants("module-info.java", text, *variants)
   private fun fileVariants(fileName: String, text: String, vararg variants: String) {
     myFixture.configureByText(fileName, text)
     myFixture.completeBasic()
     assertThat(myFixture.lookupElementStrings).containsExactlyInAnyOrder(*variants)
   }
-
   //</editor-fold>
 }
