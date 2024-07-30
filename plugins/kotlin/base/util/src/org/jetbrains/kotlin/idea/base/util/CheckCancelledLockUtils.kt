@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("CheckCancelledLockUtils")
 package org.jetbrains.kotlin.idea.base.util
 
@@ -29,7 +29,7 @@ inline fun <T> ReentrantReadWriteLock.writeWithCheckCanceled(action: () -> T): T
 
 /**
  * It is preferable to use [CheckCanceledLock] instead of [ReentrantLock] in case of mix of
- * [IntelliJ Read-Write locks](https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html) and regular locks.
+ * [IntelliJ Read-Write locks](https://plugins.jetbrains.com/docs/intellij/threading-model.html) and regular locks.
  *
  * To acquire lock has to be cancellable action as read actions.
  */

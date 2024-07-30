@@ -15,7 +15,7 @@ import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * See <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
  *
  * @param <T> Result type.
  * @see ReadAction
