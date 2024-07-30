@@ -95,8 +95,11 @@ object LocalizationUtil {
       val pathString = FileUtil.toSystemIndependentName(localizedPath.pathString)
       defaultLoader?.getResourceAsStream(pathString)?.let { return it }
     }
-    val pureResourcePath = FileUtil.toSystemIndependentName(path.pathString)
-    return getPluginClassLoader()?.getResourceAsStream(pureResourcePath)
+    val resourcePath = path.pathString
+    val pureResourcePath = FileUtil.toSystemIndependentName(resourcePath)
+    return getPluginClassLoader()?.getResourceAsStream(resourcePath)
+           ?: getPluginClassLoader()?.getResourceAsStream(pureResourcePath)
+           ?: defaultLoader?.getResourceAsStream(resourcePath)
            ?: defaultLoader?.getResourceAsStream(pureResourcePath)
   }
 
