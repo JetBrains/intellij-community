@@ -152,15 +152,17 @@ internal class LightEditFrameWrapper(
  * This method is not used in a normal conditions. Only for light edit.
  */
 private suspend fun allocateLightEditFrame(project: Project,
-                                           projectFrameHelperFactory: (IdeFrameImpl?) -> ProjectFrameHelper): ProjectFrameHelper {
+                                           projectFrameHelperFactory: (IdeFrameImpl?) -> LightEditFrameWrapper): ProjectFrameHelper {
   val windowManager = WindowManager.getInstance() as WindowManagerImpl
   windowManager.getFrameHelper(project)?.let {
     return it
   }
 
   windowManager.removeAndGetRootFrame()?.let { frame ->
-    val frameHelper = projectFrameHelperFactory(frame)
-    windowManager.lightFrameAssign(project, frameHelper)
+    val frameHelper = projectFrameHelperFactory(frame).apply {
+      setupFor(project)
+    }
+    windowManager.assignFrame(frameHelper, project, false)
     return frameHelper
   }
 
@@ -200,7 +202,9 @@ private suspend fun allocateLightEditFrame(project: Project,
     }
   }
 
-  windowManager.lightFrameAssign(project, frame)
+  frame.setupFor(project)
+  windowManager.assignFrame(frame, project, false)
+
   val uiFrame = frame.frame
   if (frameInfo != null) {
     uiFrame.extendedState = frameInfo.extendedState
@@ -217,3 +221,11 @@ private suspend fun allocateLightEditFrame(project: Project,
   }
   return frame
 }
+
+private suspend fun LightEditFrameWrapper.setupFor(project: Project) {
+  setRawProject(project)
+  setProject(project)
+  installDefaultProjectStatusBarWidgets(project)
+  updateTitle(project)
+}
+
