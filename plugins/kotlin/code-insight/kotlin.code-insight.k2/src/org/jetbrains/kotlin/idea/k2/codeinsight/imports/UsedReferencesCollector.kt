@@ -66,20 +66,21 @@ internal class UsedReferencesCollector(private val file: KtFile) {
         val references = element.references
         if (references.isEmpty()) return
 
-        if (hasEmptyInvokeReference(element)) {
-            return
-        }
-
-        val resolvedSymbols = element.mainReference?.resolveToSymbols().orEmpty()
-        val isResolved = resolvedSymbols.isNotEmpty()
-
-        val dispatchReceiver = resolveDispatchReceiver(element)
-        if (dispatchReceiver != null && isDispatchedCall(element, dispatchReceiver, file)) {
-            return
-        }
-
         for (reference in references) {
+            ProgressIndicatorProvider.checkCanceled()
+
             if (reference !is KtReference) continue
+            if (isEmptyInvokeReference(reference)) continue
+
+            val resolvedSymbols = reference.resolveToSymbols()
+            val isResolved = resolvedSymbols.isNotEmpty()
+
+            ProgressIndicatorProvider.checkCanceled()
+
+            val dispatchReceiver = resolveDispatchReceiver(element)
+            if (dispatchReceiver != null && isDispatchedCall(element, dispatchReceiver, file)) {
+                continue
+            }
 
             ProgressIndicatorProvider.checkCanceled()
 
@@ -110,10 +111,10 @@ internal class UsedReferencesCollector(private val file: KtFile) {
      * In the cases when `foo()` call is not actually an `invoke` call, we do not want to process such references,
      * since they are not supposed to resolve anywhere.
      */
-    private fun KaSession.hasEmptyInvokeReference(element: KtElement): Boolean {
-        if (element.mainReference !is KtInvokeFunctionReference) return false
+    private fun KaSession.isEmptyInvokeReference(reference: KtReference): Boolean {
+        if (reference !is KtInvokeFunctionReference) return false
 
-        val callInfo = element.resolveToCall()
+        val callInfo = reference.element.resolveToCall()
         val isImplicitInvoke = callInfo?.calls?.any { it is KaSimpleFunctionCall && it.isImplicitInvoke } == true
 
         return !isImplicitInvoke
