@@ -62,7 +62,7 @@ class K2MoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
         project: Project,
         files: Set<PsiFile>,
         infos: Ref<Array<out UsageInfo>>,
-        targetDirectory: PsiDirectory,
+        targetDirectory: PsiDirectory?,
         conflicts: MultiMap<PsiElement, String>
     ) {
         val movedFiles = files.filterIsInstance<KtFile>()
@@ -71,7 +71,9 @@ class K2MoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
         // processing kotlin usages from Java declarations will result in non-deterministic retargeting of the references
         // to fix this, all usages are sorted by start offset
         infos.set(K2MoveRenameUsageInfo.filterUpdatable(movedFiles, infos.get()).sortedBy { it.element?.startOffset ?: -1 }.toTypedArray())
-        moveFileHandler.detectConflicts(conflicts, files.filterIsInstance<KtFile>().toTypedArray(), infos.get(), targetDirectory)
+        if (targetDirectory != null) { // TODO probably this should never be null but it happens when there are multiple source roots
+            moveFileHandler.detectConflicts(conflicts, files.filterIsInstance<KtFile>().toTypedArray(), infos.get(), targetDirectory)
+        }
     }
 
     override fun beforeMove(psiFile: PsiFile?) {
