@@ -85,7 +85,7 @@ private class IntentionSearchableOptionContributor : SearchableOptionContributor
       coroutineContext.ensureActive()
 
       try {
-        val descriptionText = HTML_PATTERN.matcher(metaData.description.text.lowercase(Locale.ENGLISH)).replaceAll(" ")
+        val descriptionText = HTML_PATTERN.matcher(metaData.description.getText().lowercase(Locale.ENGLISH)).replaceAll(" ")
         val displayName = IntentionSettingsConfigurable.getDisplayNameText()
         val configurableId = IntentionSettingsConfigurable.HELP_ID
         val family = metaData.family

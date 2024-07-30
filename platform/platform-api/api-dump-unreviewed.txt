@@ -1284,7 +1284,8 @@ c:com.intellij.ide.ui.search.OptionDescription
 - invokeInternalEditor():V
 a:com.intellij.ide.ui.search.SearchableOptionContributor
 - <init>():V
-- a:processOptions(com.intellij.ide.ui.search.SearchableOptionProcessor):V
+- contribute(com.intellij.ide.ui.search.SearchableOptionProcessor,kotlin.coroutines.Continuation):java.lang.Object
+- processOptions(com.intellij.ide.ui.search.SearchableOptionProcessor):V
 a:com.intellij.ide.ui.search.SearchableOptionProcessor
 - <init>():V
 - a:addOptions(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V

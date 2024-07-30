@@ -50,11 +50,11 @@ class IntentionPreviewComputable(
     val actionMetaData = IntentionsMetadataService.getInstance().getMetaData().singleOrNull { md ->
       IntentionActionDelegate.unwrap(md.action).javaClass === originalAction.javaClass
     } ?: return IntentionPreviewInfo.EMPTY
-    return try {
-      IntentionPreviewInfo.Html(actionMetaData.description.text.replace(HTML_COMMENT_REGEX, ""))
+    try {
+      return IntentionPreviewInfo.Html(actionMetaData.description.getText().replace(HTML_COMMENT_REGEX, ""))
     }
     catch (_: IOException) {
-      IntentionPreviewInfo.EMPTY
+      return IntentionPreviewInfo.EMPTY
     }
   }
 

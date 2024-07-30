@@ -7627,8 +7627,8 @@ a:com.intellij.codeInsight.intention.impl.config.IntentionSettingsTree
 - p:<init>():V
 - apply():V
 - dispose():V
-- filter(java.util.List):V
-- pa:filterModel(java.lang.String,Z):java.util.List
+- filter(java.util.Collection):V
+- pa:filterModel(java.lang.String,Z):java.util.Collection
 - getComponent():javax.swing.JComponent
 - getFilter():java.lang.String
 - getToolbarPanel():javax.swing.JPanel
