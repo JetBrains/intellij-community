@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Point
-import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 import kotlin.time.Duration.Companion.seconds
@@ -37,7 +37,7 @@ class HotSwapStatusNotificationManager(private val project: Project) : Disposabl
     fun getInstance(project: Project): HotSwapStatusNotificationManager = project.service()
   }
 
-  private val notifications = Collections.synchronizedSet(hashSetOf<Notification>())
+  private val notifications = CopyOnWriteArrayList<Notification>()
 
   fun trackNotification(notification: Notification) {
     notification.whenExpired { notifications.remove(notification) }
@@ -45,8 +45,7 @@ class HotSwapStatusNotificationManager(private val project: Project) : Disposabl
   }
 
   internal fun clearNotifications() {
-    notifications.forEach { it.expire() }
-    notifications.clear()
+    notifications.toArray().forEach { (it as Notification).expire() }
   }
 
   fun showSuccessNotification(scope: CoroutineScope, disposable: Disposable? = null) {
