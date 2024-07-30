@@ -182,37 +182,47 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                 invalidPsiElements + "; progress=" + System.identityHashCode(ProgressManager.getGlobalProgressIndicator()));
     }
 
+    Map<Object, ToolHighlights> data = getData(psiFile, hostDocument); // assume recycle contains things from one psi file from one HighlightingSession
     for (InvalidPsi entry : invalidPsiElements) {
       RangeHighlighterEx highlighter = entry.highlighter();
-      boolean disposed;
-      if (invalidPsiRecycler.remove(highlighter)) {
-        disposed = invalidPsiRecycler.tryIncinerate(highlighter);
+      Object toolId = entry.toolId();
+      PsiElement psiElement = entry.psiElement();
+      incinerateAndRemoveFromDataAtomically(data, invalidPsiRecycler, highlighter, toolId, psiElement);
+    }
+  }
+
+  private void incinerateAndRemoveFromDataAtomically(@NotNull Map<Object, ToolHighlights> data,
+                                                     @NotNull HighlighterRecycler recycler,
+                                                     @NotNull RangeHighlighterEx highlighter,
+                                                     @NotNull Object toolId,
+                                                     @NotNull PsiElement psiElement) {
+    boolean disposed;
+    if (recycler.remove(highlighter)) {
+      disposed = recycler.tryIncinerate(highlighter);
+    }
+    else {
+      disposed = false;
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("removeInvalidPsiHighlightersFromData: " + highlighter + "; disposed=" + disposed);
+    }
+    ToolHighlights toolHighlights = data.get(toolId);
+    if (toolHighlights != null) {
+      List<? extends HighlightInfo> oldInfos = toolHighlights.elementHighlights.get(psiElement);
+      List<? extends HighlightInfo> newInfos = oldInfos == null ? List.of() : ContainerUtil.filter(oldInfos, info -> info.highlighter !=
+                                                                                                                     highlighter);
+      if (newInfos.isEmpty()) {
+        toolHighlights.elementHighlights.remove(psiElement);
       }
       else {
-        disposed = false;
+        toolHighlights.elementHighlights.put(psiElement, newInfos);
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("removeInvalidPsiHighlightersFromData: " + highlighter + "; disposed=" + disposed);
-      }
-      PsiElement invalidPsiElement = entry.psiElement();
-      Object toolId = entry.toolId();
-      Map<Object, ToolHighlights> data = getData(psiFile, hostDocument);
-      ToolHighlights toolHighlights = data.get(toolId);
-      if (toolHighlights != null) {
-        List<? extends HighlightInfo> oldInfos = toolHighlights.elementHighlights.get(invalidPsiElement);
-        List<? extends HighlightInfo> newInfos = oldInfos == null ? List.of() : ContainerUtil.filter(oldInfos, info -> info.highlighter != highlighter);
-        if (newInfos.isEmpty()) {
-          toolHighlights.elementHighlights.remove(invalidPsiElement);
-        }
-        else {
-          toolHighlights.elementHighlights.put(invalidPsiElement, newInfos);
-        }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("removeInvalidPsiHighlightersFromData: " + highlighter+": old="+oldInfos+"; new="+newInfos);
-        }
+        LOG.debug("removeInvalidPsiHighlightersFromData: " + highlighter + ": old=" + oldInfos + "; new=" + newInfos);
       }
     }
   }
+
   private record InvalidPsi(@NotNull Object toolId, @NotNull PsiElement psiElement, @NotNull RangeHighlighterEx highlighter) {}
 
   @NotNull
@@ -451,11 +461,11 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           RangeHighlighterEx salvagedHighlighter = composite.pickupFileLevelRangeHighlighter(psiFile.getTextLength());
           HighlightInfo oldFileInfo = salvagedHighlighter == null ? null : HighlightInfo.fromRangeHighlighter(salvagedHighlighter);
 
-          if (oldFileInfo != null) {
-            ((HighlightingSessionImpl)session).replaceFileLevelHighlight(oldFileInfo, info, salvagedHighlighter);
+          if (oldFileInfo == null) {
+            ((HighlightingSessionImpl)session).addFileLevelHighlight(info, salvagedHighlighter);
           }
           else {
-            ((HighlightingSessionImpl)session).addFileLevelHighlight(info, salvagedHighlighter);
+            ((HighlightingSessionImpl)session).replaceFileLevelHighlight(oldFileInfo, info, salvagedHighlighter);
           }
         }
         else {

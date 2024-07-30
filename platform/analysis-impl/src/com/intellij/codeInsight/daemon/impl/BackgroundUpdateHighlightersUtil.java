@@ -209,28 +209,16 @@ public final class BackgroundUpdateHighlightersUtil {
       return true;
     });
 
-    setHighlightersInRange(range, infos, markup, group, session, toReuse);
-  }
-  private static void setHighlightersInRange(@NotNull TextRange range,
-                                             @NotNull List<? extends HighlightInfo> infos,
-                                             @NotNull MarkupModelEx markup,
-                                             int group,
-                                             @NotNull HighlightingSession session,
-                                             @NotNull List<? extends HighlightInfo> toRemove) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile psiFile = session.getPsiFile();
-    Project project = session.getProject();
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     boolean[] changed = {false};
-    Document document = session.getDocument();
-    HighlighterRecycler.runWithRecycler(session, toReuse -> {
+    HighlighterRecycler.runWithRecycler(session, recycler -> {
       Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
 
-      for (HighlightInfo info : toRemove) {
+      for (HighlightInfo info : toReuse) {
         RangeHighlighterEx highlighter = info.getHighlighter();
         if (highlighter != null) {
-          toReuse.recycleHighlighter(highlighter);
+          recycler.recycleHighlighter(highlighter);
         }
       }
       List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, infos);
@@ -257,10 +245,10 @@ public final class BackgroundUpdateHighlightersUtil {
         return true;
       });
       for (HighlightInfo info : infosToCreateHighlightersFor) {
-        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, toReuse, range2markerCache, severityRegistrar);
+        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, recycler, range2markerCache, severityRegistrar);
       }
-      ((HighlightingSessionImpl)session).updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()), toReuse);
-      changed[0] |= !toReuse.isEmpty();
+      ((HighlightingSessionImpl)session).updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()), recycler);
+      changed[0] |= !recycler.isEmpty();
       return true;
     });
     if (changed[0]) {
