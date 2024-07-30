@@ -1,6 +1,8 @@
 package com.intellij.searchEverywhereMl.typos
 
 import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.testFramework.LightPlatformTestCase
@@ -19,8 +21,12 @@ class SearchEverywhereTyposUITest : LightPlatformTestCase() {
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern ("colop"))
     assert(elements.size == 2)
 
-    val selected = searchEverywhereUI.getData(PlatformDataKeys.SELECTED_ITEM.name)
-    Assert.assertEquals("Show Color Picker", selected)
+    val slowDataProvider = searchEverywhereUI.getData(PlatformCoreDataKeys.BGT_DATA_PROVIDER.name)
+    if (slowDataProvider is DataProvider) {
+      val selected = slowDataProvider.getData(PlatformDataKeys.SELECTED_ITEM.name)
+      Assert.assertEquals("Show Color Picker", selected)
+    }
+    else Assert.fail("Can't get the slow data provider of SearchEverywhereUI")
   }
 }
 
