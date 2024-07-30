@@ -119,7 +119,7 @@ public final class VfsEventsMerger {
               return false;
             }
           }
-          catch (ProcessCanceledException pce) { // todo remove
+          catch (ProcessCanceledException pce) { // todo remove (IJPL-9805)
             ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(new RuntimeException(pce));
             assert false;
           }
