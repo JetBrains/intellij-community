@@ -198,6 +198,10 @@
 
     <group id="XDebugger.RunToCursorInlayExtraActions">
     </group>
+
+    <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.xdebugger.impl.hotswap.HotSwapModifiedFilesAction">
+      <add-to-group group-id="DebugReloadGroup" anchor="first"/>
+    </action>
   </actions>
 
   <projectListeners>

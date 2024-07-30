@@ -27,9 +27,11 @@ class HotSwapSessionManager(private val project: Project, private val parentScop
     return hotSwapSession
   }
 
+  internal val currentSession: HotSwapSession<*>? get() = sessions.lastOrNull()
+
   internal fun addListener(listener: HotSwapChangesListener, disposable: Disposable) {
     listeners.add(listener, disposable)
-    val currentSession = sessions.lastOrNull() ?: return
+    val currentSession = currentSession ?: return
     listener.onStatusChanged(currentSession, currentSession.currentStatus)
   }
 

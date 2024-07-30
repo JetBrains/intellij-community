@@ -10,6 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
@@ -24,17 +25,35 @@ import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+internal class HotSwapModifiedFilesAction : AnAction(XDebuggerBundle.messagePointer("action.XDebugger.Hotswap.Modified.Files.text"),
+                                                     XDebuggerBundle.messagePointer("action.XDebugger.Hotswap.Modified.Files.description"),
+                                                     PlatformDebuggerImplIcons.Actions.Hot_swap) {
+  override fun actionPerformed(e: AnActionEvent) {
+    val session = findSessionIfReady(e.project) ?: return
+    HotSwapWithRebuildAction.performHotSwap(e.dataContext, session)
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = findSessionIfReady(e.project) != null
+  }
+
+  private fun findSessionIfReady(project: Project?): HotSwapSession<*>? {
+    if (project == null) return null
+    val session = HotSwapSessionManager.getInstance(project).currentSession ?: return null
+    if (session.currentStatus != HotSwapVisibleStatus.CHANGES_READY) return null
+    return session
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+}
+
 private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
   var inProgress = false
   var session: HotSwapSession<*>? = null
 
   override fun actionPerformed(e: AnActionEvent) {
     val session = session ?: return
-    callWithTemplate(e.dataContext, session)
-  }
-
-  private fun <S> callWithTemplate(context: DataContext, session: HotSwapSession<S>) {
-    session.provider.performHotSwap(context, session)
+    performHotSwap(e.dataContext, session)
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
@@ -45,6 +64,12 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     (component as HotSwapToolbarComponent).update(inProgress, presentation)
+  }
+
+  companion object {
+    internal fun <S> performHotSwap(context: DataContext, session: HotSwapSession<S>) {
+      session.provider.performHotSwap(context, session)
+    }
   }
 }
 
