@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.hotswap
 
 import com.intellij.execution.multilaunch.design.components.RoundedCornerBorder
 import com.intellij.icons.AllIcons
+import com.intellij.notification.Notification
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Point
+import java.util.*
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 import kotlin.time.Duration.Companion.seconds
@@ -31,7 +33,20 @@ import kotlin.time.Duration.Companion.seconds
 @Service(Service.Level.PROJECT)
 class HotSwapStatusNotificationManager(private val project: Project) : Disposable.Default {
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): HotSwapStatusNotificationManager = project.service()
+  }
+
+  private val notifications = Collections.synchronizedSet(hashSetOf<Notification>())
+
+  fun trackNotification(notification: Notification) {
+    notification.whenExpired { notifications.remove(notification) }
+    notifications.add(notification)
+  }
+
+  internal fun clearNotifications() {
+    notifications.forEach { it.expire() }
+    notifications.clear()
   }
 
   fun showSuccessNotification(scope: CoroutineScope, disposable: Disposable? = null) {

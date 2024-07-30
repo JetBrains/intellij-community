@@ -9,6 +9,7 @@ import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
 import com.intellij.debugger.impl.hotswap.HotSwapDebugSessionManager;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -30,6 +31,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -144,7 +146,9 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
       if (modifiedClasses.isEmpty()) {
         String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
-        HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
+        Notification notification = HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION);
+        HotSwapStatusNotificationManager.getInstance(myProject).trackNotification(notification);
+        notification.notify(myProject);
         statusListener.onNothingToReload(sessions);
         return;
       }

@@ -38,6 +38,7 @@ class HotSwapSessionManager(private val project: Project, private val parentScop
   }
 
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): HotSwapSessionManager = project.service()
   }
 }
@@ -74,6 +75,7 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
   }
 
   override fun dispose() {
+    HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
     currentStatus = HotSwapVisibleStatus.SESSION_COMPLETED
     coroutineScope.cancel()
   }
@@ -88,6 +90,7 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
   fun getChanges() = changesCollector.getChanges()
 
   fun startHotSwapListening(): HotSwapResultListener {
+    HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
     currentStatus = HotSwapVisibleStatus.IN_PROGRESS
     return object : HotSwapResultListener {
       override fun onSuccessfulReload() {

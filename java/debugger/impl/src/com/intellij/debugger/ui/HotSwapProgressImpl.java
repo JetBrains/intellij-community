@@ -26,6 +26,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import one.util.streamex.StreamEx;
@@ -110,6 +111,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
                           boolean withRestart,
                           NotificationType type) {
     Notification notification = NOTIFICATION_GROUP.createNotification(title, message, type);
+    HotSwapStatusNotificationManager.getInstance(getProject()).trackNotification(notification);
     if (SoftReference.dereference(mySessionRef) != null) {
       if (withRestart) {
         notification.addAction(new RestartHotSwapNotificationAction(mySessionRef));
