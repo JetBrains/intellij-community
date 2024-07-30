@@ -753,7 +753,7 @@
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
 
     <registryKey key="git.commit.completion.fixup.squash" defaultValue="true"
-                 description="Provide completion for fixup and squash prefixes in commit message field" restartRequired="false"/>
+                 description="Provide completion for fixup, squash and amend prefixes in commit message field" restartRequired="false"/>
 
     <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
                  description="Use Log to collect Rebase Entries"/>

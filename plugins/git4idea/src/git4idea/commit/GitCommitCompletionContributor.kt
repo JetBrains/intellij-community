@@ -29,7 +29,8 @@ class GitCommitCompletionContributor : CompletionContributor(), DumbAware {
     val completionPrefix = file.text.take(parameters.offset) // match from the start of the document only
     val gitPrefixes = listOf(
       GitPrefix("fixup!", "fixu"),
-      GitPrefix("squash!", "squ")
+      GitPrefix("squash!", "squ"),
+      GitPrefix("amend!", "amen")
     )
     gitPrefixes
       .filter { prefix -> completionPrefix.startsWith(prefix.prefixToMatch) }
