@@ -206,10 +206,6 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected fun markDirty(projectId: ExternalSystemProjectId) = projectTracker.markDirty(projectId)
 
-  protected fun enableAsyncExecution() {
-    AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
-  }
-
   @Suppress("SameParameterValue")
   protected fun setDispatcherMergingSpan(delay: Int) {
     projectTracker.setDispatcherMergingSpan(delay)
