@@ -207,7 +207,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @EntryPointWithVisibilityLevel.VisibilityLevelResult
-  int getMinVisibilityLevel(@NotNull PsiMember member) {
+  public int getMinVisibilityLevel(@NotNull PsiMember member) {
     //noinspection MagicConstant
     return StreamEx.of(EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList())
       .select(EntryPointWithVisibilityLevel.class)
