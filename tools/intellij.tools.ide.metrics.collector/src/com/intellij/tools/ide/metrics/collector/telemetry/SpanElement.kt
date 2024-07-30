@@ -53,10 +53,8 @@ data class SpanData(
   @JvmField val operationName: String,
 
   // see com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter.export
-  //@Serializable(with = DurationSerializer::class)
   @Contextual val duration: Duration,
   @Contextual val durationNano: Duration? = null,
-  //@Serializable(with = InstantSerializer::class)
   @JsonNames("startTime")
   @Contextual val startTimeNano: Instant,
 
