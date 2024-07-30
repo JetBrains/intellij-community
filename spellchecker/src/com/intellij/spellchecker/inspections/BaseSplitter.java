@@ -78,10 +78,12 @@ public abstract class BaseSplitter implements Splitter {
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
+
     try {
       Matcher matcher = toExclude.matcher(newBombedCharSequence(text, range));
       while (matcher.find()) {
-        checkCancelled();
+        ProgressManager.checkCanceled();
+
         TextRange found = matcherRange(range, matcher);
         till = found.getStartOffset();
         if (range.getEndOffset() - found.getEndOffset() < MIN_RANGE_LENGTH) {
@@ -138,6 +140,10 @@ public abstract class BaseSplitter implements Splitter {
     };
   }
 
+  /**
+   * @deprecated Use {@link ProgressManager#checkCanceled()}.
+   */
+  @Deprecated(forRemoval = true)
   public static void checkCancelled() {
     if (ApplicationManager.getApplication() != null) {
       ProgressIndicatorProvider.checkCanceled();
