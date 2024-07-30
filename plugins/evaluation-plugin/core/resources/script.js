@@ -415,9 +415,15 @@ function updateElementFeatures(suggestionDiv) {
   }
   const parts = suggestionDiv.id.split(" ")
   const sessionId = parts[0]
-  if (!(sessionId in features)) return
   const lookupOrder = parts[1]
   const suggestionIndex = parts[2]
+
+  if (suggestionDiv.parentElement?.parentElement?.classList.contains("chat")) {
+    addFunctionCallingDiagnostics(suggestionDiv, sessions[sessionId]?._lookups[lookupOrder]?.suggestions[suggestionIndex])
+    return;
+  }
+
+  if (!(sessionId in features)) return
   const featuresJson = JSON.parse(pako.ungzip(atob(features[sessionId]), {to: 'string'}))
   const lookupFeatures = featuresJson[lookupOrder]
   if (lookupFeatures["element"].length <= suggestionIndex) return

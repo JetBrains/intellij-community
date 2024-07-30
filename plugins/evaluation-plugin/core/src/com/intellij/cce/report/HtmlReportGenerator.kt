@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.metric.MetricInfo
@@ -26,9 +26,7 @@ class HtmlReportGenerator(
   companion object {
     private const val globalReportName = "index.html"
 
-    private val resources = listOf(
-      "/script.js",
-      "/diff.js",
+    private val commonResources = listOf(
       "/style.css",
       "/pako.min.js",
       "/tabulator.min.js",
@@ -46,15 +44,6 @@ class HtmlReportGenerator(
 
   private val errorReferences: MutableMap<String, Path> = mutableMapOf()
 
-  //private val dirs = GeneratorDirectories.create(outputDir, type, filterName, comparisonFilterName)
-
-  //private var fileGenerator: FileReportGenerator = if (completionGolfSettings != null) {
-  //  CompletionGolfFileReportGenerator(completionGolfSettings, filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
-  //}
-  //else {
-  //  BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
-  //}
-
   private fun copyResources(resource: String) {
     val resultFile = Paths.get(dirs.resourcesDir.toString(), resource).toFile()
     resultFile.parentFile.mkdirs()
@@ -62,10 +51,8 @@ class HtmlReportGenerator(
   }
 
   init {
-    resources.forEach { copyResources(it) }
-    //if (completionGolfSettings != null) {
-    //  downloadV2WebFiles()
-    //}
+    fileGenerator.scripts.forEach { copyResources(it.sourcePath) }
+    commonResources.forEach { copyResources(it) }
   }
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) = fileGenerator.generateFileReport(sessions)

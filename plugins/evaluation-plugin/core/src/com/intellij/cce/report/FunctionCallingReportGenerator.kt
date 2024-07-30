@@ -14,6 +14,8 @@ class FunctionCallingReportGenerator(
   dirs: GeneratorDirectories
 ) : BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs) {
 
+  override val scripts: List<Resource> = listOf(Resource("/chat.js", "../res/chat.js")) + super.scripts
+
   override fun getSpan(session: Session?, text: String, lookupOrder: Int): String =
     createHTML().span("session ${
       getColor(session, lookupOrder)
