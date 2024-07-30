@@ -1038,14 +1038,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
-    add(AnnotationsHighlightUtil.checkNameValuePair(pair));
-    if (!hasErrorResults()) {
-      PsiIdentifier nameId = pair.getNameIdentifier();
-      if (nameId != null) {
-        HighlightInfo.Builder result = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId);
-        add(result);
-      }
+    PsiIdentifier nameId = pair.getNameIdentifier();
+    if (nameId != null) {
+      add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId));
     }
+    add(AnnotationsHighlightUtil.checkNameValuePair(pair));
   }
 
   @Override

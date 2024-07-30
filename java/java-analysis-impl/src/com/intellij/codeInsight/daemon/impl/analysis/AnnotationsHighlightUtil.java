@@ -71,25 +71,18 @@ public final class AnnotationsHighlightUtil {
     if (ref == null) return null;
     PsiMethod method = (PsiMethod)ref.resolve();
     if (method == null) {
-      if (pair.getName() != null) {
-        String description = JavaErrorBundle.message("annotation.unknown.method", ref.getCanonicalText());
-        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
-          .range(ref.getElement(), ref.getRangeInElement())
-          .descriptionAndTooltip(description);
-        IntentionAction action = QuickFixFactory.getInstance().createCreateAnnotationMethodFromUsageFix(pair);
-        builder.registerFix(action, null, null, null, null);
-        return builder;
-      }
-      else {
-        String description = JavaErrorBundle.message("annotation.missing.method", ref.getCanonicalText());
-        PsiElement element = ref.getElement();
-        HighlightInfo.Builder highlightInfo =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
+      boolean noName = pair.getName() == null;
+      String description = JavaErrorBundle.message("annotation.unknown.method", ref.getCanonicalText());
+      HighlightInfo.Builder highlightInfo = HighlightInfo.newHighlightInfo(noName ? HighlightInfoType.ERROR : HighlightInfoType.WRONG_REF)
+        .range(ref.getElement())
+        .descriptionAndTooltip(description);
+      if (noName) {
         for (IntentionAction action : QuickFixFactory.getInstance().createAddAnnotationAttributeNameFixes(pair)) {
           highlightInfo.registerFix(action, null, null, null, null);
         }
-        return highlightInfo;
       }
+      highlightInfo.registerFix(QuickFixFactory.getInstance().createCreateAnnotationMethodFromUsageFix(pair), null, null, null, null);
+      return highlightInfo;
     }
     else {
       PsiType returnType = method.getReturnType();
