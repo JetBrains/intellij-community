@@ -10,9 +10,9 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
   fun `test merge started project reloads from explicit reload`() {
     test {
       enableAsyncExecution()
-      setDispatcherMergingSpan(10)
+      setDispatcherMergingSpan(MERING_SPAN)
 
-      repeat(10) {
+      repeat(TEST_ATTEMPTS) {
         parallel {
           thread {
             markDirty()
@@ -35,9 +35,9 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
   fun `test merge project reloads from external modification`() {
     test { settingsFile ->
       enableAsyncExecution()
-      setDispatcherMergingSpan(10)
+      setDispatcherMergingSpan(MERING_SPAN)
 
-      repeat(10) {
+      repeat(TEST_ATTEMPTS) {
         parallel {
           thread {
             waitForAllProjectActivities {
@@ -58,9 +58,9 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
   fun `test merge project reloads from batch modification`() {
     test { settingsFile ->
       enableAsyncExecution()
-      setDispatcherMergingSpan(10)
+      setDispatcherMergingSpan(MERING_SPAN)
 
-      repeat(10) {
+      repeat(TEST_ATTEMPTS) {
         waitForAllProjectActivities {
           modification {
             settingsFile.modify(EXTERNAL)
@@ -74,9 +74,9 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
   fun `test merge project reloads with different nature`() {
     test { settingsFile ->
       enableAsyncExecution()
-      setDispatcherMergingSpan(10)
+      setDispatcherMergingSpan(MERING_SPAN)
 
-      repeat(10) {
+      repeat(TEST_ATTEMPTS) {
         parallel {
           thread {
             waitForAllProjectActivities {
@@ -84,7 +84,10 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
             }
           }
           thread {
-            Thread.sleep(50) // see AutoImportProjectTracker.scheduleDelayedSmartProjectReload
+
+            // see AutoImportProjectTracker.scheduleDelayedSmartProjectReload
+            Thread.sleep(5L * MERING_SPAN)
+
             markDirty()
             waitForAllProjectActivities {
               scheduleProjectReload()
@@ -99,40 +102,48 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
   fun `test merge sequent project reloads from explicit reload`() {
     test {
       enableAsyncExecution()
-      setDispatcherMergingSpan(10)
+      setDispatcherMergingSpan(MERING_SPAN)
 
-      parallel {
-        repeat(100) { index ->
-          thread {
-            Thread.sleep(5L * index)
-            markDirty()
-            waitForAllProjectActivities {
-              scheduleProjectReload()
+      repeat(TEST_ATTEMPTS) {
+        parallel {
+          repeat(50) { index ->
+            thread {
+
+              // see AutoImportProjectTracker.scheduleDelayedSmartProjectReload
+              Thread.sleep(MERING_SPAN / 2L * index)
+
+              markDirty()
+              waitForAllProjectActivities {
+                scheduleProjectReload()
+              }
             }
           }
         }
+        assertStateAndReset(numReload = 1, notified = false, event = "merged project reload")
       }
-      assertStateAndReset(numReload = 1, notified = false, event = "merged project reload")
     }
   }
 
   fun `test force sync action during sync`() {
     test {
       enableAsyncExecution()
+      setDispatcherMergingSpan(MERING_SPAN)
 
-      val expectedRefreshes = 10
-      val latch = CountDownLatch(expectedRefreshes)
-      whenReloading(expectedRefreshes) {
-        latch.countDown()
-        latch.await()
+      repeat(TEST_ATTEMPTS) {
+        val expectedRefreshes = 10
+        val latch = CountDownLatch(expectedRefreshes)
+        whenReloading(expectedRefreshes) {
+          latch.countDown()
+          latch.await()
+        }
+        whenReloadStarted(expectedRefreshes - 1) {
+          forceReloadProject()
+        }
+        waitForAllProjectActivities {
+          forceReloadProject()
+        }
+        assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
       }
-      whenReloadStarted(expectedRefreshes - 1) {
-        forceReloadProject()
-      }
-      waitForAllProjectActivities {
-        forceReloadProject()
-      }
-      assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
     }
   }
 
@@ -145,16 +156,18 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
   fun `_test settings file modification during sync`() {
     test { settingsFile ->
       enableAsyncExecution()
-      setDispatcherMergingSpan(10)
+      setDispatcherMergingSpan(MERING_SPAN)
 
-      val expectedRefreshes = 10
-      whenReloading(expectedRefreshes - 1) {
-        settingsFile.modify(EXTERNAL)
+      repeat(TEST_ATTEMPTS) {
+        val expectedRefreshes = 10
+        whenReloading(expectedRefreshes - 1) {
+          settingsFile.modify(EXTERNAL)
+        }
+        waitForAllProjectActivities {
+          settingsFile.modify(EXTERNAL)
+        }
+        assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
       }
-      waitForAllProjectActivities {
-        settingsFile.modify(EXTERNAL)
-      }
-      assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
     }
   }
 }

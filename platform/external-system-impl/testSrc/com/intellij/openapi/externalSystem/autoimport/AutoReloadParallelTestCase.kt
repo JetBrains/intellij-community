@@ -6,4 +6,9 @@ abstract class AutoReloadParallelTestCase: AutoReloadTestCase() {
   protected fun enableAsyncExecution() {
     AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
   }
+
+  companion object {
+    const val MERING_SPAN = 10 //ms
+    const val TEST_ATTEMPTS = 10
+  }
 }
