@@ -161,21 +161,17 @@ sealed class K2MoveModel {
         override val moveCallBack: MoveCallback? = null
     ) : K2MoveModel() {
         override fun toDescriptor(): K2MoveOperationDescriptor.Declarations {
-            val srcDescr = source.toDescriptor()
-            val targetDescr = target.toDescriptor()
-            val searchReferences = if (inSourceRoot) searchReferences.state else false
-            val moveDescriptor = K2MoveDescriptor.Declarations(
-                project,
-                srcDescr,
-                targetDescr
-            )
             return K2MoveOperationDescriptor.Declarations(
                 project,
-                listOf(moveDescriptor),
+                source.elements,
+                target.directory,
+                target.fileName,
+                target.pkgName,
                 searchForText.state,
-                searchReferences,
+                if (inSourceRoot) searchReferences.state else false,
                 searchInComments.state,
-                dirStructureMatchesPkg = true,
+                true,
+                mppDeclarations.state,
                 moveCallBack
             )
         }
