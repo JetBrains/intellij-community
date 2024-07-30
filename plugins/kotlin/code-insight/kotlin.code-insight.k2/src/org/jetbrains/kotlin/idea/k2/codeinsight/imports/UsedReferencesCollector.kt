@@ -90,7 +90,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
                 continue
             }
 
-            val importableSymbols = resolvedSymbols.mapNotNull { toImportableSymbol(it, reference) }
+            val importableSymbols = resolvedSymbols.mapNotNull { toImportableSymbol(it, reference, file) }
 
             for (symbol in importableSymbols) {
                 if (!canBeResolvedViaImport(reference, symbol)) continue
@@ -104,93 +104,96 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             }
         }
     }
+}
 
-    /**
-     * In K2, every call in the form of `foo()` has `KtInvokeFunctionReference` on it.
-     *
-     * In the cases when `foo()` call is not actually an `invoke` call, we do not want to process such references,
-     * since they are not supposed to resolve anywhere.
-     */
-    private fun KaSession.isEmptyInvokeReference(reference: KtReference): Boolean {
-        if (reference !is KtInvokeFunctionReference) return false
+/**
+ * In K2, every call in the form of `foo()` has `KtInvokeFunctionReference` on it.
+ *
+ * In the cases when `foo()` call is not actually an `invoke` call, we do not want to process such references,
+ * since they are not supposed to resolve anywhere.
+ */
+private fun KaSession.isEmptyInvokeReference(reference: KtReference): Boolean {
+    if (reference !is KtInvokeFunctionReference) return false
 
-        val callInfo = reference.element.resolveToCall()
-        val isImplicitInvoke = callInfo?.calls?.any { it is KaSimpleFunctionCall && it.isImplicitInvoke } == true
+    val callInfo = reference.element.resolveToCall()
+    val isImplicitInvoke = callInfo?.calls?.any { it is KaSimpleFunctionCall && it.isImplicitInvoke } == true
 
-        return !isImplicitInvoke
+    return !isImplicitInvoke
+}
+
+private fun KaSession.toImportableSymbol(
+    target: KaSymbol,
+    reference: KtReference,
+    containingFile: KtFile = reference.element.containingKtFile,
+): KaSymbol? = when {
+    target is KaReceiverParameterSymbol -> null
+
+    reference.isImplicitReferenceToCompanion() -> {
+        (target as? KaNamedClassSymbol)?.containingSymbol
     }
 
-    private fun KaSession.toImportableSymbol(target: KaSymbol, reference: KtReference): KaSymbol? = when {
-        target is KaReceiverParameterSymbol -> null
+    target is KaConstructorSymbol -> {
+        val targetClass = target.containingSymbol as? KaClassLikeSymbol
 
-        reference.isImplicitReferenceToCompanion() -> {
-            (target as? KaNamedClassSymbol)?.containingSymbol
-        }
+        // if constructor is typealiased, it can be imported in any scenario
+        val typeAlias = targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, containingFile) }
 
-        target is KaConstructorSymbol -> {
-            val targetClass = target.containingSymbol as? KaClassLikeSymbol
+        // if constructor leads to inner class, it cannot be resolved by import
+        val notInnerTargetClass = targetClass?.takeUnless { it is KaNamedClassSymbol && it.isInner }
 
-            // if constructor is typealiased, it can be imported in any scenario
-            val typeAlias = targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, file) }
-
-            // if constructor leads to inner class, it cannot be resolved by import
-            val notInnerTargetClass = targetClass?.takeUnless { it is KaNamedClassSymbol && it.isInner }
-
-            typeAlias ?: notInnerTargetClass
-        }
-
-        target is KaSamConstructorSymbol -> {
-            val targetClass = findSamClassFor(target)
-
-            targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, file) } ?: targetClass
-        }
-
-        else -> target
+        typeAlias ?: notInnerTargetClass
     }
 
-    /**
-     * We want to skipp the calls which require implicit receiver to be dispatched.
-     */
-    private fun KaSession.isDispatchedCall(
-        element: KtElement,
-        dispatchReceiver: KaReceiverValue,
-        containingFile: KtFile = element.containingKtFile
-    ): Boolean {
-        return when (dispatchReceiver) {
-            is KaExplicitReceiverValue -> true
+    target is KaSamConstructorSymbol -> {
+        val targetClass = findSamClassFor(target)
 
-            is KaSmartCastedReceiverValue -> isDispatchedCall(element, dispatchReceiver.original, containingFile)
-
-            is KaImplicitReceiverValue -> !isStaticallyImportedReceiver(element, dispatchReceiver, containingFile)
-        }
+        targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, containingFile) } ?: targetClass
     }
 
-    /**
-     * Checks if [implicitDispatchReceiver] is introduced via static import
-     * from Kotlin object or Java class.
-     */
-    private fun KaSession.isStaticallyImportedReceiver(
-        element: KtElement,
-        implicitDispatchReceiver: KaImplicitReceiverValue,
-        containingFile: KtFile
-    ): Boolean {
-        val receiverTypeSymbol = implicitDispatchReceiver.type.symbol ?: return false
-        val receiverIsObject = receiverTypeSymbol is KaClassSymbol && receiverTypeSymbol.classKind.isObject
+    else -> target
+}
 
-        // with static imports, the implicit receiver is either some object symbol or `Unit` in case of imports from Java classes
-        if (!receiverIsObject) return false
+/**
+ * We want to skipp the calls which require implicit receiver to be dispatched.
+ */
+private fun KaSession.isDispatchedCall(
+    element: KtElement,
+    dispatchReceiver: KaReceiverValue,
+    containingFile: KtFile = element.containingKtFile
+): Boolean {
+    return when (dispatchReceiver) {
+        is KaExplicitReceiverValue -> true
 
-        val regularImplicitReceivers = containingFile.scopeContext(element).implicitReceivers
+        is KaSmartCastedReceiverValue -> isDispatchedCall(element, dispatchReceiver.original, containingFile)
 
-        return regularImplicitReceivers.none { it.type.semanticallyEquals(implicitDispatchReceiver.type) }
+        is KaImplicitReceiverValue -> !isStaticallyImportedReceiver(element, dispatchReceiver, containingFile)
     }
+}
 
-    private fun KaSession.resolveDispatchReceiver(element: KtElement): KaReceiverValue? {
-        val adjustedElement = element.callableReferenceExpressionForCallableReference() ?: element
-        val dispatchReceiver = adjustedElement.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver
+/**
+ * Checks if [implicitDispatchReceiver] is introduced via static import
+ * from Kotlin object or Java class.
+ */
+private fun KaSession.isStaticallyImportedReceiver(
+    element: KtElement,
+    implicitDispatchReceiver: KaImplicitReceiverValue,
+    containingFile: KtFile
+): Boolean {
+    val receiverTypeSymbol = implicitDispatchReceiver.type.symbol ?: return false
+    val receiverIsObject = receiverTypeSymbol is KaClassSymbol && receiverTypeSymbol.classKind.isObject
 
-        return dispatchReceiver
-    }
+    // with static imports, the implicit receiver is either some object symbol or `Unit` in case of imports from Java classes
+    if (!receiverIsObject) return false
+    val regularImplicitReceivers = containingFile.scopeContext(element).implicitReceivers
+
+    return regularImplicitReceivers.none { it.type.semanticallyEquals(implicitDispatchReceiver.type) }
+}
+
+private fun KaSession.resolveDispatchReceiver(element: KtElement): KaReceiverValue? {
+    val adjustedElement = element.callableReferenceExpressionForCallableReference() ?: element
+    val dispatchReceiver = adjustedElement.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver
+
+    return dispatchReceiver
 }
 
 /**
