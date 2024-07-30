@@ -268,6 +268,7 @@ internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean
   }
   val (childContext, childContinuation) =
     if (forceUseContextJob) createChildContextWithContextJob(r.toString())
+    //TODO: do we really need .toString() here? It allocates ~6 Gb during indexing
     else createChildContext(r.toString())
   command = ContextRunnable(true, childContext, command)
   if (childContinuation != null) {

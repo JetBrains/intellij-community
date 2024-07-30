@@ -117,6 +117,14 @@ public interface DataExternalizerEx<T> {
     return new ByteArrayWriter(bytes, 0, bytes.length);
   }
 
+  static KnownSizeRecordWriter fromBytes(@NotNull ByteArraySequence bytes) {
+    return new ByteArrayWriter(
+      bytes.getInternalBuffer(),
+      bytes.getOffset(),
+      bytes.getLength()
+    );
+  }
+
   static KnownSizeRecordWriter fromBytes(byte @NotNull [] bytes,
                                          int offset,
                                          int length) {
@@ -161,7 +169,7 @@ public interface DataExternalizerEx<T> {
 
     @Override
     public String toString() {
-      return "ByteArrayWriter[" + IOUtil.toHexString(Arrays.copyOfRange(bytes, startingOffset, startingOffset+length)) + "]";
+      return "ByteArrayWriter[" + IOUtil.toHexString(Arrays.copyOfRange(bytes, startingOffset, startingOffset + length)) + "]";
     }
   }
 }
