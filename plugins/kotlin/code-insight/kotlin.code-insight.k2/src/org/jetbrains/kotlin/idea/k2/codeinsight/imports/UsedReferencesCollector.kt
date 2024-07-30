@@ -173,6 +173,12 @@ internal class UsedReferencesCollector(private val file: KtFile) {
         implicitDispatchReceiver: KaImplicitReceiverValue,
         containingFile: KtFile
     ): Boolean {
+        val receiverTypeSymbol = implicitDispatchReceiver.type.symbol ?: return false
+        val receiverIsObject = receiverTypeSymbol is KaClassSymbol && receiverTypeSymbol.classKind.isObject
+
+        // with static imports, the implicit receiver is either some object symbol or `Unit` in case of imports from Java classes
+        if (!receiverIsObject) return false
+
         val regularImplicitReceivers = containingFile.scopeContext(element).implicitReceivers
 
         return regularImplicitReceivers.none { it.type.semanticallyEquals(implicitDispatchReceiver.type) }
