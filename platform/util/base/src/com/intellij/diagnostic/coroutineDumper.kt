@@ -311,10 +311,22 @@ private fun JobRepresentationTree.deduplicate(): DeduplicatedJobRepresentationTr
   )
 
 private fun JobRepresentation.withoutJobAddress(): JobRepresentation {
-  val ind = job.lastIndexOf("}@")
-  if (ind == -1) return this
-  assert(job.substring(ind + 2, job.length).all { it.isLetterOrDigit() })
-  return JobRepresentation(coroutineName, job.substring(0, ind + 1), state, context, trace)
+  val closingBracketPosition = job.lastIndexOf("}@")
+  if (closingBracketPosition == -1) {
+    return this
+  }
+  val openingBracketPosition = job.substring(0, closingBracketPosition).lastIndexOf('{')
+  if (openingBracketPosition == -1) {
+    return this
+  }
+  if (job.substring(0, openingBracketPosition).endsWith("BlockingCoroutine")) {
+    return this // the address of BlockingCoroutine is important to link it to the thread that awaits it
+  }
+  if (job.substring(closingBracketPosition + 2, job.length).any { !it.isLetterOrDigit() }) {
+    return this // suffix doesn't look like a job address
+  }
+  val jobWithoutAddress = job.substring(0, closingBracketPosition + 1)
+  return JobRepresentation(coroutineName, jobWithoutAddress, state, context, trace)
 }
 
 private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<StackTraceElement> {
