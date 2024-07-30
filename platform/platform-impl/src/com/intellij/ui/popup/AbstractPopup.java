@@ -1264,10 +1264,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
       root.setGlassPane(glass);
 
+      var zoneSize = SystemInfo.isMac ? Registry.intValue("popup.resize.zone.macos", 8) : 4;
       WindowResizeListenerEx resizeListener = new WindowResizeListenerEx(
         glass,
         myComponent,
-        myMovable ? JBUI.insets(4) : JBUI.insets(0, 0, 4, 4),
+        myMovable ? JBUI.insets(zoneSize) : JBUI.insets(0, 0, zoneSize, zoneSize),
         null);
       resizeListener.install(this);
       resizeListener.addResizeListeners(() -> {
