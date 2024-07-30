@@ -26,23 +26,7 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
 
   override fun performHotSwap(context: DataContext, session: HotSwapSession<VirtualFile>) {
     val project = context.getData(CommonDataKeys.PROJECT) ?: return
-    val listener = session.createStatusListener()
-    HotSwapUI.getInstance(project).compileAndReload(debuggerSession, HotSwapStatusListenerAdapter(listener),
-                                                    *session.getChanges().toTypedArray())
-  }
-}
-
-private class HotSwapStatusListenerAdapter(private val listener: HotSwapResultListener) : HotSwapStatusListener {
-  override fun onSuccess(sessions: MutableList<DebuggerSession>?) {
-    listener.onCompleted()
-  }
-
-  override fun onFailure(sessions: MutableList<DebuggerSession>?) {
-    listener.onFailed()
-  }
-
-  override fun onCancel(sessions: MutableList<DebuggerSession>?) {
-    listener.onCanceled()
+    HotSwapUI.getInstance(project).compileAndReload(debuggerSession, *session.getChanges().toTypedArray())
   }
 }
 

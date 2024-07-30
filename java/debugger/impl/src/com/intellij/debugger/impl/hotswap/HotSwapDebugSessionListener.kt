@@ -3,34 +3,68 @@ package com.intellij.debugger.impl.hotswap
 
 import com.intellij.debugger.impl.DebuggerManagerListener
 import com.intellij.debugger.impl.DebuggerSession
+import com.intellij.debugger.ui.HotSwapStatusListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.xdebugger.impl.hotswap.HotSwapResultListener
+import com.intellij.xdebugger.impl.hotswap.HotSwapSession
 import com.intellij.xdebugger.impl.hotswap.HotSwapSessionManager
 import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
-internal class HotSwapDebugSessionListener : DebuggerManagerListener {
-  private val sessions = ConcurrentHashMap<DebuggerSession, Disposable>()
+internal class HotSwapDebugSessionManager {
+  private val disposables = ConcurrentHashMap<DebuggerSession, Disposable>()
+  private val sessions = ConcurrentHashMap<DebuggerSession, HotSwapSession<*>>()
 
-  override fun sessionCreated(session: DebuggerSession?) {
-    if (session == null) return
+  fun createSessionListenerOrNull(session: DebuggerSession): HotSwapStatusListener? = sessions[session]
+    ?.let { HotSwapStatusListenerAdapter(it.startHotSwapListening()) }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): HotSwapDebugSessionManager = project.service()
+  }
+
+  internal fun createSession(session: DebuggerSession) {
     if (!Registry.`is`("debugger.hotswap.floating.toolbar")) return
     val disposable = Disposer.newDisposable()
-    sessions[session] = disposable
-    HotSwapSessionManager.getInstance(session.project).createSession(JvmHotSwapProvider(session), disposable)
+    disposables[session] = disposable
+    val hotSwapSession = HotSwapSessionManager.getInstance(session.project).createSession(JvmHotSwapProvider(session), disposable)
+    sessions[session] = hotSwapSession
+  }
+
+  internal fun removeSession(session: DebuggerSession) {
+    disposables.remove(session)?.let { Disposer.dispose(it) }
+    sessions.remove(session)
+  }
+}
+
+
+internal class HotSwapDebugSessionListener : DebuggerManagerListener {
+  override fun sessionCreated(session: DebuggerSession?) {
+    if (session == null) return
+    HotSwapDebugSessionManager.getInstance(session.project).createSession(session)
   }
 
   override fun sessionRemoved(session: DebuggerSession?) {
     if (session == null) return
-    sessions.remove(session)?.let { Disposer.dispose(it) }
+    HotSwapDebugSessionManager.getInstance(session.project).removeSession(session)
+  }
+}
+
+private class HotSwapStatusListenerAdapter(private val listener: HotSwapResultListener) : HotSwapStatusListener {
+  override fun onSuccess(sessions: MutableList<DebuggerSession>?) {
+    listener.onCompleted()
   }
 
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): HotSwapDebugSessionListener = project.service()
+  override fun onFailure(sessions: MutableList<DebuggerSession>?) {
+    listener.onFailed()
+  }
+
+  override fun onCancel(sessions: MutableList<DebuggerSession>?) {
+    listener.onCanceled()
   }
 }

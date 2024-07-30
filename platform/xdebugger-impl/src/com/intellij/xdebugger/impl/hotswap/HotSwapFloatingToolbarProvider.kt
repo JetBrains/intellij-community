@@ -29,7 +29,6 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     val session = session ?: return
-    session.startHotSwap()
     callWithTemplate(e.dataContext, session)
   }
 

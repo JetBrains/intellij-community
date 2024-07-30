@@ -19,11 +19,12 @@ class HotSwapSessionManager(private val project: Project, private val parentScop
   private val listeners = DisposableWrapperList<HotSwapChangesListener>()
   private val sessions = DisposableWrapperList<HotSwapSession<*>>()
 
-  fun <T> createSession(provider: HotSwapProvider<T>, disposable: Disposable) {
+  fun <T> createSession(provider: HotSwapProvider<T>, disposable: Disposable): HotSwapSession<T> {
     val hotSwapSession = HotSwapSession(project, provider, parentScope)
     Disposer.register(disposable, hotSwapSession)
     sessions.add(hotSwapSession, disposable)
     hotSwapSession.init()
+    return hotSwapSession
   }
 
   internal fun addListener(listener: HotSwapChangesListener, disposable: Disposable) {
@@ -84,24 +85,23 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
     }
   }
 
-  internal fun startHotSwap() {
-    currentStatus = HotSwapVisibleStatus.IN_PROGRESS
-  }
-
   fun getChanges() = changesCollector.getChanges()
 
-  fun createStatusListener() = object : HotSwapResultListener {
-    override fun onCompleted() {
-      completeHotSwap()
-      HotSwapStatusNotificationManager.getInstance(project).showSuccessNotification(coroutineScope)
-    }
+  fun startHotSwapListening(): HotSwapResultListener {
+    currentStatus = HotSwapVisibleStatus.IN_PROGRESS
+    return object : HotSwapResultListener {
+      override fun onCompleted() {
+        completeHotSwap()
+        HotSwapStatusNotificationManager.getInstance(project).showSuccessNotification(coroutineScope)
+      }
 
-    override fun onFailed() {
-      completeHotSwap()
-    }
+      override fun onFailed() {
+        completeHotSwap()
+      }
 
-    override fun onCanceled() {
-      currentStatus = HotSwapVisibleStatus.CHANGES_READY
+      override fun onCanceled() {
+        currentStatus = HotSwapVisibleStatus.CHANGES_READY
+      }
     }
   }
 }
