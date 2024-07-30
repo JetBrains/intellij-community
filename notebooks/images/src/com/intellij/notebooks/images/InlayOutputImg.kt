@@ -10,8 +10,8 @@ import org.jetbrains.plugins.notebooks.visualization.r.inlays.runAsyncInlay
 import java.io.File
 import javax.swing.SwingUtilities
 
-class InlayOutputImg(parent: Disposable, editor: Editor, clearAction: () -> Unit)
-  : InlayOutput(parent, editor, clearAction, loadActions(CopyImageToClipboardAction.ID, SaveOutputAction.ID, ClearOutputAction.ID)), InlayOutput.WithCopyImageToClipboard, InlayOutput.WithSaveAs {
+class InlayOutputImg(parent: Disposable, editor: Editor)
+  : InlayOutput(parent, editor, loadActions(CopyImageToClipboardAction.ID, SaveOutputAction.ID)), InlayOutput.WithCopyImageToClipboard, InlayOutput.WithSaveAs {
   private val graphicsPanel = GraphicsPanel(project, parent).apply {
     isAdvancedMode = true
   }

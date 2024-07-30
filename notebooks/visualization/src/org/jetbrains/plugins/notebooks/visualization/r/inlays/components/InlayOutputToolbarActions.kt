@@ -8,24 +8,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutput.Companion.getInlayOutput
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutput.Companion.getToolbarPaneOrNull
-
-class ClearOutputAction private constructor() : DumbAwareAction() {
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = getToolbarPaneOrNull(e) != null
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    getToolbarPaneOrNull(e)?.inlayOutput?.doClearAction()
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread =
-    ActionUpdateThread.EDT
-
-  companion object {
-    const val ID = "org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ClearOutputAction"
-  }
-}
 
 
 class SaveOutputAction private constructor() : DumbAwareAction() {

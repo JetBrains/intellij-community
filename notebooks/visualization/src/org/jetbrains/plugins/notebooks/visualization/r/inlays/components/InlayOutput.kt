@@ -48,7 +48,6 @@ import kotlin.math.min
 abstract class InlayOutput(
   parent: Disposable,
   val editor: Editor,
-  private val clearAction: () -> Unit,
   val actions: List<AnAction>,
 ) {
   // Transferring `this` from the constructor to another class violates JMM and leads to undefined behaviour
@@ -125,11 +124,6 @@ abstract class InlayOutput(
     InlayOutputUtil.saveWithFileChooser(project, title, description, extension, defaultName, true, onChoose)
   }
 
-  /** called by [ClearOutputAction] */
-  fun doClearAction() {
-    clearAction()
-  }
-
   /** marker interface for [SaveOutputAction] */
   interface WithSaveAs {
     fun saveAs()
@@ -154,8 +148,8 @@ abstract class InlayOutput(
   }
 }
 
-class InlayOutputText(parent: Disposable, editor: Editor, clearAction: () -> Unit)
-  : InlayOutput(parent, editor, clearAction, loadActions(SaveOutputAction.ID, ClearOutputAction.ID)), InlayOutput.WithSaveAs {
+class InlayOutputText(parent: Disposable, editor: Editor)
+  : InlayOutput(parent, editor, loadActions(SaveOutputAction.ID)), InlayOutput.WithSaveAs {
 
   private val console = ColoredTextConsole(project, viewer = true)
 
@@ -299,8 +293,8 @@ fun updateOutputTextConsoleUI(consoleEditor: EditorEx, editor: Editor) {
   }
 }
 
-class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Unit)
-  : InlayOutput(parent, editor, clearAction, loadActions(SaveOutputAction.ID, ClearOutputAction.ID)), InlayOutput.WithSaveAs {
+class InlayOutputHtml(parent: Disposable, editor: Editor)
+  : InlayOutput(parent, editor, loadActions(SaveOutputAction.ID)), InlayOutput.WithSaveAs {
 
   private val jbBrowser: JBCefBrowser = JBCefBrowser().also { Disposer.register(parent, it) }
   private val heightJsCallback = JBCefJSQuery.create(jbBrowser as JBCefBrowserBase)
@@ -381,8 +375,8 @@ class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Uni
   }
 }
 
-class InlayOutputTable(val parent: Disposable, editor: Editor, clearAction: () -> Unit)
-  : InlayOutput(parent, editor, clearAction, loadActions(ClearOutputAction.ID)) {
+class InlayOutputTable(val parent: Disposable, editor: Editor)
+  : InlayOutput(parent, editor, loadActions()) {
 
   private val inlayTablePage: InlayTablePage = InlayTablePage()
 

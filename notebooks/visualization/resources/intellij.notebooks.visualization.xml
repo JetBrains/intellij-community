@@ -40,9 +40,6 @@
 
   <actions resource-bundle="messages.VisualizationBundle">
     <group id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutputToolbarActions">
-      <action id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ClearOutputAction"
-              class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ClearOutputAction"
-              icon="AllIcons.Actions.GC"/>
       <action id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.SaveOutputAction"
               class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.SaveOutputAction"
               icon="AllIcons.Actions.MenuSaveall"/>
