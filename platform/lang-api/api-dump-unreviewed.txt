@@ -1294,7 +1294,8 @@ f:com.intellij.codeInsight.hints.declarative.InlayActionData
 - hashCode():I
 com.intellij.codeInsight.hints.declarative.InlayActionHandler
 - sf:Companion:com.intellij.codeInsight.hints.declarative.InlayActionHandler$Companion
-- a:handleClick(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.declarative.InlayActionPayload):V
+- handleClick(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.declarative.InlayActionPayload):V
+- handleClick(com.intellij.openapi.editor.event.EditorMouseEvent,com.intellij.codeInsight.hints.declarative.InlayActionPayload):V
 f:com.intellij.codeInsight.hints.declarative.InlayActionHandler$Companion
 - f:getActionHandler(java.lang.String):com.intellij.codeInsight.hints.declarative.InlayActionHandler
 f:com.intellij.codeInsight.hints.declarative.InlayActionHandlerBean

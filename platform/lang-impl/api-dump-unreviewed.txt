@@ -6727,7 +6727,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry
 - computeWidth(com.intellij.codeInsight.hints.presentation.InlayTextMetrics):I
 - equals(java.lang.Object):Z
 - f:getText():java.lang.String
-- handleClick(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList,Z):V
+- handleClick(com.intellij.openapi.editor.event.EditorMouseEvent,com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList,Z):V
 - hashCode():I
 - render(java.awt.Graphics2D,com.intellij.codeInsight.hints.presentation.InlayTextMetrics,com.intellij.openapi.editor.markup.TextAttributes,Z,I,I,com.intellij.openapi.editor.Editor):V
 f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingIntention
