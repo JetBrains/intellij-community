@@ -85,9 +85,9 @@ public final class JavaSourceInference {
   @NotNull
   private static Nullability findNullability(PsiMethodImpl method, MethodData data) {
     PsiType type = method.getReturnType();
+    if (type == null || type instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(method.getProject()).findExplicitNullability(method);
     if (info != null) return info.getNullability();
-    if (type == null || type instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
     MethodReturnInferenceResult result = data.getMethodReturn();
     if (result == null) return Nullability.UNKNOWN;
     try {
