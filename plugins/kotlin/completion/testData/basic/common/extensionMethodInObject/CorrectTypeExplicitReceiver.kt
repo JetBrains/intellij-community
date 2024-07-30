@@ -22,7 +22,6 @@ fun usage(b: B) {
     b.foo<caret>
 }
 
-// IGNORE_K2
 // EXIST: { lookupString: "fooForAny", itemText: "fooForAny", icon: "Function"}
 
 // EXIST: { lookupString: "fooForT", itemText: "fooForT", icon: "Function"}

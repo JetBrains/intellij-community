@@ -224,7 +224,7 @@ internal open class FirCallableCompletionContributor(
                 .forEach { yield(createCallableWithMetadata(it.asSignature(), CompletionSymbolOrigin.Index)) }
         }
 
-        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
+        collectExtensionsFromIndexAndResolveExtensionScope(
             implicitReceiversTypes,
             extensionChecker,
             visibilityChecker,
@@ -383,7 +383,7 @@ internal open class FirCallableCompletionContributor(
             )
         }
 
-        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
+        collectExtensionsFromIndexAndResolveExtensionScope(
             typesOfPossibleReceiver,
             extensionChecker,
             visibilityChecker,
@@ -425,7 +425,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KaSession)
-    private fun collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
+    private fun collectExtensionsFromIndexAndResolveExtensionScope(
         receiverTypes: List<KaType>,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
@@ -433,12 +433,12 @@ internal open class FirCallableCompletionContributor(
     ): Collection<ApplicableExtension> {
         if (receiverTypes.isEmpty()) return emptyList()
 
-        val topLevelExtensionsFromIndex = symbolFromIndexProvider.getTopLevelExtensionCallableSymbolsByNameFilter(
+        val extensionsFromIndex = symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(
             scopeNameFilter,
             receiverTypes,
         ) { !it.canDefinitelyNotBeSeenFromOtherFile() && it.canBeAnalysed() }
 
-        return topLevelExtensionsFromIndex
+        return extensionsFromIndex
             .filter { filter(it, sessionParameters) }
             .filter { visibilityChecker.isVisible(it) }
             .mapNotNull { checkApplicabilityAndSubstitute(it, extensionChecker) }
