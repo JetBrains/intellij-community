@@ -71,11 +71,10 @@ internal class UsedSymbol(val reference: KtReference, val symbol: KaSymbol) {
     }
 
     fun KaSession.isResolvedWithImport(): Boolean {
-        val dispatchReceiver = resolveDispatchReceiver(reference.element)
-        if (dispatchReceiver != null && isDispatchedCall(reference.element, dispatchReceiver)) return false
+        if (isAccessibleAsMemberCallable(symbol, reference.element)) return false
 
         val isNotAliased = symbol.name in reference.resolvesByNames
-        if (isNotAliased && isAccessibleAsMember(symbol, reference.element)) return false
+        if (isNotAliased && isAccessibleAsMemberClassifier(symbol, reference.element)) return false
 
         return canBeResolvedViaImport(reference, symbol)
     }
@@ -145,6 +144,17 @@ private fun KaSession.isDispatchedCall(
     }
 }
 
+private fun KaSession.isAccessibleAsMemberCallable(
+    symbol: KaSymbol,
+    element: KtElement,
+): Boolean {
+    if (symbol !is KaCallableSymbol || symbol.containingSymbol !is KaClassLikeSymbol) return false
+
+    val dispatchReceiver = resolveDispatchReceiver(element) ?: return false
+
+    return isDispatchedCall(element, dispatchReceiver)
+}
+
 /**
  * Checks if [implicitDispatchReceiver] is introduced via static import
  * from Kotlin object or Java class.
@@ -165,7 +175,7 @@ private fun KaSession.isStaticallyImportedReceiver(
     return regularImplicitReceivers.none { it.type.semanticallyEquals(implicitDispatchReceiver.type) }
 }
 
-private fun KaSession.isAccessibleAsMember(symbol: KaSymbol, element: KtElement): Boolean {
+private fun KaSession.isAccessibleAsMemberClassifier(symbol: KaSymbol, element: KtElement): Boolean {
     if (symbol !is KaClassLikeSymbol || symbol.containingSymbol !is KaClassLikeSymbol) return false
 
     val name = symbol.name ?: return false
@@ -181,7 +191,7 @@ private fun KaSession.isAccessibleAsMember(symbol: KaSymbol, element: KtElement)
 private fun KaSession.nonImportingScopesForPosition(element: KtElement): List<KaScope> {
     val scopeContext = element.containingKtFile.scopeContext(element)
 
-            // we have to filter scopes created by implicit receivers (like companion objects, for example); see KT-70108
+    // we have to filter scopes created by implicit receivers (like companion objects, for example); see KT-70108
     val implicitReceiverScopeIndices = scopeContext.implicitReceivers.map { it.scopeIndexInTower }.toSet()
 
     val nonImportingScopes = scopeContext.scopes
