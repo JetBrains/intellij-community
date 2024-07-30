@@ -8,13 +8,17 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.cache.TypeAnnotationContainer;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -795,6 +799,33 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     assertSize(2, stubs);
     PsiClassStub<?> classStub = (PsiClassStub<?>)stubs.get(1);
     assertFalse(classStub.isInterface());
+  }
+  
+  public void testTypeAnnotation() {
+    String source = """
+      import org.jetbrains.annotations.NotNull;
+      
+      public final class Container<E> {
+          public final Container<@NotNull Container<@NotNull E>> test() {
+              return new Container<>();
+          }
+      }
+      """;
+    PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
+    FileASTNode fileNode = file.getNode();
+    assertNotNull(fileNode);
+    assertFalse(fileNode.isParsed());
+    StubElement<?> element = myBuilder.buildStubTree(file);
+    PsiClassStub<?> classStub = ContainerUtil.findInstance(element.getChildrenStubs(), PsiClassStub.class);
+    assertNotNull(classStub);
+    PsiMethodStub methodStub = ContainerUtil.findInstance(classStub.getChildrenStubs(), PsiMethodStub.class);
+    assertNotNull(methodStub);
+    TypeInfo typeInfo = methodStub.getReturnTypeText();
+    assertEquals("Container<Container<E>>", typeInfo.text());
+    TypeAnnotationContainer annotations = typeInfo.getTypeAnnotations();
+    assertEquals("""
+                   0;->@NotNull
+                   0;0;->@NotNull""", annotations.toString());
   }
 
   public void testSOEProof() {
