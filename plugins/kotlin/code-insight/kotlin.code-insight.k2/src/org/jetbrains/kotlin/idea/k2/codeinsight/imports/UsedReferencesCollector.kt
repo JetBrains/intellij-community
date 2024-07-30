@@ -160,15 +160,22 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
             is KaSmartCastedReceiverValue -> isDispatchedCall(element, dispatchReceiver.original, containingFile)
 
-            is KaImplicitReceiverValue -> {
-                val regularImplicitReceivers = containingFile.scopeContext(element).implicitReceivers
-
-                // for imports from companion objects, or static java declarations
-                val isStaticImportDispatchReceiver = regularImplicitReceivers.none { it.type.semanticallyEquals(dispatchReceiver.type) }
-
-                !isStaticImportDispatchReceiver
-            }
+            is KaImplicitReceiverValue -> !isStaticallyImportedReceiver(element, dispatchReceiver, containingFile)
         }
+    }
+
+    /**
+     * Checks if [implicitDispatchReceiver] is introduced via static import
+     * from Kotlin object or Java class.
+     */
+    private fun KaSession.isStaticallyImportedReceiver(
+        element: KtElement,
+        implicitDispatchReceiver: KaImplicitReceiverValue,
+        containingFile: KtFile
+    ): Boolean {
+        val regularImplicitReceivers = containingFile.scopeContext(element).implicitReceivers
+
+        return regularImplicitReceivers.none { it.type.semanticallyEquals(implicitDispatchReceiver.type) }
     }
 
     private fun KaSession.resolveDispatchReceiver(element: KtElement): KaReceiverValue? {
