@@ -39,7 +39,7 @@ data class ExtractableCodeDescriptor(
         get() = if (renderedAnnotations.isEmpty()) {
             ""
         } else {
-            renderedAnnotations.joinToString(separator = "\n", postfix = "\n")
+            renderedAnnotations.joinToString(separator = "\n")
         }
 }
 

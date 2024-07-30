@@ -228,6 +228,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                 printer.append('@')
                 renderer.annotationUseSiteTargetRenderer.renderUseSiteTarget(useSiteSession, annotation, owner, renderer, printer)
                 renderer.annotationsQualifiedNameRenderer.renderQualifier(useSiteSession, annotation, owner, renderer, printer)
+                renderer.annotationArgumentsRenderer.renderAnnotationArguments(useSiteSession, annotation, owner, renderer, printer)
                 printer.append('\n')
                 printer.toString()
             }

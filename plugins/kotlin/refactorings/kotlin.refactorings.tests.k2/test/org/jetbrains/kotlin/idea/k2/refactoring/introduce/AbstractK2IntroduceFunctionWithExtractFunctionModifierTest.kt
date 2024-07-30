@@ -40,13 +40,13 @@ private class MyComposeExtractFunctionDescriptorModifier : ExtractFunctionDescri
         if (sourceFunction is KtAnnotated) {
             sourceFunction.findAnnotation(MY_COMPOSABLE_CLASS_ID)?.let {
                 return descriptor.copy(
-                    renderedAnnotations = descriptor.renderedAnnotations + "@${MY_COMPOSABLE_CLASS_ID.asFqNameString()}"
+                    renderedAnnotations = descriptor.renderedAnnotations + "@${MY_COMPOSABLE_CLASS_ID.asFqNameString()}\n"
                 )
             }
         }
         val outsideLambda = descriptor.extractionData.commonParent.parentOfType<KtLambdaArgument>(true) ?: return descriptor
         return if (outsideLambda.isComposable()) {
-            descriptor.copy(renderedAnnotations = descriptor.renderedAnnotations + "@${MY_COMPOSABLE_CLASS_ID.asFqNameString()}")
+            descriptor.copy(renderedAnnotations = descriptor.renderedAnnotations + "@${MY_COMPOSABLE_CLASS_ID.asFqNameString()}\n")
         } else {
             descriptor
         }
