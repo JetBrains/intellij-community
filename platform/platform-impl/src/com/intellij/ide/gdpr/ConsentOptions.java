@@ -87,10 +87,11 @@ public final class ConsentOptions implements ModificationTracker {
 
       @Override
       public @Nullable String readLocalizedBundledConsents() {
-        if (getCurrentLocale() == getDefaultLocale()) return null;
-        String path = getBundledResourcePath();
-        List<String> localizedPaths = LocalizationUtil.INSTANCE.getLocalizedPathStrings(path, getCurrentLocale());
-        for (String localizedPath : localizedPaths) {
+        if (getCurrentLocale() == getDefaultLocale()) {
+          return null;
+        }
+
+        for (String localizedPath : LocalizationUtil.INSTANCE.getLocalizedPaths(getBundledResourcePath(), getCurrentLocale())) {
           String loadedText = loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(localizedPath));
           if (!loadedText.isEmpty()) {
             return loadedText;

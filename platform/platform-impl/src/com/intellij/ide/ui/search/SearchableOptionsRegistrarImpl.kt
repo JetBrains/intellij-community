@@ -295,7 +295,7 @@ class SearchableOptionsRegistrarImpl : SearchableOptionsRegistrar() {
   }
 
   @Synchronized
-  fun getAcceptableDescriptions(prefix: String?): Set<OptionDescription>? {
+  fun getAcceptableDescriptions(prefix: String?): MutableSet<OptionDescription>? {
     if (prefix == null || !isInitialized()) {
       return null
     }

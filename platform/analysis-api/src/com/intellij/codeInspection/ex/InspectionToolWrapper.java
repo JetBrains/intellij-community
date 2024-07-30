@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -202,12 +201,15 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   private @Nullable InputStream getDescriptionStream() {
     Application app = ApplicationManager.getApplication();
-    Path path = Path.of(INSPECTION_DESCRIPTIONS_FOLDER).resolve(getDescriptionFileName());
+    String path = INSPECTION_DESCRIPTIONS_FOLDER + "/" + getDescriptionFileName();
+    ClassLoader classLoader;
     if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return LocalizationUtil.INSTANCE.getResourceAsStream(getDescriptionContextClass().getClassLoader(), path);
+      classLoader = getDescriptionContextClass().getClassLoader();
     }
-
-    return LocalizationUtil.INSTANCE.getResourceAsStream(myEP.getPluginDescriptor().getPluginClassLoader(), path);
+    else {
+      classLoader = myEP.getPluginDescriptor().getPluginClassLoader();
+    }
+    return LocalizationUtil.INSTANCE.getResourceAsStream(classLoader, path, null);
   }
 
   private @NotNull String getDescriptionFileName() {
