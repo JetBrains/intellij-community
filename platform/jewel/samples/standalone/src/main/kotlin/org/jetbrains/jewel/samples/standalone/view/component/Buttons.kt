@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -19,8 +20,11 @@ import org.jetbrains.jewel.ui.component.IconActionButton
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.PlatformIcon
+import org.jetbrains.jewel.ui.component.SelectableIconActionButton
 import org.jetbrains.jewel.ui.component.SelectableIconButton
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.ToggleableIconActionButton
+import org.jetbrains.jewel.ui.component.ToggleableIconButton
 import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
@@ -34,8 +38,11 @@ fun Buttons() {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         NormalButtons()
-        IconButtons()
-        IconActionButtons()
+
+        var selectedIndex by remember { mutableIntStateOf(0) }
+        IconButtons(selectedIndex == 1) { selectedIndex = 1 }
+        IconActionButtons(selectedIndex == 2) { selectedIndex = 2 }
+
         ActionButtons()
     }
 }
@@ -66,7 +73,10 @@ private fun NormalButtons() {
 }
 
 @Composable
-private fun IconButtons() {
+private fun IconButtons(
+    selected: Boolean,
+    onSelectableClick: () -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -88,20 +98,34 @@ private fun IconButtons() {
 
         Text("Selectable:")
 
-        var selected by remember { mutableStateOf(false) }
-        SelectableIconButton(onClick = { selected = !selected }, selected = selected) { state ->
-            val tint by LocalIconButtonStyle.current.colors.foregroundFor(state)
+        SelectableIconButton(onClick = onSelectableClick, selected = selected) { state ->
+            val tint by LocalIconButtonStyle.current.colors.selectableForegroundFor(state)
             PlatformIcon(
                 key = AllIconsKeys.Actions.MatchCase,
-                contentDescription = "IconButton",
+                contentDescription = "SelectableIconButton",
                 hints = arrayOf(Selected(selected), Stroke(tint)),
+            )
+        }
+
+        Text("Toggleable:")
+
+        var checked by remember { mutableStateOf(false) }
+        ToggleableIconButton(onValueChange = { checked = !checked }, value = checked) { state ->
+            val tint by LocalIconButtonStyle.current.colors.toggleableForegroundFor(state)
+            PlatformIcon(
+                key = AllIconsKeys.Actions.MatchCase,
+                contentDescription = "ToggleableIconButton",
+                hints = arrayOf(Selected(checked), Stroke(tint)),
             )
         }
     }
 }
 
 @Composable
-private fun IconActionButtons() {
+private fun IconActionButtons(
+    selected: Boolean,
+    onSelectableClick: () -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -110,14 +134,29 @@ private fun IconActionButtons() {
         Text("IconActionButton", style = Typography.h4TextStyle())
 
         Text("With tooltip:")
-
-        IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconButton", onClick = {}) {
+        IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconActionButton", onClick = {}) {
             Text("I am a tooltip")
         }
 
         Text("Without tooltip:")
+        IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconActionButton", onClick = {})
 
-        IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconButton", onClick = {})
+        Text("Selectable:")
+        SelectableIconActionButton(
+            key = AllIconsKeys.Actions.Copy,
+            contentDescription = "SelectableIconActionButton",
+            selected = selected,
+            onClick = onSelectableClick,
+        )
+
+        Text("Toggleable:")
+        var checked by remember { mutableStateOf(false) }
+        ToggleableIconActionButton(
+            key = AllIconsKeys.Actions.Copy,
+            contentDescription = "SelectableIconActionButton",
+            value = checked,
+            onValueChange = { checked = it },
+        )
     }
 }
 

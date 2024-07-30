@@ -308,24 +308,29 @@ public final class org/jetbrains/jewel/ui/component/GroupHeaderKt {
 
 public final class org/jetbrains/jewel/ui/component/IconActionButtonKt {
 	public static final fun IconActionButton (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
-	public static final fun IconActionButton (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
-	public static final fun IconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Landroidx/compose/runtime/Composer;II)V
-	public static final fun IconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun IconActionButton (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/TooltipPlacement;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun IconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Landroidx/compose/runtime/Composer;II)V
+	public static final fun IconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/TooltipPlacement;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SelectableIconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SelectableIconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/TooltipPlacement;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ToggleableIconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ToggleableIconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/TooltipPlacement;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/jetbrains/jewel/ui/component/IconButtonKt {
 	public static final fun IconButton (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
 	public static final fun SelectableIconButton (ZLkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ToggleableIconButton (ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
 }
 
-public final class org/jetbrains/jewel/ui/component/IconButtonState : org/jetbrains/jewel/foundation/state/FocusableComponentState, org/jetbrains/jewel/foundation/state/SelectableComponentState {
+public final class org/jetbrains/jewel/ui/component/IconButtonState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/IconButtonState$Companion;
 	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/IconButtonState;
 	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
 	public static fun chooseValue-impl (JLjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
 	public static fun constructor-impl (J)J
-	public static final fun copy-iT7zR20 (JZZZZZZ)J
-	public static synthetic fun copy-iT7zR20$default (JZZZZZZILjava/lang/Object;)J
+	public static final fun copy-3OtLUoY (JZZZZZ)J
+	public static synthetic fun copy-3OtLUoY$default (JZZZZZILjava/lang/Object;)J
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (JLjava/lang/Object;)Z
 	public static final fun equals-impl0 (JJ)Z
@@ -342,16 +347,14 @@ public final class org/jetbrains/jewel/ui/component/IconButtonState : org/jetbra
 	public static fun isHovered-impl (J)Z
 	public fun isPressed ()Z
 	public static fun isPressed-impl (J)Z
-	public fun isSelected ()Z
-	public static fun isSelected-impl (J)Z
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (J)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()J
 }
 
 public final class org/jetbrains/jewel/ui/component/IconButtonState$Companion {
-	public final fun of-iT7zR20 (ZZZZZZ)J
-	public static synthetic fun of-iT7zR20$default (Lorg/jetbrains/jewel/ui/component/IconButtonState$Companion;ZZZZZZILjava/lang/Object;)J
+	public final fun of-3OtLUoY (ZZZZZ)J
+	public static synthetic fun of-3OtLUoY$default (Lorg/jetbrains/jewel/ui/component/IconButtonState$Companion;ZZZZZILjava/lang/Object;)J
 }
 
 public final class org/jetbrains/jewel/ui/component/IconKt {
@@ -664,6 +667,42 @@ public final class org/jetbrains/jewel/ui/component/SegmentedControlState$Compan
 	public static synthetic fun of-bhrFvog$default (Lorg/jetbrains/jewel/ui/component/SegmentedControlState$Companion;ZZZZZILjava/lang/Object;)J
 }
 
+public final class org/jetbrains/jewel/ui/component/SelectableIconButtonState : org/jetbrains/jewel/foundation/state/FocusableComponentState, org/jetbrains/jewel/foundation/state/SelectableComponentState {
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/SelectableIconButtonState$Companion;
+	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/SelectableIconButtonState;
+	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
+	public static fun chooseValue-impl (JLjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
+	public static fun constructor-impl (J)J
+	public static final fun copy-z9lnavA (JZZZZZZ)J
+	public static synthetic fun copy-z9lnavA$default (JZZZZZZILjava/lang/Object;)J
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (JLjava/lang/Object;)Z
+	public static final fun equals-impl0 (JJ)Z
+	public final fun getState-s-VKNKU ()J
+	public fun hashCode ()I
+	public static fun hashCode-impl (J)I
+	public fun isActive ()Z
+	public static fun isActive-impl (J)Z
+	public fun isEnabled ()Z
+	public static fun isEnabled-impl (J)Z
+	public fun isFocused ()Z
+	public static fun isFocused-impl (J)Z
+	public fun isHovered ()Z
+	public static fun isHovered-impl (J)Z
+	public fun isPressed ()Z
+	public static fun isPressed-impl (J)Z
+	public fun isSelected ()Z
+	public static fun isSelected-impl (J)Z
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (J)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()J
+}
+
+public final class org/jetbrains/jewel/ui/component/SelectableIconButtonState$Companion {
+	public final fun of-z9lnavA (ZZZZZZ)J
+	public static synthetic fun of-z9lnavA$default (Lorg/jetbrains/jewel/ui/component/SelectableIconButtonState$Companion;ZZZZZZILjava/lang/Object;)J
+}
+
 public final class org/jetbrains/jewel/ui/component/SliderKt {
 	public static final fun Slider (FLkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/functions/Function0;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Landroidx/compose/runtime/Composer;II)V
 }
@@ -841,6 +880,44 @@ public final class org/jetbrains/jewel/ui/component/TextFieldKt {
 public final class org/jetbrains/jewel/ui/component/TextKt {
 	public static final fun Text-F-Jr8PA (Landroidx/compose/ui/text/AnnotatedString;Landroidx/compose/ui/Modifier;JJLandroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontFamily;JLandroidx/compose/ui/text/style/TextDecoration;IJIZILjava/util/Map;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;III)V
 	public static final fun Text-bAzTDeA (Ljava/lang/String;Landroidx/compose/ui/Modifier;JJLandroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontFamily;JLandroidx/compose/ui/text/style/TextDecoration;IJIZILkotlin/jvm/functions/Function1;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;III)V
+}
+
+public final class org/jetbrains/jewel/ui/component/ToggleableIconButtonState : org/jetbrains/jewel/foundation/state/FocusableComponentState, org/jetbrains/jewel/foundation/state/ToggleableComponentState {
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/ToggleableIconButtonState$Companion;
+	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/ToggleableIconButtonState;
+	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
+	public static fun chooseValue-impl (JLjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
+	public static fun constructor-impl (J)J
+	public static final fun copy-CAf7mdk (JZLandroidx/compose/ui/state/ToggleableState;ZZZZ)J
+	public static synthetic fun copy-CAf7mdk$default (JZLandroidx/compose/ui/state/ToggleableState;ZZZZILjava/lang/Object;)J
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (JLjava/lang/Object;)Z
+	public static final fun equals-impl0 (JJ)Z
+	public final fun getState-s-VKNKU ()J
+	public fun getToggleableState ()Landroidx/compose/ui/state/ToggleableState;
+	public static fun getToggleableState-impl (J)Landroidx/compose/ui/state/ToggleableState;
+	public fun hashCode ()I
+	public static fun hashCode-impl (J)I
+	public fun isActive ()Z
+	public static fun isActive-impl (J)Z
+	public fun isEnabled ()Z
+	public static fun isEnabled-impl (J)Z
+	public fun isFocused ()Z
+	public static fun isFocused-impl (J)Z
+	public fun isHovered ()Z
+	public static fun isHovered-impl (J)Z
+	public fun isPressed ()Z
+	public static fun isPressed-impl (J)Z
+	public fun isSelected ()Z
+	public static fun isSelected-impl (J)Z
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (J)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()J
+}
+
+public final class org/jetbrains/jewel/ui/component/ToggleableIconButtonState$Companion {
+	public final fun of-CAf7mdk (ZLandroidx/compose/ui/state/ToggleableState;ZZZZ)J
+	public static synthetic fun of-CAf7mdk$default (Lorg/jetbrains/jewel/ui/component/ToggleableIconButtonState$Companion;ZLandroidx/compose/ui/state/ToggleableState;ZZZZILjava/lang/Object;)J
 }
 
 public final class org/jetbrains/jewel/ui/component/TooltipKt {
@@ -1323,7 +1400,6 @@ public final class org/jetbrains/jewel/ui/component/styling/IconButtonColors {
 	public final fun backgroundFor-e04Q3fE (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public final fun borderFor-e04Q3fE (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun foregroundFor-e04Q3fE (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public final fun getBackground-0d7_KjU ()J
 	public final fun getBackgroundDisabled-0d7_KjU ()J
 	public final fun getBackgroundFocused-0d7_KjU ()J
@@ -1340,7 +1416,13 @@ public final class org/jetbrains/jewel/ui/component/styling/IconButtonColors {
 	public final fun getBorderSelectedActivated-0d7_KjU ()J
 	public final fun getForegroundSelectedActivated-0d7_KjU ()J
 	public fun hashCode ()I
+	public final fun selectableBackgroundFor-eXKw-ig (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun selectableBorderFor-eXKw-ig (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun selectableForegroundFor-eXKw-ig (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun toString ()Ljava/lang/String;
+	public final fun toggleableBackgroundFor-hDcPvVY (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun toggleableBorderFor-hDcPvVY (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun toggleableForegroundFor-hDcPvVY (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion {

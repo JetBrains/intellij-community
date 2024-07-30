@@ -4,8 +4,11 @@ import androidx.compose.ui.state.ToggleableState
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Indeterminate
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
 
-public interface ToggleableComponentState : SelectableComponentState {
+public interface ToggleableComponentState {
     public val toggleableState: ToggleableState
+
+    public val isSelected: Boolean
+        get() = toggleableState == ToggleableState.On
 
     public companion object {
         public fun ULong.readToggleableState(): ToggleableState {

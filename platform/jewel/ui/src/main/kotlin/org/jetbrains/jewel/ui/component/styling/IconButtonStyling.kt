@@ -10,10 +10,13 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.IconButtonState
+import org.jetbrains.jewel.ui.component.SelectableIconButtonState
+import org.jetbrains.jewel.ui.component.ToggleableIconButtonState
 
 @Stable
 @GenerateDataFunctions
@@ -44,16 +47,19 @@ public class IconButtonColors(
     public val borderHovered: Color,
 ) {
     @Composable
-    public fun foregroundFor(state: IconButtonState): State<Color> =
+    public fun backgroundFor(state: IconButtonState): State<Color> =
         rememberUpdatedState(
             when {
-                state.isActive && state.isSelected -> foregroundSelectedActivated
-                else -> Color.Unspecified
+                !state.isEnabled -> backgroundDisabled
+                state.isPressed -> backgroundPressed
+                state.isHovered -> backgroundHovered
+                state.isFocused -> backgroundFocused
+                else -> background
             },
         )
 
     @Composable
-    public fun backgroundFor(state: IconButtonState): State<Color> =
+    public fun selectableBackgroundFor(state: SelectableIconButtonState): State<Color> =
         rememberUpdatedState(
             when {
                 !state.isEnabled -> backgroundDisabled
@@ -67,7 +73,65 @@ public class IconButtonColors(
         )
 
     @Composable
+    public fun toggleableBackgroundFor(state: ToggleableIconButtonState): State<Color> =
+        rememberUpdatedState(
+            when {
+                !state.isEnabled -> backgroundDisabled
+                state.isActive && state.isSelected -> backgroundSelectedActivated
+                state.isSelected -> backgroundSelected
+                state.isPressed -> backgroundPressed
+                state.isHovered -> backgroundHovered
+                state.isFocused -> backgroundFocused
+                else -> background
+            },
+        )
+
+    @Composable
+    public fun selectableForegroundFor(state: SelectableIconButtonState): State<Color> =
+        rememberUpdatedState(
+            when {
+                state.isActive && state.isSelected -> foregroundSelectedActivated
+                else -> Color.Unspecified
+            },
+        )
+
+    @Composable
+    public fun toggleableForegroundFor(state: ToggleableIconButtonState): State<Color> =
+        rememberUpdatedState(
+            when {
+                state.isActive && state.toggleableState == ToggleableState.On -> foregroundSelectedActivated
+                else -> Color.Unspecified
+            },
+        )
+
+    @Composable
     public fun borderFor(state: IconButtonState): State<Color> =
+        rememberUpdatedState(
+            when {
+                !state.isEnabled -> borderDisabled
+                state.isFocused -> borderFocused
+                state.isPressed -> borderPressed
+                state.isHovered -> borderHovered
+                else -> border
+            },
+        )
+
+    @Composable
+    public fun selectableBorderFor(state: SelectableIconButtonState): State<Color> =
+        rememberUpdatedState(
+            when {
+                !state.isEnabled -> borderDisabled
+                state.isActive && state.isSelected -> borderSelectedActivated
+                state.isSelected -> borderSelected
+                state.isFocused -> borderFocused
+                state.isPressed -> borderPressed
+                state.isHovered -> borderHovered
+                else -> border
+            },
+        )
+
+    @Composable
+    public fun toggleableBorderFor(state: ToggleableIconButtonState): State<Color> =
         rememberUpdatedState(
             when {
                 !state.isEnabled -> borderDisabled
