@@ -111,10 +111,12 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
                           NotificationType type) {
     Notification notification = NOTIFICATION_GROUP.createNotification(title, message, type);
     if (SoftReference.dereference(mySessionRef) != null) {
-      notification.addAction(new StopHotSwapNotificationAction(mySessionRef));
       if (withRestart) {
         notification.addAction(new RestartHotSwapNotificationAction(mySessionRef));
       }
+      notification.addAction(Registry.is("debugger.hotswap.floating.toolbar")
+                             ? new ContinueDebugAction()
+                             : new StopHotSwapNotificationAction(mySessionRef));
     }
     notification.setImportant(false).notify(getProject());
   }
@@ -255,6 +257,15 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
           ExecutionUtil.restart(environment);
         }
       }
+    }
+  }
+
+  private static class ContinueDebugAction extends NotificationAction {
+    ContinueDebugAction() { super(JavaDebuggerBundle.message("status.hot.swap.completed.continue")); }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+     notification.expire();
     }
   }
 }
