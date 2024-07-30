@@ -76,7 +76,7 @@ internal class ActionsLanguageModel(val coroutineScope: CoroutineScope) {
     }
 
     registrar.initialize()
-    return registrar.allOptionNames.asSequence()
+    return registrar.getAllOptionNames().asSequence()
   }
 
   private fun computeLanguageModelDictionary(): LanguageModelDictionary {

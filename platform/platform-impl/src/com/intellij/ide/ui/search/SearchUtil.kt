@@ -546,8 +546,7 @@ fun processUiLabel(
     rawList!!.add(SearchableOptionEntry(hit = title, path = path))
   }
   else {
-    val words = HashSet<String>()
-    SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemmingAndStopWords(title, words)
+    val words = WORD_SEPARATOR_CHARS.split(title.lowercase()).toSet()
     title = title.replace(BundleBase.MNEMONIC_STRING, "")
     title = getNonWordPattern(i18n).matcher(title).replaceAll(" ")
     for (word in words) {

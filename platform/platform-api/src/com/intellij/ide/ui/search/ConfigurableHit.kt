@@ -3,10 +3,12 @@ package com.intellij.ide.ui.search
 
 import com.intellij.openapi.options.Configurable
 
-data class ConfigurableHit(val nameHits: Set<Configurable>,
-                           val nameFullHits: Set<Configurable>,
-                           val contentHits: Set<Configurable>,
-                           val spotlightFilter: String) {
+data class ConfigurableHit(
+  val nameHits: Set<Configurable>,
+  val nameFullHits: Set<Configurable>,
+  val contentHits: Set<Configurable>,
+  val spotlightFilter: String,
+) {
   val all: Set<Configurable>
     get() {
       val all = LinkedHashSet<Configurable>(nameHits.size + contentHits.size)

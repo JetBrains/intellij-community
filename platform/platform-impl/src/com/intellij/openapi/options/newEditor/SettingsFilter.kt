@@ -64,7 +64,7 @@ abstract class SettingsFilter @ApiStatus.Internal protected constructor(
 
   init {
     val optionRegistrar = serviceIfCreated<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl?
-    if (optionRegistrar == null || !optionRegistrar.isInitialized) {
+    if (optionRegistrar == null || !optionRegistrar.isInitialized()) {
       // if not yet computed, preload it to ensure that will be no delay on user typing
       searchableOptionRegistrar = coroutineScope.async {
         val r = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl

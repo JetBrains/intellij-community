@@ -39,7 +39,7 @@ final class IndexedCharsInterner {
     return id;
   }
 
-  public @NotNull @NlsSafe CharSequence fromId(int id) {
+  public @NotNull @NlsSafe String fromId(int id) {
     assert id >= 0 && id < set.size();
     return set.getByIndex(idToIndex[id]);
   }
@@ -49,9 +49,9 @@ final class IndexedCharsInterner {
       super(10, 0.9f);
     }
 
-    CharSequence getByIndex(int index) {
+    String getByIndex(int index) {
       Object[] set = this.key;
-      return (CharSequence)set[index];
+      return (String)set[index];
     }
 
     @Override

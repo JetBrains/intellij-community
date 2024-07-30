@@ -323,7 +323,7 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
 
       var registrarDescriptions: MutableSet<OptionDescription>? = null
       for (word in words) {
-        val descriptions = Objects.requireNonNullElse(registrar.getAcceptableDescriptions(word), hashSetOf())
+        val descriptions = registrar.getAcceptableDescriptions(word) ?: hashSetOf()
         descriptions.removeIf {
           @Suppress("HardCodedStringLiteral")
           it.path == "ActionManager" || filterOutInspections && it.groupName == "Inspections"

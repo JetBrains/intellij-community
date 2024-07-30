@@ -1,556 +1,549 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui.search;
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.ResourceUtil;
-import com.intellij.util.containers.ContainerUtil;
-import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ide.ui.search
 
-import javax.swing.event.DocumentEvent;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
+import com.intellij.CommonBundle
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableGroup
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.util.ResourceUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.io.IOException
+import java.util.Collections
+import java.util.HashMap
+import java.util.HashSet
+import java.util.LinkedHashSet
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Pattern
+import java.util.stream.Stream
+import javax.swing.event.DocumentEvent
 
-@SuppressWarnings("Duplicates")
+private val LOG = logger<SearchableOptionsRegistrarImpl>()
+private val EP_NAME = ExtensionPointName<SearchableOptionContributor>("com.intellij.search.optionContributor")
+internal val WORD_SEPARATOR_CHARS: @NonNls Pattern = Pattern.compile("[^-\\pL\\d#+]+")
+
 @ApiStatus.Internal
-public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
-  private static final ExtensionPointName<SearchableOptionContributor> EP_NAME =
-    new ExtensionPointName<>("com.intellij.search.optionContributor");
-
+class SearchableOptionsRegistrarImpl : SearchableOptionsRegistrar() {
   // option => array of packed OptionDescriptor
-  private volatile @NotNull Map<@NotNull String, long @NotNull []> storage = Collections.emptyMap();
+  @Volatile
+  private var storage: Map<String, LongArray> = emptyMap()
 
-  private final Set<String> stopWords;
+  private val stopWords: Set<String>
 
-  private volatile @NotNull Map<Pair<String, String>, Set<String>> highlightOptionToSynonym = Collections.emptyMap();
+  @Volatile
+  private var highlightOptionToSynonym = emptyMap<Pair<String, String>, MutableSet<String>>()
 
-  private final AtomicBoolean isInitialized = new AtomicBoolean();
+  private val isInitialized = AtomicBoolean()
 
-  private volatile IndexedCharsInterner identifierTable = new IndexedCharsInterner();
+  @Volatile
+  private var identifierTable = IndexedCharsInterner()
 
-  private static final Logger LOG = Logger.getInstance(SearchableOptionsRegistrarImpl.class);
-  private static final @NonNls Pattern WORD_SEPARATOR_CHARS = Pattern.compile("[^-\\pL\\d#+]+");
-
-  public SearchableOptionsRegistrarImpl() {
-    Application app = ApplicationManager.getApplication();
+  init {
+    val app = ApplicationManager.getApplication()
     if (app.isCommandLine() || app.isHeadlessEnvironment()) {
-      stopWords = Collections.emptySet();
-      return;
+      stopWords = emptySet()
     }
+    else {
+      stopWords = loadStopWords()
 
-    stopWords = loadStopWords();
-
-    app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        dropStorage();
-      }
-
-      @Override
-      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        dropStorage();
-      }
-    });
-  }
-
-  private static @NotNull Set<String> loadStopWords() {
-    try {
-      // stop words
-      InputStream stream = ResourceUtil.getResourceAsStream(SearchableOptionsRegistrarImpl.class.getClassLoader(), "search", "ignore.txt");
-      if (stream == null) {
-        throw new IOException("Broken installation: IDE does not provide /search/ignore.txt");
-      }
-
-      Set<String> result = new HashSet<>();
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-        String line;
-        while ((line = reader.readLine()) != null) {
-          if (!line.isEmpty()) {
-            result.add(line);
-          }
+      app.getMessageBus().simpleConnect().subscribe<DynamicPluginListener>(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+        override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+          dropStorage()
         }
-      }
-      return result;
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return Collections.emptySet();
+
+        override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+          dropStorage()
+        }
+      })
     }
   }
 
-  private synchronized void dropStorage() {
-    storage = Collections.emptyMap();
-    isInitialized.set(false);
+  companion object {
+    /**
+     * @return XYZT:64 bits where
+     * X:16 bits - id of the interned groupName
+     * Y:16 bits - id of the interned id
+     * Z:16 bits - id of the interned hit
+     * T:16 bits - id of the interned path
+     */
+    @Suppress("SpellCheckingInspection", "LocalVariableName")
+    internal fun pack(
+      id: String,
+      hit: String?,
+      path: String?,
+      groupName: String?,
+      identifierTable: IndexedCharsInterner,
+    ): Long {
+      val _id = identifierTable.toId(id.trim()).toLong()
+      val _hit = if (hit == null) Short.MAX_VALUE.toLong() else identifierTable.toId(hit.trim()).toLong()
+      val _path = if (path == null) Short.MAX_VALUE.toLong() else identifierTable.toId(path.trim()).toLong()
+      val _groupName = if (groupName == null) Short.MAX_VALUE.toLong() else identifierTable.toId(groupName.trim()).toLong()
+      assert(_id >= 0 && _id < Short.MAX_VALUE)
+      assert(_hit >= 0 && _hit <= Short.MAX_VALUE)
+      assert(_path >= 0 && _path <= Short.MAX_VALUE)
+      assert(_groupName >= 0 && _groupName <= Short.MAX_VALUE)
+      return _groupName shl 48 or (_id shl 32) or (_hit shl 16) or _path /* << 0*/
+    }
   }
 
-  public boolean isInitialized() {
-    return isInitialized.get();
+  @Synchronized
+  private fun dropStorage() {
+    storage = HashMap<String, LongArray>()
+    isInitialized.set(false)
+  }
+
+  fun isInitialized(): Boolean {
+    return isInitialized.get()
   }
 
   @ApiStatus.Internal
-  public synchronized void initialize() {
+  @Synchronized
+  fun initialize() {
     if (!isInitialized.compareAndSet(false, true)) {
-      return;
+      return
     }
 
-    MySearchableOptionProcessor processor = new MySearchableOptionProcessor(stopWords);
+    val processor = MySearchableOptionProcessor(stopWords)
     try {
-      EP_NAME.forEachExtensionSafe(contributor -> contributor.processOptions(processor));
+      EP_NAME.forEachExtensionSafe { it.processOptions(processor) }
     }
-    catch (ProcessCanceledException e) {
-      LOG.warn("=== Search storage init canceled ===");
-      isInitialized.set(false);
-      throw e;
+    catch (e: ProcessCanceledException) {
+      LOG.warn("=== Search storage init canceled ===")
+      isInitialized.set(false)
+      throw e
     }
 
     // index
-    highlightOptionToSynonym = processor.computeHighlightOptionToSynonym();
+    highlightOptionToSynonym = processor.computeHighlightOptionToSynonym()
 
-    storage = processor.storage;
-    identifierTable = processor.identifierTable;
+    storage = processor.storage
+    identifierTable = processor.identifierTable
   }
 
   /**
    * Retrieves all searchable option names.
    */
   @ApiStatus.Internal
-  public Set<@NotNull String> getAllOptionNames() {
-    return storage.keySet();
-  }
+  fun getAllOptionNames(): Set<String> = storage.keys
 
   @ApiStatus.Internal
-  public Map<CharSequence, long[]> getStorage() {
-    return new HashMap<>(storage);
-  }
+  fun getStorage(): Map<String, LongArray> = java.util.Map.copyOf(storage)
 
-  /**
-   * @return XYZT:64 bits where
-   * X:16 bits - id of the interned groupName
-   * Y:16 bits - id of the interned id
-   * Z:16 bits - id of the interned hit
-   * T:16 bits - id of the interned path
-   */
-  @SuppressWarnings("SpellCheckingInspection")
-  static long pack(@NotNull String id,
-                   @Nullable String hit,
-                   @Nullable String path,
-                   @Nullable String groupName,
-                   @NotNull IndexedCharsInterner identifierTable) {
-    long _id = identifierTable.toId(id.trim());
-    long _hit = hit == null ? Short.MAX_VALUE : identifierTable.toId(hit.trim());
-    long _path = path == null ? Short.MAX_VALUE : identifierTable.toId(path.trim());
-    long _groupName = groupName == null ? Short.MAX_VALUE : identifierTable.toId(groupName.trim());
-    assert _id >= 0 && _id < Short.MAX_VALUE;
-    assert _hit >= 0 && _hit <= Short.MAX_VALUE;
-    assert _path >= 0 && _path <= Short.MAX_VALUE;
-    assert _groupName >= 0 && _groupName <= Short.MAX_VALUE;
-    return _groupName << 48 | _id << 32 | _hit << 16 | _path/* << 0*/;
-  }
-
+  @Suppress("LocalVariableName")
   @ApiStatus.Internal
-  public OptionDescription unpack(long data) {
-    int _groupName = (int)(data >> 48 & 0xffff);
-    int _id = (int)(data >> 32 & 0xffff);
-    int _hit = (int)(data >> 16 & 0xffff);
-    int _path = (int)(data & 0xffff);
-    assert /*_id >= 0 && */_id < Short.MAX_VALUE;
-    assert /*_hit >= 0 && */_hit <= Short.MAX_VALUE;
-    assert /*_path >= 0 && */_path <= Short.MAX_VALUE;
-    assert /*_groupName >= 0 && */_groupName <= Short.MAX_VALUE;
+  fun unpack(data: Long): OptionDescription {
+    val _groupName = (data shr 48 and 0xffffL).toInt()
+    val _id = (data shr 32 and 0xffffL).toInt()
+    val _hit = (data shr 16 and 0xffffL).toInt()
+    val _path = (data and 0xffffL).toInt()
+    assert( /*_id >= 0 && */_id < Short.Companion.MAX_VALUE)
+    assert( /*_hit >= 0 && */_hit <= Short.Companion.MAX_VALUE)
+    assert( /*_path >= 0 && */_path <= Short.Companion.MAX_VALUE)
+    assert( /*_groupName >= 0 && */_groupName <= Short.Companion.MAX_VALUE)
 
-    String groupName = _groupName == Short.MAX_VALUE ? null : identifierTable.fromId(_groupName).toString();
-    String configurableId = identifierTable.fromId(_id).toString();
-    String hit = _hit == Short.MAX_VALUE ? null : identifierTable.fromId(_hit).toString();
-    String path = _path == Short.MAX_VALUE ? null : identifierTable.fromId(_path).toString();
+    val groupName = if (_groupName == Short.MAX_VALUE.toInt()) null else identifierTable.fromId(_groupName)
+    val configurableId = identifierTable.fromId(_id).toString()
+    val hit = if (_hit == Short.MAX_VALUE.toInt()) null else identifierTable.fromId(_hit).toString()
+    val path = if (_path == Short.MAX_VALUE.toInt()) null else identifierTable.fromId(_path).toString()
 
-    return new OptionDescription(null, configurableId, hit, path, groupName);
+    return OptionDescription(_option = null, configurableId = configurableId, hit = hit, path = path, groupName = groupName)
   }
 
-  @Override
-  public @NotNull ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
-                                                   DocumentEvent.EventType type,
-                                                   @Nullable Set<? extends Configurable> previouslyFiltered,
-                                                   @NotNull String option,
-                                                   @Nullable Project project) {
+  override fun getConfigurables(
+    groups: MutableList<out ConfigurableGroup>,
+    type: DocumentEvent.EventType?,
+    previouslyFiltered: MutableSet<out Configurable>?,
+    option: String,
+    project: Project?,
+  ): ConfigurableHit {
+    var previouslyFiltered = previouslyFiltered
     if (previouslyFiltered == null || previouslyFiltered.isEmpty()) {
-      previouslyFiltered = null;
+      previouslyFiltered = null
     }
 
-    String optionToCheck = Strings.toLowerCase(option.trim());
+    val optionToCheck = Strings.toLowerCase(option.trim { it <= ' ' })
 
-    ConfigurableHit foundByPath = findGroupsByPath(groups, optionToCheck);
+    val foundByPath = findGroupsByPath(groups, optionToCheck)
     if (foundByPath != null) {
-      return foundByPath;
+      return foundByPath
     }
 
-    Set<Configurable> effectiveConfigurables = new LinkedHashSet<>();
+    val effectiveConfigurables: MutableSet<Configurable> = LinkedHashSet<Configurable>()
     if (previouslyFiltered == null) {
-      for (ConfigurableGroup group : groups) {
-        SearchUtilKt.processExpandedGroups(group, effectiveConfigurables);
+      for (group in groups) {
+        processExpandedGroups(group, effectiveConfigurables)
       }
     }
     else {
-      effectiveConfigurables.addAll(previouslyFiltered);
+      effectiveConfigurables.addAll(previouslyFiltered)
     }
 
-    Set<Configurable> nameHits = new LinkedHashSet<>();
-    Set<Configurable> nameFullHits = new LinkedHashSet<>();
+    val nameHits = LinkedHashSet<Configurable>()
+    val nameFullHits = LinkedHashSet<Configurable>()
 
-    Set<String> options = getProcessedWordsWithoutStemming(optionToCheck);
+    val options = getProcessedWordsWithoutStemming(optionToCheck)
     if (options.isEmpty()) {
-      for (Configurable each : effectiveConfigurables) {
+      for (each in effectiveConfigurables) {
         if (each.getDisplayName() != null) {
-          nameHits.add(each);
-          nameFullHits.add(each);
+          nameHits.add(each)
+          nameFullHits.add(each)
         }
       }
     }
     else {
-      for (Configurable each : effectiveConfigurables) {
-        String displayName = each.getDisplayName();
+      for (each in effectiveConfigurables) {
+        val displayName = each.getDisplayName()
         if (displayName != null && StringUtil.containsIgnoreCase(displayName, optionToCheck)) {
-          nameFullHits.add(each);
-          nameHits.add(each);
+          nameFullHits.add(each)
+          nameHits.add(each)
         }
       }
     }
 
     // operate with substring
-    Set<String> descriptionOptions = new HashSet<>();
+    val descriptionOptions: MutableSet<String?> = HashSet<String?>()
     if (options.isEmpty()) {
-      String[] components = WORD_SEPARATOR_CHARS.split(optionToCheck);
-      if (components.length > 0) {
-        Collections.addAll(descriptionOptions, components);
+      val components = WORD_SEPARATOR_CHARS.split(optionToCheck)
+      if (components.size > 0) {
+        Collections.addAll<String?>(descriptionOptions, *components)
       }
       else {
-        descriptionOptions.add(option);
+        descriptionOptions.add(option)
       }
     }
     else {
-      descriptionOptions.addAll(options);
+      descriptionOptions.addAll(options)
     }
 
-    Set<String> foundIds = findConfigurablesByDescriptions(descriptionOptions);
+    val foundIds = findConfigurablesByDescriptions(descriptionOptions)
     if (foundIds == null) {
-      return new ConfigurableHit(nameHits, nameFullHits, Collections.emptySet(), option);
+      return ConfigurableHit(nameHits = nameHits, nameFullHits = nameFullHits, contentHits = setOf<Configurable>(), spotlightFilter = option)
     }
 
-    List<Configurable> contentHits = filterById(effectiveConfigurables, foundIds);
+    val contentHits = filterById(effectiveConfigurables, foundIds)
 
-    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.size() == contentHits.size()) {
-      return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
+    if (type == DocumentEvent.EventType.CHANGE && previouslyFiltered != null && effectiveConfigurables.size == contentHits.size) {
+      return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project)
     }
-    return new ConfigurableHit(nameHits, nameFullHits, new LinkedHashSet<>(contentHits), option);
+    return ConfigurableHit(
+      nameHits = nameHits,
+      nameFullHits = nameFullHits,
+      contentHits = LinkedHashSet(contentHits),
+      spotlightFilter = option,
+    )
   }
 
-  private static @Nullable ConfigurableHit findGroupsByPath(@NotNull List<? extends ConfigurableGroup> groups, @NotNull String path) {
-    List<String> split = parseSettingsPath(path);
-    if (split == null || split.isEmpty()) return null;
-
-    ConfigurableGroup root = ContainerUtil.getOnlyItem(groups);
-    List<Configurable> topLevel;
-    if (root instanceof SearchableConfigurable &&
-        ((SearchableConfigurable)root).getId().equals(ConfigurableExtensionPointUtil.ROOT_CONFIGURABLE_ID)) {
-      topLevel = Arrays.asList(root.getConfigurables());
-    }
-    else {
-      topLevel = ContainerUtil.filterIsInstance(groups, Configurable.class);
-    }
-
-    List<Configurable> current = topLevel;
-    Configurable lastMatched = null;
-    int lastMatchedIndex = -1;
-
-    for (int i = 0; i < split.size(); i++) {
-      String option = split.get(i);
-      Configurable matched = ContainerUtil.find(current, group -> StringUtil.equalsIgnoreCase(group.getDisplayName(), option));
-      if (matched == null) break;
-
-      lastMatched = matched;
-      lastMatchedIndex = i;
-
-      if (matched instanceof Configurable.Composite) {
-        current = Arrays.asList(((Configurable.Composite)matched).getConfigurables());
-      }
-      else {
-        break;
-      }
-    }
-    if (lastMatched == null) return null;
-
-    String spotlightFilter = lastMatchedIndex + 1 < split.size()
-                             ? StringUtil.join(split.subList(lastMatchedIndex + 1, split.size()), " ")
-                             : "";
-
-    Set<Configurable> hits = Collections.singleton(lastMatched);
-    return new ConfigurableHit(hits, hits, hits, spotlightFilter);
-  }
-
-  private static @Nullable List<String> parseSettingsPath(@NotNull String path) {
-    if (!path.contains(SETTINGS_GROUP_SEPARATOR)) return null;
-
-    @NotNull List<String> split = ContainerUtil.map(StringUtil.split(path, SETTINGS_GROUP_SEPARATOR), String::trim);
-    List<@NlsSafe String> prefixes = Arrays.asList("IntelliJ IDEA",
-                                                   ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                   "Settings",
-                                                   "Preferences",
-                                                   "File | Settings",
-                                                   CommonBundle.message("action.settings.path"),
-                                                   CommonBundle.message("action.settings.path.mac"),
-                                                   CommonBundle.message("action.settings.path.macOS.ventura"));
-    for (String prefix : prefixes) {
-      split = skipPrefixIfNeeded(prefix, split);
-    }
-    return split;
-  }
-
-  private static @NotNull List<String> skipPrefixIfNeeded(@NotNull String prefix, @NotNull List<String> split) {
-    if (split.isEmpty()) return split;
-
-    List<String> prefixSplit = ContainerUtil.map(StringUtil.split(prefix, SETTINGS_GROUP_SEPARATOR), String::trim);
-    if (split.size() < prefixSplit.size()) return split;
-
-    for (int i = 0; i < prefixSplit.size(); i++) {
-      if (!StringUtil.equalsIgnoreCase(split.get(i), prefixSplit.get(i))) return split;
-    }
-
-    return split.subList(prefixSplit.size(), split.size());
-  }
-
-  private static @NotNull List<Configurable> filterById(@NotNull Set<Configurable> configurables, @NotNull Set<String> configurableIds) {
-    return ContainerUtil.filter(configurables, configurable -> {
-      if (configurable instanceof SearchableConfigurable &&
-          configurableIds.contains(((SearchableConfigurable)configurable).getId())) {
-        return true;
-      }
-      if (configurable instanceof SearchableConfigurable.Merged) {
-        final List<Configurable> mergedConfigurables = ((SearchableConfigurable.Merged)configurable).getMergedConfigurables();
-        for (Configurable mergedConfigurable : mergedConfigurables) {
-          if (mergedConfigurable instanceof SearchableConfigurable &&
-              configurableIds.contains(((SearchableConfigurable)mergedConfigurable).getId())) {
-            return true;
-          }
-        }
-      }
-      return false;
-    });
-  }
-
-  private @Nullable Set<String> findConfigurablesByDescriptions(@NotNull Set<String> descriptionOptions) {
-    Set<String> helpIds = null;
-    for (String prefix : descriptionOptions) {
-      Set<OptionDescription> optionIds = getAcceptableDescriptions(prefix);
+  private fun findConfigurablesByDescriptions(descriptionOptions: MutableSet<String?>): MutableSet<String>? {
+    var helpIds: MutableSet<String>? = null
+    for (prefix in descriptionOptions) {
+      val optionIds = getAcceptableDescriptions(prefix)
       if (optionIds == null) {
-        return null;
+        return null
       }
 
-      Set<String> ids = new HashSet<>();
-      for (OptionDescription id : optionIds) {
-        ids.add(id.getConfigurableId());
+      val ids: MutableSet<String> = HashSet<String>()
+      for (id in optionIds) {
+        ids.add(id.configurableId!!)
       }
       if (helpIds == null) {
-        helpIds = ids;
+        helpIds = ids
       }
-      helpIds.retainAll(ids);
+      helpIds.retainAll(ids)
     }
-    return helpIds;
+    return helpIds
   }
 
-  public synchronized @Nullable Set<OptionDescription> getAcceptableDescriptions(@Nullable String prefix) {
+  @Synchronized
+  fun getAcceptableDescriptions(prefix: String?): MutableSet<OptionDescription>? {
     if (prefix == null) {
-      return null;
+      return null
     }
 
-    String stemmedPrefix = PorterStemmerUtil.stem(prefix);
+    val stemmedPrefix = PorterStemmerUtil.stem(prefix)
     if (stemmedPrefix == null || stemmedPrefix.isBlank()) {
-      return null;
+      return null
     }
 
-    initialize();
+    initialize()
 
-    Set<OptionDescription> result = null;
-    for (Map.Entry<@NotNull String, long @NotNull []> entry : storage.entrySet()) {
-      long[] descriptions = entry.getValue();
-      String option = entry.getKey();
+    var result: MutableSet<OptionDescription>? = null
+    for (entry in storage.entries) {
+      val descriptions = entry.value
+      val option = entry.key
       if (!option.startsWith(prefix) && !option.startsWith(stemmedPrefix)) {
-        String stemmedOption = PorterStemmerUtil.stem(option);
+        val stemmedOption = PorterStemmerUtil.stem(option)
         if (stemmedOption != null && !stemmedOption.startsWith(prefix) && !stemmedOption.startsWith(stemmedPrefix)) {
-          continue;
+          continue
         }
       }
       if (result == null) {
-        result = new HashSet<>();
+        result = HashSet<OptionDescription>()
       }
-      for (long description : descriptions) {
-        result.add(unpack(description));
+      for (description in descriptions) {
+        result.add(unpack(description))
       }
     }
-    return result;
+    return result
   }
 
-  private @Nullable Set<OptionDescription> getOptionDescriptionsByWords(SearchableConfigurable configurable, Set<String> words) {
-    Set<OptionDescription> path = null;
+  private fun getOptionDescriptionsByWords(
+    configurable: SearchableConfigurable,
+    words: MutableSet<String>,
+  ): MutableSet<OptionDescription>? {
+    var path: MutableSet<OptionDescription>? = null
 
-    for (String word : words) {
-      Set<OptionDescription> configs = getAcceptableDescriptions(word);
+    for (word in words) {
+      val configs = getAcceptableDescriptions(word)
       if (configs == null) {
-        return null;
+        return null
       }
 
-      Set<OptionDescription> paths = new HashSet<>();
-      for (OptionDescription config : configs) {
-        if (Comparing.strEqual(config.getConfigurableId(), configurable.getId())) {
-          paths.add(config);
+      val paths: MutableSet<OptionDescription> = HashSet<OptionDescription>()
+      for (config in configs) {
+        if (Comparing.strEqual(config.configurableId, configurable.getId())) {
+          paths.add(config)
         }
       }
       if (path == null) {
-        path = paths;
+        path = paths
       }
-      path.retainAll(paths);
+      path.retainAll(paths)
     }
-    return path;
+    return path
   }
 
-  @Override
-  public @NotNull Set<@NotNull String> getInnerPaths(SearchableConfigurable configurable, String option) {
-    initialize();
-    Set<String> words = getProcessedWordsWithoutStemming(option);
-    Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
+  override fun getInnerPaths(configurable: SearchableConfigurable, option: String): MutableSet<String> {
+    initialize()
+    val words = getProcessedWordsWithoutStemming(option)
+    val path = getOptionDescriptionsByWords(configurable, words)
 
     if (path == null || path.isEmpty()) {
-      return Collections.emptySet();
+      return mutableSetOf<String>()
     }
 
-    Set<String> resultSet = new HashSet<>();
-    OptionDescription theOnlyResult = null;
-    for (OptionDescription description : path) {
-      String hit = description.getHit();
+    val resultSet: MutableSet<String> = HashSet<String>()
+    var theOnlyResult: OptionDescription? = null
+    for (description in path) {
+      val hit = description.hit
       if (hit != null) {
-        boolean theBest = true;
-        for (String word : words) {
+        var theBest = true
+        for (word in words) {
           if (!StringUtil.containsIgnoreCase(hit, word)) {
-            theBest = false;
-            break;
+            theBest = false
+            break
           }
         }
         if (theBest) {
-          String p = description.getPath();
+          val p = description.path
           if (p != null) {
-            resultSet.add(p);
+            resultSet.add(p)
           }
         }
       }
-      theOnlyResult = description;
+      theOnlyResult = description
     }
 
     if (resultSet.isEmpty()) {
-      String p = theOnlyResult.getPath();
+      val p = theOnlyResult!!.path
       if (p != null) {
-        resultSet.add(p);
+        resultSet.add(p)
       }
     }
 
-    return resultSet;
+    return resultSet
   }
 
-  @Override
-  public boolean isStopWord(String word) {
-    return stopWords.contains(word);
+  override fun isStopWord(word: String?): Boolean {
+    return stopWords.contains(word)
   }
 
-  @Override
-  public @NotNull Set<String> getProcessedWordsWithoutStemming(@NotNull String text) {
-    Set<String> result = new HashSet<>();
-    collectProcessedWordsWithoutStemming(text, result, stopWords);
-    return result;
+  override fun getProcessedWordsWithoutStemming(text: String): MutableSet<String> {
+    val result: MutableSet<String> = HashSet<String>()
+    collectProcessedWordsWithoutStemming(text = text, result = result, stopWords = stopWords)
+    return result
   }
 
-  @ApiStatus.Internal
-  public static void collectProcessedWordsWithoutStemming(@NotNull String text,
-                                                          @NotNull Set<? super String> result,
-                                                          @NotNull Set<String> stopWords) {
-    for (String opt : WORD_SEPARATOR_CHARS.split(text.toLowerCase(Locale.ENGLISH))) {
-      if (!stopWords.contains(opt) && !stopWords.contains(PorterStemmerUtil.stem(opt))) {
-        result.add(opt);
-      }
-    }
+  override fun getProcessedWords(text: String): Set<String> {
+    val result = HashSet<String>()
+    collectProcessedWords(text, result, stopWords)
+    return result
   }
 
-  @ApiStatus.Internal
-  public static void collectProcessedWordsWithoutStemmingAndStopWords(@NotNull String text, @NotNull Set<? super String> result) {
-    Collections.addAll(result, WORD_SEPARATOR_CHARS.split(text.toLowerCase(Locale.ENGLISH)));
-  }
-
-  @ApiStatus.Internal
-  public static Stream<String> splitToWordsWithoutStemmingAndStopWords(@NotNull String text) {
-    return WORD_SEPARATOR_CHARS.splitAsStream(text);
-  }
-
-  @Override
-  public Set<String> getProcessedWords(@NotNull String text) {
-    Set<String> result = new HashSet<>();
-    collectProcessedWords(text, result, stopWords);
-    return result;
-  }
-
-  static void collectProcessedWords(@NotNull String text, @NotNull Set<? super String> result, @NotNull Set<String> stopWords) {
-    String toLowerCase = text.toLowerCase(Locale.ENGLISH);
-    for (String opt : WORD_SEPARATOR_CHARS.split(toLowerCase)) {
-      if (stopWords.contains(opt)) {
-        continue;
-      }
-      opt = PorterStemmerUtil.stem(opt);
-      if (opt == null) {
-        continue;
-      }
-      result.add(opt);
-    }
-  }
-
-  @Override
-  public @NotNull Set<String> replaceSynonyms(@NotNull Set<String> options, @NotNull SearchableConfigurable configurable) {
+  override fun replaceSynonyms(options: MutableSet<String>, configurable: SearchableConfigurable): MutableSet<String> {
     if (highlightOptionToSynonym.isEmpty()) {
-      return options;
+      return options
     }
 
-    Set<String> result = new HashSet<>(options);
-    initialize();
-    for (String option : options) {
-      Set<String> synonyms = highlightOptionToSynonym.get(new Pair<>(option, configurable.getId()));
-      if (synonyms != null) {
-        result.addAll(synonyms);
+    val result = HashSet<String>(options)
+    initialize()
+    for (option in options) {
+      val synonyms = highlightOptionToSynonym.get(option to configurable.getId())
+      if (synonyms == null) {
+        result.add(option)
       }
       else {
-        result.add(option);
+        result.addAll(synonyms)
       }
     }
-    return result;
+    return result
+  }
+}
+
+private fun loadStopWords(): Set<String> {
+  try {
+    // stop words
+    val stream = ResourceUtil.getResourceAsStream(SearchableOptionsRegistrarImpl::class.java.getClassLoader(), "search", "ignore.txt")
+                 ?: throw IOException("Broken installation: IDE does not provide /search/ignore.txt")
+    return stream.reader().useLines { lines ->
+      lines.filter { it.isNotEmpty() }.toHashSet()
+    }
+  }
+  catch (e: IOException) {
+    LOG.error(e)
+    return emptySet()
+  }
+}
+
+private fun filterById(configurables: Set<Configurable>, configurableIds: Set<String>): List<Configurable> {
+  return configurables.filter { configurable ->
+    if (configurable is SearchableConfigurable && configurableIds.contains(configurable.getId())) {
+      return@filter true
+    }
+
+    if (configurable is SearchableConfigurable.Merged) {
+      for (mergedConfigurable in configurable.getMergedConfigurables()) {
+        if (mergedConfigurable is SearchableConfigurable && configurableIds.contains(mergedConfigurable.getId())) {
+          return@filter true
+        }
+      }
+    }
+    false
+  }
+}
+
+private fun findGroupsByPath(groups: MutableList<out ConfigurableGroup>, path: String): ConfigurableHit? {
+  val split = parseSettingsPath(path)
+  if (split.isNullOrEmpty()) {
+    return null
+  }
+
+  val root = groups.singleOrNull()
+  var topLevel: List<Configurable>
+  if (root is SearchableConfigurable && (root as SearchableConfigurable).getId() == ConfigurableExtensionPointUtil.ROOT_CONFIGURABLE_ID) {
+    topLevel = root.getConfigurables().toList()
+  }
+  else {
+    topLevel = groups.filterIsInstance<Configurable>()
+  }
+
+  var current = topLevel
+  var lastMatched: Configurable? = null
+  var lastMatchedIndex = -1
+
+  for (i in split.indices) {
+    val option = split.get(i)
+    val matched = current.find { it.getDisplayName().equals(option, ignoreCase = true) } ?: break
+
+    lastMatched = matched
+    lastMatchedIndex = i
+
+    if (matched is Configurable.Composite) {
+      current = (matched as Configurable.Composite).getConfigurables().asList()
+    }
+    else {
+      break
+    }
+  }
+  if (lastMatched == null) {
+    return null
+  }
+
+  val spotlightFilter = if (lastMatchedIndex + 1 < split.size) {
+    split.subList(lastMatchedIndex + 1, split.size).joinToString(separator = " ")
+  }
+  else {
+    ""
+  }
+
+  val hits = setOf(lastMatched)
+  return ConfigurableHit(nameHits = hits, nameFullHits = hits, contentHits = hits, spotlightFilter = spotlightFilter)
+}
+
+private fun parseSettingsPath(path: String): List<String>? {
+  if (!path.contains(SETTINGS_GROUP_SEPARATOR)) {
+    return null
+  }
+
+  var split = path.splitToSequence(SETTINGS_GROUP_SEPARATOR).map { it.trim() }.toList()
+  val prefixes = listOf<@NlsSafe String>(
+    "IntelliJ IDEA",
+    ApplicationNamesInfo.getInstance().fullProductName,
+    "Settings",
+    "Preferences",
+    "File | Settings",
+    CommonBundle.message("action.settings.path"),
+    CommonBundle.message("action.settings.path.mac"),
+    CommonBundle.message("action.settings.path.macOS.ventura"),
+  )
+  for (prefix in prefixes) {
+    split = skipPrefixIfNeeded(prefix, split)
+  }
+  return split
+}
+
+private fun skipPrefixIfNeeded(prefix: String, split: List<String>): List<String> {
+  if (split.isEmpty()) {
+    return split
+  }
+
+  val prefixSplit = prefix.splitToSequence(SETTINGS_GROUP_SEPARATOR).map { it.trim() }.toList()
+  if (split.size < prefixSplit.size) {
+    return split
+  }
+
+  for (i in prefixSplit.indices) {
+    if (!split.get(i).equals(prefixSplit.get(i), ignoreCase = true)) {
+      return split
+    }
+  }
+
+  return split.subList(prefixSplit.size, split.size)
+}
+
+internal fun splitToWordsWithoutStemmingAndStopWords(text: String): Stream<String> = WORD_SEPARATOR_CHARS.splitAsStream(text)
+
+internal fun collectProcessedWordsWithoutStemming(
+  text: String,
+  result: MutableSet<String>,
+  stopWords: Set<String>,
+) {
+  for (opt in WORD_SEPARATOR_CHARS.split(text.lowercase())) {
+    if (!stopWords.contains(opt) && !stopWords.contains(PorterStemmerUtil.stem(opt))) {
+      result.add(opt)
+    }
+  }
+}
+
+internal fun collectProcessedWords(text: String, result: MutableSet<String>, stopWords: Set<String>) {
+  for (opt in WORD_SEPARATOR_CHARS.split(text.lowercase())) {
+    if (!stopWords.contains(opt)) {
+      result.add(PorterStemmerUtil.stem(opt) ?: continue)
+    }
   }
 }
