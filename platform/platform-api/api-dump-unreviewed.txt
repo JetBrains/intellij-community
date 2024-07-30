@@ -11532,10 +11532,10 @@ c:com.intellij.ui.treeStructure.treetable.TreeTableTree
 - updateUI():V
 *:com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:FILE_VISIBLE_FOR_GUEST:com.intellij.openapi.util.Key
-- sf:SYNC_TAB_TO_GUEST:com.intellij.openapi.util.Key
-- a:isApplicable(com.intellij.ui.content.Content):Z
-- a:syncContentToGuests(com.intellij.ui.content.Content):Z
+- sf:FILE_VISIBLE_FOR_REMOTE_CLIENTS:com.intellij.openapi.util.Key
+- sf:SYNC_TAB_TO_REMOTE_CLIENTS:com.intellij.openapi.util.Key
+- a:isApplicable(com.intellij.ui.content.Content,com.intellij.openapi.client.ClientProjectSession):Z
+- a:syncContentToRemoteClient(com.intellij.ui.content.Content):Z
 *c:com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - id:java.lang.String
