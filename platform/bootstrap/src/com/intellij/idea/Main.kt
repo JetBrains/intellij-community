@@ -217,7 +217,7 @@ private fun initLux() {
   @Suppress("SpellCheckingInspection")
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
 
-  UIUtil.DISABLE_LAYOUT_IN_TEXT_COMPONENTS = true
+  UIUtil.disableLayoutInTextComponents()
 }
 
 private fun addBootstrapTiming(name: String, startupTimings: MutableList<Any>) {
