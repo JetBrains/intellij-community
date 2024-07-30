@@ -11729,7 +11729,7 @@ f:com.intellij.util.OpenSourceUtil
 - com.intellij.openapi.Disposable
 - <init>():V
 - <init>(com.intellij.openapi.Disposable):V
-- <init>(com.intellij.util.animation.JBAnimator$Thread,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.Disposable):V
 - animate(java.util.Collection):J
 - animate(com.intellij.util.animation.Animation[]):J
 - dispose():V
@@ -11745,12 +11745,6 @@ f:com.intellij.util.OpenSourceUtil
 - setPeriod(I):com.intellij.util.animation.JBAnimator
 - setType(com.intellij.util.animation.JBAnimator$Type):com.intellij.util.animation.JBAnimator
 - stop():V
-*e:com.intellij.util.animation.JBAnimator$Thread
-- java.lang.Enum
-- sf:POOLED_THREAD:com.intellij.util.animation.JBAnimator$Thread
-- sf:SWING_THREAD:com.intellij.util.animation.JBAnimator$Thread
-- s:valueOf(java.lang.String):com.intellij.util.animation.JBAnimator$Thread
-- s:values():com.intellij.util.animation.JBAnimator$Thread[]
 *e:com.intellij.util.animation.JBAnimator$Type
 - java.lang.Enum
 - sf:EACH_FRAME:com.intellij.util.animation.JBAnimator$Type
