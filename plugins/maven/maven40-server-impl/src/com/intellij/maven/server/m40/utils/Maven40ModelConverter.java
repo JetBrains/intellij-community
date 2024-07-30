@@ -73,7 +73,7 @@ public class Maven40ModelConverter {
     return result;
   }
 
-  private static MavenPlugin convertPlugin(Plugin plugin) {
+  public static MavenPlugin convertPlugin(Plugin plugin) {
     List<MavenPlugin.Execution> executions = new ArrayList<>(plugin.getExecutions().size());
     for (PluginExecution each : plugin.getExecutions()) {
       executions.add(convertExecution(each));
@@ -202,7 +202,7 @@ public class Maven40ModelConverter {
   }
 
 
-  private static MavenRemoteRepository.Policy convertPolicy(RepositoryPolicy policy) {
+  public static MavenRemoteRepository.Policy convertPolicy(RepositoryPolicy policy) {
     return policy != null
            ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy())
            : null;

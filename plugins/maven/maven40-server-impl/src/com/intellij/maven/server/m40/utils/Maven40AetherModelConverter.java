@@ -3,10 +3,12 @@ package com.intellij.maven.server.m40.utils;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
+import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.jetbrains.annotations.NotNull;
@@ -15,44 +17,54 @@ import org.jetbrains.idea.maven.model.*;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * {@link Maven40AetherModelConverter} provides adapted methods of {@link Maven40ModelConverter} for aether models conversion
  */
 public final class Maven40AetherModelConverter extends Maven40ModelConverter {
   @NotNull
-  public static MavenModel convertModelWithAetherDependencyTree(Model model,
-                                                                List<String> sources,
-                                                                List<String> testSources,
-                                                                Collection<? extends Artifact> dependencies,
+  public static MavenModel convertModelWithAetherDependencyTree(MavenProject mavenProject,
                                                                 Collection<? extends DependencyNode> dependencyTree,
-                                                                Collection<? extends Artifact> extensions,
                                                                 File localRepository) {
     MavenModel result = new MavenModel();
-    result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
+    result.setMavenId(new MavenId(mavenProject.getGroupId(), mavenProject.getArtifactId(), mavenProject.getVersion()));
 
-    Parent parent = model.getParent();
+    Parent parent = mavenProject.getModel().getParent();
     if (parent != null) {
-      result.setParent(new MavenParent(new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion()),
-                                       parent.getRelativePath()));
+      result.setParent(
+        new MavenParent(new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion()), parent.getRelativePath()));
     }
-    result.setPackaging(model.getPackaging());
-    result.setName(model.getName());
-    result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
-    result.setPlugins(convertPlugins(model));
+    result.setPackaging(mavenProject.getPackaging());
+    result.setName(mavenProject.getName());
+    result.setProperties(mavenProject.getProperties() == null ? new Properties() : mavenProject.getProperties());
+    //noinspection SSBasedInspection
+    result.setPlugins(convertPlugins(mavenProject.getModel()));
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
-    result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
-    result.setDependencyTree(
-      convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
-    result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
+    result.setExtensions(convertArtifacts(mavenProject.getExtensionArtifacts(), convertedArtifacts, localRepository));
+    result.setDependencyTree(convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
+    result.setDependencies(convertArtifacts(mavenProject.getArtifacts(), convertedArtifacts, localRepository));
 
-    result.setRemoteRepositories(convertRepositories(model.getRepositories()));
-    result.setProfiles(convertProfiles(model.getProfiles()));
-    result.setModules(model.getModules());
+    result.setRemoteRepositories(convertAetherRepositories(mavenProject.getRemoteProjectRepositories()));
+    result.setProfiles(convertProfiles(mavenProject.getModel().getProfiles()));
+    result.setModules(mavenProject.getModules());
 
-    convertBuild(result.getBuild(), model.getBuild(), sources, testSources);
+    convertBuild(result.getBuild(), mavenProject.getModel().getBuild(), mavenProject.getCompileSourceRoots(),
+                 mavenProject.getTestCompileSourceRoots());
     return result;
+  }
+
+  @SuppressWarnings("SSBasedInspection")
+  private static List<MavenRemoteRepository> convertAetherRepositories(List<RemoteRepository> repositories) {
+    return repositories.stream().map(
+      r -> new MavenRemoteRepository(r.getId(), r.getId(), r.getUrl(), "default", convertPolicy(r.getPolicy(false)),
+                                     convertPolicy(r.getPolicy(true)))).collect(Collectors.toList());
+  }
+
+  private static MavenRemoteRepository.@Nullable Policy convertPolicy(RepositoryPolicy policy) {
+    return policy != null ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getArtifactUpdatePolicy(),
+                                                             policy.getChecksumPolicy()) : null;
   }
 
   public static List<MavenArtifactNode> convertAetherDependencyNodes(MavenArtifactNode parent,

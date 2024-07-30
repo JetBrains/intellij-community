@@ -284,12 +284,8 @@ public class Maven40ProjectResolver {
 
       List<DependencyNode> dependencyNodes = dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
       model = Maven40AetherModelConverter.convertModelWithAetherDependencyTree(
-        mavenProject.getModel(),
-        mavenProject.getCompileSourceRoots(),
-        mavenProject.getTestCompileSourceRoots(),
-        mavenProject.getArtifacts(),
+        mavenProject,
         dependencyNodes,
-        Collections.emptyList(), //mavenProject.getExtensionArtifacts(),
         myLocalRepositoryFile);
     }
     catch (Exception e) {
