@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.lang.Language
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
@@ -15,6 +14,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -97,6 +97,7 @@ class DeclarativeHintsProviderSettingsModel(
 
   override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language = language
 
+  @RequiresBackgroundThread
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
     val providerId = providerDescription.requiredProviderId()
 
@@ -112,7 +113,7 @@ class DeclarativeHintsProviderSettingsModel(
       isEnabled
     }
 
-    val pass = ActionUtil.underModalProgress(project, "") {
+    val pass =
       DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(object : InlayHintsProvider {
       override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
         return object: OwnBypassCollector {
@@ -127,7 +128,6 @@ class DeclarativeHintsProviderSettingsModel(
         }
       }
     }, providerId, enabledOptions)), false, !enabled)
-    }
 
     pass.doCollectInformation(EmptyProgressIndicator())
     return Runnable {
