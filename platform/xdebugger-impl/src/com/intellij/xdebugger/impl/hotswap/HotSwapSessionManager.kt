@@ -54,6 +54,7 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
   internal val coroutineScope = parentScope.childScope("HotSwapSession $this")
   private val hasActiveChanges = AtomicBoolean()
   private lateinit var changesCollector: SourceFileChangesCollector<T>
+
   @Volatile
   internal var currentStatus: HotSwapVisibleStatus = HotSwapVisibleStatus.NO_CHANGES
     private set(value) {
@@ -91,6 +92,7 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
   fun createStatusListener() = object : HotSwapResultListener {
     override fun onCompleted() {
       completeHotSwap()
+      HotSwapStatusNotificationManager.getInstance(project).showSuccessNotification(coroutineScope)
     }
 
     override fun onFailed() {

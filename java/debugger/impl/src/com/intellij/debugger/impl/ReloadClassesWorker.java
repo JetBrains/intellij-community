@@ -137,10 +137,12 @@ class ReloadClassesWorker {
 
       final int partiallyRedefinedClassesCount = redefineProcessor.getPartiallyRedefinedClassesCount();
       if (partiallyRedefinedClassesCount == 0) {
-        myProgress.addMessage(
-          myDebuggerSession, MessageCategory.INFORMATION,
-          JavaDebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
-        );
+        if (!Registry.is("debugger.hotswap.floating.toolbar")) {
+          myProgress.addMessage(
+            myDebuggerSession, MessageCategory.INFORMATION,
+            JavaDebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
+          );
+        }
       }
       else {
         final String message = JavaDebuggerBundle.message(
