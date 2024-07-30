@@ -46,7 +46,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
   abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor)
   open fun onShown() {}
-  abstract fun getOrCreateSdk(): Sdk?
+  abstract fun getOrCreateSdk(): Sdk
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 

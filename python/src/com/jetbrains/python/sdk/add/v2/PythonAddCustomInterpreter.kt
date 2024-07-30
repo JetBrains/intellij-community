@@ -120,7 +120,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     existingInterpreterSelectors.values.forEach(PythonAddEnvironment::onShown)
   }
 
-  fun getSdk(): Sdk? = currentSdkManager.getOrCreateSdk()
+  fun getSdk(): Sdk = currentSdkManager.getOrCreateSdk()
 
   fun createStatisticsInfo(): InterpreterStatisticsInfo {
     return currentSdkManager.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE)

@@ -128,13 +128,13 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
     }
   }
 
-  fun getSdk(): Sdk? {
+  fun getSdk(): Sdk {
     model.navigator.saveLastState()
     return when (selectedMode.get()) {
       PROJECT_VENV -> model.setupVirtualenv(Path.of(projectPath.get(), ".venv"), // todo just keep venv path, all the rest is in the model
                                             projectPath.get(),
                                                 //pythonBaseVersion.get()!!)
-                                            model.state.baseInterpreter.get()!!)
+                                            model.state.baseInterpreter.get()!!).getOrThrow()
       BASE_CONDA -> model.selectCondaEnvironment(model.state.baseCondaEnv.get()!!.envIdentity)
       CUSTOM -> custom.getSdk()
     }

@@ -184,9 +184,9 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
     return currentName.removeSuffix(digitSuffix) + newSuffix
   }
 
-  override fun getOrCreateSdk(): Sdk? {
+  override fun getOrCreateSdk(): Sdk {
     // todo remove project path, or move to controller
-    return model.setupVirtualenv((Path.of(model.state.venvPath.get())), model.projectPath.get(), model.state.baseInterpreter.get()!!)
+    return model.setupVirtualenv((Path.of(model.state.venvPath.get())), model.projectPath.get(), model.state.baseInterpreter.get()!!).getOrThrow()
   }
 
   companion object {

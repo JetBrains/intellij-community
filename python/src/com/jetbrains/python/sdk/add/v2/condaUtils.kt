@@ -31,7 +31,7 @@ internal fun PythonAddInterpreterModel.createCondaCommand(): PyCondaCommand =
                  targetConfig = targetEnvironmentConfiguration)
 
 @RequiresEdt
-internal fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Sdk? {
+internal fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Sdk {
   val project = ProjectManager.getInstance().defaultProject
   val existingSdks = this@createCondaEnvironment.existingSdks
   val sdk = runWithModalProgressBlocking(ModalTaskOwner.guess(),
@@ -41,8 +41,8 @@ internal fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaE
       .createCondaSdkAlongWithNewEnv(request,
                                      Dispatchers.EDT,
                                      existingSdks,
-                                     project).getOrNull()
-  } ?: return null
+                                     project).getOrThrow()
+  }
 
   (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
   SdkConfigurationUtil.addSdk(sdk)
