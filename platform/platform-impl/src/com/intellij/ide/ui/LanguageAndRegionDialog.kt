@@ -2,6 +2,7 @@
 package com.intellij.ide.ui
 
 import com.intellij.DynamicBundle
+import com.intellij.file.PListBuddyWrapper
 import com.intellij.icons.AllIcons
 import com.intellij.ide.LanguageAndRegionBundle
 import com.intellij.ide.Region
@@ -22,6 +23,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.SystemProperties
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.ui.*
 import com.sun.jna.platform.win32.Advapi32Util
@@ -198,13 +200,29 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
   val matchingLocale = languageMapping.keys.find { language -> languageMapping[language]?.any { locale.toLanguageTag().contains(it) } == true }
                        ?: Locale.ENGLISH
   var matchingRegion = regionMapping.keys.find { locale.country == regionMapping[it] } ?: Region.NOT_SET
-  if (matchingRegion == Region.NOT_SET && SystemInfo.isWindows) {
-    try {
-      val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
-      matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
+  if (matchingRegion == Region.NOT_SET) {
+    if (SystemInfo.isWindows) {
+      try {
+        val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
+        matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
+      }
+      catch (e: Throwable) {
+        logger<LanguageAndRegionDialog>().warn("Unable to resolve region from registry", e)
+      }
     }
-    catch (e: Throwable) {
-      logger<LanguageAndRegionDialog>().warn("Unable to resolve region from registry", e)
+    else if (SystemInfo.isMac) {
+      try {
+        val generalPrefPath = SystemProperties.getUserHome() + "/Library/Preferences/.GlobalPreferences.plist"
+        val readData = PListBuddyWrapper(generalPrefPath).readData("AppleLocale")
+        val elementsByTagName = readData.getElementsByTagName("string")
+        val localeText = elementsByTagName.item(0).textContent
+        val regionText = localeText.substringAfter("@rg=")
+        if (regionText.isNotEmpty()) {
+          matchingRegion = regionMapping.keys.find { regionText.startsWith(regionMapping[it]!!, true) } ?: Region.NOT_SET
+        }
+      } catch (e: Throwable) {
+        logger<LanguageAndRegionDialog>().warn("Unable to resolve region from GlobalPreferences.plist file", e)
+      }
     }
   }
   if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) return null
