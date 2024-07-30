@@ -19,6 +19,14 @@ public class IntermediateOperationResolveTest extends TraceExecutionTestCase {
     doTest(false);
   }
 
+  public void testMapMulti() {
+    doTest(false);
+  }
+
+  public void testMapMultiToZeroElements() {
+    doTest(false);
+  }
+
   public void testDistinctSame() {
     doTest(false);
   }
@@ -40,6 +48,14 @@ public class IntermediateOperationResolveTest extends TraceExecutionTestCase {
   }
 
   public void testSkip() {
+    doTest(false);
+  }
+
+  public void testTakeWhile() {
+    doTest(false);
+  }
+
+  public void testDropWhile() {
     doTest(false);
   }
 
