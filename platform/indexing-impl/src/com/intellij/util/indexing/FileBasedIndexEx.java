@@ -502,6 +502,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   /**
    * Returns providers of files to be indexed.
+   * <p>
+   * Don't iterate over these providers in one [smart] read action because on large projects it will either cause a freeze
+   * without a proper indicator or ProgressManager.checkCanceled() or will be constantly interrupted by write action and restarted.
+   * Consider iterating without a read action if you don't require a consistent snapshot.
    */
   public @NotNull List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
     if (project instanceof LightEditCompatible) {

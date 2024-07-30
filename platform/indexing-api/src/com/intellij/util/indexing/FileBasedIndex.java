@@ -35,6 +35,11 @@ import java.util.*;
  */
 @NonExtendable
 public abstract class FileBasedIndex {
+  /**
+   * Don't wrap this method in one [smart] read action because on large projects it will either cause a freeze
+   * without a proper indicator or ProgressManager.checkCanceled() or will be constantly interrupted by write action and restarted.
+   * Consider using it without a read action if you don't require a consistent snapshot.
+   */
   public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator);
 
   /**
