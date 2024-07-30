@@ -28,7 +28,7 @@ object LearningUiHighlightingManager {
     val usePulsation: Boolean = false,
     val clearPreviousHighlights: Boolean = true,
     val limitByVisibleRect: Boolean = true,
-    val isRoundedCorners: Boolean = true,
+    val isRoundedCorners: Boolean = false,
     val thickness: Int = 1,
   )
 
