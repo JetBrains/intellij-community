@@ -3,5 +3,11 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize
 
 import org.jetbrains.kotlin.parcelize.ParcelizeIrGeneratorExtension
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
+import org.jetbrains.kotlin.parcelize.AdditionalAnnotations
 
-internal class IdeParcelizeIrGeneratorExtension : ParcelizeIrGeneratorExtension(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES)
+internal class IdeParcelizeIrGeneratorExtension : ParcelizeIrGeneratorExtension(
+    AdditionalAnnotations(
+        parcelize = ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES,
+        ignoredOnParcel = ParcelizeNames.IGNORED_ON_PARCEL_FQ_NAMES,
+    )
+)
