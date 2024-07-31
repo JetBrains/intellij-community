@@ -3,7 +3,6 @@ package com.intellij.platform.diagnostic.telemetry.helpers
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableNotNullFunction
-import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.ThrowableConsumer
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -71,33 +70,6 @@ suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = Empt
     finally {
       span.end()
     }
-  }
-}
-
-@Internal
-fun <T> computeWithSpanAttribute(tracer: IJTracer,
-                                 spanName: String,
-                                 attributeName: String,
-                                 attributeValue: (T) -> String,
-                                 operation: () -> T): T {
-  return tracer.spanBuilder(spanName).use { span ->
-    val result = operation.invoke()
-    span.setAttribute(attributeName, attributeValue.invoke(result))
-    result
-  }
-}
-
-@Internal
-fun <T> computeWithSpanAttributes(tracer: IJTracer,
-                                  spanName: String,
-                                  attributeGenerator: (T) -> Map<String, String>,
-                                  operation: () -> T): T {
-  return tracer.spanBuilder(spanName).use { span ->
-    val result = operation.invoke()
-    attributeGenerator.invoke(result).forEach { (attributeName, attributeValue) ->
-      span.setAttribute(attributeName, attributeValue)
-    }
-    result
   }
 }
 

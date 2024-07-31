@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.testFramework.BenchmarkTestInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProfilerForTests;
@@ -38,8 +39,6 @@ import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpanAttribute;
 
 public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   private enum IterationMode {
@@ -321,40 +320,38 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
     }
 
     try {
-      computeWithSpanAttribute(tracer, uniqueTestName, "warmup", (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)), () -> {
-        try {
-          PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
+      TraceKt.use(tracer.spanBuilder(uniqueTestName).setAttribute("warmup", String.valueOf(iterationType.equals(IterationMode.WARMUP))),
+                  __ -> {
+                    try {
+                      PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
 
-          for (int attempt = 1; attempt <= maxIterationsNumber; attempt++) {
-            AtomicInteger actualInputSize;
+                      for (int attempt = 1; attempt <= maxIterationsNumber; attempt++) {
+                        AtomicInteger actualInputSize;
 
-            if (setup != null) setup.run();
-            actualInputSize = new AtomicInteger(expectedInputSize);
+                        if (setup != null) setup.run();
+                        actualInputSize = new AtomicInteger(expectedInputSize);
 
-            Supplier<Object> perfTestWorkload = getPerfTestWorkloadSupplier(iterationType, attempt, actualInputSize);
+                        Supplier<Object> perfTestWorkload = getPerfTestWorkloadSupplier(iterationType, attempt, actualInputSize);
 
-            computeWithSpanAttribute(
-              tracer, "Attempt: " + attempt,
-              "warmup",
-              (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)),
-              () -> perfTestWorkload.get()
-            );
+                        TraceKt.use(tracer.spanBuilder("Attempt: " + attempt)
+                                      .setAttribute("warmup", String.valueOf(iterationType.equals(IterationMode.WARMUP))),
+                                    ignore -> perfTestWorkload.get());
 
-            if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-              // TODO: Print debug metrics here https://youtrack.jetbrains.com/issue/AT-726
-            }
-            //noinspection CallToSystemGC
-            System.gc();
-            StorageLockContext.forceDirectMemoryCache();
-          }
-        }
-        catch (Throwable throwable) {
-          ExceptionUtil.rethrowUnchecked(throwable);
-          throw new RuntimeException(throwable);
-        }
+                        if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+                          // TODO: Print debug metrics here https://youtrack.jetbrains.com/issue/AT-726
+                        }
+                        //noinspection CallToSystemGC
+                        System.gc();
+                        StorageLockContext.forceDirectMemoryCache();
+                      }
+                    }
+                    catch (Throwable throwable) {
+                      ExceptionUtil.rethrowUnchecked(throwable);
+                      throw new RuntimeException(throwable);
+                    }
 
-        return null;
-      });
+                    return null;
+                  });
     }
     finally {
       try {
