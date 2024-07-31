@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl
 
-import com.intellij.UtilBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -49,6 +48,7 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.SingleEdtTaskScheduler
+import com.intellij.util.UtilBundle
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus

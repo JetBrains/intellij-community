@@ -39,8 +39,6 @@ f:com.intellij.Patches
 - sf:SUN_BUG_ID_6322854:Z
 - sf:TEXT_LAYOUT_IS_SLOW:Z
 - <init>():V
-f:com.intellij.UtilBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
 *f:com.intellij.concurrency.ThreadContext
 - sf:captureThreadContext(java.lang.Runnable):java.lang.Runnable
 - sf:captureThreadContext(java.util.concurrent.Callable):java.util.concurrent.Callable
