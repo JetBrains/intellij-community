@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
@@ -100,14 +99,15 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   private static final String ENABLE_PREVIEW_OPTION = "--enable-preview";
   private static final String PROCESSOR_MODULE_PATH_OPTION = "--processor-module-path";
   private static final String SOURCE_OPTION = "-source";
-  private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
+  private static final String SYSTEM_OPTION = "--system";
+  private static final Set<String> FILTERED_OPTIONS = Set.of(
     TARGET_OPTION, RELEASE_OPTION, "-d"
   );
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = ContainerUtil.newHashSet(
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = Set.of(
     "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, "-proceedOnError"
   );
-  private static final Set<String> POSSIBLY_CONFLICTING_OPTIONS = ContainerUtil.newHashSet(
-    SOURCE_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
+  private static final Set<String> POSSIBLY_CONFLICTING_OPTIONS = Set.of(
+    SOURCE_OPTION, SYSTEM_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
   );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
@@ -186,7 +186,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     // before the first compilation round starts: find and mark dirty all classes that depend on removed or moved classes so
     // that all such files are compiled in the first round.
     try {
-      JavaBuilderUtil.markDirtyDependenciesForInitialRound(context, new DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
+      JavaBuilderUtil.markDirtyDependenciesForInitialRound(context, new DirtyFilesHolderBase<>(context) {
         @Override
         public void processDirtyFiles(@NotNull FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
           FSOperations.processFilesToRecompile(context, chunk, processor);
@@ -949,17 +949,13 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  public static void addCompilationOptions(List<? super String> options,
-                                           CompileContext context,
-                                           ModuleChunk chunk,
-                                           @Nullable ProcessorConfigProfile profile) {
+  public static void addCompilationOptions(List<? super String> options, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
     addCompilationOptions(JavaVersion.current().feature, options, context, chunk, profile, false);
   }
 
-  private static void addCompilationOptions(int compilerSdkVersion,
-                                            List<? super String> options,
-                                            CompileContext context, ModuleChunk chunk,
-                                            @Nullable ProcessorConfigProfile profile, boolean procOnlySupported) {
+  private static void addCompilationOptions(
+    int compilerSdkVersion, List<? super String> options, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile, boolean procOnlySupported
+  ) {
     if (!options.contains(ENCODING_OPTION)) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
@@ -1040,22 +1036,20 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
     @NotNull JpsModule module = chunk.representativeTarget().getModule();
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    final int languageLevel = level != null ? level.feature() : 0;
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
-
-    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration,
-                                                 (level == LanguageLevel.JDK_X) ? chunkSdkVersion : languageLevel);
+    final int languageLevel = level == null? 0 : level == LanguageLevel.JDK_X? chunkSdkVersion : level.feature();
+    int bytecodeTarget = level == LanguageLevel.JDK_X? chunkSdkVersion : getModuleBytecodeTarget(context, chunk, compilerConfiguration, languageLevel);
 
     if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
       options.add(RELEASE_OPTION);
-      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(bytecodeTarget));
+      options.add(complianceOption(bytecodeTarget));
       return;
     }
 
-    // using older -source, -target and -bootclasspath options
+    // alternatively using -source, -target and --system (or -bootclasspath) options
     if (languageLevel > 0 && !options.contains(SOURCE_OPTION)) {
       options.add(SOURCE_OPTION);
-      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(languageLevel));
+      options.add(complianceOption(languageLevel));
     }
 
     if (bytecodeTarget > 0) {
@@ -1082,6 +1076,17 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     if (bytecodeTarget > 0) {
       options.add(TARGET_OPTION);
       options.add(complianceOption(bytecodeTarget));
+    }
+
+    if (compilerSdkVersion >= 9) {
+      Pair<@NotNull JpsSdk<JpsDummyElement>, @NotNull Integer> associatedSdk = getAssociatedSdk(chunk);
+      if (associatedSdk != null && associatedSdk.getSecond() >= 9 && associatedSdk.getSecond() != compilerSdkVersion) {
+        String homePath = associatedSdk.getFirst().getHomePath();
+        if (homePath != null) {
+          options.add(SYSTEM_OPTION);
+          options.add(FileUtil.toSystemIndependentName(homePath));
+        }
+      }
     }
   }
 
