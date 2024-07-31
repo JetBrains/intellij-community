@@ -1,5 +1,5 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.libraries.compose.desktop.skikoRuntime" />
+    <module name="intellij.libraries.skiko" />
   </dependencies>
 </idea-plugin>

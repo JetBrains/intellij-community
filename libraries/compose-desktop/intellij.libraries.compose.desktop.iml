@@ -7,13 +7,129 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" exported="" name="jetbrains.compose.foundation.desktop" level="project" />
     <orderEntry type="module-library" exported="">
-      <library name="jetbrains.jewel" type="repository">
+      <library name="jetbrains.compose.foundation.desktop" type="repository">
+        <properties maven-id="org.jetbrains.compose.foundation:foundation-desktop:1.7.0-dev1703">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.7.0-dev1703/foundation-desktop-1.7.0-dev1703.jar">
+              <sha256sum>6e0393b0d6b9308a0fbc359a1732593322b8b4108e6d033469f1dedbbbdf5031</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1.8.0/annotation-jvm-1.8.0.jar">
+              <sha256sum>9aab326d9492800991854360ac248f493ce7f7c3183519309b78ace9e240f6f6</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.4.0/collection-jvm-1.4.0.jar">
+              <sha256sum>d5cf7b72647c7995071588fe870450ff9c8f127f253d2d4851e161b800f67ae0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.7.0-dev1703/animation-desktop-1.7.0-dev1703.jar">
+              <sha256sum>98e329d2e50ec465c7e3150f572487b5b6afb0ed4ab978630cb233aecc26fd63</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.7.0-dev1703/animation-core-desktop-1.7.0-dev1703.jar">
+              <sha256sum>444f9d9c0fccbf8ec5b9efc79c4039de3921975612e13d71b21df836956aee0a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.7.0-dev1703/ui-geometry-desktop-1.7.0-dev1703.jar">
+              <sha256sum>4b86c961c0b4bce7995329fd57d4339ede11cb75d7ec90bc1b9913396addb30f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.7.0-dev1703/foundation-layout-desktop-1.7.0-dev1703.jar">
+              <sha256sum>f229a89e4be8c7289b100e3f1cab616f97e9a361964aafb5e2290958935fbb21</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.7.0-dev1703/runtime-desktop-1.7.0-dev1703.jar">
+              <sha256sum>afb8d12e503081d5b83a65bfe7184ff6248c8c6e03119249638cbbe9dd3c8e8a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.7.0-dev1703/ui-desktop-1.7.0-dev1703.jar">
+              <sha256sum>86113f6063e4e8647dcbd07c3cbebb19c98b3c9525faa1e807d5da226ca41b94</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.8.0/lifecycle-common-jvm-2.8.0.jar">
+              <sha256sum>61c873a7327c946ec033c310bb98f3f92eeabcede0e1a5200ab8a1896483c7bf</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.8.0/lifecycle-runtime-desktop-2.8.0.jar">
+              <sha256sum>10bfe53bb2752f967751a5102cdb785eeea54e1d4df6bde88fb0f50b0a49156c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/arch/core/core-common/2.2.0/core-common-2.2.0.jar">
+              <sha256sum>65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.1.0/annotation-1.1.0.jar">
+              <sha256sum>d38d63edb30f1467818d50aaf05f8a692dea8b31392a049bfa991b159ad5b692</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2.8.0/lifecycle-viewmodel-desktop-2.8.0.jar">
+              <sha256sum>5c28f3ba9732f2180685038dbe674059fd9b7843c721cd0f6c73f3dbfcb2683c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.8.0-dev1703/lifecycle-runtime-compose-desktop-2.8.0-dev1703.jar">
+              <sha256sum>a86a4faee71844ab986c6e1af67aae412b802f99b4a611113305e9f9d04fc271</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.7.0-dev1703/runtime-saveable-desktop-1.7.0-dev1703.jar">
+              <sha256sum>bc30d93dce0bdf9c8ea707227ebb85b82694e4a0ddab618aa5bb5613c3b87cc0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.7.0-dev1703/ui-graphics-desktop-1.7.0-dev1703.jar">
+              <sha256sum>5acc2058c905ceca092cfe8cd91bb082df7fce6126c971d826ca64b538dc7b92</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.7.0-dev1703/ui-unit-desktop-1.7.0-dev1703.jar">
+              <sha256sum>598b52e257ed674145694b9790a7383a90fed2ec7154ba09ace4aa983c65b1a2</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.7.0-dev1703/ui-text-desktop-1.7.0-dev1703.jar">
+              <sha256sum>faccd4d5e86a3ab2741cdf5dc82e8e765cf0ada911ec929436940eae0a6807ef</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.7.0-dev1703/ui-util-desktop-1.7.0-dev1703.jar">
+              <sha256sum>161dcc73b929da61cee50045e96fb02f1633c36f18a2ef38b5c2c44c38606b52</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:atomicfu-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.skiko:skiko-awt" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.7.0-dev1703/foundation-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1.8.0/annotation-jvm-1.8.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.4.0/collection-jvm-1.4.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.7.0-dev1703/animation-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.7.0-dev1703/animation-core-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.7.0-dev1703/ui-geometry-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.7.0-dev1703/foundation-layout-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.7.0-dev1703/runtime-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.7.0-dev1703/ui-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.8.0/lifecycle-common-jvm-2.8.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.8.0/lifecycle-runtime-desktop-2.8.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/arch/core/core-common/2.2.0/core-common-2.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.1.0/annotation-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2.8.0/lifecycle-viewmodel-desktop-2.8.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.8.0-dev1703/lifecycle-runtime-compose-desktop-2.8.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.7.0-dev1703/runtime-saveable-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.7.0-dev1703/ui-graphics-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.7.0-dev1703/ui-unit-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.7.0-dev1703/ui-text-desktop-1.7.0-dev1703.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.7.0-dev1703/ui-util-desktop-1.7.0-dev1703.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1.7.0-dev1703/foundation-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1.8.0/annotation-jvm-1.8.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.4.0/collection-jvm-1.4.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1.7.0-dev1703/animation-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1.7.0-dev1703/animation-core-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1.7.0-dev1703/ui-geometry-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1.7.0-dev1703/foundation-layout-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-desktop/1.7.0-dev1703/runtime-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1.7.0-dev1703/ui-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.8.0/lifecycle-common-jvm-2.8.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.8.0/lifecycle-runtime-desktop-2.8.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/arch/core/core-common/2.2.0/core-common-2.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.1.0/annotation-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2.8.0/lifecycle-viewmodel-desktop-2.8.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.8.0-dev1703/lifecycle-runtime-compose-desktop-2.8.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-saveable-desktop/1.7.0-dev1703/runtime-saveable-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1.7.0-dev1703/ui-graphics-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1.7.0-dev1703/ui-unit-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1.7.0-dev1703/ui-text-desktop-1.7.0-dev1703-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1.7.0-dev1703/ui-util-desktop-1.7.0-dev1703-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.jewel.ide.laf.bridge.241" type="repository">
         <properties maven-id="org.jetbrains.jewel:jewel-ide-laf-bridge-241:0.19.7">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jewel/jewel-ide-laf-bridge-241/0.19.7/jewel-ide-laf-bridge-241-0.19.7.jar">
@@ -43,7 +159,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.desktop.skikoRuntime" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.skiko" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

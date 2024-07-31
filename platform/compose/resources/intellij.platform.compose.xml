@@ -9,4 +9,8 @@
                  key="compose.swing.render.on.graphics"
     />
   </extensions>
+  <dependencies>
+    <module name="intellij.libraries.compose.desktop" />
+    <module name="intellij.libraries.skiko" />
+  </dependencies>
 </idea-plugin>

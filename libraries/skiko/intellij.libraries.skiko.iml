@@ -25,5 +25,23 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.skiko.awt.compose" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.skiko:skiko-awt:0.8.9">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.8.9/skiko-awt-0.8.9.jar">
+              <sha256sum>c7f5c1253a1f7ea5876aa122309b517cce1b4d1522eb65eedd8579ec83e5a083</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.8.9/skiko-awt-0.8.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.8.9/skiko-awt-0.8.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

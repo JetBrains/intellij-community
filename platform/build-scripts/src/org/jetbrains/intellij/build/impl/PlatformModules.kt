@@ -90,8 +90,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
 
-  "intellij.platform.compose",
-
   // do we need it?
   "intellij.platform.sqlite",
 )
