@@ -6,8 +6,6 @@ import com.intellij.util.ThrowableConsumer;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,14 +24,5 @@ public final class TraceUtil {
                                                              @NotNull String spanName,
                                                              @NotNull ThrowableConsumer<Span, E> operation) throws E {
     TraceKt.runWithSpanIgnoreThrows(tracer, spanName, operation);
-  }
-
-  public static <E extends Throwable> void runWithSpanThrows(@NotNull Tracer tracer,
-                                                             @NotNull Context context,
-                                                             @NotNull String spanName,
-                                                             @NotNull ThrowableConsumer<Span, E> operation) throws E {
-    try(Scope ignored = context.makeCurrent()) {
-      TraceKt.runWithSpanIgnoreThrows(tracer, spanName, operation);
-    }
   }
 }

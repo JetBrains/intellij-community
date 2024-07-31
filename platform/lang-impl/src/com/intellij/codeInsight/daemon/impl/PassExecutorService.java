@@ -45,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -405,22 +406,24 @@ final class PassExecutorService implements Disposable {
             if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
               String fileName = myFileEditor.getFile().getName();
               String passClassName = StringUtil.getShortName(myPass.getClass());
-              TraceUtil.runWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, myOpenTelemetryContext, passClassName, span -> {
-                Activity startupActivity = StartUpMeasurer.startActivity("running " + passClassName);
-                boolean cancelled = false;
-                try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
-                  myPass.collectInformation(myUpdateProgress);
-                }
-                catch (CancellationException e) {
-                  cancelled = true;
-                  throw e;
-                }
-                finally {
-                  startupActivity.end();
-                  span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, fileName);
-                  span.setAttribute(HighlightingPassTracer.CANCELLED_ATTR_SPAN_KEY, Boolean.toString(cancelled));
-                }
-              });
+              try (Scope __ = myOpenTelemetryContext.makeCurrent()) {
+                TraceUtil.runWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, passClassName, span -> {
+                  Activity startupActivity = StartUpMeasurer.startActivity("running " + passClassName);
+                  boolean cancelled = false;
+                  try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
+                    myPass.collectInformation(myUpdateProgress);
+                  }
+                  catch (CancellationException e) {
+                    cancelled = true;
+                    throw e;
+                  }
+                  finally {
+                    startupActivity.end();
+                    span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, fileName);
+                    span.setAttribute(HighlightingPassTracer.CANCELLED_ATTR_SPAN_KEY, Boolean.toString(cancelled));
+                  }
+                });
+              }
             }
           }
           catch (ProcessCanceledException e) {
