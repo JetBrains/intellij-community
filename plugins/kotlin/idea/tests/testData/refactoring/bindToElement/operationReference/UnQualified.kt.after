@@ -3,6 +3,7 @@
 package test
 
 import test.bar.barFoo
+import test.foo.fooBar
 
 fun foo() {
     0 <caret>barFoo 1

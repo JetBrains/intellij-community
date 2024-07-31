@@ -2,9 +2,9 @@
 // BIND_TO test.bar.A
 package test
 
-import test.bar.A
+import test.foo.A
 
 fun foo() {
-    val x = <caret>A()
+    val x = <caret>test.bar.A()
 }
 

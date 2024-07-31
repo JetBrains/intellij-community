@@ -1,3 +1,5 @@
+import C
+
 // BIND_TO C
 class A {
     class B { }

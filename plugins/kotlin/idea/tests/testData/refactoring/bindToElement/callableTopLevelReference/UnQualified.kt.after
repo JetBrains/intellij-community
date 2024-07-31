@@ -1,6 +1,8 @@
 // BIND_TO test.B
 package test
 
+import test.B
+
 class A { }
 
 class B { }

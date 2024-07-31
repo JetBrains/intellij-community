@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.k2.refactoring.modifyPsiWithOptimizedImports
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -65,7 +66,10 @@ class ClassUsageReplacementStrategy(
                     val fqName = FqName(fqNameStr)
 
                     return {
-                        usage.mainReference.bindToFqName(fqName, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING) as? KtElement
+                        modifyPsiWithOptimizedImports(usage.containingKtFile) {
+                            usage.mainReference.bindToFqName(fqName, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING) as? KtElement
+                        }
+
                     }
                 }
 
