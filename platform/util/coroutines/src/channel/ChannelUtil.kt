@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.coroutines.channel
 
 import kotlinx.coroutines.CoroutineScope
@@ -8,10 +8,10 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -19,24 +19,32 @@ import kotlin.coroutines.cancellation.CancellationException
   Solution from fleet.api.exec.ExecApiProcess.kt. Maybe it should be merged somehow
  */
 @ApiStatus.Experimental
-class ChannelInputStream(
-  parentCoroutineScope: CoroutineScope,
-  private val channel: ReceiveChannel<ByteArray>,
-) : InputStream() {
-  private sealed class Content {
-    class Data(val stream: ByteArrayInputStream) : Content()
-    class Error(val cause: Throwable) : Content()
-    object End : Content()
-  }
+class ChannelInputStream private constructor(
+  private val channel: ReceiveChannel<*>,
+): InputStream() {
+  companion object {
+    fun forArrays(parentCoroutineScope: CoroutineScope, channel: ReceiveChannel<ByteArray>): ChannelInputStream {
+      val result = ChannelInputStream(channel)
+      parentCoroutineScope.launch {
+        consumeChannel(channel, result.myBuffer) { ByteBuffer.wrap(it) }
+      }
+      return result
+    }
 
-  private val myBuffer = LinkedBlockingDeque<Content>()
+    fun forByteBuffers(parentCoroutineScope: CoroutineScope, channel: ReceiveChannel<ByteBuffer>): ChannelInputStream {
+      val result = ChannelInputStream(channel)
+      parentCoroutineScope.launch {
+        consumeChannel(channel, result.myBuffer) { it }
+      }
+      return result
+    }
 
-  init {
-    parentCoroutineScope.launch {
+    private suspend inline fun <T> consumeChannel(channel: ReceiveChannel<T>, myBuffer: LinkedBlockingDeque<Content>, crossinline transform: (T) -> ByteBuffer) {
       try {
-        channel.consumeEach { bytes ->
-          if (bytes.isNotEmpty()) {
-            myBuffer.offerLast(Content.Data(ByteArrayInputStream(bytes)))
+        channel.consumeEach { obj ->
+          val bytes = transform(obj)
+          if (bytes.hasRemaining()) {
+            myBuffer.offerLast(Content.Data(bytes))
           }
         }
         myBuffer.offerLast(Content.End)
@@ -52,18 +60,28 @@ class ChannelInputStream(
     }
   }
 
+  private val myBuffer = LinkedBlockingDeque<Content>()
+
+  private sealed class Content {
+    class Data(val buffer: ByteBuffer) : Content()
+    class Error(val cause: Throwable) : Content()
+    object End : Content()
+  }
+
   override fun close() {
     channel.cancel(CancellationException("ChannelInputStream was closed"))
   }
 
   override fun read(): Int {
     val available = getAvailableBuffer() ?: return -1
-    return available.read()
+    return available.get().toInt()
   }
 
   override fun read(b: ByteArray, off: Int, len: Int): Int {
     val available = getAvailableBuffer() ?: return -1
-    return available.read(b, off, minOf(len, available.available()))
+    val resultSize = minOf(len, available.remaining())
+    available.get(b, off, resultSize)
+    return resultSize
   }
 
   override tailrec fun available(): Int =
@@ -71,7 +89,7 @@ class ChannelInputStream(
       null -> 0
 
       is Content.Data -> {
-        val availableInCurrent = current.stream.available()
+        val availableInCurrent = current.buffer.remaining()
         if (availableInCurrent > 0) {
           myBuffer.putFirst(current)
           availableInCurrent
@@ -87,7 +105,7 @@ class ChannelInputStream(
       }
     }
 
-  private fun getAvailableBuffer(): ByteArrayInputStream? {
+  private fun getAvailableBuffer(): ByteBuffer? {
     while (true) {
       val current =
         try {
@@ -107,9 +125,9 @@ class ChannelInputStream(
           throw IOException(current.cause)
         }
         is Content.Data -> {
-          if (current.stream.available() > 0) {
+          if (current.buffer.hasRemaining()) {
             myBuffer.putFirst(current)
-            return current.stream
+            return current.buffer
           }
         }
       }
@@ -120,9 +138,33 @@ class ChannelInputStream(
 private const val MAX_ARRAY_SIZE_SENT: Int = 1024
 
 @ApiStatus.Experimental
-class ChannelOutputStream(private val channel: SendChannel<ByteArray>) : OutputStream() {
+sealed class ChannelOutputStream<T>(private val channel: SendChannel<T>) : OutputStream() {
+  companion object {
+    fun forArrays(channel: SendChannel<ByteArray>): ChannelOutputStream<ByteArray> =
+      ForByteArray(channel)
+
+    fun forByteBuffers(channel: SendChannel<ByteBuffer>): ChannelOutputStream<ByteBuffer> =
+      ForByteBuffer(channel)
+  }
+
+  private class ForByteArray(channel: SendChannel<ByteArray>) : ChannelOutputStream<ByteArray>(channel) {
+    override fun fromByte(b: Byte): ByteArray = byteArrayOf(b)
+    override fun range(b: ByteArray, offset: Int, nextOffset: Int): ByteArray = b.copyOfRange(offset, nextOffset)
+  }
+
+  private class ForByteBuffer(channel: SendChannel<ByteBuffer>) : ChannelOutputStream<ByteBuffer>(channel) {
+    override fun fromByte(b: Byte): ByteBuffer = ByteBuffer.wrap(byteArrayOf(b))
+    override fun range(b: ByteArray, offset: Int, nextOffset: Int): ByteBuffer = ByteBuffer.wrap(b, offset, nextOffset)
+  }
+
+  @ApiStatus.Internal
+  protected abstract fun fromByte(b: Byte): T
+
+  @ApiStatus.Internal
+  protected abstract fun range(b: ByteArray, offset: Int, nextOffset: Int): T
+
   override fun write(b: Int) {
-    val result = channel.trySendBlocking(byteArrayOf(b.toByte()))
+    val result = channel.trySendBlocking(fromByte(b.toByte()))
     when {
       result.isClosed -> throw IOException("Unable to write, channel is closed")
       result.isFailure -> throw IOException("Unable to write to channel", result.exceptionOrNull())
@@ -134,7 +176,7 @@ class ChannelOutputStream(private val channel: SendChannel<ByteArray>) : OutputS
 
     while (offset < len) {
       val nextOffset = minOf(offset + MAX_ARRAY_SIZE_SENT, len)
-      val result = channel.trySendBlocking(b.copyOfRange(offset, nextOffset))
+      val result = channel.trySendBlocking(range(b, offset, nextOffset))
 
       when {
         result.isClosed -> throw IOException("Unable to write, channel is closed")

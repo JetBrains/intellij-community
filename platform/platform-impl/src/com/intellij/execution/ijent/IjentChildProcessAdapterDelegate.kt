@@ -38,12 +38,12 @@ internal class IjentChildProcessAdapterDelegate(
         ijentChildProcess.stderr.consumeEach { chunk -> merged.send(chunk) }
       }
 
-      inputStream = ChannelInputStream(coroutineScope, merged)
+      inputStream = ChannelInputStream.forArrays(coroutineScope, merged)
       errorStream = ByteArrayInputStream(byteArrayOf())
     }
     else {
-      inputStream = ChannelInputStream(coroutineScope, ijentChildProcess.stdout)
-      errorStream = ChannelInputStream(coroutineScope, ijentChildProcess.stderr)
+      inputStream = ChannelInputStream.forArrays(coroutineScope, ijentChildProcess.stdout)
+      errorStream = ChannelInputStream.forArrays(coroutineScope, ijentChildProcess.stderr)
     }
   }
 
