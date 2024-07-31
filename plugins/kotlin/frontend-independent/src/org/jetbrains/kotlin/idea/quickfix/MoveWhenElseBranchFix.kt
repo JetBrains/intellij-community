@@ -3,22 +3,19 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-class MoveWhenElseBranchFix private constructor(
-    element: KtWhenExpression
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtWhenExpression, Unit>(element, Unit) {
+class MoveWhenElseBranchFix private constructor(element: KtWhenExpression) : PsiUpdateModCommandAction<KtWhenExpression>(element) {
     override fun getFamilyName() = KotlinBundle.message("move.else.branch.to.the.end")
 
     override fun invoke(
         actionContext: ActionContext,
         element: KtWhenExpression,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         val entries = element.entries

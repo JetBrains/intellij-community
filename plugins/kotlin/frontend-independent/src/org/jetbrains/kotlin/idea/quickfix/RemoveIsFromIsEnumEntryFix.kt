@@ -3,21 +3,18 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenConditionIsPattern
 
-class RemoveIsFromIsEnumEntryFix(
-    element: KtWhenConditionIsPattern,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtWhenConditionIsPattern, Unit>(element, Unit) {
+class RemoveIsFromIsEnumEntryFix(element: KtWhenConditionIsPattern) : PsiUpdateModCommandAction<KtWhenConditionIsPattern>(element) {
 
     override fun getFamilyName() = KotlinBundle.message("remove.expression", "is")
 
     override fun invoke(
         actionContext: ActionContext,
         element: KtWhenConditionIsPattern,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         val typeReference = element.typeReference?.text ?: return

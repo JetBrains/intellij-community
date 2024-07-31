@@ -4,14 +4,12 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class WrongLongSuffixFix(
-    element: KtConstantExpression
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtConstantExpression, Unit>(element, Unit) {
+class WrongLongSuffixFix(element: KtConstantExpression) : PsiUpdateModCommandAction<KtConstantExpression>(element) {
     private val corrected = element.text.trimEnd('l') + 'L'
 
     override fun getPresentation(
@@ -26,7 +24,6 @@ class WrongLongSuffixFix(
     override fun invoke(
         actionContext: ActionContext,
         element: KtConstantExpression,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         element.replace(KtPsiFactory(actionContext.project).createExpression(corrected))

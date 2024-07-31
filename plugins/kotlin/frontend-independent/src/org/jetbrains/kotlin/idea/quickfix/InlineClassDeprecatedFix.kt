@@ -5,9 +5,9 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 
 class InlineClassDeprecatedFix(
     element: KtModifierListOwner,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtModifierListOwner, Unit>(element, Unit) {
+) : PsiUpdateModCommandAction<KtModifierListOwner>(element) {
 
     @IntentionName
     private val text = KotlinBundle.message(
@@ -34,7 +34,6 @@ class InlineClassDeprecatedFix(
     override fun invoke(
         actionContext: ActionContext,
         element: KtModifierListOwner,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         element.removeModifier(KtTokens.INLINE_KEYWORD)
