@@ -21,7 +21,7 @@ import java.io.File
 
 fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
     val task = resolverCtx.externalSystemTaskId
-    val tasks = KotlinDslSyncListener.instance?.tasks ?: return
+    val tasks = kotlinDslSyncListenerInstance?.tasks ?: return
     synchronized(tasks) { tasks[task] }?.let { sync ->
         val gradleHome = resolverCtx.getRootModel(GradleBuildScriptClasspathModel::class.java)?.gradleHomeDir?.path
             ?: resolverCtx.settings?.gradleHome
@@ -128,8 +128,9 @@ private fun KotlinDslScriptsModel.toListOfScriptModels(project: Project): List<K
     }
 
 class KotlinDslGradleBuildSync(val workingDir: String, val taskId: ExternalSystemTaskId) {
-    val ts = System.currentTimeMillis()
-    var project: Project? = null
+    val creationTimestamp: Long = System.currentTimeMillis()
+    // TODO: projectId is inconsistent - see com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId.getProjectId
+    var projectId: String? = null
     var gradleVersion: String? = null
     var gradleHome: String? = null
     var javaHome: String? = null

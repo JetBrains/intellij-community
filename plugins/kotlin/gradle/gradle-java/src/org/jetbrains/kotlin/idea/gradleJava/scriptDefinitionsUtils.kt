@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava
 
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId.getProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
@@ -12,7 +13,7 @@ import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradle.scripting.GradleKotlinScriptDefinitionWrapper
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor
-import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslSyncListener
+import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.kotlinDslSyncListenerInstance
 import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinitionAdapterFromNewAPIBase
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
@@ -126,14 +127,16 @@ class ErrorGradleScriptDefinition(project: Project, message: String? = null) :
 }
 
 class ErrorScriptDependenciesResolver(
-    private val project: Project,
+    project: Project,
     private val message: String? = null
 ) : DependenciesResolver {
+    private val projectId: String = getProjectId(project)
+
     override fun resolve(scriptContents: ScriptContents, environment: Environment): DependenciesResolver.ResolveResult {
         val importInProgress =
-            KotlinDslSyncListener.instance?.tasks?.let { importTasks ->
-                synchronized(importTasks) { importTasks.values.any { it.project == project } }
-            } ?: false
+            kotlinDslSyncListenerInstance?.tasks?.let { importTasks ->
+                synchronized(importTasks) { importTasks.values.any { it.projectId == projectId } }
+            } == true
         val failureMessage = if (importInProgress) {
             KotlinIdeaGradleBundle.message("error.text.highlighting.is.impossible.during.gradle.import")
         } else {
