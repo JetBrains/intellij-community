@@ -528,11 +528,19 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
       // If the preferred selection exists in the tree
       if (tree.getRowForPath(preferredSelection) != -1) {
         tree.selectionPath = preferredSelection
-        TreeUtil.scrollToVisible(tree, preferredSelection, false)
+        scrollToSelectionIfNeeded(preferredSelection)
         return
       }
     }
     TreeUtil.promiseSelectFirstLeaf(tree)
+  }
+
+  private fun scrollToSelectionIfNeeded(selectedPath: TreePath) {
+    val selectedNodeBounds = tree.getPathBounds(selectedPath) ?: return
+    // If the selected not is not visible
+    if (!tree.visibleRect.intersects(selectedNodeBounds)) {
+      TreeUtil.scrollToVisible(tree, selectedPath, false)
+    }
   }
 
   final override fun isResizable(): Boolean = true
