@@ -92,7 +92,7 @@ public final class LayoutCodeDialog extends DialogWrapper {
   }
 
   private void setUpActions() {
-    boolean canOptimizeImports = !LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty();
+    boolean canOptimizeImports = !OptimizeImportsProcessor.collectOptimizers(myFile).isEmpty();
     myOptimizeImportsCb.setVisible(canOptimizeImports);
     if (canOptimizeImports) {
       myOptimizeImportsCb.setSelected(myLastRunOptions.getLastOptimizeImports());
