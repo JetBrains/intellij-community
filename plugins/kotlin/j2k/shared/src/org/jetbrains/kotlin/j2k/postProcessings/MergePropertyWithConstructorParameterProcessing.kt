@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -26,41 +27,57 @@ import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.asAssignment
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-// TODO convert everything to element pointers
-// TODO document
+/**
+ * 1. Merges the triple "primary constructor parameter / property / initialization of property with parameter"
+ * into a single property declaration to produce more clean and idiomatic Kotlin code.
+ *
+ * 2. Also works for simple property initializers in `init` blocks without parameters (similar to JoinDeclarationAndAssignmentInspection).
+ *
+ * 3. Currently, `RecordClassConversion` depends on this processing (in order to produce a valid data class,
+ * regular properties must be merged into the primary constructor).
+ *
+ * TODO convert everything to element pointers
+ */
 class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
-    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
-        for (klass in runReadAction { elements.descendantsOfType<KtClass>() }) {
-            klass.convert()
-        }
-    }
-
-    context(KaSession)
-    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
-        error("Not supported in K1 J2K")
-    }
-
     @OptIn(KaAllowAnalysisOnEdt::class)
-    private fun KtClass.convert() {
-        val klass = this
-        val initializations = runReadAction {
+    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
+        val ktElement = elements.firstIsInstanceOrNull<KtElement>() ?: return
+        val context = runReadAction {
             allowAnalysisOnEdt {
-                analyze(klass) {
-                    collectPropertyInitializations(klass)
+                analyze(ktElement) {
+                    prepareContext(elements)
                 }
             }
         }
 
         runUndoTransparentActionInEdt(inWriteAction = true) {
-            initializations.forEach(::convertInitialization)
-            removeEmptyInitBlocks()
-            removeRedundantEnumSemicolon()
-            removeIllegalDataModifierIfNeeded()
-            removeEmptyClassBody()
+            Applier(context).apply()
         }
+    }
+
+    context(KaSession)
+    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+        val context = prepareContext(elements)
+        return Applier(context)
+    }
+
+    context(KaSession)
+    private fun prepareContext(elements: List<PsiElement>): Map<KtClass, List<Initialization<*>>> {
+        val context = mutableMapOf<KtClass, List<Initialization<*>>>()
+
+        for (klass in elements.descendantsOfType<KtClass>()) {
+            val initializations = collectPropertyInitializations(klass)
+            context[klass] = initializations
+        }
+
+        return context
     }
 
     context(KaSession)
@@ -92,7 +109,8 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
                     val parameter = rightSide.asParameter() ?: return false
                     if (!property.isSameTypeAs(parameter)) return false
                     usedParameters += parameter
-                    initializations += ConstructorParameterInitialization(property, parameter, assignment)
+                    val references = ReferencesSearch.search(parameter, LocalSearchScope(parameter.containingKtFile)).toList()
+                    initializations += ConstructorParameterInitialization(property, parameter, assignment, references)
                 }
 
                 is KtConstantExpression, is KtStringTemplateExpression -> {
@@ -110,6 +128,23 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
             if (!collectInitialization(statement)) break
         }
         return initializations
+    }
+}
+
+private class Applier(private val context: Map<KtClass, List<Initialization<*>>>) : PostProcessingApplier {
+    override fun apply() {
+        for ((klass, initializations) in context) {
+            for (initialization in initializations) {
+                convertInitialization(initialization)
+            }
+
+            with(klass) {
+                removeEmptyInitBlocks()
+                removeRedundantEnumSemicolon()
+                removeIllegalDataModifierIfNeeded()
+                removeEmptyClassBody()
+            }
+        }
     }
 
     private fun convertInitialization(initialization: Initialization<*>) {
@@ -138,7 +173,7 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
 
         parameter.addBefore(property.valOrVarKeyword, parameter.nameIdentifier!!)
         parameter.addAfter(KtPsiFactory(property.project).createWhiteSpace(), parameter.valOrVarKeyword!!)
-        parameter.rename(property.name!!)
+        parameter.rename(property.name!!, this.parameterReferences)
 
         val visibilityModifier = property.visibilityModifierType()
         if (visibilityModifier != null) {
@@ -171,11 +206,11 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
         }
     }
 
-    private fun KtCallableDeclaration.rename(newName: String) {
+    private fun KtParameter.rename(newName: String, parameterReferences: List<PsiReference>) {
         val psiFactory = KtPsiFactory(project)
         val escapedName = newName.escaped()
-        ReferencesSearch.search(this, LocalSearchScope(containingKtFile)).forEach {
-            it.element.replace(psiFactory.createExpression(escapedName))
+        for (reference in parameterReferences) {
+            reference.element.replace(psiFactory.createExpression(escapedName))
         }
         setName(escapedName)
     }
@@ -236,7 +271,8 @@ private sealed class Initialization<I : KtElement> {
 private data class ConstructorParameterInitialization(
     override val property: KtProperty,
     override val initializer: KtParameter,
-    override val assignment: KtBinaryExpression
+    override val assignment: KtBinaryExpression,
+    val parameterReferences: List<PsiReference>
 ) : Initialization<KtParameter>()
 
 private data class LiteralInitialization(

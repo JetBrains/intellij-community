@@ -78,11 +78,19 @@ internal class K2J2KPostProcessor : PostProcessor {
     }
 }
 
+// TODO try to reduce the number of post-processing groups for better performance
 private val processings: List<NamedPostProcessingGroup> = listOf(
     NamedPostProcessingGroup(
         KotlinJ2KK2Bundle.message("processing.step.cleaning.up.code"),
         listOf(
             K2ConvertGettersAndSettersToPropertyProcessing()
+        ),
+    ),
+
+    NamedPostProcessingGroup(
+        KotlinJ2KK2Bundle.message("processing.step.cleaning.up.code"),
+        listOf(
+            MergePropertyWithConstructorParameterProcessing()
         ),
     ),
 
