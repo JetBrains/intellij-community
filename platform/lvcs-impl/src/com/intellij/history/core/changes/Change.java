@@ -50,6 +50,10 @@ public abstract class Change {
 
   public abstract boolean affectsProject(String projectId);
 
+  /**
+   * @deprecated Use {@link Change#affectsMatching(MinusculeMatcher)} instead.
+   */
+  @Deprecated
   public abstract boolean affectsMatching(@NotNull Pattern pattern);
 
   public abstract boolean affectsMatching(@NotNull MinusculeMatcher matcher);
