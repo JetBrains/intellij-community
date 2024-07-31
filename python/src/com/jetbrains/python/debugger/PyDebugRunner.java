@@ -820,7 +820,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
   private static void configureDebugConnectionParameters(@NotNull ParamsGroup debugParams, int serverLocalPort) {
-    final String[] debuggerArgs = new String[]{
+    final String[] debuggerArgs = {
       CLIENT_PARAM, "127.0.0.1",
       PORT_PARAM, String.valueOf(serverLocalPort),
       FILE_PARAM
