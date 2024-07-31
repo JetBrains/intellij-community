@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
+import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -21,14 +23,26 @@ import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 public class MockProject extends MockComponentManager implements Project, ComponentManagerEx {
   private static final Logger LOG = Logger.getInstance(MockProject.class);
   private VirtualFile myBaseDir;
+  private final CoroutineScope myCoroutineScope;
 
   @Internal
   public MockProject(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     super(parent, parentDisposable);
+
+    myCoroutineScope = CoroutineScopeKt.childScope(GlobalScope.INSTANCE, "MockProject: " + this,
+                                                   EmptyCoroutineContext.INSTANCE, true);
+  }
+
+  @Override
+  public void dispose() {
+    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, new CancellationException());
+
+    super.dispose();
   }
 
   @Override
@@ -48,7 +62,7 @@ public class MockProject extends MockComponentManager implements Project, Compon
 
   @Override
   public @NotNull CoroutineScope getCoroutineScope() {
-    return GlobalScope.INSTANCE;
+    return myCoroutineScope;
   }
 
   @Override

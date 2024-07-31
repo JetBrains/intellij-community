@@ -1056,6 +1056,7 @@ c:com.intellij.mock.MockFileIndexFacade
 c:com.intellij.mock.MockProject
 - com.intellij.mock.MockComponentManager
 - com.intellij.openapi.project.Project
+- dispose():V
 - f:getActivityCategory(Z):com.intellij.diagnostic.ActivityCategory
 - getActualComponentManager():com.intellij.openapi.components.ComponentManager
 - getBaseDir():com.intellij.openapi.vfs.VirtualFile
