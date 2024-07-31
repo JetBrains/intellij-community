@@ -1329,6 +1329,7 @@ f:com.intellij.codeInsight.hints.declarative.InlayHintsCustomSettingsProviderBea
 f:com.intellij.codeInsight.hints.declarative.InlayHintsCustomSettingsProviderBean$Companion
 - f:getEP():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+- com.intellij.openapi.project.PossiblyDumbAware
 - sf:Companion:com.intellij.codeInsight.hints.declarative.InlayHintsProvider$Companion
 - a:createCollector(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 - s:getINLAY_PAYLOADS():com.intellij.openapi.actionSystem.DataKey

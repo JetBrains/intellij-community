@@ -6594,6 +6594,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsMouseMoti
 - mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
 f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass
 - com.intellij.codeHighlighting.EditorBoundHighlightingPass
+- com.intellij.openapi.project.DumbAware
 - sf:Companion:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass$Companion
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor,java.util.List,Z,Z):V
 - b:<init>(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor,java.util.List,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -6604,6 +6605,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass$Comp
 f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 - com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 - com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
+- com.intellij.openapi.project.DumbAware
 - sf:Companion:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory$Companion
 - <init>():V
 - createHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass
@@ -6734,6 +6736,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry
 f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingIntention
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.codeInsight.intention.LowPriorityAction
+- com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String,java.lang.String,Z):V
 - getFamilyName():java.lang.String
 - getText():java.lang.String
@@ -6741,11 +6744,13 @@ f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglin
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - startInWriteAction():Z
 f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingIntentionMenuContributor
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - collectActions(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.codeInsight.daemon.impl.ShowIntentionsPass$IntentionsInfo,I,I):V
 f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingOptionIntention
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.codeInsight.intention.LowPriorityAction
+- com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingOptionIntention$Mode):V
 - getFamilyName():java.lang.String
 - getText():java.lang.String

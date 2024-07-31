@@ -12,6 +12,8 @@ import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -20,21 +22,28 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal
 
-class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
   @Suppress("CompanionObjectInExtension") // used in third party
   companion object {
     @RequiresReadLock
-    fun createPassForPreview(file: PsiFile,
-                             editor: Editor,
-                             provider: InlayHintsProvider,
-                             providerId: String,
-                             optionsToEnabled: Map<String, Boolean>,
-                             isDisabled: Boolean): DeclarativeInlayHintsPass {
+    fun createPassForPreview(
+      file: PsiFile,
+      editor: Editor,
+      provider: InlayHintsProvider,
+      providerId: String,
+      optionsToEnabled: Map<String, Boolean>,
+      isDisabled: Boolean,
+    ): DeclarativeInlayHintsPass {
       return DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(provider, providerId, optionsToEnabled)), isPreview = true, isProviderDisabled = isDisabled)
     }
 
     fun getSuitableToFileProviders(file: PsiFile): List<InlayProviderInfo> {
-      return InlayHintsProviderFactory.getProvidersForLanguage(file.language)
+      val infos = InlayHintsProviderFactory.getProvidersForLanguage(file.language)
+      if (!DumbService.isDumb(file.project)) {
+        return infos
+      }
+
+      return infos.filter { DumbService.isDumbAware(it.provider) }
     }
 
     private val PSI_MODIFICATION_STAMP: Key<Long> = Key<Long>("declarative.inlays.psi.modification.stamp")
