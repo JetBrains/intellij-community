@@ -371,6 +371,12 @@ public final class JavaResolveUtil {
     return results;
   }
 
+  /**
+   * Retrieves all transitive modules required by the given module, including the module itself.
+   *
+   * @param module the module for which transitive dependencies are being collected; must not be null
+   * @return a set of transitive modules required by the given module, including the module itself
+   */
   public static Set<PsiJavaModule> getAllTransitiveModulesIncludeCurrent(@NotNull PsiJavaModule module){
     return CachedValuesManager.getCachedValue(module, ()->{
       Project project = module.getProject();

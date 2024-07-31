@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
@@ -643,22 +644,25 @@ public final class JavaModuleGraphUtil {
   }
 
   public static class JavaModuleScope extends GlobalSearchScope {
-    @NotNull private final Set<PsiJavaModule> myModules;
+    @NotNull private final MultiMap<String, VirtualFile> myModules;
     private final boolean myIncludeLibraries;
     private final boolean myIsInTests;
 
     private JavaModuleScope(@NotNull Project project, @NotNull Set<PsiJavaModule> modules) {
       super(project);
-      myModules = modules;
+      myModules = new MultiMap<>();
+      for (PsiJavaModule module : modules) {
+        myModules.putValue(module.getName(), PsiImplUtil.getModuleVirtualFile(module));
+      }
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
-      myIncludeLibraries = ContainerUtil.or(myModules, m -> {
+      myIncludeLibraries = ContainerUtil.or(modules, m -> {
         PsiFile containingFile = m.getContainingFile();
         if (containingFile == null) return true;
         VirtualFile moduleFile = containingFile.getVirtualFile();
         if (moduleFile == null) return true;
         return fileIndex.isInLibrary(moduleFile);
       });
-      myIsInTests = !myIncludeLibraries && ContainerUtil.or(myModules, m -> {
+      myIsInTests = !myIncludeLibraries && ContainerUtil.or(modules, m -> {
         PsiFile containingFile = m.getContainingFile();
         if (containingFile == null) return true;
         VirtualFile moduleFile = containingFile.getVirtualFile();
@@ -669,7 +673,7 @@ public final class JavaModuleGraphUtil {
 
     @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return myModules.contains(findDescriptorByModule(aModule, myIsInTests));
+      return contains(findDescriptorByModule(aModule, myIsInTests));
     }
 
     @Override
@@ -683,9 +687,16 @@ public final class JavaModuleGraphUtil {
       if (project == null) return false;
       if (!isJvmLanguageFile(file)) return false;
       ProjectFileIndex index = ProjectFileIndex.getInstance(project);
-      if (index.isInLibrary(file)) return myIncludeLibraries && myModules.contains(findDescriptorInLibrary(project, index, file));
+      if (index.isInLibrary(file)) return myIncludeLibraries && contains(findDescriptorInLibrary(project, index, file));
       Module module = index.getModuleForFile(file);
-      return myModules.contains(findDescriptorByModule(module, myIsInTests));
+      return contains(findDescriptorByModule(module, myIsInTests));
+    }
+
+    private boolean contains(@Nullable PsiJavaModule module) {
+      if (module == null || !module.isValid()) return false;
+      Collection<VirtualFile> myFiles = myModules.get(module.getName());
+      VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
+      return myFiles.contains(file);
     }
 
     private static boolean isJvmLanguageFile(@NotNull VirtualFile file) {
@@ -711,9 +722,13 @@ public final class JavaModuleGraphUtil {
       return new JavaModuleScope(module.getProject(), Set.of(module));
     }
 
+    /**
+     * Creates a JavaModuleScope that includes the given module and all transitive modules.
+     *
+     * @param module the base PsiJavaModule for which to create the scope, must not be null
+     * @return a new JavaModuleScope including all transitive modules of the given module, or null if the moduleFile is null or no transitive modules are found
+     */
     public static @Nullable JavaModuleScope moduleWithTransitiveScope(@NotNull PsiJavaModule module) {
-      PsiFile moduleFile = module.getContainingFile();
-      if (moduleFile == null) return null;
       Set<PsiJavaModule> allModules = JavaResolveUtil.getAllTransitiveModulesIncludeCurrent(module);
       if (allModules.isEmpty()) return null;
       return new JavaModuleScope(module.getProject(), allModules);
