@@ -21,7 +21,8 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
   ) = SourceFileChangesCollectorImpl(
     coroutineScope, listener,
     InProjectFilter(session.project),
-    SearchScopeFilter(debuggerSession.searchScope),
+    // TODO add another scope check
+    //SearchScopeFilter(debuggerSession.searchScope),
   )
 
   override fun performHotSwap(context: DataContext, session: HotSwapSession<VirtualFile>) {
