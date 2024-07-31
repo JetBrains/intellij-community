@@ -41,6 +41,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.intellij.openapi.ui.playback.commands.ActionCommand.getInputEvent;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector.wrapDataContextWithActionStartData;
 import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.findTarget;
 
 /**
@@ -102,11 +103,12 @@ public class SearchEverywhereCommand extends AbstractCommand {
             component = (EditorComponentImpl)target;
           }
           DataContext dataContext = DataManager.getInstance().getDataContext(component);
+          DataContext wrappedDataContext = wrapDataContextWithActionStartData(dataContext);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
           TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere_dialog_shown", dialogSpan -> {
             var manager = SearchEverywhereManager.getInstance(project);
             manager.show(tabId.get(), "",
-                         new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(),
+                         new AnActionEvent(null, wrappedDataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(),
                                            0) {
                            @Override
                            public Project getProject() {

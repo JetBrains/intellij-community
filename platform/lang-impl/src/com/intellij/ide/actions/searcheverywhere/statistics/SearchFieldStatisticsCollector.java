@@ -1,9 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService;
+import com.intellij.internal.statistic.utils.StartMoment;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -15,6 +19,7 @@ public final class SearchFieldStatisticsCollector implements Disposable {
 
   private final Project myProject;
   private final JTextField myTextField;
+  private final StartMoment myStartMoment;
   private final SearchEverywhereMlService myMlService;
   private final SearchPerformanceTracker myPerformanceTracker;
 
@@ -22,18 +27,20 @@ public final class SearchFieldStatisticsCollector implements Disposable {
   private int myNavKeysTyped;
 
   private SearchFieldStatisticsCollector(JTextField field, SearchPerformanceTracker performanceTracker,
-                                         SearchEverywhereMlService mlService, Project project) {
+                                         SearchEverywhereMlService mlService, Project project, @Nullable StartMoment startMoment) {
     myProject = project;
     myPerformanceTracker = performanceTracker;
     myMlService = mlService;
     myTextField = field;
+    myStartMoment = startMoment;
   }
 
   public static SearchFieldStatisticsCollector createAndStart(JTextField field,
                                                               SearchPerformanceTracker performanceTracker,
                                                               SearchEverywhereMlService mlService,
-                                                              Project project) {
-    SearchFieldStatisticsCollector res = new SearchFieldStatisticsCollector(field, performanceTracker, mlService, project);
+                                                              Project project,
+                                                              @Nullable StartMoment startMoment) {
+    SearchFieldStatisticsCollector res = new SearchFieldStatisticsCollector(field, performanceTracker, mlService, project, startMoment);
     res.initListeners();
     return res;
   }
@@ -57,6 +64,9 @@ public final class SearchFieldStatisticsCollector implements Disposable {
       pairs.add(TYPED_NAVIGATION_KEYS.with(myNavKeysTyped));
       pairs.add(TYPED_SYMBOL_KEYS.with(mySymbolKeysTyped));
       pairs.add(DURATION_MS.with(info.getDuration()));
+      if (myStartMoment != null) {
+        pairs.add(DURATION_FROM_ACTION_START_MS.with(myStartMoment.getCurrentDuration().toMillis()));
+      }
 
       if (myMlService != null) {
         pairs.add(ML_EXPERIMENT_VERSION.with(myMlService.getExperimentVersion()));
@@ -81,5 +91,31 @@ public final class SearchFieldStatisticsCollector implements Disposable {
         }
       }
     });
+  }
+
+  private static final DataKey<StartMoment> START_MOMENT_KEY = DataKey.create("start_moment_of_search_everywhere");
+
+  public static StartMoment getStartMoment(AnActionEvent event) {
+    return event.getData(START_MOMENT_KEY);
+  }
+
+  @NotNull
+  public static AnActionEvent wrapEventWithActionStartData(@NotNull AnActionEvent event) {
+    StartMoment startMoment = StartMoment.Companion.now();
+    DataContext initialDataContext = event.getDataContext();
+    DataContext wrappedDataContext = wrapDataContextWithActionStartData(initialDataContext, startMoment);
+    if (wrappedDataContext == initialDataContext) return event;
+    return event.withDataContext(wrappedDataContext);
+  }
+
+  @NotNull
+  private static DataContext wrapDataContextWithActionStartData(@NotNull DataContext dataContext, @NotNull StartMoment startMoment) {
+    if (dataContext.getData(START_MOMENT_KEY) != null) return dataContext;
+    return CustomizedDataContext.withSnapshot(dataContext, sink -> sink.set(START_MOMENT_KEY, startMoment));
+  }
+
+  @NotNull
+  public static DataContext wrapDataContextWithActionStartData(@NotNull DataContext dataContext) {
+    return wrapDataContextWithActionStartData(dataContext, StartMoment.Companion.now());
   }
 }
