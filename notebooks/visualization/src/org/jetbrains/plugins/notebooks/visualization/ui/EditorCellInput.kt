@@ -2,8 +2,8 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
@@ -18,8 +18,6 @@ class EditorCellInput(
 
   val interval: NotebookCellLines.Interval
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
-
-  private var foldRegion: FoldRegion? = null
 
   private val shouldShowRunButton =
     editor.editorKind != EditorKind.DIFF &&
@@ -47,8 +45,8 @@ class EditorCellInput(
   private fun getFoldingBounds(): Pair<Int, Int> {
     //For disposed
     cell
-    if (cell.intervalPointer.get()==null) {
-      return Pair(0,0)
+    if (cell.intervalPointer.get() == null) {
+      return Pair(0, 0)
     }
 
     val delimiterPanelSize = if (interval.ordinal == 0) {
@@ -78,20 +76,26 @@ class EditorCellInput(
     val startOffset = editor.document.getLineStartOffset(interval.lines.first + 1)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
     val foldingModel = editor.foldingModel
-    val currentFoldingRegion = foldRegion
+    val currentFoldingRegion = foldingModel.getFoldRegion(startOffset, endOffset)
     if (currentFoldingRegion == null) {
       if (cell.type == NotebookCellLines.CellType.MARKDOWN) cell.view?.disableMarkdownRenderingIfEnabled()
       foldingModel.runBatchFoldingOperation {
         val text = editor.document.getText(TextRange(startOffset, endOffset))
         val firstNotEmptyString = text.lines().firstOrNull { it.trim().isNotEmpty() }
         val placeholder = StringUtil.shortenTextWithEllipsis(firstNotEmptyString ?: "\u2026", 20, 0)
-        foldRegion = foldingModel.createFoldRegion(startOffset, endOffset, placeholder, null, true)
+        foldingModel.createFoldRegion(startOffset, endOffset, placeholder, null, false)?.apply {
+          FoldingModelImpl.hideGutterRendererForCollapsedRegion(this)
+          isExpanded = false
+        }
       }
     }
     else {
       foldingModel.runBatchFoldingOperation {
-        foldingModel.removeFoldRegion(currentFoldingRegion)
-        foldRegion = null
+        if (currentFoldingRegion.isExpanded) {
+          currentFoldingRegion.isExpanded = false
+        } else {
+            foldingModel.removeFoldRegion(currentFoldingRegion)
+        }
       }
       if (cell.type == NotebookCellLines.CellType.MARKDOWN) cell.view?.enableMarkdownRenderingIfNeeded()
     }
