@@ -5,6 +5,7 @@ import com.intellij.CacheSwitcher;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.idea.IJIgnore;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -164,6 +165,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:true, after:false]", fileToDeleteListener.log.toString());
   }
 
+  @IJIgnore(issue = "IJPL-149673")
   @Test
   public void testSwitchingVfs() {
     final var file = tempDir.newFile("myfile.txt");
