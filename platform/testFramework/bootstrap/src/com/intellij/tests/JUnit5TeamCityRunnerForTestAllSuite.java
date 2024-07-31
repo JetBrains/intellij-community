@@ -174,6 +174,22 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     private static final int MAX_STACKTRACE_MESSAGE_LENGTH =
       Integer.getInteger("intellij.build.test.stacktrace.max.length", 100 * 1024);
 
+    /**
+     * If true, then all the standard output and standard error messages
+     * received between testStarted and testFinished messages will be considered test output.
+     * @see <a href="https://www.jetbrains.com/help/teamcity/service-messages.html#Nested+Test+Reporting">TeamCity test reporting</a>
+     */
+    private static final boolean CAPTURE_STANDARD_OUTPUT;
+
+    static {
+      if ("false".equalsIgnoreCase(System.getProperty("intellij.build.test.captureStandardOutput"))) {
+        CAPTURE_STANDARD_OUTPUT = false;
+      }
+      else {
+        CAPTURE_STANDARD_OUTPUT = true;
+      }
+    }
+
     public TCExecutionListener() {
       myPrintStream = System.out;
       myPrintStream.println("##teamcity[enteredTheMatrix]");
@@ -288,7 +304,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     private void testStarted(TestIdentifier testIdentifier) {
-      myPrintStream.println("##teamcity[testStarted" + idAndName(testIdentifier) + " captureStandardOutput='true']");
+      myPrintStream.println("##teamcity[testStarted" + idAndName(testIdentifier) + " captureStandardOutput='" + CAPTURE_STANDARD_OUTPUT + "']");
     }
 
     private void testFinished(TestIdentifier testIdentifier, long duration) {
