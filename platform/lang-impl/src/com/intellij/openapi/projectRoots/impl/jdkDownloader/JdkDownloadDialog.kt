@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.system.CpuArch
@@ -243,6 +244,8 @@ internal class JdkDownloadDialog(
       }
     }
 
+    var archiveSizeCell: Cell<*>? = null
+
     row(ProjectBundle.message("dialog.row.jdk.version")) {
       versionComboBox = comboBox(listOf<JdkVersionItem>().toMutableList(), textListCellRenderer { it!!.jdkVersion })
         .align(AlignX.FILL)
@@ -260,15 +263,15 @@ internal class JdkDownloadDialog(
           }
         }
         .apply {
-          val cell = comment("")
           vendorComboBox.onSelectionChange {
-            cell.comment?.text = ProjectBundle.message("dialog.jdk.archive.size", it.item.archiveSizeInMB)
+            archiveSizeCell?.comment?.text = ProjectBundle.message("dialog.jdk.archive.size", it.item.archiveSizeInMB)
           }
         }
     }
     row(ProjectBundle.message("dialog.row.jdk.location")) {
       cell(setupContainer())
         .align(AlignX.FILL)
+        .apply { archiveSizeCell = comment("") }
     }
   }
 
