@@ -16,10 +16,7 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ide.CopyProvider;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +28,6 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +38,7 @@ import java.util.List;
 import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
 import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
 
-class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
+class DetailsPanel extends HtmlPanel implements UiDataProvider, CopyProvider {
   @NotNull private final Project myProject;
   @NotNull private final StatusText myStatusText;
   @Nullable private List<? extends TreeNodeOnVcsRevision> mySelection;
@@ -124,12 +120,8 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     return true;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
   }
 }

@@ -2302,7 +2302,7 @@ com.intellij.vcs.commit.CommitWorkflowHandler
 - f:isSkipCommitChecks():Z
 com.intellij.vcs.commit.CommitWorkflowUi
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - a:activate():Z
 - a:addDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - a:addExecutorListener(com.intellij.vcs.commit.CommitExecutorListener,com.intellij.openapi.Disposable):V

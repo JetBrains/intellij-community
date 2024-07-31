@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
@@ -77,10 +78,10 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
 
   private fun createCommitEditor(): CommitMessage {
     val editor = object : CommitMessage(commitEditingData.project, false, false, true) {
-      override fun getData(dataId: String): Any? {
-        if (VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION.`is`(dataId)) return commitEditingData.selection
-        if (VcsLogInternalDataKeys.LOG_DATA.`is`(dataId)) return commitEditingData.logData
-        return super.getData(dataId)
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        sink[VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION] = commitEditingData.selection
+        sink[VcsLogInternalDataKeys.LOG_DATA] = commitEditingData.logData
       }
     }
     editor.text = originMessage

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -102,15 +103,16 @@ abstract class NonModalCommitPanel(
   override fun getComponent(): JComponent = this
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
-  override fun getData(dataId: String): Any? {
-    return getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    DataSink.uiDataSnapshot(sink, commitMessage)
+    uiDataSnapshotFromProviders(sink)
   }
 
-  fun getDataFromProviders(dataId: String): Any? {
-    for (dataProvider in dataProviders) {
-      return dataProvider.getData(dataId) ?: continue
+  @Deprecated("Use UiDataRule instead")
+  fun uiDataSnapshotFromProviders(sink: DataSink) {
+    dataProviders.forEach {
+      DataSink.uiDataSnapshot(sink, it)
     }
-    return null
   }
 
   override fun addDataProvider(provider: DataProvider) {

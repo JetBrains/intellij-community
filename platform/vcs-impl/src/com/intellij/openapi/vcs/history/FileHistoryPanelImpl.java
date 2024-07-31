@@ -75,7 +75,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.reverseOrder;
 
-public final class FileHistoryPanelImpl extends JPanel implements DataProvider, Disposable, EditorColorsListener, CopyProvider {
+public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider, Disposable, EditorColorsListener, CopyProvider {
   public static final DataKey<VcsFileRevision> PREVIOUS_REVISION_FOR_DIFF = DataKey.create("PREVIOUS_VCS_FILE_REVISION_FOR_DIFF");
 
   private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
@@ -418,9 +418,9 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      VcsFileRevision[] selectedRevisions = getSelectedRevisions();
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    VcsFileRevision[] selectedRevisions = getSelectedRevisions();
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       if (selectedRevisions.length != 1) return null;
       VcsFileRevision firstSelectedRevision = ArrayUtil.getFirstElement(selectedRevisions);
       if (!myHistorySession.isContentAvailable(firstSelectedRevision)) {
@@ -433,66 +433,33 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
       else {
         return null;
       }
-    }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myVcs.getProject();
-    }
-    else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-      return ArrayUtil.getFirstElement(getSelectedRevisions());
-    }
-    else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId)) {
-      return !myHistorySession.hasLocalSource();
-    }
-    else if (VcsDataKeys.VCS.is(dataId)) {
-      return myVcs.getKeyInstanceMethod();
-    }
-    else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
-      return getSelectedRevisions();
-    }
-    else if (VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.is(dataId)) {
-      return (Consumer<String>)s -> myDualView.rebuild();
-    }
-    else if (VcsDataKeys.CHANGES.is(dataId)) {
-      return getChanges();
-    }
-    else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
-      VcsFileRevision[] selectedRevisions = getSelectedRevisions();
-      if (selectedRevisions.length == 0) return null;
-      return createVirtualFileForRevision(ArrayUtil.getFirstElement(selectedRevisions));
-    }
-    else if (VcsDataKeys.FILE_PATH.is(dataId)) {
-      return myFilePath;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+    });
+    sink.set(CommonDataKeys.PROJECT, myVcs.getProject());
+    sink.set(VcsDataKeys.VCS_FILE_REVISION, ArrayUtil.getFirstElement(getSelectedRevisions()));
+    sink.set(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION, !myHistorySession.hasLocalSource());
+    sink.set(VcsDataKeys.VCS, myVcs.getKeyInstanceMethod());
+    sink.set(VcsDataKeys.VCS_FILE_REVISIONS, getSelectedRevisions());
+    sink.set(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER, s -> myDualView.rebuild());
+    sink.set(VcsDataKeys.CHANGES, getChanges());
+    sink.set(VcsDataKeys.VCS_VIRTUAL_FILE, selectedRevisions.length == 0 ? null :
+                                           createVirtualFileForRevision(ArrayUtil.getFirstElement(selectedRevisions)));
+    sink.set(VcsDataKeys.FILE_PATH, myFilePath);
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
       VirtualFile virtualFile = myFilePath.getVirtualFile();
       return virtualFile == null || !virtualFile.isValid() ? null : virtualFile;
-    }
-    else if (VcsDataKeys.HISTORY_SESSION.is(dataId)) {
-      return myHistorySession;
-    }
-    else if (VcsDataKeys.HISTORY_PROVIDER.is(dataId)) {
-      return myProvider;
-    }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
-    }
-    else if (PREVIOUS_REVISION_FOR_DIFF.is(dataId)) {
-      TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
-      if (flatView.getSelectedRow() == (flatView.getRowCount() - 1)) {
-        // no previous
-        return myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL;
-      }
-      else {
-        return flatView.getRow(flatView.getSelectedRow() + 1).getRevision();
-      }
-    }
-    else if (VcsInternalDataKeys.FILE_HISTORY_REFRESHER.is(dataId)) {
-      return myRefresherI;
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return myHelpId;
-    }
-    return null;
+    });
+    sink.set(VcsDataKeys.HISTORY_SESSION, myHistorySession);
+    sink.set(VcsDataKeys.HISTORY_PROVIDER, myProvider);
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
+    //noinspection unchecked
+    TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
+    sink.set(PREVIOUS_REVISION_FOR_DIFF,
+             flatView.getSelectedRow() == (flatView.getRowCount() - 1) ?
+             // no previous
+             (myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL) :
+             flatView.getRow(flatView.getSelectedRow() + 1).getRevision());
+    sink.set(VcsInternalDataKeys.FILE_HISTORY_REFRESHER, myRefresherI);
+    sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId);
   }
 
   private Change @Nullable [] getChanges() {

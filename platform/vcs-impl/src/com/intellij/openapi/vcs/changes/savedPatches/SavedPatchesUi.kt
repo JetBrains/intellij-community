@@ -30,7 +30,7 @@ open class SavedPatchesUi(project: Project,
                           private val isShowDiffWithLocal: () -> Boolean,
                           focusMainUi: (Component?) -> Unit,
                           disposable: Disposable) :
-  JPanel(BorderLayout()), Disposable, DataProvider {
+  JPanel(BorderLayout()), Disposable, UiDataProvider {
 
   protected val patchesTree: SavedPatchesTree
   internal val changesBrowser: SavedPatchesChangesBrowser
@@ -171,12 +171,11 @@ open class SavedPatchesUi(project: Project,
     splitDiffProcessor = null
   }
 
-  override fun getData(dataId: String): Any? {
-    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
-    if (SAVED_PATCH_SELECTED_PATCH.`is`(dataId)) return selectedPatchObjectOrNull()
-    if (SAVED_PATCHES_UI.`is`(dataId)) return this
-    if (SAVED_PATCH_CHANGES.`is`(dataId)) return changesBrowser.getData(dataId)
-    return null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW] = editorTabPreview
+    sink[SAVED_PATCH_SELECTED_PATCH] = selectedPatchObjectOrNull()
+    sink[SAVED_PATCHES_UI] = this
+    sink[SAVED_PATCH_CHANGES] = changesBrowser.getSavedPatchChanges()
   }
 
   private fun selectedPatchObjectOrNull() = patchesTree.selectedPatchObjects().firstOrNull()

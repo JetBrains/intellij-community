@@ -2,7 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.blockingContext
@@ -76,14 +76,11 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private val commitHandlers get() = workflow.commitHandlers
   protected val commitOptions get() = workflow.commitOptions
 
-  protected open fun createDataProvider() = DataProvider { dataId ->
-    when {
-      VcsDataKeys.COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
-      VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId) -> this.ui
-      VcsDataKeys.COMMIT_MESSAGE_CONTROL.`is`(dataId) -> this.ui.commitMessageUi
-      Refreshable.PANEL_KEY.`is`(dataId) -> commitPanel
-      else -> null
-    }
+  protected open fun uiDataSnapshot(sink: DataSink) {
+    sink[VcsDataKeys.COMMIT_WORKFLOW_HANDLER] = this
+    sink[VcsDataKeys.COMMIT_WORKFLOW_UI] = this.ui
+    sink[VcsDataKeys.COMMIT_MESSAGE_CONTROL] = this.ui.commitMessageUi as? CommitMessageI
+    sink[Refreshable.PANEL_KEY] = commitPanel
   }
 
   protected fun initCommitHandlers() {

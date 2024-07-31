@@ -2,10 +2,9 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.VcsInternalDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -85,9 +84,8 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
       sameHistories(((FileHistoryContentPanel)comp).getPath(), ((FileHistoryContentPanel)comp).getRevision(), path,
                     startingRevisionNumber));
     if (component == null) return null;
-    DataProvider dataProvider = DataManagerImpl.getDataProviderEx(component);
-    if (dataProvider == null) return null;
-    return VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData(dataProvider);
+    DataContext dataContext = DataManager.getInstance().getDataContext(component);
+    return VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData(dataContext);
   }
 
   @RequiresBackgroundThread
@@ -197,7 +195,6 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
         myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, session, myVcsHistoryProvider,
                                                       myRefresher, false);
         add(myFileHistoryPanel, BorderLayout.CENTER);
-        DataManager.registerDataProvider(this, myFileHistoryPanel);
         Disposer.register(FileHistorySessionPartner.this, myFileHistoryPanel);
       }
       else if (!session.getRevisionList().isEmpty()) {

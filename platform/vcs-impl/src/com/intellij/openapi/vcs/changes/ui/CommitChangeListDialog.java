@@ -7,10 +7,7 @@ import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -626,14 +623,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return getPreferredFocusedComponent();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    return StreamEx.of(myDataProviders)
-      .map(provider -> provider.getData(dataId))
-      .nonNull()
-      .findFirst()
-      .orElseGet(() -> getBrowser().getData(dataId));
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, getBrowser());
+    for (DataProvider provider : myDataProviders) {
+      DataSink.uiDataSnapshot(sink, provider);
+    }
   }
 
   @NotNull

@@ -55,7 +55,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 
-public final class PushLog extends JPanel implements Disposable, DataProvider {
+public final class PushLog extends JPanel implements Disposable, UiDataProvider {
   @NonNls private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   @NonNls private static final String START_EDITING = "startEditing";
   @NonNls private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
@@ -442,26 +442,19 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
     myChangesBrowser.getViewer().setEmptyText(DvcsBundle.message("push.no.commits.selected"));
   }
 
-  // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
-  @Nullable
   @Override
-  public Object getData(@NotNull String id) {
-    if (VcsDataKeys.CHANGES.is(id)) {
-      List<CommitNode> commitNodes = getSelectedCommitNodes();
-      return collectAllChanges(commitNodes).toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(id)) {
-      List<CommitNode> commitNodes = getSelectedCommitNodes();
-      return ContainerUtil.map2Array(commitNodes, VcsRevisionNumber.class, commitNode -> {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    // Make changes available for diff action; revisionNumber for create patch and copy revision number actions
+    List<CommitNode> commitNodes = getSelectedCommitNodes();
+    sink.set(VcsDataKeys.CHANGES,
+             collectAllChanges(commitNodes).toArray(Change.EMPTY_CHANGE_ARRAY));
+    sink.set(VcsDataKeys.VCS_REVISION_NUMBERS, ContainerUtil.map2Array(
+      commitNodes, VcsRevisionNumber.class, commitNode -> {
         Hash hash = commitNode.getUserObject().getId();
         return new TextRevisionNumber(hash.asString(), hash.toShortString());
-      });
-    }
-    else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.is(id)) {
-      List<CommitNode> commitNodes = getSelectedCommitNodes();
-      return ContainerUtil.map2Array(commitNodes, String.class, commitNode -> commitNode.getUserObject().getSubject());
-    }
-    return null;
+      }));
+    sink.set(VcsDataKeys.VCS_COMMIT_SUBJECTS, ContainerUtil.map2Array(
+      commitNodes, String.class, commitNode -> commitNode.getUserObject().getSubject()));
   }
 
   @NotNull

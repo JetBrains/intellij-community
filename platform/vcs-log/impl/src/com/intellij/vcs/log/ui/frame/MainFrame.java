@@ -67,9 +67,9 @@ import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.containers.ContainerUtil.getOnlyItem;
 
-public class MainFrame extends JPanel implements DataProvider, Disposable {
+public class MainFrame extends JPanel implements UiDataProvider, Disposable {
   private static final @NonNls String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
   private static final @NonNls String DETAILS_SPLITTER_PROPORTION = "vcs.log.details.splitter.proportion";
   private static final @NonNls String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
@@ -246,51 +246,43 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
-      return myChangesBrowser.getDirectChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    Collection<VirtualFile> roots = getSelectedRoots();
+    Change[] changes = myChangesBrowser.getDirectChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
+    sink.set(VcsDataKeys.CHANGES, changes);
+    sink.set(VcsDataKeys.SELECTED_CHANGES, changes);
+    sink.set(VcsLogInternalDataKeys.LOG_UI_PROPERTIES, myUiProperties);
+    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, toVirtualFileArray(roots));
+    VirtualFile onlyRoot = getOnlyItem(roots);
+    if (onlyRoot != null) {
+      sink.set(VcsLogInternalDataKeys.LOG_DIFF_HANDLER,
+               myLogData.getLogProvider(onlyRoot).getDiffHandler());
     }
-    else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
-      return myUiProperties;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      Collection<VirtualFile> roots = getSelectedRoots();
-      return toVirtualFileArray(roots);
-    }
-    else if (VcsLogInternalDataKeys.LOG_DIFF_HANDLER.is(dataId)) {
-      Collection<VirtualFile> roots = getSelectedRoots();
-      if (roots.size() != 1) return null;
-      return myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getDiffHandler();
-    }
-    else if (VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS.is(dataId)) {
-      return VcsLogUtil.getAllVisibleRoots(myLogData.getRoots(), myFilterUi.getFilters());
-    }
-    else if (QuickActionProvider.KEY.is(dataId)) {
-      return new QuickActionProvider() {
-        @Override
-        public @NotNull List<AnAction> getActions(boolean originalProvider) {
-          AnAction textFilterAction = ActionUtil.wrap(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER);
-          textFilterAction.getTemplatePresentation().setText(VcsLogBundle.message("vcs.log.text.filter.action.text"));
-          List<AnAction> actions = new ArrayList<>();
-          actions.add(textFilterAction);
-          actions.addAll(SimpleToolWindowPanel.collectActions(myToolbar));
-          return actions;
-        }
+    sink.set(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS,
+             VcsLogUtil.getAllVisibleRoots(myLogData.getRoots(), myFilterUi.getFilters()));
+    sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
+    sink.set(History.KEY, myHistory);
+    sink.set(QuickActionProvider.KEY, new QuickActionProvider() {
+      @Override
+      public @NotNull List<AnAction> getActions(boolean originalProvider) {
+        AnAction textFilterAction = ActionUtil.wrap(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER);
+        textFilterAction.getTemplatePresentation().setText(VcsLogBundle.message("vcs.log.text.filter.action.text"));
+        List<AnAction> actions = new ArrayList<>();
+        actions.add(textFilterAction);
+        actions.addAll(SimpleToolWindowPanel.collectActions(myToolbar));
+        return actions;
+      }
 
-        @Override
-        public JComponent getComponent() {
-          return MainFrame.this;
-        }
+      @Override
+      public JComponent getComponent() {
+        return MainFrame.this;
+      }
 
-        @Override
-        public @NlsActions.ActionText @Nullable String getName() {
-          return null;
-        }
-      };
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return HELP_ID;
-    else if (History.KEY.is(dataId)) return myHistory;
-    return null;
+      @Override
+      public @NlsActions.ActionText @Nullable String getName() {
+        return null;
+      }
+    });
   }
 
   private @NotNull Collection<VirtualFile> getSelectedRoots() {

@@ -205,7 +205,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   }
 
   private inner class TextFilterField(private val textFilterModel: TextFilterModel, parentDisposable: Disposable) :
-    SearchTextField(VCS_LOG_TEXT_FILTER_HISTORY), DataProvider {
+    SearchTextField(VCS_LOG_TEXT_FILTER_HISTORY), UiDataProvider {
 
     init {
       text = textFilterModel.text
@@ -251,11 +251,8 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
       return thisText == otherText
     }
 
-    override fun getData(dataId: String): Any? {
-      if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId)) {
-        return uiProperties
-      }
-      return null
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = uiProperties
     }
   }
 

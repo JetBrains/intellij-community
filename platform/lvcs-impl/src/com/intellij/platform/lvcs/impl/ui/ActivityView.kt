@@ -55,7 +55,7 @@ import javax.swing.text.JTextComponent
 @ApiStatus.Internal
 class ActivityView(private val project: Project, gateway: IdeaGateway, val activityScope: ActivityScope,
                    private val isFrameDiffPreview: Boolean = false) :
-  JBPanel<ActivityView>(BorderLayout()), DataProvider, Disposable {
+  JBPanel<ActivityView>(BorderLayout()), UiDataProvider, Disposable {
 
   private val coroutineScope = project.service<ActivityService>().coroutineScope.childScope("ActivityView")
   private val settings = service<ActivityViewApplicationSettings>()
@@ -168,12 +168,11 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
   }
 
-  override fun getData(dataId: String): Any? {
-    if (ActivityViewDataKeys.SELECTION.`is`(dataId)) return activityList.selection
-    if (ActivityViewDataKeys.SCOPE.`is`(dataId)) return activityScope
-    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorDiffPreview
-    if (ActivityViewDataKeys.DIRECTORY_DIFF_MODE.`is`(dataId)) return model.diffMode
-    return null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[ActivityViewDataKeys.SELECTION] = activityList.selection
+    sink[ActivityViewDataKeys.SCOPE] = activityScope
+    sink[EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW] = editorDiffPreview
+    sink[ActivityViewDataKeys.DIRECTORY_DIFF_MODE] = model.diffMode
   }
 
   val preferredFocusedComponent: JComponent get() = activityList
