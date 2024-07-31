@@ -6,9 +6,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 data class ConfigurableHit(
-  @JvmField val nameHits: Set<Configurable>,
-  @JvmField val nameFullHits: Set<Configurable>,
-  @JvmField val contentHits: Set<Configurable>,
+  @JvmField val nameHits: Collection<Configurable>,
+  @JvmField val nameFullHits: Collection<Configurable>,
+  @JvmField val contentHits: List<Configurable>,
   @JvmField val spotlightFilter: String,
 ) {
   val all: Set<Configurable>

@@ -1586,10 +1586,10 @@ a:com.intellij.codeInspection.ex.InspectionToolWrapper
 - a:createCopy():com.intellij.codeInspection.ex.InspectionToolWrapper
 - getDefaultEditorAttributes():java.lang.String
 - getDefaultLevel():com.intellij.codeHighlighting.HighlightDisplayLevel
-- getDescriptionContextClass():java.lang.Class
+- f:getDescriptionContextClass():java.lang.Class
 - getDisplayKey():com.intellij.codeInsight.daemon.HighlightDisplayKey
 - getDisplayName():java.lang.String
-- getExtension():com.intellij.codeInspection.InspectionEP
+- f:getExtension():com.intellij.codeInspection.InspectionEP
 - f:getFolderName():java.lang.String
 - getGroupDisplayName():java.lang.String
 - getGroupPath():java.lang.String[]

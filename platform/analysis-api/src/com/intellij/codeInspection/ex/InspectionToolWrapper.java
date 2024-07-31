@@ -10,8 +10,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -174,15 +172,21 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   public @Nls String loadDescription() {
-    final String description = getStaticDescription();
-    if (description != null) return description;
+    String description = getStaticDescription();
+    if (description != null) {
+      return description;
+    }
+
     try {
       InputStream descriptionStream = getDescriptionStream();
-      //noinspection HardCodedStringLiteral(IDEA-249976)
-      return descriptionStream != null ? insertAddendum(ResourceUtil.loadText(descriptionStream),
-                                         getTool().getDescriptionAddendum()) : null;
+      if (descriptionStream != null) {
+        //noinspection HardCodedStringLiteral(IDEA-249976)
+        return insertAddendum(ResourceUtil.loadText(descriptionStream), getTool().getDescriptionAddendum());
+      }
+      return null;
     }
-    catch (IOException ignored) { }
+    catch (IOException ignored) {
+    }
 
     return getTool().loadDescription();
   }
@@ -200,11 +204,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   private @Nullable InputStream getDescriptionStream() {
-    Application app = ApplicationManager.getApplication();
     String path = INSPECTION_DESCRIPTIONS_FOLDER + "/" + getDescriptionFileName();
     ClassLoader classLoader;
-    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      classLoader = getDescriptionContextClass().getClassLoader();
+    if (myEP == null) {
+      classLoader = getTool().getClass().getClassLoader();
     }
     else {
       classLoader = myEP.getPluginDescriptor().getPluginClassLoader();
@@ -220,7 +223,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return getShortName();
   }
 
-  public @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  public final @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getTool().getClass();
   }
 
@@ -228,7 +231,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return getTool().getMainToolId();
   }
 
-  public E getExtension() {
+  public final E getExtension() {
     return myEP;
   }
 

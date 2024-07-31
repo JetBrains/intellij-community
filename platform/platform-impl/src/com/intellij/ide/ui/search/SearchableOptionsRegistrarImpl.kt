@@ -63,9 +63,8 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
       stopWords = emptySet()
     }
     else {
-      startLoading()
-
       stopWords = loadStopWords()
+      startLoading()
 
       app.getMessageBus().simpleConnect().subscribe<DynamicPluginListener>(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
         override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
@@ -152,11 +151,11 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
         try {
           extension.instance?.contribute(processor)
         }
-        catch (e: Throwable) {
-          LOG.error(PluginException(e, extension.pluginDescriptor.pluginId))
-        }
         catch (e: CancellationException) {
           throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(PluginException(e, extension.pluginDescriptor.pluginId))
         }
       }
 
@@ -198,11 +197,18 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
 
     val identifierTable = identifierTable!!
     val groupName = if (_groupName == Short.MAX_VALUE.toInt()) null else identifierTable.fromId(_groupName)
-    val configurableId = identifierTable.fromId(_id).toString()
-    val hit = if (_hit == Short.MAX_VALUE.toInt()) null else identifierTable.fromId(_hit).toString()
-    val path = if (_path == Short.MAX_VALUE.toInt()) null else identifierTable.fromId(_path).toString()
+    val configurableId = identifierTable.fromId(_id)
+    val hit = if (_hit == Short.MAX_VALUE.toInt()) null else identifierTable.fromId(_hit)
+    val path = if (_path == Short.MAX_VALUE.toInt()) null else identifierTable.fromId(_path)
 
     return OptionDescription(_option = null, configurableId = configurableId, hit = hit, path = path, groupName = groupName)
+  }
+
+  @Suppress("LocalVariableName")
+  private fun unpackConfigurableId(data: Long): String {
+    val _id = (data shr 32 and 0xffffL).toInt()
+    assert(_id < Short.Companion.MAX_VALUE)
+    return identifierTable!!.fromId(_id)
   }
 
   override fun getConfigurables(
@@ -276,7 +282,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
       return ConfigurableHit(
         nameHits = nameHits,
         nameFullHits = nameFullHits,
-        contentHits = emptySet(),
+        contentHits = emptyList(),
         spotlightFilter = option,
       )
     }
@@ -296,28 +302,39 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
       return ConfigurableHit(
         nameHits = nameHits,
         nameFullHits = nameFullHits,
-        contentHits = LinkedHashSet(contentHits),
+        contentHits = contentHits,
         spotlightFilter = option,
       )
     }
   }
 
   private fun findConfigurablesByDescriptions(descriptionOptions: Set<String>): MutableSet<String>? {
-    var helpIds: MutableSet<String>? = null
+    var result: MutableSet<String>? = null
     for (prefix in descriptionOptions) {
-      val ids = (findAcceptableDescriptions(prefix) ?: return null).mapTo(HashSet()) { it.configurableId!! }
-      if (helpIds == null) {
-        helpIds = ids
+      val ids = HashSet<String>()
+      for (longs in findAcceptablePackedDescriptions(prefix) ?: return null) {
+        for (l in longs) {
+          ids.add(unpackConfigurableId(l))
+        }
       }
-      helpIds.retainAll(ids)
+      if (result == null) {
+        result = ids
+      }
+      else {
+        result.retainAll(ids)
+      }
     }
-    return helpIds
+    return result
   }
 
   fun findAcceptableDescriptions(prefix: String): Sequence<OptionDescription>? {
+    return findAcceptablePackedDescriptions(prefix)?.flatMap { data -> data.asSequence().map { unpack(it)} }
+  }
+
+  private fun findAcceptablePackedDescriptions(prefix: String): Sequence<LongArray>? {
     val storage = storage?.takeIf { it.isCompleted }?.getCompleted()
     if (storage == null) {
-      LOG.warn("Not yet initialized")
+      LOG.error("Not yet initialized")
       return null
     }
 
@@ -336,9 +353,7 @@ class SearchableOptionsRegistrarImpl(private val coroutineScope: CoroutineScope)
           }
         }
 
-        for (description in entry.value) {
-          yield(unpack(description))
-        }
+        yield(entry.value)
       }
     }
   }
@@ -496,7 +511,7 @@ private fun findGroupsByPath(groups: List<ConfigurableGroup>, path: String): Con
     lastMatchedIndex = i
 
     if (matched is Configurable.Composite) {
-      current = (matched as Configurable.Composite).getConfigurables().asList()
+      current = matched.getConfigurables().asList()
     }
     else {
       break
@@ -513,7 +528,7 @@ private fun findGroupsByPath(groups: List<ConfigurableGroup>, path: String): Con
     ""
   }
 
-  val hits = setOf(lastMatched)
+  val hits = listOf(lastMatched)
   return ConfigurableHit(nameHits = hits, nameFullHits = hits, contentHits = hits, spotlightFilter = spotlightFilter)
 }
 

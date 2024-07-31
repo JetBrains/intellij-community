@@ -90,9 +90,9 @@ object LocalizationUtil {
 
   @Internal
   fun getResourceAsStream(classLoader: ClassLoader?, path: String, specialLocale: Locale? = null): InputStream? {
-    if (classLoader != null) {
+    val locale = specialLocale ?: getLocaleOrNullForDefault()
+    if (classLoader != null && locale != null) {
       try {
-        val locale = specialLocale ?: getLocaleOrNullForDefault()
         for (localizedPath in getLocalizedPaths(path, locale)) {
           classLoader.getResourceAsStream(localizedPath)?.let { return it }
         }
@@ -101,7 +101,8 @@ object LocalizationUtil {
         thisLogger().error("Cannot find localized resource: $path", e)
       }
     }
-    return getPluginClassLoader()?.getResourceAsStream(path) ?: classLoader?.getResourceAsStream(path)
+    return locale?.let { getPluginClassLoader(defaultLoader = null, locale = it)?.getResourceAsStream(path) }
+           ?: classLoader?.getResourceAsStream(path)
   }
 
   @Internal

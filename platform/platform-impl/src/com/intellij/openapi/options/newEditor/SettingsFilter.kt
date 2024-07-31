@@ -244,7 +244,7 @@ private fun getUnnamedConfigurable(candidate: Configurable): UnnamedConfigurable
   return if (candidate is ConfigurableWrapper) candidate.getConfigurable() else candidate
 }
 
-private fun findConfigurable(configurables: Set<Configurable>, hits: Set<Configurable>?): Configurable? {
+private fun findConfigurable(configurables: Collection<Configurable>, hits: Collection<Configurable>?): Configurable? {
   var candidate: Configurable? = null
   for (configurable in configurables) {
     if (hits != null && hits.contains(configurable)) {

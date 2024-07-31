@@ -103,7 +103,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     @NotNull Disposable parent,
     @NotNull Function1<? super SpotlightPainter, Unit> updater
   ) {
-    return new SpotlightPainter(target, parent, updater);
+    return new SpotlightPainter(target, updater);
   }
 
   private void init(@Nullable Configurable configurable, @Nullable Project project) {

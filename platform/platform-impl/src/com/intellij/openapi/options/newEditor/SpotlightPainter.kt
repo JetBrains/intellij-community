@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.options.newEditor
 
 import com.intellij.ide.ui.search.ComponentHighlightingListener
 import com.intellij.ide.ui.search.SearchUtil.lightOptions
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
@@ -13,8 +14,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.showingScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics2D
@@ -26,27 +31,47 @@ import javax.swing.SwingUtilities
 
 private val DO_NOT_SCROLL = Key.create<Boolean?>("SpotlightPainter.DO_NOT_SCROLL")
 
+@OptIn(FlowPreview::class)
 @ApiStatus.Internal
-open class SpotlightPainter constructor(
+open class SpotlightPainter(
   private val target: JComponent,
-  parent: Disposable,
   private val updater: (SpotlightPainter) -> Unit,
-) : AbstractPainter(), ComponentHighlightingListener {
+) : AbstractPainter() {
   private val configurableOption = HashMap<String?, String?>()
-  private val queue = MergingUpdateQueue(
-    name = "SettingsSpotlight",
-    mergingTimeSpan = 200,
-    isActive = false,
-    modalityStateComponent = target,
-    parent = parent,
-    activationComponent = target,
-  )
   private val glassPanel = GlassPanel(target)
   private var isVisible: Boolean = false
 
+  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   init {
-    IdeGlassPaneUtil.installPainter(target, this, parent)
-    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(ComponentHighlightingListener.TOPIC, this)
+    val activatable = IdeGlassPaneUtil.createPainterActivatable(target, this)
+    target.showingScope("SpotlightPainter") {
+      activatable.showNotify()
+      try {
+        ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighlightingListener.TOPIC, object : ComponentHighlightingListener {
+          override fun highlight(component: JComponent, searchString: String) {
+            // If several spotlight painters exist, they will receive each other updates,
+            // because they share one message bus (ComponentHighlightingListener.TOPIC).
+            // The painter should only draw spotlights for components in the hierarchy of `myTarget`
+            if (UIUtil.isAncestor(target, component)) {
+              glassPanel.addSpotlight(component)
+              if (target.getClientProperty(DO_NOT_SCROLL) != true && center(component)) {
+                target.putClientProperty(DO_NOT_SCROLL, true)
+              }
+            }
+          }
+        })
+
+        updateRequests
+          .debounce(200)
+          .collectLatest {
+            updateNow()
+          }
+      }
+      finally {
+        activatable.hideNotify()
+      }
+    }
   }
 
   companion object {
@@ -64,11 +89,7 @@ open class SpotlightPainter constructor(
   override fun needsRepaint(): Boolean = true
 
   fun updateLater() {
-    queue.queue(object : Update(this) {
-      override fun run() {
-        updateNow()
-      }
-    })
+    updateRequests.tryEmit(Unit)
   }
 
   fun updateNow() {
@@ -104,25 +125,7 @@ open class SpotlightPainter constructor(
 
     fireNeedsRepaint(glassPanel)
   }
-
-  override fun highlight(component: JComponent, searchString: String) {
-    // If several spotlight painters exist, they will receive each other updates,
-    // because they share one message bus (ComponentHighlightingListener.TOPIC).
-    // The painter should only draw spotlights for components in the hierarchy of `myTarget`
-    if (UIUtil.isAncestor(target, component)) {
-      glassPanel.addSpotlight(component)
-      if (isScrollingEnabled(target) && center(component)) {
-        disableScrolling(target)
-      }
-    }
-  }
 }
-
-private fun disableScrolling(target: JComponent) {
-  target.putClientProperty(DO_NOT_SCROLL, true)
-}
-
-private fun isScrollingEnabled(target: JComponent): Boolean = !ClientProperty.isTrue(target, DO_NOT_SCROLL)
 
 private fun center(component: JComponent): Boolean {
   var scrollPane: JScrollPane? = null
