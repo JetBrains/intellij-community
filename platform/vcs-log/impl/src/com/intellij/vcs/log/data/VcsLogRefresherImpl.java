@@ -152,8 +152,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       for (Map.Entry<VirtualFile, VcsLogProvider> entry : getProvidersForRoots(requirements.keySet()).entrySet()) {
         VirtualFile root = entry.getKey();
         VcsLogProvider provider = entry.getValue();
-        runWithSpanThrows(myTracer, LogData.ReadingRecentCommitsInRoot.getName(), spanForRoot -> {
-          spanForRoot.setAttribute("rootName", root.getName());
+        runWithSpanThrows(myTracer.spanBuilder(LogData.ReadingRecentCommitsInRoot.getName()).setAttribute("rootName", root.getName()), ignored -> {
           VcsLogProvider.DetailedLogData data = provider.readFirstBlock(root, requirements.get(root));
           logInfo.put(root, compactCommits(data.getCommits(), root));
           logInfo.put(root, data.getRefs());
@@ -438,8 +437,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myProviders.entrySet()) {
           VirtualFile root = entry.getKey();
           VcsLogProvider provider = entry.getValue();
-          runWithSpanThrows(myTracer, LogData.ReadingAllCommitsInRoot.getName(), scopeSpan -> {
-            scopeSpan.setAttribute("rootName", root.getName());
+          runWithSpanThrows(myTracer.spanBuilder(LogData.ReadingAllCommitsInRoot.getName()).setAttribute("rootName", root.getName()), ignored -> {
             List<GraphCommit<Integer>> graphCommits = new ArrayList<>();
             VcsLogProvider.LogData data = provider.readAllHashes(root, commit -> graphCommits.add(compactCommit(commit, root)));
             logInfo.put(root, graphCommits);

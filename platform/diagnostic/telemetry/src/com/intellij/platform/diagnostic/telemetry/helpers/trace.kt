@@ -8,7 +8,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import io.opentelemetry.semconv.SemanticAttributes
@@ -79,8 +78,8 @@ internal fun <T> computeWithSpanIgnoreThrows(spanBuilder: SpanBuilder,
 }
 
 @Internal
-internal fun runWithSpanIgnoreThrows(tracer: Tracer, spanName: String, operation: ThrowableConsumer<Span, out Throwable>) {
-  tracer.spanBuilder(spanName).use(operation::consume)
+internal fun runWithSpanIgnoreThrows(spanBuilder: SpanBuilder, operation: ThrowableConsumer<Span, out Throwable>) {
+  spanBuilder.use(operation::consume)
 }
 
 /**

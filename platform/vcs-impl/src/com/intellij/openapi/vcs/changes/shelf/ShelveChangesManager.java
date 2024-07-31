@@ -421,9 +421,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       batchIndex++;
       int finalBatchIndex = batchIndex;
       try {
-        runWithSpanThrows(myTracer, Shelve.BatchShelving.getName(), (span) -> {
-          span.setAttribute("batch", finalBatchIndex);
-
+        runWithSpanThrows(myTracer.spanBuilder(Shelve.BatchShelving.getName()).setAttribute("batch", finalBatchIndex), ignored -> {
           try {
             if (baseContentsPreloadSize > 0) {
               TraceKt.use(myTracer.spanBuilder(Shelve.PreloadingBaseRevisions.getName()).setAttribute("changesSize", list.size()), __ -> {
@@ -433,7 +431,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
             }
 
             ProgressManager.checkCanceled();
-            runWithSpanThrows(myTracer, Shelve.BuildingPatches.getName(), (__) -> {
+            runWithSpanThrows(myTracer.spanBuilder(Shelve.BuildingPatches.getName()), __ -> {
               patches.addAll(IdeaTextPatchBuilder
                                .buildPatch(myProject, list, ProjectKt.getStateStore(myProject).getProjectBasePath(), false,
                                            honorExcludedFromCommit));
@@ -446,7 +444,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
               return context;
             });
 
-            runWithSpanThrows(myTracer, Shelve.StoringPathFile.getName(), (__) -> {
+            runWithSpanThrows(myTracer.spanBuilder(Shelve.StoringPathFile.getName()), __ -> {
               savePatchFile(myProject, patchFile, patches, null, commitContext);
             });
           }

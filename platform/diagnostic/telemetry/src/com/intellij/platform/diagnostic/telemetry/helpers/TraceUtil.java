@@ -5,7 +5,6 @@ import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ThrowableConsumer;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
-import io.opentelemetry.api.trace.Tracer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,9 +19,8 @@ public final class TraceUtil {
     return TraceKt.computeWithSpanIgnoreThrows(spanBuilder, operation);
   }
 
-  public static <E extends Throwable> void runWithSpanThrows(@NotNull Tracer tracer,
-                                                             @NotNull String spanName,
+  public static <E extends Throwable> void runWithSpanThrows(@NotNull SpanBuilder spanBuilder,
                                                              @NotNull ThrowableConsumer<Span, E> operation) throws E {
-    TraceKt.runWithSpanIgnoreThrows(tracer, spanName, operation);
+    TraceKt.runWithSpanIgnoreThrows(spanBuilder, operation);
   }
 }
