@@ -296,9 +296,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
       clearBuildManagerState(myProject);
     }
   }
-
-  @Override
-  public boolean isParallelCompilationEnabled() {
+  private boolean isOldParallelCompilationEnabled() {
     // returns parallel compilation flag first by looking into workspace.xml and then intellij.yaml
 
     //noinspection deprecation
@@ -311,9 +309,20 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
+  public boolean isParallelCompilationEnabled() {
+    return switch (CompilerWorkspaceConfiguration.getInstance(myProject).JPS_PARALLEL_COMPILATION) {
+        case ENABLED, AUTOMATIC -> true;
+        case DISABLED -> false;
+      };
+  }
+
+  @Override
   public void setParallelCompilationEnabled(boolean enabled) {
-    //noinspection deprecation
-    CompilerWorkspaceConfiguration.getInstance(myProject).PARALLEL_COMPILATION = enabled;
+    if (enabled) {
+      CompilerWorkspaceConfiguration.getInstance(myProject).JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.ENABLED;
+    } else {
+      CompilerWorkspaceConfiguration.getInstance(myProject).JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.DISABLED;
+    }
   }
 
   @Override
