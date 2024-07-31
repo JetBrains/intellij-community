@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.statistics;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -11,6 +12,7 @@ import java.awt.event.KeyEvent;
 
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
 
+@ApiStatus.Internal
 public final class SearchFieldStatisticsCollector implements Disposable {
 
   private final Project myProject;
