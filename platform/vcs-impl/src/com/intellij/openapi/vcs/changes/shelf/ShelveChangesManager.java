@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -85,7 +86,6 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChang
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
@@ -443,7 +443,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
             });
             ProgressManager.checkCanceled();
 
-            CommitContext commitContext = computeWithSpan(myTracer, Shelve.StoringBaseRevision.getName(), (__) -> {
+            CommitContext commitContext = TraceKt.use(myTracer.spanBuilder(Shelve.StoringBaseRevision.getName()), __ -> {
               CommitContext context = new CommitContext();
               baseRevisionsOfDvcsIntoContext(list, context);
               return context;

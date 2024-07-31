@@ -4,7 +4,8 @@ package com.intellij.platform.ijent.community.impl.nio.telemetry
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import io.opentelemetry.api.trace.Span
 import java.util.concurrent.atomic.AtomicLong
 
 private val eventsCounter: AtomicLong = AtomicLong()
@@ -57,7 +58,7 @@ object Measurer {
 }
 
 internal inline fun <T> Measurer.measure(operation: Measurer.Operation, body: () -> T): T {
-  return computeWithSpan(ijentTracer, spanName = "ijent.${operation.name}") {
+  return ijentTracer.spanBuilder("ijent.${operation.name}").use {
     eventsCounter.incrementAndGet()
     body()
   }

@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
-import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -311,7 +311,7 @@ internal class LazyRefsSubtreeHolder<out T: GitReference>(repositories: List<Git
 
   val tree: Map<String, Any> by lazy {
     val infoList = matchingResult.matchedNodes
-    computeWithSpan(getInstance().getTracer(VcsScope), GitTelemetrySpan.GitBranchesPopup.BuildingTree.getName()) {
+    getInstance().getTracer(VcsScope).spanBuilder(GitTelemetrySpan.GitBranchesPopup.BuildingTree.getName()).use { span ->
       buildSubTree(infoList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
     }
   }

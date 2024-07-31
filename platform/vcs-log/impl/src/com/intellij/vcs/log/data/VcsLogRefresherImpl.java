@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
@@ -37,7 +38,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 
@@ -191,17 +191,18 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   private @NotNull List<GraphCommit<Integer>> compactCommits(@NotNull List<? extends TimedVcsCommit> commits, @NotNull VirtualFile root) {
-    return computeWithSpan(myTracer, LogData.CompactingCommits.getName(), (span -> {
-      if (commits.isEmpty()) {
-        return Collections.emptyList();
-      }
+    return TraceKt.use(myTracer.spanBuilder(LogData.CompactingCommits.getName()),
+                       span -> {
+                         if (commits.isEmpty()) {
+                           return Collections.emptyList();
+                         }
 
-      List<GraphCommit<Integer>> list = new ArrayList<>(commits.size());
-      for (TimedVcsCommit commit : commits) {
-        list.add(compactCommit(commit, root));
-      }
-      return list;
-    }));
+                         List<GraphCommit<Integer>> list = new ArrayList<>(commits.size());
+                         for (TimedVcsCommit commit : commits) {
+                           list.add(compactCommit(commit, root));
+                         }
+                         return list;
+                       });
   }
 
   private @NotNull GraphCommit<Integer> compactCommit(@NotNull TimedVcsCommit commit, @NotNull VirtualFile root) {
@@ -394,7 +395,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
                                                                 @NotNull Map<VirtualFile, CompressedRefs> newRefs) {
       if (fullLog.isEmpty()) return recentCommits;
 
-      return computeWithSpan(myTracer, LogData.JoiningNewAndOldCommits.getName(), span -> {
+      return TraceKt.use(myTracer.spanBuilder(LogData.JoiningNewAndOldCommits.getName()), span -> {
         Collection<Integer> prevRefIndices = previousRefs
           .values()
           .stream()

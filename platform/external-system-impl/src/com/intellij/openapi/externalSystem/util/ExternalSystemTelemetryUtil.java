@@ -23,7 +23,7 @@ public final class ExternalSystemTelemetryUtil {
   }
 
   public static <T> T computeWithSpan(@Nullable ProjectSystemId id, @NotNull String spanName, @NotNull Function<Span, T> fn) {
-    return TraceKt.computeWithSpan(getTracer(id), spanName, span -> fn.apply(span));
+    return TraceKt.use(getTracer(id).spanBuilder(spanName), fn::apply);
   }
 
   public static void runWithSpan(@Nullable ProjectSystemId id, @NotNull String spanName, @NotNull Consumer<Span> fn) {
