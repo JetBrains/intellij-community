@@ -17,10 +17,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import icons.PlatformDebuggerImplIcons
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -118,36 +115,34 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   }
 
   private inner class ChangesListener(private val component: FloatingToolbarComponent) : HotSwapChangesListener {
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onStatusChanged(session: HotSwapSession<*>, status: HotSwapVisibleStatus) {
-      if (status == HotSwapVisibleStatus.IN_PROGRESS) {
-        hotSwapAction.inProgress = true
-        hotSwapAction.session = null
-        return
-      }
+      // We need to hide the button even if the coroutineScope is cancelled
+      session.coroutineScope.launch(Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
+        if (status == HotSwapVisibleStatus.IN_PROGRESS) {
+          hotSwapAction.inProgress = true
+          hotSwapAction.session = null
+          return@launch
+        }
 
-      val action = when (status) {
-        HotSwapVisibleStatus.NO_CHANGES -> HotSwapButtonAction.HIDE
-        HotSwapVisibleStatus.CHANGES_READY -> HotSwapButtonAction.SHOW
-        HotSwapVisibleStatus.SESSION_COMPLETED -> HotSwapButtonAction.HIDE_NOW
-        else -> error("Unexpected status $status")
-      }
-      if (action == HotSwapButtonAction.SHOW) {
-        hotSwapAction.inProgress = false
-        hotSwapAction.session = session
-      } else {
-        hotSwapAction.session = null
-      }
-      updateComponentIfNeeded(component, session.coroutineScope, action)
-    }
-  }
-
-  private fun updateComponentIfNeeded(component: FloatingToolbarComponent, scope: CoroutineScope, show: HotSwapButtonAction) {
-    // We need to hide the button even if the coroutineScope is cancelled
-    scope.launch(Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
-      when (show) {
-        HotSwapButtonAction.SHOW -> component.scheduleShow()
-        HotSwapButtonAction.HIDE -> component.scheduleHide()
-        HotSwapButtonAction.HIDE_NOW -> component.hideImmediately()
+        val action = when (status) {
+          HotSwapVisibleStatus.NO_CHANGES -> HotSwapButtonAction.HIDE
+          HotSwapVisibleStatus.CHANGES_READY -> HotSwapButtonAction.SHOW
+          HotSwapVisibleStatus.SESSION_COMPLETED -> HotSwapButtonAction.HIDE_NOW
+          else -> error("Unexpected status $status")
+        }
+        if (action == HotSwapButtonAction.SHOW) {
+          hotSwapAction.inProgress = false
+          hotSwapAction.session = session
+        }
+        else {
+          hotSwapAction.session = null
+        }
+        when (action) {
+          HotSwapButtonAction.SHOW -> component.scheduleShow()
+          HotSwapButtonAction.HIDE -> component.scheduleHide()
+          HotSwapButtonAction.HIDE_NOW -> component.hideImmediately()
+        }
       }
     }
   }
