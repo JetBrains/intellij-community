@@ -29,7 +29,6 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -948,28 +947,27 @@ internal class SoftwareBillOfMaterialsImpl(
     if (Docker.isAvailable && !SystemInfoRt.isWindows) {
       val ntiaChecker = "ntia-checker"
       suspendingRetryWithExponentialBackOff {
-        runProcess(
+        context.runProcess(
           "docker", "build", ".", "--tag", ntiaChecker,
           workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
-          inheritOut = true,
         )
       }
       coroutineScope {
         documents.forEach {
           launch {
             try {
-              runProcess(
+              context.runProcess(
                 "docker", "run", "--rm",
                 "--volume=${it.parent}:${it.parent}:ro",
                 ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose",
-                inheritOut = true,
+                attachStdOutToException = true,
               )
             }
             catch (e: Exception) {
               context.messages.error(
                 """
                    Generated SBOM $it is not NTIA-conformant. 
-                   Please search for 'Components missing an supplier' error message and specify all missing suppliers.
+                   Please look for 'Components missing an supplier' in the suppressed exceptions and specify all missing suppliers.
                    You may use https://package-search.jetbrains.com/ to search for them.
                 """.trimIndent(), e
               )

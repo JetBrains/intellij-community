@@ -26,6 +26,8 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
+import org.jetbrains.intellij.build.io.runProcess
+import kotlin.time.Duration
 
 class BuildContextImpl internal constructor(
   private val compilationContext: CompilationContext,
@@ -383,6 +385,24 @@ class BuildContextImpl internal constructor(
       additionalPluginModules.isEmpty() -> return devModeProductRunner.await()
       else -> return createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this)
     }
+  }
+
+  override suspend fun runProcess(
+    vararg args: String,
+    workingDir: Path?,
+    timeout: Duration,
+    additionalEnvVariables: Map<String, String>,
+    attachStdOutToException: Boolean,
+  ) {
+    runProcess(
+      args.toList(),
+      workingDir = workingDir,
+      timeout = timeout,
+      additionalEnvVariables = additionalEnvVariables,
+      stdOutConsumer = messages::info,
+      stdErrConsumer = messages::warning,
+      attachStdOutToException = attachStdOutToException,
+    )
   }
 }
 

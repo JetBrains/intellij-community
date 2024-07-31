@@ -10,10 +10,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
+import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration
 
 interface BuildContext : CompilationContext {
   val productProperties: ProductProperties
@@ -145,6 +147,14 @@ interface BuildContext : CompilationContext {
   suspend fun cleanupJarCache()
 
   suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
+
+  suspend fun runProcess(
+    vararg args: String,
+    workingDir: Path? = null,
+    timeout: Duration = DEFAULT_TIMEOUT,
+    additionalEnvVariables: Map<String, String> = emptyMap(),
+    attachStdOutToException: Boolean = false,
+  )
 }
 
 suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
