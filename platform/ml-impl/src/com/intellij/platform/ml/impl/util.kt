@@ -52,7 +52,10 @@ fun interface FeatureDeclarationsExtractor {
     }
 
     val ofMapValues = FeatureDeclarationsExtractor { returnClass, propertyValue ->
-      if (returnClass.isSubclassOf(Map::class)) (propertyValue as Map<*, *>).values.filterIsInstance(FeatureDeclaration::class.java) else null
+      val mapValues = if (returnClass.isSubclassOf(Map::class)) (propertyValue as Map<*, *>).values else return@FeatureDeclarationsExtractor null
+      val simpleValues = mapValues.filterIsInstance(FeatureDeclaration::class.java)
+      val iterValues = mapValues.filterIsInstance(Iterable::class.java).flatMap { it.filterIsInstance(FeatureDeclaration::class.java) }
+      simpleValues + iterValues
     }
   }
 }
