@@ -124,12 +124,12 @@ open class StateStorageManagerImpl(
           )
           else -> storageCreator.create(this)
         }
-        storageCustomizer?.let { storage.it() }
+        storageCustomizer?.invoke(storage)
         storage
       }
     }
 
-    storageCustomizer?.let { storage.it() }
+    storageCustomizer?.invoke(storage)
     return storage
   }
 
