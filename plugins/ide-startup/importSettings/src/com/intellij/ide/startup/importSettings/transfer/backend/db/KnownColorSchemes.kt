@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.transfer.backend.db
 
 import com.intellij.ide.startup.importSettings.models.BundledEditorColorScheme
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.colors.EditorColorsManager
 
 object KnownColorSchemes {
@@ -11,9 +12,9 @@ object KnownColorSchemes {
   val HighContrast: BundledEditorColorScheme? = findScheme("High contrast")
 
   private fun findScheme(name: String): BundledEditorColorScheme? = BundledEditorColorScheme.fromManager(name) ?: run {
-    logger.error(
-      "Unable to find bundled color scheme \"$name\". " +
-      "All available schemes: ${EditorColorsManager.getInstance().allSchemes.joinToString(", ", "\"", "\"") { it.name }}.")
+    val names = logger.runAndLogException { EditorColorsManager.getInstance().allSchemes.joinToString(", ", "\"", "\"") { it.name } }
+                ?: "[cannot compute]"
+    logger.error("Unable to find bundled color scheme \"$name\". All available schemes: ${names}.")
     null
   }
 }
