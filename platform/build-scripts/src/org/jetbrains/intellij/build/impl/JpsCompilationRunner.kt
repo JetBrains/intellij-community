@@ -311,6 +311,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
           .setAttribute("incremental", context.options.incrementalCompilation)
           .setAttribute("cacheDir", compilationData.dataStorageRoot.toString())
           .use {
+            messageHandler.span = it
             Standalone.runBuild(
               { context.projectModel }, compilationData.dataStorageRoot.toFile(),
               mapOf(GlobalOptions.BUILD_DATE_IN_SECONDS to "${context.options.buildDateInSeconds}"),
