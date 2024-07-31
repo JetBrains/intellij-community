@@ -93,7 +93,7 @@ public class GitHubAlertBlockRenderer(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val titleIconProvider = styling.titleIconPath
+                val titleIconProvider = styling.titleIconKey
                 if (titleIconProvider != null) {
                     val colorFilter =
                         remember(styling.titleIconTint) {

@@ -4,7 +4,10 @@ import com.intellij.ui.icons.IconPathProvider
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.IntelliJIconKey
 
-public fun IntelliJIconKey.Companion.fromPlatformIcon(icon: javax.swing.Icon): IconKey {
+public fun IntelliJIconKey.Companion.fromPlatformIcon(
+    icon: javax.swing.Icon,
+    iconClass: Class<*> = icon::class.java,
+): IconKey {
     check(icon is IconPathProvider) {
         "Only icons implementing IconPathsProvider are supported (e.g., coming from AllIcons)"
     }
@@ -15,5 +18,5 @@ public fun IntelliJIconKey.Companion.fromPlatformIcon(icon: javax.swing.Icon): I
         }
 
     val newUiPath = icon.expUIPath ?: oldUiPath
-    return IntelliJIconKey(oldUiPath, newUiPath)
+    return IntelliJIconKey(oldUiPath, newUiPath, iconClass)
 }

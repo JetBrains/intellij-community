@@ -216,48 +216,47 @@ open class IconKeysGeneratorTask : DefaultTask() {
                         .objectBuilder(objectName)
                         .apply {
                             for (childHolder in rootHolder.holders) {
-                                generateKotlinCodeInner(childHolder)
+                                generateKotlinCodeInner(childHolder, className)
                             }
 
                             for (key in rootHolder.keys) {
-                                addProperty(
-                                    PropertySpec
-                                        .builder(key.name.substringAfterLast('.'), keyClassName)
-                                        .initializer(
-                                            "%L",
-                                            """IntelliJIconKey("${key.oldPath}", "${key.newPath ?: key.oldPath}")""",
-                                        ).build(),
-                                )
+                                addProperty(buildIconKeyEntry(key, className))
                             }
                         }.build(),
                 )
             }.build()
     }
 
-    private fun TypeSpec.Builder.generateKotlinCodeInner(holder: IconKeyHolder) {
+    private fun TypeSpec.Builder.generateKotlinCodeInner(holder: IconKeyHolder, rootClassName: ClassName) {
         val objectName = holder.name.substringAfterLast('.')
         addType(
             TypeSpec
                 .objectBuilder(objectName)
                 .apply {
                     for (childHolder in holder.holders) {
-                        generateKotlinCodeInner(childHolder)
+                        generateKotlinCodeInner(childHolder, rootClassName)
                     }
 
                     for (key in holder.keys) {
-                        addProperty(
-                            PropertySpec
-                                .builder(key.name.substringAfterLast('.'), keyClassName)
-                                .initializer(
-                                    "%L",
-                                    """IntelliJIconKey("${key.oldPath}", "${key.newPath ?: key.oldPath}")"""
-                                )
-                                .build(),
-                        )
+                        addProperty(buildIconKeyEntry(key, rootClassName))
                     }
                 }.build(),
         )
     }
+
+    private fun buildIconKeyEntry(
+        key: IconKey,
+        rootClassName: ClassName,
+    ) =
+        PropertySpec
+            .builder(key.name.substringAfterLast('.'), keyClassName)
+            .initializer(
+                "%L",
+                "IntelliJIconKey(\"${key.oldPath}\", " +
+                    "\"${key.newPath ?: key.oldPath}\", " +
+                    "${rootClassName.simpleName}::class.java)",
+            )
+            .build()
 
     companion object {
 

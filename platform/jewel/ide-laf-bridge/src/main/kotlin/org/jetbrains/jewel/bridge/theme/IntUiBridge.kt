@@ -372,7 +372,7 @@ private fun readCheckboxStyle(): CheckboxStyle {
                 outlineSelectedFocusedSize = metrics.outlineSelectedFocusedSize,
                 iconContentGap = metrics.iconContentGap,
             ),
-        icons = CheckboxIcons(checkbox = PathIconKey("${iconsBasePath}checkBox.svg")),
+        icons = CheckboxIcons(checkbox = PathIconKey("${iconsBasePath}checkBox.svg", CheckboxIcons::class.java)),
     )
 }
 
@@ -776,7 +776,7 @@ private fun readRadioButtonStyle(): RadioButtonStyle {
                     retrieveIntAsDpOrUnspecified("RadioButton.textIconGap")
                         .takeOrElse { metrics.iconContentGap },
             ),
-        icons = RadioButtonIcons(radioButton = PathIconKey("${iconsBasePath}radio.svg")),
+        icons = RadioButtonIcons(radioButton = PathIconKey("${iconsBasePath}radio.svg", RadioButtonIcons::class.java)),
     )
 }
 

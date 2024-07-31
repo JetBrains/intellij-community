@@ -60,7 +60,7 @@ internal fun findViews(packageName: String): List<ViewInfo> {
                             ViewInfo(
                                 title = annotation.title,
                                 position = annotation.position,
-                                iconKey = PathIconKey(annotation.icon),
+                                iconKey = PathIconKey(annotation.icon, View::class.java),
                                 content = it.kotlinFunction as @Composable () -> Unit,
                             )
                         }

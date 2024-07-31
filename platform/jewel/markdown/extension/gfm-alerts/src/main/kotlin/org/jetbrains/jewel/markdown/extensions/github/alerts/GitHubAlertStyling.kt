@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
+import org.jetbrains.jewel.ui.icon.IconKey
 
 @GenerateDataFunctions
 public class AlertStyling(
@@ -26,7 +27,7 @@ public sealed interface BaseAlertStyling {
     public val pathEffect: PathEffect?
     public val strokeCap: StrokeCap
     public val titleTextStyle: TextStyle
-    public val titleIconPath: String?
+    public val titleIconKey: IconKey?
     public val titleIconTint: Color
     public val textColor: Color
 }
@@ -39,7 +40,7 @@ public class NoteAlertStyling(
     override val pathEffect: PathEffect?,
     override val strokeCap: StrokeCap,
     override val titleTextStyle: TextStyle,
-    override val titleIconPath: String?,
+    override val titleIconKey: IconKey?,
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
@@ -54,7 +55,7 @@ public class TipAlertStyling(
     override val pathEffect: PathEffect?,
     override val strokeCap: StrokeCap,
     override val titleTextStyle: TextStyle,
-    override val titleIconPath: String?,
+    override val titleIconKey: IconKey?,
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
@@ -69,7 +70,7 @@ public class ImportantAlertStyling(
     override val pathEffect: PathEffect?,
     override val strokeCap: StrokeCap,
     override val titleTextStyle: TextStyle,
-    override val titleIconPath: String?,
+    override val titleIconKey: IconKey?,
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
@@ -84,7 +85,7 @@ public class WarningAlertStyling(
     override val pathEffect: PathEffect?,
     override val strokeCap: StrokeCap,
     override val titleTextStyle: TextStyle,
-    override val titleIconPath: String?,
+    override val titleIconKey: IconKey?,
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
@@ -99,7 +100,7 @@ public class CautionAlertStyling(
     override val pathEffect: PathEffect?,
     override val strokeCap: StrokeCap,
     override val titleTextStyle: TextStyle,
-    override val titleIconPath: String?,
+    override val titleIconKey: IconKey?,
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {

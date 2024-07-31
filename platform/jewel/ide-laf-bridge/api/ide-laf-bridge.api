@@ -89,7 +89,8 @@ public final class org/jetbrains/jewel/bridge/actionSystem/ProvideDataKt {
 }
 
 public final class org/jetbrains/jewel/bridge/icon/IntelliJIconKeyKt {
-	public static final fun fromPlatformIcon (Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey$Companion;Ljavax/swing/Icon;)Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public static final fun fromPlatformIcon (Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey$Companion;Ljavax/swing/Icon;Ljava/lang/Class;)Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public static synthetic fun fromPlatformIcon$default (Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey$Companion;Ljavax/swing/Icon;Ljava/lang/Class;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/icon/IconKey;
 }
 
 public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalColorsKt {

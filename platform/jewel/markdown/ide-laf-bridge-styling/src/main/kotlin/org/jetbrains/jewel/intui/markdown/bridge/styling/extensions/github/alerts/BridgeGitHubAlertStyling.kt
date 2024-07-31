@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.intui.markdown.bridge.styling.extension.github.alerts
+package org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.alerts
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Color
@@ -11,10 +11,12 @@ import androidx.compose.ui.unit.dp
 import com.intellij.ui.JBColor
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling
+import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertIcons
 import org.jetbrains.jewel.markdown.extensions.github.alerts.ImportantAlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.NoteAlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.TipAlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.WarningAlertStyling
+import org.jetbrains.jewel.ui.icon.IconKey
 
 public fun AlertStyling.Companion.create(
     note: NoteAlertStyling = NoteAlertStyling.create(),
@@ -31,7 +33,7 @@ public fun NoteAlertStyling.Companion.create(
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),
-    titleIconPath: String? = "icons/markdown/extensions/github/alerts/alert-note.svg",
+    titleIconKey: IconKey? = GitHubAlertIcons.Note,
     titleIconTint: Color = lineColor,
     textColor: Color = Color.Unspecified,
 ): NoteAlertStyling =
@@ -42,7 +44,7 @@ public fun NoteAlertStyling.Companion.create(
         pathEffect,
         strokeCap,
         titleTextStyle,
-        titleIconPath,
+        titleIconKey,
         titleIconTint,
         textColor,
     )
@@ -54,7 +56,7 @@ public fun TipAlertStyling.Companion.create(
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),
-    titleIconPath: String? = "icons/markdown/extensions/github/alerts/alert-tip.svg",
+    titleIconKey: IconKey? = GitHubAlertIcons.Tip,
     titleIconTint: Color = lineColor,
     textColor: Color = Color.Unspecified,
 ): TipAlertStyling =
@@ -65,7 +67,7 @@ public fun TipAlertStyling.Companion.create(
         pathEffect,
         strokeCap,
         titleTextStyle,
-        titleIconPath,
+        titleIconKey,
         titleIconTint,
         textColor,
     )
@@ -77,7 +79,7 @@ public fun ImportantAlertStyling.Companion.create(
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),
-    titleIconPath: String? = "icons/markdown/extensions/github/alerts/alert-important.svg",
+    titleIconKey: IconKey? = GitHubAlertIcons.Important,
     titleIconTint: Color = lineColor,
     textColor: Color = Color.Unspecified,
 ): ImportantAlertStyling =
@@ -88,7 +90,7 @@ public fun ImportantAlertStyling.Companion.create(
         pathEffect,
         strokeCap,
         titleTextStyle,
-        titleIconPath,
+        titleIconKey,
         titleIconTint,
         textColor,
     )
@@ -100,7 +102,7 @@ public fun WarningAlertStyling.Companion.create(
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),
-    titleIconPath: String? = "icons/markdown/extensions/github/alerts/alert-warning.svg",
+    titleIconKey: IconKey? = GitHubAlertIcons.Warning,
     titleIconTint: Color = lineColor,
     textColor: Color = Color.Unspecified,
 ): WarningAlertStyling =
@@ -111,7 +113,7 @@ public fun WarningAlertStyling.Companion.create(
         pathEffect,
         strokeCap,
         titleTextStyle,
-        titleIconPath,
+        titleIconKey,
         titleIconTint,
         textColor,
     )
@@ -123,7 +125,7 @@ public fun CautionAlertStyling.Companion.create(
     pathEffect: PathEffect? = null,
     strokeCap: StrokeCap = StrokeCap.Square,
     titleTextStyle: TextStyle = TextStyle(fontWeight = FontWeight.Medium, color = lineColor),
-    titleIconPath: String? = "icons/markdown/extensions/github/alerts/alert-caution.svg",
+    titleIconKey: IconKey? = GitHubAlertIcons.Caution,
     titleIconTint: Color = lineColor,
     textColor: Color = Color.Unspecified,
 ): CautionAlertStyling =
@@ -134,7 +136,7 @@ public fun CautionAlertStyling.Companion.create(
         pathEffect,
         strokeCap,
         titleTextStyle,
-        titleIconPath,
+        titleIconKey,
         titleIconTint,
         textColor,
     )

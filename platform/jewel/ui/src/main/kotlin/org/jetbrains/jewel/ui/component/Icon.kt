@@ -40,6 +40,10 @@ import org.jetbrains.jewel.ui.util.thenIf
 import org.xml.sax.InputSource
 import java.io.InputStream
 
+@Deprecated(
+    "Use the IconKey-based API instead",
+    ReplaceWith("Icon(PathIconKey(resource, iconClass), contentDescription, colorFilter, modifier, hints)"),
+)
 @Composable
 public fun Icon(
     resource: String,
@@ -60,6 +64,10 @@ public fun Icon(
     )
 }
 
+@Deprecated(
+    "Use the IconKey-based API instead",
+    ReplaceWith("Icon(PathIconKey(resource, iconClass), contentDescription, colorFilter, modifier, hint)"),
+)
 @Composable
 public fun Icon(
     resource: String,
@@ -80,6 +88,10 @@ public fun Icon(
     )
 }
 
+@Deprecated(
+    "Use the IconKey-based API instead",
+    ReplaceWith("Icon(PathIconKey(resource, iconClass), contentDescription, tint, modifier, hints)"),
+)
 @Composable
 public fun Icon(
     resource: String,
@@ -100,6 +112,10 @@ public fun Icon(
     )
 }
 
+@Deprecated(
+    "Use the IconKey-based API instead",
+    ReplaceWith("Icon(PathIconKey(resource, iconClass), contentDescription, tint, modifier, hints)"),
+)
 @Composable
 public fun Icon(
     resource: String,
@@ -125,13 +141,21 @@ public fun Icon(
     key: IconKey,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    iconClass: Class<*> = key::class.java,
+    iconClass: Class<*> = key.iconClass,
     tint: Color = Color.Unspecified,
     vararg hints: PainterHint,
 ) {
     val isNewUi = JewelTheme.newUiChecker.isNewUi()
     val path = remember(key, isNewUi) { key.path(isNewUi) }
-    Icon(path, contentDescription, iconClass, modifier, tint, *hints)
+    val painterProvider = rememberResourcePainterProvider(path, iconClass)
+    val painter by painterProvider.getPainter(*hints)
+
+    Icon(
+        painter = painter,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        tint = tint,
+    )
 }
 
 @Composable
@@ -139,13 +163,22 @@ public fun Icon(
     key: IconKey,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    iconClass: Class<*> = key::class.java,
+    iconClass: Class<*> = key.iconClass,
     tint: Color = Color.Unspecified,
     hint: PainterHint,
 ) {
     val isNewUi = JewelTheme.newUiChecker.isNewUi()
     val path = remember(key, isNewUi) { key.path(isNewUi) }
-    Icon(path, contentDescription, iconClass, modifier, tint, hint)
+
+    val painterProvider = rememberResourcePainterProvider(path, iconClass)
+    val painter by painterProvider.getPainter(hint)
+
+    Icon(
+        painter = painter,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        tint = tint,
+    )
 }
 
 @Composable
@@ -153,13 +186,21 @@ public fun Icon(
     key: IconKey,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    iconClass: Class<*> = key::class.java,
+    iconClass: Class<*> = key.iconClass,
     colorFilter: ColorFilter?,
     hint: PainterHint,
 ) {
     val isNewUi = JewelTheme.newUiChecker.isNewUi()
     val path = remember(key, isNewUi) { key.path(isNewUi) }
-    Icon(path, contentDescription, iconClass, colorFilter, modifier, hint)
+    val painterProvider = rememberResourcePainterProvider(path, iconClass)
+    val painter by painterProvider.getPainter(hint)
+
+    Icon(
+        painter = painter,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        colorFilter = colorFilter,
+    )
 }
 
 @Composable
@@ -167,13 +208,21 @@ public fun Icon(
     key: IconKey,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    iconClass: Class<*> = key::class.java,
+    iconClass: Class<*> = key.iconClass,
     colorFilter: ColorFilter?,
     vararg hints: PainterHint,
 ) {
     val isNewUi = JewelTheme.newUiChecker.isNewUi()
     val path = remember(key, isNewUi) { key.path(isNewUi) }
-    Icon(path, contentDescription, iconClass, colorFilter, modifier, *hints)
+    val painterProvider = rememberResourcePainterProvider(path, iconClass)
+    val painter by painterProvider.getPainter(*hints)
+
+    Icon(
+        painter = painter,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        colorFilter = colorFilter,
+    )
 }
 
 /**
@@ -284,6 +333,7 @@ public fun Icon(
         } else {
             Modifier
         }
+
     Box(
         modifier
             .toolingGraphicsLayer()

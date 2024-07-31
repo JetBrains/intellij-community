@@ -2396,14 +2396,16 @@ public final class org/jetbrains/jewel/ui/component/styling/TooltipStylingKt {
 }
 
 public abstract interface class org/jetbrains/jewel/ui/icon/IconKey {
+	public abstract fun getIconClass ()Ljava/lang/Class;
 	public abstract fun path (Z)Ljava/lang/String;
 }
 
 public final class org/jetbrains/jewel/ui/icon/IntelliJIconKey : org/jetbrains/jewel/ui/icon/IconKey {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public fun getIconClass ()Ljava/lang/Class;
 	public final fun getNewUiPath ()Ljava/lang/String;
 	public final fun getOldUiPath ()Ljava/lang/String;
 	public fun hashCode ()I
@@ -2425,8 +2427,9 @@ public final class org/jetbrains/jewel/ui/icon/NewUiCheckerKt {
 
 public final class org/jetbrains/jewel/ui/icon/PathIconKey : org/jetbrains/jewel/ui/icon/IconKey {
 	public static final field $stable I
-	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/Class;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public fun getIconClass ()Ljava/lang/Class;
 	public fun hashCode ()I
 	public fun path (Z)Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;

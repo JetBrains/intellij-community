@@ -86,7 +86,7 @@ public abstract interface class org/jetbrains/jewel/markdown/extensions/github/a
 	public abstract fun getPathEffect ()Landroidx/compose/ui/graphics/PathEffect;
 	public abstract fun getStrokeCap-KaPHkGw ()I
 	public abstract fun getTextColor-0d7_KjU ()J
-	public abstract fun getTitleIconPath ()Ljava/lang/String;
+	public abstract fun getTitleIconKey ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public abstract fun getTitleIconTint-0d7_KjU ()J
 	public abstract fun getTitleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 }
@@ -94,7 +94,7 @@ public abstract interface class org/jetbrains/jewel/markdown/extensions/github/a
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/CautionAlertStyling : org/jetbrains/jewel/markdown/extensions/github/alerts/BaseAlertStyling {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/markdown/extensions/github/alerts/CautionAlertStyling$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Ljava/lang/String;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/icon/IconKey;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getLineColor-0d7_KjU ()J
 	public fun getLineWidth-D9Ej5fM ()F
@@ -102,7 +102,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/Caution
 	public fun getPathEffect ()Landroidx/compose/ui/graphics/PathEffect;
 	public fun getStrokeCap-KaPHkGw ()I
 	public fun getTextColor-0d7_KjU ()J
-	public fun getTitleIconPath ()Ljava/lang/String;
+	public fun getTitleIconKey ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun getTitleIconTint-0d7_KjU ()J
 	public fun getTitleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I
@@ -117,6 +117,16 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubA
 	public fun <init> (Lorg/jetbrains/jewel/markdown/extensions/github/alerts/AlertStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;)V
 	public fun canRender (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;)Z
 	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubAlertIcons {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/markdown/extensions/github/alerts/GitHubAlertIcons;
+	public final fun getCaution ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getImportant ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getNote ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getTip ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getWarning ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 }
 
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubAlertProcessorExtension : org/jetbrains/jewel/markdown/extensions/MarkdownProcessorExtension {
@@ -138,7 +148,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubA
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/ImportantAlertStyling : org/jetbrains/jewel/markdown/extensions/github/alerts/BaseAlertStyling {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/markdown/extensions/github/alerts/ImportantAlertStyling$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Ljava/lang/String;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/icon/IconKey;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getLineColor-0d7_KjU ()J
 	public fun getLineWidth-D9Ej5fM ()F
@@ -146,7 +156,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/Importa
 	public fun getPathEffect ()Landroidx/compose/ui/graphics/PathEffect;
 	public fun getStrokeCap-KaPHkGw ()I
 	public fun getTextColor-0d7_KjU ()J
-	public fun getTitleIconPath ()Ljava/lang/String;
+	public fun getTitleIconKey ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun getTitleIconTint-0d7_KjU ()J
 	public fun getTitleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I
@@ -159,7 +169,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/Importa
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/NoteAlertStyling : org/jetbrains/jewel/markdown/extensions/github/alerts/BaseAlertStyling {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/markdown/extensions/github/alerts/NoteAlertStyling$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Ljava/lang/String;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/icon/IconKey;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getLineColor-0d7_KjU ()J
 	public fun getLineWidth-D9Ej5fM ()F
@@ -167,7 +177,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/NoteAle
 	public fun getPathEffect ()Landroidx/compose/ui/graphics/PathEffect;
 	public fun getStrokeCap-KaPHkGw ()I
 	public fun getTextColor-0d7_KjU ()J
-	public fun getTitleIconPath ()Ljava/lang/String;
+	public fun getTitleIconKey ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun getTitleIconTint-0d7_KjU ()J
 	public fun getTitleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I
@@ -180,7 +190,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/NoteAle
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/TipAlertStyling : org/jetbrains/jewel/markdown/extensions/github/alerts/BaseAlertStyling {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/markdown/extensions/github/alerts/TipAlertStyling$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Ljava/lang/String;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/icon/IconKey;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getLineColor-0d7_KjU ()J
 	public fun getLineWidth-D9Ej5fM ()F
@@ -188,7 +198,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/TipAler
 	public fun getPathEffect ()Landroidx/compose/ui/graphics/PathEffect;
 	public fun getStrokeCap-KaPHkGw ()I
 	public fun getTextColor-0d7_KjU ()J
-	public fun getTitleIconPath ()Ljava/lang/String;
+	public fun getTitleIconKey ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun getTitleIconTint-0d7_KjU ()J
 	public fun getTitleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I
@@ -201,7 +211,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/TipAler
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/WarningAlertStyling : org/jetbrains/jewel/markdown/extensions/github/alerts/BaseAlertStyling {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/markdown/extensions/github/alerts/WarningAlertStyling$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Ljava/lang/String;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;FJLandroidx/compose/ui/graphics/PathEffect;ILandroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/icon/IconKey;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getLineColor-0d7_KjU ()J
 	public fun getLineWidth-D9Ej5fM ()F
@@ -209,7 +219,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/Warning
 	public fun getPathEffect ()Landroidx/compose/ui/graphics/PathEffect;
 	public fun getStrokeCap-KaPHkGw ()I
 	public fun getTextColor-0d7_KjU ()J
-	public fun getTitleIconPath ()Ljava/lang/String;
+	public fun getTitleIconKey ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun getTitleIconTint-0d7_KjU ()J
 	public fun getTitleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I

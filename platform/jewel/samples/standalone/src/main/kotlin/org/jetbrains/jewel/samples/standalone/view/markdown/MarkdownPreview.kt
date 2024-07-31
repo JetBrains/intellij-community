@@ -24,8 +24,8 @@ import org.jetbrains.jewel.intui.markdown.standalone.ProvideMarkdownStyling
 import org.jetbrains.jewel.intui.markdown.standalone.dark
 import org.jetbrains.jewel.intui.markdown.standalone.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.dark
-import org.jetbrains.jewel.intui.markdown.standalone.styling.extension.github.alerts.dark
-import org.jetbrains.jewel.intui.markdown.standalone.styling.extension.github.alerts.light
+import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.alerts.dark
+import org.jetbrains.jewel.intui.markdown.standalone.styling.extensions.github.alerts.light
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
 import org.jetbrains.jewel.markdown.LazyMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
