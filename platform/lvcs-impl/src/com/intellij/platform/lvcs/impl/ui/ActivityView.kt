@@ -181,7 +181,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   private fun createChangesBrowser(): ActivityChangesBrowser? {
     if (model.isSingleDiffSupported) return null
 
-    val changesBrowser = ActivityChangesBrowser(project, isSwitchingDiffModeAllowed)
+    val changesBrowser = ActivityChangesBrowser(project, isSwitchingDiffModeAllowed, searchField.textComponent)
     model.addListener(object : ActivityModelListener {
       override fun onDiffDataLoadingStarted() {
         changesBrowser.loadingStarted()

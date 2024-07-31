@@ -4432,6 +4432,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - putUserDataIfAbsent(com.intellij.openapi.util.Key,java.lang.Object):java.lang.Object
 - remove(I):V
 - render(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z,Z,Z):V
+- render(javax.swing.JTree,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z,Z,Z):V
 - replace(com.intellij.openapi.util.Key,java.lang.Object,java.lang.Object):Z
 - p:resetCounters():V
 - setUserObject(java.lang.Object):V
