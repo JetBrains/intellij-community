@@ -16,6 +16,7 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -317,7 +318,7 @@ class Bar extends Foo {
     def main = myFixture.addClass("public class Main { public static void main(String[] args) { new Goo().bar(); } }")
     assertEmpty(make())
 
-    if(JavaBuilderUtil.isDepGraphEnabled()) {
+    if(AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
       long oldFooStamp = findClassFile("Foo").lastModified()
       long oldGooStamp = findClassFile("Goo").lastModified()
       long oldMainStamp = findClassFile("Main").lastModified()
@@ -881,7 +882,7 @@ string
 
     assertEmpty make()
 
-    if(JavaBuilderUtil.isDepGraphEnabled()) {
+    if(AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
       long oldBar1Stamp = findClassFile("bar/Bar1").lastModified()
       long oldBar2Stamp = findClassFile("bar/Bar2").lastModified()
       long oldBar3Stamp = findClassFile("bar/Bar3").lastModified()
