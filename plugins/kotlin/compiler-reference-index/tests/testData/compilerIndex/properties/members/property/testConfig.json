@@ -7,5 +7,6 @@
         "Foo.kt",
         "JavaRead.java",
         "TypeAliasUsage.kt"
-    ]
+    ],
+    "ignoreK2Compiler": "KTIJ-24828"
 }

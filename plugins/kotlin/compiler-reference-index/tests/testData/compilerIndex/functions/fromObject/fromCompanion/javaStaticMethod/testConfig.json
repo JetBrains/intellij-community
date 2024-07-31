@@ -4,5 +4,6 @@
         "JavaUsage.java",
         "KotlinUsage.kt",
         "Main.java"
-    ]
+    ],
+    "ignoreK2Compiler": "KTIJ-24830"
 }
