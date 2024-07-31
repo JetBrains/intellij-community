@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
@@ -30,8 +31,10 @@ public class CertificateWarningDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(CertificateWarningDialog.class);
 
   public static CertificateWarningDialog createUntrustedCertificateWarning(@NotNull X509Certificate certificate,
+                                                                           @Nullable @NlsSafe String remoteHost,
                                                                            @Nullable @NlsContexts.DialogMessage String details) {
     return new CertificateWarningDialog(certificate,
+                                        remoteHost,
                                         IdeBundle.message("dialog.title.untrusted.server.s.certificate"),
                                         details == null
                                         ? IdeBundle.message("text.server.s.certificate.trusted")
@@ -39,7 +42,7 @@ public class CertificateWarningDialog extends DialogWrapper {
   }
 
   public static CertificateWarningDialog createUntrustedCertificateWarning(@NotNull X509Certificate certificate) {
-    return createUntrustedCertificateWarning(certificate, null);
+    return createUntrustedCertificateWarning(certificate, null,null);
   }
 
   public static CertificateWarningDialog createExpiredCertificateWarning(@NotNull X509Certificate certificate) {
@@ -51,9 +54,12 @@ public class CertificateWarningDialog extends DialogWrapper {
   private JPanel myCertificateInfoPanel;
   private JTextPane myNoticePane;
   private JTextPane myMessagePane;
+  private JPanel myRemoteHostPanel;
+  private JBLabel myRemoteHostLabel;
   private final X509Certificate myCertificate;
 
   public CertificateWarningDialog(@NotNull X509Certificate certificate,
+                                  @Nullable @NlsSafe String remoteHost,
                                   @NotNull @NlsContexts.DialogTitle String title,
                                   @NotNull @NlsContexts.DetailedDescription String message) {
     super((Project)null, false);
@@ -90,6 +96,14 @@ public class CertificateWarningDialog extends DialogWrapper {
                            .wrapWithHtmlBody()
                            .toString());
     myCertificateInfoPanel.add(new CertificateInfoPanel(certificate), BorderLayout.CENTER);
+
+    if (remoteHost == null) {
+      myRemoteHostPanel.setVisible(false);
+    }
+    else {
+      myRemoteHostLabel.setText(remoteHost);
+    }
+
     setResizable(true);
     init();
     LOG.debug("Preferred size: " + getPreferredSize());

@@ -15,12 +15,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
@@ -173,10 +174,37 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   @Override
   public void checkServerTrusted(final X509Certificate[] chain, String authType) throws CertificateException {
+    checkServerTrusted(chain, authType, (String)null);
+  }
+
+  @Override
+  public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+    String remoteHost;
+    SocketAddress sa = socket.getRemoteSocketAddress();
+    if (sa instanceof InetSocketAddress isa) {
+      remoteHost = isa.getHostString() + ":" + isa.getPort();
+    }
+    else {
+      remoteHost = sa.toString();
+    }
+    checkServerTrusted(chain, authType, remoteHost);
+  }
+
+  @Override
+  public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
+    String remoteHost = engine.getPeerHost();
+    int peerPort = engine.getPeerPort();
+    if (peerPort > 0) {
+      remoteHost = remoteHost + ":" + peerPort;
+    }
+    checkServerTrusted(chain, authType, remoteHost);
+  }
+
+  private void checkServerTrusted(X509Certificate[] chain, String authType, String remoteHost) throws CertificateException {
     withCalculatedCertificateStrategy(strategyWithReason -> {
       boolean askUser = strategyWithReason.getStrategy() == UntrustedCertificateStrategy.ASK_USER;
       String askUserReason = strategyWithReason.getReason();
-      checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, true, null, null, askUserReason));
+      checkServerTrusted(chain, authType, remoteHost, new CertificateConfirmationParameters(askUser, true, null, null, askUserReason));
     });
   }
 
@@ -197,10 +225,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   @Deprecated
   public void checkServerTrusted(final X509Certificate[] chain, String authType, boolean addToKeyStore, boolean askUser)
     throws CertificateException {
-    checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, addToKeyStore, null, null, null));
+    checkServerTrusted(chain, authType, null, new CertificateConfirmationParameters(askUser, addToKeyStore, null, null, null));
   }
 
-  public void checkServerTrusted(final X509Certificate[] chain, String authType, @NotNull CertificateConfirmationParameters parameters)
+  public void checkServerTrusted(final X509Certificate[] chain, String authType, @NotNull CertificateConfirmationParameters parameters) throws CertificateException {
+    checkServerTrusted(chain, authType, null, parameters);
+  }
+
+  private void checkServerTrusted(final X509Certificate[] chain, String authType, String remoteHost, @NotNull CertificateConfirmationParameters parameters)
     throws CertificateException {
 
     CertificateException lastCertificateException = null;
@@ -221,14 +253,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         myCustomManager.checkServerTrusted(chain, authType);
       }
       catch (CertificateException e) {
-        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, parameters)) {
+        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, remoteHost, parameters)) {
           throw lastCertificateException != null ? lastCertificateException : e;
         }
       }
     }
   }
 
-  private boolean confirmAndUpdate(final X509Certificate[] chain, @NotNull CertificateConfirmationParameters parameters) {
+  private boolean confirmAndUpdate(final X509Certificate[] chain, String remoteHost, @NotNull CertificateConfirmationParameters parameters) {
     Application app = ApplicationManager.getApplication();
     final X509Certificate endPoint = chain[0];
     // IDEA-123467 and IDEA-123335 workaround
@@ -261,7 +293,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       LOG.info(acceptLogMessage);
       accepted = CertificateManager.Companion.showAcceptDialog(() -> {
         // TODO may be another kind of warning, if default trust store is missing
-        return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, parameters.myCertificateDetails);
+        return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, remoteHost, parameters.myCertificateDetails);
       });
     }
     else {
