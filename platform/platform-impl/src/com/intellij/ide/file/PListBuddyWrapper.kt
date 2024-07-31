@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.file
+package com.intellij.ide.file
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -18,11 +18,9 @@ import java.io.StringReader
 
 @ApiStatus.Internal
 class PListBuddyWrapper(private val pListPath: String) {
-  companion object {
-    private const val UTIL_PATH: String = "/usr/libexec/PListBuddy"
-    private const val MAX_CHARS_OUTPUT = 20
-  }
-
+  private val UTIL_PATH: String = "/usr/libexec/PListBuddy"
+  private val MAX_CHARS_OUTPUT = 20
+  
   enum class OutputType {
     DEFAULT, XML
   }
