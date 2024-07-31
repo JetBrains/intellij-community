@@ -216,7 +216,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
         workspaceConfiguration.MAKE_PROJECT_ON_SAVE = cbEnableAutomake.isSelected
       }
       if (!disabledSettings.contains(Setting.PARALLEL_COMPILATION)) {
-        workspaceConfiguration.JPS_PARALLEL_COMPILATION = comboboxJpsParallelCompilation.getItemAt(comboboxJpsParallelCompilation.selectedIndex)
+        configuration.parallelCompilationOption = comboboxJpsParallelCompilation.getItemAt(comboboxJpsParallelCompilation.selectedIndex)
       }
       if (!disabledSettings.contains(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE)) {
         workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE = cbRebuildOnDependencyChange.isSelected
@@ -259,7 +259,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
     cbAssertNotNull.setSelected(configuration.isAddNotNullAssertions)
     cbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE)
     cbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE)
-    comboboxJpsParallelCompilation.selectedItem = workspaceConfiguration.JPS_PARALLEL_COMPILATION
+    comboboxJpsParallelCompilation.selectedItem = configuration.parallelCompilationOption
     val heapSize = workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE
     heapSizeField.text = if (heapSize > 0) heapSize.toString() else ""
     // for compatibility with older projects
@@ -292,7 +292,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
     isModified = isModified || !disabledSettings.contains(Setting.AUTO_MAKE)
                  && ComparingUtils.isModified(cbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE)
     isModified = isModified || !disabledSettings.contains(Setting.PARALLEL_COMPILATION)
-                 && (comboboxJpsParallelCompilation.selectedItem != workspaceConfiguration.JPS_PARALLEL_COMPILATION)
+                 && (comboboxJpsParallelCompilation.selectedItem != configuration.parallelCompilationOption)
     isModified = isModified || !disabledSettings.contains(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE)
                  && ComparingUtils.isModified(cbRebuildOnDependencyChange, workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE)
     isModified = isModified || !disabledSettings.contains(Setting.HEAP_SIZE)

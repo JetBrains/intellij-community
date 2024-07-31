@@ -166,6 +166,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
     public boolean USE_RELEASE_OPTION = true;
+    @Nullable
+    public JpsParallelCompilationOption JPS_PARALLEL_COMPILATION = null;
   }
 
   @Override
@@ -296,6 +298,14 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
       clearBuildManagerState(myProject);
     }
   }
+
+  private void migrateParallelCompilationOption() {
+    // TODO: check if this is a gradle based project or not
+    boolean isOldParallelCompilationEnabled = isOldParallelCompilationEnabled();
+    if (isOldParallelCompilationEnabled) myState.JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.ENABLED;
+    else myState.JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.AUTOMATIC;
+  }
+
   private boolean isOldParallelCompilationEnabled() {
     // returns parallel compilation flag first by looking into workspace.xml and then intellij.yaml
 
@@ -310,7 +320,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
   @Override
   public boolean isParallelCompilationEnabled() {
-    return switch (CompilerWorkspaceConfiguration.getInstance(myProject).JPS_PARALLEL_COMPILATION) {
+    if (myState.JPS_PARALLEL_COMPILATION == null) migrateParallelCompilationOption();
+    return switch (myState.JPS_PARALLEL_COMPILATION) {
         case ENABLED, AUTOMATIC -> true;
         case DISABLED -> false;
       };
@@ -319,10 +330,22 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   @Override
   public void setParallelCompilationEnabled(boolean enabled) {
     if (enabled) {
-      CompilerWorkspaceConfiguration.getInstance(myProject).JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.ENABLED;
+      myState.JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.ENABLED;
     } else {
-      CompilerWorkspaceConfiguration.getInstance(myProject).JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.DISABLED;
+      myState.JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.DISABLED;
     }
+  }
+
+  @Override
+  @NotNull
+  public JpsParallelCompilationOption getParallelCompilationOption() {
+    if (myState.JPS_PARALLEL_COMPILATION == null) migrateParallelCompilationOption();
+    return myState.JPS_PARALLEL_COMPILATION;
+  }
+
+  @Override
+  public void setParallelCompilationOption(@NotNull JpsParallelCompilationOption option) {
+    myState.JPS_PARALLEL_COMPILATION = option;
   }
 
   @Override

@@ -38,8 +38,14 @@ public abstract class CompilerConfiguration {
   /**
    * Explicitly set parallel value property. The value will be written to user-local settings file (workspace.xml)
    * This value will override any value set in shared settings.
+   * @deprecated use {@link #setParallelCompilationOption(JpsParallelCompilationOption)} instead
    */
+  @Deprecated
   public abstract void setParallelCompilationEnabled(boolean enabled);
+
+  @NotNull
+  public abstract JpsParallelCompilationOption getParallelCompilationOption();
+  public abstract void setParallelCompilationOption(@NotNull JpsParallelCompilationOption option);
 
   @Nullable
   public abstract String getBytecodeTargetLevel(Module module);
