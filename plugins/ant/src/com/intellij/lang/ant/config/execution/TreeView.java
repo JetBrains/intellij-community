@@ -353,10 +353,9 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   private void popupInvoked(Component component, int x, int y) {
-    final TreePath path = myTree.getLeadSelectionPath();
+    TreePath path = myTree.getLeadSelectionPath();
     if (path == null) return;
-    if (!(path.getLastPathComponent()instanceof MessageNode)) return;
-    if (getData(CommonDataKeys.NAVIGATABLE_ARRAY.getName()) == null) return;
+    if (!(path.getLastPathComponent() instanceof MessageNode)) return;
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.ANT_MESSAGES_POPUP, group);
@@ -372,18 +371,10 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      final MessageNode item = getSelectedItem();
-      return item != null? (DataProvider)id -> getSlowData(id, item) : null;
-    }
-    return null;
-  }
-
-  @Nullable
-  private Object getSlowData(@NonNls @NotNull String dataId, @NotNull final MessageNode item) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    MessageNode item = getSelectedItem();
+    if (item == null) return;
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       if (isValid(item.getFile())) {
         return PsiNavigationSupport.getInstance().createNavigatable(myProject, item.getFile(), item.getOffset());
       }
@@ -399,8 +390,8 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
           return descriptor;
         }
       }
-    }
-    return null;
+      return null;
+    });
   }
 
   @Nullable
@@ -587,7 +578,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     return myOccurenceNavigatorSupport.hasPreviousOccurence();
   }
 
-  private class MyTree extends Tree implements DataProvider {
+  private class MyTree extends Tree implements UiDataProvider {
     MyTree() {
       super(myTreeModel);
     }
@@ -605,27 +596,24 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return new TextCopyProvider() {
-          @Override
-          public @NotNull ActionUpdateThread getActionUpdateThread() {
-            return ActionUpdateThread.EDT;
-          }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, new TextCopyProvider() {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
-          @Nullable
-          @Override
-          public Collection<String> getTextLinesToCopy() {
-            TreePath selection = getSelectionPath();
-            Object value = selection == null ? null : selection.getLastPathComponent();
-            if (value instanceof MessageNode messageNode) {
-              return Arrays.asList(messageNode.getText());
-            }
-            return value == null ? null : Collections.singleton(value.toString());
+        @Nullable
+        @Override
+        public Collection<String> getTextLinesToCopy() {
+          TreePath selection = getSelectionPath();
+          Object value = selection == null ? null : selection.getLastPathComponent();
+          if (value instanceof MessageNode messageNode) {
+            return Arrays.asList(messageNode.getText());
           }
-        };
-      }
-      return null;
+          return value == null ? null : Collections.singleton(value.toString());
+        }
+      });
     }
   }
 }
