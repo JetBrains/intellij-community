@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -62,6 +64,8 @@ public final class RegionUrlMapper {
    * @param url the original resource URL
    * @return the possibly adjusted URL that is specific to the currently specified IDE region.
    */
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   @Contract("null -> null")
   @Nullable
   public static String mapUrl(@Nullable String url) {
@@ -76,6 +80,8 @@ public final class RegionUrlMapper {
    * @param region the region for which the original url might be adjusted
    * @return the adjusted url, in case the mapping is configured or the original url, if no adjustments are required
    */
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   @Contract("null, _ -> null")
   @Nullable
   public static String mapUrl(@Nullable String url, @NotNull Region region) {
