@@ -21,10 +21,12 @@ import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicReferenceArray
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.BiConsumer
 import java.util.function.Function
 import kotlin.concurrent.withLock
+import kotlin.math.abs
 import kotlin.math.ceil
 
 @Internal
@@ -174,6 +176,117 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
       }
       finally {
         cacheAccessLock.unlock()
+      }
+    }
+  }
+}
+
+
+/** Implementation uses a very simple MRU-cache under the hood */
+@Suppress("unused")
+@Internal
+class MRUIndexStorageCacheProvider : MapIndexStorageCacheProvider {
+
+  init {
+    thisLogger().info("MRU cache will be used for indexes")
+  }
+
+  //cache efficacy statistics:
+  //MAYBE RC: statistics could be implemented universally, with wrapper around MapIndexStorageCache impl -- need to intercept
+  //          get()/getIfCached(), and valueReader
+  private val totalReads: AtomicLong = AtomicLong()
+  private val totalUncachedReads: AtomicLong = AtomicLong()
+  private val totalEvicted: AtomicLong = AtomicLong()
+
+  override fun totalReads(): Long = totalReads.get()
+
+  override fun totalReadsUncached(): Long = totalUncachedReads.get()
+
+  override fun totalEvicted(): Long = totalEvicted.get()
+
+  override fun <Key : Any, Value> createCache(
+    valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
+    evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
+    hashingStrategy: EqualityPolicy<Key>,
+    cacheSizeHint: Int,
+  ): MapIndexStorageCache<Key, Value> {
+    val cache = MRUCache<Key, ChangeTrackingValueContainer<Value>>(
+      { key -> totalUncachedReads.incrementAndGet(); valueReader.apply(key) },
+      { key, value -> totalEvicted.incrementAndGet(); evictedValuesPersister.accept(key, value) },
+      hashingStrategy,
+      cacheSizeHint * 5 / 4 //to match SLRU cache sizing
+    )
+
+    return object : MapIndexStorageCache<Key, Value> {
+      override fun read(key: Key): ChangeTrackingValueContainer<Value> {
+        totalReads.incrementAndGet()
+        return cache.get(key)
+      }
+
+      override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? {
+        totalReads.incrementAndGet()
+        return cache.getIfCached(key)
+      }
+
+      //MAYBE RC: totalReads.addAndGet(cache.values().size)?
+      override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cache.values()
+
+      override fun invalidateAll() = cache.invalidateAll()
+    }
+  }
+
+  /** 'weak consistency' cache */
+  private class MRUCache<Key : Any, Value>(
+    val valueReader: Function<Key, Value>,
+    val evictedValuesPersister: BiConsumer<Key, Value>,
+    val hashingStrategy: EqualityPolicy<Key>,
+    cacheSize: Int,
+  ) {
+
+    data class CacheEntry<K : Any, V>(val key: K, val value: V)
+
+    private val table: AtomicReferenceArray<CacheEntry<Key, Value>?> = AtomicReferenceArray(cacheSize)
+
+    fun get(key: Key): Value {
+      val hash = hashingStrategy.getHashCode(key)
+      val index = abs(hash % table.length())
+      val entry = table[index]
+      if (entry != null && hashingStrategy.isEqual(entry.key, key)) {
+        return entry.value
+      }
+
+      val value = valueReader.apply(key)
+      table[index] = CacheEntry(key, value)
+      if (entry != null) {
+        evictedValuesPersister.accept(entry.key, entry.value)
+      }
+      return value
+    }
+
+    fun getIfCached(key: Key): Value? {
+      val hash = hashingStrategy.getHashCode(key)
+      val index = abs(hash % table.length())
+      val entry = table[index]
+      if (entry != null && hashingStrategy.isEqual(entry.key, key)) {
+        return entry.value
+      }
+      return null
+    }
+
+    fun values(): Collection<Value> {
+      val values = mutableListOf<Value>()
+      for (i in 0 until table.length()) {
+        table[i]?.let { values.add(it.value) }
+      }
+      return values
+    }
+
+    fun invalidateAll() {
+      for (i in 0 until table.length()) {
+        table[i]?.let { entry ->
+          evictedValuesPersister.accept(entry.key, entry.value)
+        }
+        table[i] = null
       }
     }
   }
