@@ -92,7 +92,7 @@ class PresentationTreeBuilderImpl private constructor(
   override fun text(text: String, actionData: InlayActionData?) {
     require(text.isNotEmpty()) { "Text entry may not be empty. Please, fix the provider implementation." }
     val segmentText = if (MAX_SEGMENT_TEXT_LENGTH < text.length) {
-      text.substring(0, MAX_SEGMENT_TEXT_LENGTH) + "..."
+      text.substring(0, MAX_SEGMENT_TEXT_LENGTH) + "…"
     } else {
       text
     }
@@ -138,7 +138,7 @@ private class InlayTreeBuildingContext {
     }
     if (nodeCount == PresentationTreeBuilderImpl.MAX_NODE_COUNT - 1) {
       limitReached = true
-      tree.add(parent, InlayTags.TEXT_TAG, "...")
+      tree.add(parent, InlayTags.TEXT_TAG, "…")
       return PresentationTreeBuilderImpl.DOESNT_FIT_INDEX
     }
     nodeCount++
