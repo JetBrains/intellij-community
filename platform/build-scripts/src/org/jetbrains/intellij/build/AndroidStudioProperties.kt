@@ -111,7 +111,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "-Djava.security.manager=allow",
       // Configure the feedback URL displayed for IDE startup failures. This system property should match
       // StartupErrorReporter.STARTUP_ERROR_REPORTING_URL_PROPERTY. Eventually we may want a better landing page (b/295896403).
-      "-Dintellij.custom.startup.error.reporting.url=https://issuetracker.google.com/issues/new?component=192708",
+      "-Dij.startup.error.report.url=https://issuetracker.google.com/issues/new?component=192708",
     )
 
     productLayout.productImplementationModules = listOf(
