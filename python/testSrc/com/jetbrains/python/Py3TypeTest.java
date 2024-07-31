@@ -2739,6 +2739,36 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-71748
+  public void testDictDunderEqAppliedFromLeftToRightByDefault() {
+    doTest("int", """
+      class A:
+        def __eq__(self, other: Any) -> int: ...
+      
+      class B:
+        def __eq__(self, other: Any) -> str: ...
+      
+      a = A()
+      b = B()
+      expr = a == b
+      """);
+  }
+
+  // PY-71748
+  public void testDictDunderNeAppliedFromLeftToRightByDefault() {
+    doTest("int", """
+      class A:
+        def __ne__(self, other: Any) -> int: ...
+      
+      class B:
+        def __ne__(self, other: Any) -> str: ...
+      
+      a = A()
+      b = B()
+      expr = a != b
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

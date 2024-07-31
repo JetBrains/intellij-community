@@ -637,7 +637,6 @@ public final @NonNls class PyNames {
       case "__gt__" -> "__lt__";
       case "__ge__" -> "__le__";
       case "__le__" -> "__ge__";
-      case "__eq__", "__ne__" -> name;
       default -> null;
     };
   }
