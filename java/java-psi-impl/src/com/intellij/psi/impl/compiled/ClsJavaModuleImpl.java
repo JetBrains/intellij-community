@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   private final PsiJavaModuleReferenceElement myReference;
@@ -174,16 +173,5 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     return JavaResolveUtil.processJavaModuleExports(this, processor, state, lastParent, place);
-  }
-
-  public boolean equals(Object o) {
-    if (!(o instanceof ClsJavaModuleImpl)) return false;
-    ClsJavaModuleImpl other = (ClsJavaModuleImpl)o;
-    return getName().equals(other.getName()) &&
-            Objects.equals(getContainingFile(), other.getContainingFile());
-  }
-
-  public int hashCode() {
-    return getName().hashCode();
   }
 }

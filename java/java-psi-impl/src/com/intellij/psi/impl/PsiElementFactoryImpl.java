@@ -458,7 +458,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
     PsiImportModuleStatement[] statements = importList.getImportModuleStatements();
     if (statements.length != 1) throw new IncorrectOperationException("Created more than one module with name: " + moduleName);
     PsiImportModuleStatement statement = statements[0];
-    GeneratedMarkerVisitor.markGenerated(statement);
+    GeneratedMarkerVisitor.markGenerated(statement); //Don't reformat because there is a chance of infinite recursion
     return statement;
   }
 
@@ -554,7 +554,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
     PsiJavaFile aFile = createDummyJavaFile("import " + aClass.getQualifiedName() + ";");
     PsiImportStatementBase statement = extractImport(aFile, false);
-    GeneratedMarkerVisitor.markGenerated(statement);
+    GeneratedMarkerVisitor.markGenerated(statement);  //Don't reformat because there is a chance of infinite recursion
     return (PsiImportStatement)statement;
   }
 
@@ -569,7 +569,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
     PsiJavaFile aFile = createDummyJavaFile("import " + packageName + ".*;");
     PsiImportStatementBase statement = extractImport(aFile, false);
-    GeneratedMarkerVisitor.markGenerated(statement);
+    GeneratedMarkerVisitor.markGenerated(statement); //Don't reformat because there is a chance of infinite recursion
     return (PsiImportStatement)statement;
   }
 
