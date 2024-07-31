@@ -390,6 +390,6 @@ public abstract class JewelLogger {
 
         public fun getInstance(category: String): JewelLogger = factory.getInstance("#$category")
 
-        public fun getInstance(clazz: Class<*>): JewelLogger = getInstance('#'.toString() + clazz.name)
+        public fun getInstance(clazz: Class<*>): JewelLogger = getInstance("#${clazz.name}")
     }
 }

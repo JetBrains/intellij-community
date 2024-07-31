@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
-import org.jetbrains.jewel.foundation.util.inDebugMode
 import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider
@@ -85,21 +84,17 @@ public class StandalonePainterHintsProvider(
         val adjustedKey = if (isDark) key.removeSuffix(".Dark") else key
 
         if (adjustedKey !in supportedCheckboxKeys) {
-            if (inDebugMode) {
-                logger.debug("${if (isDark) "Dark" else "Light"} theme: color key $key is not supported, will be ignored")
-            }
+            logger.debug("${if (isDark) "Dark" else "Light"} theme: color key $key is not supported, will be ignored")
             return
         }
 
-        if (adjustedKey != key && inDebugMode) {
-            logger.debug("${if (isDark) "Dark" else "Light"} theme: color key $key is deprecated, use $adjustedKey instead")
+        if (adjustedKey != key) {
+            logger.warn("${if (isDark) "Dark" else "Light"} theme: color key $key is deprecated, use $adjustedKey instead")
         }
 
         val parsedValue = resolveColor(value)
         if (parsedValue == null) {
-            if (inDebugMode) {
-                logger.debug("${if (isDark) "Dark" else "Light"} theme: color key $key has invalid value: '$value'")
-            }
+            logger.info("${if (isDark) "Dark" else "Light"} theme: color key $key has invalid value: '$value'")
             return
         }
 

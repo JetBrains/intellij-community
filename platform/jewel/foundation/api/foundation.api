@@ -883,10 +883,6 @@ public final class org/jetbrains/jewel/foundation/theme/ThemeIconData$Companion 
 	public final fun getEmpty ()Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;
 }
 
-public final class org/jetbrains/jewel/foundation/util/DebugKt {
-	public static final fun getInDebugMode ()Z
-}
-
 public abstract class org/jetbrains/jewel/foundation/util/JewelLogger {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/foundation/util/JewelLogger$Companion;

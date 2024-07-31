@@ -14,7 +14,6 @@ import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.res.loadXmlImageVector
 import androidx.compose.ui.unit.Density
-import org.jetbrains.jewel.foundation.util.inDebugMode
 import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
@@ -44,8 +43,7 @@ private val errorPainter = ColorPainter(Color.Magenta)
  * [getPainter] multiple times.
  *
  * If a resource fails to load, it will be silently replaced by a
- * magenta color painter, and the exception logged. If Jewel is in
- * [debug mode][inDebugMode], however, exceptions will not be suppressed.
+ * magenta color painter, and the exception logged as error.
  */
 public class ResourcePainterProvider(
     private val basePath: String,
@@ -115,11 +113,8 @@ public class ResourcePainterProvider(
         val (chosenScope, url) =
             scopes.firstNotNullOfOrNull { resolveResource(it) }
                 ?: run {
-                    if (inDebugMode) {
-                        error("Resource '$basePath(${scope.acceptedHints.joinToString()})' not found")
-                    } else {
-                        return errorPainter
-                    }
+                    logger.error("Resource '$basePath(${scope.acceptedHints.joinToString()})' not found")
+                    return errorPainter
                 }
 
         val extension = basePath.substringAfterLast(".").lowercase()
@@ -230,10 +225,6 @@ public class ResourcePainterProvider(
                 loadingAction(url)
             } catch (e: RuntimeException) {
                 val message = "Unable to load SVG resource from $url\n${e.stackTraceToString()}"
-                if (inDebugMode) {
-                    error(message)
-                }
-
                 logger.error(message)
                 return errorPainter
             }
