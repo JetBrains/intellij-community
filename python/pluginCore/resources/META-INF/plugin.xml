@@ -50,7 +50,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.grazie"/>
     <module name="intellij.python.langInjection"/>
     <module name="intellij.python.markdown"/>
-    <module name="intellij.python.reStructuredText"/>
     <module name="intellij.python.terminal"/>
   </content>
 
