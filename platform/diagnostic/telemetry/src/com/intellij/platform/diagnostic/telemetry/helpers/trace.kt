@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.helpers
 
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableNotNullFunction
 import com.intellij.util.ThrowableConsumer
 import io.opentelemetry.api.common.Attributes
@@ -101,10 +100,6 @@ inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
     return operation(this)
   }
   catch (e: CancellationException) {
-    recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
-    throw e
-  }
-  catch (e: ProcessCanceledException) {
     recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
