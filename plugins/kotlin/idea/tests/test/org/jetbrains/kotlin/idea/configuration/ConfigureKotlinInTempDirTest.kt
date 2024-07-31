@@ -164,11 +164,10 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         assertEmpty(getCanBeConfiguredModules(myProject, jsConfigurator))
     }
 
-    // The JS configurator does not work with the new klib format because it requires target platforms to be set correctly
-    //fun testTwoModulesWithJSNonDefaultPath_doNotCopyInDefault() {
-    //    doTestConfigureModulesWithNonDefaultSetup(jsConfigurator)
-    //    assertEmpty(getCanBeConfiguredModules(myProject, jvmConfigurator))
-    //}
+    fun testTwoModulesWithJSNonDefaultPath_doNotCopyInDefault() {
+        doTestConfigureModulesWithNonDefaultSetup(jsConfigurator)
+        assertEmpty(getCanBeConfiguredModules(myProject, jvmConfigurator))
+    }
 
     fun testModuleFacetChange() {
         val kotlinFacet = KotlinFacet.get(module)!!
