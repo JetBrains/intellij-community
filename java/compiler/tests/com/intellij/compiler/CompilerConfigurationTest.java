@@ -68,6 +68,89 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
     assertEquals("bar", assertOneElement(newProfile.getModuleNames()));
   }
 
+  public void testDefaultParallelCompilationOptionIsAutomatic() {
+    assertEquals(getConfiguration().getParallelCompilationOption(), ParallelCompilationOption.AUTOMATIC);
+  }
+
+  public void testDefaultParallelCompilationOptionDoesNotChangeXml() {
+    CompilerConfigurationImpl configuration = getConfiguration();
+
+    assertNotNull(configuration.getParallelCompilationOption());
+    assertThat(configuration.getState()).isEqualTo("<state />");
+  }
+
+  public void testChangedInOldWayParallelCompilationOptionChangesXml() {
+    CompilerConfigurationImpl configuration = getConfiguration();
+
+    configuration.setParallelCompilationEnabled(true);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.ENABLED);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Enabled" />
+     </state>"""
+    );
+
+    configuration.setParallelCompilationEnabled(false);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.DISABLED);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Disabled" />
+     </state>"""
+    );
+
+  }
+
+  public void testChangedInNewWayParallelCompilationOptionChangesXml() {
+    CompilerConfigurationImpl configuration = getConfiguration();
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.ENABLED);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.ENABLED);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Enabled" />
+     </state>""");
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.AUTOMATIC);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.AUTOMATIC);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Automatic" />
+     </state>""");
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.DISABLED);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.DISABLED);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Disabled" />
+     </state>""");
+  }
+
+  public void testParallelCompilationOptionMapToBoolean() {
+    CompilerConfiguration configuration = getConfiguration();
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.ENABLED);
+
+    assertTrue(configuration.isParallelCompilationEnabled());
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.AUTOMATIC);
+
+    assertTrue(configuration.isParallelCompilationEnabled());
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.DISABLED);
+
+    assertFalse(configuration.isParallelCompilationEnabled());
+  }
+
   private CompilerConfigurationImpl getConfiguration() {
     return (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
   }
