@@ -128,12 +128,16 @@ function updatePopup(sessionDiv) {
     prefixDiv.innerHTML = `prefix: &quot;${lookup["prefix"]}&quot;; latency: ${lookup["latency"]}`
   }
   popup.appendChild(prefixDiv)
-  // order: () -> (suggestions or diffView) -> features
+  // order: () -> (suggestions or diffView) -> features -> contexts
   const needAddFeatures = sessionDiv.classList.contains("diffView") || sessionDiv.classList.contains("suggestions")
+  const needAddContext = sessionDiv.classList.contains("features")
   const isCodeGeneration = sessionDiv.classList.contains("code-generation");
   closeAllLists()
   if (needAddFeatures) {
     addCommonFeatures(sessionDiv, popup, lookup)
+  }
+  else if (needAddContext && !isCodeGeneration) {
+    addContexts(sessionDiv, popup, lookup)
   }
   else {
     if (isCodeGeneration) {
@@ -191,7 +195,7 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
 
 function addCommonFeatures(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("features")
-  sessionDiv.classList.remove("diffView","suggestions")
+  sessionDiv.classList.remove("contexts", "diffView","suggestions")
   const parts = sessionDiv.id.split(" ")
   const sessionId = parts[0]
   const lookupOrder = parts[1]
@@ -220,6 +224,21 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   addDiagnosticsBlock("ANALYZED SUGGESTIONS", "analyzed_proposals", popup, lookup)
   addDiagnosticsBlock("ANALYZED FILTERED", "analyzed_filtered", popup, lookup)
   addDiagnosticsBlock("RESULT SUGGESTIONS", "result_proposals", popup, lookup)
+}
+
+function addContexts(sessionDiv, popup, lookup) {
+  sessionDiv.classList.add("contexts")
+  sessionDiv.classList.remove("features", "diffView","suggestions")
+
+  if (!("cc_context" in lookup["additionalInfo"])) return
+
+  const contextJson = lookup["additionalInfo"]["cc_context"]
+  addButtonToCopyCompletionContext(contextJson, sessionDiv, popup, lookup)
+
+  const contextObject = JSON.parse(contextJson)
+  contextObject.contexts.items.forEach(context => {
+    popup.appendChild(createContextBlock(context))
+  })
 }
 
 function createContextBlock(context) {
@@ -251,7 +270,7 @@ function addButtonToCopyCompletionContext(context, sessionDiv, popup, lookup) {
 
 function addSuggestions(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("suggestions")
-  sessionDiv.classList.remove("features")
+  sessionDiv.classList.remove("features", "contexts")
   const sessionId = sessionDiv.id.split(" ")[0]
   const suggestions = lookup["suggestions"]
   for (let i = 0; i < suggestions.length; i++) {
