@@ -32,6 +32,7 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
@@ -316,13 +317,27 @@ class Bar extends Foo {
     def main = myFixture.addClass("public class Main { public static void main(String[] args) { new Goo().bar(); } }")
     assertEmpty(make())
 
-    touch(foo.virtualFile)
-    touch(main.containingFile.virtualFile)
-    if (isRebuildExpectedAfterChangeInJavaClassExtendedByGroovy()) {
-      assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
-    }
-    else {
-      assertEmpty(make())
+    if(JavaBuilderUtil.isDepGraphEnabled()) {
+      long oldFooStamp = findClassFile("Foo").lastModified()
+      long oldGooStamp = findClassFile("Goo").lastModified()
+      long oldMainStamp = findClassFile("Main").lastModified()
+
+      touch(foo.virtualFile)
+      touch(main.containingFile.virtualFile)
+      shouldSucceed { make() }
+
+      assert oldFooStamp != findClassFile("Foo").lastModified()
+      assert oldMainStamp != findClassFile("Main").lastModified()
+      assert oldGooStamp != findClassFile("Goo").lastModified()
+    } else {
+      touch(foo.virtualFile)
+      touch(main.containingFile.virtualFile)
+      if (isRebuildExpectedAfterChangeInJavaClassExtendedByGroovy()) {
+        assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
+      }
+      else {
+        assertEmpty(make())
+      }
     }
   }
 
@@ -866,15 +881,29 @@ string
 
     assertEmpty make()
 
-    touch bar1.virtualFile
-    touch bar3.virtualFile
-    touch using.virtualFile
+    if(JavaBuilderUtil.isDepGraphEnabled()) {
+      long oldBar1Stamp = findClassFile("bar/Bar1").lastModified()
+      long oldBar2Stamp = findClassFile("bar/Bar2").lastModified()
+      long oldBar3Stamp = findClassFile("bar/Bar3").lastModified()
 
-    if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
-      assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
-    }
-    else {
-      assertEmpty make()
+      touch(bar1.virtualFile)
+      touch(bar3.virtualFile)
+      shouldSucceed { make() }
+
+      assert oldBar1Stamp != findClassFile("bar/Bar1").lastModified()
+      assert oldBar2Stamp != findClassFile("bar/Bar2").lastModified()
+      assert oldBar3Stamp != findClassFile("bar/Bar3").lastModified()
+    } else {
+      touch bar1.virtualFile
+      touch bar3.virtualFile
+      touch using.virtualFile
+
+      if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
+        assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
+      }
+      else {
+        assertEmpty make()
+      }
     }
   }
 
