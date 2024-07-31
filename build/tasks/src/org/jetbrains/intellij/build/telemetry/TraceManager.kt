@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
-package org.jetbrains.intellij.build
+package org.jetbrains.intellij.build.telemetry
 
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Suppress("SSBasedInspection")
 var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor> = {
-  val batchSpanProcessor = BatchSpanProcessor(coroutineScope = CoroutineScope(Job()), spanExporters = JaegerJsonSpanExporterManager.spanExporterProvider())
+  val batchSpanProcessor = BatchSpanProcessor(coroutineScope = CoroutineScope(Job()), spanExporters = JaegerJsonSpanExporterManager.spanExporterProvider)
   val tracerProvider = SdkTracerProvider.builder()
     .addSpanProcessor(batchSpanProcessor)
     .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "builder")))
@@ -71,24 +71,27 @@ object JaegerJsonSpanExporterManager {
   private val shutdownHookAdded = AtomicBoolean()
   private val jaegerJsonSpanExporter = AtomicReference<JaegerJsonSpanExporter?>()
 
-  internal val spanExporterProvider: () -> List<AsyncSpanExporter> = {
-    val list = mutableListOf(ConsoleSpanExporter(), object : AsyncSpanExporter {
-      override suspend fun export(spans: Collection<SpanData>) {
-        jaegerJsonSpanExporter.get()?.export(spans)
-      }
+  internal val spanExporterProvider: List<AsyncSpanExporter> by lazy {
+    buildList {
+      add(ConsoleSpanExporter())
+      add(object : AsyncSpanExporter {
+        override suspend fun export(spans: Collection<SpanData>) {
+          jaegerJsonSpanExporter.get()?.export(spans)
+        }
 
-      override suspend fun flush() {
-        jaegerJsonSpanExporter.get()?.flush()
-      }
+        override suspend fun flush() {
+          jaegerJsonSpanExporter.get()?.flush()
+        }
 
-      override suspend fun shutdown() {
-        jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
+        override suspend fun shutdown() {
+          jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
+        }
+      })
+      val otlpEndPoint = normalizeOtlpEndPoint(System.getenv("OTLP_ENDPOINT"))
+      if (otlpEndPoint != null) {
+        add(OtlpSpanExporter(otlpEndPoint))
       }
-    })
-    normalizeOtlpEndPoint(System.getenv("OTLP_ENDPOINT"))?.let {
-      list.add(OtlpSpanExporter(it))
     }
-    list
   }
 
   suspend fun setOutput(file: Path, addShutDownHook: Boolean = true) {

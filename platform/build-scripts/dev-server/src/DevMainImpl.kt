@@ -15,13 +15,13 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.ConsoleSpanExporter
+import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.getAdditionalPluginMainModules
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
-import org.jetbrains.intellij.build.traceManagerInitializer
+import org.jetbrains.intellij.build.telemetry.traceManagerInitializer
 import java.io.File
 import java.nio.file.Path
 

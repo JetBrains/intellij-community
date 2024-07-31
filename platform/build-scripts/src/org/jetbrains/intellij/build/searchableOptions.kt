@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import java.nio.file.Files
 import java.nio.file.Path
 

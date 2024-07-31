@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
-package org.jetbrains.intellij.build
+package org.jetbrains.intellij.build.telemetry
 
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.api.common.AttributeKey
@@ -200,7 +200,7 @@ private fun formatDuration(duration: Long): java.lang.StringBuilder {
     if (count < multiplier) break
     val remainder = count % multiplier
     count /= multiplier
-    if (remainder != 0L || !unitValues.isEmpty()) {
+    if (remainder != 0L || !unitValues.isEmpty) {
       unitValues.add(0, remainder)
       unitIndices.add(0, i - 1)
     }

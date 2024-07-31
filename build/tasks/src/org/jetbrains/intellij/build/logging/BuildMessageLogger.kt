@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.logging
 
-import org.jetbrains.intellij.build.impl.logging.BuildMessageLoggerBase
+import org.jetbrains.annotations.ApiStatus
 
 abstract class BuildMessageLogger {
   abstract fun processMessage(message: LogMessage)
@@ -20,12 +20,15 @@ open class LogMessage(val kind: Kind, val text: String) {
   }
 }
 
-internal class CompilationErrorsLogMessage(@JvmField val compilerName: String, @JvmField val errorMessages: List<String>)
+@ApiStatus.Internal
+class CompilationErrorsLogMessage(@JvmField val compilerName: String, @JvmField val errorMessages: List<String>)
   : LogMessage(Kind.COMPILATION_ERRORS, "$compilerName compilation errors")
 
-internal class BuildProblemLogMessage(description: String, val identity: String?) : LogMessage(Kind.BUILD_PROBLEM, description)
+@ApiStatus.Internal
+class BuildProblemLogMessage(description: String, val identity: String?) : LogMessage(Kind.BUILD_PROBLEM, description)
 
-internal class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
+@ApiStatus.Internal
+class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
   companion object {
     @JvmField
     val FACTORY: () -> BuildMessageLogger = ::ConsoleBuildMessageLogger

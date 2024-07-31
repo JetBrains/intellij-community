@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.use
+import org.jetbrains.intellij.build.telemetry.use
 import com.intellij.util.io.PosixFilePermissionsUtil
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.TraceManager
+import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.BufferedInputStream
 import java.nio.file.FileSystems

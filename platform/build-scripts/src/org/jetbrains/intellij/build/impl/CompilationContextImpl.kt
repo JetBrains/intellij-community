@@ -7,8 +7,7 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import org.jetbrains.intellij.build.telemetry.use
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import com.jetbrains.JBR
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -36,6 +35,9 @@ import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImp
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
+import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
+import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
+import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.*
@@ -165,7 +167,7 @@ class CompilationContextImpl private constructor(
       check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
         Files.exists(COMMUNITY_ROOT.communityRoot.resolve(it))
       }) {
-        "communityHome ($COMMUNITY_ROOT) doesn\'t point to a directory containing IntelliJ Community sources"
+        "communityHome ($COMMUNITY_ROOT) doesn't point to a directory containing IntelliJ Community sources"
       }
 
       val messages = BuildMessagesImpl.create()

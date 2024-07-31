@@ -1,11 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl.logging
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.logging
 
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildScriptsLoggedError
-import org.jetbrains.intellij.build.CompilationErrorsLogMessage
-import org.jetbrains.intellij.build.LogMessage
 
 abstract class BuildMessageLoggerBase : BuildMessageLogger() {
   private var indent = 0

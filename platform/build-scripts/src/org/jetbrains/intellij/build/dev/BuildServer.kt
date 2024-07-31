@@ -3,13 +3,14 @@
 
 package org.jetbrains.intellij.build.dev
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import org.jetbrains.intellij.build.telemetry.useWithScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.telemetry.TraceManager
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*

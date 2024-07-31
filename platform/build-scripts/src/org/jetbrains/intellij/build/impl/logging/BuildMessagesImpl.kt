@@ -1,12 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
+import org.jetbrains.intellij.build.logging.BuildMessageLogger
+import org.jetbrains.intellij.build.logging.BuildMessageLoggerBase
+import org.jetbrains.intellij.build.logging.BuildProblemLogMessage
+import org.jetbrains.intellij.build.logging.CompilationErrorsLogMessage
+import org.jetbrains.intellij.build.logging.ConsoleBuildMessageLogger
+import org.jetbrains.intellij.build.logging.LogMessage
+import org.jetbrains.intellij.build.logging.TeamCityBuildMessageLogger
+import org.jetbrains.intellij.build.telemetry.TraceManager
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.file.Files

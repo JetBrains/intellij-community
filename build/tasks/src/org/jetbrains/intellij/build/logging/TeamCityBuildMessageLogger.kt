@@ -1,40 +1,69 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl.logging
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.logging
 
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.sdk.trace.ReadableSpan
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
-import org.jetbrains.intellij.build.BuildMessageLogger
-import org.jetbrains.intellij.build.BuildProblemLogMessage
-import org.jetbrains.intellij.build.CompilationErrorsLogMessage
-import org.jetbrains.intellij.build.LogMessage
-import org.jetbrains.intellij.build.LogMessage.Kind.*
-import java.io.PrintStream
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.logging.LogMessage.Kind.*
 
 class TeamCityBuildMessageLogger : BuildMessageLogger() {
   companion object {
     @JvmField
     val FACTORY: () -> BuildMessageLogger = ::TeamCityBuildMessageLogger
 
-    private val out: PrintStream? = System.out
-
     private fun print(messageId: String, argument: String) {
-      printMessageText(ServiceMessage.asString(messageId, argument))
+      println(SpanAwareServiceMessage(messageId, argument))
     }
 
-    private fun print(messageId: String, vararg attributes: Pair<String, String>) {
-      check(attributes.any()) { messageId }
-      printMessageText(ServiceMessage.asString(messageId, mapOf(*attributes)))
+    @ApiStatus.Internal
+    fun print(messageId: String, vararg attributes: Pair<String, String>) {
+      println(SpanAwareServiceMessage(messageId, *attributes))
     }
 
-    private fun printMessageText(message: String) {
-      out?.println(message)
+    /**
+     * [io.opentelemetry.api.trace.Span]-aware [ServiceMessage].
+     *
+     * [ServiceMessage.setFlowId] is called with [io.opentelemetry.api.trace.SpanContext.getSpanId].
+     *
+     * See [the docs](https://www.jetbrains.com/help/teamcity/service-messages.html#Message+FlowId).
+     */
+    @ApiStatus.Internal
+    class SpanAwareServiceMessage : ServiceMessage {
+      constructor(messageName: String, argument: String) : super(messageName, argument)
+      constructor(messageName: String, vararg attributes: Pair<String, String>) : super(messageName, mapOf(*attributes))
+
+      init {
+        setFlowId(Span.current().spanContext.spanId)
+      }
+    }
+
+    /**
+     * Wraps a [span] into a TeamCity flow linked to a parent flow of a parent span.
+     * Flows are not displayed in a TeamCity build log.
+     */
+    @ApiStatus.Internal
+    inline fun <T> withFlow(span: Span, operation: () -> T): T {
+      if (!TeamCityHelper.isUnderTeamCity) {
+        return operation()
+      }
+      val parentFlowId = (span as? ReadableSpan)?.parentSpanContext?.spanId
+      print(ServiceMessageTypes.FLOW_STARTED, "parent" to "$parentFlowId")
+      return try {
+        operation()
+      }
+      finally {
+        print(ServiceMessageTypes.FLOW_FINSIHED)
+      }
     }
   }
 
   override fun processMessage(message: LogMessage) {
     when (message.kind) {
-      INFO -> logPlainMessage(message, "")
-      WARNING -> logPlainMessage(message, "WARNING")
+      INFO -> print(ServiceMessageTypes.MESSAGE, "text" to message.text)
+      WARNING -> print(ServiceMessageTypes.MESSAGE, "text" to message.text, "status" to "WARNING")
       ERROR -> {
         val messageText = message.text.trim()
         val lineEnd = messageText.indexOf('\n')
@@ -88,18 +117,5 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
       }
       BUILD_CANCEL -> print(ServiceMessageTypes.BUILD_STOP, "comment" to message.text, "readdToQueue" to "false")
     }
-  }
-
-  private fun logPlainMessage(message: LogMessage, status: String) {
-    if (status.isNotBlank()) {
-      print(ServiceMessageTypes.MESSAGE, "text" to message.text, "status" to status)
-    }
-    else {
-      printMessageText(message.text)
-    }
-  }
-
-  private fun print(messageId: String, argument: String) {
-    TeamCityBuildMessageLogger.print(messageId, argument)
   }
 }

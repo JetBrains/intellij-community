@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.FileSet
-import org.jetbrains.intellij.build.TraceManager
+import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.executeStep
 import java.nio.file.Files

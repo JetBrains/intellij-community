@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.compilation.fetchAndUnpackCompiledClasses
 import org.jetbrains.intellij.build.io.deleteDir
+import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
