@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.openapi.actionSystem.*;
@@ -29,6 +30,7 @@ public final class GotoClassAction extends SearchEverywhereBaseAction implements
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    e = SearchFieldStatisticsCollector.wrapEventWithActionStartData(e);
     Project project = e.getProject();
     if (project == null) return;
 

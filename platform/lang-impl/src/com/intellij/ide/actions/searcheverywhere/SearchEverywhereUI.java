@@ -30,6 +30,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.local.ContributorsLocalSummary;
+import com.intellij.internal.statistic.utils.StartMoment;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -178,6 +179,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors,
                             @NotNull Function<? super String, String> shortcutSupplier,
                             @Nullable SearchEverywhereSpellingCorrector spellingCorrector) {
+    this(project, contributors, shortcutSupplier, spellingCorrector, null);
+  }
+
+  @ApiStatus.Internal
+  public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors,
+                            @NotNull Function<? super String, String> shortcutSupplier,
+                            @Nullable SearchEverywhereSpellingCorrector spellingCorrector,
+                            @Nullable StartMoment startMoment) {
     super(project);
 
     mySpellingCorrector = spellingCorrector;
@@ -257,7 +266,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     SearchPerformanceTracker performanceTracker = new SearchPerformanceTracker(() -> myHeader.getSelectedTab().getID());
     addSearchListener(performanceTracker);
-    Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, performanceTracker, myMlService, myProject));
+    Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, performanceTracker, myMlService, myProject,
+                                                                          startMoment));
   }
 
   public void addSearchListener(SearchListener listener) {

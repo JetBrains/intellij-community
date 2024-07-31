@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
@@ -105,15 +106,16 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (LightEdit.owns(e.getProject())) return;
+    AnActionEvent newEvent = SearchFieldStatisticsCollector.wrapEventWithActionStartData(e);
+    if (LightEdit.owns(newEvent.getProject())) return;
 
-    if (AdvancedSettings.getBoolean("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
-      if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_SHIFT) {
+    if (AdvancedSettings.getBoolean("ide.suppress.double.click.handler") && newEvent.getInputEvent() instanceof KeyEvent) {
+      if (((KeyEvent)newEvent.getInputEvent()).getKeyCode() == KeyEvent.VK_SHIFT) {
         return;
       }
     }
 
-    ReadAction.run(() -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, e, true, true));
+    ReadAction.run(() -> showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, newEvent, true, true));
   }
 }
 
