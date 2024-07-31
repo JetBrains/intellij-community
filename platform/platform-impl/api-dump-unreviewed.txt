@@ -4420,15 +4420,8 @@ a:com.intellij.ide.actions.CloseProjectsActionBase
 - pa:canClose(com.intellij.openapi.project.Project,com.intellij.openapi.project.Project):Z
 - pa:shouldShow(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.CollectZippedLogsAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- sf:Companion:com.intellij.ide.actions.CollectZippedLogsAction$Companion
-- sf:NOTIFICATION_GROUP:java.lang.String
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-f:com.intellij.ide.actions.CollectZippedLogsAction$Companion
+f:com.intellij.ide.actions.CollectZippedLogsActionKt
+- sf:COLLECT_LOGS_NOTIFICATION_GROUP:java.lang.String
 c:com.intellij.ide.actions.CopyAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible

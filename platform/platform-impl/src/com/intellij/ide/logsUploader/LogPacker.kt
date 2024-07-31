@@ -8,7 +8,7 @@ import com.google.gson.reflect.TypeToken
 import com.intellij.diagnostic.MacOSDiagnosticReportDirectories
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.CollectZippedLogsAction
+import com.intellij.ide.actions.COLLECT_LOGS_NOTIFICATION_GROUP
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
 import com.intellij.ide.troubleshooting.collectDimensionServiceDiagnosticsData
 import com.intellij.idea.LoggerFactory
@@ -166,7 +166,7 @@ object LogPacker {
             upload(file, uploadUrl, headers)
           }
           val message = IdeBundle.message("collect.logs.notification.sent.success", UPLOADS_SERVICE_URL, folderName)
-          Notification(CollectZippedLogsAction.NOTIFICATION_GROUP, message, NotificationType.INFORMATION).notify(project)
+          Notification(COLLECT_LOGS_NOTIFICATION_GROUP, message, NotificationType.INFORMATION).notify(project)
           folderName
         }
       }
