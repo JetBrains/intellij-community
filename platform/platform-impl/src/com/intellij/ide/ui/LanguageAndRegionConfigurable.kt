@@ -3,10 +3,12 @@ package com.intellij.ide.ui
 
 import com.intellij.DynamicBundle
 import com.intellij.help.impl.HelpManagerImpl
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
 import com.intellij.ide.RegionSettings.RegionSettingsListener
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.localization.statistics.EventSource
 import com.intellij.ide.ui.localization.statistics.LocalizationActionsStatistics
 import com.intellij.l10n.LocalizationListener
@@ -19,6 +21,9 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.whenItemSelectedFromUi
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.options.ex.Settings
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsSafe
@@ -36,6 +41,7 @@ import com.intellij.util.ui.RestartDialog
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.URL
 import java.util.*
+import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.PopupMenuEvent
 
@@ -51,7 +57,7 @@ class LanguageAndRegionUi {
       val comboGroup = "language_and_region_combo"
 
       panel.row(IdeBundle.message("combobox.language")) {
-        val locales = LocalizationUtil.getAllAvailableLocales()
+        val locales = getAllAvailableLocales()
         val initSelectionLocale = LocalizationUtil.getLocale(true)
         val localizationService = LocalizationStateService.getInstance()!!
         val model = CollectionComboBoxModel(locales.first, initSelectionLocale)
@@ -64,7 +70,7 @@ class LanguageAndRegionUi {
 
           property.afterChange(parentDisposable) {
             val prevLocale = LocalizationUtil.getLocale(true)
-            if (it.toLanguageTag() == prevLocale.toLanguageTag()) {
+            if (it.toLanguageTag() == prevLocale.toLanguageTag() || it === ITEM_MORE_LANGUAGES) {
               return@afterChange
             }
 
@@ -94,6 +100,12 @@ class LanguageAndRegionUi {
 
         var lastSelectedItem = languageComponent.selectedItem as Locale
         languageComponent.whenItemSelectedFromUi {
+          if (it === ITEM_MORE_LANGUAGES) {
+            model.selectedItem = lastSelectedItem
+            statistics.moreLanguagesSelected()
+            showMoreLanguages(languageComponent)
+            return@whenItemSelectedFromUi
+          }
           if (lastSelectedItem == it) return@whenItemSelectedFromUi
           statistics.languageSelected(it, lastSelectedItem)
           lastSelectedItem = it
@@ -114,7 +126,7 @@ class LanguageAndRegionUi {
           }
 
           private fun updateComboModel() {
-            val newLocales = LocalizationUtil.getAllAvailableLocales()
+            val newLocales = getAllAvailableLocales()
             languageComponent.renderer = LanguageComboBoxRenderer(newLocales)
             languageComponent.model = CollectionComboBoxModel(newLocales.first, languageComponent.selectedItem as Locale)
           }
@@ -180,8 +192,31 @@ class LanguageAndRegionUi {
         })
       }
     }
-  }
 
+    private fun getAllAvailableLocales(): Pair<List<Locale>, Map<Locale, String>> {
+      val availableLocales = LocalizationUtil.getAllAvailableLocales()
+      return buildList {
+        addAll(availableLocales.first)
+        add(ITEM_MORE_LANGUAGES)
+      } to availableLocales.second
+    }
+
+    private fun showMoreLanguages(comboBoxComponent: JComponent) {
+      val tag = "/tag:\"Language Pack\""
+      val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(comboBoxComponent))
+
+      if (settings == null) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(ProjectManager.getInstance().defaultProject, PluginManagerConfigurable::class.java) {
+          it.enableSearch(tag)
+        }
+      }
+      else {
+        settings.select(settings.find("preferences.pluginManager"), tag)
+      }
+    }
+
+    internal val ITEM_MORE_LANGUAGES = Locale("more languages")
+  }
 }
 
 internal class LanguageAndRegionConfigurable :
@@ -216,11 +251,14 @@ private class LanguageComboBoxRenderer(private val locales: Pair<kotlin.collecti
   GroupedComboBoxRenderer<Locale>() {
 
   override fun getText(item: Locale): @NlsSafe String {
+    if (item === LanguageAndRegionUi.ITEM_MORE_LANGUAGES) {
+      return IdeBundle.message("item.get.more.languages")
+    }
     return locales.second[item] ?: item.getDisplayLanguage(Locale.ENGLISH)
   }
 
   override fun separatorFor(value: Locale): ListSeparator? {
-    if (locales.first.indexOf(value) == 1) {
+    if (locales.first.indexOf(value) == 1 || value === LanguageAndRegionUi.ITEM_MORE_LANGUAGES) {
       return ListSeparator()
     }
     return null
