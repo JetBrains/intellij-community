@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -121,6 +122,18 @@ class KotlinFirExtractFunctionHandler(
             }
         }
         engine.run(editor, data)
+    }
+
+    override fun restart(
+        templateState: TemplateState,
+        file: KtFile,
+        restartInplace: Boolean
+    ): Boolean {
+        if (helper is InplaceExtractionHelper) {
+            helper.restart(templateState, file, restartInplace)
+            return true
+        }
+        return false
     }
 }
 

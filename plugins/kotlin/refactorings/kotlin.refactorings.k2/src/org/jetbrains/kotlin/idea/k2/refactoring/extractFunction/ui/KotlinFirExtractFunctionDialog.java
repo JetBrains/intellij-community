@@ -115,7 +115,7 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
                                                                               originalDescriptor.getDescriptor().getContext())
                 )
                 .expireWith(getDisposable())
-                .finishOnUiThread(ModalityState.current(), preview -> signaturePreviewField.setText(preview))
+                .finishOnUiThread(ModalityState.stateForComponent(signaturePreviewField), preview -> signaturePreviewField.setText(preview))
                 .submit(AppExecutorUtil.getAppExecutorService());
     }
 
@@ -252,7 +252,6 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
                     }
                 }
         );
-        onAccept.invoke(result.getDescriptor());
         close(OK_EXIT_CODE);
     }
 
