@@ -180,6 +180,7 @@ internal class ImageCollector(
   }
 
   fun collectSubDir(sourceRoot: JpsModuleSourceRoot, name: String, includePhantom: Boolean = false): List<ImageInfo> {
+    collectMappingFile(sourceRoot.path)
     processRoot(sourceRoot, sourceRoot.path.resolve(name))
     val result = icons.values.toMutableList()
     if (includePhantom) {
@@ -330,11 +331,16 @@ internal class ImageCollector(
 
   private fun collectMappingFile(rootDir: Path) {
     if (mappingFile == null) {
-      val mappings = rootDir.listDirectoryEntries("*Mapping*.json")
-      if (mappings.size == 1) {
-        mappings.isNotEmpty()
-        mappingFile = mappings[0]
+      try {
+        val mappings = rootDir.listDirectoryEntries("*Mapping*.json")
+        if (mappings.size == 1) {
+          mappings.isNotEmpty()
+          mappingFile = mappings[0]
+        }
+      } catch (e: NoSuchFileException) {
+        println("Tried to access directory: $rootDir for a mapping file, but the directory did not exist")
       }
+
     }
   }
 

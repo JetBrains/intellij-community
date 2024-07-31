@@ -125,9 +125,11 @@ internal open class IconsClassGenerator(
         val imagesI = imageCollector.collectSubDir(resourceRoot, "studio/illustrations", includePhantom = true)
         imageCollector.printUsedIconRobots()
 
+        val (studioImages, studioMappings) = imageCollector.mergeImages(imagesS, module)
+
         return listOf(
           IconClassInfo(packageName, "AndroidIcons", Path.of(sourceRoot, "icons/AndroidIcons.java"), imagesA),
-          IconClassInfo(packageName, "StudioIcons", Path.of(sourceRoot, "icons/StudioIcons.java"), imagesS),
+          IconClassInfo(packageName, "StudioIcons", Path.of(sourceRoot, "icons/StudioIcons.java"), studioImages, studioMappings),
           IconClassInfo(packageName, "StudioIllustrations", Path.of(sourceRoot, "icons/StudioIllustrations.java"), imagesI),
         )
       }
