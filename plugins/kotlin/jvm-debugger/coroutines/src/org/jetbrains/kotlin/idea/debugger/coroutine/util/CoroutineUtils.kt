@@ -7,7 +7,7 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.debugger.core.canRunEvaluation
 import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import java.util.concurrent.Callable
 
 const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as creation stacktrace separator in kotlinx.coroutines
 const val CREATION_CLASS_NAME = "_COROUTINE._CREATION"
@@ -94,9 +95,9 @@ fun StackTraceElement.isCreationSeparatorFrame() =
     className.startsWith(CREATION_STACK_TRACE_SEPARATOR) ||
     className == CREATION_CLASS_NAME
 
-fun Location.findPosition(debugProcess: DebugProcessImpl) = runReadAction {
+fun Location.findPosition(debugProcess: DebugProcessImpl) = ReadAction.nonBlocking(Callable {
     DebuggerUtilsEx.toXSourcePosition(debugProcess.positionManager.getSourcePosition(this))
-}
+}).executeSynchronously()
 
 fun SuspendContextImpl.executionContext() = invokeInManagerThread { DefaultExecutionContext(this, this.frameProxy) }
 
