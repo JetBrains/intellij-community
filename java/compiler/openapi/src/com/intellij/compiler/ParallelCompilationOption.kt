@@ -3,7 +3,7 @@ package com.intellij.compiler
 
 import com.intellij.openapi.compiler.JavaCompilerBundle
 
-enum class JpsParallelCompilationOption {
+enum class ParallelCompilationOption {
   ENABLED,
   AUTOMATIC,
   DISABLED;

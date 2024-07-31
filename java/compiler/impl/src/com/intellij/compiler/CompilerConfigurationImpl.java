@@ -167,7 +167,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
     public boolean USE_RELEASE_OPTION = true;
     @Nullable
-    public JpsParallelCompilationOption JPS_PARALLEL_COMPILATION = null;
+    public ParallelCompilationOption PARALLEL_COMPILATION_OPTION = null;
   }
 
   @Override
@@ -302,8 +302,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   private void migrateParallelCompilationOption() {
     // TODO: check if this is a gradle based project or not
     boolean isOldParallelCompilationEnabled = isOldParallelCompilationEnabled();
-    if (isOldParallelCompilationEnabled) myState.JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.ENABLED;
-    else myState.JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.AUTOMATIC;
+    if (isOldParallelCompilationEnabled) myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.ENABLED;
+    else myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.AUTOMATIC;
   }
 
   private boolean isOldParallelCompilationEnabled() {
@@ -320,8 +320,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
   @Override
   public boolean isParallelCompilationEnabled() {
-    if (myState.JPS_PARALLEL_COMPILATION == null) migrateParallelCompilationOption();
-    return switch (myState.JPS_PARALLEL_COMPILATION) {
+    if (myState.PARALLEL_COMPILATION_OPTION == null) migrateParallelCompilationOption();
+    return switch (myState.PARALLEL_COMPILATION_OPTION) {
         case ENABLED, AUTOMATIC -> true;
         case DISABLED -> false;
       };
@@ -330,22 +330,22 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   @Override
   public void setParallelCompilationEnabled(boolean enabled) {
     if (enabled) {
-      myState.JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.ENABLED;
+      myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.ENABLED;
     } else {
-      myState.JPS_PARALLEL_COMPILATION = JpsParallelCompilationOption.DISABLED;
+      myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.DISABLED;
     }
   }
 
   @Override
   @NotNull
-  public JpsParallelCompilationOption getParallelCompilationOption() {
-    if (myState.JPS_PARALLEL_COMPILATION == null) migrateParallelCompilationOption();
-    return myState.JPS_PARALLEL_COMPILATION;
+  public ParallelCompilationOption getParallelCompilationOption() {
+    if (myState.PARALLEL_COMPILATION_OPTION == null) migrateParallelCompilationOption();
+    return myState.PARALLEL_COMPILATION_OPTION;
   }
 
   @Override
-  public void setParallelCompilationOption(@NotNull JpsParallelCompilationOption option) {
-    myState.JPS_PARALLEL_COMPILATION = option;
+  public void setParallelCompilationOption(@NotNull ParallelCompilationOption option) {
+    myState.PARALLEL_COMPILATION_OPTION = option;
   }
 
   @Override

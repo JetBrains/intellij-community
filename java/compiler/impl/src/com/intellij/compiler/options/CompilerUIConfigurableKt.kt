@@ -6,7 +6,7 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.CompilerWorkspaceConfiguration
-import com.intellij.compiler.JpsParallelCompilationOption
+import com.intellij.compiler.ParallelCompilationOption
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.compiler.options.CompilerOptionsFilter.Setting
 import com.intellij.compiler.options.CompilerUIConfigurable.applyResourcePatterns
@@ -41,7 +41,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
   private lateinit var cbEnableAutomakeCell: Cell<JCheckBox>
   private lateinit var cbEnableAutomake: JCheckBox
 
-  private lateinit var comboboxJpsParallelCompilation: JComboBox<JpsParallelCompilationOption>
+  private lateinit var comboboxJpsParallelCompilation: JComboBox<ParallelCompilationOption>
 
   lateinit var sharedHeapSizeField: JTextField
   lateinit var sharedVMOptionsField: ExpandableTextField
@@ -98,7 +98,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
       row {
         label(JavaCompilerBundle.message("settings.compile.independent.modules.in.parallel"))
           .comment
-        comboboxJpsParallelCompilation = comboBox(JpsParallelCompilationOption.entries)
+        comboboxJpsParallelCompilation = comboBox(ParallelCompilationOption.entries)
           .comment(JavaCompilerBundle.message("settings.parallel.module.compile.may.require.larger.heap.size"))
           .component
       }
