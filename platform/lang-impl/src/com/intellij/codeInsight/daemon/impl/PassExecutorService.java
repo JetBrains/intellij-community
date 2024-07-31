@@ -36,7 +36,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
@@ -407,7 +407,7 @@ final class PassExecutorService implements Disposable {
               String fileName = myFileEditor.getFile().getName();
               String passClassName = StringUtil.getShortName(myPass.getClass());
               try (Scope __ = myOpenTelemetryContext.makeCurrent()) {
-                TraceUtil.runWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, passClassName, span -> {
+                TraceKt.use(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder(passClassName), span -> {
                   Activity startupActivity = StartUpMeasurer.startActivity("running " + passClassName);
                   boolean cancelled = false;
                   try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
@@ -422,6 +422,7 @@ final class PassExecutorService implements Disposable {
                     span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, fileName);
                     span.setAttribute(HighlightingPassTracer.CANCELLED_ATTR_SPAN_KEY, Boolean.toString(cancelled));
                   }
+                  return null;
                 });
               }
             }

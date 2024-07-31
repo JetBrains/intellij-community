@@ -34,7 +34,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -49,7 +49,6 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
-import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -292,12 +291,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   @RequiresEdt
   private void showNotificationWithSpan(Notification notification, @Nullable Project project) {
-    TraceUtil.runWithSpanThrows(myTracer, "show notification", (Span span) -> {
-      if(project != null) {
-        span.setAttribute("project", project.toString());
-      }
-      span.setAttribute("notification", notification.toString());
+    TraceKt.use(myTracer.spanBuilder("show notification")
+                  .setAttribute("project", project != null ? project.toString() : null)
+                  .setAttribute("notification", notification.toString()), __ -> {
       showNotificationInner(notification, project);
+      return null;
     });
   }
 

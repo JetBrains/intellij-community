@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.psi.util.ReadActionCache;
@@ -585,8 +586,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       stopServicePreloading();
 
       if (BitUtil.isSet(flags, SAVE)) {
-        TraceUtil.runWithSpanThrows(tracer, "saveSettingsOnExit",
-                                    (span) -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
+        TraceKt.use(tracer.spanBuilder("saveSettingsOnExit"),
+                    __ -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
       }
 
       if (isInstantShutdownPossible()) {

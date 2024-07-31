@@ -63,7 +63,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -305,8 +305,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     initializeTools(globalTools, localTools, globalSimpleTools);
 
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
-    TraceUtil.runWithSpanThrows(tracer, "externalInspectionsAnalysis", (__) -> {
+    TraceKt.use(tracer.spanBuilder("externalInspectionsAnalysis"), __ -> {
       runExternalTools();
+      return null;
     });
 
     if (runGlobalToolsOnly || localTools.isEmpty() && globalSimpleTools.isEmpty()) return;
@@ -692,8 +693,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
     IJTracer tracer = TelemetryManager.getInstance().getTracer(GlobalInspectionScopeKt.GlobalInspectionScope);
     long refGraphTimestamp = System.currentTimeMillis();
-    TraceUtil.runWithSpanThrows(tracer, "refGraphBuilding", (__) -> {
+    TraceKt.use(tracer.spanBuilder("refGraphBuilding"), __ -> {
       buildRefGraphIfNeeded(globalTools);
+      return null;
     });
     long refGraphDuration = System.currentTimeMillis() - refGraphTimestamp;
 
@@ -701,7 +703,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     SearchScope initialSearchScope = ReadAction.compute(scope::toSearchScope);
     boolean canBeExternalUsages = !scope.isTotalScope();
 
-    TraceUtil.runWithSpanThrows(tracer, "globalInspectionsAnalysis", (__) -> {
+    TraceKt.use(tracer.spanBuilder("globalInspectionsAnalysis"), __ -> {
       for (Tools tools : globalTools) {
         for (ScopeToolState state : tools.getTools()) {
           if (!state.isEnabled()) continue;
@@ -749,6 +751,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           }
         }
       }
+      return null;
     });
     InspectionEventsKt.reportToQodanaWhenActivityFinished(
       getInspectionEventPublisher(),
