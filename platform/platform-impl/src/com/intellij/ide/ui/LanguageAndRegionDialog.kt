@@ -199,20 +199,21 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
   val locale = Locale.getDefault()
   val matchingLocale = languageMapping.keys.find { language -> languageMapping[language]?.any { locale.toLanguageTag().contains(it) } == true }
                        ?: Locale.ENGLISH
-  var matchingRegion = regionMapping.keys.find { locale.country == regionMapping[it] } ?: Region.NOT_SET
-  if (matchingRegion == Region.NOT_SET) {
-    if (SystemInfo.isWindows) {
-      try {
-        val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
-        matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
-      }
-      catch (e: Throwable) {
-        logger<LanguageAndRegionDialog>().warn("Unable to resolve region from registry", e)
-      }
+  var matchingRegion = Region.NOT_SET
+  if (SystemInfo.isWindows) {
+    try {
+      val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
+      matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
     }
-    else if (SystemInfo.isMac) {
-      matchingRegion = getLocaleFromGeneralPrefMacOs(SystemProperties.getUserHome()) ?: getLocaleFromGeneralPrefMacOs("") ?: Region.NOT_SET
+    catch (e: Throwable) {
+      logger<LanguageAndRegionDialog>().warn("Unable to resolve region from registry", e)
     }
+  }
+  else if (SystemInfo.isMac) {
+    matchingRegion = regionMapping.keys.find { locale.country == regionMapping[it] }
+                     ?: getLocaleFromGeneralPrefMacOs(SystemProperties.getUserHome())
+                     ?: getLocaleFromGeneralPrefMacOs("")
+                     ?: Region.NOT_SET
   }
   if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) return null
   return suspend {
