@@ -13,15 +13,12 @@
     <a href="https://json-schema.org/overview/what-is-jsonschema">JSON Schema</a> languages
   ]]></description>
 
-  <actions>
+  <actions resource-bundle="messages.JsonBundle">
     <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Copy.Paste.Special"/>
     </action>
-  </actions>
-
-  <actions resource-bundle="messages.JsonBundle">
     <action id="ConsoleView.ShowAsJsonAction" class="com.intellij.json.actions.ShowAsJsonAction">
       <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="ConsoleView.FoldLinesLikeThis"/>
     </action>
