@@ -6,13 +6,13 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.PyBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.awt.Dimension
@@ -22,25 +22,28 @@ import javax.swing.JPanel
 import javax.swing.event.AncestorEvent
 
 
-class PythonAddLocalInterpreterDialog(project: Project) : DialogWrapper(project) {
-    val outerPanel = JPanel().apply {
-      layout = BoxLayout(this, BoxLayout.X_AXIS)
-      preferredSize = Dimension(500, 250) // todo scale dimensions
-    }
+/**
+ * @see PythonAddLocalInterpreterPresenter
+ */
+class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLocalInterpreterPresenter) : DialogWrapper(dialogPresenter.project) {
+  val outerPanel = JPanel().apply {
+    layout = BoxLayout(this, BoxLayout.X_AXIS)
+    preferredSize = Dimension(500, 250) // todo scale dimensions
+  }
 
   private lateinit var model: PythonLocalAddInterpreterModel
   private lateinit var mainPanel: PythonAddCustomInterpreter
 
   init {
-    title = "Add Python Interpreter"
+    title = PyBundle.message("python.sdk.add.python.interpreter.title")
     isResizable = true
     init()
 
     outerPanel.addAncestorListener(object : AncestorListenerAdapter() {
       override fun ancestorAdded(event: AncestorEvent?) {
-        val basePath = project.basePath!!
+        val basePath = dialogPresenter.basePathForEnv.toString()
         model = PythonLocalAddInterpreterModel(service<PythonAddSdkService>().coroutineScope,
-                                                   Dispatchers.EDT + ModalityState.current().asContextElement(), AtomicProperty(basePath))
+                                               Dispatchers.EDT + ModalityState.current().asContextElement(), AtomicProperty(basePath))
         model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
         mainPanel = PythonAddCustomInterpreter(model)
 
@@ -65,12 +68,11 @@ class PythonAddLocalInterpreterDialog(project: Project) : DialogWrapper(project)
   }
 
 
+  @RequiresEdt
   override fun doOKAction() {
     super.doOKAction()
-    val sdk = mainPanel.getSdk()
-    if (sdk != null) {
-      val existing = ProjectJdkTable.getInstance().findJdk(sdk.name)
-      SdkConfigurationUtil.addSdk(sdk)
+    runWithModalProgressBlocking(dialogPresenter.project, "...") {
+      dialogPresenter.okClicked(mainPanel.currentSdkManager)
     }
   }
 

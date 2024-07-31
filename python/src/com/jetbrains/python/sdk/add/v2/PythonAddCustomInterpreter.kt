@@ -41,7 +41,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     CONDA to CondaExistingEnvironmentSelector(model),
   )
 
-  private val currentSdkManager: PythonAddEnvironment
+  val currentSdkManager: PythonAddEnvironment
     get() {
       return if (_selectExisting.get()) existingInterpreterSelectors[existingInterpreterManager.get()]!!
       else newInterpreterCreators[newInterpreterManager.get()]!!
@@ -119,8 +119,6 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     newInterpreterCreators.values.forEach(PythonAddEnvironment::onShown)
     existingInterpreterSelectors.values.forEach(PythonAddEnvironment::onShown)
   }
-
-  fun getSdk(): Sdk = currentSdkManager.getOrCreateSdk()
 
   fun createStatisticsInfo(): InterpreterStatisticsInfo {
     return currentSdkManager.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE)

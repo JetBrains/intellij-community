@@ -186,7 +186,9 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
 
   override fun getOrCreateSdk(): Sdk {
     // todo remove project path, or move to controller
-    return model.setupVirtualenv((Path.of(model.state.venvPath.get())), model.projectPath.get(), model.state.baseInterpreter.get()!!).getOrThrow()
+    val projectPath = model.projectPath.get()
+    assert(projectPath.isNotBlank()) {"Project path can't be blank"}
+    return model.setupVirtualenv((Path.of(model.state.venvPath.get())), Path.of(projectPath), model.state.baseInterpreter.get()!!).getOrThrow()
   }
 
   companion object {

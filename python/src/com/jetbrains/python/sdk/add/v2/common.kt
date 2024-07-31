@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -46,6 +47,11 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
   abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor)
   open fun onShown() {}
+
+  /**
+   * Returns created SDK ready to use
+   */
+  @RequiresEdt
   abstract fun getOrCreateSdk(): Sdk
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }

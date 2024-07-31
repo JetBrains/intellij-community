@@ -177,11 +177,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
    * @param additionalAction either the gear button for the old UI or the link "Add Interpreter" for the new UI
    */
   private static @NotNull JPanel buildPanel(@NotNull Project project,
-                                   @NotNull ComboBox<?> sdkComboBox,
-                                   @NotNull JComponent additionalAction,
-                                   @NotNull PyInstalledPackagesPanel installedPackagesPanel,
-                                   @NotNull PackagesNotificationPanel packagesNotificationPanel,
-                                   @Nullable Pair<PyCustomSdkUiProvider, Disposable> customizer) {
+                                            @NotNull ComboBox<?> sdkComboBox,
+                                            @NotNull JComponent additionalAction,
+                                            @NotNull PyInstalledPackagesPanel installedPackagesPanel,
+                                            @NotNull PackagesNotificationPanel packagesNotificationPanel,
+                                            @Nullable Pair<PyCustomSdkUiProvider, Disposable> customizer) {
     final JPanel result = new JPanel(new GridBagLayout());
 
     final GridBagConstraints c = new GridBagConstraints();
@@ -379,6 +379,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected void setSdk(@Nullable Sdk item) {
+    // This function literally associates SDK with module and must be moved to the service
     final var currentSdk = getSdk();
 
     PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithInheritedSdk(myProject, currentSdk);

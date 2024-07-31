@@ -23,7 +23,7 @@ import java.nio.file.Path
 
 
 // todo should it be overriden for targets?
-internal fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Path, projectPath: String, baseSdk: PythonSelectableInterpreter): Result<Sdk> {
+internal fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Path, projectPath: Path, baseSdk: PythonSelectableInterpreter): Result<Sdk> {
 
   val venvPathOnTarget = venvPath.convertToPathOnTarget(targetEnvironmentConfiguration)
 
@@ -38,12 +38,7 @@ internal fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pa
   createVirtualenv(baseSdkPath!!,
                    venvPathOnTarget,
                    projectPath,
-                   targetEnvironmentConfiguration,
-                   this.existingSdks,
-                   null,
-                   null,
-                   inheritSitePackages = state.inheritSitePackages.get(),
-                   makeShared = state.makeAvailable.get())
+                   inheritSitePackages = state.inheritSitePackages.get())
 
   if (targetEnvironmentConfiguration != null) error("Remote targets aren't supported")
   val venvPython = PythonSdkUtil.getPythonExecutable(venvPathOnTarget)
@@ -55,7 +50,7 @@ internal fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pa
     return Result.failure(e)
   }
 
-  val suggestedName = /*suggestedSdkName ?:*/ suggestAssociatedSdkName(homeFile.path, projectPath)
+  val suggestedName = /*suggestedSdkName ?:*/ suggestAssociatedSdkName(homeFile.path, projectPath.toString())
   val newSdk = SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
                                              PythonSdkType.getInstance(),
                                              false, null, suggestedName)

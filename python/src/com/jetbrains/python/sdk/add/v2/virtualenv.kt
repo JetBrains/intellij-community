@@ -2,37 +2,25 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.process.ColoredProcessHandler
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.value.TargetValue
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.run.*
+import com.jetbrains.python.run.PythonExecution
+import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.target.TargetPanelExtension
-import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
+import java.nio.file.Path
 
-
-fun createVirtualenv(baseInterpreterPath: String,
-                     venvRoot: String,
-                     projectBasePath: String?,
-                     targetConfiguration: TargetEnvironmentConfiguration?,
-                     existingSdks: List<Sdk>,
-                     project: Project?,
-                     module: Module?,
-                     inheritSitePackages: Boolean = false,
-                     makeShared: Boolean = false,
-                     targetPanelExtension: TargetPanelExtension? = null) {
+@RequiresEdt // There is runBlockingModel down the code
+fun createVirtualenv(
+  baseInterpreterPath: String,
+  venvRoot: String,
+  projectBasePath: Path,
+  inheritSitePackages: Boolean = false,
+) {
 
   // todo find request for targets (need sdk, maybe can work around it )
   //PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter()
@@ -53,12 +41,12 @@ fun createVirtualenv(baseInterpreterPath: String,
 
 
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
-  commandLineBuilder.setWorkingDirectory(projectBasePath!!)
+  commandLineBuilder.setWorkingDirectory(projectBasePath.toString())
 
   commandLineBuilder.setExePath(baseInterpreterPath)
 
   execution.pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment)) }
-                                ?: throw IllegalArgumentException("Python script path must be set")
+  ?: throw IllegalArgumentException("Python script path must be set")
 
   execution.parameters.forEach { parameter ->
     val resolvedParameter = parameter.apply(targetEnvironment)
