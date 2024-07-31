@@ -4,6 +4,7 @@ package com.intellij.platform.navbar.backend
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus.Internal
 
 
 /**
@@ -13,7 +14,9 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
  */
 interface NavBarItemProvider {
 
+  @Internal
   companion object {
+    @Internal
     @JvmField
     val EP_NAME: ExtensionPointName<NavBarItemProvider> = ExtensionPointName.create("com.intellij.navbar.item.provider")
   }
