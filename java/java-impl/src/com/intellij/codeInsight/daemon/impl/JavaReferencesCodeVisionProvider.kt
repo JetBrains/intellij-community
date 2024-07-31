@@ -7,8 +7,6 @@ import com.intellij.codeInsight.hints.codeVision.RenameAwareReferencesCodeVision
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
@@ -25,11 +23,7 @@ class JavaReferencesCodeVisionProvider : RenameAwareReferencesCodeVisionProvider
 
   private fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionProviderBase.CodeVisionInfo? {
     val inspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(element)
-    var isEntryPoint = true
-    ProgressManager.getInstance().executeProcessUnderProgress({
-      isEntryPoint = inspection.isEntryPoint(element)
-    }, EmptyProgressIndicator())
-    if (isEntryPoint) return null
+    if (inspection.isEntryPoint(element)) return null
     return JavaTelescope.usagesHint(element as PsiMember, file)?.let {
       CodeVisionProviderBase.CodeVisionInfo(it.hint, it.count)
     }
