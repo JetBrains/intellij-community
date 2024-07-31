@@ -27,6 +27,9 @@ public final class ExternalSystemTelemetryUtil {
   }
 
   public static void runWithSpan(@Nullable ProjectSystemId id, @NotNull String spanName, @NotNull Consumer<Span> fn) {
-    TraceKt.runWithSpan(getTracer(id), spanName, fn);
+    TraceKt.use(getTracer(id).spanBuilder(spanName), span -> {
+      fn.accept(span);
+      return null;
+    });
   }
 }

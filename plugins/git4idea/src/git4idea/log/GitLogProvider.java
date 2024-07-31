@@ -54,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 import static git4idea.history.GitCommitRequirements.DiffRenames;
@@ -170,9 +169,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
                                           @NotNull Set<? extends VcsRef> manuallyReadBranches,
                                           @Nullable Set<String> currentTagNames,
                                           @Nullable DetailedLogData commitsFromTags) {
-    runWithSpan(myTracer, ValidatingData.getName(), span -> {
-      span.setAttribute("rootName", root.getName());
-
+    TraceKt.use(myTracer.spanBuilder(ValidatingData.getName()).setAttribute("rootName", root.getName()), __ -> {
       Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
 
       PermanentGraphImpl.newInstance(sortedCommits, new GraphColorGetterByNodeFactory<>((hash, integer) -> 0), (head1, head2) -> {
@@ -184,6 +181,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
         }
         return 0;
       }, refs);
+      return null;
     });
   }
 

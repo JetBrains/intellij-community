@@ -6,11 +6,12 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts
 import com.intellij.refactoring.move.MoveHandler
 import com.jetbrains.performancePlugin.commands.dto.MoveFilesData
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -41,7 +42,7 @@ class MoveFilesCommand(text: String, line: Int) : PerformanceCommandCoroutineAda
         .map { file -> psiManager.findFile(file) }
         .toTypedArray()
       val toDirectory = psiManager.findDirectory(findFile(project, moveFileData.toDirectory))
-      runWithSpan(TelemetryManager.getTracer(Scope("MoveFiles")), "$NAME$tag") {
+      TelemetryManager.getTracer(Scope("MoveFiles")).spanBuilder("$NAME$tag").use { it: Span ->
         withIgnoredConflicts<Throwable> {
           MoveHandler.doMove(project, files, toDirectory, null, null)
         }

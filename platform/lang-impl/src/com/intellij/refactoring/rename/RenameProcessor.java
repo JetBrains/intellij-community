@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.*;
@@ -46,6 +47,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import io.opentelemetry.api.trace.Tracer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +57,6 @@ import java.util.*;
 
 import static com.intellij.openapi.util.NlsContexts.Command;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(RenameProcessor.class);
@@ -245,12 +246,13 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
 
     final Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
-      runWithSpan(TelemetryManager.Companion.getTracer(new Scope("RenameProcessorScope")), "RenameProcessor",
-                  span -> {
-                    for (final AutomaticRenamer renamer : myRenamers) {
-                      renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
-                    }
-                  });
+      Tracer tracer = TelemetryManager.Companion.getTracer(new Scope("RenameProcessorScope"));
+      TraceKt.use(tracer.spanBuilder("RenameProcessor"), __ -> {
+        for (final AutomaticRenamer renamer : myRenamers) {
+          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
+        }
+        return null;
+      });
     });
 
     return ProgressManager.getInstance()

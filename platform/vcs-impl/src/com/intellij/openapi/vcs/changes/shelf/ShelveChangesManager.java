@@ -86,7 +86,6 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChang
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 
@@ -429,9 +428,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
           try {
             if (baseContentsPreloadSize > 0) {
-              runWithSpan(myTracer, Shelve.PreloadingBaseRevisions.getName(), (preloadSpan) -> {
-                preloadSpan.setAttribute("changesSize", list.size());
+              TraceKt.use(myTracer.spanBuilder(Shelve.PreloadingBaseRevisions.getName()).setAttribute("changesSize", list.size()), __ -> {
                 preloadBaseRevisions(list);
+                return null;
               });
             }
 
@@ -495,9 +494,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private void rollbackChangesAfterShelve(@NotNull Collection<? extends Change> changes, boolean honorExcludedFromCommit) {
     final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
-    runWithSpan(myTracer, Shelve.RollbackAfterShelve.getName(), (__) -> {
+    TraceKt.use(myTracer.spanBuilder(Shelve.RollbackAfterShelve.getName()), __ -> {
       new RollbackWorker(myProject, operationName, modalContext)
         .doRollback(changes, true, null, VcsBundle.message("activity.name.shelve"), VcsActivity.Shelve, honorExcludedFromCommit);
+      return null;
     });
   }
 

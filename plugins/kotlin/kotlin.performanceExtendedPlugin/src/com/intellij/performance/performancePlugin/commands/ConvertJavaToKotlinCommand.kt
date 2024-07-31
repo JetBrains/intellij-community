@@ -7,10 +7,11 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiJavaFile
 import com.jetbrains.performancePlugin.commands.OpenFileCommand
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
@@ -31,7 +32,7 @@ class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCo
             val javaFile = readAction { OpenFileCommand.findFile(filePath, project)?.toPsiFile(project) as? PsiJavaFile }
                 ?: throw IllegalArgumentException("There is no file $filePath")
 
-            runWithSpan(TelemetryManager.getTracer(Scope("javaToKotlin")), NAME) {
+            TelemetryManager.getTracer(Scope("javaToKotlin")).spanBuilder(NAME).use { it: Span ->
                 JavaToKotlinAction.Handler.convertFiles(listOf(javaFile), project, module, false, false, false)
             }
         }

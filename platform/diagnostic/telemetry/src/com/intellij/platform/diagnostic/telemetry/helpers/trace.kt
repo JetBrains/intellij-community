@@ -16,7 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CancellationException
-import java.util.function.Consumer
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -83,11 +82,6 @@ internal fun <T> computeWithSpanIgnoreThrows(tracer: Tracer,
 @Internal
 internal fun runWithSpanIgnoreThrows(tracer: Tracer, spanName: String, operation: ThrowableConsumer<Span, out Throwable>) {
   tracer.spanBuilder(spanName).use(operation::consume)
-}
-
-@Internal
-fun runWithSpan(tracer: Tracer, spanName: String, operation: Consumer<Span>) {
-  tracer.spanBuilder(spanName).use(operation::accept)
 }
 
 /**
