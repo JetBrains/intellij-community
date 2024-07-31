@@ -13,17 +13,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.ApiStatus
 
-
-@ApiStatus.Internal
-suspend fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeAsync(
-  action: suspend (Extension) -> Unit
-) {
-  for (extension in extensionList) {
-    runCatching { action(extension) }
-      .getOrLogException(logger<ExtensionPointImpl<*>>())
-  }
-}
-
 @ApiStatus.Internal
 internal suspend fun <Extension : Any> ExtensionPointName<Extension>.withEachExtensionSafeAsync(
   parentDisposable: Disposable,
