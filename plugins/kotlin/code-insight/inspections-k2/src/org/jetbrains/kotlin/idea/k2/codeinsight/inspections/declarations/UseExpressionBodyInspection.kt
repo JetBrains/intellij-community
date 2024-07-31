@@ -51,7 +51,7 @@ internal class UseExpressionBodyInspection :
     override fun isApplicableByPsi(element: KtDeclarationWithBody): Boolean = element.isConvertableToExpressionBody()
 
     override fun getApplicableRanges(element: KtDeclarationWithBody): List<TextRange> =
-        ApplicabilityRange.single(element) { declaration: KtDeclarationWithBody ->
+        ApplicabilityRange.multiple(element) { declaration: KtDeclarationWithBody ->
             val bodyBlockExpression = declaration.bodyBlockExpression
 
             fun KtExpression.toHighlight(): PsiElement? = when (this) {
@@ -62,7 +62,12 @@ internal class UseExpressionBodyInspection :
                 else -> this
             }
 
-            bodyBlockExpression?.statements?.singleOrNull()?.toHighlight() ?: bodyBlockExpression
+            val toHighlightElement = bodyBlockExpression?.statements?.singleOrNull()?.toHighlight()
+            if (toHighlightElement == null) {
+                listOf(bodyBlockExpression)
+            } else {
+                listOf(toHighlightElement, bodyBlockExpression.lBrace)
+            }
         }
 
     override fun getProblemHighlightType(

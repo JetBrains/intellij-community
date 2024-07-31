@@ -19050,6 +19050,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/useExpressionBody/leftBrace.kt");
             }
 
+            @TestMetadata("leftBraceNotApplicableInsideWhitespace.kt")
+            public void testLeftBraceNotApplicableInsideWhitespace() throws Exception {
+                runTest("testData/inspectionsLocal/useExpressionBody/leftBraceNotApplicableInsideWhitespace.kt");
+            }
+
             @TestMetadata("multiLine.kt")
             public void testMultiLine() throws Exception {
                 runTest("testData/inspectionsLocal/useExpressionBody/multiLine.kt");
