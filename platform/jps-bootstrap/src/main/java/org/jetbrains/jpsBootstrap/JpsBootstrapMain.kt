@@ -190,7 +190,7 @@ class JpsBootstrapMain(args: Array<String>?) {
     if (!classpathFileTargetString.isNullOrBlank()) {
       writeClasspathFile(moduleRuntimeClasspath, Path.of(classpathFileTargetString))
     }
-    downloadRuntime()
+    // downloadRuntime() FIXME IJI-2074
   }
 
   private fun removeOpenedPackage(openedPackages: MutableList<String>, openedPackage: String, unknownPackages: MutableList<String>) {
