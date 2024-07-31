@@ -22,7 +22,7 @@ ItemPresentation:
     presentableText: arrayOfNulls(Int)
     locationString: (in kotlin.kotlin)
     icon: RowIcon(icons=[Function, Public])
-TargetElement: public fun <reified @kotlin.internal.PureReifiable T> arrayOfNulls(size: kotlin.Int): kotlin.Array<T?> { /* compiled code */ }
+TargetElement: public fun <reified T> arrayOfNulls(size: kotlin.Int): kotlin.Array<T?> { /* compiled code */ }
 QualifiedName: kotlin.kotlin.arrayOfNulls
 
 NavigationItem:
@@ -31,5 +31,5 @@ ItemPresentation:
     presentableText: arrayOfNulls(Int)
     locationString: (kotlin)
     icon: RowIcon(icons=[Function, Public])
-TargetElement: public fun <reified @kotlin.internal.PureReifiable T> arrayOfNulls(size: kotlin.Int): kotlin.Array<T?> { /* compiled code */ }
+TargetElement: public fun <reified T> arrayOfNulls(size: kotlin.Int): kotlin.Array<T?> { /* compiled code */ }
 QualifiedName: (kotlin).arrayOfNulls

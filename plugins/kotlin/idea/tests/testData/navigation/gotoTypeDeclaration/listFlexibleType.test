@@ -3,4 +3,4 @@
 val <caret>item /*: (Mutable)List<String>! */ = java.util.Collections.singletonList("hello")
 
 // FILE: after.kt
-public interface <caret>List<out E> : Collection<E> {
+public actual interface <caret>List<out E> : Collection<E> {
