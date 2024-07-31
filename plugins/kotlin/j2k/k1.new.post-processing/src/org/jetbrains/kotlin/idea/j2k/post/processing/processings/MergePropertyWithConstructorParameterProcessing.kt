@@ -24,10 +24,7 @@ import org.jetbrains.kotlin.j2k.resolve
 import org.jetbrains.kotlin.j2k.unpackedReferenceToProperty
 import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.descendantsOfType
-import org.jetbrains.kotlin.nj2k.escaped
-import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
