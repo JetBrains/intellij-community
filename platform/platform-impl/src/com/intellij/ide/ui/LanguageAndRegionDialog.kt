@@ -2,11 +2,11 @@
 package com.intellij.ide.ui
 
 import com.intellij.DynamicBundle
-import com.intellij.file.PListBuddyWrapper
 import com.intellij.icons.AllIcons
 import com.intellij.ide.LanguageAndRegionBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
+import com.intellij.ide.file.PListBuddyWrapper
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.ui.localization.statistics.EventSource
 import com.intellij.ide.ui.localization.statistics.LocalizationActionsStatistics
@@ -211,18 +211,7 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
       }
     }
     else if (SystemInfo.isMac) {
-      try {
-        val generalPrefPath = SystemProperties.getUserHome() + "/Library/Preferences/.GlobalPreferences.plist"
-        val readData = PListBuddyWrapper(generalPrefPath).readData("AppleLocale")
-        val elementsByTagName = readData.getElementsByTagName("string")
-        val localeText = elementsByTagName.item(0).textContent
-        val regionText = localeText.substringAfter("@rg=")
-        if (regionText.isNotEmpty()) {
-          matchingRegion = regionMapping.keys.find { regionText.startsWith(regionMapping[it]!!, true) } ?: Region.NOT_SET
-        }
-      } catch (e: Throwable) {
-        logger<LanguageAndRegionDialog>().warn("Unable to resolve region from GlobalPreferences.plist file", e)
-      }
+      matchingRegion = getLocaleFromGeneralPrefMacOs(SystemProperties.getUserHome()) ?: getLocaleFromGeneralPrefMacOs("") ?: Region.NOT_SET
     }
   }
   if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) return null
@@ -230,5 +219,25 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
     withContext(RawSwingDispatcher) {
       LanguageAndRegionDialog(matchingLocale, matchingRegion, locale).showAndGet()
     }
+  }
+}
+
+/** @return Region from GlobalPreferences for selected rootPath if the setting was found, null otherwise **/
+private fun getLocaleFromGeneralPrefMacOs(rootPath: String): Region? {
+  val generalPath = "/Library/Preferences/.GlobalPreferences.plist"
+  val fullPath = rootPath + generalPath
+  try {
+    val readData = PListBuddyWrapper(fullPath).readData("AppleLocale")
+    val elementsByTagName = readData.getElementsByTagName("string")
+    val localeText = elementsByTagName.item(0).textContent
+    val regionText = localeText.substringAfter("@rg=", "")
+    if (regionText.isNotEmpty()) {
+      return regionMapping.keys.find { regionText.startsWith(regionMapping[it]!!, true) }
+    }
+    return Region.NOT_SET
+  }
+  catch (e: Throwable) {
+    logger<LanguageAndRegionDialog>().warn("Unable to resolve region from $fullPath", e)
+    return null
   }
 }
