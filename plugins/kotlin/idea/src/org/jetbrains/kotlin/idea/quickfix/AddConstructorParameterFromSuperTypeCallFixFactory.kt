@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-object AddConstructorParameterFromSuperTypeCallFixFactory : KotlinSingleIntentionActionFactory() {
+internal object AddConstructorParameterFromSuperTypeCallFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val superTypeCallArgList = diagnostic.psiElement as? KtValueArgumentList ?: return null
         val superTypeCall = superTypeCallArgList.parent as? KtSuperTypeCallEntry ?: return null

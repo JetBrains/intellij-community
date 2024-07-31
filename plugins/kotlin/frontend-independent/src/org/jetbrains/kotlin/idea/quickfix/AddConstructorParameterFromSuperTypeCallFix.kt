@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 class AddConstructorParameterFromSuperTypeCallFix(
-    constructor: KtValueArgumentList,
+    element: KtValueArgumentList,
     private val parameterName: String,
     private val parameterTypeSourceCode: String
-) : PsiUpdateModCommandAction<KtValueArgumentList>(constructor) {
+) : PsiUpdateModCommandAction<KtValueArgumentList>(element) {
     override fun getFamilyName() = KotlinBundle.message("fix.add.constructor.parameter", parameterName)
 
     override fun invoke(
@@ -24,11 +24,10 @@ class AddConstructorParameterFromSuperTypeCallFix(
         element: KtValueArgumentList,
         updater: ModPsiUpdater
     ) {
-        val superTypeCallArgList = element
-        val constructorParamList = superTypeCallArgList.containingClass()?.createPrimaryConstructorIfAbsent()?.valueParameterList ?: return
+        val constructorParamList = element.containingClass()?.createPrimaryConstructorIfAbsent()?.valueParameterList ?: return
         val psiFactory = KtPsiFactory(context.project)
         val constructorParam = constructorParamList.addParameter(psiFactory.createParameter("$parameterName: $parameterTypeSourceCode"))
-        val superTypeCallArg = superTypeCallArgList.addArgument(psiFactory.createArgument(parameterName))
+        val superTypeCallArg = element.addArgument(psiFactory.createArgument(parameterName))
 
         ShortenReferencesFacility.getInstance().shorten(constructorParam)
         updater.moveCaretTo(superTypeCallArg.endOffset)
