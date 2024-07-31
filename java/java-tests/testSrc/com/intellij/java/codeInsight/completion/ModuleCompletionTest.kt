@@ -252,6 +252,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.assertPreferredCompletionItems(0, "MyClassC", "MyClassB", "MyClassA")
   }
 
+  @NeedsIndex.Full
   fun testReadableCompletion1() {
     addFile("module-info.java", "module current.module.name { requires first.module.name; }")
     addFile("module-info.java", "module first.module.name { }", M2)
@@ -265,9 +266,12 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
                             "second.module.name" to JBColor.RED))
   }
 
+  @NeedsIndex.Full
   fun testReadableCompletion2() {
     addFile("module-info.java", "module current.module.name { requires first.module.name; }")
+    deleteFile("module-info.java", M2)
     addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: first.module.name\n", M2)
+    deleteFile("module-info.java", M4)
     addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: second.module.name\n", M4)
 
     fileComplete("MyClass.java", """
@@ -278,6 +282,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
                             "second.module.name" to JBColor.RED))
   }
 
+  @NeedsIndex.Full
   fun testReadableCompletion3() {
     addFile("module-info.java", "module first.module.name { }", M2)
     addFile("module-info.java", "module second.module.name { }", M3)
@@ -289,8 +294,11 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
                             "second.module.name" to JBColor.RED))
   }
 
+  @NeedsIndex.Full
   fun testReadableCompletion4() {
+    deleteFile("module-info.java", M2)
     addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: first.module.name\n", M2)
+    deleteFile("module-info.java", M3)
     addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: second.module.name\n", M3)
 
     fileComplete("MyClass.java", """
@@ -300,10 +308,12 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
                             "second.module.name" to JBColor.RED))
   }
 
+  @NeedsIndex.Full
   fun testReadableCompletionTransitive() {
     addFile("module-info.java", "module current.module.name { requires first.module.name; }")
     addFile("module-info.java", "module first.module.name { requires transitive second.module.name; }", M2)
     addFile("module-info.java", "module second.module.name { requires transitive third.module.name; }", M4)
+    deleteFile("module-info.java", M5)
     addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: third.module.name\n", M5)
     ModuleRootModificationUtil.addDependency(ModuleManager.getInstance(project).findModuleByName(M2.moduleName)!!,
                                              ModuleManager.getInstance(project).findModuleByName(M4.moduleName)!!)
