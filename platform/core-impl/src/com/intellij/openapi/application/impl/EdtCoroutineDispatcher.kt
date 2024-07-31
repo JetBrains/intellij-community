@@ -50,9 +50,13 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
       // The current coroutine is executed with the correct modality state
-      // (the execution would be postponed otherwise)
-      // => there is no need to check modality state here.
-      return !EDT.isCurrentThreadEdt()
+      // (the execution would be postponed otherwise).
+      // But the code that's about to be executed may belong to a different coroutine
+      // (e.g., one coroutine emits a value into a flow and another collects it).
+      // If the context modality is lower than the current modality,
+      // we need to dispatch and postpone its execution.
+      return !EDT.isCurrentThreadEdt() ||
+             context.contextModality()?.let { contextModality -> ModalityState.current().dominates(contextModality) } == true
     }
 
     override fun toString(): String = "Dispatchers.EDT.immediate"
