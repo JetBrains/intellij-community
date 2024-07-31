@@ -1,155 +1,167 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.options.newEditor;
+package com.intellij.openapi.options.newEditor
 
-import com.intellij.ide.ui.search.ComponentHighlightingListener;
-import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
-import com.intellij.openapi.ui.AbstractPainter;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.ClientProperty;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.ui.search.ComponentHighlightingListener
+import com.intellij.ide.ui.search.SearchUtil.lightOptions
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ex.GlassPanel
+import com.intellij.openapi.ui.AbstractPainter
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.wm.IdeGlassPaneUtil
+import com.intellij.ui.ClientProperty
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
+import java.awt.Graphics2D
+import java.util.HashMap
+import javax.swing.CellRendererPane
+import javax.swing.JComponent
+import javax.swing.JScrollPane
+import javax.swing.SwingUtilities
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.HashMap;
+private val DO_NOT_SCROLL = Key.create<Boolean?>("SpotlightPainter.DO_NOT_SCROLL")
 
 @ApiStatus.Internal
-public class SpotlightPainter extends AbstractPainter implements ComponentHighlightingListener {
-  private final HashMap<String, String> myConfigurableOption = new HashMap<>();
-  private final MergingUpdateQueue myQueue;
-  private final SpotlightPainterUpdater myUpdater;
-  private final GlassPanel myGlassPanel;
-  private final JComponent myTarget;
-  boolean myVisible;
+open class SpotlightPainter constructor(
+  private val target: JComponent,
+  parent: Disposable,
+  private val updater: (SpotlightPainter) -> Unit,
+) : AbstractPainter(), ComponentHighlightingListener {
+  private val configurableOption = HashMap<String?, String?>()
+  private val queue = MergingUpdateQueue(
+    name = "SettingsSpotlight",
+    mergingTimeSpan = 200,
+    isActive = false,
+    modalityStateComponent = target,
+    parent = parent,
+    activationComponent = target,
+  )
+  private val glassPanel = GlassPanel(target)
+  private var isVisible: Boolean = false
 
-  private static final Key<Boolean> DO_NOT_SCROLL =Key.create("SpotlightPainter.DO_NOT_SCROLL");
-
-  static void allowScrolling(@NotNull JComponent target) {
-    ClientProperty.remove(target, DO_NOT_SCROLL);
+  init {
+    IdeGlassPaneUtil.installPainter(target, this, parent)
+    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(ComponentHighlightingListener.TOPIC, this)
   }
 
-  private static void disableScrolling(@NotNull JComponent target) {
-    ClientProperty.put(target, DO_NOT_SCROLL, true);
-  }
-
-  private static boolean isScrollingEnabled(@NotNull JComponent target) {
-    return !ClientProperty.isTrue(target, DO_NOT_SCROLL);
-  }
-
-  public SpotlightPainter(@NotNull JComponent target, @NotNull Disposable parent, @NotNull SpotlightPainterUpdater updater) {
-    myQueue = new MergingUpdateQueue("SettingsSpotlight", 200, false, target, parent, target);
-    myUpdater = updater;
-    myGlassPanel = new GlassPanel(target);
-    myTarget = target;
-    IdeGlassPaneUtil.installPainter(target, this, parent);
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parent);
-    connection.subscribe(ComponentHighlightingListener.TOPIC, this);
-  }
-
-  @Override
-  public void executePaint(Component component, Graphics2D g) {
-    if (myVisible && myGlassPanel.isVisible()) {
-      myGlassPanel.paintSpotlight(g, myTarget);
+  companion object {
+    fun allowScrolling(target: JComponent) {
+      ClientProperty.remove(target, DO_NOT_SCROLL)
     }
   }
 
-  @Override
-  public boolean needsRepaint() {
-    return true;
+  override fun executePaint(component: Component?, g: Graphics2D?) {
+    if (isVisible && glassPanel.isVisible) {
+      glassPanel.paintSpotlight(g, target)
+    }
   }
 
-  public final void updateLater() {
-    myQueue.queue(new Update(this) {
-      @Override
-      public void run() {
-        updateNow();
+  override fun needsRepaint(): Boolean = true
+
+  fun updateLater() {
+    queue.queue(object : Update(this) {
+      override fun run() {
+        updateNow()
       }
-    });
+    })
   }
 
-  public final void updateNow() {
-    myUpdater.updateNow(this);
+  fun updateNow() {
+    updater(this)
   }
 
-  public void update(SettingsFilter filter, Configurable configurable, JComponent component) {
+  open fun update(filter: SettingsFilter?, configurable: Configurable?, component: JComponent?) {
     if (configurable == null) {
-      myGlassPanel.clear();
-      myVisible = false;
+      glassPanel.clear()
+      isVisible = false
     }
     else if (component != null) {
-      myGlassPanel.clear();
-      String text = filter.getSpotlightFilterText();
-      myVisible = !text.isEmpty();
-      SearchableConfigurable searchable = new SearchableConfigurable.Delegate(configurable);
+      glassPanel.clear()
+      val text = filter?.getSpotlightFilterText()
+      isVisible = !text.isNullOrEmpty()
+      val searchable = SearchableConfigurable.Delegate(configurable)
       try {
-        SearchUtil.INSTANCE.lightOptions(searchable, component, text);
-        Runnable search = searchable.enableSearch(text); // execute for empty string too
-        if (search != null && !filter.contains(configurable) && !text.equals(myConfigurableOption.get(searchable.getId()))) {
-          search.run();
+        lightOptions(configurable = searchable, component = component, option = text)
+        // execute for empty string too
+        val search = searchable.enableSearch(text)
+        if (search != null && (filter == null || !filter.contains(configurable)) && text != configurableOption.get(searchable.id)) {
+          search.run()
         }
       }
       finally {
-        myConfigurableOption.put(searchable.getId(), text);
+        configurableOption.put(searchable.id, text)
       }
     }
     else if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      updateLater();
-      return;
+      updateLater()
+      return
     }
-    fireNeedsRepaint(myGlassPanel);
+
+    fireNeedsRepaint(glassPanel)
   }
 
-  @Override
-  public void highlight(@NotNull JComponent component, @NotNull String searchString) {
+  override fun highlight(component: JComponent, searchString: String) {
     // If several spotlight painters exist, they will receive each other updates,
     // because they share one message bus (ComponentHighlightingListener.TOPIC).
     // The painter should only draw spotlights for components in the hierarchy of `myTarget`
-    if (UIUtil.isAncestor(myTarget, component)) {
-      myGlassPanel.addSpotlight(component);
-      if (isScrollingEnabled(myTarget)) {
-        if (center(component)) {
-          disableScrolling(myTarget);
-        }
+    if (UIUtil.isAncestor(target, component)) {
+      glassPanel.addSpotlight(component)
+      if (isScrollingEnabled(target) && center(component)) {
+        disableScrolling(target)
       }
     }
   }
+}
 
-  private static boolean center(@NotNull JComponent component) {
-    JScrollPane scrollPane = null;
-    for (Component c = component; c != null && !(c instanceof CellRendererPane); c = c.getParent()) {
-      if (c instanceof JScrollPane cScrollPane) scrollPane = cScrollPane;
-      if (c instanceof ConfigurableEditor) break; // We need the topmost scroll pane descendant of the editor.
+private fun disableScrolling(target: JComponent) {
+  target.putClientProperty(DO_NOT_SCROLL, true)
+}
+
+private fun isScrollingEnabled(target: JComponent): Boolean = !ClientProperty.isTrue(target, DO_NOT_SCROLL)
+
+private fun center(component: JComponent): Boolean {
+  var scrollPane: JScrollPane? = null
+  var c: Component? = component
+  while (c != null && c !is CellRendererPane) {
+    if (c is JScrollPane) {
+      scrollPane = c
     }
-    if (scrollPane == null) return false;
-    var viewport = scrollPane.getViewport();
-    if (viewport == null || viewport.getHeight() <= 0) return false;
-    if (viewport.getView() instanceof JComponent view) {
-      var bounds = SwingUtilities.convertRectangle(component.getParent(), component.getBounds(), view);
-      var extraHeight = viewport.getHeight() - bounds.height;
-      if (extraHeight > 0) {
-        bounds.y -= extraHeight / 2;
-        bounds.height += extraHeight;
-      }
-      bounds.x = 0; // Horizontal scrolling usually does more harm than good.
-      bounds.width = viewport.getWidth();
-      view.scrollRectToVisible(bounds);
-      return true;
+    // we need the topmost scroll pane descendant of the editor
+    if (c is ConfigurableEditor) {
+      break
     }
-    return false;
+
+    c = c.getParent()
   }
 
-  @ApiStatus.Internal
-  public interface SpotlightPainterUpdater {
-    void updateNow(SpotlightPainter painter);
+  if (scrollPane == null) {
+    return false
   }
+
+  val viewport = scrollPane.getViewport()
+  if (viewport == null || viewport.getHeight() <= 0) {
+    return false
+  }
+
+  val view = viewport.view
+  if (view !is JComponent) {
+    return false
+  }
+
+  val bounds = SwingUtilities.convertRectangle(component.getParent(), component.bounds, view)
+  val extraHeight = viewport.getHeight() - bounds.height
+  if (extraHeight > 0) {
+    bounds.y -= extraHeight / 2
+    bounds.height += extraHeight
+  }
+  // horizontal scrolling usually does more harm than good
+  bounds.x = 0
+  bounds.width = viewport.getWidth()
+  view.scrollRectToVisible(bounds)
+  return true
 }

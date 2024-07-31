@@ -2,7 +2,6 @@
 package com.intellij.openapi.options.newEditor
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.options.newEditor.SpotlightPainter.SpotlightPainterUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -12,5 +11,10 @@ import javax.swing.JComponent
  */
 @ApiStatus.Internal
 interface SpotlightPainterFactory {
-  fun createSpotlightPainter(project: Project, target: JComponent, parent: Disposable, updater: SpotlightPainterUpdater): SpotlightPainter
+  fun createSpotlightPainter(
+    project: Project,
+    target: JComponent,
+    parent: Disposable,
+    updater: (SpotlightPainter) -> Unit,
+  ): SpotlightPainter
 }

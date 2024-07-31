@@ -241,7 +241,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     callback
       .doWhenDone(() -> {
         if (this.configurable != configurable) {
-          SpotlightPainter.allowScrolling(this);
+          SpotlightPainter.Companion.allowScrolling(this);
         }
         this.configurable = configurable;
         updateCurrent(configurable, false);

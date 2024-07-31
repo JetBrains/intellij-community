@@ -22,6 +22,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +97,12 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   }
 
   @ApiStatus.Internal
-  protected @NotNull SpotlightPainter spotlightPainterFactory(@Nullable Project project, @NotNull JComponent target, @NotNull Disposable parent, @NotNull SpotlightPainter.SpotlightPainterUpdater updater) {
+  protected @NotNull SpotlightPainter spotlightPainterFactory(
+    @Nullable Project project,
+    @NotNull JComponent target,
+    @NotNull Disposable parent,
+    @NotNull Function1<? super SpotlightPainter, Unit> updater
+  ) {
     return new SpotlightPainter(target, parent, updater);
   }
 
