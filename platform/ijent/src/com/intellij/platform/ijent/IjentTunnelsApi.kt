@@ -28,6 +28,9 @@ sealed interface IjentTunnelsApi {
    * The connection exists as a pair of channels [Connection.channelToServer] and [Connection.channelFromServer],
    * which allow communicating to a remote server from the IDE side.
    *
+   * Packets sent to the channel and received from the channel may be split and/or concatenated.
+   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+   *
    * If the connection gets closed from the server, then the channels also get closed in the sense of [SendChannel.close].
    *
    * If an exception happens during sending, then [Connection.channelFromServer] gets closed exceptionally with [RemoteNetworkException].
@@ -178,8 +181,11 @@ operator fun Connection.component2(): ReceiveChannel<ByteBuffer> = channelFromSe
 
 interface IjentTunnelsPosixApi : IjentTunnelsApi {
   /**
-   * Creates a remote UNIX socket forwarding, i.e. IJent listens waits for a connection on the remote machine, and when the connection
+   * Creates a remote UNIX socket forwarding. IJent listens for a connection on the remote machine, and when the connection
    * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
+   *
+   * Packets sent to the channel and received from the channel may be split and/or concatenated.
+   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
    *
    * The call accepts only one connection. If multiple connections should be accepted, the function is supposed to be called in a loop:
    * ```kotlin

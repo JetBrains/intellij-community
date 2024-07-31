@@ -268,6 +268,8 @@ sealed interface IjentOpenedFile {
      * Note, that [ReadResult.Bytes] can be `0` if [buf] cannot accept new data.
      *
      * This operation modifies the file's cursor, i.e. [tell] may show different results before and after this function is invoked.
+     *
+     * It reads not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
      */
     suspend fun read(buf: ByteBuffer): IjentFsResult<ReadResult, ReadError>
 
@@ -275,6 +277,8 @@ sealed interface IjentOpenedFile {
      * Reads data from the position [offset] of the file.
      *
      * This operation does not modify the file's cursor, i.e. [tell] will show the same result before and after this function is invoked.
+     *
+     * It reads not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
      */
     suspend fun read(buf: ByteBuffer, offset: Long) : IjentFsResult<ReadResult, ReadError>
 
@@ -293,10 +297,20 @@ sealed interface IjentOpenedFile {
   }
 
   interface Writer : IjentOpenedFile {
+    /**
+     * TODO Document
+     *
+     * It writes not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+     */
     suspend fun write(buf: ByteBuffer): IjentFsResult<
       Int,
       WriteError>
 
+    /**
+     * TODO Document
+     *
+     * It writes not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+     */
     suspend fun write(buf: ByteBuffer, pos: Long): IjentFsResult<
       Int,
       WriteError>
