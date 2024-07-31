@@ -10627,6 +10627,7 @@ f:com.intellij.execution.console.ConsoleFoldingSettings
 - s:getSettings():com.intellij.execution.console.ConsoleFoldingSettings
 - getState():com.intellij.execution.console.ConsoleFoldingSettings$MyBean
 - loadState(com.intellij.execution.console.ConsoleFoldingSettings$MyBean):V
+- noStateLoaded():V
 - shouldFoldLine(java.lang.String):Z
 f:com.intellij.execution.console.ConsoleFoldingSettings$MyBean
 - addedNegative:java.util.List
