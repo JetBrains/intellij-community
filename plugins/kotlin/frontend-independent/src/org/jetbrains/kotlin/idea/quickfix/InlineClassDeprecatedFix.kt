@@ -27,7 +27,7 @@ class InlineClassDeprecatedFix(
         (if (element.containingKtFile.hasJvmTarget()) "@JvmInline " else "") + "value"
     )
 
-    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? = Presentation.of(text)
+    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation = Presentation.of(text)
 
     override fun getFamilyName() = KotlinBundle.message("replace.modifier")
 
