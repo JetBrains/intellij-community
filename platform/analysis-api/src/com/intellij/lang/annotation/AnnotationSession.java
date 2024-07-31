@@ -47,9 +47,15 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
 
   /**
    * @return text range (inside the {@link #getFile()}) for which annotators should be calculated.
+   * The highlighting range is the subset of psi file for which the highlighting was requested.
+   * For example, when the user typed inside a function, the highlighting range is the containing code block.
+   * The {@link #getPriorityRange()} on the other hand, is a visible part of the file for which the highlighting should be run first.
+   * In the example above it could be a part of the function body and a couple of members below, visible onscreen.
    * It is guaranteed that no PSI elements outside this range are going to be analyzed in this session.
    * This method could be used as an optimization to reduce the analysis range.
    */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public @NotNull TextRange getHighlightRange() {
     return getFile().getTextRange();
   }
