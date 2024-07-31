@@ -21,19 +21,19 @@ internal class CompilerSettingsCollector : ProjectUsagesCollector() {
     usages.add(DISPLAY_NOTIFICATION_POPUP.metric(workspaceConfig.DISPLAY_NOTIFICATION_POPUP))
     usages.add(CLEAR_OUTPUT_DIRECTORY.metric(workspaceConfig.CLEAR_OUTPUT_DIRECTORY))
     usages.add(MAKE_PROJECT_ON_SAVE.metric(workspaceConfig.MAKE_PROJECT_ON_SAVE))
-    usages.add(PARALLEL_COMPILATION.metric(config.isParallelCompilationEnabled))
+    usages.add(PARALLEL_COMPILATION_OPTION.metric(config.parallelCompilationOption))
     usages.add(REBUILD_ON_DEPENDENCY_CHANGE.metric(workspaceConfig.REBUILD_ON_DEPENDENCY_CHANGE))
     usages.add(COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT.metric(workspaceConfig.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT))
 
     return usages
   }
 
-  private val GROUP = EventLogGroup("java.compiler.settings.project", 2)
+  private val GROUP = EventLogGroup("java.compiler.settings.project", 3)
   private val AUTO_SHOW_ERRORS_IN_EDITOR = GROUP.registerEvent("AUTO_SHOW_ERRORS_IN_EDITOR", EventFields.Enabled)
   private val DISPLAY_NOTIFICATION_POPUP = GROUP.registerEvent("DISPLAY_NOTIFICATION_POPUP", EventFields.Enabled)
   private val CLEAR_OUTPUT_DIRECTORY = GROUP.registerEvent("CLEAR_OUTPUT_DIRECTORY", EventFields.Enabled)
   private val MAKE_PROJECT_ON_SAVE = GROUP.registerEvent("MAKE_PROJECT_ON_SAVE", EventFields.Enabled)
-  private val PARALLEL_COMPILATION = GROUP.registerEvent("PARALLEL_COMPILATION", EventFields.Enabled)
+  private val PARALLEL_COMPILATION_OPTION = GROUP.registerEvent("PARALLEL_COMPILATION_OPTION", EventFields.Enum("value", ParallelCompilationOption::class.java))
   private val REBUILD_ON_DEPENDENCY_CHANGE = GROUP.registerEvent("REBUILD_ON_DEPENDENCY_CHANGE", EventFields.Enabled)
   private val COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT = GROUP.registerEvent("COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT", EventFields.Enabled)
 }
