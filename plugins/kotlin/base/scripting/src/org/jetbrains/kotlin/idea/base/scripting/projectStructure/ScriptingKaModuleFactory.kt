@@ -2,20 +2,14 @@
 package org.jetbrains.kotlin.idea.base.scripting.projectStructure
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryEntity
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.*
@@ -34,14 +28,14 @@ internal class ScriptingKaModuleFactory : KaModuleFactory {
             is ScriptDependenciesInfo -> KtScriptDependencyModuleByModuleInfo(moduleInfo)
             is ScriptDependenciesSourceInfo -> KtScriptDependencySourceModuleByModuleInfo(moduleInfo)
             is LibraryInfo -> {
-                val entitySource = getLibraryEntitySource(moduleInfo.library)
+                val entitySource = moduleInfo.library.findLibraryEntity(moduleInfo.project.workspaceModel.currentSnapshot)?.entitySource
 
                 (entitySource as? KotlinScriptEntitySourceK2)?.virtualFileUrl?.virtualFile?.let {
                     KtScriptLibraryModuleByModuleInfo(moduleInfo, it)
                 }
             }
             is LibrarySourceInfo -> {
-                val entitySource = getLibraryEntitySource(moduleInfo.library)
+                val entitySource = moduleInfo.library.findLibraryEntity(moduleInfo.project.workspaceModel.currentSnapshot)?.entitySource
 
                 (entitySource as? KotlinScriptEntitySourceK2)?.virtualFileUrl?.virtualFile?.let {
                     KtScriptLibrarySourceModuleByModuleInfo(moduleInfo, it)
@@ -51,12 +45,6 @@ internal class ScriptingKaModuleFactory : KaModuleFactory {
         }
     }
 
-    private fun getLibraryEntitySource(library: Library): EntitySource? {
-        val entitySource = (library as? LibraryBridgeImpl)?.let { bridge ->
-            bridge.entityStorage.current.resolve<LibraryEntity>(bridge.entityId)?.entitySource
-        }
-        return entitySource
-    }
 }
 
 @OptIn(KaExperimentalApi::class)
