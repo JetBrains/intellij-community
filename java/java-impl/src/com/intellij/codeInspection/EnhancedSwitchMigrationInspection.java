@@ -935,12 +935,21 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
         if (i + 1 < length) {
           addWhiteSpaceAndComments(element, sb, ct);
         }
+        if (element.getNextSibling() == null && element.getLastChild() instanceof PsiComment comment &&
+            comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+          if (sb.charAt(sb.length() - 1) != '\n') {
+            sb.append("\n");
+          }
+        }
       }
       addCommentsUntilNextLabel(ct, branch, sb);
       if (sb.charAt(sb.length() - 1) != '\n') {
         sb.append("\n");
       }
       sb.append("}");
+      for (PsiElement element : branch.myUsedElements) {
+        ct.markUnchanged(element);
+      }
       return sb.toString();
     }
 
@@ -995,7 +1004,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       untilComment = next;
     }
     if (untilComment != null) {
-      String commentsBefore = ct.commentsBefore(untilComment).stripTrailing();
+      String commentsBefore = grubCommentsBefore(untilComment, ct, branch).stripTrailing();
       String previousText = builder.toString().stripTrailing();
       if (previousText.length() > 1 && previousText.charAt(builder.length() - 1) == '\n') {
         commentsBefore = StringUtil.trimStart(commentsBefore, "\n");
@@ -1005,6 +1014,27 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       }
       builder.append(commentsBefore);
     }
+  }
+
+  @NotNull
+  private static String grubCommentsBefore(@NotNull PsiElement untilComment, @NotNull CommentTracker ct, SwitchBranch branch) {
+    List<String> comments = new ArrayList<>();
+    PsiElement current =
+      (untilComment instanceof PsiComment || untilComment instanceof PsiWhiteSpace) ? untilComment : PsiTreeUtil.prevLeaf(untilComment);
+    while (current != null) {
+      if ((current instanceof PsiComment || current instanceof PsiWhiteSpace)) {
+        if (branch.myUsedElements.isEmpty() ||
+            !PsiTreeUtil.isAncestor(branch.myUsedElements.get(branch.myUsedElements.size() - 1), current, false)) {
+          comments.add(ct.text(current));
+        }
+      }
+      else {
+        break;
+      }
+      current = PsiTreeUtil.prevLeaf(current);
+    }
+    Collections.reverse(comments);
+    return StringUtil.join(comments, "");
   }
 
   private static final class SwitchBranch {
