@@ -145,7 +145,14 @@ public abstract class ExecutorAction extends DumbAwareAction {
     if (project == null) return;
 
     List<RunDashboardRunConfigurationNode> runnableLeaves = e.getPresentation().getClientProperty(RUNNABLE_LEAVES_KEY);
-    if (runnableLeaves == null) return;
+    if (runnableLeaves == null) {
+      // We try to recalculate it because in the backend + frontend case update & perform are 2 different
+      // requests to backend, and for now this client property won't be saved between them.
+      // We won't count leaves twice in case they are empty because in that case update will disable the action.
+      JBIterable<RunDashboardRunConfigurationNode> targetNodes = getLeafTargets(e);
+      runnableLeaves = targetNodes.filter(this::canRun).toList();
+      if (runnableLeaves.isEmpty()) return;
+    }
 
     for (RunDashboardRunConfigurationNode node : runnableLeaves) {
       run(node.getConfigurationSettings(), node.getDescriptor(), e.getDataContext());
