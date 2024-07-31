@@ -129,7 +129,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       myContentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
     }
 
-    myPanel = new UnifiedDiffPanel(myProject, myContentPanel, this, myContext);
+    myPanel = new UnifiedDiffPanel(myProject, myContentPanel, myContext) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
+        DataSink.uiDataSnapshot(sink, UnifiedDiffViewer.this);
+      }
+    };
 
     myFoldingModel = new MyFoldingModel(getProject(), myEditor, this);
     myMarkupUpdater = new MarkupUpdater(getContents());
@@ -917,7 +923,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
   @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public Navigatable getNavigatable() {
     return getNavigatable(LineCol.fromCaret(myEditor));
   }
 
@@ -1063,25 +1069,16 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
-      return myPrevNextDifferenceIterable;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    UnifiedDiffChange change = getCurrentChange();
+    sink.set(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE, myPrevNextDifferenceIterable);
+    sink.set(DiffDataKeys.CURRENT_EDITOR, myEditor);
+    if (change != null) {
+      sink.set(DiffDataKeys.CURRENT_CHANGE_RANGE, new LineRange(change.getLine1(), change.getLine2()));
     }
-    else if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
-      return myEditor;
-    }
-    else if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
-      UnifiedDiffChange change = getCurrentChange();
-      if (change != null) {
-        return new LineRange(change.getLine1(), change.getLine2());
-      }
-    }
-    else if (DiffDataKeys.EDITOR_CHANGED_RANGE_PROVIDER.is(dataId)) {
-      return new MyChangedRangeProvider();
-    }
-    return super.getData(dataId);
+    sink.set(DiffDataKeys.EDITOR_CHANGED_RANGE_PROVIDER, new MyChangedRangeProvider());
   }
 
   private class MyStatusPanel extends StatusPanel {

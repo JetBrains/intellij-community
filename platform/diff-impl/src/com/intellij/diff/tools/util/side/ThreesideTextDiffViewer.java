@@ -36,6 +36,7 @@ import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
@@ -47,7 +48,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -298,7 +298,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
   @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public Navigatable getNavigatable() {
     return getCurrentContent().getNavigatable(LineCol.fromCaret(getCurrentEditor()));
   }
 
@@ -330,13 +330,10 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
-      return getCurrentEditor();
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_EDITOR, getCurrentEditor());
   }
 
   private class MyVisibleAreaListener implements VisibleAreaListener {

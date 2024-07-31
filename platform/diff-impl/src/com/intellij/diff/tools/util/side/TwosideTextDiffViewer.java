@@ -24,6 +24,7 @@ import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -33,7 +34,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -282,7 +282,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
 
   @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public Navigatable getNavigatable() {
     Side side = getCurrentSide();
 
     LineCol position = LineCol.fromCaret(getEditor(side));
@@ -346,13 +346,10 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
-      return getCurrentEditor();
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_EDITOR, getCurrentEditor());
   }
 
   private class MyVisibleAreaListener implements VisibleAreaListener {

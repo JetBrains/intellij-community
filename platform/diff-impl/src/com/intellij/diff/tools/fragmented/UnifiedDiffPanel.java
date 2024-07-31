@@ -18,7 +18,6 @@ package com.intellij.diff.tools.fragmented;
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.tools.util.base.DiffPanelBase;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -40,11 +39,8 @@ public class UnifiedDiffPanel extends DiffPanelBase {
 
   @NotNull private final AsyncProcessIcon.Big myBusyIcon;
 
-  public UnifiedDiffPanel(@Nullable Project project,
-                          @NotNull JComponent content,
-                          @NotNull DataProvider provider,
-                          @NotNull DiffContext context) {
-    super(project, provider, context);
+  public UnifiedDiffPanel(@Nullable Project project, @NotNull JComponent content, @NotNull DiffContext context) {
+    super(project, context);
     myBusyIcon = new AsyncProcessIcon.Big("UnifiedDiff");
     JPanel centerPanel = JBUI.Panels.simplePanel(content).addToTop(myNotificationsPanel);
     myContentPanel.add(centerPanel, GOOD_CONTENT);

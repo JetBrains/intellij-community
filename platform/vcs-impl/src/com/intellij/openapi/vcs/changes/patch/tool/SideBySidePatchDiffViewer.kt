@@ -41,14 +41,13 @@ import com.intellij.ui.DirtyUI
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.ints.IntConsumer
 import it.unimi.dsi.fastutil.ints.IntList
-import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import javax.swing.JComponent
 
 internal class SideBySidePatchDiffViewer(
   private val diffContext: DiffContext,
   private val diffRequest: PatchDiffRequest
-) : DiffViewer, DataProvider, EditorDiffViewer {
+) : DiffViewer, EditorDiffViewer {
   private val project: Project? = diffContext.getProject()
 
   private val panel: SimpleDiffPanel
@@ -95,7 +94,16 @@ internal class SideBySidePatchDiffViewer(
     contentPanel.setTitles(titles)
     contentPanel.setPainter(MyDividerPainter())
 
-    panel = SimpleDiffPanel(contentPanel, this, diffContext)
+    panel = object : SimpleDiffPanel(contentPanel, diffContext) {
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        sink[CommonDataKeys.PROJECT] = project
+        sink[DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE] = prevNextDifferenceIterable
+        sink[DiffDataKeys.CURRENT_EDITOR] = currentEditor
+        sink[DiffDataKeys.CURRENT_CHANGE_RANGE] = prevNextDifferenceIterable
+          .getCurrentLineRangeByLine(currentEditor.getCaretModel().logicalPosition.line)
+      }
+    }
 
     syncScrollable = MySyncScrollable()
     syncScrollSupport = TwosideSyncScrollSupport(editors, syncScrollable)
@@ -235,23 +243,6 @@ internal class SideBySidePatchDiffViewer(
     group.add(Separator.getInstance())
     group.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR))
     return group
-  }
-
-  override fun getData(dataId: @NonNls String): Any? {
-    if (CommonDataKeys.PROJECT.`is`(dataId)) {
-      return project
-    }
-    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.`is`(dataId)) {
-      return prevNextDifferenceIterable
-    }
-    if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) {
-      return currentEditor
-    }
-    if (DiffDataKeys.CURRENT_CHANGE_RANGE.`is`(dataId)) {
-      val line = currentEditor.getCaretModel().logicalPosition.line
-      return prevNextDifferenceIterable.getCurrentLineRangeByLine(line)
-    }
-    return null
   }
 
   private inner class MyPrevNextDifferenceIterable : PrevNextDifferenceIterableBase<PatchSideChange>() {

@@ -28,10 +28,10 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,13 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
 
     myContentPanel = OnesideContentPanel.createFromHolder(myHolder);
 
-    myPanel = new SimpleDiffPanel(myContentPanel, this, context);
+    myPanel = new SimpleDiffPanel(myContentPanel, context) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
+        DataSink.uiDataSnapshot(sink, OnesideDiffViewer.this);
+      }
+    };
   }
 
   @Override
@@ -122,13 +128,10 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
     return myHolder;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
-      return getContent();
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_CONTENT, getContent());
   }
 
   //
@@ -137,7 +140,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
 
   @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public Navigatable getNavigatable() {
     return getContent().getNavigatable();
   }
 
