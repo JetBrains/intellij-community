@@ -79,6 +79,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   private final List<CompiledPattern> myCompiledPatterns = new ArrayList<>();
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<>();
   private boolean myWildcardPatternsInitialized = false;
+  private boolean myParallelCompilationOptionSetExplicitly = false;
   private final Project myProject;
   private final ExcludedEntriesConfiguration myExcludesConfiguration;
 
@@ -173,6 +174,9 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   @Override
   public Element getState() {
     Element state = new Element("state");
+    if (!myParallelCompilationOptionSetExplicitly) {
+      myState.PARALLEL_COMPILATION_OPTION = null;
+    }
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters());
 
     if (!myAddNotNullAssertions) {
@@ -300,9 +304,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   private void migrateParallelCompilationOption() {
-    // TODO: check if this is a gradle based project or not
-    boolean isOldParallelCompilationEnabled = isOldParallelCompilationEnabled();
-    if (isOldParallelCompilationEnabled) myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.ENABLED;
+    if (isOldParallelCompilationEnabled()) myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.ENABLED;
     else myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.AUTOMATIC;
   }
 
@@ -320,8 +322,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
   @Override
   public boolean isParallelCompilationEnabled() {
-    if (myState.PARALLEL_COMPILATION_OPTION == null) migrateParallelCompilationOption();
-    return switch (myState.PARALLEL_COMPILATION_OPTION) {
+    return switch (getParallelCompilationOption()) {
         case ENABLED, AUTOMATIC -> true;
         case DISABLED -> false;
       };
@@ -329,6 +330,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
   @Override
   public void setParallelCompilationEnabled(boolean enabled) {
+    myParallelCompilationOptionSetExplicitly = true;
     if (enabled) {
       myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.ENABLED;
     } else {
@@ -345,6 +347,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
   @Override
   public void setParallelCompilationOption(@NotNull ParallelCompilationOption option) {
+    myParallelCompilationOptionSetExplicitly = true;
     myState.PARALLEL_COMPILATION_OPTION = option;
   }
 
@@ -788,6 +791,9 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   @Override
   public void loadState(@NotNull Element parentNode) {
     myState = XmlSerializer.deserialize(parentNode, State.class);
+    if (myState.PARALLEL_COMPILATION_OPTION != null) {
+      myParallelCompilationOptionSetExplicitly = true;
+    }
     if (!myProject.isDefault()) {
       for (Element option : parentNode.getChildren("option")) {
         if ("DEFAULT_COMPILER".equals(option.getAttributeValue("name"))) {
