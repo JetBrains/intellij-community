@@ -19,10 +19,6 @@ class StopProfileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
 
   override suspend fun doExecute(context: PlaybackContext) {
     val profilerController = ProfilersController.getInstance()
-    check(isAnyProfilingStarted()) {
-      "Profiling hasn't been started"
-    }
-
     val reportPath = getCurrentProfilerHandler().stopProfileAsyncWithNotification(extractCommandArgument(PREFIX))
     if(reportPath != null) {
       profilerController.reportsPath = reportPath
