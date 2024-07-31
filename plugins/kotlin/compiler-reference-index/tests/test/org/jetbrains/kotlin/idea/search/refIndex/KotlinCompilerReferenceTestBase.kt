@@ -34,8 +34,6 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
 
         if (withK2Compiler) {
             project.enableK2Compiler()
-        } else {
-            project.enableK1Compiler()
         }
     }
 
