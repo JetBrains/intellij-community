@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
+import com.intellij.compiler.ParallelCompilationOption
 import com.intellij.compiler.server.BuildManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
@@ -1007,6 +1008,7 @@ class AppTest {
   }
 
   void "test java depends on stub whose generation failed"() {
+    CompilerConfiguration.getInstance(project).parallelCompilationOption = ParallelCompilationOption.DISABLED
     Closure<Runnable> createFiles = { String prefix ->
       def genParam = myFixture.addFileToProject(prefix + "GenParam.java", "class GenParam {}")
       myFixture.addFileToProject(prefix + "Intf.java", "class Intf<T extends GenParam> {}")
