@@ -253,10 +253,8 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   }
 
   private @NotNull Set<String> readCurrentTagNames(@NotNull VirtualFile root) throws VcsException {
-    return computeWithSpanThrows(myTracer, ReadingTags.getName(), span -> {
-      span.setAttribute("rootName", root.getName());
-      return new HashSet<>(GitBranchUtil.getAllTags(myProject, root));
-    });
+    return computeWithSpanThrows(myTracer.spanBuilder(ReadingTags.getName()).setAttribute("rootName", root.getName()),
+                                 __ -> new HashSet<>(GitBranchUtil.getAllTags(myProject, root)));
   }
 
   private static @NotNull <T> Set<T> remove(@NotNull Set<? extends T> original, Set<T> @NotNull ... toRemove) {
@@ -278,9 +276,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   private @NotNull DetailedLogData loadSomeCommitsOnTaggedBranches(@NotNull VirtualFile root,
                                                                    int commitCount,
                                                                    @NotNull Collection<String> unmatchedTags) throws VcsException {
-    return computeWithSpanThrows(myTracer, LoadingCommitsOnTaggedBranch.getName(), span -> {
-      span.setAttribute("rootName", root.getName());
-
+    return computeWithSpanThrows(myTracer.spanBuilder(LoadingCommitsOnTaggedBranch.getName()).setAttribute("rootName", root.getName()), __ -> {
       List<String> params = new ArrayList<>();
       params.add("--max-count=" + commitCount);
 

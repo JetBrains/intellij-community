@@ -608,7 +608,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
       if (manager != null) {
         try {
-          boolean projectsClosedSuccessfully = TraceUtil.computeWithSpanThrows(tracer, "disposeProjects", (span) -> {
+          boolean projectsClosedSuccessfully = TraceUtil.computeWithSpanThrows(tracer.spanBuilder("disposeProjects"), __ -> {
             return manager.closeAndDisposeAllProjects(!force);
           });
           if (!projectsClosedSuccessfully) {

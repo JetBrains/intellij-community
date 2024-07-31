@@ -4,6 +4,7 @@ package com.intellij.platform.diagnostic.telemetry.helpers;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ThrowableConsumer;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
@@ -16,10 +17,9 @@ import org.jetbrains.annotations.NotNull;
 public final class TraceUtil {
 
   @NotNull
-  public static <T, E extends Throwable> T computeWithSpanThrows(@NotNull Tracer tracer,
-                                                                 @NotNull String spanName,
+  public static <T, E extends Throwable> T computeWithSpanThrows(@NotNull SpanBuilder spanBuilder,
                                                                  @NotNull ThrowableNotNullFunction<Span, T, E> operation) throws E {
-    return TraceKt.computeWithSpanIgnoreThrows(tracer, spanName, operation);
+    return TraceKt.computeWithSpanIgnoreThrows(spanBuilder, operation);
   }
 
   public static <E extends Throwable> void runWithSpanThrows(@NotNull Tracer tracer,

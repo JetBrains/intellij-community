@@ -116,10 +116,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   private @NotNull DataPack readFirstBlock() {
     try {
-      DataPack dataPack = computeWithSpanThrows(myTracer, LogData.Initializing.getName(), span -> {
-        return loadRecentData(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()),
-                              myRecentCommitCount, false);
-      });
+      DataPack dataPack = computeWithSpanThrows(
+        myTracer.spanBuilder(LogData.Initializing.getName()),
+        __ -> loadRecentData(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()), myRecentCommitCount, false));
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
       return dataPack;
     }
@@ -148,7 +147,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   private @NotNull LogInfo loadRecentData(final @NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements) throws VcsException {
-    return computeWithSpanThrows(myTracer, LogData.ReadingRecentCommits.getName(), __ -> {
+    return computeWithSpanThrows(myTracer.spanBuilder(LogData.ReadingRecentCommits.getName()), __ -> {
       LogInfo logInfo = new LogInfo(myStorage);
       for (Map.Entry<VirtualFile, VcsLogProvider> entry : getProvidersForRoots(requirements.keySet()).entrySet()) {
         VirtualFile root = entry.getKey();
@@ -327,7 +326,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         PermanentGraph<Integer> permanentGraph = myCurrentDataPack.isFull() ? myCurrentDataPack.getPermanentGraph() : null;
         if (permanentGraph == null || !supportsIncrementalRefresh) return loadFullLog();
 
-        return computeWithSpanThrows(myTracer, LogData.Refreshing.getName(), span -> {
+        return computeWithSpanThrows(myTracer.spanBuilder(LogData.Refreshing.getName()), __ -> {
           Map<VirtualFile, CompressedRefs> currentRefs = myCurrentDataPack.getRefsModel().getAllRefsByRoot();
           int commitCount = myRecentCommitCount;
           for (int attempt = 0; attempt <= 1; attempt++) {
@@ -426,7 +425,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
 
     private @NotNull DataPack loadFullLog() throws VcsException {
-      return computeWithSpanThrows(myTracer, LogData.LoadingFullLog.getName(), span -> {
+      return computeWithSpanThrows(myTracer.spanBuilder(LogData.LoadingFullLog.getName()), __ -> {
         LogInfo logInfo = readFullLogFromVcs();
         List<? extends GraphCommit<Integer>> graphCommits = multiRepoJoin(logInfo.getCommits());
         return DataPack.build(graphCommits, logInfo.getRefs(), myProviders, myStorage, true);
@@ -434,7 +433,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
 
     private @NotNull LogInfo readFullLogFromVcs() throws VcsException {
-      return computeWithSpanThrows(myTracer, LogData.ReadingAllCommits.getName(), span -> {
+      return computeWithSpanThrows(myTracer.spanBuilder(LogData.ReadingAllCommits.getName()), __ -> {
         LogInfo logInfo = new LogInfo(myStorage);
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myProviders.entrySet()) {
           VirtualFile root = entry.getKey();
@@ -455,7 +454,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
 
     private @NotNull DataPack buildSmallDataPack() {
-      return computeWithSpanThrows(myTracer, LogData.PartialRefreshing.getName(), span -> {
+      return computeWithSpanThrows(myTracer.spanBuilder(LogData.PartialRefreshing.getName()), __ -> {
         try {
           int commitCount = SMALL_DATA_PACK_COMMITS_COUNT;
           Map<VirtualFile, VcsLogProvider.Requirements> requirements = prepareRequirements(myProviders.keySet(), commitCount, null);

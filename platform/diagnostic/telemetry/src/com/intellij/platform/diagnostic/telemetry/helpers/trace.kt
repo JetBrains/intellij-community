@@ -73,10 +73,9 @@ suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = Empt
 }
 
 @Internal
-internal fun <T> computeWithSpanIgnoreThrows(tracer: Tracer,
-                                             spanName: String,
+internal fun <T> computeWithSpanIgnoreThrows(spanBuilder: SpanBuilder,
                                              operation: ThrowableNotNullFunction<Span, T, out Throwable>): T {
-  return tracer.spanBuilder(spanName).use(operation::`fun`)
+  return spanBuilder.use(operation::`fun`)
 }
 
 @Internal

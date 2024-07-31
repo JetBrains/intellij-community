@@ -363,9 +363,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     LOG.debug("Shelving of " + changes.size() + " changes...");
 
     try {
-      return computeWithSpanThrows(myTracer, Shelve.TotalShelving.getName(), (span) -> {
-        span.setAttribute("changesSize", changes.size());
-
+      return computeWithSpanThrows(myTracer.spanBuilder(Shelve.TotalShelving.getName()).setAttribute("changesSize", changes.size()), __ -> {
         Path schemePatchDir = generateUniqueSchemePatchDir(commitMessage, true);
         List<Change> textChanges = new ArrayList<>();
         final List<ShelvedBinaryFile> binaryFiles = new ArrayList<>();
