@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
-open class InlineClassDeprecatedFix(
+class InlineClassDeprecatedFix(
     element: KtModifierListOwner,
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtModifierListOwner, Unit>(element, Unit) {
 
