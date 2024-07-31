@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.HeavyPlatformTestCase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
@@ -61,10 +63,9 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
         Disposer.dispose(disposable2)
       }
     }
-
   }
 
-  fun testOnChangesChanges(): Unit = runBlocking {
+  fun testOnChanges(): Unit = runBlocking {
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable = Disposer.newDisposable(testRootDisposable)
     try {
@@ -148,6 +149,69 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     }
     finally {
       Disposer.dispose(disposable)
+    }
+  }
+
+  fun testAddingListenerConcurrentlyToChanges() {
+    repeat(100) {
+      runBlocking {
+        val manager = HotSwapSessionManager.getInstance(project)
+        val list = mutableListOf<HotSwapVisibleStatus>()
+        val disposable = Disposer.newDisposable(testRootDisposable)
+        try {
+          val addFile = launch(Dispatchers.Default) {
+            val provider = MockHotSwapProvider()
+            manager.createSession(provider, disposable)
+            provider.collector.addFile(MockVirtualFile("a.txt"))
+          }
+          val addListener = launch(Dispatchers.Default) {
+            manager.addListener(HotSwapChangesListener { _, status ->
+              synchronized(list) {
+                list.add(status)
+              }
+            }, disposable)
+          }
+          addFile.join()
+          addListener.join()
+          assertEquals(HotSwapVisibleStatus.CHANGES_READY, list.last())
+        }
+        finally {
+          Disposer.dispose(disposable)
+        }
+      }
+    }
+  }
+
+  fun testAddingListenerConcurrentlyToSessionClose() {
+    repeat(100) {
+      runBlocking {
+        val manager = HotSwapSessionManager.getInstance(project)
+        val list = mutableListOf<HotSwapVisibleStatus>()
+        val disposable1 = Disposer.newDisposable(testRootDisposable)
+        val disposable2 = Disposer.newDisposable(testRootDisposable)
+        try {
+          manager.createSession(MockHotSwapProvider(), disposable1)
+          val closeOldAndAddFile = launch(Dispatchers.Default) {
+            Disposer.dispose(disposable1)
+            val provider = MockHotSwapProvider()
+            manager.createSession(provider, disposable2)
+            provider.collector.addFile(MockVirtualFile("a.txt"))
+          }
+          val addListener = launch(Dispatchers.Default) {
+            manager.addListener(HotSwapChangesListener { _, status ->
+              synchronized(list) {
+                list.add(status)
+              }
+            }, disposable2)
+          }
+          closeOldAndAddFile.join()
+          addListener.join()
+          assertEquals(HotSwapVisibleStatus.CHANGES_READY, list.last())
+        }
+        finally {
+          Disposer.dispose(disposable2)
+        }
+      }
     }
   }
 }

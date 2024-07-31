@@ -27,7 +27,20 @@ class HotSwapSessionManager(private val project: Project, private val parentScop
     return hotSwapSession
   }
 
-  internal val currentSession: HotSwapSession<*>? get() = sessions.lastOrNull()
+  internal val currentSession: HotSwapSession<*>?
+    get() {
+      // Thread safe implementation of `lastOrNull` call
+      while (true) {
+        val size = sessions.size
+        if (size == 0) return null
+        try {
+          return sessions[size - 1]
+        }
+        catch (e: IndexOutOfBoundsException) {
+          continue
+        }
+      }
+    }
 
   internal fun addListener(listener: HotSwapChangesListener, disposable: Disposable) {
     listeners.add(listener, disposable)
