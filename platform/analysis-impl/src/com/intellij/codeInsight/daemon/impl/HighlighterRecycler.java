@@ -52,6 +52,7 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
       replaced = h.replace(BEING_RECYCLED_KEY, oldIndicator, myIndicator);
     }
     else {
+      ProgressManager.checkCanceled(); // two sessions are going to overlap and fight for recycling highlighters, cancel one of them
       replaced = false;
     }
     if (replaced) {
