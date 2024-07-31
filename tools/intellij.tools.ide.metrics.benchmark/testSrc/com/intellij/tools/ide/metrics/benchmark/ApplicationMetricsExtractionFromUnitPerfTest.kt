@@ -64,7 +64,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .build()
 
     Benchmark.newBenchmark(testName) {
-      tracer.spanBuilder(customSpanName).use { it: Span ->
+      tracer.spanBuilder(customSpanName).use {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }
 
@@ -108,7 +108,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
     val customSpanName = "custom span"
 
     val perfTest = Benchmark.newBenchmark(testName) {
-      tracer.spanBuilder(customSpanName).use { span ->
+      tracer.spanBuilder(customSpanName).use {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }
 

@@ -7,8 +7,8 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import com.jetbrains.JBR
@@ -470,7 +470,7 @@ internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = Comp
       addAll(compilationState)
     }
   }
-  spanBuilder("clean output").useWithoutActiveScope { span ->
+  spanBuilder("clean output").use { span ->
     val outDir = paths.buildOutputDir
     outputDirectoriesToKeep.forEach {
       val path = it.relativeToOrNull(outDir) ?: it

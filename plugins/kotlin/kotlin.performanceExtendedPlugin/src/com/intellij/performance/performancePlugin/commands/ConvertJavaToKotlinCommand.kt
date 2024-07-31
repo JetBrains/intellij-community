@@ -32,8 +32,15 @@ class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCo
             val javaFile = readAction { OpenFileCommand.findFile(filePath, project)?.toPsiFile(project) as? PsiJavaFile }
                 ?: throw IllegalArgumentException("There is no file $filePath")
 
-            TelemetryManager.getTracer(Scope("javaToKotlin")).spanBuilder(NAME).use { it: Span ->
-                JavaToKotlinAction.Handler.convertFiles(listOf(javaFile), project, module, false, false, false)
+            TelemetryManager.getTracer(Scope("javaToKotlin")).spanBuilder(NAME).use {
+                JavaToKotlinAction.Handler.convertFiles(
+                    files = listOf(javaFile),
+                    project = project,
+                    module = module,
+                    enableExternalCodeProcessing = false,
+                    askExternalCodeProcessing = false,
+                    forceUsingOldJ2k = false
+                )
             }
         }
     }

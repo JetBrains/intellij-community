@@ -5,7 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
@@ -777,7 +777,7 @@ private suspend fun buildJars(
         spanBuilder("build jar")
           .setAttribute("jar", file.toString())
           .setAttribute(AttributeKey.stringArrayKey("sources"), sources.map(Source::toString))
-          .useWithoutActiveScope { span ->
+          .use { span ->
             asset.effectiveFile = cache.computeIfAbsent(
               sources = sources,
               targetFile = file,

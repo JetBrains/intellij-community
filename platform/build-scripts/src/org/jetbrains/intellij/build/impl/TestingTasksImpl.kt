@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
@@ -481,7 +480,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     val ideaSystemPath = Path.of("$tempDir/system")
     if (cleanSystemDir) {
-      spanBuilder("idea.system.path cleanup").useWithoutActiveScope {
+      spanBuilder("idea.system.path cleanup").use {
         NioFiles.deleteRecursively(ideaSystemPath)
       }
     }
@@ -591,7 +590,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
   override suspend fun runTestsSkippedInHeadlessEnvironment() {
     CompilationTasks.create(context).compileAllModulesAndTests()
-    val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").useWithoutActiveScope { loadTestsSkippedInHeadlessEnvironment() }
+    val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").use { loadTestsSkippedInHeadlessEnvironment() }
     for (it in tests) {
       options.batchTestIncludes = it.getFirst()
       options.mainModule = it.getSecond()

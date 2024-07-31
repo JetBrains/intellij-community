@@ -42,7 +42,7 @@ class MoveFilesCommand(text: String, line: Int) : PerformanceCommandCoroutineAda
         .map { file -> psiManager.findFile(file) }
         .toTypedArray()
       val toDirectory = psiManager.findDirectory(findFile(project, moveFileData.toDirectory))
-      TelemetryManager.getTracer(Scope("MoveFiles")).spanBuilder("$NAME$tag").use { it: Span ->
+      TelemetryManager.getTracer(Scope("MoveFiles")).spanBuilder("$NAME$tag").use {
         withIgnoredConflicts<Throwable> {
           MoveHandler.doMove(project, files, toDirectory, null, null)
         }

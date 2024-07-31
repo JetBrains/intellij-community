@@ -82,20 +82,12 @@ internal fun runWithSpanIgnoreThrows(spanBuilder: SpanBuilder, operation: Throwa
 }
 
 /**
- * Does not activate the span scope, so **new spans created inside will not be linked to the started span**.
- * Consider using [use] to also activate the scope.
- */
-@Internal
-inline fun <T> SpanBuilder.useWithoutActiveScope(operation: (Span) -> T): T {
-  return startSpan().useWithoutActiveScope(operation)
-}
-
-/**
  * Does not activate the span scope, so **new spans created inside will not be linked to [this] span**.
  * Consider using [use] to also activate the scope.
  */
+@PublishedApi
 @Internal
-inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
+internal inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
   try {
     return operation(this)
   }
