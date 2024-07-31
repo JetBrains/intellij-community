@@ -119,14 +119,14 @@ public final class PyToxTest extends PyEnvTestCase {
   }
 
   /**
-   * Checks empty envs for all but 3.7
+   * Checks empty envs for all but 3.8
    */
   @Test
   public void textToxOneInterpreter() {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxOneInterpreter/", 0,
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
-                                                       Pair.create("py39", new InterpreterExpectations("ython 3.7", true)),
+                                                       Pair.create("py39", new InterpreterExpectations("ython 3.9", true)),
                                                        Pair.create("py38", new InterpreterExpectations("", false))
                                                      ),
                                                      Integer.MAX_VALUE)
@@ -156,7 +156,7 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxSuccess/", 1,
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
-                                                       Pair.create("py39", new InterpreterExpectations("I am 3.7", true)),
+                                                       Pair.create("py39", new InterpreterExpectations("I am 3.9", true)),
                                                        // Should have output
                                                        Pair.create("py38", new InterpreterExpectations("I am 3.8", true))
                                                      ),
@@ -275,7 +275,7 @@ public final class PyToxTest extends PyEnvTestCase {
                                         final int exitCode) {
           Assert.assertThat("Pytest should provide version because of --version", runner.getAllConsoleText(),
                             Matchers.containsString("pytest"));
-          Assert.assertEquals("Only 3.7 should be launched", """
+          Assert.assertEquals("Only 3.9 should be launched", """
             Test tree:
             [root](+)
             .py39(+)
