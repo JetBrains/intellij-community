@@ -1738,6 +1738,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/smartStepIntoInlinedFunctionalExpression.kt");
         }
 
+        @TestMetadata("smartStepIntoInsideConstructor.kt")
+        public void testSmartStepIntoInsideConstructor() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInsideConstructor.kt");
+        }
+
         @TestMetadata("smartStepIntoInsideLambda.kt")
         public void testSmartStepIntoInsideLambda() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoInsideLambda.kt");

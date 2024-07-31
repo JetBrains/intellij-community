@@ -1738,6 +1738,11 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
             runTest("testData/stepping/custom/smartStepIntoInlinedFunctionalExpression.kt");
         }
 
+        @TestMetadata("smartStepIntoInsideConstructor.kt")
+        public void testSmartStepIntoInsideConstructor() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoInsideConstructor.kt");
+        }
+
         @TestMetadata("smartStepIntoInsideLambda.kt")
         public void testSmartStepIntoInsideLambda() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoInsideLambda.kt");
