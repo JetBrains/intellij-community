@@ -1694,7 +1694,7 @@ org.jetbrains.jps.builders.DirtyFilesHolder
 org.jetbrains.jps.builders.FileProcessor
 - a:apply(org.jetbrains.jps.builders.BuildTarget,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor):Z
 f:org.jetbrains.jps.builders.JpsBuildBundle
-- org.jetbrains.jps.api.JpsDynamicBundle
+- <init>():V
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 a:org.jetbrains.jps.builders.ModuleBasedBuildTargetType

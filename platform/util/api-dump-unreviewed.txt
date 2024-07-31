@@ -8,7 +8,6 @@ c:com.intellij.AbstractBundle
 - getLazyMessage(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 - getMessage(java.lang.String,java.lang.Object[]):java.lang.String
 - f:getPartialMessage(java.lang.String,I,java.lang.Object[]):java.lang.String
-- f:getResourceBundle():java.util.ResourceBundle
 - sf:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
 - messageOrDefault(java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
 - sf:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
