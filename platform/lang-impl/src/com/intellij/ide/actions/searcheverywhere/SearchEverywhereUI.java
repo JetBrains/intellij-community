@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -1049,6 +1050,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private void onFocusLost(FocusEvent e) {
     if (StartupUiUtil.isWaylandToolkit()) {
       // In Wayland focus is always lost when the window is being moved.
+      return;
+    }
+    if(ApplicationManagerEx.isInIntegrationTest()){
       return;
     }
     Component oppositeComponent = e.getOppositeComponent();
