@@ -16,7 +16,7 @@ class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope
     if (binaryTraces.isEmpty()) return
     val telemetryHost = getOtlpEndPoint() ?: return
     coroutineScope.launch {
-      OpenTelemetryRawTraceExporter.export(URI.create(telemetryHost), binaryTraces, OpenTelemetryRawTraceExporter.Protocol.PROTOBUF)
+      OpenTelemetryRawTraceExporter.sendProtobuf(URI.create(telemetryHost), binaryTraces)
     }
   }
 
