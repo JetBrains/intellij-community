@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 @Service(Service.Level.PROJECT)
 class ExtractMethodService(val scope: CoroutineScope) {
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): ExtractMethodService = project.service<ExtractMethodService>()
   }
 }
