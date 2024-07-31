@@ -31,6 +31,30 @@ data class ComponentData(val xpath: String,
                          val foundComponent: Component?)
 
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
+
+  companion object {
+    /**
+     * Waits until the element specified is found within the parent search context. Doesn't guaranty visibility.
+     *
+     * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
+     */
+    fun <T : UiComponent> T.waitFound(): T {
+      findThisComponent()
+      return this
+    }
+
+    /**
+     * Asserts that the current UI component is found. Doesn't check visibility.
+     *
+     * @return The current UI component.
+     */
+    fun <T : UiComponent> T.assertFound(): T {
+      assert(present()) { "Component '$this' should be found" }
+      return this
+    }
+
+  }
+
   private var cachedComponent: Component? = null
   val component: Component
     get() = data.foundComponent ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull()
