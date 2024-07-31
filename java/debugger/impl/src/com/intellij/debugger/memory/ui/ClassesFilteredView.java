@@ -72,7 +72,6 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession, @NotNull DebugProcessImpl debugProcess, @NotNull InstancesTracker tracker) {
     super(debugSession);
-    final DebuggerManagerThreadImpl managerThread = debugProcess.getManagerThread();
     myInstancesTracker = tracker;
     final InstancesTrackerListener instancesTrackerListener = new InstancesTrackerListener() {
       @Override
@@ -84,7 +83,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         }
         ReferenceType ref = ((JavaTypeInfo)typeInfo).getReferenceType();
         final boolean activated = myIsTrackersActivated.get();
-        managerThread.schedule(new DebuggerCommandImpl() {
+        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             trackClass(debugSession, debugProcess, ref, type, activated);
@@ -118,7 +117,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
       @Override
       public void processAttached(@NotNull DebugProcess process) {
         debugProcess.removeDebugProcessListener(this);
-        managerThread.invoke(new DebuggerCommandImpl() {
+        debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             final boolean activated = myIsTrackersActivated.get();
