@@ -202,9 +202,8 @@ interface IjentTunnelsPosixApi : IjentTunnelsApi {
 
   data class ListenOnUnixSocketResult(
     val unixSocketPath: String,
-    // TODO Avoid excessive byte arrays copying.
-    val tx: SendChannel<ByteArray>,
-    val rx: ReceiveChannel<ByteArray>,
+    val tx: SendChannel<ByteBuffer>,
+    val rx: ReceiveChannel<ByteBuffer>,
   )
 
   sealed interface CreateFilePath {
