@@ -4,12 +4,10 @@
 package com.intellij.ide.ui
 
 import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.core.json.JsonReadFeature
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.laf.UIThemeExportableBean
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
@@ -490,7 +488,7 @@ internal class IJColorUIResource(color: Color, private val name: String) : JBCol
 
 private fun createWarnFunction(classLoader: ClassLoader): (String, Throwable?) -> Unit {
   return { message, error ->
-    val id = if (classLoader is PluginAwareClassLoader) classLoader.pluginId else PluginManagerCore.CORE_ID
+    val id = PluginUtil.getPluginId(classLoader)
     logger<UITheme>().warn(PluginException(message, error, id))
   }
 }

@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -224,10 +223,7 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
   private static void addPluginCost(@NotNull Class<?> runnableClass,
                                     long duration) {
     ClassLoader loader = runnableClass.getClassLoader();
-    String pluginId = loader instanceof PluginAwareClassLoader ?
-                      ((PluginAwareClassLoader)loader).getPluginId().getIdString() :
-                      PluginManagerCore.CORE_PLUGIN_ID;
-
+    String pluginId = PluginUtil.getPluginId(loader).getIdString();
     StartUpMeasurer.addPluginCost(pluginId,
                                   "invokeLater",
                                   TimeUnit.MILLISECONDS.toNanos(duration));
