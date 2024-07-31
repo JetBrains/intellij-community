@@ -2361,7 +2361,6 @@ c:com.intellij.lang.annotation.AnnotationSession
 - com.intellij.openapi.util.UserDataHolder
 - <init>(com.intellij.psi.PsiFile):V
 - getFile():com.intellij.psi.PsiFile
-- getHighlightRange():com.intellij.openapi.util.TextRange
 - getMinimumSeverity():com.intellij.lang.annotation.HighlightSeverity
 - getPriorityRange():com.intellij.openapi.util.TextRange
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
