@@ -76,14 +76,17 @@ class JpsMessageHandler(private val context: CompilationContext) : MessageHandle
         if (message is CompilerMessage) {
           compilerName = message.compilerName
           val sourcePath = message.sourcePath
-          messageText = if (sourcePath != null) {
-            """
- $sourcePath${if (message.line != -1L) ":" + message.line else ""}:
- $text
- """.trimIndent()
-          }
-          else {
-            text
+          messageText = buildString {
+            if (sourcePath != null) {
+              append(sourcePath)
+              if (message.line != -1L) append(":" + message.line)
+              appendLine(":")
+            }
+            append(text)
+            val moduleNames = message.moduleNames
+            if (moduleNames.any()) {
+              append(moduleNames.joinToString(prefix = " (", postfix = ")"))
+            }
           }
         }
         else {
