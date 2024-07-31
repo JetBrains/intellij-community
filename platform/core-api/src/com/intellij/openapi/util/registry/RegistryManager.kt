@@ -38,7 +38,7 @@ interface RegistryManager {
   /**
    * Waits for the registry load. Useful in cases when there's an early startup activity that is required to access the registry.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   suspend fun awaitRegistryLoad()
 }
 
