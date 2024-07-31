@@ -7,7 +7,11 @@
   <id>com.intellij.modules.json</id>
   <vendor>JetBrains</vendor>
   <category>Languages</category>
-  <!--<module value="com.intellij.modules.json"/>-->
+  <description><![CDATA[
+    Provides syntax highlighting and editor features for
+    <a href="https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON">JSON</a> and
+    <a href="https://json-schema.org/overview/what-is-jsonschema">JSON Schema</a> languages
+  ]]></description>
 
   <actions>
     <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction">

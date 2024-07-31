@@ -80,7 +80,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.bootstrap",
 
   "intellij.relaxng",
-  "intellij.json",
   "intellij.spellchecker",
   "intellij.platform.webSymbols",
   "intellij.xml.dom.impl",
