@@ -511,6 +511,8 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils
 - sf:findLibraryId(com.intellij.openapi.roots.libraries.Library):com.intellij.platform.workspace.jps.entities.LibraryId
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils
 - sf:getModuleLevelLibraries(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):kotlin.sequences.Sequence
+f:com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt
+- sf:findLibraryEntity(com.intellij.openapi.roots.libraries.Library,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.jps.entities.LibraryEntity
 f:com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges
 - sf:findModule(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.openapi.module.Module
 - sf:findModuleEntity(com.intellij.openapi.module.Module,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.jps.entities.ModuleEntity
