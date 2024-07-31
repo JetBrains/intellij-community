@@ -21,6 +21,7 @@ import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.event.LocatableEvent
+import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject
@@ -89,15 +90,18 @@ class KotlinLambdaAsyncMethodFilter(
     }
 
     private fun StackFrameProxyImpl.getLambdaReference(): ObjectReference? {
-        // We could fetch the lambda reference from the caller function arguments
-        // using `argumentValues.getOrNull(lambdaInfo.parameterIndex)`. However, this call
-        // results in an exception when debugging on Android. Instead, we can fetch the lambda
-        // reference from visible variables. When the current function is called, the debugger
-        // should be located on the first available line number of a function that calls the
-        // lambda we are looking for. It means that the only visible variables are arguments
-        // of this function.
-        val lambdaArgumentVariable = visibleVariables().getOrNull(lambdaInfo.parameterIndex) ?: return null
-        return getValue(lambdaArgumentVariable) as? ObjectReference
+        if (DexDebugFacility.isDex(virtualMachine.virtualMachine)) {
+            // We could fetch the lambda reference from the caller function arguments
+            // using `argumentValues.getOrNull(lambdaInfo.parameterIndex)`. However, this call
+            // results in an exception when debugging on Android. Instead, we can fetch the lambda
+            // reference from visible variables. When the current function is called, the debugger
+            // should be located on the first available line number of a function that calls the
+            // lambda we are looking for. It means that the only visible variables are arguments
+            // of this function.
+            val lambdaArgumentVariable = visibleVariables().getOrNull(lambdaInfo.parameterIndex) ?: return null
+            return getValue(lambdaArgumentVariable) as? ObjectReference
+        }
+        return argumentValues.getOrNull(lambdaInfo.parameterIndex) as? ObjectReference
     }
 
     private class KotlinLambdaInstanceBreakpoint(
