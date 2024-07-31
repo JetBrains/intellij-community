@@ -353,8 +353,8 @@ object PluginManagerCore {
         .map { Supplier { HtmlChunk.text(it!!.get()) } }
         .toList()
     }
-    else if (PlatformUtils.isFleetBackend() && !SystemInfoRt.isMac) {
-      logger.warn(logMessage) // some Mercury backend plugins cannot be loaded on Windows and Linux
+    else if (PlatformUtils.isFleetBackend()) {
+      logger.warn(logMessage)
     }
     else {
       logger.error(logMessage)
