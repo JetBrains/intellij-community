@@ -128,7 +128,7 @@ function updatePopup(sessionDiv) {
     prefixDiv.innerHTML = `prefix: &quot;${lookup["prefix"]}&quot;; latency: ${lookup["latency"]}`
   }
   popup.appendChild(prefixDiv)
-  // order: () -> (suggestions or diffView) -> features -> contexts
+  // order: () -> (suggestions or diffView) -> features
   const needAddFeatures = sessionDiv.classList.contains("diffView") || sessionDiv.classList.contains("suggestions")
   const isCodeGeneration = sessionDiv.classList.contains("code-generation");
   closeAllLists()
