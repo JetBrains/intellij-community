@@ -154,7 +154,7 @@ open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
 
   private fun getSpans(file: Path, jsonSerializer: Json): OpentelemetryJson {
     val jsonData = withRetryBlocking(
-      messageOnFailure = "Failure during spans extraction from OpenTelemetry json file",
+      messageOnFailure = "Failure during spans extraction from OpenTelemetry json file $file",
       retries = 5,
       printFailuresMode = PrintFailuresMode.ONLY_LAST_FAILURE,
       delay = 300.milliseconds,

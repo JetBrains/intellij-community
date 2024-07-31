@@ -10,9 +10,7 @@ import java.nio.file.Path
  */
 open class OpenTelemetrySpanCollector(val spanNames: List<String>, private val aliases: Map<String, String> = mapOf()) : TelemetryMetricsCollector {
   override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> {
-
-    val telemetryJsonFile = Path.of(System.getProperty("idea.diagnostic.opentelemetry.file",
-                                                       logsDirPath.resolve("opentelemetry.json").toAbsolutePath().toString()))
+    val telemetryJsonFile = logsDirPath.resolve("opentelemetry.json").toAbsolutePath()
     return getMetricsFromSpanAndChildren(telemetryJsonFile, SpanFilter.containsNameIn(spanNames), aliases = aliases)
   }
 }
