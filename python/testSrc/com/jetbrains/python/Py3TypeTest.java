@@ -2403,6 +2403,21 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+
+  // PY-73958
+  public void testNoStackOverflow() {
+    doTest("Foo", """
+            class Foo:
+                def foo(self):
+                    pass
+
+            xxx = Foo()
+
+            """ + "xxx.foo()\n".repeat(1000) + """
+            expr = xxx
+            """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
