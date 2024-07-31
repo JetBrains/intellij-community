@@ -59,4 +59,13 @@ public interface JavaModuleSystem {
    * @param place place where accessibility of target is required
    */
   boolean isAccessible(@NotNull String targetPackageName, @Nullable PsiFile targetFile, @NotNull PsiElement place);
+
+  /**
+   * Checks accessibility of module in the place
+   *
+   * @param targetModule the target java module whose accessibility is being checked
+   * @param place place where accessibility of target is required
+   * @return true if the target module is accessible from the specified location, false otherwise
+   */
+  boolean isAccessible(@NotNull PsiJavaModule targetModule, @NotNull PsiElement place);
 }

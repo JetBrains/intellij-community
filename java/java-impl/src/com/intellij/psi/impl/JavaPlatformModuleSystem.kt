@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessRunner
@@ -65,7 +67,21 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return getProblem(targetPackageName, targetFile, place, false) { (current, target) ->
       val currentModule = current.module ?: return@getProblem false
       val targetModule = target.module ?: return@getProblem false
-      JavaModuleGraphUtil.reads(currentModule, targetModule)
+      return@getProblem JavaModuleGraphUtil.reads(currentModule, targetModule)
+    }
+  }
+
+  override fun isAccessible(targetModule: PsiJavaModule, place: PsiElement): Boolean {
+    return getProblem(targetModule, place, true) { (current, target) ->
+      if (current.module == null || target.module == null) return@getProblem false
+      return@getProblem JavaModuleGraphUtil.reads(current.module, target.module!!)
+    } == null
+  }
+
+  override fun checkAccess(targetModule: PsiJavaModule, place: PsiElement): ErrorWithFixes? {
+    return getProblem(targetModule, place, false) { (current, target) ->
+      if (current.module == null || target.module == null) return@getProblem false
+      return@getProblem JavaModuleGraphUtil.reads(current.module, target.module!!)
     }
   }
 
@@ -74,6 +90,12 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     if (!targetModule.isPhysical || JavaModuleGraphUtil.exports(targetModule, target.packageName, current.module)) return true
     val currentJpsModule = current.jpsModule ?: return false
     return inAddedExports(currentJpsModule, targetModule.name, target.packageName, current.name)
+  }
+
+  private fun getProblem(targetModule: PsiJavaModule, place: PsiElement, quick: Boolean,
+                         isAccessible: (ModuleAccessInfo) -> Boolean): ErrorWithFixes? {
+    val target = TargetModuleInfo(targetModule, "")
+    return checkModuleAccess(target, place, quick, isAccessible)
   }
 
   private fun getProblem(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean,
@@ -114,6 +136,74 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private val ERR = ErrorWithFixes("-")
+
+  private fun checkModuleAccess(
+    target: TargetModuleInfo, place: PsiElement, quick: Boolean,
+    isAccessible: (ModuleAccessInfo) -> Boolean,
+  ): ErrorWithFixes? {
+    val useFile = place.containingFile?.originalFile ?: return null
+    val useModule = JavaModuleGraphUtil.findDescriptorByElement(useFile).let { if (it is LightJavaModule) null else it }
+    val current = CurrentModuleInfo(useModule, place)
+
+    val targetModule = target.module
+    if (targetModule != null) {
+      if (targetModule == current.module) {
+        return null
+      }
+
+      val currentJpsModule = current.jpsModule
+      if (current.module == null) {
+        var origin = targetModule.containingFile?.virtualFile
+        if (origin == null && targetModule is LightJavaModule) origin = targetModule.rootVirtualFile
+        if (origin == null || currentJpsModule == null) return null
+
+        if (ModuleRootManager.getInstance(currentJpsModule).fileIndex.getOrderEntryForFile(origin) !is JdkOrderEntry) {
+          val searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(currentJpsModule)
+          if (searchScope.contains(origin)) return null
+          return if (quick) ERR
+          else if (place is PsiJavaModuleReferenceElement) {
+            val reference: PsiJavaModuleReference = place.reference ?: return null
+            val registrar: MutableList<IntentionAction> = ArrayList()
+            QuickFixFactory.getInstance().registerOrderEntryFixes(reference, registrar)
+            ErrorWithFixes("-", registrar)
+          }
+          else null
+        }
+
+        if (targetModule.name.startsWith("java.") &&
+            targetModule.name != PsiJavaModule.JAVA_BASE &&
+            !inAddedModules(currentJpsModule, targetModule.name) &&
+            !accessibleFromLoadedModules(current, target, isAccessible)) {
+          return if (quick) ERR
+          else ErrorWithFixes(JavaErrorBundle.message("module.not.in.graph", targetModule.name),
+                              listOf(AddModulesOptionFix(currentJpsModule, targetModule.name).asIntention()))
+        }
+      }
+
+      if (current.module != null &&
+          targetModule.name != PsiJavaModule.JAVA_BASE &&
+          !isAccessible(ModuleAccessInfo(current, target)) &&
+          !inAddedReads(current.module, targetModule)) {
+        return when {
+          quick -> ERR
+          PsiNameHelper.isValidModuleName(targetModule.name, current.module) -> ErrorWithFixes(JavaErrorBundle.message("module.does.not.read", targetModule.name, current.name),
+                                                                                               listOf(AddRequiresDirectiveFix(current.module, targetModule.name).asIntention()))
+          else -> ErrorWithFixes(JavaErrorBundle.message("module.bad.name", targetModule.name))
+        }
+      }
+    }
+    else if (current.module != null) {
+      val autoModule = TargetModuleInfo(detectAutomaticModule(target), target.packageName)
+      if (autoModule.module != null &&
+          !isAccessible(ModuleAccessInfo(current, autoModule)) &&
+          !inAddedReads(current.module, null) &&
+          !inSameMultiReleaseModule(current, target)) {
+        return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", target.packageName, current.name))
+      }
+    }
+
+    return null
+  }
 
   private fun checkAccess(target: TargetModuleInfo, place: PsiFileSystemItem, quick: Boolean,
                           isAccessible: (ModuleAccessInfo) -> Boolean): ErrorWithFixes? {

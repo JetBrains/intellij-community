@@ -259,15 +259,28 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       result.add(0, new AddModuleDependencyFix(reference, currentModule, modules, scope, exported));
     }
 
-    Set<Library> libraries = targets.stream()
+    Set<Library> lightLibraries = targets.stream()
       .map(e -> e instanceof LightJavaModule ? ((LightJavaModule)e).getRootVirtualFile() : null)
       .flatMap(vf -> vf != null ? index.getOrderEntriesForFile(vf).stream() : Stream.empty())
       .map(e -> e instanceof LibraryOrderEntry ? ((LibraryOrderEntry)e).getLibrary() : null)
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
-    if (!libraries.isEmpty()) {
+    if (!lightLibraries.isEmpty()) {
       result.add(new AddLibraryDependencyFix(reference, currentModule,
-                                             ContainerUtil.map2Map(libraries, library -> Pair.create(library, "")), scope, exported));
+                                             ContainerUtil.map2Map(lightLibraries, library -> Pair.create(library, "")), scope, exported));
+    }
+
+    Set<Library> clsLibraries = targets.stream()
+      .map(e -> e instanceof PsiCompiledElement ? e.getContainingFile() : null)
+      .map(f -> f != null ? f.getVirtualFile() : null)
+      .filter(vf -> vf != null && !index.isInSource(vf))
+      .flatMap(vf -> index.getOrderEntriesForFile(vf).stream())
+      .map(e -> e instanceof LibraryOrderEntry ? ((LibraryOrderEntry)e).getLibrary() : null)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
+    if (!clsLibraries.isEmpty()) {
+      result.add(new AddLibraryDependencyFix(reference, currentModule,
+                                             ContainerUtil.map2Map(clsLibraries, library -> Pair.create(library, "")), scope, exported));
     }
   }
 

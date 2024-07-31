@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.*;
@@ -1421,7 +1422,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           Collection<PsiJavaModule> modules = index.getModules(name, project, scope);
           if (!modules.isEmpty() && filter.add(name)) {
             LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
-            if (checkAccess && !isModuleReadable(parent, currentModule, modules)) lookup = highlightLookup(lookup);
+            if (checkAccess && !ContainerUtil.and(modules, module -> JavaModuleUtil.isModuleReadable(parent, module))) lookup = highlightLookup(lookup);
             if (withAutoModules) lookup = TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
             result.addElement(lookup);
           }
@@ -1444,8 +1445,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
                 }
                 LookupElement lookup = getAutoModuleReference(name, parent, filter, lookupElement -> {
                   if (!checkAccess) return PrioritizedLookupElement.withPriority(lookupElement, -1);
-                  if (currentModule != null && !isModuleReadable(currentModule, name)) return highlightLookup(lookupElement);
-                  if (currentModule == null && !isModuleReadable(parent, manifests)) return highlightLookup(lookupElement);
+                  if (!ContainerUtil.and(manifests, manifest -> JavaModuleUtil.isModuleReadable(parent, manifest)))
+                    return highlightLookup(lookupElement);
                   return lookupElement;
                 });
                 if (lookup != null) {
@@ -1463,8 +1464,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
               if (!files.isEmpty()) {
                 LookupElement lookup = getAutoModuleReference(name, parent, filter, lookupElement -> {
                   if (!checkAccess) return PrioritizedLookupElement.withPriority(lookupElement, -1);
-                  if (currentModule != null && !isModuleReadable(currentModule, name)) return highlightLookup(lookupElement);
-                  if (currentModule == null && !isModuleReadable(parent, files)) return highlightLookup(lookupElement);
+                  if (!ContainerUtil.and(files, file -> JavaModuleUtil.isModuleReadable(parent, file)))
+                    return highlightLookup(lookupElement);
                   return lookupElement;
                 });
                 if (lookup != null) {
@@ -1494,63 +1495,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         presentation.setItemTextForeground(JBColor.RED);
       }
     }), -1);
-  }
-
-  /**
-   * Determines if a specified module is readable from a given context
-   *
-   * @param place             current module/position
-   * @param targetModuleFiles files from the target module
-   * @return {@code true} if the target module is readable from the place; {@code false} otherwise.
-   */
-  private static boolean isModuleReadable(@NotNull PsiElement place,
-                                          @NotNull Collection<VirtualFile> targetModuleFiles) {
-    Module currentModule = ModuleUtilCore.findModuleForPsiElement(place);
-    if (currentModule == null) return false;
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(currentModule);
-    for (VirtualFile targetModuleFile : targetModuleFiles) {
-      if (scope.contains(targetModuleFile)) return true;
-    }
-    return false;
-  }
-
-  /**
-   * Determines if the specified modules are readable from a given context.
-   *
-   * @param place the current position or element from where readability is being checked
-   * @param currentModule the module from which readability is being checked
-   * @param targetModules the collection of target modules to check readability against
-   * @return {@code true} if any of the target modules are readable from the current context; {@code false} otherwise
-   */
-  private static boolean isModuleReadable(@NotNull PsiElement place,
-                                          @Nullable PsiJavaModule currentModule,
-                                          @NotNull Collection<PsiJavaModule> targetModules) {
-    if (currentModule != null) {
-      for (PsiJavaModule targetModule : targetModules) {
-        if (JavaModuleGraphUtil.reads(currentModule, targetModule)) return true;
-      }
-    } else {
-      for (PsiJavaModule targetModule : targetModules) {
-        PsiFile file = targetModule.getContainingFile();
-        if (file == null) continue;
-        VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) continue;
-        if (isModuleReadable(place, List.of(virtualFile))) return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Checks if the specified target module is readable from the current module.
-   *
-   * @param currentModule the module from which readability is being checked
-   * @param targetModuleName the name of the target module to check readability against
-   * @return true if the target module is readable from the current module; false otherwise
-   */
-  private static boolean isModuleReadable(@NotNull PsiJavaModule currentModule,
-                                          @NotNull String targetModuleName) {
-    return JavaModuleGraphUtil.reads(currentModule, targetModuleName);
   }
 
 
