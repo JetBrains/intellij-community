@@ -28,6 +28,7 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.text.Matcher;
 import kotlin.Unit;
+import kotlin.sequences.Sequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,9 +156,18 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     Set<OptionDescription> optionDescriptions = null;
     boolean filterOutInspections = Registry.is("go.to.action.filter.out.inspections", true);
     for (String word : words) {
-      Set<OptionDescription> descriptions = registrar.getAcceptableDescriptions(word);
+      List<OptionDescription> descriptions = null;
+      Sequence<@NotNull OptionDescription> s = registrar.findAcceptableDescriptions(word);
+      if (s != null) {
+        descriptions = new ArrayList<>();
+        Iterator<OptionDescription> iterator = s.iterator();
+        while (iterator.hasNext()) {
+          descriptions.add(iterator.next());
+        }
+      }
+
       if (descriptions == null || descriptions.isEmpty()) {
-        descriptions = Set.of();
+        descriptions = List.of();
       }
       else {
         descriptions.removeIf(description -> {
@@ -169,13 +179,11 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         optionDescriptions = null;
         break;
       }
+      else if (optionDescriptions == null) {
+        optionDescriptions = new HashSet<>(descriptions);
+      }
       else {
-        if (optionDescriptions == null) {
-          optionDescriptions = descriptions;
-        }
-        else {
-          optionDescriptions.retainAll(descriptions);
-        }
+        optionDescriptions.retainAll(descriptions);
       }
     }
     if (!Strings.isEmptyOrSpaces(pattern)) {

@@ -2,12 +2,14 @@
 package com.intellij.ide.ui.search
 
 import com.intellij.openapi.options.Configurable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class ConfigurableHit(
-  val nameHits: Set<Configurable>,
-  val nameFullHits: Set<Configurable>,
-  val contentHits: Set<Configurable>,
-  val spotlightFilter: String,
+  @JvmField val nameHits: Set<Configurable>,
+  @JvmField val nameFullHits: Set<Configurable>,
+  @JvmField val contentHits: Set<Configurable>,
+  @JvmField val spotlightFilter: String,
 ) {
   val all: Set<Configurable>
     get() {

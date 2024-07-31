@@ -27,6 +27,7 @@ public abstract class SearchableOptionsRegistrar {
     return ApplicationManager.getApplication().getService(SearchableOptionsRegistrar.class);
   }
 
+  @ApiStatus.Internal
   public abstract @NotNull ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                                             DocumentEvent.EventType type,
                                                             @Nullable Set<? extends Configurable> configurables,

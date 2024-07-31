@@ -467,7 +467,7 @@ object SearchUtil {
     val keySetList = ArrayList<Set<String>>()
     val optionsRegistrar = SearchableOptionsRegistrar.getInstance() as SearchableOptionsRegistrarImpl
     for (word in optionsRegistrar.getProcessedWords(filter)) {
-      val descriptions = optionsRegistrar.getAcceptableDescriptions(word) ?: continue
+      val descriptions = optionsRegistrar.findAcceptableDescriptions(word) ?: continue
       val keySet = HashSet<String>()
       for (description in descriptions) {
         description.path?.let {
