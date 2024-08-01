@@ -595,25 +595,19 @@
             class="org.intellij.plugins.markdown.extensions.CleanupExtensionsExternalFilesAction"
             icon="AllIcons.Actions.GC"/>
 
-    <group id="Markdown.Preview.FontSize" popup="true">
-      <action id="Markdown.Preview.IncreaseFontSize"
-              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Increase">
-        <keyboard-shortcut first-keystroke="control ADD" keymap="$default"/>
-        <keyboard-shortcut first-keystroke="control EQUALS" keymap="$default"/>
-      </action>
-      <action id="Markdown.Preview.DecreaseFontSize"
-              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Decrease">
-        <keyboard-shortcut first-keystroke="control MINUS" keymap="$default"/>
-        <keyboard-shortcut first-keystroke="control SUBTRACT" keymap="$default"/>
-      </action>
-    </group>
+    <action id="Markdown.Preview.IncreaseFontSize"
+            class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Increase"
+            use-shortcut-of="ExpandAll"/>
+    <action id="Markdown.Preview.DecreaseFontSize"
+            class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Decrease"
+            use-shortcut-of="CollapseAll"/>
+
+    <action id="Markdown.Preview.ResetFontSize"
+            class="org.intellij.plugins.markdown.ui.actions.ResetFontSizeAction"/>
 
     <group id="Markdown.PreviewGroup">
       <action id="Markdown.Preview.AdjustFontSize"
               class="org.intellij.plugins.markdown.ui.actions.AdjustFontSizeAction"/>
     </group>
-
-    <action id="Markdown.Preview.ResetFontSize"
-            class="org.intellij.plugins.markdown.ui.actions.ResetFontSizeAction"/>
   </actions>
 </idea-plugin>

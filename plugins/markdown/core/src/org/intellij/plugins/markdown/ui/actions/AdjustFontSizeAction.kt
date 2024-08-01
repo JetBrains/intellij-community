@@ -23,9 +23,6 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 
 class AdjustFontSizeAction: DumbAwareAction() {
-  private val previewSettings
-    get() = service<MarkdownPreviewSettings>()
-
   override fun actionPerformed(event: AnActionEvent) {
     val editor = MarkdownActionUtil.findMarkdownPreviewEditor(event)
     checkNotNull(editor) { "Preview editor should be obtainable from the action event" }
@@ -33,44 +30,7 @@ class AdjustFontSizeAction: DumbAwareAction() {
     if (preview !is MarkdownJCEFHtmlPanel) {
       return
     }
-
-    val fontSizeLabel = JBLabel(previewSettings.state.fontSize.toString(), SwingConstants.CENTER).apply {
-      preferredSize = JBUI.size(22, 22)
-    }
-    val decreaseButton = JButton(AllIcons.General.Remove).apply {
-      border = BorderFactory.createEmptyBorder()
-      isContentAreaFilled = false
-      preferredSize = JBUI.size(22, 22)
-
-      setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.General.Remove))
-      isEnabled = previewSettings.state.fontSize != fontSizeOptions.first()
-    }
-    val increaseButton = JButton(AllIcons.General.Add).apply {
-      border = BorderFactory.createEmptyBorder()
-      isContentAreaFilled = false
-      preferredSize = JBUI.size(22, 22)
-
-      setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.General.Add))
-      isEnabled = previewSettings.state.fontSize != fontSizeOptions.last()
-    }
-
-    fun updateFontSize(transform: (Int) -> Int?) {
-      val currentSize = preview.getCurrentFontSize()
-      val newSize = transform(currentSize) ?: currentSize
-      previewSettings.state.fontSize = newSize
-      preview.changeFontSize(newSize)
-
-      fontSizeLabel.text = newSize.toString()
-      decreaseButton.isEnabled = newSize != fontSizeOptions.first()
-      increaseButton.isEnabled = newSize != fontSizeOptions.last()
-    }
-
-    val hintComponent = JPanel(FlowLayout(FlowLayout.LEFT, 10, 5))
-    hintComponent.add(JBLabel(MarkdownBundle.message("action.Markdown.Preview.FontSize.label.text")))
-    hintComponent.add(decreaseButton.apply { addActionListener { updateFontSize { fontSizeOptions.findLast { step -> step < it } } } })
-    hintComponent.add(fontSizeLabel.apply { text = preview.getCurrentFontSize().toString() })
-    hintComponent.add(increaseButton.apply { addActionListener { updateFontSize { fontSizeOptions.find { step -> step > it } } } })
-
+    val hintComponent = HintComponent(preview)
     val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(hintComponent, hintComponent).setRequestFocus(true).createPopup()
     val point = event.dataContext.getData(PREVIEW_POPUP_POINT)
     if (point != null) {
@@ -80,7 +40,50 @@ class AdjustFontSizeAction: DumbAwareAction() {
     }
   }
 
-  private fun MarkdownJCEFHtmlPanel.getCurrentFontSize() = getTemporaryFontSize() ?: previewSettings.state.fontSize
+  private class HintComponent(preview: MarkdownJCEFHtmlPanel) : JPanel(FlowLayout(FlowLayout.LEFT, 10, 5)) {
+    private val previewSettings
+      get() = service<MarkdownPreviewSettings>()
+
+    init {
+      val fontSizeLabel = JBLabel(previewSettings.state.fontSize.toString(), SwingConstants.CENTER).apply {
+        preferredSize = JBUI.size(22, 22)
+      }
+      val decreaseButton = JButton(AllIcons.General.Remove).apply {
+        border = BorderFactory.createEmptyBorder()
+        isContentAreaFilled = false
+        preferredSize = JBUI.size(22, 22)
+
+        setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.General.Remove))
+        isEnabled = previewSettings.state.fontSize != fontSizeOptions.first()
+      }
+      val increaseButton = JButton(AllIcons.General.Add).apply {
+        border = BorderFactory.createEmptyBorder()
+        isContentAreaFilled = false
+        preferredSize = JBUI.size(22, 22)
+
+        setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.General.Add))
+        isEnabled = previewSettings.state.fontSize != fontSizeOptions.last()
+      }
+
+      fun updateFontSize(transform: (Int) -> Int?) {
+        val currentSize = preview.getCurrentFontSize()
+        val newSize = transform(currentSize) ?: currentSize
+        previewSettings.state.fontSize = newSize
+        preview.changeFontSize(newSize)
+
+        fontSizeLabel.text = newSize.toString()
+        decreaseButton.isEnabled = newSize != fontSizeOptions.first()
+        increaseButton.isEnabled = newSize != fontSizeOptions.last()
+      }
+
+      add(JBLabel(MarkdownBundle.message("action.Markdown.Preview.FontSize.label.text")))
+      add(decreaseButton.apply { addActionListener { updateFontSize { fontSizeOptions.findLast { step -> step < it } } } })
+      add(fontSizeLabel.apply { text = preview.getCurrentFontSize().toString() })
+      add(increaseButton.apply { addActionListener { updateFontSize { fontSizeOptions.find { step -> step > it } } } })
+    }
+
+    private fun MarkdownJCEFHtmlPanel.getCurrentFontSize() = getTemporaryFontSize() ?: previewSettings.state.fontSize
+  }
 
   override fun update(event: AnActionEvent) {
     val editor = MarkdownActionUtil.findMarkdownPreviewEditor(event)
