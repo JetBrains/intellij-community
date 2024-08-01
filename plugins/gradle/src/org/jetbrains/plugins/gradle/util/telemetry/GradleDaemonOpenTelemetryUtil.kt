@@ -1,26 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.util.telemetry;
+package org.jetbrains.plugins.gradle.util.telemetry
 
-import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTelemetryFormat;
-import com.intellij.openapi.util.registry.Registry;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTelemetryFormat
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.registry.Registry.Companion.stringValue
+import org.jetbrains.annotations.ApiStatus.Internal
 
-import java.util.Locale;
+@Internal
+object GradleDaemonOpenTelemetryUtil {
 
-public final class GradleDaemonOpenTelemetryUtil {
-
-  public static boolean isDaemonTracingEnabled() {
-    return Registry.is("gradle.daemon.opentelemetry.enabled", false);
+  @JvmStatic
+  fun isDaemonTracingEnabled(): Boolean {
+    return `is`("gradle.daemon.opentelemetry.enabled", false)
   }
 
-  public static @NotNull GradleTelemetryFormat getTelemetryFormat() {
+  @JvmStatic
+  fun getTelemetryFormat(): GradleTelemetryFormat {
     try {
-      String format = Registry.stringValue("gradle.daemon.opentelemetry.format");
-      return GradleTelemetryFormat.valueOf(format.toUpperCase(Locale.ROOT));
+      val format = stringValue("gradle.daemon.opentelemetry.format")
+      return GradleTelemetryFormat.valueOf(format.uppercase())
     }
-    catch (Exception e) {
+    catch (e: Exception) {
       // ignore
-      return GradleTelemetryFormat.PROTOBUF;
+      return GradleTelemetryFormat.PROTOBUF
     }
   }
 }
