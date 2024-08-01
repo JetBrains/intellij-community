@@ -14,7 +14,7 @@ import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.ALWAYS_VISIBLE_GROUP
-import com.intellij.openapi.actionSystem.ex.ActionUtil.HIDE_INVISIBLE_CHILDREN
+import com.intellij.openapi.actionSystem.ex.ActionUtil.HIDE_DISABLED_CHILDREN
 import com.intellij.openapi.actionSystem.ex.ActionUtil.SUPPRESS_SUBMENU
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
@@ -50,9 +50,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.lang.IllegalStateException
 import java.lang.Integer.max
-import java.lang.RuntimeException
 import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -327,7 +325,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         // don't process invisible groups
         return@withContext emptyList()
       }
-      val hideDisabled = hideDisabled || group is CompactActionGroup || presentation.getClientProperty(HIDE_INVISIBLE_CHILDREN) == true
+      val hideDisabled = hideDisabled || group is CompactActionGroup || presentation.getClientProperty(HIDE_DISABLED_CHILDREN) == true
       val children = getGroupChildren(group)
       // parallel update execution can break some existing caching
       // the preferred way to do caching now is `updateSession.sharedData`
@@ -449,7 +447,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         presentation.setEnabled(false)
       }
     }
-    val isCompactGroup = child is CompactActionGroup || presentation.getClientProperty(HIDE_INVISIBLE_CHILDREN) == true
+    val isCompactGroup = child is CompactActionGroup || presentation.getClientProperty(HIDE_DISABLED_CHILDREN) == true
     val hideDisabledChildren = (hideDisabledBase || isCompactGroup) && !alwaysVisible
     return when {
       !hasEnabled && hideDisabled || !hasVisible && hideEmpty -> when {

@@ -36,7 +36,7 @@ public final class SuppressActionWrapper extends ActionGroup {
 
   public SuppressActionWrapper() {
     super(InspectionsBundle.messagePointer("suppress.inspection.problem"), false);
-    getTemplatePresentation().putClientProperty(ActionUtil.HIDE_INVISIBLE_CHILDREN, true);
+    getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DISABLED_CHILDREN, true);
   }
 
   @Override
