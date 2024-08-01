@@ -244,7 +244,23 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
-    TODO("Not yet implemented")
+    ensureIjentNioPath(source)
+    ensureIjentNioPath(target)
+    val sourcePath = source.ijentPath
+    val targetPath = target.ijentPath
+    ensurePathIsAbsolute(sourcePath)
+    ensurePathIsAbsolute(targetPath)
+    return fsBlocking {
+      try {
+        source.nioFs.ijentFs.move(
+          sourcePath,
+          targetPath,
+          replaceExisting = true,
+          followLinks = LinkOption.NOFOLLOW_LINKS !in options)
+      } catch (e : IjentFileSystemApi.MoveException) {
+        e.throwFileSystemException()
+      }
+    }
   }
 
   override fun isSameFile(path: Path, path2: Path): Boolean {

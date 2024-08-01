@@ -236,6 +236,19 @@ sealed interface IjentFileSystemApi {
     class TargetDirNotEmpty(where: IjentPath.Absolute) : CopyException(where, "Target directory is not empty"), IjentFsError.DirNotEmpty
     class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.Other
   }
+
+  @Throws(MoveException::class)
+  suspend fun move(source: IjentPath.Absolute, target: IjentPath.Absolute, replaceExisting: Boolean, followLinks: Boolean)
+
+  sealed class MoveException(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : IjentFsIOException(where, additionalMessage) {
+    class SourceDoesNotExist(where: IjentPath.Absolute) : MoveException(where, "Source does not exist"), IjentFsError.DoesNotExist
+    class TargetAlreadyExists(where: IjentPath.Absolute) : MoveException(where, "Target already exists"), IjentFsError.AlreadyExists
+    class PermissionDenied(where: IjentPath.Absolute) : MoveException(where, "Permission denied"), IjentFsError.PermissionDenied
+    class NameTooLong(where: IjentPath.Absolute) : MoveException(where, "Name too long"), IjentFsError.NameTooLong
+    class ReadOnlyFileSystem(where: IjentPath.Absolute) : MoveException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
+    class FileSystemError(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : MoveException(where, additionalMessage), IjentFsError.Other
+    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : MoveException(where, additionalMessage), IjentFsError.Other
+  }
 }
 
 sealed interface IjentOpenedFile {
