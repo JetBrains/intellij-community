@@ -491,46 +491,51 @@ final class PassExecutorService implements Disposable {
                                               @NotNull AtomicInteger threadsToStartCountdown,
                                               @NotNull CoroutineContext context,
                                               @NotNull Runnable callbackOnApplied) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (isDisposed() || !fileEditor.isValid()) {
-        updateProgress.cancel();
-      }
-      if (updateProgress.isCanceled()) {
-        log(updateProgress, pass, " is canceled during apply, sorry");
-        return;
-      }
-      try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor)); AccessToken ignored2 = ThreadContext.installThreadContext(context, true)) {
-        if (UIUtil.isShowing(fileEditor.getComponent())) {
-          pass.applyInformationToEditor();
-          repaintErrorStripeAndIcon(fileEditor);
-          if (pass instanceof TextEditorHighlightingPass text) {
-            text.markUpToDateIfStillValid();
-          }
-          log(updateProgress, pass, " Applied");
+    try {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (isDisposed() || !fileEditor.isValid()) {
+          updateProgress.cancel();
         }
-      }
-      catch (ProcessCanceledException e) {
-        log(updateProgress, pass, "Error " + e);
-        throw e;
-      }
-      catch (RuntimeException e) {
-        VirtualFile file = fileEditor.getFile();
-        FileType fileType = file == null ? null : file.getFileType();
-        String message = "Exception while applying information to " + fileEditor + "(" + fileType + ")";
-        log(updateProgress, pass, message + e);
-        throw new RuntimeException(message, e);
-      }
-      if (threadsToStartCountdown.decrementAndGet() == 0) {
-        HighlightingSessionImpl.waitForAllSessionsHighlightInfosApplied(updateProgress);
-        log(updateProgress, pass, "Stopping ");
-        updateProgress.stopIfRunning();
-        clearStaleEntries();
-      }
-      else {
-        log(updateProgress, pass, "Finished but there are passes in the queue: " + threadsToStartCountdown.get());
-      }
-      callbackOnApplied.run();
-    }, updateProgress.getModalityState(), pass.getExpiredCondition());
+        if (updateProgress.isCanceled()) {
+          log(updateProgress, pass, " is canceled during apply, sorry");
+          return;
+        }
+        try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor)); AccessToken ignored2 = ThreadContext.installThreadContext(context, true)) {
+          if (UIUtil.isShowing(fileEditor.getComponent())) {
+            pass.applyInformationToEditor();
+            repaintErrorStripeAndIcon(fileEditor);
+            if (pass instanceof TextEditorHighlightingPass text) {
+              text.markUpToDateIfStillValid();
+            }
+            log(updateProgress, pass, " Applied");
+          }
+        }
+        catch (ProcessCanceledException e) {
+          log(updateProgress, pass, "Error " + e);
+          throw e;
+        }
+        catch (RuntimeException e) {
+          VirtualFile file = fileEditor.getFile();
+          FileType fileType = file == null ? null : file.getFileType();
+          String message = "Exception while applying information to " + fileEditor + "(" + fileType + ")";
+          log(updateProgress, pass, message + e);
+          throw new RuntimeException(message, e);
+        }
+        if (threadsToStartCountdown.decrementAndGet() == 0) {
+          HighlightingSessionImpl.waitForAllSessionsHighlightInfosApplied(updateProgress);
+          log(updateProgress, pass, "Stopping ");
+          updateProgress.stopIfRunning();
+          clearStaleEntries();
+        }
+        else {
+          log(updateProgress, pass, "Finished but there are passes in the queue: " + threadsToStartCountdown.get());
+        }
+        callbackOnApplied.run();
+      }, updateProgress.getModalityState(), pass.getExpiredCondition());
+    }
+    catch (ProcessCanceledException ignored) {
+      // pass.getExpiredCondition() computation could throw PCE
+    }
   }
 
   private void clearStaleEntries() {
@@ -573,8 +578,8 @@ final class PassExecutorService implements Disposable {
         String message = StringUtil.repeatSymbol(' ', getThreadNum() * 4)
                          + " " + (pass == null ? "" : pass + " ")
                          + StringUtil.join(info, Functions.TO_STRING(), " ")
-                         + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
-                         + (progressIndicator == null ? "" : progressIndicator.isCanceled() ? "X" : "V")
+                         + "; progress=" + (progressIndicator == null ? null : System.identityHashCode(progressIndicator))
+                         + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
                          + " " + docText;
         LOG.debug(message);
       }
