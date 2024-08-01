@@ -115,7 +115,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
     }.installOn(this)
 
     PopupHandler.installPopupMenu(this, DefaultActionGroup(object : DumbAwareAction({
-                                                                                      val pkg = model.items[selectedRow]
+                                                                                      val pkg = if (selectedRow >= 0) model.items[selectedRow] else null
                                                                                       if (pkg is InstalledPackage) {
                                                                                         message("python.toolwindow.packages.delete.package")
                                                                                       }
@@ -125,6 +125,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
                                                                                     }) {
       override fun actionPerformed(e: AnActionEvent) {
         controller.packagingScope.launch(Dispatchers.Main) {
+          if (selectedRow == -1) return@launch
           val pkg = model.items[selectedRow]
           if (pkg is InstalledPackage) {
             withContext(Dispatchers.IO) {
@@ -142,7 +143,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
         }
       }
     }, object : DumbAwareAction({
-                                  val pkg = model.items[selectedRow]
+                                  val pkg = if (selectedRow >= 0) model.items[selectedRow] else null
                                   if (pkg is InstalledPackage && pkg.canBeUpdated) {
                                     message("python.toolwindow.packages.update.package")
                                   }
@@ -152,6 +153,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
                                 }) {
       override fun actionPerformed(e: AnActionEvent) {
         controller.packagingScope.launch(Dispatchers.Main) {
+          if (selectedRow == -1) return@launch
           val pkg = model.items[selectedRow]
           if (pkg is InstalledPackage && pkg.canBeUpdated) {
             controller.packagingScope.launch(Dispatchers.IO) {
