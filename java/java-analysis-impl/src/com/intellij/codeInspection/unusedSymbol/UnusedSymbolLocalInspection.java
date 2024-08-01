@@ -230,7 +230,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
         if (isIgnoreAccessors() && PropertyUtilBase.isSimplePropertyAccessor(method)) return;
         if (!compareVisibilities(method, getMethodVisibility())) return;
         if (UnusedSymbolUtil.isMethodUsed(project, file, method, helper)) return;
-        String key;
+        @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key;
         if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
           key = method.isConstructor() ? "private.constructor.is.not.used" : "private.method.is.not.used";
         }
@@ -356,16 +356,13 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
         if (aClass instanceof PsiImplicitClass) return;
-        String acceptedVisibility = aClass.getContainingClass() == null ? getClassVisibility()
-                                                                        : getInnerClassVisibility();
+        String acceptedVisibility = aClass.getContainingClass() == null ? getClassVisibility() : getInnerClassVisibility();
         if (!compareVisibilities(aClass, acceptedVisibility)) return;
         if (UnusedSymbolUtil.isClassUsed(project, file, aClass, helper)) return;
 
-        String pattern;
+        @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String pattern;
         if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-          pattern = aClass.isInterface()
-                    ? "private.inner.interface.is.not.used"
-                    : "private.inner.class.is.not.used";
+          pattern = aClass.isInterface() ? "private.inner.interface.is.not.used" : "private.inner.class.is.not.used";
         }
         else if (aClass.getParent() instanceof PsiDeclarationStatement) { // local class
           pattern = "local.class.is.not.used";
