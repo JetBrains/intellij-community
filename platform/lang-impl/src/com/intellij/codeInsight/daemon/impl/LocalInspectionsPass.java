@@ -147,7 +147,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
         result.injectedFragments = runner.getInjectedFragments();
       };
       if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
-        impl.runWithInvalidPsiRecycler(getHighlightingSession(), toolId -> HighlightInfoUpdaterImpl.isInspectionToolId(toolId), withRecycler);
+        impl.runWithInvalidPsiRecycler(getHighlightingSession(), true, withRecycler);
       }
       else {
         withRecycler.accept(HighlighterRecyclerPickup.EMPTY);
