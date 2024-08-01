@@ -251,7 +251,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private boolean add(@Nullable HighlightInfo.Builder builder) {
     if (builder != null) {
-      HighlightInfo info = builder/*.toolId(getClass())*/.create();
+      HighlightInfo info = builder.create();
       if (info != null && info.getSeverity().compareTo(HighlightSeverity.ERROR) >= 0) {
         myHasError = true;
       }
@@ -1136,7 +1136,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result = doVisitReferenceElement(ref);
+    JavaResolveResult result = ref instanceof PsiExpression ? resolveOptimised(ref, myFile) : doVisitReferenceElement(ref);
     if (result != null) {
       PsiElement resolved = result.getElement();
       if (!hasErrorResults()) add(GenericsHighlightUtil.checkRawOnParameterizedType(ref, resolved));
@@ -1161,22 +1161,22 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     add(HighlightUtil.checkReference(ref, result, myFile, myLanguageLevel));
 
-    if (parent instanceof PsiJavaCodeReferenceElement || ref.isQualified()) {
-      if (!hasErrorResults() && resolved instanceof PsiTypeParameter) {
-        boolean canSelectFromTypeParameter = myJavaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7);
-        if (canSelectFromTypeParameter) {
-          PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-          if (containingClass != null) {
-            if (PsiTreeUtil.isAncestor(containingClass.getExtendsList(), ref, false) ||
-                PsiTreeUtil.isAncestor(containingClass.getImplementsList(), ref, false)) {
-              canSelectFromTypeParameter = false;
-            }
+    if ((parent instanceof PsiJavaCodeReferenceElement || ref.isQualified()) &&
+        !hasErrorResults() &&
+        resolved instanceof PsiTypeParameter) {
+      boolean canSelectFromTypeParameter = myJavaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7);
+      if (canSelectFromTypeParameter) {
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+        if (containingClass != null) {
+          if (PsiTreeUtil.isAncestor(containingClass.getExtendsList(), ref, false) ||
+              PsiTreeUtil.isAncestor(containingClass.getImplementsList(), ref, false)) {
+            canSelectFromTypeParameter = false;
           }
         }
-        if (!canSelectFromTypeParameter) {
-          add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(
-            JavaErrorBundle.message("cannot.select.from.a.type.parameter")).range(ref));
-        }
+      }
+      if (!canSelectFromTypeParameter) {
+        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(
+          JavaErrorBundle.message("cannot.select.from.a.type.parameter")).range(ref));
       }
     }
 
