@@ -21,7 +21,7 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 import kotlin.io.path.*
 
-internal object SettingsSnapshotZipSerializer {
+object SettingsSnapshotZipSerializer {
   private const val METAINFO = ".metainfo"
   private const val INFO = "info.json"
   const val PLUGINS = "plugins.json"

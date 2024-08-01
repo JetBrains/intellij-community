@@ -28,6 +28,8 @@
                              provider="com.intellij.settingsSync.config.SettingsSyncConfigurableProvider"
                              groupId="root"
                              groupWeight="5"/>
+    <applicationService serviceInterface="com.intellij.settingsSync.SettingsSyncMain"
+                        serviceImplementation="com.intellij.settingsSync.SettingsSyncMainImpl"/>
     <applicationService serviceInterface="com.intellij.settingsSync.auth.SettingsSyncAuthService"
                         serviceImplementation="com.intellij.settingsSync.auth.SettingsSyncDefaultAuthService"
                         testServiceImplementation="com.intellij.settingsSync.SettingsSyncTestAuthService"/>

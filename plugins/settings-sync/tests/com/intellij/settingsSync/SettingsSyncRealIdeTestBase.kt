@@ -53,7 +53,7 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     SettingsSyncLocalSettings.getInstance().state.crossIdeSyncEnabled = crossIdeSync;
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
-    val controls = SettingsSyncMain.init(currentThreadCoroutineScope(), disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    val controls = SettingsSyncMainImpl.init(currentThreadCoroutineScope(), disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)
