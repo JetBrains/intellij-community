@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -454,6 +455,10 @@ class EditorCellView(
         PlatformDataKeys.EDITOR.name -> editor
         else -> null
       }
+  }
+
+  override fun doGetInlays(): Sequence<Inlay<*>> {
+    return controllers.map { it.inlay }.asSequence()
   }
 
   companion object {

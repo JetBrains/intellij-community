@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
@@ -66,4 +67,8 @@ class ControllerEditorCellViewComponent(
 
   private fun createFoldRegion(foldingModel: FoldingModelEx, regionToFold: IntRange): FoldRegion? =
     foldingModel.createFoldRegion(regionToFold.first, regionToFold.last, "", null, true)
+
+  override fun doGetInlays(): Sequence<Inlay<*>> {
+    return sequenceOf(controller.inlay)
+  }
 }

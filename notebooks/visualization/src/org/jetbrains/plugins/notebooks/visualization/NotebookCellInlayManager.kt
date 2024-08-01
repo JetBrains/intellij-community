@@ -323,8 +323,12 @@ class NotebookCellInlayManager private constructor(
         add(editor.document.getLineEndOffset(cell.interval.lines.last))
       }
     }
-    val wronglyPlacedInlays = editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength)
+
+    val wronglyPlacedInlays = _cells.asSequence()
+      .mapNotNull { it.view }
+      .flatMap { it.getInlays() }
       .filter { it.offset !in inlaysOffsets }
+      .toSet()
     if (wronglyPlacedInlays.isNotEmpty()) {
       thisLogger().error("Expected offsets: $inlaysOffsets. Wrongly placed offsets: ${wronglyPlacedInlays.map { it.offset }} of inlays $wronglyPlacedInlays, for file = '${editor.virtualFile?.name}'")
     }
