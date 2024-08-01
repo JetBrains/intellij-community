@@ -862,7 +862,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) return;
     for (DaemonProgressIndicator updateProgress : myUpdateProgress.values()) {
       if (!updateProgress.isCanceled()) {
-        PassExecutorService.log(updateProgress, null, "Cancel", reason, toRestartAlarm);
+        PassExecutorService.log(updateProgress, null, "Cancel:", reason, toRestartAlarm);
         updateProgress.cancel(reason);
         myPassExecutorService.cancelAll(false, reason);
       }
@@ -1100,8 +1100,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (PassExecutorService.LOG.isDebugEnabled()) {
       PassExecutorService.log(null, null, "Update Runnable. myUpdateByTimerEnabled:",
         updateByTimerEnabled, " activeEditors:", activeEditors,
-        (documentManager.hasEventSystemEnabledUncommittedDocuments() ? " hasEventSystemEnabledUncommittedDocuments(" + Arrays.toString(
-          documentManager.getUncommittedDocuments()) + ")" : "()")
+        (documentManager.hasEventSystemEnabledUncommittedDocuments() ? " hasEventSystemEnabledUncommittedDocuments(" + Arrays.toString(documentManager.getUncommittedDocuments()) + ")" : "()")
         + (ApplicationManager.getApplication().isWriteAccessAllowed() ? " inside write action" : "r"));
     }
     if (!updateByTimerEnabled || activeEditors.isEmpty()) {
@@ -1114,16 +1113,22 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       return;
     }
     if (documentManager.hasEventSystemEnabledUncommittedDocuments()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Reschedule after commit. Uncommitted documents: " + Arrays.toString(documentManager.getUncommittedDocuments()));
+      }
       // restart when everything committed
       documentManager.performLaterWhenAllCommitted(() -> {
-        LOG.debug("Rescheduled after commit");
-        scheduleIfNotRunning();
+        synchronized (DaemonCodeAnalyzerImpl.this) {
+          LOG.debug("Rescheduled after commit");
+          scheduleIfNotRunning();
+        }
       });
       return;
     }
 
+    boolean submitted = false;
+    ProcessCanceledException pce = null;
     try {
-      boolean submitted = false;
       for (FileEditor fileEditor : activeEditors) {
         if (fileEditor instanceof TextEditor textEditor && !textEditor.isEditorLoaded()) {
           // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
@@ -1143,27 +1148,27 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           }
         }
       }
+    }
+    catch (ProcessCanceledException e) {
+      pce = e;
+    }
+    finally {
       if (!submitted) {
         // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
         // invokeLater is required because we can't stop daemon from inside UpdateRunnable, since its future hasn't been scheduled yet
+        // or when PCE happened in queuePassesCreation
+
+        ProcessCanceledException finalPce = pce;
         ApplicationManager.getApplication().invokeLater(() ->
-        stopProcess(true, "Couldn't create session for "+activeEditors), __->myDisposed);
+        stopProcess(true, "Couldn't create session for "+ activeEditors+(finalPce==null?"":"; PCE was thrown: "+finalPce)), __->myDisposed);
       }
-    }
-    catch (ProcessCanceledException ignored) {
     }
   }
 
   private static VirtualFile getVirtualFile(@NotNull FileEditor fileEditor) {
     VirtualFile virtualFile = fileEditor.getFile();
-    for (BackedVirtualFileProvider provider : BackedVirtualFileProvider.EP_NAME.getExtensionList()) {
-      VirtualFile replacedVirtualFile = provider.getReplacedVirtualFile(virtualFile);
-      if (replacedVirtualFile != null) {
-        virtualFile = replacedVirtualFile;
-        break;
-      }
-    }
-    return virtualFile;
+    VirtualFile replacedVirtualFile = BackedVirtualFileProvider.EP_NAME.computeSafeIfAny(provider -> provider.getReplacedVirtualFile(virtualFile));
+    return replacedVirtualFile == null ? virtualFile : replacedVirtualFile;
   }
 
   /**
@@ -1217,6 +1222,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       submitInBackground(fileEditor, document, virtualFile, psiFile, highlighter, passesToIgnore, progress, session))),
       // manifest exceptions in EDT to avoid storing them in the Future and abandoning
       task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
+    if (PassExecutorService.LOG.isDebugEnabled()) {
+      PassExecutorService.log(progress, null, "queuePassesCreation completed. session=",session);
+    }
     return session;
   }
 
@@ -1236,24 +1244,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                   @NotNull DaemonProgressIndicator progress,
                                   @NotNull HighlightingSessionImpl session) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (myProject.isDisposed()) {
-      stopProcess(false, "project disposed");
-      return;
-    }
-    if (progress.isCanceled()) {
-      stopProcess(true, "canceled in queuePassesCreation: "+progress.getCancellationTrace());
-      return;
-    }
-    if (getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments()) {
-      stopProcess(true, "more documents to commit: " + ReadAction.compute(() -> Arrays.toString(getPsiDocumentManager().getUncommittedDocuments())));
-      return;
-    }
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
         // wait for heavy processing to stop, re-schedule daemon but not too soon
         boolean heavyProcessIsRunning = heavyProcessIsRunning();
         HighlightingPass[] passes = ReadAction.compute(() -> {
-          if (myProject.isDisposed() || !fileEditor.isValid() || !psiFile.isValid()) {
+          if (progress.isCanceled() ||
+              myProject.isDisposed() ||
+              getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments() ||
+              !fileEditor.isValid() ||
+              !psiFile.isValid()) {
             return HighlightingPass.EMPTY_ARRAY;
           }
           if (session.isCanceled()) {
@@ -1273,18 +1273,18 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         });
         boolean hasPasses = passes.length != 0;
         if (!hasPasses) {
-          // will be re-scheduled by HeavyLatch listener in DaemonListeners
+          // will be re-scheduled by HeavyLatch or some other listener in DaemonListeners
           return;
         }
         // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
         synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
           myPassExecutorService.submitPasses(document, virtualFile, psiFile, fileEditor, passes, progress);
         }
+        ProgressManager.checkCanceled();
       }), progress);
     }
     catch (ProcessCanceledException e) {
       LOG.debug(e);
-      stopProcess(true, "PCE in queuePassesCreation");
     }
     catch (Throwable e) {
       // make it manifestable in tests
@@ -1308,9 +1308,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (isRestartToCompleteEssentialHighlightingRequested()) {
       progress.putUserData(COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY, true);
     }
-    DaemonProgressIndicator old = myUpdateProgress.put(fileEditor, progress);
-    if (old != null && !old.isCanceled()) {
-      old.cancel();
+    DaemonProgressIndicator oldProgress = myUpdateProgress.put(fileEditor, progress);
+    if (oldProgress != null && !oldProgress.isCanceled()) {
+      if (PassExecutorService.LOG.isDebugEnabled()) {
+        PassExecutorService.log(progress, null, "createUpdateProgress(" + fileEditor + "); " +
+           " oldProgress=" + System.identityHashCode(oldProgress) + (oldProgress.isCanceled() ? "X" : "V"));
+      }
+      oldProgress.cancel(new Throwable(), "Old indicator: " + System.identityHashCode(oldProgress));
     }
     myDaemonListenerPublisher.daemonStarting(List.of(fileEditor));
     return progress;
