@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-impl-base-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-impl-base-tests-for-ide:2.1.0-dev-2515">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-impl-base-tests-for-ide:2.1.0-dev-3141">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.0-dev-2515/analysis-api-impl-base-tests-for-ide-2.1.0-dev-2515.jar">
-          <sha256sum>c33bddb299e52b0b32b305859d1c1523aaeba2672994c9eb9b92d4ac3b2ba600</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.0-dev-3141/analysis-api-impl-base-tests-for-ide-2.1.0-dev-3141.jar">
+          <sha256sum>a7d0b2500e7dad925cdb9b2549d9a622c0b9a1736b292f2ef717ca2e6c3ffd38</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.0-dev-2515/analysis-api-impl-base-tests-for-ide-2.1.0-dev-2515.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.0-dev-3141/analysis-api-impl-base-tests-for-ide-2.1.0-dev-3141.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.0-dev-2515/analysis-api-impl-base-tests-for-ide-2.1.0-dev-2515-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-tests-for-ide/2.1.0-dev-3141/analysis-api-impl-base-tests-for-ide-2.1.0-dev-3141-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
