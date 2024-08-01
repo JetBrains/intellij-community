@@ -15,6 +15,7 @@ French Français
 Galician Galego
 German (Austria) Deutsch (Österreich)
 German (Germany) Deutsch (Deutschland)
+German (Switzerland) Deutsch (Die Schweiz)
 Greek Ελληνικά
 Irish Gaeilge
 Italian Italiano
