@@ -13,18 +13,13 @@ internal object JdkDownloaderLogger : CounterUsagesCollector() {
 
   private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 3)
 
-  private const val UNKNOWN_VENDOR = "Unknown"
-  private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
-                                .mapNotNull { it.displayName }
-                                .toList() + UNKNOWN_VENDOR
-
   private val DOWNLOAD: EventId1<Boolean> = GROUP.registerEvent("download", EventFields.Boolean("success"))
 
   private val DETECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("detected",
-                                                                         EventFields.String("product", KNOWN_VENDORS),
+                                                                         EventFields.String("product", JdkVersionDetector.VENDORS),
                                                                          EventFields.Int("version"))
   private val SELECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("selected",
-                                                                         EventFields.String("product", KNOWN_VENDORS),
+                                                                         EventFields.String("product", JdkVersionDetector.VENDORS),
                                                                          EventFields.Int("version"))
 
   fun logDownload(success: Boolean) {
@@ -32,7 +27,7 @@ internal object JdkDownloaderLogger : CounterUsagesCollector() {
   }
 
   fun logSelected(jdkItem: JdkItem) {
-    val vendor = KNOWN_VENDORS.firstOrNull { jdkItem.fullPresentationText.contains(it) } ?: UNKNOWN_VENDOR
+    val vendor = JdkVersionDetector.VENDORS.firstOrNull { jdkItem.fullPresentationText.contains(it) } ?: JdkVersionDetector.Variant.Unknown.displayName
     SELECTED_SDK.log(vendor, jdkItem.jdkMajorVersion)
   }
 
@@ -40,8 +35,8 @@ internal object JdkDownloaderLogger : CounterUsagesCollector() {
   fun logDetected(jdkInfo: JdkVersionDetector.JdkVersionInfo?) {
     val (name, version) = when {
                             jdkInfo == null -> null
-                            jdkInfo.variant.displayName in KNOWN_VENDORS -> jdkInfo.variant.displayName to jdkInfo.version.feature
-                            else -> UNKNOWN_VENDOR to jdkInfo.version.feature
+                            jdkInfo.variant.displayName in JdkVersionDetector.VENDORS -> jdkInfo.variant.displayName to jdkInfo.version.feature
+                            else -> JdkVersionDetector.Variant.Unknown.displayName to jdkInfo.version.feature
                           } ?: return
     DETECTED_SDK.log(name, version)
   }

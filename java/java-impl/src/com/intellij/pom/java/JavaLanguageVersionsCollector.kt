@@ -16,11 +16,6 @@ import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.util.*
 
-private const val UNKNOWN_VENDOR = "Unknown"
-private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
-                              .mapNotNull { it.displayName }
-                              .toList() + UNKNOWN_VENDOR
-
 class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
   private val group = EventLogGroup("java.language", 5)
 
@@ -29,7 +24,7 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
   private val update = EventFields.Int("update")
   private val ea = EventFields.Boolean("ea")
   private val wsl = EventFields.Boolean("wsl")
-  private val vendor = EventFields.String("vendor", KNOWN_VENDORS)
+  private val vendor = EventFields.String("vendor", JdkVersionDetector.VENDORS)
 
   private val moduleJdkVersion = group.registerVarargEvent("MODULE_JDK_VERSION",
                                                            feature, minor, update, ea, wsl, vendor)
@@ -52,7 +47,7 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
       JdkVersionData(
         JavaVersion.tryParse(sdk.versionString),
         (sdk.homePath?.let { WslPath.isWslUncPath(it) } ?: false),
-        KNOWN_VENDORS.firstOrNull { sdk.versionString?.contains(it) == true } ?: UNKNOWN_VENDOR
+        JdkVersionDetector.VENDORS.firstOrNull { sdk.versionString?.contains(it) == true } ?: JdkVersionDetector.Variant.Unknown.displayName
       )
     }
 
