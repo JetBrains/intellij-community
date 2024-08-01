@@ -1,16 +1,17 @@
 package com.intellij.execution.multilaunch.statistics
 
 import com.intellij.internal.statistic.eventLog.events.*
+import org.jetbrains.annotations.ApiStatus
 
-object MultiLaunchEventFields {
+internal object MultiLaunchEventFields {
   val ACTIVATE_TOOL_WINDOWS_FIELD = EventFields.Boolean("activate_tool_windows")
 }
 
-object FusExecutableRows {
+internal object FusExecutableRows {
   val FIELD = ObjectListEventField("rows", FusExecutionRow())
 }
 
-class FusExecutionRow: ObjectDescription() {
+internal class FusExecutionRow : ObjectDescription() {
   var executable by field(ObjectEventField("executable", FusExecutable()))
   var condition by field(ObjectEventField("condition", FusCondition()))
   var disableDebugging by field(EventFields.Boolean("disable_debugging"))
@@ -26,7 +27,7 @@ class FusExecutionRow: ObjectDescription() {
   }
 }
 
-class FusExecutable: ObjectDescription() {
+internal class FusExecutable : ObjectDescription() {
   var kind by field(EventFields.Enum<FusExecutableKind>("kind"))
   var typeId by field(EventFields.StringValidatedByCustomRule<ExecutableTypeIdValidationRule>("type_id"))
 
@@ -40,7 +41,8 @@ class FusExecutable: ObjectDescription() {
   }
 }
 
-class FusCondition: ObjectDescription() {
+@ApiStatus.Internal
+class FusCondition : ObjectDescription() {
   var typeId by field(EventFields.StringValidatedByCustomRule<ConditionTypeIdValidationRule>("type_id"))
 
   companion object {
@@ -52,6 +54,7 @@ class FusCondition: ObjectDescription() {
   }
 }
 
+@ApiStatus.Internal
 object CreatedOrigin {
   val CREATED_FIELD = EventFields.Boolean("is_created")
   val ORIGIN_FIELD = EventFields.Enum<MultiLaunchCreationOrigin>("origin")

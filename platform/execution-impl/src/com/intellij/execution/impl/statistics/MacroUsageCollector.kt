@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.ExtensionIdValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-object MacroUsageCollector: CounterUsagesCollector() {
+internal object MacroUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private val GROUP = EventLogGroup("execution.macro", 1)
@@ -23,7 +23,7 @@ object MacroUsageCollector: CounterUsagesCollector() {
   }
 }
 
-class MacroNameValidationRule: ExtensionIdValidationRule<Macro>(Macro.EP_NAME, { macro -> macro.name }) {
+internal class MacroNameValidationRule : ExtensionIdValidationRule<Macro>(Macro.EP_NAME, { macro -> macro.name }) {
   override val extensions: Iterable<Macro>
     get() = MacroManager.getInstance().macros
 }
