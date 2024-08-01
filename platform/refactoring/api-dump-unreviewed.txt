@@ -305,16 +305,6 @@ c:com.intellij.refactoring.RefactoringSettings
 - showRefactoringMessageDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,com.intellij.openapi.project.Project):Z
 - showReplacePromptDialog(Z,java.lang.String,com.intellij.openapi.project.Project):I
 - startFindUsages(com.intellij.psi.PsiElement,com.intellij.find.findUsages.FindUsagesOptions):V
-f:com.intellij.refactoring.RefactoringUsageCollector
-- sf:CANCELLED:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:ELEMENT:com.intellij.internal.statistic.eventLog.events.ClassEventField
-- sf:EXECUTED:com.intellij.internal.statistic.eventLog.events.EventId2
-- sf:HANDLER:com.intellij.internal.statistic.eventLog.events.ClassEventField
-- sf:HANDLER_INVOKED:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:INSTANCE:com.intellij.refactoring.RefactoringUsageCollector
-- sf:PROCESSOR:com.intellij.internal.statistic.eventLog.events.ClassEventField
-- sf:USAGES_SEARCHED:com.intellij.internal.statistic.eventLog.events.EventId3
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 com.intellij.refactoring.changeSignature.ChangeInfo
 - a:getLanguage():com.intellij.lang.Language
 - a:getMethod():com.intellij.psi.PsiElement
@@ -603,17 +593,6 @@ e:com.intellij.refactoring.rename.RenameScopeType
 - f:getFusName():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.refactoring.rename.RenameScopeType
 - s:values():com.intellij.refactoring.rename.RenameScopeType[]
-f:com.intellij.refactoring.rename.RenameUsagesCollector
-- sf:INSTANCE:com.intellij.refactoring.rename.RenameUsagesCollector
-- sf:executed:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:localSearchInCommentsEvent:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:referenceProcessed:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:renameProcessor:com.intellij.internal.statistic.eventLog.events.ClassEventField
-- sf:scopeType:com.intellij.internal.statistic.eventLog.events.EnumEventField
-- sf:searchInComments:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:searchInTextOccurrences:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:started:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 f:com.intellij.refactoring.rename.RenameUtil
 - s:addConflictDescriptions(com.intellij.usageView.UsageInfo[],com.intellij.util.containers.MultiMap):V
 - s:assertNonCompileElement(com.intellij.psi.PsiElement):V
