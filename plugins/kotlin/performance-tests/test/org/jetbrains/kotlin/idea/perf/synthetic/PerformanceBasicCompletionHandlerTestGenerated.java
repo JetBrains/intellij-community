@@ -1130,6 +1130,16 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
         }
 
+        @TestMetadata("TopLevelFunctionShadowingWithSameParameterName.kt")
+        public void testTopLevelFunctionShadowingWithSameParameterName() throws Exception {
+            runTest("../completion/testData/handlers/basic/topLevelDeclarations/TopLevelFunctionShadowingWithSameParameterName.kt");
+        }
+
+        @TestMetadata("TopLevelFunctionShadowingWithSameParameterName2.kt")
+        public void testTopLevelFunctionShadowingWithSameParameterName2() throws Exception {
+            runTest("../completion/testData/handlers/basic/topLevelDeclarations/TopLevelFunctionShadowingWithSameParameterName2.kt");
+        }
+
         @TestMetadata("TopLevelRootClass.kt")
         public void testTopLevelRootClass() throws Exception {
             runTest("../completion/testData/handlers/basic/topLevelDeclarations/TopLevelRootClass.kt");
@@ -1158,6 +1168,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("TopLevelRootFunctionFromRootPackage.kt")
         public void testTopLevelRootFunctionFromRootPackage() throws Exception {
             runTest("../completion/testData/handlers/basic/topLevelDeclarations/TopLevelRootFunctionFromRootPackage.kt");
+        }
+
+        @TestMetadata("TopLevelRootFunctionShadowingWithLocalFunction.kt")
+        public void testTopLevelRootFunctionShadowingWithLocalFunction() throws Exception {
+            runTest("../completion/testData/handlers/basic/topLevelDeclarations/TopLevelRootFunctionShadowingWithLocalFunction.kt");
         }
 
         @TestMetadata("TopLevelRootObjectFunction.kt")
