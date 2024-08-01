@@ -5,6 +5,8 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.diagnostic.ThreadDumper
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
@@ -29,6 +31,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.observable.operation.core.waitForOperationAndPumpEdt
 import com.intellij.testFramework.withProjectAsync
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory
@@ -47,19 +50,32 @@ private object TestGradleProjectConfigurationActivityKey: ActivityKey {
 
 suspend fun awaitGradleOpenProjectConfiguration(openProject: suspend () -> Project): Project {
   return openProject()
-    .withProjectAsync { awaitGradleProjectConfiguration(it) }
+    .withProjectAsync { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it, ::println) }
 }
 
 suspend fun <R> awaitGradleProjectConfiguration(project: Project, action: suspend () -> R): R {
   return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
-    .also { awaitGradleProjectConfiguration(project) }
+    .also { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project, ::println) }
 }
 
-private suspend fun awaitGradleProjectConfiguration(project: Project) {
-  withTimeout(DEFAULT_SYNC_TIMEOUT) {
-    Observation.awaitConfiguration(project) { message ->
-      println(message)
+suspend fun awaitConfiguration(timeout: Duration, project: Project, messageCallback: ((String) -> Unit)? = null) {
+  try {
+    withTimeout(timeout) {
+      Observation.awaitConfiguration(project, messageCallback)
     }
+  }
+  catch (e: TimeoutCancellationException) {
+    val coroutineDump = dumpCoroutines()
+    val threadDump = ThreadDumper.dumpThreadsToString()
+    throw AssertionError("""
+      |The waiting takes too long
+      |------- Thread dump begin -------
+      |$threadDump
+      |-------- Thread dump end --------
+      |------ Coroutine dump begin -----
+      |$coroutineDump
+      |------- Coroutine dump end ------
+    """.trimMargin())
   }
 }
 
