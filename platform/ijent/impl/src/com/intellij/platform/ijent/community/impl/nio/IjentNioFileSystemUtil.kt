@@ -7,7 +7,6 @@ import com.intellij.platform.ijent.fs.*
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import java.io.IOException
-import java.nio.channels.NonWritableChannelException
 import java.nio.file.*
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
@@ -49,7 +48,6 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
     is IjentFsError.NotFile -> FileSystemException(where.toString(), null, "Is a directory")
     is IjentFsError.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
     is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
-    is IjentFsError.AlreadyDeleted -> NoSuchFileException(where.toString())
     is IjentFsError.AlreadyExists -> FileAlreadyExistsException(where.toString())
     is IjentFsError.UnknownFile -> IOException("File is not opened")
     is IjentOpenedFile.SeekError.InvalidValue -> throw IllegalArgumentException(message)
@@ -60,6 +58,7 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
     is IjentOpenedFile.Writer.TruncateException.OffsetTooBig -> throw IllegalArgumentException(message)
     is IjentOpenedFile.Writer.TruncateException.ReadOnlyFs -> throw NonWritableChannelException()
     is IjentOpenedFile.Writer.WriteError.InvalidValue -> throw IllegalArgumentException(message)
+    is IjentFileSystemApi.DeleteException.UnresolvedLink -> throw FileSystemException(where.toString(), null, message)
   }
 }
 

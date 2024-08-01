@@ -188,14 +188,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun delete(path: Path) {
     ensureIjentNioPath(path)
+    if (path.ijentPath !is IjentPath.Absolute) {
+      throw FileSystemException(path.toString(), null, "Path is not absolute")
+    }
     fsBlocking {
       try {
-        path.nioFs.ijentFs.deleteDirectory(path.ijentPath as IjentPath.Absolute, false)
+        path.nioFs.ijentFs.delete(path.ijentPath as IjentPath.Absolute,false, false)
       }
-      catch (e: IjentFileSystemApi.DeleteException.DirNotEmpty) {
-        val exception = DirectoryNotEmptyException(path.toString())
-        exception.addSuppressed(e)
-        throw exception
+      catch (e: IjentFileSystemApi.DeleteException) {
+        e.throwFileSystemException()
       }
     }
   }

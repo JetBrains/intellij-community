@@ -186,15 +186,20 @@ sealed interface IjentFileSystemApi {
 
 
   @Throws(DeleteException::class, IjentUnavailableException::class)
-  suspend fun deleteDirectory(path: IjentPath.Absolute, removeContent: Boolean)
+  suspend fun delete(path: IjentPath.Absolute, removeContent: Boolean, followLinks: Boolean)
 
   sealed class DeleteException(
     where: IjentPath.Absolute,
     additionalMessage: @NlsSafe String,
   ) : IjentFsIOException(where, additionalMessage) {
-    class DirAlreadyDeleted(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.AlreadyDeleted
+    class DoesNotExist(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.DoesNotExist
     class DirNotEmpty(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage)
     class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.PermissionDenied
+
+    /**
+     * Thrown only when `followLinks` is specified for [delete]
+     */
+    class UnresolvedLink(where: IjentPath.Absolute): DeleteException(where, "Attempted to delete a file referenced by an unresolvable link")
     class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
       : DeleteException(where, additionalMessage), IjentFsError.Other
   }
