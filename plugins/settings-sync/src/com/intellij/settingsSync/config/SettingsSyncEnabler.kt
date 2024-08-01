@@ -14,7 +14,7 @@ import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.*
 import java.util.*
 
-internal class SettingsSyncEnabler {
+class SettingsSyncEnabler {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   object State {
