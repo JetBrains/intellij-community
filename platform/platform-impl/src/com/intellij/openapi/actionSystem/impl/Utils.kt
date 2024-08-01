@@ -998,8 +998,13 @@ object Utils {
         it?.cancel()
       }
     }
-    val result = block()
-    cancelJob.cancel()
+    val result = try {
+      block()
+    }
+    finally {
+      cancelJob.cancel()
+    }
+
     result
   }
 
