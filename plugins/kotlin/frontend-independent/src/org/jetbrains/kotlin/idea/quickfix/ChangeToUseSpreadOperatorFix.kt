@@ -19,7 +19,7 @@ class ChangeToUseSpreadOperatorFix(element: KtExpression) : PsiUpdateModCommandA
         context: ActionContext,
         element: KtExpression,
     ): Presentation = Presentation.of(
-        KotlinBundle.message("fix.change.to.use.spread.operator.text", element.text.toString(), "*${element.text}")
+        KotlinBundle.message("fix.change.to.use.spread.operator.text", element.text, "*${element.text}")
     )
 
     override fun invoke(
