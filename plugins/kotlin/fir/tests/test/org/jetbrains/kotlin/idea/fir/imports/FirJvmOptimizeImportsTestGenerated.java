@@ -474,6 +474,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AliasedImportFromObject.kt")
+            public void testAliasedImportFromObject() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/AliasedImportFromObject.kt");
+            }
+
             @TestMetadata("ArrayAccessExpression.kt")
             public void testArrayAccessExpression() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/ArrayAccessExpression.kt");

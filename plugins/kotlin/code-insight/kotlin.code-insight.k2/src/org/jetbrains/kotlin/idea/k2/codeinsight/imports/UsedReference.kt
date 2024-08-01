@@ -71,9 +71,9 @@ internal class UsedSymbol(val reference: KtReference, val symbol: KaSymbol) {
     }
 
     fun KaSession.isResolvedWithImport(): Boolean {
-        if (isAccessibleAsMemberCallable(symbol, reference.element)) return false
-
         val isNotAliased = symbol.name in reference.resolvesByNames
+
+        if (isNotAliased && isAccessibleAsMemberCallable(symbol, reference.element)) return false
         if (isNotAliased && isAccessibleAsMemberClassifier(symbol, reference.element)) return false
 
         return canBeResolvedViaImport(reference, symbol)

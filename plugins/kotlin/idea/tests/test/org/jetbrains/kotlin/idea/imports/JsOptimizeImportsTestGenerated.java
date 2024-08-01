@@ -211,6 +211,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AliasedImportFromObject.kt")
+            public void testAliasedImportFromObject() throws Exception {
+                runTest("testData/editor/optimizeImports/common/AliasedImportFromObject.kt");
+            }
+
             @TestMetadata("ArrayAccessExpression.kt")
             public void testArrayAccessExpression() throws Exception {
                 runTest("testData/editor/optimizeImports/common/ArrayAccessExpression.kt");
