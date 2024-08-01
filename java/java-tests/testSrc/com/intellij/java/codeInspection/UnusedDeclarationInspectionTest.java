@@ -2,6 +2,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 
@@ -283,6 +284,12 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
 
   public void testImplicitClass() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      doTest();
+    });
+  }
+
+  public void testBrokenClassToImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> {
       doTest();
     });
   }
