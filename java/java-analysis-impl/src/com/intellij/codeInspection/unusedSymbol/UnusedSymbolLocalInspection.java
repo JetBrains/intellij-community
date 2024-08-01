@@ -53,7 +53,7 @@ import java.util.Map;
 import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
- * Local counterpart of {@link com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase}
+ * Local counterpart of {@link UnusedDeclarationInspectionBase}
  */
 public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
@@ -355,6 +355,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
 
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
+        if (aClass instanceof PsiImplicitClass) return;
         String acceptedVisibility = aClass.getContainingClass() == null ? getClassVisibility()
                                                                         : getInnerClassVisibility();
         if (!compareVisibilities(aClass, acceptedVisibility)) return;
