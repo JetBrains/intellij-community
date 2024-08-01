@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.settingsSync.SettingsSyncEvents
 import com.intellij.ui.JBAccountInfoService
 
-internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
+class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
 
   companion object {
     private val LOG = logger<SettingsSyncDefaultAuthService>()
