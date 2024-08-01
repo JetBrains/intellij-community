@@ -30,10 +30,6 @@ internal class CreateKotlinSubClassIntention : CreateKotlinSubClassIntentionBase
         KtImplementMembersHandler().generateMembers(editor, targetClass, collectMembersToGenerate, copyDoc = true)
     }
 
-    override fun shortenReferences(klass: KtClass) {
-        shortenReferences(klass)
-    }
-
     override fun getOrCreateKtFile(fileName: String, targetDir: PsiDirectory): KtFile {
         return getOrCreateKotlinFile(fileName, targetDir)
     }
