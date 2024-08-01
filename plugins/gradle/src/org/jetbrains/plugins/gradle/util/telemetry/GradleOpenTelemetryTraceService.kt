@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util.telemetry
 
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTelemetryFormat
+import com.intellij.gradle.toolingExtension.impl.telemetry.TelemetryHolder
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter
@@ -12,19 +14,21 @@ import java.net.URI
 @Service(Service.Level.APP)
 class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope) {
 
-  private fun exportTraces(binaryTraces: ByteArray) {
-    if (binaryTraces.isEmpty()) return
+  private fun exportTraces(holder: TelemetryHolder) {
+    if (holder.traces.isEmpty()) return
     val telemetryHost = getOtlpEndPoint() ?: return
     coroutineScope.launch {
-      OpenTelemetryRawTraceExporter.sendProtobuf(URI.create(telemetryHost), binaryTraces)
+      when (holder.format) {
+        GradleTelemetryFormat.PROTOBUF -> OpenTelemetryRawTraceExporter.sendProtobuf(URI.create(telemetryHost), holder.traces)
+        GradleTelemetryFormat.JSON -> OpenTelemetryRawTraceExporter.sendJson(URI.create(telemetryHost), holder.traces)
+      }
     }
   }
 
   companion object {
-
     @JvmStatic
-    fun exportOpenTelemetryTraces(binaryTraces: ByteArray) {
-      service<GradleOpenTelemetryTraceService>().exportTraces(binaryTraces)
+    fun exportOpenTelemetry(holder: TelemetryHolder) {
+      service<GradleOpenTelemetryTraceService>().exportTraces(holder)
     }
   }
 }

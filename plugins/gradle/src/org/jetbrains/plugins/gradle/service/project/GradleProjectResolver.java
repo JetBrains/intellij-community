@@ -84,6 +84,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext.REQUESTED_FORMAT_KEY;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static org.jetbrains.plugins.gradle.service.project.ArtifactMappingServiceKt.OWNER_BASE_GRADLE;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
@@ -1031,6 +1032,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   private static @NotNull GradleTracingContext getActionTelemetryContext(@NotNull Span span) {
     GradleTracingContext context = new GradleTracingContext();
+    context.put(REQUESTED_FORMAT_KEY, GradleDaemonOpenTelemetryUtil.getTelemetryFormat().name());
     GlobalOpenTelemetry.get()
       .getPropagators()
       .getTextMapPropagator()
