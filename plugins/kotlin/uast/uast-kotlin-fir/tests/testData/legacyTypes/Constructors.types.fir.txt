@@ -12,7 +12,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(i.toString())] : A
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                     UQualifiedReferenceExpression [i.toString()] : java.lang.String
                         USimpleNameReferenceExpression (identifier = i) [i] : int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : java.lang.String
@@ -34,7 +34,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [AWithInit(i.toString())] : AWithInit
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = AWithInit, resolvesTo = PsiClass: AWithInit) [AWithInit] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = AWithInit, resolvesTo = PsiClass: AWithInit) [AWithInit]
                     UQualifiedReferenceExpression [i.toString()] : java.lang.String
                         USimpleNameReferenceExpression (identifier = i) [i] : int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : java.lang.String
@@ -61,7 +61,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [AWith2Init(i.toString())] : AWith2Init
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = AWith2Init, resolvesTo = PsiClass: AWith2Init) [AWith2Init] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = AWith2Init, resolvesTo = PsiClass: AWith2Init) [AWith2Init]
                     UQualifiedReferenceExpression [i.toString()] : java.lang.String
                         USimpleNameReferenceExpression (identifier = i) [i] : int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : java.lang.String
