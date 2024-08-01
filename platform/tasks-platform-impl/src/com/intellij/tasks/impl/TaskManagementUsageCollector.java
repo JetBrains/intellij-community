@@ -11,9 +11,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class TaskManagementUsageCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("task.management", 2);
   private static final ClassEventField REPOSITORY_TYPE = EventFields.Class("repository_type");
