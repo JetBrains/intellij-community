@@ -70,7 +70,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="false" description="Use pratt java expression parser" key="pratt.java.expression.parser" restartRequired="true" />
+    <registryKey defaultValue="true" description="Use pratt java expression parser" key="pratt.java.expression.parser" restartRequired="true" />
     <applicationService serviceInterface="com.intellij.psi.util.JavaClassSupers"
                         serviceImplementation="com.intellij.psi.impl.JavaClassSupersImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
