@@ -49,6 +49,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator.MavenProgressTracker
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.Assert
 import org.junit.AssumptionViolatedException
 import java.awt.HeadlessException
 import java.io.File
@@ -59,6 +60,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.absolutePathString
 
 abstract class MavenTestCase : UsefulTestCase() {
   protected var mavenProgressIndicator: MavenProgressIndicator? = null
@@ -437,11 +439,8 @@ abstract class MavenTestCase : UsefulTestCase() {
                               @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
     val filePath = Path.of(dir.path, fileName)
     setPomContent(filePath, xml)
-    var f = dir.findChild(fileName)
-    if (null == f) {
-      refreshFiles(listOf(dir))
-      f = dir.findChild(fileName)!!
-    }
+    dir.refresh(false, false)
+    var f = dir.findChild(fileName) ?: throw AssertionError("can't find file ${filePath.absolutePathString()} in VFS")
     myAllPoms.add(f)
     return f
   }
