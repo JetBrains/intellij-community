@@ -63,22 +63,22 @@ class SpanExtractionFromUnitPerfTest {
       .collect(PathManager.getLogDir())
 
     // warmup metrics
-    Assertions.assertEquals(243012, extractedMetrics.single { it.id.name == "warmup.attempt.mean.ms" }.value)
-    Assertions.assertEquals(243012, extractedMetrics.single { it.id.name == "warmup.attempt.median.ms" }.value)
+    Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.mean.ms" }.value)
+    Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.median.ms" }.value)
     Assertions.assertEquals(0, extractedMetrics.single { it.id.name == "warmup.attempt.range.ms" }.value)
-    Assertions.assertEquals(243012, extractedMetrics.single { it.id.name == "warmup.attempt.sum.ms" }.value)
+    Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.sum.ms" }.value)
     Assertions.assertEquals(1, extractedMetrics.single { it.id.name == "warmup.attempt.count" }.value)
     Assertions.assertEquals(0, extractedMetrics.single { it.id.name == "warmup.attempt.standard.deviation" }.value)
-    Assertions.assertEquals(379215, extractedMetrics.single { it.id.name == "warmup.total.test.duration.ms" }.value)
+    Assertions.assertEquals(379, extractedMetrics.single { it.id.name == "warmup.total.test.duration.ms" }.value)
 
     // measured metrics
-    Assertions.assertEquals(307137, extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value)
-    Assertions.assertEquals(324189, extractedMetrics.single { it.id.name == "attempt.median.ms" }.value)
-    Assertions.assertEquals(375247, extractedMetrics.single { it.id.name == "attempt.range.ms" }.value)
-    Assertions.assertEquals(921412, extractedMetrics.single { it.id.name == "attempt.sum.ms" }.value)
+    Assertions.assertEquals(306, extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value)
+    Assertions.assertEquals(324, extractedMetrics.single { it.id.name == "attempt.median.ms" }.value)
+    Assertions.assertEquals(376, extractedMetrics.single { it.id.name == "attempt.range.ms" }.value)
+    Assertions.assertEquals(920, extractedMetrics.single { it.id.name == "attempt.sum.ms" }.value)
     Assertions.assertEquals(3, extractedMetrics.single { it.id.name == "attempt.count" }.value)
-    Assertions.assertEquals(153667, extractedMetrics.single { it.id.name == "attempt.standard.deviation" }.value)
-    Assertions.assertEquals(2004871, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
+    Assertions.assertEquals(153, extractedMetrics.single { it.id.name == "attempt.standard.deviation" }.value)
+    Assertions.assertEquals(2004, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
 
     val reportFile = Files.createTempFile("temp", ".json")
 

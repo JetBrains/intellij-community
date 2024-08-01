@@ -33,8 +33,6 @@ class JaegerJsonSpanExporter(
   val serviceVersion: String? = null,
   val serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  val exporterVersion: Int = 2
-
   private val fileChannel: FileChannel
   private var writer: JsonGenerator
 
@@ -58,8 +56,7 @@ class JaegerJsonSpanExporter(
     beginWriter(w = writer,
                 serviceName = serviceName,
                 serviceVersion = serviceVersion,
-                serviceNamespace = serviceNamespace,
-                exporterVersion = exporterVersion)
+                serviceNamespace = serviceNamespace)
   }
 
   @Suppress("DuplicatedCode")
@@ -225,8 +222,7 @@ class JaegerJsonSpanExporter(
           beginWriter(w = writer,
                       serviceName = serviceName,
                       serviceVersion = serviceVersion,
-                      serviceNamespace = serviceNamespace,
-                      exporterVersion = exporterVersion)
+                      serviceNamespace = serviceNamespace)
         }
       }
     }
@@ -238,10 +234,8 @@ private fun beginWriter(
   serviceName: String,
   serviceVersion: String?,
   serviceNamespace: String?,
-  exporterVersion: Int,
 ) {
   w.writeStartObject()
-  w.writeNumberField("exporterVersion", exporterVersion)
   w.writeArrayFieldStart("data")
   w.writeStartObject()
   w.writeStringField("traceID", IdGenerator.random().generateTraceId())
