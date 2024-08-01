@@ -12,7 +12,6 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ import java.util.List;
  * NOT THREAD-SAFE
  */
 final class HighlighterRecycler implements HighlighterRecyclerPickup {
-  private final Long2ObjectMap<List<RangeHighlighterEx>> incinerator = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
+  private final Long2ObjectMap<List<RangeHighlighterEx>> incinerator = new Long2ObjectOpenHashMap<>();
   private static final Key<ProgressIndicator> BEING_RECYCLED_KEY = Key.create("RECYCLED_KEY"); // set when the highlighter is just recycled, but not yet transferred to EDT to change its attributes. used to prevent double recycling the same RH
   @NotNull private final HighlightingSession myHighlightingSession;
 
@@ -40,7 +39,7 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
   }
 
   // return true if RH is successfully recycled, false if race condition intervened
-  boolean recycleHighlighter(@NotNull RangeHighlighterEx highlighter) {
+  synchronized boolean recycleHighlighter(@NotNull RangeHighlighterEx highlighter) {
     if (!highlighter.isValid()) {
       return false;
     }
@@ -55,12 +54,14 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
       ProgressManager.checkCanceled(); // two sessions are going to overlap and fight for recycling highlighters, cancel one of them
       replaced = false;
     }
+    if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
+      UpdateHighlightersUtil.LOG.debug("recycleHighlighter success="+replaced+": "+highlighter+
+                                       (oldIndicator!=myIndicator && oldIndicator != null? "; oldIndicator="+System.identityHashCode(oldIndicator) + (oldIndicator.isCanceled() ? "X" : "V") : "")+
+                                       "; myIndicator="+System.identityHashCode(myIndicator) + (myIndicator.isCanceled() ? "X" : "V"));
+    }
     if (replaced) {
       long range = ((RangeMarkerImpl)highlighter).getScalarRange();
       incinerator.computeIfAbsent(range, __ -> new ArrayList<>()).add(highlighter);
-      if (UpdateHighlightersUtil.LOG.isTraceEnabled()) {
-        UpdateHighlightersUtil.LOG.trace("recycleHighlighter "+highlighter);
-      }
       return true;
     }
     return false;
@@ -69,7 +70,7 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
   // null means no highlighter found in the cache
   @Override
   @Nullable
-  public RangeHighlighterEx pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
+  synchronized public RangeHighlighterEx pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     List<RangeHighlighterEx> collection = incinerator.get(range);
     if (collection != null) {
@@ -89,15 +90,15 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
   }
   //
   @NotNull
-  Collection<? extends RangeHighlighter> forAllInGarbageBin() {
+  synchronized Collection<? extends RangeHighlighter> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
   }
 
   // mark all remaining highlighters as not "recycled", to avoid double creation
-  void releaseHighlighters() {
+  synchronized void releaseHighlighters() {
     if (HighlightInfoUpdaterImpl.LOG.isDebugEnabled()) {
       if (!incinerator.isEmpty()) {
-        HighlightInfoUpdaterImpl.LOG.debug("releaseHighlighters: (" + incinerator.size() + ")" + "; progress=" + System.identityHashCode(ProgressManager.getGlobalProgressIndicator()));
+        HighlightInfoUpdaterImpl.LOG.debug("releaseHighlighters: (" + incinerator.size() + ")" + "; progress=" + System.identityHashCode(ProgressManager.getGlobalProgressIndicator())+(ProgressManager.getGlobalProgressIndicator().isCanceled() ? "X" : "V"));
       }
     }
     for (RangeHighlighter highlighter : forAllInGarbageBin()) {
@@ -119,7 +120,7 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
   }
 
   // dispose all highlighters (still) stored in this recycler, if possible
-  private boolean incinerateObsoleteHighlighters() {
+  synchronized private boolean incinerateObsoleteHighlighters() {
     boolean changed = false;
     // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
 
@@ -141,7 +142,7 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
   boolean tryIncinerate(@NotNull RangeHighlighterEx highlighter) {
     boolean shouldRemove = UpdateHighlightersUtil.shouldRemoveHighlighter(highlighter, myHighlightingSession);
     if (HighlightInfoUpdaterImpl.LOG.isDebugEnabled()) {
-      HighlightInfoUpdaterImpl.LOG.debug("incinerateObsoleteHighlighters " + highlighter + "; shouldRemove:" + shouldRemove);
+      HighlightInfoUpdaterImpl.LOG.debug("tryIncinerate " + highlighter + "; shouldRemove:" + shouldRemove);
     }
     if (shouldRemove) {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
@@ -167,10 +168,10 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
       recycler.releaseHighlighters();
     }
   }
-  boolean isEmpty() {
+  synchronized boolean isEmpty() {
     return incinerator.isEmpty();
   }
-  boolean remove(@NotNull RangeHighlighterEx highlighter) {
+  synchronized boolean remove(@NotNull RangeHighlighterEx highlighter) {
     List<RangeHighlighterEx> list = incinerator.get(TextRangeScalarUtil.toScalarRange(highlighter.getTextRange()));
     if (list != null) {
       return list.remove(highlighter);
