@@ -1015,7 +1015,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     else if (parent instanceof PsiClass aClass) {
       try {
         if (!hasErrorResults()) add(HighlightClassUtil.checkDuplicateNestedClass(aClass));
-        if (!hasErrorResults()) {
+        if (!hasErrorResults() && !(aClass instanceof PsiAnonymousClass)/* anonymous class is highlighted in HighlightClassUtil.checkAbstractInstantiation()*/) {
           TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
           add(HighlightClassUtil.checkClassMustBeAbstract(aClass, textRange));
         }
