@@ -223,6 +223,8 @@
     <module name="kotlin.project-wizard.maven"/>
     <module name="kotlin.project-wizard.compose"/>
 
+    <module name="kotlin.features-trainer"/>
+
     <module name="kotlin.jvm-decompiler"/>
 
     <module name="kotlin.code-insight.intentions.shared"/>

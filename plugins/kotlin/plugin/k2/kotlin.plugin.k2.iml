@@ -121,5 +121,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jsr223" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.features-trainer" scope="RUNTIME" />
   </component>
 </module>
