@@ -510,8 +510,21 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.lang.String.strip") convertTo Method("kotlin.text.trim") withByArgumentsFilter { it.isEmpty() },
         Method("java.lang.String.stripLeading") convertTo Method("kotlin.text.trimStart") withByArgumentsFilter { it.isEmpty() },
         Method("java.lang.String.stripTrailing") convertTo Method("kotlin.text.trimEnd") withByArgumentsFilter { it.isEmpty() },
-        Method("java.lang.String.indexOf") convertTo Method("kotlin.text.indexOf"),
-        Method("java.lang.String.lastIndexOf") convertTo Method("kotlin.text.lastIndexOf"),
+
+        Method("java.lang.String.indexOf")
+                convertTo Method("kotlin.text.indexOf", parameterTypesFqNames = listOf("kotlin.String", "kotlin.Int", "kotlin.Boolean"))
+                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.isStringType() == true },
+        Method("java.lang.String.indexOf")
+                convertTo Method("kotlin.text.indexOf", parameterTypesFqNames = listOf("kotlin.Char", "kotlin.Int", "kotlin.Boolean"))
+                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.isStringType() == false },
+
+        Method("java.lang.String.lastIndexOf")
+                convertTo Method("kotlin.text.lastIndexOf", parameterTypesFqNames = listOf("kotlin.String", "kotlin.Int", "kotlin.Boolean"))
+                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.isStringType() == true },
+        Method("java.lang.String.lastIndexOf")
+                convertTo Method("kotlin.text.lastIndexOf", parameterTypesFqNames = listOf("kotlin.Char", "kotlin.Int", "kotlin.Boolean"))
+                withByArgumentsFilter { it.firstOrNull()?.calculateType(typeFactory)?.isStringType() == false },
+
         Method("java.lang.String.getBytes") convertTo Method("kotlin.text.toByteArray")
                 withByArgumentsFilter { it.singleOrNull()?.calculateType(typeFactory)?.isStringType() == true }
                 withArgumentsProvider { arguments ->
