@@ -104,8 +104,11 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
     })
 
     // legend
-    val actionGroup = DefaultActionGroup({"Some action group"}, listOf(CompilationChartsStatsActionHolder(vm), Separator(), ScrollToEndAction(vm)))
-    addToRight(ActionManager.getInstance().createActionToolbar("Some toolbar", actionGroup, true).component)
+    val actionGroup = DefaultActionGroup(listOf(CompilationChartsStatsActionHolder(vm), Separator(), ScrollToEndAction(vm)))
+    val toolbar = ActionManager.getInstance().createActionToolbar(COMPILATION_CHARTS_TOOLBAR_NAME, actionGroup, true).apply {
+      targetComponent = this@ActionPanel
+    }
+    addToRight(toolbar.component)
 
     DumbAwareAction.create {
       val focusManager = IdeFocusManager.getInstance(project)
@@ -227,5 +230,9 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
       })
     }
     override fun actionPerformed(e: AnActionEvent) = Unit
+  }
+
+  companion object {
+    private const val COMPILATION_CHARTS_TOOLBAR_NAME = "Compilation charts toolbar"
   }
 }
