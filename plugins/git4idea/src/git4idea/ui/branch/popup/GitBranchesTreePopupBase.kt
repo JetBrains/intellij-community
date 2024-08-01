@@ -537,7 +537,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
 
   private fun scrollToSelectionIfNeeded(selectedPath: TreePath) {
     val selectedNodeBounds = tree.getPathBounds(selectedPath) ?: return
-    // If the selected not is not visible
+    // If the selected node is not visible
     if (!tree.visibleRect.intersects(selectedNodeBounds)) {
       TreeUtil.scrollToVisible(tree, selectedPath, false)
     }
