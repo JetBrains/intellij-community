@@ -12,13 +12,12 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkModuleDependencyConflictsForInternalUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkModuleDependencyConflictsForNonMovedUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictForNonMovedUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictsForInternalUsages
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -76,8 +75,11 @@ internal fun findAllMoveConflicts(
     targetFileName: String,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
+    val targetModule = targetDir.containingModule()?.productionOrTestSourceModuleInfo?.toKaModule() ?: return MultiMap.empty()
     val (fakeTarget, oldToNewMap) = createCopyTarget(declarationsToCheck, targetDir, targetPkg, targetFileName)
     return MultiMap<PsiElement, String>().apply {
+        putAllValues(checkMoveExpectedDeclarationIntoPlatformCode(declarationsToCheck, targetModule))
+        putAllValues(checkMoveActualDeclarationIntoCommonModule(declarationsToCheck, targetModule))
         putAllValues(checkVisibilityConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))
         putAllValues(checkVisibilityConflictForNonMovedUsages(allDeclarationsToMove, oldToNewMap, usages))
         putAllValues(checkModuleDependencyConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))

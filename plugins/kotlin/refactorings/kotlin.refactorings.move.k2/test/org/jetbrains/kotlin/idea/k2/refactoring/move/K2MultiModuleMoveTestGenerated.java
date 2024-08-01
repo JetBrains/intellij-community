@@ -35,9 +35,19 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveClassWithInternalMemberFromJvmToCommon/moveClassWithInternalMemberFromJvmToCommon.test");
     }
 
+    @TestMetadata("moveDeclarationActualToCommon/moveDeclarationActual.test")
+    public void testMoveDeclarationActualToCommon_MoveDeclarationActual() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationActualToCommon/moveDeclarationActual.test");
+    }
+
     @TestMetadata("moveDeclarationActual/moveDeclarationActual.test")
     public void testMoveDeclarationActual_MoveDeclarationActual() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationActual/moveDeclarationActual.test");
+    }
+
+    @TestMetadata("moveDeclarationExpectedToPlatform/moveDeclarationActual.test")
+    public void testMoveDeclarationExpectedToPlatform_MoveDeclarationActual() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationExpectedToPlatform/moveDeclarationActual.test");
     }
 
     @TestMetadata("moveDeclarationExpected/moveDeclarationExpected.test")

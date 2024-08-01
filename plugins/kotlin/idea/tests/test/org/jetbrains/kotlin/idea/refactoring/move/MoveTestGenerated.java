@@ -52,11 +52,6 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/changePackage/kotlin/changeToNonDefaultPackage/changeToNonDefaultPackage.test");
         }
 
-        @TestMetadata("kotlin/headerClasses/headerClasses.test")
-        public void testKotlin_headerClasses_HeaderClasses() throws Exception {
-            runTest("testData/refactoring/changePackage/kotlin/headerClasses/headerClasses.test");
-        }
-
         @TestMetadata("kotlin/longName/longName.test")
         public void testKotlin_longName_LongName() throws Exception {
             runTest("testData/refactoring/changePackage/kotlin/longName/longName.test");
