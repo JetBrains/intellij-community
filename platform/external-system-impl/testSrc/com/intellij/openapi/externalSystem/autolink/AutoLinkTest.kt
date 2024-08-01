@@ -130,7 +130,6 @@ class AutoLinkTest : AutoLinkTestCase() {
 
       openProject("project")
         .useProjectAsync { project ->
-          assertNotificationAware(project, "B" to "project")
           assertLinkedProjects(unlinkedProjectAwareA, 1)
           assertLinkedProjects(unlinkedProjectAwareB, 0)
         }

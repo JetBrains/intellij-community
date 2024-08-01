@@ -31,7 +31,10 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfigured
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.util.containers.DisposableWrapperList
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CopyOnWriteArrayList
@@ -133,7 +136,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   private suspend fun installProjectRootsScanner(project: Project): ProjectRoots {
     val projectRoots = ProjectRoots()
     val rootProjectPath = project.basePath
-    if (rootProjectPath != null) {
+    if (rootProjectPath != null && !hasLinkedProject(project, rootProjectPath)) {
       projectRoots.addProjectRoot(rootProjectPath)
     }
     val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
@@ -148,7 +151,9 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
         override fun onProjectUnlinked(externalProjectPath: String) {
           coroutineScope.launch(extensionDisposable) {
-            projectRoots.addProjectRoot(externalProjectPath)
+            if (!hasLinkedProject(project, externalProjectPath)) {
+              projectRoots.addProjectRoot(externalProjectPath)
+            }
           }
         }
 
@@ -159,24 +164,37 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private suspend fun installUnlinkedProjectScanner(project: Project, projectRoots: ProjectRoots) {
     whenProjectRootsChanged(project, projectRoots) { changedRoots ->
-      EP_NAME.forEachExtensionSafeAsync { extension ->
-        project.trackActivity(ExternalSystemActivityKey) {
-          for (projectRoot in changedRoots) {
+      project.trackActivity(ExternalSystemActivityKey) {
+        for (projectRoot in changedRoots) {
+          EP_NAME.forEachExtensionSafeAsync { extension ->
             updateNotification(project, projectRoot, extension)
           }
         }
       }
     }
-    EP_NAME.withEachExtensionSafeAsync(project) { extension, extensionDisposable ->
-      projectRoots.withProjectRoot(extensionDisposable) { projectRoot ->
-        updateNotification(project, projectRoot, extension)
+    projectRoots.withProjectRoot(project) { projectRoot ->
+      project.trackActivity(ExternalSystemActivityKey) {
+        EP_NAME.forEachExtensionSafeAsync { extension ->
+          updateNotification(project, projectRoot, extension)
+        }
       }
-      projectRoots.whenProjectRootRemoved(extensionDisposable) { projectRoot ->
-        project.trackActivity(ExternalSystemActivityKey) {
+    }
+    projectRoots.whenProjectRootRemoved(project) { projectRoot ->
+      project.trackActivity(ExternalSystemActivityKey) {
+        EP_NAME.forEachExtensionSafeAsync { extension ->
           expireNotification(project, projectRoot, extension)
         }
       }
     }
+  }
+
+  private fun hasLinkedProject(project: Project, projectRoot: String): Boolean {
+    EP_NAME.forEachExtensionSafeAsync { extension ->
+      if (extension.isLinkedProject(project, projectRoot)) {
+        return true
+      }
+    }
+    return false
   }
 
   private suspend fun updateNotification(project: Project, projectRoot: String, extension: ExternalSystemUnlinkedProjectAware) {

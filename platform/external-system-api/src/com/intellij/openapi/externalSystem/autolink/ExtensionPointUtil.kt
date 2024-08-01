@@ -9,8 +9,8 @@ import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
-suspend fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeAsync(
-  action: suspend (Extension) -> Unit
+inline fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeAsync(
+  action: (Extension) -> Unit
 ) {
   for (extension in extensionList) {
     runCatching { action(extension) }
