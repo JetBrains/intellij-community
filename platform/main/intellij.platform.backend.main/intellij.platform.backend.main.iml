@@ -10,5 +10,6 @@
     <orderEntry type="module" module-name="intellij.platform.navbar.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.project.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.progress.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.backend" scope="RUNTIME" />
   </component>
 </module>

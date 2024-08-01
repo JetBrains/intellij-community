@@ -1,0 +1,5 @@
+<idea-plugin package="com.intellij.xdebugger.impl.breakpoints.backend">
+  <dependencies>
+    <module name="intellij.platform.kernel.backend"/>
+  </dependencies>
+</idea-plugin>

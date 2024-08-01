@@ -20,5 +20,8 @@
     <module name="intellij.platform.clouds"/>
     <module name="intellij.platform.execution.dashboard"/>
     <module name="intellij.platform.execution.serviceView"/>
+
+    <module name="intellij.platform.debugger.impl.frontend"/>
+    <module name="intellij.platform.debugger.impl.backend"/>
   </content>
 </idea-plugin>
