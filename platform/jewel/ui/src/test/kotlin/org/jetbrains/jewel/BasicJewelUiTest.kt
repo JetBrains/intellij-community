@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import kotlinx.coroutines.runBlocking
-import org.junit.Before
 import org.junit.Rule
 
 open class BasicJewelUiTest {
@@ -18,10 +17,5 @@ open class BasicJewelUiTest {
     ) = runBlocking {
         composeRule.setContent(composable)
         composeRule.block()
-    }
-
-    @Before
-    fun setUpProperties() {
-        System.setProperty("org.jetbrains.jewel.debug", "true")
     }
 }

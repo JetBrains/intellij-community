@@ -11,7 +11,7 @@ repositories {
     google()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     mavenCentral()
-    
+
     intellijPlatform {
         defaultRepositories()
     }
@@ -39,12 +39,11 @@ dependencies {
 
 intellijPlatform {
     pluginConfiguration { name = "Jewel Demo" }
-    buildSearchableOptions  = false
+    buildSearchableOptions = false
 }
 
 tasks {
     runIde {
-        systemProperties["org.jetbrains.jewel.debug"] = "true"
         jvmArgs = listOf("-Xmx3g")
     }
 }
