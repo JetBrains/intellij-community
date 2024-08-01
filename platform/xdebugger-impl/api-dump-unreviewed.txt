@@ -661,8 +661,6 @@ c:com.intellij.xdebugger.impl.actions.handlers.XToggleLineBreakpointActionHandle
 - <init>(Z):V
 - isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollectorKt
-- sf:getType(com.intellij.xdebugger.breakpoints.XBreakpointType):java.util.List
 c:com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 - <init>():V
 - getErrorMessage():java.lang.String
