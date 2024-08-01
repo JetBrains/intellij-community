@@ -1,4 +1,8 @@
 <idea-plugin package="com.intellij.internal.statistic.devkit">
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+  </dependencies>
+
   <resource-bundle>messages.ActionsBundle</resource-bundle>
   <actions>
     <group id="FeatureUsage.Internal" popup="true" internal="true" compact="true">
