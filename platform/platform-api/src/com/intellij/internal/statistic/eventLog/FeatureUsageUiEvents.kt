@@ -3,7 +3,9 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 fun getUiEventLogger(): FeatureUsageUiEvents {
   if (ApplicationManager.getApplication() != null) {
     return ApplicationManager.getApplication().getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
@@ -12,6 +14,7 @@ fun getUiEventLogger(): FeatureUsageUiEvents {
   return EmptyFeatureUsageUiEvents
 }
 
+@ApiStatus.Internal
 interface FeatureUsageUiEvents {
   fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long)
 
@@ -26,6 +29,7 @@ interface FeatureUsageUiEvents {
   fun logClickOnHelpDialog(dialogClass: Class<*>)
 }
 
+@ApiStatus.Internal
 object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
   override fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long) {
   }

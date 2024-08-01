@@ -1490,24 +1490,6 @@ com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 - s:registerTracker(com.intellij.openapi.project.Project,java.lang.String):com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
 com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
 - a:activityFinished():V
-f:com.intellij.internal.statistic.eventLog.EmptyFeatureUsageUiEvents
-- com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
-- sf:INSTANCE:com.intellij.internal.statistic.eventLog.EmptyFeatureUsageUiEvents
-- logApplyConfigurable(com.intellij.openapi.options.Configurable):V
-- logClickOnHelpDialog(java.lang.Class):V
-- logCloseDialog(java.lang.Class,I):V
-- logResetConfigurable(com.intellij.openapi.options.Configurable):V
-- logSelectConfigurable(com.intellij.openapi.options.Configurable,Z,J):V
-- logShowDialog(java.lang.Class):V
-com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
-- a:logApplyConfigurable(com.intellij.openapi.options.Configurable):V
-- a:logClickOnHelpDialog(java.lang.Class):V
-- a:logCloseDialog(java.lang.Class,I):V
-- a:logResetConfigurable(com.intellij.openapi.options.Configurable):V
-- a:logSelectConfigurable(com.intellij.openapi.options.Configurable,Z,J):V
-- a:logShowDialog(java.lang.Class):V
-f:com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt
-- sf:getUiEventLogger():com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
 f:com.intellij.lang.StdLanguages
 - sf:JAVA:com.intellij.lang.Language
 - sf:XML:com.intellij.lang.Language
