@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 /**
  * @author Konstantin Bulenkov
  */
-class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
+internal class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("ui.fonts", 6)
 
   private val FONT_NAME: StringEventField = EventFields.String(

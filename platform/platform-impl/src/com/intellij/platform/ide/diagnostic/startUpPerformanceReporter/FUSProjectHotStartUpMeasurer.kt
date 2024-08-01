@@ -486,7 +486,7 @@ private val WELCOME_SCREEN_EVENT = WELCOME_SCREEN_GROUP.registerVarargEvent("wel
                                                                             DURATION, SPLASH_SCREEN_WAS_SHOWN,
                                                                             SPLASH_SCREEN_VISIBLE_DURATION)
 
-class WelcomeScreenPerformanceCollector : CounterUsagesCollector() {
+internal class WelcomeScreenPerformanceCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = WELCOME_SCREEN_GROUP
 }
 

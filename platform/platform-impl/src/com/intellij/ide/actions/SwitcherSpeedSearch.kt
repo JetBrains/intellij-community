@@ -117,7 +117,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
   }
 
   companion object {
-    fun installOn(switcher: SwitcherPanel): SwitcherSpeedSearch {
+    internal fun installOn(switcher: SwitcherPanel): SwitcherSpeedSearch {
       val search = SwitcherSpeedSearch(switcher)
       search.setupListeners()
       return search

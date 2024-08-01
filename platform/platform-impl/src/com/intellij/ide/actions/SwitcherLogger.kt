@@ -4,7 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 
-object SwitcherLogger {
+internal object SwitcherLogger {
   val GROUP = EventLogGroup("recent.files.dialog", 1)
 
   val NAVIGATED = EventFields.Boolean("navigated")

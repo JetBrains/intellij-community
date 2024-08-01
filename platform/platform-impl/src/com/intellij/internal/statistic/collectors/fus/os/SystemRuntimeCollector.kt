@@ -23,6 +23,7 @@ import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.UIUtil
 import com.sun.management.OperatingSystemMXBean
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
@@ -32,6 +33,7 @@ import kotlin.io.path.name
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+@ApiStatus.Internal
 class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")

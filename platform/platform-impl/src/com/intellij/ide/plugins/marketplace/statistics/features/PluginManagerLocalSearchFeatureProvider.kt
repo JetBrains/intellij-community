@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 
-object PluginManagerLocalSearchFeatureProvider {
+internal object PluginManagerLocalSearchFeatureProvider {
   private val IS_ENABLED_DATA_KEY = EventFields.Boolean("isEnabled")
   private val IS_DISABLED_DATA_KEY = EventFields.Boolean("isDisabled")
   private val IS_BUNDLED_DATA_KEY = EventFields.Boolean("isBundled")

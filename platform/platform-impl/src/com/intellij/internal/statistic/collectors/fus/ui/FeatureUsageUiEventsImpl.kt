@@ -11,7 +11,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogWrapper
 
-object DialogsCounterUsagesCollector : CounterUsagesCollector() {
+internal object DialogsCounterUsagesCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("ui.dialogs", 61)
 
   val EXIT_CODE: PrimitiveEventField<Int> = object: PrimitiveEventField<Int>() {
@@ -42,7 +42,7 @@ object DialogsCounterUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 }
 
-object SettingsCounterUsagesCollector : CounterUsagesCollector() {
+internal object SettingsCounterUsagesCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("ui.settings", 62)
 
   private val CONFIGURABLE_CLASS = EventFields.Class("configurable")
@@ -64,7 +64,7 @@ object SettingsCounterUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 }
 
-class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
+internal class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
   override fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long) {
     if (FeatureUsageLogger.isEnabled()) {
       val wrapper = configurable as? ConfigurableWrapper

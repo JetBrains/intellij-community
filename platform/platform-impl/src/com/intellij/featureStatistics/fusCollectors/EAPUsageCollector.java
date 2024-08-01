@@ -17,6 +17,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public final class EAPUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 6);
   private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));

@@ -66,6 +66,7 @@ import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -88,16 +89,20 @@ import kotlin.math.min
  * @author Konstantin Bulenkov
  */
 object Switcher : BaseSwitcherAction(null) {
+  @ApiStatus.Internal
   val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
 
-  class SwitcherPanel(val project: Project,
-                      val title: @Nls String,
-                      event: InputEvent?,
-                      onlyEditedFiles: Boolean?,
-                      forward: Boolean) : BorderLayoutPanel(), UiDataProvider, QuickSearchComponent, Disposable {
+  @ApiStatus.Internal
+  class SwitcherPanel(
+    val project: Project,
+    val title: @Nls String,
+    event: InputEvent?,
+    onlyEditedFiles: Boolean?,
+    forward: Boolean,
+  ) : BorderLayoutPanel(), UiDataProvider, QuickSearchComponent, Disposable {
     val popup: JBPopup?
     val activity = SHOWN_TIME_ACTIVITY.started(project)
-    var navigationData: SwitcherLogger.NavigationData? = null
+    private var navigationData: SwitcherLogger.NavigationData? = null
     internal val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
@@ -549,11 +554,13 @@ object Switcher : BaseSwitcherAction(null) {
       model.removeAll()
       model.addAll(0, items)
 
-      class ListItemData(val item: SwitcherVirtualFile,
-                         val mainText: String,
-                         val statusText: String,
-                         val backgroundColor: Color?,
-                         val foregroundTextColor: Color?)
+      class ListItemData(
+        val item: SwitcherVirtualFile,
+        val mainText: String,
+        val statusText: String,
+        val backgroundColor: Color?,
+        val foregroundTextColor: Color?,
+      )
       ReadAction.nonBlocking<List<ListItemData>> {
         items.map {
           ListItemData(item = it,

@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -121,6 +122,7 @@ enum class StartupWizardStage {
   WizardProgressPage
 }
 
+@Internal
 object IdeStartupWizardCollector : CounterUsagesCollector() {
   val GROUP = EventLogGroup("wizard.startup", 7)
   override fun getGroup() = GROUP
