@@ -9703,6 +9703,10 @@ com.intellij.ui.jcef.JBCefApp$JBCefCustomSchemeHandlerFactory
 - a:getDomainName():java.lang.String
 - a:getSchemeName():java.lang.String
 - a:registerCustomScheme(org.cef.callback.CefSchemeRegistrar):V
+*f:com.intellij.ui.jcef.JBCefAppArmorUtils
+- <init>():V
+- s:areUnprivilegedUserNameSpacesRestricted():Z
+- s:createUnprivilegedUserNamespacesRestrictedBanner():com.intellij.ui.InlineBanner
 com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider
 - sf:Companion:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
 - a:getOptions():java.util.List
