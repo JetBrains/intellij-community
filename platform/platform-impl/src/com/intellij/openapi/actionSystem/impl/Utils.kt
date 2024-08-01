@@ -59,7 +59,6 @@ import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -995,7 +994,7 @@ object Utils {
   @DelicateCoroutinesApi
   suspend fun <T> cancelCurrentInputEventProcessingAndRun(block: suspend () -> T): T = coroutineScope {
     val cancelJob = launch(cancellationDispatcher) {
-      ourCurrentInputEventProcessingJobFlow.collectLatest {
+      ourCurrentInputEventProcessingJobFlow.collect {
         it?.cancel()
       }
     }
