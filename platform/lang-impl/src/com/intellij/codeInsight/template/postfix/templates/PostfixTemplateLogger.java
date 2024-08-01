@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-public final class PostfixTemplateLogger extends CounterUsagesCollector {
+final class PostfixTemplateLogger extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("completion.postfix", 59);
   private static final @NonNls String CUSTOM = "custom";
   private static final @NonNls String NO_PROVIDER = "no.provider";
@@ -54,7 +54,7 @@ public final class PostfixTemplateLogger extends CounterUsagesCollector {
     EXPANDED.log(context.getProject(), events);
   }
 
-  public static final class PostfixTemplateValidator extends CustomValidationRule {
+  static final class PostfixTemplateValidator extends CustomValidationRule {
     @NotNull
     @Override
     public String getRuleId() {

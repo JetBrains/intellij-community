@@ -9,11 +9,13 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+@ApiStatus.Internal
 public final class PackageManagementUsageCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("package.management.ui", 2);
   private static final StringEventField SERVICE = EventFields.String("service", Arrays.asList("Node.js", "Python", "Bower"));

@@ -2832,9 +2832,6 @@ c:com.intellij.codeInsight.actions.onSave.FormatOnSaveOptionsBase
 com.intellij.codeInsight.actions.onSave.FormatOnSaveOptionsBase$DefaultsProvider
 - getFileTypesFormattedOnSaveByDefault():java.util.Collection
 - getFileTypesWithOptimizeImportsOnSaveByDefault():java.util.Collection
-f:com.intellij.codeInsight.actions.onSave.FormatOnSaveUsagesCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 f:com.intellij.codeInsight.actions.onSave.OptimizeImportsOnSaveOptions
 - com.intellij.codeInsight.actions.onSave.FormatOnSaveOptionsBase
 - com.intellij.openapi.components.PersistentStateComponent
@@ -6293,9 +6290,6 @@ f:com.intellij.codeInsight.hint.actions.ShowTypeDefinitionAction$TypeDefinitions
 - f:getLanguage():com.intellij.lang.Language
 - f:getName():java.lang.String
 - f:getProject():com.intellij.openapi.project.Project
-*f:com.intellij.codeInsight.hints.InlayProviderUsageCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 *f:com.intellij.codeInsight.hints.InlayUnloadingListener
 - com.intellij.ide.plugins.DynamicPluginListener
 - <init>():V
@@ -7975,22 +7969,6 @@ f:com.intellij.codeInsight.lookup.impl.LookupTypedHandler
 - <init>(com.intellij.openapi.editor.actionSystem.TypedActionHandler):V
 - execute(com.intellij.openapi.editor.Editor,C,com.intellij.openapi.actionSystem.DataContext):V
 - s:getLookupAction(C,com.intellij.codeInsight.lookup.impl.LookupImpl):com.intellij.codeInsight.lookup.CharFilter$Result
-f:com.intellij.codeInsight.lookup.impl.LookupUsageTracker
-- sf:ADDITIONAL:com.intellij.internal.statistic.eventLog.events.ObjectEventField
-- sf:FINISHED:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:FINISHED_EVENT_ID:java.lang.String
-- sf:GROUP:com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:GROUP_ID:java.lang.String
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- s:isSelectedByTyping(com.intellij.codeInsight.lookup.impl.LookupImpl,com.intellij.codeInsight.lookup.LookupElement):Z
-e:com.intellij.codeInsight.lookup.impl.LookupUsageTracker$FinishType
-- java.lang.Enum
-- sf:CANCELED_BY_TYPING:com.intellij.codeInsight.lookup.impl.LookupUsageTracker$FinishType
-- sf:CANCELED_EXPLICITLY:com.intellij.codeInsight.lookup.impl.LookupUsageTracker$FinishType
-- sf:EXPLICIT:com.intellij.codeInsight.lookup.impl.LookupUsageTracker$FinishType
-- sf:TYPED:com.intellij.codeInsight.lookup.impl.LookupUsageTracker$FinishType
-- s:valueOf(java.lang.String):com.intellij.codeInsight.lookup.impl.LookupUsageTracker$FinishType
-- s:values():com.intellij.codeInsight.lookup.impl.LookupUsageTracker$FinishType[]
 com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 - afterAppend(C):V
 - afterTruncate():V
@@ -8596,10 +8574,6 @@ f:com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable
 - getTemplateListPanel():com.intellij.codeInsight.template.impl.TemplateListPanel
 - isModified():Z
 - reset():V
-f:com.intellij.codeInsight.template.impl.SurroundWithLogger
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- s:logSurrounder(com.intellij.lang.surroundWith.Surrounder,com.intellij.lang.Language,com.intellij.openapi.project.Project):V
 f:com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler
 - com.intellij.codeInsight.CodeInsightActionHandler
 - <init>():V
@@ -9216,16 +9190,6 @@ a:com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionS
 - p:getPsiErrorFilter():com.intellij.openapi.util.Condition
 - getRenderer():com.intellij.util.Function
 - hasExpression(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,I):Z
-f:com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-f:com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger$PostfixTemplateValidator
-- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
-- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
-- <init>():V
-- acceptRuleId(java.lang.String):Z
-- getRuleId():java.lang.String
 com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 - a:afterExpand(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - createEditor(com.intellij.codeInsight.template.postfix.templates.PostfixTemplate):com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor
@@ -11346,16 +11310,6 @@ f:com.intellij.find.FindAllAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.find.FindUsagesCollector
-- sf:CHECK_BOX_TOGGLED:com.intellij.internal.statistic.eventLog.events.EventId3
-- sf:FIND_IN_FILE:java.lang.String
-- sf:FIND_IN_PATH:java.lang.String
-- sf:INSTANCE:com.intellij.find.FindUsagesCollector
-- sf:PIN_TOGGLED:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:UNKNOWN:java.lang.String
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:triggerRegexHelpClicked(java.lang.String):V
-- sf:triggerUsedOptionsStats(com.intellij.openapi.project.Project,java.lang.String,com.intellij.find.FindModel):V
 f:com.intellij.find.FindUtil
 - s:configureFindModel(Z,com.intellij.find.FindModel,Z,java.lang.String):V
 - s:configureFindModel(Z,com.intellij.openapi.editor.Editor,com.intellij.find.FindModel,Z):V
@@ -11855,12 +11809,6 @@ f:com.intellij.find.findUsages.FindUsagesManager
 - s:startProcessUsages(com.intellij.find.findUsages.FindUsagesHandlerBase,com.intellij.psi.PsiElement[],com.intellij.psi.PsiElement[],com.intellij.util.Processor,com.intellij.find.findUsages.FindUsagesOptions,java.lang.Runnable):com.intellij.openapi.progress.ProgressIndicator
 - s:startProcessUsages(com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.project.Project,com.intellij.usages.UsageSearcher,com.intellij.util.Processor,java.lang.Runnable):V
 - s:waitForAsyncTaskCompletion(com.intellij.openapi.project.Project):V
-f:com.intellij.find.findUsages.FindUsagesStatisticsCollector
-- sf:GROUP:com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:INSTANCE:com.intellij.find.findUsages.FindUsagesStatisticsCollector
-- sf:OPTIONS_EVENT_ID:java.lang.String
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logOptions(com.intellij.openapi.project.Project,com.intellij.find.findUsages.FindUsagesOptions,Z):V
 f:com.intellij.find.findUsages.FindUsagesUtil
 - s:isSearchForTextOccurrencesAvailable(com.intellij.psi.PsiElement,Z,com.intellij.find.findUsages.FindUsagesHandlerBase):Z
 com.intellij.find.findUsages.FusAwareFindUsagesOptions
@@ -12874,10 +12822,6 @@ c:com.intellij.ide.actions.CreateDirectoryOrPackageHandler
 - getCreatedElement():com.intellij.psi.PsiFileSystemItem
 - getErrorText(java.lang.String):java.lang.String
 - getWarningText(java.lang.String):java.lang.String
-f:com.intellij.ide.actions.CreateDirectoryUsageCollector
-- sf:INSTANCE:com.intellij.ide.actions.CreateDirectoryUsageCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logCompletionVariantChosen(com.intellij.openapi.project.Project,java.lang.Class):V
 c:com.intellij.ide.actions.CreateFileAction
 - com.intellij.ide.actions.CreateElementActionBase
 - com.intellij.openapi.project.DumbAware
@@ -14130,12 +14074,6 @@ com.intellij.ide.actions.searcheverywhere.SearchEverywhereActions
 - sf:SELECT_ITEM:java.lang.String
 - sf:SWITCH_TO_NEXT_TAB:java.lang.String
 - sf:SWITCH_TO_PREV_TAB:java.lang.String
-f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorValidationRule
-- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
-- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
-- <init>():V
-- getRuleId():java.lang.String
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorWrapper
 - a:getEffectiveContributor():com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereEmptyTextProvider
@@ -14148,41 +14086,6 @@ c:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
 - getFilter():com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - p:isActive():Z
 - isEnabled():Z
-f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-a:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$BaseFilterStatisticsCollector
-- com.intellij.ide.util.ElementsChooser$StatisticsCollector
-- <init>():V
-- allSelected():V
-- noneSelected():V
-- selectionInverted():V
-f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$ContributorFilterCollector
-- com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$BaseFilterStatisticsCollector
-- <init>():V
-- elementMarkChanged(java.lang.String,Z):V
-f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$FileTypeFilterCollector
-- com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$BaseFilterStatisticsCollector
-- <init>():V
-- elementMarkChanged(com.intellij.ide.util.gotoByName.FileTypeRef,Z):V
-e:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$FilterTypes
-- java.lang.Enum
-- sf:CONTRIBUTORS:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$FilterTypes
-- sf:FILE_TYPE:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$FilterTypes
-- sf:LANGUAGE:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$FilterTypes
-- s:valueOf(java.lang.String):com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$FilterTypes
-- s:values():com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$FilterTypes[]
-f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$LangFilterCollector
-- com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$BaseFilterStatisticsCollector
-- <init>():V
-- elementMarkChanged(com.intellij.ide.util.gotoByName.LanguageRef,Z):V
-e:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$QuickFilterButtons
-- java.lang.Enum
-- sf:ALL:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$QuickFilterButtons
-- sf:INVERT:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$QuickFilterButtons
-- sf:NONE:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$QuickFilterButtons
-- s:valueOf(java.lang.String):com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$QuickFilterButtons
-- s:values():com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector$QuickFilterButtons[]
 c:com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 - sf:COMPARATOR:java.util.Comparator
 - f:contributor:com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
@@ -18611,10 +18514,6 @@ f:com.intellij.ide.util.projectWizard.ExistingModuleLoader
 - getModuleType():com.intellij.openapi.module.ModuleType
 - s:setUpLoader(java.lang.String):com.intellij.ide.util.projectWizard.ExistingModuleLoader
 - validate(com.intellij.openapi.project.Project,com.intellij.openapi.project.Project):Z
-f:com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector
-- sf:INSTANCE:com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logProjectGenerated(com.intellij.openapi.project.Project,java.lang.Class):V
 a:com.intellij.ide.util.projectWizard.MultiWebTemplateNewProjectWizard
 - com.intellij.ide.util.projectWizard.WebTemplateNewProjectWizardBase
 - <init>(java.util.List):V
@@ -18672,8 +18571,6 @@ a:com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor
 - s:encodeFile(java.lang.String,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.String
 - pa:encodeFileText(java.lang.String,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.String
 - ps:wrap(java.lang.String):java.lang.String
-com.intellij.ide.util.projectWizard.StatisticsAwareModuleWizardStep
-- a:addCustomFeatureUsageData(java.lang.String,com.intellij.internal.statistic.eventLog.FeatureUsageData):V
 f:com.intellij.ide.util.projectWizard.WebProjectSettingsStepWrapper
 - com.intellij.ide.util.projectWizard.SettingsStep
 - <init>():V
@@ -19076,11 +18973,6 @@ com.intellij.internal.sandbox.LSPServer
 com.intellij.internal.sandbox.LSPServer$Diagnostic
 - a:getDescription():java.lang.String
 - a:getRange():com.intellij.openapi.util.Segment
-f:com.intellij.internal.statistic.projectView.ProjectViewCollector
-- sf:CLASS_NAME:com.intellij.internal.statistic.eventLog.events.ClassEventField
-- sf:SCOPE_CLASS_NAME:com.intellij.internal.statistic.eventLog.events.ClassEventField
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 f:com.intellij.lang.LanguageQuoteHandling
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageQuoteHandling
@@ -20418,21 +20310,6 @@ f:com.intellij.openapi.fileTypes.impl.FileTypeConfigurable
 - isModified():Z
 - reset():V
 - selectFileType(com.intellij.openapi.fileTypes.FileType):V
-f:com.intellij.openapi.fileTypes.impl.FileTypeConfigurableInteractions
-- sf:fileTypeAdded:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:fileTypeEdited:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:fileTypeRemoved:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:hashbangAdded:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:hashbangEdited:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:hashbangRemoved:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:ignorePatternAdded:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:ignorePatternEdited:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:ignorePatternRemoved:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:patternAdded:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:patternEdited:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:patternRemoved:com.intellij.internal.statistic.eventLog.events.EventId1
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 f:com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil
 - sf:ENABLE_REG_KEY:java.lang.String
 - sf:EXTENSION_SEPARATOR:java.lang.String
@@ -25206,11 +25083,6 @@ f:com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 - getCommentReferencesText(I,I):java.lang.String
 - getElements():com.intellij.psi.PsiElement[]
 - getProcessedElementsHeader():java.lang.String
-f:com.intellij.refactoring.move.MoveUsagesCollector
-- sf:HANDLER_INVOKED:com.intellij.internal.statistic.eventLog.events.EventId2
-- sf:INSTANCE:com.intellij.refactoring.move.MoveUsagesCollector
-- sf:MOVE_FILES_OR_DIRECTORIES:com.intellij.internal.statistic.eventLog.events.EventId
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 f:com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil
 - <init>():V
 - s:retargetUsages(com.intellij.usageView.UsageInfo[],java.util.Map):com.intellij.refactoring.util.NonCodeUsageInfo[]
@@ -26425,11 +26297,6 @@ a:com.intellij.refactoring.ui.RefactoringDialog
 - p:validateButtons():V
 - p:validateButtonsAsync():V
 - p:validateButtonsAsync(com.intellij.openapi.application.ModalityState):V
-f:com.intellij.refactoring.ui.RefactoringDialogUsageCollector
-- sf:INSTANCE:com.intellij.refactoring.ui.RefactoringDialogUsageCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logOpenInEditorSaved(com.intellij.openapi.project.Project,Z,java.lang.Class):V
-- sf:logOpenInEditorShown(com.intellij.openapi.project.Project,Z,java.lang.Class):V
 c:com.intellij.refactoring.ui.StringTableCellEditor
 - javax.swing.AbstractCellEditor
 - javax.swing.table.TableCellEditor
@@ -26825,16 +26692,6 @@ f:com.intellij.task.impl.ProjectTaskManagerImpl
 *:com.intellij.task.impl.ProjectTaskManagerListener
 - a:afterRun(com.intellij.task.ProjectTaskManager$Result):V
 - a:beforeRun(com.intellij.task.ProjectTaskContext):V
-f:com.intellij.task.impl.ProjectTaskManagerStatisticsCollector
-- sf:BUILD_ACTIVITY:com.intellij.internal.statistic.IdeActivityDefinition
-- sf:BUILD_ORIGINATOR:com.intellij.internal.statistic.eventLog.events.ClassEventField
-- sf:HAS_ERRORS:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:INCREMENTAL:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:INSTANCE:com.intellij.task.impl.ProjectTaskManagerStatisticsCollector
-- sf:MODULES:com.intellij.internal.statistic.eventLog.events.IntEventField
-- sf:TASK_RUNNER:com.intellij.internal.statistic.eventLog.events.ClassListEventField
-- f:getGROUP():com.intellij.internal.statistic.eventLog.EventLogGroup
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 *:com.intellij.task.impl.ProjectTaskScope
 - sf:KEY:com.intellij.openapi.util.Key
 - a:getRequestedTasks(java.lang.Class):java.util.List
@@ -27523,9 +27380,6 @@ f:com.intellij.ui.tabs.FileColorsSearchOptionContributor
 - com.intellij.ide.ui.search.SearchableOptionContributor
 - <init>():V
 - processOptions(com.intellij.ide.ui.search.SearchableOptionProcessor):V
-f:com.intellij.ui.tabs.FileColorsUsagesCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 f:com.intellij.uiDesigner.SerializedComponentData
 - <init>(java.lang.String):V
 - getSerializedComponents():java.lang.String
@@ -28604,12 +28458,6 @@ a:com.intellij.webcore.packaging.PackageManagementServiceEx
 - installPackage(com.intellij.webcore.packaging.RepoPackage,java.lang.String,java.lang.String,com.intellij.webcore.packaging.PackageManagementService$Listener,java.io.File):V
 - shouldFetchLatestVersionsForOnlyInstalledPackages():Z
 - a:updatePackage(com.intellij.webcore.packaging.InstalledPackage,java.lang.String,com.intellij.webcore.packaging.PackageManagementService$Listener):V
-f:com.intellij.webcore.packaging.PackageManagementUsageCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- s:triggerBrowseAvailablePackagesPerformed(com.intellij.openapi.project.Project,com.intellij.webcore.packaging.PackageManagementService):V
-- s:triggerInstallPerformed(com.intellij.openapi.project.Project,com.intellij.webcore.packaging.PackageManagementService):V
-- s:triggerUninstallPerformed(com.intellij.openapi.project.Project,com.intellij.webcore.packaging.PackageManagementService):V
-- s:triggerUpgradePerformed(com.intellij.openapi.project.Project,com.intellij.webcore.packaging.PackageManagementService):V
 c:com.intellij.webcore.packaging.PackagesNotificationPanel
 - <init>():V
 - <init>(java.util.function.BiConsumer):V

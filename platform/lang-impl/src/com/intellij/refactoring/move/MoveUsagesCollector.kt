@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.Language
 
-object MoveUsagesCollector : CounterUsagesCollector() {
+internal object MoveUsagesCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("move.refactoring", 2)
 
   @JvmField

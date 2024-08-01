@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project
  *
  * @see com.intellij.ide.util.projectWizard.AbstractNewProjectDialog
  */
-object LightweightNewProjectWizardCollector : CounterUsagesCollector() {
+internal object LightweightNewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
