@@ -1,0 +1,12 @@
+PsiJavaFile:Binary4.java
+  PsiPolyadicExpression: a**
+    PsiReferenceExpression:a
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:a('a')
+    PsiJavaToken:ASTERISK('*')
+    PsiErrorElement:Expression expected
+      <empty list>
+    PsiJavaToken:ASTERISK('*')
+    PsiErrorElement:Expression expected
+      <empty list>

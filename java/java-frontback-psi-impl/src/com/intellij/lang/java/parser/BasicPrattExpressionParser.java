@@ -1000,14 +1000,12 @@ public class BasicPrattExpressionParser {
       while (true) {
         advanceBinOpToken(builder, binOpType);
         PsiBuilder.Marker rhs = parser.tryParseWithPrecedenceAtMost(builder, currentPrecedence - 1, mode);
-        IElementType nextToken = getBinOpToken(builder);
-        if (rhs != null) {
-          operandCount++;
+        if (rhs == null) {
+          error(builder, JavaPsiBundle.message("expected.expression"));
         }
-        if (rhs == null || nextToken != binOpType) {
-          if (rhs == null) {
-            error(builder, JavaPsiBundle.message("expected.expression"));
-          }
+        operandCount++;
+        IElementType nextToken = getBinOpToken(builder);
+        if (nextToken != binOpType) {
           break;
         }
       }

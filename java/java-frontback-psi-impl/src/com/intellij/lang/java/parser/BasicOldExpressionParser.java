@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -196,14 +196,14 @@ public class BasicOldExpressionParser {
       advanceGtToken(builder, tokenType);
 
       final PsiBuilder.Marker right = parseExpression(builder, type, mode);
+      if (right == null) {
+        error(builder, JavaPsiBundle.message("expected.expression"));
+      }
       operandCount++;
       tokenType = getGtTokenType(builder);
-      if (tokenType == null || !ops.contains(tokenType) || tokenType != currentExprTokenType || right == null) {
+      if (tokenType == null || !ops.contains(tokenType) || tokenType != currentExprTokenType) {
         // save
         result = result.precede();
-        if (right == null) {
-          error(builder, JavaPsiBundle.message("expected.expression"));
-        }
         result.done(operandCount > 2 ? myJavaElementTypeContainer.POLYADIC_EXPRESSION : myJavaElementTypeContainer.BINARY_EXPRESSION);
         if (right == null) break;
         currentExprTokenType = tokenType;

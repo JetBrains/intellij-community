@@ -17,6 +17,7 @@ public abstract class AbstractBasicExpressionParserTest extends AbstractBasicJav
   public void testBinary1() { doParserTest("a < b"); }
   public void testBinary2() { doParserTest("a > = b"); }
   public void testBinary3() { doParserTest("a >/**/= b"); }
+  public void testBinary4() { doParserTest("a**"); }
 
   public void testCond0() { doParserTest("cond ? true : false"); }
   public void testCond1() { doParserTest("cond ?"); }
