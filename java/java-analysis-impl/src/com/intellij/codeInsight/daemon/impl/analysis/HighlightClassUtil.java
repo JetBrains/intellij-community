@@ -79,6 +79,7 @@ public final class HighlightClassUtil {
       return null;
     }
 
+    @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
     final String messageKey;
     final String referenceName;
     if (aClass instanceof PsiEnumConstantInitializer enumConstant) {
