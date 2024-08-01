@@ -246,7 +246,8 @@ interface IjentTunnelsWindowsApi : IjentTunnelsApi
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   hostAddress: IjentTunnelsApi.HostAddress,
   errorHandler: suspend (IjentConnectionError) -> T,
-  action: suspend CoroutineScope.(Connection) -> T): T =
+  action: suspend CoroutineScope.(Connection) -> T,
+): T =
   when (val connectionResult = getConnectionToRemotePort(hostAddress)) {
     is IjentNetworkResult.Error -> errorHandler(connectionResult.error)
     is Ok -> try {
@@ -260,12 +261,14 @@ suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   host: String, port: UShort,
   errorHandler: suspend (IjentConnectionError) -> T,
-  action: suspend CoroutineScope.(Connection) -> T): T = withConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build(), errorHandler, action)
+  action: suspend CoroutineScope.(Connection) -> T,
+): T = withConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build(), errorHandler, action)
 
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   remotePort: UShort,
   errorHandler: suspend (IjentConnectionError) -> T,
-  action: suspend CoroutineScope.(Connection) -> T): T = withConnectionToRemotePort("localhost", remotePort, errorHandler, action)
+  action: suspend CoroutineScope.(Connection) -> T,
+): T = withConnectionToRemotePort("localhost", remotePort, errorHandler, action)
 
 /**
  * Represents a common class for all network-related errors appearing during the interaction with IJent

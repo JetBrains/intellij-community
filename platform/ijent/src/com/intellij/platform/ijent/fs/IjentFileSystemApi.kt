@@ -132,21 +132,21 @@ sealed interface IjentFileSystemApi {
    * Opens file only for writing
    */
   suspend fun openForWriting(
-    options: WriteOptions
+    options: WriteOptions,
   ): IjentFsResult<
     IjentOpenedFile.Writer,
     FileWriterError>
 
   interface WriteOptions
 
-  fun writeOptionsBuilder(path: IjentPath.Absolute) : WriteOptionsBuilder
+  fun writeOptionsBuilder(path: IjentPath.Absolute): WriteOptionsBuilder
 
   interface WriteOptionsBuilder {
     /**
      * Whether to append new data to the end of file.
      * Default: `false`
      */
-    fun append(shouldAppend: Boolean) : WriteOptionsBuilder
+    fun append(shouldAppend: Boolean): WriteOptionsBuilder
 
     /**
      * Whether to remove contents from the existing file.
@@ -160,7 +160,7 @@ sealed interface IjentFileSystemApi {
      */
     fun creationMode(mode: FileWriterCreationMode): WriteOptionsBuilder
 
-    fun build() : WriteOptions
+    fun build(): WriteOptions
   }
 
   enum class FileWriterCreationMode {
@@ -176,7 +176,7 @@ sealed interface IjentFileSystemApi {
     interface Other : FileWriterError, IjentFsError.Other
   }
 
-  suspend fun openForReadingAndWriting(options: WriteOptions) : IjentFsResult<IjentOpenedFile.ReaderWriter, FileWriterError>
+  suspend fun openForReadingAndWriting(options: WriteOptions): IjentFsResult<IjentOpenedFile.ReaderWriter, FileWriterError>
 
 
   @Throws(DeleteException::class)
@@ -280,7 +280,7 @@ sealed interface IjentOpenedFile {
      *
      * It reads not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
      */
-    suspend fun read(buf: ByteBuffer, offset: Long) : IjentFsResult<ReadResult, ReadError>
+    suspend fun read(buf: ByteBuffer, offset: Long): IjentFsResult<ReadResult, ReadError>
 
     sealed interface ReadResult {
       interface EOF : ReadResult
@@ -322,6 +322,7 @@ sealed interface IjentOpenedFile {
         interface FileSizeExceeded : ResourceExhausted, IjentFsError.Other
         interface NoSpaceLeft : ResourceExhausted, IjentFsError.Other
       }
+
       interface UnknownFile : WriteError, IjentFsError.UnknownFile
       interface Other : WriteError, IjentFsError.Other
     }
