@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -15,8 +16,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.InlineBanner;
+import com.intellij.util.LazyInitializer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -25,10 +32,71 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-final class JBCefAppArmorUtils {
+/**
+ * The class contains utilities for interacting with Linux AppArmor for solving the restricted user namespaces problem.
+ * <a href="https://youtrack.jetbrains.com/articles/JBR-A-11">The problem description.</a>
+ */
+@ApiStatus.Experimental
+public final class JBCefAppArmorUtils {
   private static final Logger LOG = Logger.getInstance(JBCefAppArmorUtils.class);
+  private static final LazyInitializer.LazyValue<Boolean> myUnprivilegedUserNameSpacesRestricted = LazyInitializer.create(
+    () -> areUnprivilegedUserNameSpacesRestrictedImpl());
 
+  /**
+   * Checks if unprivileged user namespaces are restricted.
+   * This function call might be blocking.
+   * The function runs `unshare` command and tries to create a new user namespace.
+   * See <a href="https://man7.org/linux/man-pages/man1/unshare.1.html">man page</a>
+   */
+  public static boolean areUnprivilegedUserNameSpacesRestricted() {
+    return myUnprivilegedUserNameSpacesRestricted.get();
+  }
+
+  public static @NotNull InlineBanner createUnprivilegedUserNamespacesRestrictedBanner() {
+    String message = "%s. %s".formatted(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.title"),
+                                        IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.message"));
+    return
+      new InlineBanner(message, EditorNotificationPanel.Status.Error)
+        .setMessage(message)
+        .showCloseButton(false)
+        .addAction(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.add.apparmor.profile"),
+                   () -> {
+                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                       try {
+                         installAppArmorProfile();
+                       }
+                       catch (IOException | ExecutionException ex) {
+                         Notification notification = JBCefApp.getNotificationGroup().createNotification(
+                           IdeBundle.message("notification.content.jcef.failed.to.install.apparmor.profile"), ex.getMessage(), NotificationType.ERROR);
+                         Notifications.Bus.notify(notification);
+                         return;
+                       }
+                       ApplicationManager.getApplication().restart();
+                     });
+                   })
+        .addAction(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.disable.sandbox"),
+                   () -> {
+                     RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
+                     ApplicationManager.getApplication().restart();
+                   })
+        .addAction(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.learn.more"),
+                   () -> {
+                     BrowserUtil.browse("https://youtrack.jetbrains.com/articles/JBR-A-11");
+                   });
+  }
+
+  /**
+   * @deprecated The name of the function is not accurate.
+   * Use {@link JBCefAppArmorUtils#areUnprivilegedUserNameSpacesRestricted()}
+   * This function is here yet just to simplify cherry-picking.
+   * To be removed by another commit.
+   */
+  @Deprecated(forRemoval = true)
   static boolean areUnprivilegedUserNameSpacesAllowed() {
+    return !myUnprivilegedUserNameSpacesRestricted.get();
+  }
+
+  private static boolean areUnprivilegedUserNameSpacesRestrictedImpl() {
     if (!SystemInfoRt.isLinux) {
       return false;
     }
@@ -41,19 +109,19 @@ final class JBCefAppArmorUtils {
       CapturingProcessHandler handler = new CapturingProcessHandler(cl);
       ProcessOutput output = handler.runProcess();
       if (output.getExitCode() == 0) {
-        return true;
+        return false;
       }
 
       LOG.warn("Unprivileged user namespaces check failed: " + output.getStderr());
-      return false;
+      return true;
     }
     catch (ExecutionException e) {
       LOG.warn("Failed to check unprivileged user namespaces restrictions(considered as restricted): " + e.getMessage());
-      return false;
+      return true;
     }
   }
 
-  static String getApparmorProfile() {
+  private static String getApparmorProfile() {
     String executablePath = ProcessHandle.current().info().command().orElse(null);
     if (executablePath == null) {
       LOG.warn("Can't generate the apparmor profile for JCEF: failed to find the executable path");
@@ -73,13 +141,13 @@ final class JBCefAppArmorUtils {
       """.formatted(ApplicationNamesInfo.getInstance().getFullProductNameWithEdition(), executablePath).stripIndent();
   }
 
-  static String getApplicationName() {
+  private static String getApplicationName() {
     return (ApplicationNamesInfo.getInstance().getProductName() + "-" + ApplicationNamesInfo.getInstance().getEditionName())
       .toLowerCase(Locale.ROOT)
       .replaceAll("[^a-z0-9]", "-");
   }
 
-  static String getApparmorProfilePath() {
+  private static String getApparmorProfilePath() {
     final Path configDirPath = Path.of("/etc/apparmor.d");
     if (!Files.exists(configDirPath) || !Files.isDirectory(configDirPath)) {
       LOG.warn("Can't generate the apparmor profile for CEF: /etc/apparmor.d doesn't exists");
@@ -99,7 +167,13 @@ final class JBCefAppArmorUtils {
     return null;
   }
 
-  static void installAppArmorProfile(String path, String content) throws IOException, ExecutionException {
+  private static void installAppArmorProfile() throws IOException, ExecutionException {
+    String installationPath = getApparmorProfilePath();
+    String profileText = getApparmorProfile();
+    installAppArmorProfile(installationPath, profileText);
+  }
+
+  private static void installAppArmorProfile(String path, String content) throws IOException, ExecutionException {
     File tmpPrifile = FileUtil.createTempFile("apparmor_profile", null, true);
     FileUtil.writeToFile(tmpPrifile, content);
 
@@ -137,7 +211,7 @@ final class JBCefAppArmorUtils {
     return new InstallAppArmorProfileAction(installationPath, profileText, onComplete);
   }
 
-  static class InstallAppArmorProfileAction extends AnAction {
+  private static class InstallAppArmorProfileAction extends DumbAwareAction {
     private final String path;
     private final String profileContent;
     private final Runnable onComplete;
