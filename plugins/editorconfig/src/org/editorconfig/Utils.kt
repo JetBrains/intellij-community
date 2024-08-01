@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig
 
-import com.intellij.BundleBase
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
@@ -77,12 +76,13 @@ object Utils {
 
   fun invalidConfigMessage(project: Project, configValue: String?, configKey: String, filePath: String?) {
     val message = if (configValue != null) {
-      BundleBase.messageOrDefault(EditorConfigBundle.bundle.resourceBundle,
-                                  "invalid.config.value",
-                                  null,
-                                  configValue,
-                                  configKey.ifEmpty { "?" },
-                                  filePath)
+      EditorConfigBundle.bundle.messageOrDefault(
+        key = "invalid.config.value",
+        defaultValue = null,
+        configValue,
+        configKey.ifEmpty { "?" },
+        filePath,
+      )
     }
     else {
       EditorConfigBundle.message("read.failure")
