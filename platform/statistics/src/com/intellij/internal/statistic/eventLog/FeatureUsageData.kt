@@ -56,25 +56,20 @@ class FeatureUsageData(val recorderId: String) {
     if (clientId != null && clientId != ClientId.defaultLocalId) {
       addClientId(clientId.value)
     }
-    if (QODANA_PROJECT_ID != null) {
-      data["system_qdcld_project_id"] = QODANA_PROJECT_ID
+    if (QODANA_EVENTS_DATA.projectId != null) {
+      data["system_qdcld_project_id"] = QODANA_EVENTS_DATA.projectId
+    }
+    if (QODANA_EVENTS_DATA.organizationId != null) {
+      data["system_qdcld_org_id"] = QODANA_EVENTS_DATA.organizationId
     }
   }
 
   companion object {
     // don't list "version" as "platformDataKeys" because it's format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
-                                                "file_path", "anonymous_id", "client_id", "system_qdcld_project_id")
+                                                "file_path", "anonymous_id", "client_id", "system_qdcld_project_id", "system_qdcld_org_id")
 
-    private const val QODANA_PROJECT_ID_PATTERN = "([-0-9A-Fa-f]{32,64})"
-    private val QODANA_PROJECT_ID: String? = calcQodanaProjectId()
-
-    private fun calcQodanaProjectId(): String? {
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment) return null
-      val env = System.getenv("QODANA_PROJECT_ID_HASH") ?: return null
-      if (env.isEmpty()) return null
-      return if (Pattern.compile(QODANA_PROJECT_ID_PATTERN).matcher(env).matches()) env else ValidationResultType.REJECTED.description
-    }
+    private val QODANA_EVENTS_DATA: QodanaEventsData = calcQodanaEventsData()
   }
 
   fun addClientId(clientId: String?): FeatureUsageData {
