@@ -193,7 +193,7 @@ sealed interface IjentFileSystemApi {
     additionalMessage: @NlsSafe String,
   ) : IjentFsIOException(where, additionalMessage) {
     class DoesNotExist(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.DoesNotExist
-    class DirNotEmpty(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage)
+    class DirNotEmpty(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.DirNotEmpty
     class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : DeleteException(where, additionalMessage), IjentFsError.PermissionDenied
 
     /**
@@ -204,7 +204,6 @@ sealed interface IjentFileSystemApi {
       : DeleteException(where, additionalMessage), IjentFsError.Other
   }
 
-
   @Throws(CopyException::class, IjentUnavailableException::class)
   suspend fun copy(options: CopyOptions)
 
@@ -213,22 +212,29 @@ sealed interface IjentFileSystemApi {
   fun copyOptionsBuilder(source: IjentPath.Absolute, target: IjentPath.Absolute): CopyOptionsBuilder
 
   interface CopyOptionsBuilder {
-    fun replaceExisting(): CopyOptionsBuilder
-    fun copyAttributes(): CopyOptionsBuilder
-    fun atomicMove(): CopyOptionsBuilder
-    fun interruptible(): CopyOptionsBuilder
-    fun nofollowLinks(): CopyOptionsBuilder
+    /**
+     * Relevant for copying directories.
+     * [shouldCopyRecursively] indicates whether the directory should be copied recirsively.
+     * If `false`, then only the directory itself is copied, resulting in an empty directory located at target path
+     */
+    fun copyRecursively(shouldCopyRecursively: Boolean): CopyOptionsBuilder
+    fun replaceExisting(shouldReplace: Boolean): CopyOptionsBuilder
+    fun preserveAttributes(shouldPreserve: Boolean): CopyOptionsBuilder
+    fun interruptible(isInterruptible: Boolean): CopyOptionsBuilder
+    fun followLinks(shouldFollowLinks: Boolean): CopyOptionsBuilder
     fun build(): CopyOptions
   }
 
-  sealed class CopyException(
-    where: IjentPath.Absolute,
-    additionalMessage: @NlsSafe String,
-  ) : IjentFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.DoesNotExist
-    class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.PermissionDenied
-    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
-      : CopyException(where, additionalMessage), IjentFsError.Other
+  sealed class CopyException(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : IjentFsIOException(where, additionalMessage) {
+    class SourceDoesNotExist(where: IjentPath.Absolute) : CopyException(where, "Source does not exist"), IjentFsError.DoesNotExist
+    class TargetAlreadyExists(where: IjentPath.Absolute) : CopyException(where, "Target already exists"), IjentFsError.AlreadyExists
+    class PermissionDenied(where: IjentPath.Absolute) : CopyException(where, "Permission denied"), IjentFsError.PermissionDenied
+    class NotEnoughSpace(where: IjentPath.Absolute) : CopyException(where, "Not enough space"), IjentFsError.NotEnoughSpace
+    class NameTooLong(where: IjentPath.Absolute) : CopyException(where, "Name too long"), IjentFsError.NameTooLong
+    class ReadOnlyFileSystem(where: IjentPath.Absolute) : CopyException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
+    class FileSystemError(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.Other
+    class TargetDirNotEmpty(where: IjentPath.Absolute) : CopyException(where, "Target directory is not empty"), IjentFsError.DirNotEmpty
+    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CopyException(where, additionalMessage), IjentFsError.Other
   }
 }
 
@@ -365,7 +371,7 @@ sealed interface IjentOpenedFile {
       class UnknownFile(where: IjentPath.Absolute) : TruncateException(where, "Could not find opened file"), IjentFsError.UnknownFile
       class NegativeOffset(where: IjentPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is negative")
       class OffsetTooBig(where: IjentPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is too big for truncation")
-      class ReadOnlyFs(where: IjentPath.Absolute) : TruncateException(where, "File system is read-only")
+      class ReadOnlyFs(where: IjentPath.Absolute) : TruncateException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
       class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
         : TruncateException(where, additionalMessage), IjentFsError.Other
     }

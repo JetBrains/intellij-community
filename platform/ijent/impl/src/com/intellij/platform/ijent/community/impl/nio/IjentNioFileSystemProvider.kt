@@ -10,6 +10,7 @@ import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.CreateDirectoryException
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
+import com.sun.nio.file.ExtendedCopyOption
 import kotlinx.coroutines.job
 import java.io.IOException
 import java.net.URI
@@ -211,20 +212,34 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val targetPath = target.ijentPath
     ensurePathIsAbsolute(sourcePath)
     ensurePathIsAbsolute(targetPath)
-    fsBlocking {
-      var builder = source.nioFs.ijentFs.copyOptionsBuilder(sourcePath, targetPath)
-      for (option in options) {
-        builder = when (option) {
-          StandardCopyOption.REPLACE_EXISTING -> builder.replaceExisting()
-          StandardCopyOption.COPY_ATTRIBUTES -> builder.copyAttributes()
-          StandardCopyOption.ATOMIC_MOVE -> builder.atomicMove()
-          else -> {
-            thisLogger().warn("Unknown copy option: $option. This option will be ignored.")
-            builder
-          }
+
+    val fs = source.nioFs.ijentFs
+
+    val defaultBuilderOptions = fs.copyOptionsBuilder(sourcePath, targetPath)
+      .followLinks(true)
+      .copyRecursively(false)
+      .replaceExisting(false)
+      .preserveAttributes(false)
+
+    val copyOptions = options.fold(defaultBuilderOptions, { builder, option ->
+      when (option) {
+        StandardCopyOption.REPLACE_EXISTING -> builder.replaceExisting(true)
+        StandardCopyOption.COPY_ATTRIBUTES -> builder.preserveAttributes(true)
+        ExtendedCopyOption.INTERRUPTIBLE -> builder.interruptible(true)
+        LinkOption.NOFOLLOW_LINKS -> builder.followLinks(false)
+        else -> {
+          thisLogger().warn("Unknown copy option: $option. This option will be ignored.")
+          builder
         }
       }
-      source.nioFs.ijentFs.copy(builder.build())
+    }).build()
+
+    fsBlocking {
+      try {
+        fs.copy(copyOptions)
+      } catch (e : IjentFileSystemApi.CopyException) {
+        e.throwFileSystemException()
+      }
     }
   }
 

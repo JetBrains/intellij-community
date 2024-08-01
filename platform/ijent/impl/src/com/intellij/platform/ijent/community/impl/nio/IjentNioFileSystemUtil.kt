@@ -50,15 +50,17 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
     is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
     is IjentFsError.AlreadyExists -> FileAlreadyExistsException(where.toString())
     is IjentFsError.UnknownFile -> IOException("File is not opened")
-    is IjentOpenedFile.SeekError.InvalidValue -> throw IllegalArgumentException(message)
-    is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
-    is IjentOpenedFile.Reader.ReadError.InvalidValue -> throw IllegalArgumentException(message)
-    is IjentFileSystemApi.DeleteException.DirNotEmpty -> DirectoryNotEmptyException(where.toString())
+    is IjentFsError.DirNotEmpty -> DirectoryNotEmptyException(where.toString())
+    is IjentFsError.NameTooLong -> IllegalArgumentException("Name is too long")
+    is IjentFsError.NotEnoughSpace -> FileSystemException(where.toString(), null, "Not enough space")
+    is IjentFsError.ReadOnlyFileSystem -> ReadOnlyFileSystemException()
+    is IjentOpenedFile.SeekError.InvalidValue -> IllegalArgumentException(message)
+    is IjentOpenedFile.Reader.ReadError.InvalidValue -> IllegalArgumentException(message)
     is IjentOpenedFile.Writer.TruncateException.NegativeOffset,
     is IjentOpenedFile.Writer.TruncateException.OffsetTooBig -> throw IllegalArgumentException(message)
-    is IjentOpenedFile.Writer.TruncateException.ReadOnlyFs -> throw NonWritableChannelException()
     is IjentOpenedFile.Writer.WriteError.InvalidValue -> throw IllegalArgumentException(message)
     is IjentFileSystemApi.DeleteException.UnresolvedLink -> throw FileSystemException(where.toString(), null, message)
+    is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
   }
 }
 
