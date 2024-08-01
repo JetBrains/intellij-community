@@ -16,6 +16,7 @@ import org.xml.sax.SAXException
 import java.io.IOException
 import java.io.StringReader
 
+@Deprecated("Use dd-plist library to work with plist files (https://github.com/3breadt/dd-plist)")
 @ApiStatus.Internal
 class PListBuddyWrapper(private val pListPath: String) {
   private val UTIL_PATH: String = "/usr/libexec/PListBuddy"
