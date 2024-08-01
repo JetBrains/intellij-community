@@ -49,7 +49,6 @@ import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +68,7 @@ import java.util.Map;
  * @author Alexander Lobas
  */
 public abstract class DesignerEditorPanel extends JPanel
-  implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, RadPropertyContext {
+  implements DesignerEditorPanelFacade, UiDataProvider, ModuleProvider, RadPropertyContext {
   private static final Logger LOG = Logger.getInstance(DesignerEditorPanel.class);
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
@@ -739,8 +738,8 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    return myActionPanel.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, myActionPanel);
   }
 
   public void dispose() {

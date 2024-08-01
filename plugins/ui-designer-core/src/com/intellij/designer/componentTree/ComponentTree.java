@@ -26,8 +26,9 @@ import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -36,7 +37,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class ComponentTree extends Tree implements DataProvider {
+public final class ComponentTree extends Tree implements UiDataProvider {
   private final StartInplaceEditing myInplaceEditingAction;
   private QuickFixManager myQuickFixManager;
   private DesignerEditorPanel myDesigner;
@@ -125,17 +125,12 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (EditableArea.DATA_KEY.is(dataId)) {
-      return myArea;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(EditableArea.DATA_KEY, myArea);
     if (myDesigner != null) {
-      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-        return myDesigner.getEditor();
-      }
-      return myDesigner.getActionPanel().getData(dataId);
+      sink.set(PlatformCoreDataKeys.FILE_EDITOR, myDesigner.getEditor());
+      DataSink.uiDataSnapshot(sink, myDesigner.getActionPanel());
     }
-    return null;
   }
 
   @Nullable

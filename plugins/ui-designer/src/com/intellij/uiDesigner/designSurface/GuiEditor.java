@@ -63,6 +63,7 @@ import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +86,7 @@ import java.util.*;
  * tree of component with property editor at the west and editor area at the center.
  * This editor area contains internal component where user edit the UI.
  */
-public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, Disposable {
+public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade, UiDataProvider, ModuleProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(GuiEditor.class);
 
   private final Project myProject;
@@ -482,6 +483,16 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     return myNextSaveGroupId;
   }
 
+  @ApiStatus.Internal
+  public @NotNull CutCopyPasteSupport getCutCopyPasteDelegator() {
+    return myCutCopyPasteSupport;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull DeleteProvider getDeleteProvider() {
+    return myDeleteProvider;
+  }
+
   private static void refreshImpl(final RadComponent component) {
     if (component.getParent() != null) {
       final Dimension size = component.getSize();
@@ -507,32 +518,21 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   @Override
-  public Object getData(final @NotNull String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
 
     // Standard Swing cut/copy/paste actions should work if user is editing something inside property inspector
     Project project = getProject();
-    if (project.isDisposed()) return null;
+    if (project.isDisposed()) return;
     DesignerToolWindow toolWindow = DesignerToolWindowManager.getInstance(this);
-    if (toolWindow == null) return null;
-    final PropertyInspector inspector = toolWindow.getPropertyInspector();
-    if (inspector != null && inspector.isEditing()) {
-      return null;
-    }
+    if (toolWindow == null) return;
+    PropertyInspector inspector = toolWindow.getPropertyInspector();
+    if (inspector != null && inspector.isEditing()) return;
 
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteProvider;
-    }
-
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
-        PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
-        PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myCutCopyPasteSupport;
-    }
-
-    return null;
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myCutCopyPasteSupport);
+    sink.set(PlatformDataKeys.CUT_PROVIDER, myCutCopyPasteSupport);
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, myCutCopyPasteSupport);
   }
 
   private JPanel createInvalidCard() {

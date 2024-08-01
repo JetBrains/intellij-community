@@ -41,6 +41,7 @@ import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.UIDesignerIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-public final class ComponentTree extends Tree implements DataProvider {
+public final class ComponentTree extends Tree implements UiDataProvider {
   private static final Logger LOG = Logger.getInstance(ComponentTree.class);
 
   public static final DataKey<LwInspectionSuppression[]> LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY =
@@ -141,6 +142,10 @@ public final class ComponentTree extends Tree implements DataProvider {
     myStartInplaceEditingAction.setEditor(editor);
   }
 
+  public GuiEditor getEditor() {
+    return myEditor;
+  }
+
   public void refreshIntentionHint() {
     myQuickFixManager.refreshIntentionHint();
   }
@@ -208,57 +213,34 @@ public final class ComponentTree extends Tree implements DataProvider {
     return result.toArray(RadComponent.EMPTY_ARRAY);
   }
 
-  /**
-   * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
-   * binding of currently selected component (if any)
-   */
   @Override
-  public Object getData(final @NotNull String dataId) {
-    if (GuiEditor.DATA_KEY.is(dataId)) {
-      return myEditor;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(GuiEditor.DATA_KEY, myEditor);
+
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+
+    if (myEditor != null) {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, myEditor.getCutCopyPasteDelegator());
+      sink.set(PlatformDataKeys.CUT_PROVIDER, myEditor.getCutCopyPasteDelegator());
+      sink.set(PlatformDataKeys.PASTE_PROVIDER, myEditor.getCutCopyPasteDelegator());
     }
 
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteProvider;
-    }
+    Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
+    sink.set(LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY,
+             elements.isEmpty() ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY));
 
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
-        PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
-        PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myEditor == null ? null : myEditor.getData(dataId);
-    }
+    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myFormEditor);
 
-    if (LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.is(dataId)) {
-      Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
-      return elements.isEmpty() ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY);
-    }
-
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
-
-    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      return myFormEditor;
-    }
-
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      RadComponent selectedComponent = getSelectedComponent();
-      if (selectedComponent == null) {
-        return null;
-      }
-      return (DataProvider)slowId -> getSlowData(selectedComponent, slowId);
-    }
-    return null;
-  }
-
-  private @Nullable Object getSlowData(@NotNull RadComponent selectedComponent, @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    RadComponent selectedComponent = getSelectedComponent();
+    if (selectedComponent == null) return;
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       return getPsiFile(selectedComponent);
-    }
-    return null;
+    });
   }
 
-  private @Nullable Navigatable getPsiFile(@NotNull RadComponent selectedComponent) {
+  @ApiStatus.Internal
+  public @Nullable Navigatable getPsiFile(@NotNull RadComponent selectedComponent) {
     final String classToBind = myEditor.getRootContainer().getClassToBind();
     if (classToBind == null) {
       return null;
@@ -587,7 +569,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      DeleteProvider baseProvider = myEditor == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
+      DeleteProvider baseProvider = myEditor == null ? null : myEditor.getDeleteProvider();
       return baseProvider == null ? ActionUpdateThread.BGT : baseProvider.getActionUpdateThread();
     }
 
@@ -603,10 +585,8 @@ public final class ComponentTree extends Tree implements DataProvider {
         myEditor.refreshAndSave(true);
       }
       else {
-        DeleteProvider baseProvider = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
-        if (baseProvider != null) {
-          baseProvider.deleteElement(dataContext);
-        }
+        DeleteProvider baseProvider = myEditor.getDeleteProvider();
+        baseProvider.deleteElement(dataContext);
       }
     }
 
@@ -617,10 +597,8 @@ public final class ComponentTree extends Tree implements DataProvider {
         if (suppressions != null) {
           return true;
         }
-        DeleteProvider baseProvider = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
-        if (baseProvider != null) {
-          return baseProvider.canDeleteElement(dataContext);
-        }
+        DeleteProvider baseProvider = myEditor.getDeleteProvider();
+        return baseProvider.canDeleteElement(dataContext);
       }
       return false;
     }
