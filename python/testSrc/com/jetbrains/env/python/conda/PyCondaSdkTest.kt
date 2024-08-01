@@ -178,8 +178,8 @@ internal class PyCondaSdkTest {
   }
 
   private suspend fun ensureHomePathCorrect(sdk: Sdk) {
-    val homePath = sdk.homePath!!
-    Assert.assertEquals("Wrong home path", homePath, sdk.getPythonBinaryPath(projectRule.project).getOrThrow())
+    val homePath = Path.of(sdk.homePath!!)
+    Assert.assertEquals("Wrong home path", homePath,Path.of(sdk.getPythonBinaryPath(projectRule.project).getOrThrow()))
   }
 
 }
