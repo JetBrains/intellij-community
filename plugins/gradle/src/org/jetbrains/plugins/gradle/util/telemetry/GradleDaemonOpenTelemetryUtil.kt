@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.util.telemetry
 
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTelemetryFormat
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.registry.Registry.Companion.stringValue
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.file.Path
 
 @Internal
 object GradleDaemonOpenTelemetryUtil {
@@ -23,6 +25,21 @@ object GradleDaemonOpenTelemetryUtil {
     catch (e: Exception) {
       // ignore
       return GradleTelemetryFormat.PROTOBUF
+    }
+  }
+
+  @JvmStatic
+  fun getTargetFilePath(): Path? {
+    try {
+      val format = stringValue("gradle.daemon.opentelemetry.file")
+      if (format.isBlank()) {
+        return null
+      }
+      return format.toNioPathOrNull()
+    }
+    catch (e: Exception) {
+      // ignore
+      return null
     }
   }
 }

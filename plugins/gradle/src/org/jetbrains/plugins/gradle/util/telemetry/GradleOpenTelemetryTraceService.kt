@@ -5,19 +5,32 @@ import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTelemetryFormat
 import com.intellij.gradle.toolingExtension.impl.telemetry.TelemetryHolder
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter
 import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.URI
+import java.nio.file.StandardOpenOption
+import kotlin.io.path.exists
+import kotlin.io.path.writeBytes
 
 @Service(Service.Level.APP)
 class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope) {
 
   private fun exportTraces(holder: TelemetryHolder) {
-    if (holder.traces.isEmpty()) return
+    if (holder.traces.isEmpty()) {
+      return
+    }
+    sendTelemetryToOtlp(holder)
+    dumpTelemetryToFile(holder)
+  }
+
+  private fun sendTelemetryToOtlp(holder: TelemetryHolder) {
     val telemetryHost = getOtlpEndPoint() ?: return
-    coroutineScope.launch {
+    coroutineScope.launch(Dispatchers.IO) {
       when (holder.format) {
         GradleTelemetryFormat.PROTOBUF -> OpenTelemetryRawTraceExporter.sendProtobuf(URI.create(telemetryHost), holder.traces)
         GradleTelemetryFormat.JSON -> OpenTelemetryRawTraceExporter.sendJson(URI.create(telemetryHost), holder.traces)
@@ -25,7 +38,27 @@ class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope
     }
   }
 
+  private fun dumpTelemetryToFile(holder: TelemetryHolder) {
+    if (holder.format == GradleTelemetryFormat.PROTOBUF) {
+      return
+    }
+    val targetFilePath = GradleDaemonOpenTelemetryUtil.getTargetFilePath() ?: return
+    if (!targetFilePath.parent.exists()) {
+      return
+    }
+    coroutineScope.launch(Dispatchers.IO) {
+      try {
+        targetFilePath.writeBytes(holder.traces, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+      }
+      catch (e: Exception) {
+        LOG.warn("Unable to dump performance traces to the file ($targetFilePath); Cause: ${e.message}")
+      }
+    }
+  }
+
   companion object {
+    private val LOG: Logger = logger<GradleOpenTelemetryTraceService>()
+
     @JvmStatic
     fun exportOpenTelemetry(holder: TelemetryHolder) {
       service<GradleOpenTelemetryTraceService>().exportTraces(holder)
