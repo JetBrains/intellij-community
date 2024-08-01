@@ -44,7 +44,7 @@ def build_kotlin_compiler(args):
         'publishIdeArtifacts',
         ':prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish',
         '-Ppublish.ide.plugin.dependencies=true',
-        '-PkotlinLanguageVersion=1.9',
+        '-PkotlinLanguageVersion=2.0',
         f'-PdeployVersion={args.kotlinc_version}',
         f'-Pbuild.number={args.kotlinc_version}',
         '-Pteamcity=true',  # Makes this a release build rather than a dev build.
