@@ -16,11 +16,8 @@ class AddReifiedToTypeParameterOfFunctionFix(
     function: KtNamedFunction,
 ) : PsiUpdateModCommandAction<KtTypeParameter>(element) {
 
-    private val elementName = "'${element.name}'"
-    private val functionName = "'${function.name}'"
-
     @IntentionFamilyName
-    private val familyName: String = KotlinBundle.message("fix.make.type.parameter.reified", elementName, functionName)
+    private val familyName: String = KotlinBundle.message("fix.make.type.parameter.reified", "'${element.name}'", "'${function.name}'")
 
     override fun getFamilyName(): String = familyName
 
