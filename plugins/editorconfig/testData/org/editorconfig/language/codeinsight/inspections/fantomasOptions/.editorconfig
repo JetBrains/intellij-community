@@ -1,0 +1,121 @@
+[*.fs]
+
+fsharp_space_before_parameter = false
+fsharp_space_before_parameter = true
+fsharp_space_before_parameter = <error descr="'123' is not allowed here">123</error>
+
+fsharp_space_before_lowercase_invocation = false
+fsharp_space_before_lowercase_invocation = true
+fsharp_space_before_lowercase_invocation = <error descr="'123' is not allowed here">123</error>
+
+fsharp_space_before_uppercase_invocation = false
+fsharp_space_before_uppercase_invocation = true
+fsharp_space_before_uppercase_invocation = <error descr="'123' is not allowed here">123</error>
+
+fsharp_space_before_class_constructor = false
+fsharp_space_before_class_constructor = true
+fsharp_space_before_class_constructor = <error descr="'123' is not allowed here">123</error>
+
+fsharp_space_before_member = false
+fsharp_space_before_member = true
+fsharp_space_before_member = <error descr="'123' is not allowed here">123</error>
+
+fsharp_space_after_comma = false
+fsharp_space_after_comma = true
+fsharp_space_after_comma = <error descr="'123' is not allowed here">123</error>
+
+fsharp_space_before_semicolon = false
+fsharp_space_before_semicolon = true
+fsharp_space_before_semicolon = <error descr="'123' is not allowed here">123</error>
+
+fsharp_space_after_semicolon = false
+fsharp_space_after_semicolon = true
+fsharp_space_after_semicolon = <error descr="'123' is not allowed here">123</error>
+
+fsharp_space_around_delimiter = false
+fsharp_space_around_delimiter = true
+fsharp_space_around_delimiter = <error descr="'123' is not allowed here">123</error>
+
+fsharp_max_if_then_short_width = 123
+fsharp_max_if_then_short_width = <error descr="'false' is not allowed here">false</error>
+
+fsharp_max_if_then_else_short_width = 123
+fsharp_max_if_then_else_short_width = <error descr="'false' is not allowed here">false</error>
+
+fsharp_max_infix_operator_expression = 123
+fsharp_max_infix_operator_expression = <error descr="'false' is not allowed here">false</error>
+
+fsharp_max_record_width = 123
+fsharp_max_record_width = <error descr="'false' is not allowed here">false</error>
+
+fsharp_max_record_number_of_items = 123
+fsharp_max_record_number_of_items = <error descr="'false' is not allowed here">false</error>
+
+fsharp_max_array_or_list_width = 123
+fsharp_max_array_or_list_width = <error descr="'false' is not allowed here">false</error>
+
+fsharp_max_array_or_list_number_of_items = 123
+fsharp_max_array_or_list_number_of_items = <error descr="'false' is not allowed here">false</error>
+
+fsharp_max_value_binding_width = 123
+fsharp_max_value_binding_width = <error descr="'false' is not allowed here">false</error>
+
+fsharp_max_function_binding_width = 123
+fsharp_max_function_binding_width = <error descr="'false' is not allowed here">false</error>
+
+fsharp_max_dot_get_expression_width = 123
+fsharp_max_dot_get_expression_width = <error descr="'false' is not allowed here">false</error>
+
+fsharp_newline_between_type_definition_and_members = false
+fsharp_newline_between_type_definition_and_members = true
+fsharp_newline_between_type_definition_and_members = <error descr="'123' is not allowed here">123</error>
+
+fsharp_align_function_signature_to_indentation = false
+fsharp_align_function_signature_to_indentation = true
+fsharp_align_function_signature_to_indentation = <error descr="'123' is not allowed here">123</error>
+
+fsharp_alternative_long_member_definitions = false
+fsharp_alternative_long_member_definitions = true
+fsharp_alternative_long_member_definitions = <error descr="'123' is not allowed here">123</error>
+
+fsharp_multi_line_lambda_closing_newline = false
+fsharp_multi_line_lambda_closing_newline = true
+fsharp_multi_line_lambda_closing_newline = <error descr="'123' is not allowed here">123</error>
+
+fsharp_experimental_keep_indent_in_branch = false
+fsharp_experimental_keep_indent_in_branch = true
+fsharp_experimental_keep_indent_in_branch = <error descr="'123' is not allowed here">123</error>
+
+fsharp_blank_lines_around_nested_multiline_expressions = false
+fsharp_blank_lines_around_nested_multiline_expressions = true
+fsharp_blank_lines_around_nested_multiline_expressions = <error descr="'123' is not allowed here">123</error>
+
+fsharp_bar_before_discriminated_union_declaration = false
+fsharp_bar_before_discriminated_union_declaration = true
+fsharp_bar_before_discriminated_union_declaration = <error descr="'123' is not allowed here">123</error>
+
+fsharp_multiline_bracket_style = aligned
+fsharp_multiline_bracket_style = stroustrup
+fsharp_multiline_bracket_style = cramped
+fsharp_multiline_bracket_style = <error descr="'123' is not allowed here">123</error>
+
+fsharp_keep_max_number_of_blank_lines = 1
+fsharp_keep_max_number_of_blank_lines = <error descr="'true' is not allowed here">true</error>
+
+fsharp_newline_before_multiline_computation_expression = false
+fsharp_newline_before_multiline_computation_expression = true
+fsharp_newline_before_multiline_computation_expression = <error descr="'123' is not allowed here">123</error>
+
+fsharp_experimental_elmish = false
+fsharp_experimental_elmish = true
+fsharp_experimental_elmish = <error descr="'123' is not allowed here">123</error>
+
+fsharp_record_multiline_formatter = character_width
+fsharp_record_multiline_formatter = number_of_items
+fsharp_record_multiline_formatter = <error descr="'123' is not allowed here">123</error>
+
+fsharp_array_or_list_multiline_formatter = character_width
+fsharp_array_or_list_multiline_formatter = number_of_items
+fsharp_array_or_list_multiline_formatter = <error descr="'123' is not allowed here">123</error>
+
+<warning descr="The property is not supported">fsharp_unexpected_option</warning> = 123
