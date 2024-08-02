@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
@@ -44,19 +45,12 @@ private class CodeFoldingNecromancer(
     }
   }
 
-  override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: FingerprintedZombie<CodeFoldingZombie>): Boolean {
-    val psiManager = recipe.project.serviceAsync<PsiDocumentManager>()
-    val psiFile = readAction {
-      psiManager.getPsiFile(recipe.document)
-    }
-    // disable folding cache if there is no following folding pass IDEA-341064
-    // com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighterKt.IGNORE_FOR_COMPILED
-    return psiFile != null && psiFile !is PsiCompiledFile
-  }
-
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: CodeFoldingZombie?) {
     val document = recipe.document
-    if (isNecromancerEnabled() && zombie != null && !zombie.isEmpty()) {
+    if (isNecromancerEnabled() &&
+        zombie != null &&
+        !zombie.isEmpty() &&
+        isNotCompiledFile(recipe.project, recipe.document)) {
       val editor = recipe.editorSupplier()
       withContext(Dispatchers.EDT) {
         if (recipe.isValid(editor) &&
@@ -93,6 +87,16 @@ private class CodeFoldingNecromancer(
 
   private fun notZombieRegions(editor: Editor): List<FoldRegion> {
     return editor.foldingModel.allFoldRegions.filter { it.getUserData(ZOMBIE_REGION_KEY) == null }
+  }
+
+  private suspend fun isNotCompiledFile(project: Project, document: Document): Boolean {
+    val psiManager = project.serviceAsync<PsiDocumentManager>()
+    val psiFile = readAction {
+      psiManager.getPsiFile(document)
+    }
+    // disable folding cache if there is no following folding pass IDEA-341064
+    // com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighterKt.IGNORE_FOR_COMPILED
+    return psiFile != null && psiFile !is PsiCompiledFile
   }
 
   private fun isNecromancerEnabled(): Boolean {
