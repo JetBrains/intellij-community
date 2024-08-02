@@ -12,13 +12,14 @@ import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.Language
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
 import java.util.*
 
-class GrazieInspection : LocalInspectionTool() {
+class GrazieInspection : LocalInspectionTool(), DumbAware {
 
   override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
 
