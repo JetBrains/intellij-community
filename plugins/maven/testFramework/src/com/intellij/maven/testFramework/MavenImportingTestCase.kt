@@ -421,12 +421,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     isAutoReloadEnabled = true
   }
 
-  private fun assertAutoReloadIsInitialized() {
-    assertTrue("Auto-reload is disabled for tests by default", isAutoReloadEnabled)
+  private fun assertAutoReloadIsEnabled() {
+    assertTrue("Auto-reload is disabled in this test", isAutoReloadEnabled)
   }
 
   protected suspend fun assertHasPendingProjectForReload() {
-    assertAutoReloadIsInitialized()
+    assertAutoReloadIsEnabled()
     assertWithinTimeout(10) {
       assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
     }
@@ -434,14 +434,14 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun assertNoPendingProjectForReload() {
-    assertAutoReloadIsInitialized()
+    assertAutoReloadIsEnabled()
     assertFalse(myNotificationAware!!.isNotificationVisible())
     assertEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
   @RequiresBackgroundThread
   protected suspend fun scheduleProjectImportAndWait() {
-    assertAutoReloadIsInitialized()
+    assertAutoReloadIsEnabled()
 
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
@@ -456,7 +456,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun scheduleProjectImportAndWaitAsync() {
-    assertAutoReloadIsInitialized()
+    assertAutoReloadIsEnabled()
 
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
