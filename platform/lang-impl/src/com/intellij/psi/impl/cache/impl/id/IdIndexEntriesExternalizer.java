@@ -21,15 +21,21 @@ final class IdIndexEntriesExternalizer implements DataExternalizer<Collection<Id
     int size = value.size();
     final int[] values = spareBufferLocal.getBuffer(size);
     int ptr = 0;
-    for(IdIndexEntry ie:value) {
+    for (IdIndexEntry ie : value) {
       values[ptr++] = ie.getWordHashCode();
     }
-    Arrays.sort(values, 0, size);
+    save(out, values, size);
+  }
+
+  static void save(@NotNull DataOutput out,
+                   int[] idHashes,
+                   int size) throws IOException {
+    Arrays.sort(idHashes, 0, size);
     DataInputOutputUtil.writeINT(out, size);
     int prev = 0;
-    for(int i = 0; i < size; ++i) {
-      DataInputOutputUtil.writeLONG(out, (long)values[i] - prev);
-      prev = values[i];
+    for (int i = 0; i < size; ++i) {
+      DataInputOutputUtil.writeLONG(out, (long)idHashes[i] - prev);
+      prev = idHashes[i];
     }
   }
 
