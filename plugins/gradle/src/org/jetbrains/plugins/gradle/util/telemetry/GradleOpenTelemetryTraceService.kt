@@ -47,7 +47,7 @@ class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope
         if (!targetFolder.exists()) {
           targetFolder.createDirectory()
         }
-        val targetFile = targetFolder.resolve("opentelemetry-${System.currentTimeMillis()}.json")
+        val targetFile = targetFolder.resolve("gradle-ot-${System.currentTimeMillis()}.json")
           .createFile()
         targetFile.writeBytes(holder.traces, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
       }
