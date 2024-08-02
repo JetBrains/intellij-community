@@ -5,6 +5,7 @@ package com.intellij.platform.ijent
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
  */
 interface IjentExecApi {
+  // TODO Extract into a separate interface, like IjentFileSystemApi.Arguments
   /**
    * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
    * stdin, stdout and stderr of the process are always forwarded, if there are.

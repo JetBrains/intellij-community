@@ -144,16 +144,14 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       if (DELETE_ON_CLOSE in options) TODO("WRITE + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("WRITE + NOFOLLOW_LINKS")
 
-      val writeOptions = fs.ijentFs
-        .writeOptionsBuilder(path.ijentPath)
+      val writeOptions = IjentFileSystemApi.writeOptionsBuilder(path.ijentPath)
         .append(APPEND in options)
         .truncateExisting(TRUNCATE_EXISTING in options)
         .creationMode(when {
                         CREATE_NEW in options -> IjentFileSystemApi.FileWriterCreationMode.ONLY_CREATE
                         CREATE in options -> IjentFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
                         else -> IjentFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
-                      }).build()
-
+                      })
 
       fsBlocking {
         if (READ in options) {
@@ -257,24 +255,20 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     val fs = source.nioFs.ijentFs
 
-    val defaultBuilderOptions = fs.copyOptionsBuilder(sourcePath, targetPath)
-      .followLinks(true)
-      .copyRecursively(false)
-      .replaceExisting(false)
-      .preserveAttributes(false)
+    val copyOptions = IjentFileSystemApi.copyOptionsBuilder(sourcePath, targetPath)
+    copyOptions.followLinks(true)
 
-    val copyOptions = options.fold(defaultBuilderOptions, { builder, option ->
+    for (option in options) {
       when (option) {
-        StandardCopyOption.REPLACE_EXISTING -> builder.replaceExisting(true)
-        StandardCopyOption.COPY_ATTRIBUTES -> builder.preserveAttributes(true)
-        ExtendedCopyOption.INTERRUPTIBLE -> builder.interruptible(true)
-        LinkOption.NOFOLLOW_LINKS -> builder.followLinks(false)
+        StandardCopyOption.REPLACE_EXISTING -> copyOptions.replaceExisting(true)
+        StandardCopyOption.COPY_ATTRIBUTES -> copyOptions.preserveAttributes(true)
+        ExtendedCopyOption.INTERRUPTIBLE -> copyOptions.interruptible(true)
+        LinkOption.NOFOLLOW_LINKS -> copyOptions.followLinks(false)
         else -> {
           thisLogger().warn("Unknown copy option: $option. This option will be ignored.")
-          builder
         }
       }
-    }).build()
+    }
 
     fsBlocking {
       try {

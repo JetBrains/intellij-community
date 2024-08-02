@@ -137,30 +137,29 @@ sealed interface IjentFileSystemApi {
     IjentOpenedFile.Writer,
     FileWriterError>
 
-  interface WriteOptions
+  sealed interface WriteOptions {
+    val path: IjentPath.Absolute
 
-  fun writeOptionsBuilder(path: IjentPath.Absolute): WriteOptionsBuilder
-
-  interface WriteOptionsBuilder {
     /**
      * Whether to append new data to the end of file.
      * Default: `false`
      */
-    fun append(shouldAppend: Boolean): WriteOptionsBuilder
+    fun append(v: Boolean): WriteOptions
+    val append: Boolean
 
     /**
      * Whether to remove contents from the existing file.
      * Default: `false`
      */
-    fun truncateExisting(shouldTruncate: Boolean): WriteOptionsBuilder
+    fun truncateExisting(v: Boolean): WriteOptions
+    val truncateExisting: Boolean
 
     /**
      * Defines the behavior if the written file does not exist
      * Default: [FileWriterCreationMode.ONLY_OPEN_EXISTING]
      */
-    fun creationMode(mode: FileWriterCreationMode): WriteOptionsBuilder
-
-    fun build(): WriteOptions
+    fun creationMode(v: FileWriterCreationMode): WriteOptions
+    val creationMode: FileWriterCreationMode
   }
 
   enum class FileWriterCreationMode {
@@ -202,22 +201,29 @@ sealed interface IjentFileSystemApi {
   @Throws(CopyException::class, IjentUnavailableException::class)
   suspend fun copy(options: CopyOptions)
 
-  interface CopyOptions
+  sealed interface CopyOptions {
+    val source: IjentPath.Absolute
+    val target: IjentPath.Absolute
 
-  fun copyOptionsBuilder(source: IjentPath.Absolute, target: IjentPath.Absolute): CopyOptionsBuilder
-
-  interface CopyOptionsBuilder {
     /**
      * Relevant for copying directories.
      * [shouldCopyRecursively] indicates whether the directory should be copied recirsively.
      * If `false`, then only the directory itself is copied, resulting in an empty directory located at target path
      */
-    fun copyRecursively(shouldCopyRecursively: Boolean): CopyOptionsBuilder
-    fun replaceExisting(shouldReplace: Boolean): CopyOptionsBuilder
-    fun preserveAttributes(shouldPreserve: Boolean): CopyOptionsBuilder
-    fun interruptible(isInterruptible: Boolean): CopyOptionsBuilder
-    fun followLinks(shouldFollowLinks: Boolean): CopyOptionsBuilder
-    fun build(): CopyOptions
+    fun copyRecursively(v: Boolean): CopyOptions
+    val copyRecursively: Boolean
+
+    fun replaceExisting(v: Boolean): CopyOptions
+    val replaceExisting: Boolean
+
+    fun preserveAttributes(v: Boolean): CopyOptions
+    val preserveAttributes: Boolean
+
+    fun interruptible(v: Boolean): CopyOptions
+    val interruptible: Boolean
+
+    fun followLinks(v: Boolean): CopyOptions
+    val followLinks: Boolean
   }
 
   sealed class CopyException(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : IjentFsIOException(where, additionalMessage) {
@@ -243,6 +249,16 @@ sealed interface IjentFileSystemApi {
     class ReadOnlyFileSystem(where: IjentPath.Absolute) : MoveException(where, "File system is read-only"), IjentFsError.ReadOnlyFileSystem
     class FileSystemError(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : MoveException(where, additionalMessage), IjentFsError.Other
     class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : MoveException(where, additionalMessage), IjentFsError.Other
+  }
+
+  companion object Arguments {
+    @JvmStatic
+    fun writeOptionsBuilder(path: IjentPath.Absolute): WriteOptions =
+      WriteOptionsImpl(path)
+
+    @JvmStatic
+    fun copyOptionsBuilder(source: IjentPath.Absolute, target: IjentPath.Absolute): CopyOptions =
+      CopyOptionsImpl(source, target)
   }
 }
 
