@@ -253,6 +253,57 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   @NeedsIndex.Full
+  fun testTransitiveModuleImportDeclarationsOrder() {
+    addFile("module-info.java", """
+      module first.module.name { 
+        requires transitive second.module.name;
+      }
+    """.trimIndent(), M2)
+
+    addFile("module-info.java", """
+      module second.module.name { 
+        exports second.module.name;
+      }
+    """.trimIndent(), M4)
+    addFile("MyClassB.java", """
+      package second.module.name;
+      public class MyClassB { }
+    """.trimIndent(), M4)
+
+    addFile("module-info.java", """
+      module third.module.name {
+        exports third.module.name;
+      }
+    """.trimIndent(), M5)
+    addFile("MyClassC.java", """
+      package third.module.name;
+      public class MyClassC { }
+    """.trimIndent(), M4)
+
+
+    addFile("module-info.java", """
+      module current.module.name { 
+        requires first.module.name;
+      }
+    """.trimIndent(), M4)
+
+    myFixture.configureByText("Main.java", """
+      import module second.module.name;
+      import current.pkg.name.*;
+      
+      public class Main {
+        public static void main(String[] args) {
+          MyCla<caret>
+        }
+      }
+    """.trimIndent())
+
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.getLookup()
+    myFixture.assertPreferredCompletionItems(0, "MyClassB", "MyClassC")
+  }
+
+  @NeedsIndex.Full
   fun testReadableCompletion1() {
     addFile("module-info.java", "module current.module.name { requires first.module.name; }")
     addFile("module-info.java", "module first.module.name { }", M2)
