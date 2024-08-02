@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.EnhancedSwitchBackwardMigrationInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,6 @@ public class EnhancedSwitchBackwardMigrationInspectionTest extends LightQuickFix
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_21_PREVIEW;
+    return JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel();
   }
 }
