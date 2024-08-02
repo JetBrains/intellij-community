@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.lang.ref.SoftReference;
 
+@ApiStatus.Internal
 public final class ThreadLocalCachedIntArray {
   private final ThreadLocal<SoftReference<int[]>> myThreadLocal = new ThreadLocal<>();
 

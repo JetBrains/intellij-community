@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see com.intellij.util.containers.prefix.map.PrefixTreeMap
  */
 @ApiStatus.NonExtendable
+@ApiStatus.Internal
 interface PrefixTreeSet<Key> : Set<Key> {
 
   /**

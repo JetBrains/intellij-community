@@ -3,12 +3,15 @@ package com.intellij.warmup.util
 
 import com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator
 import com.intellij.platform.util.ArgsParser
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 interface HeadlessConfigurableArgs {
   val pathToConfigurationFile: Path?
 }
 
+@ApiStatus.Internal
 open class HeadlessConfigurableArgsImpl(parser: ArgsParser) : HeadlessConfigurableArgs {
   override val pathToConfigurationFile: Path? by
   parser.arg("environment-keys-file",

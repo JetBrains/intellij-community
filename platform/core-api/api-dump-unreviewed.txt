@@ -3278,10 +3278,6 @@ com.intellij.openapi.vfs.VirtualFilePathWrapper
 - a:canCloseFile(com.intellij.openapi.vfs.VirtualFile):Z
 *f:com.intellij.openapi.vfs.VirtualFilePreCloseCheck$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-f:com.intellij.openapi.vfs.VirtualFilePrefixTreeFactory
-- com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
-- sf:INSTANCE:com.intellij.openapi.vfs.VirtualFilePrefixTreeFactory
-- convertToList(com.intellij.openapi.vfs.VirtualFile):java.util.List
 c:com.intellij.openapi.vfs.VirtualFilePropertyEvent
 - com.intellij.openapi.vfs.VirtualFileEvent
 - <init>(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.Object,java.lang.Object):V

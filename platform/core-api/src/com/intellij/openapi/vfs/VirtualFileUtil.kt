@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
@@ -206,6 +207,7 @@ fun Path.refreshAndFindVirtualDirectory(): VirtualFile? {
   return file
 }
 
+@ApiStatus.Internal
 object VirtualFilePrefixTreeFactory : AbstractPrefixTreeFactory<VirtualFile, String>() {
 
   override fun convertToList(element: VirtualFile): List<String> {

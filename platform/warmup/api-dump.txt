@@ -18,44 +18,14 @@ f:com.intellij.warmup.util.ConsoleLog
 - bs:error$default(com.intellij.warmup.util.ConsoleLog,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
 - f:info(java.lang.String):V
 - f:warn(java.lang.String):V
-com.intellij.warmup.util.HeadlessConfigurableArgs
-- a:getPathToConfigurationFile():java.nio.file.Path
-c:com.intellij.warmup.util.HeadlessConfigurableArgsImpl
-- com.intellij.warmup.util.HeadlessConfigurableArgs
-- <init>(com.intellij.platform.util.ArgsParser):V
-- getPathToConfigurationFile():java.nio.file.Path
 f:com.intellij.warmup.util.LoggingKt
 - sf:withLoggingProgressReporter(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withLoggingProgresses(kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.warmup.util.OpenProjectArgs
-- com.intellij.warmup.util.HeadlessConfigurableArgs
-- a:getConfigureProject():Z
-- a:getConvertProject():Z
-- a:getDisabledConfigurators():java.util.Set
-- a:getProjectDir():java.nio.file.Path
-c:com.intellij.warmup.util.OpenProjectArgsImpl
-- com.intellij.warmup.util.HeadlessConfigurableArgsImpl
-- com.intellij.warmup.util.OpenProjectArgs
-- <init>(com.intellij.platform.util.ArgsParser):V
-- getConfigureProject():Z
-- getConvertProject():Z
-- getDisabledConfigurators():java.util.Set
-- getProjectDir():java.nio.file.Path
-f:com.intellij.warmup.util.ProjectUtilKt
-- sf:importOrOpenProjectAsync(com.intellij.warmup.util.OpenProjectArgs,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.warmup.util.UtilsKt
 - sf:runAndCatchNotNull(java.lang.String,kotlin.jvm.functions.Function0):java.lang.Object
 f:com.intellij.warmup.util.Utils_time_loggerKt
 - sf:runTaskAndLogTime(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.warmup.util.WarmupProjectArgs
-- com.intellij.warmup.util.OpenProjectArgs
 - a:getBuild():Z
 - a:getIndexGitLog():Z
 - a:getRebuild():Z
-f:com.intellij.warmup.util.WarmupProjectArgsImpl
-- com.intellij.warmup.util.OpenProjectArgsImpl
-- com.intellij.warmup.util.WarmupProjectArgs
-- <init>(com.intellij.platform.util.ArgsParser):V
-- getBuild():Z
-- getIndexGitLog():Z
-- getRebuild():Z

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util
 
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -31,6 +32,7 @@ import java.util.regex.PatternSyntaxException
  * @param globPattern the passed argument doesn't need to have `glob:` prefix (though no difference if it does have this prefix)
  * @throws PatternSyntaxException if [ignorePatternSyntaxException] is `false` and the [globPattern] is invalid
  */
+@ApiStatus.Internal
 fun getPathMatcher(globPattern: String, ignorePatternSyntaxException: Boolean = true): PathMatcher {
   val patterns: List<String> = transformIntoJdkFriendlyGlobs(globPattern.removePrefix("glob:"))
 

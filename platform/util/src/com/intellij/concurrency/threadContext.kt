@@ -12,6 +12,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -103,6 +104,7 @@ private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) ->
 
 @VisibleForTesting
 @TestOnly
+@ApiStatus.Internal
 fun currentThreadContextOrNull(): CoroutineContext? {
   return currentThreadContextOrFallback { null }
 }
@@ -300,6 +302,7 @@ fun resetThreadContext(): AccessToken {
  * it still would be cancellable on project closing or component unloading, but it would not be bound to the context cancellation.
  */
 @Experimental
+@ApiStatus.Internal
 fun <T> escapeCancellation(job: Job, action: () -> T): T {
   return installThreadContext(currentThreadContext() + job + BlockingJob(job), true).use {
     action()
@@ -407,6 +410,7 @@ fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): Acce
  * This method should be used with executors from [java.util.concurrent.Executors] or with [java.util.concurrent.CompletionStage] methods.
  * Do not use this method with executors returned from [com.intellij.util.concurrency.AppExecutorUtil], they already capture the context.
  */
+@ApiStatus.Internal
 fun captureThreadContext(runnable: Runnable): Runnable {
   return captureRunnableThreadContext(runnable)
 }
@@ -414,6 +418,7 @@ fun captureThreadContext(runnable: Runnable): Runnable {
 /**
  * Same as [captureThreadContext] but for [Supplier]
  */
+@ApiStatus.Internal
 fun <T> captureThreadContext(s : Supplier<T>) : Supplier<T> {
   val c = captureCallableThreadContext(s::get)
   return Supplier(c::call)
@@ -422,6 +427,7 @@ fun <T> captureThreadContext(s : Supplier<T>) : Supplier<T> {
 /**
  * Same as [captureThreadContext] but for [Consumer]
  */
+@ApiStatus.Internal
 fun <T> captureThreadContext(c : Consumer<T>) : Consumer<T> {
   val f = capturePropagationContext(c::accept)
   return Consumer(f::apply)
@@ -430,6 +436,7 @@ fun <T> captureThreadContext(c : Consumer<T>) : Consumer<T> {
 /**
  * Same as [captureThreadContext] but for [Function]
  */
+@ApiStatus.Internal
 fun <T, U> captureThreadContext(f : Function<T, U>) : Function<T, U> {
   return capturePropagationContext(f)
 }
@@ -449,6 +456,7 @@ interface InternalCoroutineContextKey<T : CoroutineContext.Element> : CoroutineC
  * Strips off internal elements from thread contexts.
  * If you need to compare contexts by equality, most likely you need to use this method.
  */
+@ApiStatus.Internal
 fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element> {
   checkContextInstalled()
   return context.fold(HashSet()) { acc, element ->
@@ -470,6 +478,7 @@ fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element>
 /**
  * Same as [captureCallableThreadContext] but for [Callable].
  */
+@ApiStatus.Internal
 fun <V> captureThreadContext(callable: Callable<V>): Callable<V> {
   return captureCallableThreadContext(callable)
 }

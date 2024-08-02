@@ -4,6 +4,7 @@ package com.intellij.util.containers.prefix.set
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
+@ApiStatus.Internal
 interface MutablePrefixTreeSet<Key> : PrefixTreeSet<Key> {
 
   fun add(element: Key)

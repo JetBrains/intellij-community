@@ -4,7 +4,9 @@ package com.intellij.util.containers.prefix.map
 import com.intellij.util.containers.prefix.factory.PrefixTreeFactory
 import com.intellij.util.containers.prefix.set.MutablePrefixTreeSet
 import com.intellij.util.containers.prefix.set.PrefixTreeSetImpl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class AbstractPrefixTreeFactory<Key, KeyElement> : PrefixTreeFactory<Key, KeyElement> {
 
   override fun createSet(elements: Sequence<Key>): MutablePrefixTreeSet<Key> {

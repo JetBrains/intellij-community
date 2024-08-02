@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -44,6 +45,7 @@ private object Holder {
 }
 
 @TestOnly
+@ApiStatus.Internal
 fun runWithContextPropagationEnabled(runnable: Runnable) {
   val propagateThreadContext = Holder.propagateThreadContext
   Holder.propagateThreadContext = true
@@ -56,6 +58,7 @@ fun runWithContextPropagationEnabled(runnable: Runnable) {
 }
 
 @TestOnly
+@ApiStatus.Internal
 fun runWithImplicitBlockingContextEnabled(runnable: Runnable) {
   val propagateThreadContext = Holder.useImplicitBlockingContext
   Holder.useImplicitBlockingContext = true
@@ -277,6 +280,7 @@ internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean
   return command
 }
 
+@ApiStatus.Internal
 fun capturePropagationContext(r: Runnable, expired: Condition<*>): JBPair<Runnable, Condition<*>> {
   var command = captureClientIdInRunnable(r)
   if (isContextAwareComputation(r)) {
@@ -293,6 +297,7 @@ fun capturePropagationContext(r: Runnable, expired: Condition<*>): JBPair<Runnab
   return JBPair.create(command, expired)
 }
 
+@ApiStatus.Internal
 fun <T, U> captureBiConsumerThreadContext(f: BiConsumer<T, U>): BiConsumer<T, U> {
   val (childContext, childContinuation) = createChildContext(f.toString())
   var f = captureClientIdInBiConsumer(f)
@@ -381,6 +386,7 @@ internal fun capturePropagationContext(
   }
 }
 
+@ApiStatus.Internal
 fun contextAwareCallable(r: Runnable): Callable<*> = ContextAwareCallable {
   r.run()
 }
