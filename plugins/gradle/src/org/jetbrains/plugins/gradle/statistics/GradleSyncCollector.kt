@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.LongEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import java.util.*
@@ -17,11 +18,12 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("gradle.sync", 1)
+  private val GROUP = EventLogGroup("gradle.sync", 2)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
 
   private val MODEL_FETCH_FOR_BUILD_SRC = EventFields.Boolean("model_fetch_for_build_src")
+  private val MODEL_FETCH_WITH_IDE_CACHES = EventFields.Boolean("first_model_fetch_with_ide_caches")
   private val MODEL_FETCH_ERROR_COUNT = EventFields.Int("model_fetch_error_count")
   private val MODEL_FETCH_COMPLETION_STAMP = EventFields.Long("model_fetch_completion_stamp")
 
@@ -37,6 +39,7 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
 
     ACTIVITY_ID,
     MODEL_FETCH_FOR_BUILD_SRC,
+    MODEL_FETCH_WITH_IDE_CACHES,
     MODEL_FETCH_ERROR_COUNT,
     MODEL_FETCH_COMPLETION_STAMP,
 
@@ -58,6 +61,10 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
 
     private val exceptions = ArrayList<Throwable>()
 
+    private val isFirstModelFetchWithIdeCaches: Boolean? =
+      context.externalSystemTaskId.findProject()
+        ?.getUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES)
+
     fun logModelFetchPhaseCompleted(phase: GradleModelFetchPhase) {
       val currentStamp = GlobalStamp.now()
       val phaseCompletionStamp = currentStamp - modelFetchStartStamp
@@ -73,6 +80,9 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
       val project = context.externalSystemTaskId.findProject()
       MODEL_FETCH_COMPLETED_EVENT.log(project) {
         add(ACTIVITY_ID with context.externalSystemTaskId.id)
+        if (isFirstModelFetchWithIdeCaches != null) {
+          add(MODEL_FETCH_WITH_IDE_CACHES with isFirstModelFetchWithIdeCaches)
+        }
         add(MODEL_FETCH_FOR_BUILD_SRC with context.isBuildSrcProject)
         add(MODEL_FETCH_ERROR_COUNT with exceptions.size)
         val modelFetchStamp = currentStamp - modelFetchStartStamp

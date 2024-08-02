@@ -116,6 +116,9 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
       List<InternalExternalProjectInfo> projectInfos = load(myProject);
       readEnd = System.currentTimeMillis();
 
+      boolean isOpenedProjectWithIdeCaches = projectInfos != null && !projectInfos.isEmpty();
+      myProject.putUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES, isOpenedProjectWithIdeCaches);
+
       boolean isOpenedProject = hasLinkedExternalProjects() && !ExternalSystemUtil.isNewProject(myProject);
       if (projectInfos == null || (projectInfos.isEmpty() && isOpenedProject)) {
         markDirtyAllExternalProjects();
