@@ -318,7 +318,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myProjectGradleVersion;
   }
 
-  @Override
   public boolean isBuildSrcProject() {
     return myBuildSrcProject;
   }
