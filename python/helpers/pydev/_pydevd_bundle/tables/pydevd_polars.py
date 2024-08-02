@@ -33,7 +33,7 @@ def get_column_types(table):
 
 
 # used by pydevd
-def get_data(table, start_index=None, end_index=None):
+def get_data(table, start_index=None, end_index=None, format=None):
     # type: (pl.DataFrame, int, int) -> str
     with __create_config():
         return table[start_index:end_index]._repr_html_()

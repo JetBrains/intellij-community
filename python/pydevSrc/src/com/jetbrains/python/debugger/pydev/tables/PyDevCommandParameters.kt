@@ -3,4 +3,4 @@ package com.jetbrains.python.debugger.pydev.tables
 
 import com.jetbrains.python.tables.TableCommandParameters
 
-class PyDevCommandParameters(val start: Int, val end: Int) : TableCommandParameters
+class PyDevCommandParameters(val start: Int, val end: Int, val format: String?) : TableCommandParameters
