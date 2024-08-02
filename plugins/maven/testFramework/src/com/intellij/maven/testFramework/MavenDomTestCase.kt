@@ -52,7 +52,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.utils.MavenLog
-import java.io.IOException
 import java.util.*
 import java.util.function.Function
 
@@ -64,7 +63,6 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   protected val fixture: CodeInsightTestFixture
     get() = myFixture!!
 
-  @Throws(Exception::class)
   override fun setUpFixtures() {
     testFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
 
@@ -80,7 +78,6 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
   }
 
-  @Throws(Exception::class)
   override fun tearDownFixtures() {
     try {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = myOriginalAutoCompletion
@@ -97,61 +94,60 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return PsiManager.getInstance(project).findFile(f!!)!!
   }
 
-  protected fun configureProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
+  protected suspend fun configureProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
     val file = createProjectPom(xml!!)
     configTest(file)
   }
 
-  protected fun configTest(f: VirtualFile) {
+  protected suspend fun configTest(f: VirtualFile) {
     if (Comparing.equal(myConfigTimestamps[f], f.timeStamp)) {
       MavenLog.LOG.warn("MavenDomTestCase configTest skipped")
       return
     }
     refreshFiles(listOf(f))
+    awaitConfiguration()
     fixture.configureFromExistingVirtualFile(f)
     myConfigTimestamps[f] = f.timeStamp
     MavenLog.LOG.warn("MavenDomTestCase configTest performed")
   }
 
-  protected fun type(f: VirtualFile, c: Char) {
+  protected suspend fun type(f: VirtualFile, c: Char) {
     configTest(f)
     fixture.type(c)
   }
 
-  protected fun getReferenceAtCaret(f: VirtualFile): PsiReference? {
+  protected suspend fun getReferenceAtCaret(f: VirtualFile): PsiReference? {
     configTest(f)
     val editorOffset = getEditorOffset(f)
     MavenLog.LOG.warn("MavenDomTestCase getReferenceAtCaret offset $editorOffset")
     return findPsiFile(f).findReferenceAt(editorOffset)
   }
 
-  private fun getReferenceAt(f: VirtualFile, offset: Int): PsiReference? {
+  private suspend fun getReferenceAt(f: VirtualFile, offset: Int): PsiReference? {
     configTest(f)
     return findPsiFile(f).findReferenceAt(offset)
   }
 
-  protected fun getElementAtCaret(f: VirtualFile): PsiElement? {
+  protected suspend fun getElementAtCaret(f: VirtualFile): PsiElement? {
     configTest(f)
     return findPsiFile(f).findElementAt(getEditorOffset(f))
   }
 
-  protected val editor: Editor
-    get() = getEditor(projectPom)
+  protected suspend fun getEditor() = getEditor(projectPom)
 
-  protected fun getEditor(f: VirtualFile): Editor {
+  protected suspend fun getEditor(f: VirtualFile): Editor {
     configTest(f)
     return fixture.editor
   }
 
-  protected val editorOffset: Int
-    get() = getEditorOffset(projectPom)
+  protected suspend fun getEditorOffset() = getEditorOffset(projectPom)
 
-  protected fun getEditorOffset(f: VirtualFile): Int {
+  protected suspend fun getEditorOffset(f: VirtualFile): Int {
     return getEditor(f).caretModel.offset
   }
 
   private val caretElement = "<caret>"
-  protected fun moveCaretTo(f: VirtualFile, textWithCaret: String) {
+  protected suspend fun moveCaretTo(f: VirtualFile, textWithCaret: String) {
     val caretOffset = textWithCaret.indexOf(caretElement)
     assertTrue(caretOffset > 0)
     val textWithoutCaret = textWithCaret.replaceFirst(caretElement, "")
@@ -162,10 +158,9 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     getEditor(f).caretModel.moveToOffset(offset)
   }
 
-  protected val testPsiFile: PsiFile
-    get() = getTestPsiFile(projectPom)
+  protected suspend fun getTestPsiFile() = getTestPsiFile(projectPom)
 
-  private fun getTestPsiFile(f: VirtualFile): PsiFile {
+  private suspend fun getTestPsiFile(f: VirtualFile): PsiFile {
     configTest(f)
     return fixture.file
   }
@@ -180,7 +175,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return MavenDomUtil.findTag(model!!, path!!)!!
   }
 
-  protected fun assertNoReferences(file: VirtualFile, refClass: Class<*>) {
+  protected suspend fun assertNoReferences(file: VirtualFile, refClass: Class<*>) {
     val ref = getReferenceAtCaret(file)
     if (ref == null) return
     val refs = if (ref is PsiMultiReference) ref.references else arrayOf(ref)
@@ -189,7 +184,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  protected fun assertUnresolved(file: VirtualFile) {
+  protected suspend fun assertUnresolved(file: VirtualFile) {
     val ref = getReferenceAtCaret(file)
     assertNotNull(ref)
     assertNull(ref!!.resolve())
@@ -204,13 +199,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  @Throws(IOException::class)
-  protected fun assertResolved(file: VirtualFile, expected: PsiElement) {
+  protected suspend fun assertResolved(file: VirtualFile, expected: PsiElement) {
     doAssertResolved(file, expected)
   }
 
-  @Throws(IOException::class)
-  protected fun getReference(file: VirtualFile, referenceText: String): PsiReference? {
+  protected suspend fun getReference(file: VirtualFile, referenceText: String): PsiReference? {
     val text = VfsUtilCore.loadText(file)
     val index = text.indexOf(referenceText)
     assert(index >= 0)
@@ -222,8 +215,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return getReferenceAt(file, index)
   }
 
-  @Throws(IOException::class)
-  protected fun getReference(file: VirtualFile, referenceText: String, index: Int): PsiReference? {
+  protected suspend fun getReference(file: VirtualFile, referenceText: String, index: Int): PsiReference? {
     var index = index
     val text = VfsUtilCore.loadText(file)
     var k = -1
@@ -237,8 +229,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return getReferenceAt(file, k)
   }
 
-  @Throws(IOException::class)
-  protected fun resolveReference(file: VirtualFile, referenceText: String): PsiElement? {
+  protected suspend fun resolveReference(file: VirtualFile, referenceText: String): PsiElement? {
     val ref = getReference(file, referenceText)
     assertNotNull(ref)
 
@@ -257,7 +248,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  private fun doAssertResolved(file: VirtualFile, expected: PsiElement): PsiReference? {
+  private suspend fun doAssertResolved(file: VirtualFile, expected: PsiElement): PsiReference? {
     assertNotNull("expected reference is null", expected)
 
     val ref = getReferenceAtCaret(file)
@@ -271,23 +262,27 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return ref
   }
 
-  protected fun assertCompletionVariants(f: VirtualFile, vararg expected: String?) {
+  protected suspend fun assertCompletionVariants(f: VirtualFile, vararg expected: String?) {
     assertCompletionVariants(f, LOOKUP_STRING, *expected)
   }
 
   /**
    * bypass DependencySearchService cache
    */
-  protected fun assertCompletionVariantsNoCache(f: VirtualFile,
-                                                lookupElementStringFunction: Function<LookupElement, String?>,
-                                                vararg expected: String?) {
+  protected suspend fun assertCompletionVariantsNoCache(
+    f: VirtualFile,
+    lookupElementStringFunction: Function<LookupElement, String?>,
+    vararg expected: String?,
+  ) {
     val actual = getCompletionVariantsNoCache(f, lookupElementStringFunction)
     assertUnorderedElementsAreEqual(actual, *expected)
   }
 
-  protected fun assertCompletionVariants(f: VirtualFile,
-                                         lookupElementStringFunction: Function<LookupElement, String?>,
-                                         vararg expected: String?) {
+  protected suspend fun assertCompletionVariants(
+    f: VirtualFile,
+    lookupElementStringFunction: Function<LookupElement, String?>,
+    vararg expected: String?,
+  ) {
     val actual = getCompletionVariants(f, lookupElementStringFunction)
     assertUnorderedElementsAreEqual(actual, *expected)
   }
@@ -300,30 +295,34 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     assertUnorderedElementsAreEqual(actual!!.toList(), expected.toList())
   }
 
-  protected fun assertCompletionVariantsInclude(f: VirtualFile,
-                                                vararg expected: String?) {
+  protected suspend fun assertCompletionVariantsInclude(
+    f: VirtualFile,
+    vararg expected: String?,
+  ) {
     assertCompletionVariantsInclude(f, LOOKUP_STRING, *expected)
   }
 
-  protected fun assertCompletionVariantsInclude(f: VirtualFile,
-                                                lookupElementStringFunction: Function<LookupElement, String?>,
-                                                vararg expected: String?) {
+  protected suspend fun assertCompletionVariantsInclude(
+    f: VirtualFile,
+    lookupElementStringFunction: Function<LookupElement, String?>,
+    vararg expected: String?,
+  ) {
     assertContain(getCompletionVariants(f, lookupElementStringFunction), *expected)
   }
 
-  protected fun assertDependencyCompletionVariantsInclude(f: VirtualFile, vararg expected: String?) {
+  protected suspend fun assertDependencyCompletionVariantsInclude(f: VirtualFile, vararg expected: String?) {
     assertContain(getDependencyCompletionVariants(f), *expected)
   }
 
-  protected fun assertCompletionVariantsDoNotInclude(f: VirtualFile, vararg expected: String?) {
+  protected suspend fun assertCompletionVariantsDoNotInclude(f: VirtualFile, vararg expected: String?) {
     assertDoNotContain(getCompletionVariants(f), *expected)
   }
 
-  protected fun getCompletionVariants(f: VirtualFile): List<String?> {
+  protected suspend fun getCompletionVariants(f: VirtualFile): List<String?> {
     return getCompletionVariants(f) { li: LookupElement -> li.lookupString }
   }
 
-  protected fun getCompletionVariants(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>): List<String?> {
+  protected suspend fun getCompletionVariants(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>): List<String?> {
     configTest(f)
     val variants = fixture.completeBasic()
 
@@ -334,7 +333,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return result
   }
 
-  protected fun getCompletionVariantsNoCache(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>): List<String?> {
+  protected suspend fun getCompletionVariantsNoCache(f: VirtualFile, lookupElementStringFunction: Function<LookupElement, String?>): List<String?> {
     configTest(f)
     val variants = fixture.complete(CompletionType.BASIC, 2)
 
@@ -345,12 +344,14 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return result
   }
 
-  protected fun getDependencyCompletionVariants(f: VirtualFile): Set<String> {
+  protected suspend fun getDependencyCompletionVariants(f: VirtualFile): Set<String> {
     return getDependencyCompletionVariants(f) { it: MavenRepositoryArtifactInfo? -> MavenDependencyCompletionUtil.getPresentableText(it) }
   }
 
-  protected fun getDependencyCompletionVariants(f: VirtualFile,
-                                                lookupElementStringFunction: Function<in MavenRepositoryArtifactInfo?, String>): Set<String> {
+  protected suspend fun getDependencyCompletionVariants(
+    f: VirtualFile,
+    lookupElementStringFunction: Function<in MavenRepositoryArtifactInfo?, String>,
+  ): Set<String> {
     configTest(f)
     val variants = fixture.completeBasic()
 
@@ -380,7 +381,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     withContext(Dispatchers.EDT) {
       val originalElement = getElementAtCaret(projectPom)
       val targetElement = DocumentationManager.getInstance(project)
-        .findTargetElement(editor, testPsiFile, originalElement)
+        .findTargetElement(getEditor(), getTestPsiFile(), originalElement)
 
       val provider = DocumentationManager.getProviderFromElement(targetElement)
       assertEquals(expectedText, provider.generateDoc(targetElement, originalElement))
@@ -440,11 +441,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  protected fun getIntentionAtCaret(intentionName: String?): IntentionAction? {
+  protected suspend fun getIntentionAtCaret(intentionName: String?): IntentionAction? {
     return getIntentionAtCaret(projectPom, intentionName)
   }
 
-  protected fun getIntentionAtCaret(pomFile: VirtualFile, intentionName: String?): IntentionAction? {
+  protected suspend fun getIntentionAtCaret(pomFile: VirtualFile, intentionName: String?): IntentionAction? {
     configTest(pomFile)
     try {
       val intentions = fixture.availableIntentions
@@ -470,7 +471,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  protected fun doInlineRename(f: VirtualFile, value: String) {
+  protected suspend fun doInlineRename(f: VirtualFile, value: String) {
     val context = createRenameDataContext(f, value)
     val renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context)
     assertNotNull(renameHandler)
@@ -498,7 +499,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     renameHandler!!.invoke(project, PsiElement.EMPTY_ARRAY, context)
   }
 
-  private fun createDataContext(f: VirtualFile): MapDataContext {
+  private suspend fun createDataContext(f: VirtualFile): MapDataContext {
     val context = MapDataContext()
 
     context.put(CommonDataKeys.EDITOR, getEditor(f))
@@ -509,21 +510,21 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return context
   }
 
-  private fun createRenameDataContext(f: VirtualFile, value: String?): MapDataContext {
+  private suspend fun createRenameDataContext(f: VirtualFile, value: String?): MapDataContext {
     val context = createDataContext(f)
     context.put(PsiElementRenameHandler.DEFAULT_NAME, value)
     return context
   }
 
-  protected fun assertSearchResults(file: VirtualFile, vararg expected: PsiElement?) {
+  protected suspend fun assertSearchResults(file: VirtualFile, vararg expected: PsiElement?) {
     assertUnorderedElementsAreEqual(search(file), *expected)
   }
 
-  protected fun assertSearchResultsInclude(file: VirtualFile, vararg expected: PsiElement?) {
+  protected suspend fun assertSearchResultsInclude(file: VirtualFile, vararg expected: PsiElement?) {
     assertContain(search(file), *expected)
   }
 
-  protected fun search(file: VirtualFile): List<PsiElement> {
+  protected suspend fun search(file: VirtualFile): List<PsiElement> {
     val context = createDataContext(file)
     val targets = UsageTargetUtil.findUsageTargets { dataId: String? -> context.getData(dataId!!) }
     val target = (targets[0] as PsiElement2UsageTargetAdapter).element
@@ -531,7 +532,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return result.map { it.element }
   }
 
-  protected fun assertHighlighted(file: VirtualFile, vararg expected: HighlightPointer) {
+  protected suspend fun assertHighlighted(file: VirtualFile, vararg expected: HighlightPointer) {
     val editor = getEditor(file)
     HighlightUsagesHandler.invoke(project, editor, getTestPsiFile(file))
 
