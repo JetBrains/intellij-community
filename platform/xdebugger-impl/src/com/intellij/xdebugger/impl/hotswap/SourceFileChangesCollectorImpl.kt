@@ -30,8 +30,9 @@ class SourceFileChangesCollectorImpl(
   private val coroutineScope: CoroutineScope,
   private val listener: SourceFileChangesListener<VirtualFile>,
   private vararg val filters: SourceFileChangeFilter<VirtualFile>,
-) : SourceFileChangesCollector<VirtualFile>, Disposable.Default {
+) : SourceFileChangesCollector<VirtualFile>, Disposable {
   private val currentChanges = AtomicReference(mutableSetOf<VirtualFile>())
+  private val channel = Channel<VirtualFile>(Channel.UNLIMITED)
 
   init {
     val eventMulticaster = EditorFactory.getInstance().eventMulticaster
@@ -40,6 +41,11 @@ class SourceFileChangesCollectorImpl(
         onDocumentChange(event.document)
       }
     }, this)
+    coroutineScope.collectChanges()
+  }
+
+  override fun dispose() {
+    channel.close()
   }
 
   override fun getChanges(): Set<VirtualFile> = currentChanges.get()
@@ -51,8 +57,14 @@ class SourceFileChangesCollectorImpl(
     coroutineScope.launch(Dispatchers.Default) {
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@launch
       if (filters.any { !it.isApplicable(virtualFile) }) return@launch
-      currentChanges.get().add(virtualFile)
-      listener.onFileChange(virtualFile)
+      channel.send(virtualFile)
+    }
+  }
+
+  private fun CoroutineScope.collectChanges() = launch(Dispatchers.Default) {
+    for (change in channel) {
+      currentChanges.get().add(change)
+      listener.onFileChange(change)
     }
   }
 }
