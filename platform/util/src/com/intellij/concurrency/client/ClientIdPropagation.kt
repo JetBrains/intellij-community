@@ -4,31 +4,39 @@
 
 package com.intellij.concurrency.client
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Function
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
-private val threadLocalClientIdString = ThreadLocal.withInitial<String?> { null }
-@get:ApiStatus.Internal
-@set:ApiStatus.Internal
-var currentClientIdString: String?
-  get() = threadLocalClientIdString.get()
-  set(value) = threadLocalClientIdString.set(value)
+@ApiStatus.Internal
+class ClientIdStringContextElement(val clientIdString: String?) : AbstractCoroutineContextElement(Key) {
+  object Key : CoroutineContext.Key<ClientIdStringContextElement>
+
+  override fun toString(): String = "ClientId=$clientIdString"
+}
+
+val CoroutineContext.clientIdStringContextElement: ClientIdStringContextElement?
+  get() = this[ClientIdStringContextElement.Key]
+
+val currentThreadClientIdString: String? get() = currentThreadContext().clientIdStringContextElement?.clientIdString
 
 @get:ApiStatus.Internal
 @set:ApiStatus.Internal
 var propagateClientIdAcrossThreads: Boolean = false
 
-private inline fun <T> withClientId(clientId: String?, action: () -> T): T {
-  val oldClientIdValue = currentClientIdString
-  try {
-    currentClientIdString = clientId
+inline fun <T> withClientId(clientId: String?, action: () -> T): T {
+  return withClientId(ClientIdStringContextElement(clientId), action)
+}
+
+inline fun <T> withClientId(idStringContextElement: ClientIdStringContextElement, action: () -> T): T {
+  installThreadContext(idStringContextElement, replace = true).use {
     return action()
-  }
-  finally {
-    currentClientIdString = oldClientIdValue
   }
 }
 
@@ -38,7 +46,8 @@ internal fun <T> withClientId(clientId: String?, callable: Callable<T>) = withCl
 @ApiStatus.Internal
 fun captureClientIdInRunnable(runnable: Runnable): Runnable {
   if (!propagateClientIdAcrossThreads) return runnable
-  val currentId = currentClientIdString
+  val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return runnable
+  val currentId = idStringContextElement.clientIdString
   return Runnable {
     withClientId(currentId) {
       runnable.run()
@@ -49,9 +58,9 @@ fun captureClientIdInRunnable(runnable: Runnable): Runnable {
 @ApiStatus.Internal
 fun <T> captureClientIdInCallable(callable: Callable<T>): Callable<T> {
   if (!propagateClientIdAcrossThreads) return callable
-  val currentId = currentClientIdString
+  val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return callable
   return Callable {
-    withClientId(currentId) {
+    withClientId(idStringContextElement) {
       callable.call()
     }
   }
@@ -60,9 +69,9 @@ fun <T> captureClientIdInCallable(callable: Callable<T>): Callable<T> {
 @ApiStatus.Internal
 fun <T> captureClientIdInProcessor(processor: Processor<T>): Processor<T> {
   if (!propagateClientIdAcrossThreads) return processor
-  val currentId = currentClientIdString
+  val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return processor
   return Processor {
-    withClientId(currentId) {
+    withClientId(idStringContextElement) {
       processor.process(it)
     }
   }
@@ -71,9 +80,9 @@ fun <T> captureClientIdInProcessor(processor: Processor<T>): Processor<T> {
 @ApiStatus.Internal
 fun <T> captureClientId(action: () -> T): () -> T {
   if (propagateClientIdAcrossThreads) return action
-  val currentId = currentClientIdString
+  val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return action
   return {
-    withClientId(currentId) {
+    withClientId(idStringContextElement) {
       action()
     }
   }
@@ -82,9 +91,9 @@ fun <T> captureClientId(action: () -> T): () -> T {
 @ApiStatus.Internal
 fun <T, R> captureClientIdInFunction(function: Function<T, R>): Function<T, R> {
   if (!propagateClientIdAcrossThreads) return function
-  val currentId = currentClientIdString
+  val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return function
   return Function {
-    withClientId(currentId) {
+    withClientId(idStringContextElement) {
       function.apply(it)
     }
   }
@@ -93,9 +102,9 @@ fun <T, R> captureClientIdInFunction(function: Function<T, R>): Function<T, R> {
 @ApiStatus.Internal
 fun <T, U> captureClientIdInBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
   if (!propagateClientIdAcrossThreads) return biConsumer
-  val currentId = currentClientIdString
+  val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return biConsumer
   return BiConsumer { t, u ->
-    withClientId(currentId) {
+    withClientId(idStringContextElement) {
       biConsumer.accept(t, u)
     }
   }

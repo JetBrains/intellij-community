@@ -4,6 +4,7 @@ package com.intellij.codeWithMe
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.client.*
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
@@ -20,14 +21,13 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 import java.util.function.Function
-import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -242,33 +242,22 @@ data class ClientId(val value: String) {
         null
       }
 
-      val oldClientIdValue = currentClientIdString
-      try {
-        currentClientIdString = newClientIdValue
-        return action()
-      }
-      finally {
-        currentClientIdString = oldClientIdValue
+      return withClientId(newClientIdValue) {
+        action()
       }
     }
 
     private fun getCurrentIdValidated(): String? {
-      val currentValue = currentClientIdString
+      val currentValue = currentThreadClientIdString
       if (currentValue != null) {
         val service = getCachedService()
         if (service != null && !service.isValid(ClientId(currentValue))) {
           getClientIdLogger().trace { "Invalid ClientId $currentValue replaced with null at ${Throwable().fillInStackTrace()}" }
-          currentClientIdString = null
-          return null
+          // TODO: is it ok to throw CE? I believe that is client has gone all its activity should be cancelled
+          throw CancellationException("ClientId=$currentValue is not valid anymore")
         }
       }
       return currentValue
-    }
-
-    class ClientIdAccessToken(private val oldClientIdValue: String?) : AccessToken() {
-      override fun finish() {
-        currentClientIdString = oldClientIdValue
-      }
     }
 
     /**
@@ -302,7 +291,7 @@ data class ClientId(val value: String) {
       if (service == null) {
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
-      val oldClientIdValue = currentClientIdString ?: localId.value
+      val oldClientIdValue = currentThreadClientIdString ?: localId.value
       if (clientIdValue == oldClientIdValue) {
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
@@ -318,8 +307,7 @@ data class ClientId(val value: String) {
         null
       }
 
-      currentClientIdString = newClientIdValue
-      return ClientIdAccessToken(oldClientIdValue)
+      return installThreadContext(ClientIdStringContextElement(newClientIdValue))
     }
 
     private var service: Ref<ClientSessionsManager<*>?>? = null
@@ -402,49 +390,49 @@ fun isOnGuest(): Boolean {
 
 fun ClientId.asContextElement(): CoroutineContext.Element {
   if (ClientId.isFakeLocalId(this))
-    return ClientIdElement(ClientId.localId)
+    return ClientIdStringContextElement(ClientId.localId.value)
 
-  return ClientIdElement(this)
+  return ClientIdStringContextElement(value)
 }
 
-private object ClientIdElementKey : CoroutineContext.Key<ClientIdElement>
+//private object ClientIdElementKey : CoroutineContext.Key<ClientIdElement>
+//
+//private class ClientIdElement(private val clientId: ClientId) : ThreadContextElement<AccessToken>, IntelliJContextElement {
 
-private class ClientIdElement(private val clientId: ClientId) : ThreadContextElement<AccessToken>, IntelliJContextElement {
+  //override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+//
+//  override val key: CoroutineContext.Key<*> get() = ClientIdElementKey
+//
+//  override fun toString(): String = clientId.toString()
+//
+//  override fun updateThreadContext(context: CoroutineContext): AccessToken {
+//    return ClientId.withClientId(clientId)
+//  }
+//
+//  override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken) {
+//    oldState.finish()
+//  }
+//}
 
-  override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+//private class ClientIdElement2(val clientId: ClientId) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
 
-  override val key: CoroutineContext.Key<*> get() = ClientIdElementKey
-
-  override fun toString(): String = clientId.toString()
-
-  override fun updateThreadContext(context: CoroutineContext): AccessToken {
-    return ClientId.withClientId(clientId)
-  }
-
-  override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken) {
-    oldState.finish()
-  }
-}
-
-private class ClientIdElement2(val clientId: ClientId) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
-
-  override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
-
-  override fun toString(): String = clientId.toString()
-
-  object Key : CoroutineContext.Key<ClientIdElement2>
-}
+  //override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+//
+//  override fun toString(): String = clientId.toString()
+//
+//  object Key : CoroutineContext.Key<ClientIdElement2>
+//}
+//
+//@ApiStatus.Internal
+//fun ClientId.asContextElement2(): CoroutineContext.Element {
+//  if (ClientId.isFakeLocalId(this))
+//    return ClientIdElement2(ClientId.localId)
+//
+//  return ClientIdElement2(this)
+//}
 
 @ApiStatus.Internal
-fun ClientId.asContextElement2(): CoroutineContext.Element {
-  if (ClientId.isFakeLocalId(this))
-    return ClientIdElement2(ClientId.localId)
-
-  return ClientIdElement2(this)
-}
-
-@ApiStatus.Internal
-fun CoroutineContext.clientId(): ClientId? = this[ClientIdElement2.Key]?.clientId
+fun CoroutineContext.clientId(): ClientId? = this[ClientIdStringContextElement.Key]?.clientIdString?.let { ClientId(it) }
 
 @ApiStatus.Internal
 fun currentThreadClientId(): ClientId? = currentThreadContext().clientId()

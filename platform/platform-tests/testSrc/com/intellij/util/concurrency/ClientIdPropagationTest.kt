@@ -2,7 +2,9 @@
 package com.intellij.util.concurrency
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.concurrency.client.currentClientIdString
+import com.intellij.concurrency.client.ClientIdStringContextElement
+import com.intellij.concurrency.client.currentThreadClientIdString
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.client.ClientAppSession
@@ -10,6 +12,7 @@ import com.intellij.openapi.client.ClientAppSessionImpl
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.client.ClientType
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.Alarm
 import com.intellij.util.application
@@ -41,9 +44,11 @@ class ClientIdPropagationTest : LightPlatformTestCase() {
   }
 
   fun testChildCoroutine() = doTest {
-    runBlocking(ClientId.coroutineContext()) {
-      launch(Dispatchers.EDT) {
-        doAction()
+    prepareThreadContext { ctx ->
+      runBlocking(ctx) {
+        launch(Dispatchers.EDT) {
+          doAction()
+        }
       }
     }
   }
@@ -52,23 +57,19 @@ class ClientIdPropagationTest : LightPlatformTestCase() {
   private val resultClientId = CompletableFuture<String?>()
 
   private fun doAction() {
-    resultClientId.complete(currentClientIdString)
+    resultClientId.complete(currentThreadClientIdString)
   }
 
   private fun doTest(testRunnable: Runnable) {
     service<ClientSessionsManager<ClientAppSession>>().registerSession(testRootDisposable,
                                                                        TestClientAppSession(application as ApplicationImpl))
-    val oldClientId = currentClientIdString
     val oldPropagate = ClientId.propagateAcrossThreads
-    currentClientIdString = TEST_CLIENT_ID
     ClientId.propagateAcrossThreads = true
-    try {
+    installThreadContext(ClientIdStringContextElement(TEST_CLIENT_ID)).use {
       testRunnable.run()
     }
-    finally {
-      ClientId.propagateAcrossThreads = oldPropagate
-      currentClientIdString = oldClientId
-    }
+    ClientId.propagateAcrossThreads = oldPropagate
+
     val clientId = resultClientId.get(10, TimeUnit.SECONDS)
     check(clientId == TEST_CLIENT_ID) { "Unexpected clientId value: $clientId" }
   }
