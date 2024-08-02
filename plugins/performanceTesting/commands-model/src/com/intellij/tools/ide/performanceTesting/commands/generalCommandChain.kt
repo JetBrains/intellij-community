@@ -1071,6 +1071,10 @@ fun <T : CommandChain> T.gitCommitFile(pathToFile: String, commitMessage: String
   addCommand("${CMD_PREFIX}gitCommit ${pathToFile},${commitMessage}")
 }
 
+fun <T : CommandChain> T.gitRollbackFile(pathToFile: String): T = apply {
+  addCommand("${CMD_PREFIX}gitRollback ${pathToFile}")
+}
+
 fun <T : CommandChain> T.replaceText(startOffset: Int? = null, endOffset: Int? = null, newText: String? = null): T = apply {
   val options = StringBuilder()
   if (startOffset != null) {
@@ -1162,4 +1166,12 @@ fun <T : CommandChain> T.waitForProjectView(): T = apply {
  */
 fun <T : CommandChain> T.expandProjectView(relativePath: String): T = apply {
   addCommand("${CMD_PREFIX}expandProjectView $relativePath")
+}
+
+/**
+ *  The first call will create and start span.
+ *  The second call with the same spanName will stop span.
+ * */
+fun <T : CommandChain> T.handleSpan(spanName: String): T = apply {
+  addCommand("${CMD_PREFIX}handleSpan $spanName")
 }
