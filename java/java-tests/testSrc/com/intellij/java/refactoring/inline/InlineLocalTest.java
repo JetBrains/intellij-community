@@ -356,6 +356,8 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   public void testCompositeAssignment() { doTest(); }
   
   public void testCompositeAssignmentCast() { doTest(); }
+  
+  public void testLambdaInitialization() { doTest(); }
 
   private void doTest(String conflictMessage) {
     try {
