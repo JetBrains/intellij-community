@@ -8786,20 +8786,20 @@ com.intellij.ui.components.fields.valueEditors.ValueEditor$Listener
 - a:valueChanged(java.lang.Object):V
 c:com.intellij.ui.components.labels.ActionLink
 - com.intellij.ui.components.labels.LinkLabel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.AnAction):V
 - <init>(java.lang.String,javax.swing.Icon,com.intellij.openapi.actionSystem.AnAction):V
 - <init>(java.lang.String,javax.swing.Icon,com.intellij.openapi.actionSystem.AnAction,java.lang.Runnable,java.lang.String):V
 - doClick(java.awt.event.InputEvent):V
 - getAction():com.intellij.openapi.actionSystem.AnAction
 - getActiveColor():java.awt.Color
-- getData(java.lang.String):java.lang.Object
 - p:getNormal():java.awt.Color
 - p:getTextColor():java.awt.Color
 - p:getVisited():java.awt.Color
 - setActiveColor(java.awt.Color):V
 - setNormalColor(java.awt.Color):V
 - setVisitedColor(java.awt.Color):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.ui.components.labels.BoldLabel
 - javax.swing.JLabel
 - <init>():V
