@@ -125,19 +125,26 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
           }
           else if (children.length != 0 &&
                    ContainerUtil.find(children, node -> node.getElementType() == YAMLElementTypes.KEY_VALUE_PAIR) == null) {
-            String rootKey = "root";
-            String valueText = parent.getText();
-            YAMLFile file = YAMLElementGenerator.getInstance(parent.getProject())
-              .createDummyYamlWithText(rootKey + ":\n  " + valueText);
-            YAMLValue value = file.getDocuments().get(0).getTopLevelValue();
-            if (value instanceof YAMLMapping mapping) {
-              YAMLKeyValue root = mapping.getKeyValueByKey(rootKey);
-              if (root != null) {
-                substitute = root.getValue();
-              }
+            List<ASTNode> notSpaces =
+              ContainerUtil.filter(children, child -> !YAMLElementTypes.SPACE_ELEMENTS.contains(child.getElementType()));
+            if (notSpaces.size() == 1) {
+              substitute = notSpaces.get(0).getPsi();
             }
-            if (substitute == null) {
-              Logger.getInstance(YamlKeyCompletionInsertHandler.class).error("Could not substitute: " + valueText);
+            else {
+              String rootKey = "root";
+              String valueText = parent.getText();
+              YAMLFile file = YAMLElementGenerator.getInstance(parent.getProject())
+                .createDummyYamlWithText(rootKey + ":\n  " + valueText);
+              YAMLValue value = file.getDocuments().get(0).getTopLevelValue();
+              if (value instanceof YAMLMapping mapping) {
+                YAMLKeyValue root = mapping.getKeyValueByKey(rootKey);
+                if (root != null) {
+                  substitute = root.getValue();
+                }
+              }
+              if (substitute == null) {
+                Logger.getInstance(YamlKeyCompletionInsertHandler.class).error("Could not substitute: " + valueText);
+              }
             }
           }
         }
