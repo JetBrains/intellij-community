@@ -461,6 +461,7 @@ f:com.intellij.ide.ui.UISettings
 - f:getShowNavigationBar():Z
 - f:getShowNavigationBarInBottom():Z
 - f:getShowNewMainToolbar():Z
+- f:getShowPreviewInSearchEverywhere():Z
 - f:getShowStatusBar():Z
 - f:getShowTabsTooltips():Z
 - f:getShowToolWindowsNames():Z
@@ -541,6 +542,7 @@ f:com.intellij.ide.ui.UISettings
 - f:setShowMembersInNavigationBar(Z):V
 - f:setShowNavigationBar(Z):V
 - f:setShowNewMainToolbar(Z):V
+- f:setShowPreviewInSearchEverywhere(Z):V
 - f:setShowStatusBar(Z):V
 - f:setShowTabsTooltips(Z):V
 - f:setShowToolWindowsNames(Z):V
@@ -652,6 +654,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:getShowNavigationBar():Z
 - f:getShowNewMainToolbar():Z
 - f:getShowPinnedTabsInASeparateRow():Z
+- f:getShowPreviewInSearchEverywhere():Z
 - f:getShowStatusBar():Z
 - f:getShowTabsTooltips():Z
 - f:getShowToolWindowsNames():Z
@@ -738,6 +741,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:setShowNavigationBar(Z):V
 - f:setShowNewMainToolbar(Z):V
 - f:setShowPinnedTabsInASeparateRow(Z):V
+- f:setShowPreviewInSearchEverywhere(Z):V
 - f:setShowStatusBar(Z):V
 - f:setShowTabsTooltips(Z):V
 - f:setShowToolWindowsNames(Z):V
