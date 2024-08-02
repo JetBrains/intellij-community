@@ -1317,7 +1317,7 @@ interface UastApiFixtureTestBase {
         TestCase.assertEquals("nananananana, batman", uEval)
     }
 
-    fun checkLocalPropertyInitializerEvaluation(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+    fun checkLocalPropertyInitializerEvaluation_String(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
                 class Test {
@@ -1327,12 +1327,18 @@ interface UastApiFixtureTestBase {
                     val bar = "bar"
                     return foo + bar
                   }
+                  
+                  fun poly(): String {
+                    val na = "na"
+                    val b = "batman"
+                    return na + na + na + na + na + na + na + na + ", " + b
+                  }
                 }
             """.trimIndent()
         )
 
         val uFile = myFixture.file.toUElementOfType<UFile>()!!
-        val names = listOf("foo", "bar")
+        val names = listOf("foo", "bar", "na", "batman")
         uFile.accept(
             object : AbstractUastVisitor() {
                 override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
@@ -1341,11 +1347,44 @@ interface UastApiFixtureTestBase {
                     return super.visitSimpleNameReferenceExpression(node)
                 }
 
+                override fun visitReturnExpression(node: UReturnExpression): Boolean {
+                    val eval = node.returnExpression?.evaluate()
+                    if ((node.jumpTarget as? UMethod)?.name == "poly") {
+                        TestCase.assertEquals(eval?.toString() ?: "<null>", "nananananananana, batman", eval)
+                    } else {
+                        TestCase.assertEquals(eval?.toString() ?: "<null>", "foobar", eval)
+                    }
+                    return super.visitReturnExpression(node)
+                }
+            }
+        )
+    }
+
+    fun checkLocalPropertyInitializerEvaluation_Numeric(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                  val foo = 1
+
+                  fun test() {
+                    val bar = 41
+                    foo + bar
+                    val baz = 42
+                    foo * baz * foo
+                    baz / foo / foo
+                    val qaz = 43
+                    qaz - foo
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
                 override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
                     val eval = node.evaluate()
-                    // TODO(KTIJ-30649)
-                    val expected = if (isK2) null else "foobar"
-                    TestCase.assertEquals(eval?.toString() ?: "<null>", expected, eval)
+                    TestCase.assertEquals(node.sourcePsi?.text, 42, eval)
                     return super.visitBinaryExpression(node)
                 }
             }
