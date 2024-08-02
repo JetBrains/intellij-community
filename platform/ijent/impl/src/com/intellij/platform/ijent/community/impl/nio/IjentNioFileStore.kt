@@ -10,7 +10,7 @@ internal class IjentNioFileStore(
   private val ijentFsApi: IjentFileSystemApi,
 ) : FileStore() {
   override fun name(): String =
-    ijentFsApi.id.toString()
+    ijentFsApi.toString()
 
   // TODO: uncomment appropriate part of the test com.intellij.platform.ijent.functional.fs.UnixLikeFileSystemTest.test file store
 

@@ -12,28 +12,6 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.startCoroutine
 
-/**
- * Returns an adapter from [IjentFileSystemApi] to [java.nio.file.FileSystem]. The adapter is automatically registered in advance,
- * also it is automatically closed when it is needed.
- *
- * The function is idempotent and thread-safe.
- */
-fun IjentFileSystemApi.asNioFileSystem(): FileSystem {
-  val nioFsProvider = IjentNioFileSystemProvider.getInstance()
-  val uri = id.uri
-  return try {
-    nioFsProvider.getFileSystem(uri)
-  }
-  catch (ignored: FileSystemNotFoundException) {
-    try {
-      nioFsProvider.newFileSystem(uri, mutableMapOf<String, Any>())
-    }
-    catch (ignored: FileSystemAlreadyExistsException) {
-      nioFsProvider.getFileSystem(uri)
-    }
-  }
-}
-
 @Throws(FileSystemException::class)
 internal fun <T, E : IjentFsError> IjentFsResult<T, E>.getOrThrowFileSystemException(): T =
   when (this) {

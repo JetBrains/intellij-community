@@ -51,7 +51,11 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
   var expectedErrorCode = ExpectedErrorCode.NO
 
   companion object {
-    /** See the docs of [IjentSessionMediator] */
+    /**
+     * See the docs of [IjentSessionMediator].
+     *
+     * [ijentId] is used only for logging.
+     */
     @OptIn(DelicateCoroutinesApi::class)
     fun create(process: Process, ijentId: IjentId): IjentSessionMediator {
       val lastStderrMessages = MutableSharedFlow<String?>(

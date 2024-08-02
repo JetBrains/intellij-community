@@ -2,16 +2,15 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.ijent.IjentId
-import com.intellij.platform.ijent.IjentSessionRegistry
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
+import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.CreateDirectoryException
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
+import com.intellij.util.text.nullize
 import com.sun.nio.file.ExtendedCopyOption
-import kotlinx.coroutines.job
 import java.io.IOException
 import java.net.URI
 import java.nio.channels.AsynchronousFileChannel
@@ -23,11 +22,19 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
+/**
+ * This filesystem connects to particular IJent instances.
+ *
+ * A new filesystem can be created with [newFileSystem] and [newFileSystemMap].
+ * The URL must have the scheme "ijent", and the unique identifier of a filesystem
+ * is represented with an authority and a path.
+ *
+ * For accessing WSL use [com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider].
+ */
 class IjentNioFileSystemProvider : FileSystemProvider() {
   companion object {
     @JvmStatic
@@ -35,56 +42,91 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       installedProviders()
         .filterIsInstance<IjentNioFileSystemProvider>()
         .single()
+
+    @JvmStatic
+    fun newFileSystemMap(ijentFs: IjentFileSystemApi): MutableMap<String, *> =
+      mutableMapOf(KEY_IJENT_FS to ijentFs)
+
+    private const val SCHEME = "ijent"
+    private const val KEY_IJENT_FS = "ijentFs"
   }
 
-  private val registeredFileSystems = ConcurrentHashMap<IjentId, IjentNioFileSystem>()
+  @JvmInline
+  internal value class CriticalSection<D : Any>(val hidden: D) {
+    inline operator fun <T> invoke(body: D.() -> T): T =
+      synchronized(hidden) {
+        hidden.body()
+      }
+  }
 
-  override fun getScheme(): String = "ijent"
+  private val criticalSection = CriticalSection(object {
+    val authorityRegistry: MutableMap<URI, IjentFileSystemApi> = hashMapOf()
+  })
 
-  override fun newFileSystem(uri: URI, env: MutableMap<String, *>?): IjentNioFileSystem {
+  override fun getScheme(): String = SCHEME
+
+  override fun newFileSystem(uri: URI, env: MutableMap<String, *>): IjentNioFileSystem {
+    @Suppress("NAME_SHADOWING") val uri = uri.normalize()
     typicalUriChecks(uri)
-
-    if (!uri.path.isNullOrEmpty()) {
-      TODO("Filesystems with non-empty paths are not supported yet.")
+    val ijentFs =
+      try {
+        env[KEY_IJENT_FS] as IjentFileSystemApi
+      }
+      catch (err: Exception) {
+        throw when (err) {
+          is NullPointerException, is ClassCastException ->
+            IllegalArgumentException("Invalid map. `IjentNioFileSystemProvider.newFileSystemMap` should be used for map creation.")
+          else ->
+            err
+        }
+      }
+    val uriParts = getUriParts(uri)
+    criticalSection {
+      for (uriPart in uriParts) {
+        if (uriPart in authorityRegistry) {
+          throw FileSystemAlreadyExistsException(
+            "`$uri` can't be registered because there's an already registered as IJent FS provider `$uriPart`"
+          )
+        }
+      }
+      authorityRegistry[uri] = ijentFs
     }
-
-    val ijentId = IjentId(uri.host)
-
-    val ijentApi = IjentSessionRegistry.instance().ijents[ijentId]
-    require(ijentApi != null) {
-      "$ijentApi is not registered in ${IjentSessionRegistry::class.java.simpleName}"
-    }
-
-    val fs = IjentNioFileSystem(this, ijentApi.fs, onClose = { registeredFileSystems.remove(ijentId) })
-
-    if (registeredFileSystems.putIfAbsent(ijentId, fs) != null) {
-      throw FileSystemAlreadyExistsException("A filesystem for $ijentId is already registered")
-    }
-
-    fs.ijentFs.coroutineScope.coroutineContext.job.invokeOnCompletion {
-      registeredFileSystems.remove(ijentId)
-    }
-
-    return fs
+    return IjentNioFileSystem(this, uri)
   }
 
-  override fun newFileSystem(path: Path, env: MutableMap<String, *>?): IjentNioFileSystem =
+  private fun getUriParts(uri: URI): Collection<URI> = uri.path.asSequence()
+    .mapIndexedNotNull { index, c -> if (c == '/') index else null }
+    .map { URI(uri.scheme, uri.authority, uri.path.substring(0, it), null, null) }
+    .plus(sequenceOf(uri))
+    .toList()
+    .asReversed()
+
+  override fun newFileSystem(path: Path, env: MutableMap<String, *>): IjentNioFileSystem =
     newFileSystem(path.toUri(), env)
 
   override fun getFileSystem(uri: URI): IjentNioFileSystem {
-    typicalUriChecks(uri)
-    return registeredFileSystems[IjentId(uri.host)] ?: throw FileSystemNotFoundException()
+    val uriParts = getUriParts(uri.normalize())
+    val matchingUri = criticalSection {
+      uriParts.firstOrNull { it in authorityRegistry }
+    }
+    if (matchingUri != null) {
+      return IjentNioFileSystem(this, matchingUri)
+    }
+    else {
+      throw FileSystemNotFoundException("`$uri` is not registered as IJent FS provider")
+    }
   }
 
-  override fun getPath(uri: URI): IjentNioPath =
-    getFileSystem(uri).run {
-      getPath(
-        when (ijentFs) {
-          is IjentFileSystemPosixApi -> uri.path
-          is IjentFileSystemWindowsApi -> uri.path.trimStart('/')
-        }
-      )
-    }
+  override fun getPath(uri: URI): IjentNioPath {
+    val nioFs = getFileSystem(uri)
+    val relativeUri = nioFs.uri.relativize(uri)
+    return nioFs.getPath(
+      when (nioFs.ijentFs) {
+        is IjentFileSystemPosixApi -> relativeUri.path.nullize() ?: "/"
+        is IjentFileSystemWindowsApi -> relativeUri.path.trimStart('/')  // TODO Check that uri.path contains the drive letter.
+      }
+    )
+  }
 
   override fun newByteChannel(path: Path, options: Set<OpenOption>, vararg attrs: FileAttribute<*>): SeekableByteChannel =
     newFileChannel(path, options, *attrs)
@@ -93,7 +135,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureIjentNioPath(path)
     require(path.ijentPath is IjentPath.Absolute)
     // TODO Handle options and attrs
-    val fs = registeredFileSystems[path.ijentId] ?: throw FileSystemNotFoundException()
+    val fs = path.nioFs
 
     require(!(READ in options && APPEND in options)) { "READ + APPEND not allowed" }
     require(!(APPEND in options && TRUNCATE_EXISTING in options)) { "APPEND + TRUNCATE_EXISTING not allowed" }
@@ -340,10 +382,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     val fs = ensureIjentNioPath(path).nioFs
 
-    val result = when (fs.ijentFs) {
+    val result = when (val ijentFs = fs.ijentFs) {
       is IjentFileSystemPosixApi ->
         IjentNioPosixFileAttributes(fsBlocking {
-          statPosix(path.ijentPath, fs.ijentFs, LinkOption.NOFOLLOW_LINKS in options)
+          statPosix(path.ijentPath, ijentFs, LinkOption.NOFOLLOW_LINKS in options)
         })
 
       is IjentFileSystemWindowsApi -> TODO()
@@ -390,6 +432,17 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     TODO("Not yet implemented")
   }
 
+  internal fun close(uri: URI) {
+    criticalSection {
+      authorityRegistry.remove(uri)
+    }
+  }
+
+  internal fun ijentFsApi(uri: URI): IjentFileSystemApi? =
+    criticalSection {
+      authorityRegistry[uri]
+    }
+
   @OptIn(ExperimentalContracts::class)
   private fun ensureIjentNioPath(path: Path): IjentNioPath {
     contract {
@@ -416,11 +469,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   private fun typicalUriChecks(uri: URI) {
-    require(uri.host.isNotEmpty())
+    require(uri.authority.isNotEmpty())
 
-    require(uri.scheme == scheme)
-    require(uri.userInfo.isNullOrEmpty())
-    require(uri.query.isNullOrEmpty())
-    require(uri.fragment.isNullOrEmpty())
+    require(uri.scheme == scheme) { "${uri.scheme} != $scheme" }
+    require(uri.query.isNullOrEmpty()) { uri.query }
+    require(uri.fragment.isNullOrEmpty()) { uri.fragment }
   }
 }

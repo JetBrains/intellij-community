@@ -12,7 +12,7 @@ internal class IjentWslNioFileSystem(
   private val ijentFs: FileSystem,
   private val originalFs: FileSystem,
 ) : FileSystem() {
-  override fun toString(): String = """${javaClass.simpleName}(ijentId=${provider.ijentId}, wslLocalRoot=${provider.wslLocalRoot})"""
+  override fun toString(): String = """${javaClass.simpleName}($provider)"""
 
   override fun close() {
     ijentFs.close()

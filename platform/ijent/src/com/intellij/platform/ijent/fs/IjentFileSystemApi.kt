@@ -10,11 +10,6 @@ import java.nio.ByteBuffer
 
 sealed interface IjentFileSystemApi {
   /**
-   * The same [IjentId] as in the corresponding [com.intellij.platform.ijent.IjentApi].
-   */
-  val id: IjentId
-
-  /**
    * The same [CoroutineScope] as in the corresponding [com.intellij.platform.ijent.IjentApi].
    */
   @Deprecated("API should avoid exposing coroutine scopes")

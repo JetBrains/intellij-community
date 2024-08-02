@@ -15,8 +15,6 @@ import kotlin.contracts.contract
 /** This service should know about all running IJents. */
 @Service(Service.Level.APP)
 class IjentSessionRegistry {
-  val ijents: Map<IjentId, IjentApi> get() = ijentsInternal
-
   private val counter = AtomicLong()
 
   private val ijentsInternal = ConcurrentHashMap<IjentId, IjentApi>()

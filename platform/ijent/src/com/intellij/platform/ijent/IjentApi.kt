@@ -13,8 +13,6 @@ import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
  * Usually, [com.intellij.platform.ijent.deploy] creates instances of [IjentApi].
  */
 sealed interface IjentApi : AutoCloseable {
-  val id: IjentId
-
   val platform: IjentPlatform
 
   /**

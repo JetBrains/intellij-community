@@ -7,7 +7,6 @@ import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
 import com.intellij.util.containers.forEachGuaranteed
@@ -67,8 +66,7 @@ class IjentWslNioFsToggleStrategy(
   }
 
   private suspend fun handleWslDistributionAddition(distro: WSLDistribution) {
-    val ijentApi = WslIjentManager.instanceAsync().getIjentApi(distro, null, false)
-    switchToIjentFs(distro, ijentApi.id)
+    switchToIjentFs(distro)
   }
 
   private fun handleWslDistributionDeletion(distro: WSLDistribution) {
@@ -78,10 +76,14 @@ class IjentWslNioFsToggleStrategy(
     }
   }
 
-  fun switchToIjentFs(distro: WSLDistribution, ijentId: IjentId) {
+  suspend fun switchToIjentFs(distro: WSLDistribution) {
     val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
     try {
-      ijentFsProvider.newFileSystem(ijentId.uri, null)
+      val ijentFs = WslIjentManager.instanceAsync().getIjentApi(distro, null, false).fs
+      ijentFsProvider.newFileSystem(
+        URI("ijent", "wsl", "/${distro.id}", null, null),
+        IjentNioFileSystemProvider.newFileSystemMap(ijentFs),
+      )
     }
     catch (_: FileSystemAlreadyExistsException) {
       // Nothing.
@@ -93,11 +95,10 @@ class IjentWslNioFsToggleStrategy(
       }
       else {
         IjentWslNioFileSystemProvider(
-          ijentId = ijentId,
-          wslLocalRoot = underlyingProvider.getLocalFileSystem().getPath(distro.getWindowsPath("/")),
+          wslDistribution = distro,
           ijentFsProvider = ijentFsProvider,
           originalFsProvider = TracingFileSystemProvider(underlyingProvider),
-        ).getFileSystem(ijentId.uri)
+        ).getFileSystem(distro.getUNCRootPath().toUri())
       }
     }
   }

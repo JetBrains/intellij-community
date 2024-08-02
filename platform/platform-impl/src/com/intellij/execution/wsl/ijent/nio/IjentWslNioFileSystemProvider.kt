@@ -1,10 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
+import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
-import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixUserPrincipal
@@ -30,23 +31,22 @@ import kotlin.io.path.name
  *
  * Also, this wrapper delegates calls to the default file system [originalFsProvider]
  * for the methods not implemented in [ijentFsProvider] yet.
+ *
+ * Normally, there's no need to create this filesystem manually because [com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler]
+ * does this job automatically.
+ * It should be used even for manual creation of filesystems.
+ * Nevertheless, in case when this filesystem should be accessed directly,
+ * an instance of [IjentWslNioFileSystem] can be obtained with a URL like "ijent://wsl/distribution-name".
  */
 internal class IjentWslNioFileSystemProvider(
-  internal val ijentId: IjentId,
-  internal val wslLocalRoot: Path,
+  wslDistribution: WSLDistribution,
   private val ijentFsProvider: FileSystemProvider,
   internal val originalFsProvider: FileSystemProvider,
 ) : FileSystemProvider(), RoutingAwareFileSystemProvider {
-  init {
-    require(wslLocalRoot.isAbsolute)
-  }
+  private val ijentFsUri: URI = URI("ijent", "wsl", "/${wslDistribution.id}", null, null)
+  private val wslLocalRoot: Path = originalFsProvider.getFileSystem(URI("file:/")).getPath(wslDistribution.getWindowsPath("/"))
 
-  private val ijentUserInfo: IjentInfo.User by lazy {
-    val api = IjentSessionRegistry.instance().ijents[ijentId] ?: error("The session $ijentId was unregistered")
-    api.info.user
-  }
-
-  override fun toString(): String = """${javaClass.simpleName}(ijentId=$ijentId, wslLocalRoot=$wslLocalRoot)"""
+  override fun toString(): String = """${javaClass.simpleName}(${wslLocalRoot})"""
 
   override fun canHandleRouting(): Boolean = true
 
@@ -54,38 +54,33 @@ internal class IjentWslNioFileSystemProvider(
     if (this is IjentNioPath)
       this
     else
-      fold(ijentFsProvider.getPath(ijentId.uri.resolve("/")) as IjentNioPath, IjentNioPath::resolve)
-
-  private fun Path.toDefaultPath(): Path =
-    if (this is IjentNioPath)
-      wslLocalRoot.resolve(this)
-    else
-      this
+      fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, IjentNioPath::resolve)
 
   override fun getScheme(): String =
     originalFsProvider.scheme
 
-  override fun newFileSystem(path: Path, env: MutableMap<String, *>?): IjentWslNioFileSystem {
-    val ijentNioPath = path.toIjentPath()
-    require(ijentNioPath.toUri() == ijentId.uri) { "${ijentNioPath.toUri()} != ${ijentId.uri}" }
-    return IjentWslNioFileSystem(
-      provider = this,
-      ijentFs = ijentFsProvider.newFileSystem(ijentNioPath, env),
-      originalFs = originalFsProvider.newFileSystem(Path.of("."), env),
-    )
-  }
+  override fun newFileSystem(path: Path, env: MutableMap<String, *>?): IjentWslNioFileSystem =
+    getFileSystem(path.toUri())
 
   override fun getFileSystem(uri: URI): IjentWslNioFileSystem {
-    require(uri == ijentId.uri) { "$uri != ${ijentId.uri}" }
+    require(uri.scheme == scheme) { "Wrong scheme in `$uri` (expected `$scheme`)" }
+    val wslId = wslIdFromPath(originalFsProvider.getPath(uri))
     return IjentWslNioFileSystem(
       provider = this,
-      ijentFs = ijentFsProvider.getFileSystem(uri),
+      ijentFs = ijentFsProvider.getFileSystem(URI("ijent", "wsl", "/$wslId", null, null)),
       originalFsProvider.getFileSystem(URI("file:/"))
     )
   }
 
   override fun newFileSystem(uri: URI, env: MutableMap<String, *>?): IjentWslNioFileSystem =
     getFileSystem(uri)
+
+  private fun wslIdFromPath(path: Path): String {
+    val root = path.toAbsolutePath().root.toString()
+    require(root.startsWith("""\\wsl""")) { "`$path` doesn't look like a file on WSL" }
+    val wslId = root.removePrefix("""\\wsl""").substringAfter('\\').trimEnd('\\')
+    return wslId
+  }
 
   override fun checkAccess(path: Path, vararg modes: AccessMode): Unit =
     ijentFsProvider.checkAccess(path.toIjentPath(), *modes)
@@ -187,27 +182,19 @@ internal class IjentWslNioFileSystemProvider(
     // the function always assumes that the returned object is DosFileAttributes on Windows,
     // and that's always true with the default WindowsFileSystemProvider.
 
-    val actualType = when (ijentUserInfo) {
-      is IjentPosixInfo.User ->
-        if (DosFileAttributes::class.java.isAssignableFrom(type)) PosixFileAttributes::class.java
-        else type
+    val actualType =
+      if (DosFileAttributes::class.java.isAssignableFrom(type)) PosixFileAttributes::class.java
+      else type
 
-      is IjentWindowsInfo.User -> TODO()
-    }
-
-    val actualAttrs = ijentFsProvider.readAttributes(path.toIjentPath(), actualType, *options)
-
-    val resultAttrs = when (actualAttrs) {
-      is DosFileAttributes -> actualAttrs
+    val ijentNioPath = path.toIjentPath()
+    val resultAttrs = when (val actualAttrs = ijentFsProvider.readAttributes(ijentNioPath, actualType, *options)) {
+      is DosFileAttributes -> actualAttrs  // TODO How can it be possible? It's certainly known that the remote OS is GNU/Linux.
 
       is PosixFileAttributes ->
-        when (val ijentUserInfo = ijentUserInfo) {
-          is IjentPosixInfo.User ->
-            IjentNioPosixFileAttributesWithDosAdapter(ijentUserInfo, actualAttrs, path.name.startsWith("."))
-
-          is IjentWindowsInfo.User ->
-            actualAttrs
-        }
+        IjentNioPosixFileAttributesWithDosAdapter(
+          ijentNioPath.fileSystem.ijentFs.user as IjentPosixInfo.User,
+          actualAttrs, path.name.startsWith("."),
+        )
 
       else -> actualAttrs
     }

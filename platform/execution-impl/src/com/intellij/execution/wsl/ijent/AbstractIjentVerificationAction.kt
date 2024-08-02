@@ -18,7 +18,7 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentMissingBinary
-import com.intellij.platform.ijent.community.impl.nio.asNioFileSystem
+import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.deploy
 import com.intellij.platform.ijent.executeProcess
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
@@ -26,6 +26,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.ByteArrayOutputStream
+import java.net.URI
 import kotlin.io.path.isDirectory
 
 /**
@@ -86,9 +87,15 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
                   }
 
                   launch(Dispatchers.IO) {
-                    val nioFs = ijent.fs.asNioFileSystem()
                     val path = "/etc"
-                    val isDir = nioFs.getPath(path).isDirectory()
+                    val isDir =
+                      IjentNioFileSystemProvider.getInstance()
+                        .newFileSystem(
+                          URI("ijent://some-random-string"),
+                          IjentNioFileSystemProvider.newFileSystemMap(ijent.fs),
+                        ).use { nioFs ->
+                          nioFs.getPath(path).isDirectory()
+                        }
                     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
                       Messages.showInfoMessage("$path is directory: $isDir", title)
                     }

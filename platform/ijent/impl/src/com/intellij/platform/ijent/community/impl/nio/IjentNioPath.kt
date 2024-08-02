@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.fs.*
 import java.net.URI
 import java.nio.file.*
@@ -12,22 +11,20 @@ import java.nio.file.*
  * How to get a path:
  * ```kotlin
  * val ijent: IjentApi = getIjentFromSomewhere()
- * val path: Path = ijentFs.asNioFileSystem().getPath("/usr/bin/cowsay")
+ * val path: Path = ijent.fs.asNioFileSystem().getPath("/usr/bin/cowsay")
  * ```
  */
 class IjentNioPath internal constructor(
   val ijentPath: IjentPath,
   internal val nioFs: IjentNioFileSystem,
 ) : Path {
-  val ijentId: IjentId get() = nioFs.ijentFs.id
-
   private val isWindows
     get() = when (nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> false
       is IjentFileSystemWindowsApi -> true
     }
 
-  override fun getFileSystem(): FileSystem = nioFs
+  override fun getFileSystem(): IjentNioFileSystem = nioFs
 
   override fun isAbsolute(): Boolean =
     when (ijentPath) {
@@ -106,12 +103,7 @@ class IjentNioPath internal constructor(
   override fun toUri(): URI =
     when (ijentPath) {
       is IjentPath.Absolute ->
-        URI(
-          "ijent",
-          ijentId.id,
-          ijentPath.toString(),
-          null,
-        )
+        nioFs.uri.resolve(ijentPath.toString())
 
       is IjentPath.Relative ->
         throw InvalidPathException(toString(), "Can't create a URL from a relative path") // TODO Really no way?

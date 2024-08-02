@@ -3,6 +3,8 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.fs.*
 import kotlinx.coroutines.isActive
+import org.jetbrains.annotations.ApiStatus
+import java.net.URI
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
 import java.nio.file.PathMatcher
@@ -11,14 +13,19 @@ import java.nio.file.attribute.UserPrincipalLookupService
 
 class IjentNioFileSystem internal constructor(
   private val fsProvider: IjentNioFileSystemProvider,
-  internal val ijentFs: IjentFileSystemApi,
-  private val onClose: () -> Unit,
+  internal val uri: URI,
 ) : FileSystem() {
   override fun close() {
-    onClose()
+    fsProvider.close(uri)
   }
 
   override fun provider(): IjentNioFileSystemProvider = fsProvider
+
+  val ijentFs: IjentFileSystemApi
+    @ApiStatus.Internal
+    get() =
+      fsProvider.ijentFsApi(uri)
+      ?: throw java.nio.file.FileSystemException("`$uri` was removed from IJent FS providers")
 
   override fun isOpen(): Boolean =
     ijentFs.coroutineScope.isActive
