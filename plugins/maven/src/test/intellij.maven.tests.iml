@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />
   </component>
 </module>
