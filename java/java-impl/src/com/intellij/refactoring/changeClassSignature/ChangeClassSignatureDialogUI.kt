@@ -17,7 +17,6 @@ class ChangeClassSignatureDialogUI(val classElement: PsiElement, val table: JCom
     }
     row {
       cell(table)
-        .resizableColumn()
         .applyToComponent { minimumSize = Dimension(210, 100) }
         .align(Align.FILL)
         .label(JavaRefactoringBundle.message("changeClassSignature.parameters.panel.border.title"), LabelPosition.TOP)
