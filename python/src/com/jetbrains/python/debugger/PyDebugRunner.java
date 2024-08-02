@@ -41,6 +41,7 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
@@ -148,21 +149,19 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return false;
   }
 
+  @RequiresEdt
   protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, final @NotNull ExecutionEnvironment environment) {
-    return AppUIExecutor.onUiThread()
-      .submit(FileDocumentManager.getInstance()::saveAllDocuments)
-      .thenAsync(ignored -> {
-        if (Registry.is("python.use.targets.api")) {
-          return createSessionUsingTargetsApi(state, environment);
-        }
-        if (PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
-          Project project = environment.getProject();
-          Module module = PyRunnerUtil.getModule(state);
-          throw new RuntimeExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
-                                                  () -> showPythonInterpreterSettings(project, module));
-        }
-        return createSessionLegacy(state, environment);
-      });
+    FileDocumentManager.getInstance().saveAllDocuments();
+    if (Registry.is("python.use.targets.api")) {
+      return createSessionUsingTargetsApi(state, environment);
+    }
+    if (PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
+      Project project = environment.getProject();
+      Module module = PyRunnerUtil.getModule(state);
+      throw new RuntimeExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
+                                              () -> showPythonInterpreterSettings(project, module));
+    }
+    return createSessionLegacy(state, environment);
   }
 
   private @NotNull Promise<XDebugSession> createSessionUsingTargetsApi(@NotNull RunProfileState state,
