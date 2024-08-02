@@ -18,11 +18,11 @@ package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
 import com.intellij.history.core.DataStreamUtil;
+import com.intellij.history.core.HistoryPathFilter;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,8 +103,8 @@ public abstract class StructuralChange extends Change {
   }
 
   @Override
-  public boolean affectsMatching(@NotNull MinusculeMatcher matcher) {
-    return ContainerUtil.exists(getAffectedPaths(), matcher::matches);
+  public boolean affectsMatching(@NotNull HistoryPathFilter historyPathFilter) {
+    return ContainerUtil.exists(getAffectedPaths(), historyPathFilter::affectsMatching);
   }
 
   protected String[] getAffectedPaths() {

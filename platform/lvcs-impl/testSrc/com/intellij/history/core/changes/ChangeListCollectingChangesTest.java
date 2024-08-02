@@ -16,6 +16,7 @@
 
 package com.intellij.history.core.changes;
 
+import com.intellij.history.core.HistoryPathFilter;
 import org.junit.Test;
 
 import java.util.List;
@@ -358,6 +359,6 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   }
 
   private List<ChangeSet> getChangesFor(String path, String pattern) {
-    return collectChanges(facade, path, PROJECT_ID, pattern);
+    return collectChanges(facade, path, PROJECT_ID, HistoryPathFilter.create(r.getPath(), pattern));
   }
 }

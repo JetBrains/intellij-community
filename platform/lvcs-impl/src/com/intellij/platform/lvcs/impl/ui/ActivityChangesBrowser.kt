@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
-import com.intellij.history.core.toLocalHistoryMatcher
+import com.intellij.history.core.HistoryPathFilter
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -31,7 +31,7 @@ import javax.swing.JTree
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultTreeModel
 
-internal class ActivityChangesBrowser(project: Project, private val isSwitchingDiffModeAllowed: Boolean, private val searchField: JTextComponent) : AsyncChangesBrowserBase(project, false, false), Disposable {
+internal class ActivityChangesBrowser(private val project: Project, private val isSwitchingDiffModeAllowed: Boolean, private val searchField: JTextComponent) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private var diffData: ActivityDiffData? = null
 
   init {
@@ -51,7 +51,7 @@ internal class ActivityChangesBrowser(project: Project, private val isSwitchingD
 
     val changesList = activityDiffData.presentableChanges
     val sortedChangesList = changesList.sortedWith(comparing(PresentableChange::getFilePath, PATH_COMPARATOR))
-    val matcher = searchField.text.toLocalHistoryMatcher()
+    val matcher = HistoryPathFilter.create(searchField.text, project)?.matcher
     for (presentableChange in sortedChangesList) {
       val filePath = presentableChange.filePath
       val filePathNode = if (filePath.isDirectory) PresentableDirectoryChangeNode(presentableChange, matcher) else PresentableChangeNode(presentableChange, matcher)

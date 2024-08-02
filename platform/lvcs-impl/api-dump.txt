@@ -32,7 +32,7 @@ f:com.intellij.history.core.ChangeListStorageImpl
 - readPrevious(I,it.unimi.dsi.fastutil.ints.IntSet):com.intellij.history.core.ChangeSetHolder
 - writeNextSet(com.intellij.history.core.changes.ChangeSet):V
 *c:com.intellij.history.core.ChangeProcessorBase
-- <init>(java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
+- <init>(java.lang.String,com.intellij.history.core.HistoryPathFilter,kotlin.jvm.functions.Function1):V
 - process(com.intellij.history.core.changes.ChangeSet,com.intellij.history.core.changes.Change,java.lang.String):V
 f:com.intellij.history.core.ChangeSetHolder
 - java.lang.Record
@@ -60,6 +60,14 @@ f:com.intellij.history.core.DataStreamUtil
 - s:writeEntry(java.io.DataOutput,com.intellij.history.core.tree.Entry):V
 - s:writeString(java.io.DataOutput,java.lang.String):V
 - s:writeStringOrNull(java.io.DataOutput,java.lang.String):V
+*f:com.intellij.history.core.HistoryPathFilter
+- *sf:Companion:com.intellij.history.core.HistoryPathFilter$Companion
+- f:affectsMatching(java.lang.String):Z
+- sf:create(java.lang.String,com.intellij.openapi.project.Project):com.intellij.history.core.HistoryPathFilter
+- sf:create(java.lang.String,java.lang.String):com.intellij.history.core.HistoryPathFilter
+- f:getMatcher():com.intellij.psi.codeStyle.MinusculeMatcher
+*f:com.intellij.history.core.HistoryPathFilter$Companion
+- f:create(java.lang.String,com.intellij.openapi.project.Project):com.intellij.history.core.HistoryPathFilter
 com.intellij.history.core.LabelImpl
 - a:getByteContent(com.intellij.history.core.tree.RootEntry,java.lang.String):com.intellij.history.ByteContent
 - a:getLabelChangeId():J
@@ -91,7 +99,7 @@ a:com.intellij.history.core.LocalHistoryFacade$Listener
 - changeAdded(com.intellij.history.core.changes.Change):V
 - changeSetFinished(com.intellij.history.core.changes.ChangeSet):V
 f:com.intellij.history.core.LocalHistoryFacadeKt
-- *sf:collectChanges(com.intellij.history.core.LocalHistoryFacade,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
+- *sf:collectChanges(com.intellij.history.core.LocalHistoryFacade,java.lang.String,java.lang.String,com.intellij.history.core.HistoryPathFilter,kotlin.jvm.functions.Function1):V
 f:com.intellij.history.core.Paths
 - sf:DELIM:C
 - <init>():V
@@ -112,8 +120,8 @@ f:com.intellij.history.core.Paths
 - s:useSystemCaseSensitivity():V
 f:com.intellij.history.core.RevisionsCollector
 - <init>():V
-- s:collect(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry,java.lang.String,java.lang.String,java.lang.String):java.util.List
-- s:collect(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry,java.lang.String,java.lang.String,java.lang.String,Z):java.util.List
+- s:collect(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry,java.lang.String,java.lang.String):java.util.List
+- s:collect(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry,java.lang.String,java.lang.String,com.intellij.history.core.HistoryPathFilter,Z):java.util.List
 c:com.intellij.history.core.StoredContent
 - com.intellij.history.core.Content
 - <init>(I):V
@@ -132,7 +140,7 @@ a:com.intellij.history.core.changes.Change
 - p:<init>(J):V
 - p:<init>(java.io.DataInput):V
 - accept(com.intellij.history.core.changes.ChangeVisitor):V
-- a:affectsMatching(com.intellij.psi.codeStyle.MinusculeMatcher):Z
+- a:affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
 - a:affectsMatching(java.util.regex.Pattern):Z
 - a:affectsPath(java.lang.String):Z
 - a:affectsProject(java.lang.String):Z
@@ -235,7 +243,7 @@ c:com.intellij.history.core.changes.PutLabelChange
 - <init>(J,java.lang.String,java.lang.String):V
 - <init>(java.io.DataInput):V
 - accept(com.intellij.history.core.changes.ChangeVisitor):V
-- affectsMatching(com.intellij.psi.codeStyle.MinusculeMatcher):Z
+- affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
 - affectsMatching(java.util.regex.Pattern):Z
 - affectsPath(java.lang.String):Z
 - affectsProject(java.lang.String):Z
@@ -272,7 +280,7 @@ a:com.intellij.history.core.changes.StructuralChange
 - pf:myPath:java.lang.String
 - p:<init>(J,java.lang.String):V
 - p:<init>(java.io.DataInput):V
-- affectsMatching(com.intellij.psi.codeStyle.MinusculeMatcher):Z
+- affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
 - affectsMatching(java.util.regex.Pattern):Z
 - affectsPath(java.lang.String):Z
 - affectsProject(java.lang.String):Z

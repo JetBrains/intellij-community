@@ -4,8 +4,8 @@ package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
 import com.intellij.history.core.DataStreamUtil;
+import com.intellij.history.core.HistoryPathFilter;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -62,7 +62,7 @@ public class PutLabelChange extends Change {
   }
 
   @Override
-  public boolean affectsMatching(@NotNull MinusculeMatcher matcher) {
+  public boolean affectsMatching(@NotNull HistoryPathFilter historyPathFilter) {
     return false;
   }
 

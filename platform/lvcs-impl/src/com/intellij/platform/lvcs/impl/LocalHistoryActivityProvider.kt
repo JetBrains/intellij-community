@@ -32,16 +32,17 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   override fun loadActivityList(scope: ActivityScope, fileFilter: String?): ActivityData {
     gateway.registerUnsavedDocuments(facade)
 
+    val filter = HistoryPathFilter.create(fileFilter, project)
     val projectId = project.locationHash
     if (scope is ActivityScope.File) {
-      return loadFileActivityList(projectId, scope, fileFilter)
+      return loadFileActivityList(projectId, scope, filter)
     } else if (scope is ActivityScope.Files) {
-      return loadFilesActivityList(projectId, scope, fileFilter)
+      return loadFilesActivityList(projectId, scope, filter)
     }
-    return loadRecentActivityList(projectId, scope, fileFilter)
+    return loadRecentActivityList(projectId, scope, filter)
   }
 
-  private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: String?): ActivityData {
+  private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: HistoryPathFilter?): ActivityData {
     val path = gateway.getPathOrUrl(scope.file)
     val activityItems = mutableListOf<ActivityItem>()
     val affectedPaths = mutableSetOf(path)
@@ -51,7 +52,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return ActivityData(activityItems).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
   }
 
-  private fun loadFilesActivityList(projectId: String, scope: ActivityScope.Files, scopeFilter: String?): ActivityData {
+  private fun loadFilesActivityList(projectId: String, scope: ActivityScope.Files, scopeFilter: HistoryPathFilter?): ActivityData {
     val paths = scope.files.map { gateway.getPathOrUrl(it) }
     val activityItems = mutableListOf<ActivityItem>()
     val affectedPaths = paths.toMutableSet()
@@ -63,7 +64,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return ActivityData(activityItems.toSet().sortedByDescending { it.timestamp }).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
   }
 
-  private fun doLoadPathActivityList(projectId: String, scope: ActivityScope, path: String, scopeFilter: String?,
+  private fun doLoadPathActivityList(projectId: String, scope: ActivityScope, path: String, scopeFilter: HistoryPathFilter?,
                                      affectedPaths: MutableSet<String>, activityItems: MutableList<ActivityItem>) {
     var lastEventLabel: ChangeSet? = null
     val userLabels = mutableListOf<ChangeSet>()
@@ -89,10 +90,9 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     })
   }
 
-  private fun loadRecentActivityList(projectId: String, scope: ActivityScope, fileFilter: String?): ActivityData {
+  private fun loadRecentActivityList(projectId: String, scope: ActivityScope, fileFilter: HistoryPathFilter?): ActivityData {
     val result = mutableListOf<ActivityItem>()
     val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
-    val matcher = fileFilter.toLocalHistoryMatcher()
     for (changeSet in facade.changes) {
       if (changeSet.isSystemLabelOnly) continue
       if (changeSet.isLabelOnly) {
@@ -100,7 +100,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
       }
       else {
         if (!changeSet.changes.any { change ->
-            change !is PutLabelChange && paths.any { path -> change.matches(projectId, path, matcher) }
+            change !is PutLabelChange && paths.any { path -> change.matches(projectId, path, fileFilter) }
           }) continue
       }
       result.add(changeSet.toActivityItem(scope))

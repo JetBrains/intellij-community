@@ -24,6 +24,8 @@ import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -194,13 +196,15 @@ interface ChangeProcessor {
 }
 
 @ApiStatus.Experimental
-open class ChangeProcessorBase(private val projectId: String?, patternString: String?,
-                               private val consumer: (ChangeSet) -> Unit) : ChangeProcessor {
-  private val pattern = patternString.toLocalHistoryMatcher()
+open class ChangeProcessorBase(
+  private val projectId: String?,
+  private val filter: HistoryPathFilter?,
+  private val consumer: (ChangeSet) -> Unit,
+) : ChangeProcessor {
   private val processedChangesSets = mutableSetOf<Long>()
 
   override fun process(changeSet: ChangeSet, change: Change, changePath: String) {
-    if (!processedChangesSets.contains(changeSet.id) && change.matches(projectId, changePath, pattern)) {
+    if (!processedChangesSets.contains(changeSet.id) && change.matches(projectId, changePath, filter)) {
       processedChangesSets.add(changeSet.id)
       consumer(changeSet)
     }
@@ -208,8 +212,12 @@ open class ChangeProcessorBase(private val projectId: String?, patternString: St
 }
 
 @ApiStatus.Internal
-class ChangeAndPathProcessor(projectId: String?, patternString: String?, private val pathConsumer: (String) -> Unit,
-                             changeConsumer: (ChangeSet) -> Unit) : ChangeProcessorBase(projectId, patternString, changeConsumer) {
+class ChangeAndPathProcessor(
+  projectId: String?,
+  filter: HistoryPathFilter?,
+  private val pathConsumer: (String) -> Unit,
+  changeConsumer: (ChangeSet) -> Unit,
+) : ChangeProcessorBase(projectId, filter, changeConsumer) {
   override fun process(changeSet: ChangeSet, change: Change, changePath: String) {
     pathConsumer(changePath)
     super.process(changeSet, change, changePath)
@@ -217,8 +225,8 @@ class ChangeAndPathProcessor(projectId: String?, patternString: String?, private
 }
 
 @ApiStatus.Experimental
-fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, patternString: String?, consumer: (ChangeSet) -> Unit) {
-  collectChanges(startPath, ChangeProcessorBase(projectId, patternString, consumer))
+fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, filter: HistoryPathFilter?, consumer: (ChangeSet) -> Unit) {
+  collectChanges(startPath, ChangeProcessorBase(projectId, filter, consumer))
 }
 
 @ApiStatus.Internal
@@ -251,19 +259,47 @@ fun LocalHistoryFacade.collectChanges(startPath: String, processor: ChangeProces
   }
 }
 
-internal fun String?.toLocalHistoryMatcher(): MinusculeMatcher? = this?.let { NameUtil.buildMatcher("*$this").build() }
-internal fun Change.matches(projectId: String?, path: String, matcher: MinusculeMatcher?): Boolean =
+@ApiStatus.Experimental
+class HistoryPathFilter private constructor(private val guessedProjectDir: String?, pathFilter: String) {
+  val matcher: MinusculeMatcher = NameUtil.buildMatcher("*$pathFilter").build()
+
+  /**
+   * If project dir is guessed, then matches part of [path] relative to it, otherwise only last [path] segment is matched
+   */
+  fun affectsMatching(path: String): Boolean {
+    val partToMatch =
+      if (guessedProjectDir != null && path.startsWith(guessedProjectDir)) path.substring(guessedProjectDir.length)
+      else Paths.getNameOf(path)
+    return matcher.matches(partToMatch)
+  }
+
+  companion object {
+    @JvmStatic
+    fun create(pathPattern: String?, project: Project): HistoryPathFilter? =
+      if (pathPattern == null) null else HistoryPathFilter(project.guessProjectDir()?.path, pathPattern)
+
+    @TestOnly
+    @JvmStatic
+    @JvmName("create")
+    internal fun create(guessedProjectDir: String?, pathPattern: String?): HistoryPathFilter? =
+      if (pathPattern == null) null else HistoryPathFilter(guessedProjectDir, pathPattern)
+  }
+}
+
+internal fun Change.matches(projectId: String?, path: String, pathFilter: HistoryPathFilter?): Boolean =
   if (affectsPath(path) || affectsProject(projectId)) {
-    matcher?.let { affectsMatching(it) } ?: true
+    pathFilter?.let { affectsMatching(it) } ?: true
   } else false
 
 @ApiStatus.Internal
-fun LocalHistoryFacade.processContents(gateway: IdeaGateway,
-                                       root: RootEntry,
-                                       startPath: String,
-                                       changeSets: Set<Long>,
-                                       before: Boolean,
-                                       processor: (Long, String?) -> Boolean) {
+fun LocalHistoryFacade.processContents(
+  gateway: IdeaGateway,
+  root: RootEntry,
+  startPath: String,
+  changeSets: Set<Long>,
+  before: Boolean,
+  processor: (Long, String?) -> Boolean,
+) {
   val processContents = fun(changeSetId: Long, path: String): Boolean {
     if (!changeSets.contains(changeSetId)) return true
     val entry = root.findEntry(path)
