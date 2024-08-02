@@ -29,9 +29,13 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Service to synchronize notifications showing during hot swap.
+ * @see trackNotification
+ */
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class HotSwapStatusNotificationManager(private val project: Project) : Disposable.Default {
+class HotSwapStatusNotificationManager private constructor(private val project: Project) : Disposable.Default {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): HotSwapStatusNotificationManager = project.service()
@@ -39,16 +43,22 @@ class HotSwapStatusNotificationManager(private val project: Project) : Disposabl
 
   private val notifications = CopyOnWriteArrayList<Notification>()
 
+  /**
+   * Add the notification to a tracking list, that will be cleaned after [clearNotifications] call.
+   */
   fun trackNotification(notification: Notification) {
     notification.whenExpired { notifications.remove(notification) }
     notifications.add(notification)
   }
 
+  /**
+   * Expire all previously added notifications.
+   */
   internal fun clearNotifications() {
     notifications.toArray().forEach { (it as Notification).expire() }
   }
 
-  fun showSuccessNotification(scope: CoroutineScope, disposable: Disposable? = null) {
+  internal fun showSuccessNotification(scope: CoroutineScope, disposable: Disposable? = null) {
     scope.launch(Dispatchers.EDT) {
       val frame = WindowManager.getInstance().getFrame(project) ?: return@launch
       val factory = JBPopupFactory.getInstance() ?: return@launch

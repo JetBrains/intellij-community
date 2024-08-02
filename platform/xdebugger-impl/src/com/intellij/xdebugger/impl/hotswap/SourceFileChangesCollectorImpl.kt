@@ -22,11 +22,14 @@ fun interface SourceFileChangeFilter<T> {
   suspend fun isApplicable(change: T): Boolean
 }
 
+/**
+ * Default implementation of [SourceFileChangesCollector], that track modification of all available documents.
+ */
 @ApiStatus.Internal
 class SourceFileChangesCollectorImpl(
   private val coroutineScope: CoroutineScope,
   private val listener: SourceFileChangesListener<VirtualFile>,
-  vararg val filters: SourceFileChangeFilter<VirtualFile>,
+  private vararg val filters: SourceFileChangeFilter<VirtualFile>,
 ) : SourceFileChangesCollector<VirtualFile>, Disposable.Default {
   private val currentChanges = AtomicReference(mutableSetOf<VirtualFile>())
 

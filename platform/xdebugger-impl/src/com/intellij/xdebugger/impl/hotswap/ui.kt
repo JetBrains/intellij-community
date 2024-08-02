@@ -5,8 +5,14 @@ import com.intellij.ide.HelpTooltip
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+/**
+ * Extension point to configure UI for different IDEs.
+ */
 @ApiStatus.Internal
 interface HotSwapUiExtension {
+  /**
+   * @return true if this EP is applicable for the current IDE
+   */
   fun isApplicable(): Boolean = true
   val hotSwapIcon: Icon
   fun createTooltip(): HelpTooltip? = null

@@ -15,10 +15,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class HotSwapSessionManager(private val project: Project, private val parentScope: CoroutineScope) {
+class HotSwapSessionManager private constructor(private val project: Project, private val parentScope: CoroutineScope) {
   private val listeners = DisposableWrapperList<HotSwapChangesListener>()
   private val sessions = DisposableWrapperList<HotSwapSession<*>>()
 
+  /**
+   * Start a hot swap session and source file tracking.
+   *
+   * @param provider platform-specific provider of hot swap
+   * @param disposable handles the session end
+   */
   fun <T> createSession(provider: HotSwapProvider<T>, disposable: Disposable): HotSwapSession<T> {
     val hotSwapSession = HotSwapSession(project, provider, parentScope)
     Disposer.register(disposable, hotSwapSession)
@@ -67,7 +73,7 @@ internal fun interface HotSwapChangesListener {
 }
 
 @ApiStatus.Internal
-class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProvider<T>, parentScope: CoroutineScope) : Disposable {
+class HotSwapSession<T> internal constructor(val project: Project, internal val provider: HotSwapProvider<T>, parentScope: CoroutineScope) : Disposable {
   internal val coroutineScope = parentScope.childScope("HotSwapSession $this")
   private val hasActiveChanges = AtomicBoolean()
   private lateinit var changesCollector: SourceFileChangesCollector<T>
@@ -102,8 +108,15 @@ class HotSwapSession<T>(val project: Project, internal val provider: HotSwapProv
     }
   }
 
+  /**
+   * Get elements modified since the last hot swap.
+   */
   fun getChanges() = changesCollector.getChanges()
 
+  /**
+   * Start a hot swap process.
+   * @return a callback to report the hot swap status
+   */
   fun startHotSwapListening(): HotSwapResultListener {
     HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
     currentStatus = HotSwapVisibleStatus.IN_PROGRESS
