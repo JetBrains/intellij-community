@@ -110,8 +110,8 @@ internal class IjentWslNioFileSystemProvider(
     originalFsProvider.createLink(link, existing)
   }
 
-  override fun deleteIfExists(path: Path?): Boolean =
-    originalFsProvider.deleteIfExists(path)
+  override fun deleteIfExists(path: Path): Boolean =
+    ijentFsProvider.deleteIfExists(path.toIjentPath())
 
   override fun readSymbolicLink(link: Path?): Path =
     originalFsProvider.readSymbolicLink(link)
@@ -149,20 +149,20 @@ internal class IjentWslNioFileSystemProvider(
       }
     }
 
-  override fun createDirectory(dir: Path?, vararg attrs: FileAttribute<*>?) {
-    originalFsProvider.createDirectory(dir, *attrs)
+  override fun createDirectory(dir: Path, vararg attrs: FileAttribute<*>?) {
+    ijentFsProvider.createDirectory(dir.toIjentPath(), *attrs)
   }
 
-  override fun delete(path: Path?) {
-    originalFsProvider.delete(path)
+  override fun delete(path: Path) {
+    ijentFsProvider.delete(path.toIjentPath())
   }
 
-  override fun copy(source: Path?, target: Path?, vararg options: CopyOption?) {
-    originalFsProvider.copy(source, target, *options)
+  override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
+    ijentFsProvider.copy(source.toIjentPath(), target.toIjentPath(), *options)
   }
 
-  override fun move(source: Path?, target: Path?, vararg options: CopyOption?) {
-    originalFsProvider.move(source, target, *options)
+  override fun move(source: Path, target: Path, vararg options: CopyOption?) {
+    ijentFsProvider.move(source.toIjentPath(), target.toIjentPath(), *options)
   }
 
   override fun isSameFile(path: Path?, path2: Path?): Boolean =
