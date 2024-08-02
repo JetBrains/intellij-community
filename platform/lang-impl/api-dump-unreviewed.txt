@@ -10980,6 +10980,7 @@ c:com.intellij.execution.impl.ConsoleViewImpl
 - p:calcNextOccurrence(I):com.intellij.ide.OccurenceNavigator$OccurenceInfo
 - canPause():Z
 - clear():V
+- f:clearMessageFilters():V
 - pf:clearThisConsoleAction():com.intellij.openapi.actionSystem.AnAction
 - p:createCenterComponent():javax.swing.JComponent
 - p:createCompositeFilter():com.intellij.execution.filters.CompositeFilter

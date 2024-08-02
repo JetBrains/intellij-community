@@ -771,6 +771,10 @@ open class ConsoleViewImpl protected constructor(
     myCustomFilters.add(filter)
   }
 
+  fun clearMessageFilters() {
+    myCustomFilters.clear()
+  }
+
   override fun printHyperlink(hyperlinkText: String, info: HyperlinkInfo?) {
     print(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info)
   }
