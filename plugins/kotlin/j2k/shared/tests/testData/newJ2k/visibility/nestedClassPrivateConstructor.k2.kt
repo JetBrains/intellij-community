@@ -1,5 +1,3 @@
-import J.Marker
-
 class J {
     private class Marker {
         private val x = 42

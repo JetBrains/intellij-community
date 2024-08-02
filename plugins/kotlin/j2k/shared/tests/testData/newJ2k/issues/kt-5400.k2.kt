@@ -1,5 +1,3 @@
-import Base.Nested
-
 internal open class Base {
     internal inner class Nested
 }

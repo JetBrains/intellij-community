@@ -1,5 +1,3 @@
-import Test.Foo
-
 object Test {
     private fun foo(text: String?): Boolean {
         return text == null ||

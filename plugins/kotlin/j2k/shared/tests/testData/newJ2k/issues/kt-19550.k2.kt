@@ -1,6 +1,3 @@
-import TestToStringReturnsNullable.Base
-import TestToStringReturnsNullable.Ctor
-
 class TestToStringReturnsNullable {
     open class Base {
         var string: String? = null

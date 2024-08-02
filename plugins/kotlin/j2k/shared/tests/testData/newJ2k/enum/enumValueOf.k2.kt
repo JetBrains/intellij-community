@@ -1,5 +1,3 @@
-import Foo.Color
-
 object Foo {
     @JvmStatic
     fun main(args: Array<String>) {

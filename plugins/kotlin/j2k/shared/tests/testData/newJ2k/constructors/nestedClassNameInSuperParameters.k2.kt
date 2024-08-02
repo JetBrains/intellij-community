@@ -1,5 +1,3 @@
-import Base.Nested
-
 internal open class Base(nested: Nested?) {
     internal class Nested(p: Int) {
         companion object {

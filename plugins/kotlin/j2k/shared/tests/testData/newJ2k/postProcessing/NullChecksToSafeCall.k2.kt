@@ -1,5 +1,3 @@
-import Foo.Bar
-
 class Foo {
     internal class Bar {
         fun <T> bar(): Comparable<T?>? {
