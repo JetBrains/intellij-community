@@ -85,17 +85,19 @@ object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   @JvmStatic
   fun logSyncFinished(project: Project?, activityId: Long, success: Boolean) {
     val nowTS = System.currentTimeMillis()
-
-    val (duration, parallelModelFetchEnabled) =
-      idToStartTS[activityId]
-        ?.let { Pair(nowTS - it.timestamp, it.parallelModelFetchEnabled) }
-      ?: Pair(-1L, false)
-
-    syncFinishedEvent.log(project,
-                          activityIdField.with(activityId),
-                          DurationMs.with(duration),
-                          isParallelModelFetch.with(parallelModelFetchEnabled),
-                          isSyncSuccessful.with(success))
+    syncFinishedEvent.log(project) {
+      add(activityIdField with activityId)
+      val syncDetails = idToStartTS[activityId]
+      if (syncDetails != null) {
+        add(DurationMs with nowTS - syncDetails.timestamp)
+        add(isParallelModelFetch with syncDetails.parallelModelFetchEnabled)
+      }
+      else {
+        add(DurationMs with -1)
+        add(isParallelModelFetch with false)
+      }
+      add(isSyncSuccessful with success)
+    }
   }
 
   @JvmStatic
