@@ -418,7 +418,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     if (element instanceof TodoItemNode) {
       return (TodoItemNode)element;
     }
-    else if (element == null) {
+    else if (!(element instanceof AbstractTreeNode)) {
       return null;
     }
     else {
