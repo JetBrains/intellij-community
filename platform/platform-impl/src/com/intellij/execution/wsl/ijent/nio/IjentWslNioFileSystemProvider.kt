@@ -3,7 +3,6 @@ package com.intellij.execution.wsl.ijent.nio
 
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
-import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.ijent.*
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
@@ -37,7 +36,7 @@ internal class IjentWslNioFileSystemProvider(
   internal val wslLocalRoot: Path,
   private val ijentFsProvider: FileSystemProvider,
   internal val originalFsProvider: FileSystemProvider,
-) : DelegatingFileSystemProvider<IjentWslNioFileSystemProvider, IjentWslNioFileSystem>(), RoutingAwareFileSystemProvider {
+) : FileSystemProvider(), RoutingAwareFileSystemProvider {
   init {
     require(wslLocalRoot.isAbsolute)
   }
@@ -65,29 +64,6 @@ internal class IjentWslNioFileSystemProvider(
 
   override fun getScheme(): String =
     originalFsProvider.scheme
-
-  override fun wrapDelegateFileSystem(delegateFs: FileSystem): IjentWslNioFileSystem {
-    val ijentFs =
-      try {
-        ijentFsProvider.getFileSystem(ijentId.uri)
-      }
-      catch (ignored: FileSystemNotFoundException) {
-        ijentFsProvider.newFileSystem(ijentId.uri, null)
-      }
-    return IjentWslNioFileSystem(this, ijentFs = ijentFs, originalFs = delegateFs)
-  }
-
-  override fun getDelegate(path1: Path?, path2: Path?): FileSystemProvider =
-    originalFsProvider
-
-  // While the original file system implements more methods than the IJent FS, it make sens to keep it the default delegate and
-  // convert paths in place for the IJent FS.
-  // Everything may turn upside down later.
-  override fun toDelegatePath(path: Path?): Path? =
-    path?.toDefaultPath()
-
-  override fun fromDelegatePath(path: Path?): Path? =
-    path?.toDefaultPath()
 
   override fun newFileSystem(path: Path, env: MutableMap<String, *>?): IjentWslNioFileSystem {
     val ijentNioPath = path.toIjentPath()
