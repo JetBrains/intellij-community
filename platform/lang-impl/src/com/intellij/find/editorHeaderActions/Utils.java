@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -20,6 +20,8 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.util.List;
+
+import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
 
 public final class Utils {
   private Utils() {
@@ -48,10 +50,7 @@ public final class Utils {
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChosenCallback(callback)
-      .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
-        @Override
-        public @Nullable String getTextFor(@NlsContexts.ListItem String item) { return item; }
-      }))
+      .setRenderer(textListCellRenderer((@NlsSafe var s) -> s))
       .createPopup();
 
     if (ad != null) {
@@ -80,10 +79,7 @@ public final class Utils {
         textField.setText(s);
         IdeFocusManager.getGlobalInstance().requestFocus(textField, false);
       })
-      .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
-        @Override
-        public @Nullable String getTextFor(@NlsContexts.ListItem String item) { return item; }
-      }))
+      .setRenderer(textListCellRenderer((@Nls var s) -> s))
       .createPopup();
 
     if (ad != null) popup.setAdText(ad, SwingConstants.LEFT);
