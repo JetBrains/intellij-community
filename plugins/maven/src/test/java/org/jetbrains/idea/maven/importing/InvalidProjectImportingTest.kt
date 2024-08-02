@@ -24,7 +24,37 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
 class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
-  
+
+  @Test
+  fun testSystemDependencyWithoutPath() = runBlocking {
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <version>4.0</version>
+                           <scope>system</scope>
+                         </dependency>
+                       </dependencies>
+                       """.trimIndent())
+    doImportProjectsAsync(listOf(projectPom), false)
+
+    assertModules("project")
+    forMaven3 {
+      //IDEA-357072
+      assertModuleLibDeps("project") // dependency was not added due to reported pom model problem.
+    }
+
+    forMaven4 {
+      assertProblems(projectsManager.findProject(projectPom)!! , "'dependencies.dependency.systemPath' for junit:junit:jar is missing.")
+    }
+
+
+  }
+
   @Test
   fun testResetDependenciesWhenProjectContainsErrors() = runBlocking {
     //Registry.get("maven.server.debug").setValue(true);

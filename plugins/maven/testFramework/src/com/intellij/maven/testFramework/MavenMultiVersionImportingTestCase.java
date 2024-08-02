@@ -43,6 +43,16 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   }
 
 
+  protected void forMaven3(Runnable r) {
+    String version = getActualVersion(myMavenVersion);
+    if(version.startsWith("3.")) r.run();
+  }
+
+  protected void forMaven4(Runnable r) {
+    String version = getActualVersion(myMavenVersion);
+    if(version.startsWith("4.")) r.run();
+  }
+
   protected void assumeMaven3() {
     String version = getActualVersion(myMavenVersion);
     Assume.assumeTrue(version.startsWith("3."));
