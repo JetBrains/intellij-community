@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -18,7 +19,7 @@ import java.lang.ref.SoftReference;
 
 import static com.intellij.reference.SoftReference.dereference;
 
-public abstract class LeafElement extends TreeElement {
+public abstract class LeafElement extends TreeElement implements LighterASTTokenNode {
   private static final Logger LOG = Logger.getInstance(LeafElement.class);
   private static final Key<SoftReference<String>> CACHED_TEXT = Key.create("CACHED_TEXT");
 
@@ -219,7 +220,7 @@ public abstract class LeafElement extends TreeElement {
 
   @Override
   public ASTNode @NotNull [] getChildren(TokenSet filter) {
-    return EMPTY_ARRAY;
+    return TreeElement.EMPTY_ARRAY;
   }
 
   @Override

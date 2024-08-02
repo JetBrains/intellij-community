@@ -3847,6 +3847,7 @@ c:com.intellij.psi.impl.source.tree.LazyParseablePsiElement
 - replace(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 a:com.intellij.psi.impl.source.tree.LeafElement
 - com.intellij.psi.impl.source.tree.TreeElement
+- com.intellij.lang.LighterASTTokenNode
 - p:<init>(com.intellij.psi.tree.IElementType,java.lang.CharSequence):V
 - acceptTree(com.intellij.psi.impl.source.tree.TreeElementVisitor):V
 - addChild(com.intellij.lang.ASTNode):V
@@ -4068,6 +4069,7 @@ com.intellij.psi.impl.source.tree.TreeCopyHandler
 - a:encodeInformation(com.intellij.psi.impl.source.tree.TreeElement,com.intellij.lang.ASTNode,java.util.Map):V
 a:com.intellij.psi.impl.source.tree.TreeElement
 - com.intellij.lang.ASTNode
+- com.intellij.lang.LighterASTNode
 - com.intellij.psi.impl.ElementBase
 - java.lang.Cloneable
 - sf:EMPTY_ARRAY:com.intellij.psi.impl.source.tree.TreeElement[]
@@ -4081,13 +4083,16 @@ a:com.intellij.psi.impl.source.tree.TreeElement
 - a:findLeafElementAt(I):com.intellij.psi.impl.source.tree.LeafElement
 - a:getCachedLength():I
 - getElementType():com.intellij.psi.tree.IElementType
+- getEndOffset():I
 - a:getFirstChildNode():com.intellij.psi.impl.source.tree.TreeElement
 - a:getLastChildNode():com.intellij.psi.impl.source.tree.TreeElement
 - getManager():com.intellij.psi.impl.PsiManagerEx
 - getStartOffset():I
 - f:getStartOffsetInParent():I
+- a:getTextLength():I
 - getTextOffset():I
 - getTextRange():com.intellij.openapi.util.TextRange
+- getTokenType():com.intellij.psi.tree.IElementType
 - f:getTreeNext():com.intellij.psi.impl.source.tree.TreeElement
 - f:getTreeParent():com.intellij.psi.impl.source.tree.CompositeElement
 - f:getTreePrev():com.intellij.psi.impl.source.tree.TreeElement
