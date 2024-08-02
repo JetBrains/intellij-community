@@ -9,6 +9,8 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
@@ -29,7 +31,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public final class SpellCheckingInspection extends LocalInspectionTool {
+public final class SpellCheckingInspection extends LocalInspectionTool implements DumbAware {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
 
   @Override
@@ -45,8 +47,9 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   }
 
   private static SpellcheckingStrategy getSpellcheckingStrategy(@NotNull PsiElement element, @NotNull Language language) {
+    DumbService dumbService = DumbService.getInstance(element.getProject());
     for (SpellcheckingStrategy strategy : LanguageSpellchecking.INSTANCE.allForLanguage(language)) {
-      if (strategy.isMyContext(element)) {
+      if (dumbService.isUsableInCurrentContext(strategy) && strategy.isMyContext(element)) {
         return strategy;
       }
     }

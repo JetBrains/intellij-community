@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.jlanguage.Lang
@@ -22,7 +23,7 @@ import kotlinx.coroutines.runBlocking
 
 abstract class GrazieTestBase : BasePlatformTestCase() {
   companion object {
-    val inspectionTools by lazy { arrayOf(GrazieInspection(), SpellCheckingInspection()) }
+    val inspectionTools: Array<out LocalInspectionTool> by lazy { arrayOf(GrazieInspection(), SpellCheckingInspection()) }
     val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN, Lang.ITALIAN)
     val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH", "LanguageTool.EN.UPPERCASE_SENTENCE_START")
   }
