@@ -596,3 +596,7 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
 }
 
 private fun getCommunityHomePath(homePath: Path): Path = if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
+
+fun getAdditionalPluginMainModules(): List<String> {
+  return System.getProperty("additional.modules")?.splitToSequence(',')?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList() ?: emptyList()
+}
