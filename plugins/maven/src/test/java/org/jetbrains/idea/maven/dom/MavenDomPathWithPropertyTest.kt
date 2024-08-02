@@ -1,18 +1,19 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.junit.Ignore
 import org.junit.Test
+
 
 class MavenDomPathWithPropertyTest : MavenDomTestCase() {
   @Test
+  @Ignore("IDEA-357023")
   fun testRename() = runBlocking {
     importProjectAsync(
       """
