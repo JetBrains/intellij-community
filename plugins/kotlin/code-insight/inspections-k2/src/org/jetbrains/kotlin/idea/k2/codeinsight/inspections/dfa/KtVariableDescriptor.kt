@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
-import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.JvmVariableDescriptor
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
@@ -158,14 +156,13 @@ class KtVariableDescriptor(
                     ?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
                         as? KaReceiverParameterSymbol
                 val functionLiteral = receiverParameter?.psi as? KtFunctionLiteral
-                val type = receiverParameter?.type
+                val type = receiverParameter?.returnType
                 if (functionLiteral != null && type != null) {
                     qualifier = varFactory.createVariableValue(KtLambdaThisVariableDescriptor(functionLiteral, type.toDfType()))
                 } else {
                     val classOrObject = symbol.containingDeclaration as? KaClassSymbol
                     if (classOrObject != null) {
-                        val dfType = TypeConstraints.exactClass(classOrObject.classDef()).instanceOf().asDfType()
-                        qualifier = varFactory.createVariableValue(KtThisDescriptor(dfType))
+                        qualifier = varFactory.createVariableValue(KtThisDescriptor(classOrObject.classDef()))
                     }
                 }
             }

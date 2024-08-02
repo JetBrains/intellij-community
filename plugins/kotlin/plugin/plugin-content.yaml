@@ -217,6 +217,7 @@
   - name: kotlin.jvm-debugger.eval4j
   - name: kotlin.jvm-debugger.evaluation
   - name: kotlin.jvm-debugger.evaluation.k1
+  - name: kotlin.jvm-debugger.evaluation.k2
   - name: kotlin.jvm-debugger.sequence.k1
   - name: kotlin.jvm-decompiler
   - name: kotlin.maven
