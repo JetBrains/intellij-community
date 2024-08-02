@@ -335,7 +335,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       var modelFetchActionResultHandler = new GradleModelFetchActionResultHandler(resolverContext);
-      GradleModelFetchActionRunner.runBuildAction(resolverContext, executionSettings, buildAction, modelFetchActionResultHandler);
+      GradleModelFetchActionRunner.runAndTraceBuildAction(resolverContext, executionSettings, buildAction, modelFetchActionResultHandler);
 
       var gradleVersion = ObjectUtils.doIfNotNull(resolverContext.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
