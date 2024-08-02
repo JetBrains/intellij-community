@@ -32,9 +32,11 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import java.util.Collections
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
@@ -97,7 +99,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
 
   private val stateLock = Any()
   private val sessions = ConcurrentHashMap<TextEditor, ExceptionWithTime>()
-  private val highlightingFinishedEverywhere: Semaphore = Semaphore(1)
+  private val waitingJobs: MutableList<CompletableFuture<Unit>> = Collections.synchronizedList(mutableListOf<CompletableFuture<Unit>>())
   private var locked: Boolean = false
 
   private fun ensureLockedIfNeeded() {
@@ -105,7 +107,6 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       @Suppress("UsePropertyAccessSyntax") // inhibit weak warning, for property access is a warning
       if (!sessions.isEmpty() && !locked) {
         LOG.info("Highlighting began with ${sessions.keys.joinToString(separator = ",\n") { it.description }}")
-        highlightingFinishedEverywhere.acquire()
         locked = true
       }
     }
@@ -123,7 +124,10 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
           Highlighting done,
           Total opening time is : ${(System.nanoTime() - StartUpMeasurer.getStartTime()).nanoseconds.inWholeMilliseconds}
          """)
-        highlightingFinishedEverywhere.release()
+        for (job in waitingJobs) {
+          job.complete(Unit)
+        }
+        waitingJobs.clear()
         locked = false
       }
       else {
@@ -143,10 +147,16 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     if (LightEdit.owns(project)) {
       return
     }
-    if (highlightingFinishedEverywhere.tryAcquire(timeout.inWholeSeconds, TimeUnit.SECONDS)) {
-      highlightingFinishedEverywhere.release()
+    val future = CompletableFuture<Unit>()
+    future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+    registerWaiter(future)
+    try {
+      future.join()
     }
-    else {
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (_: CompletionException) {
       val errorText = "Waiting for highlight to finish took more than $timeout."
       if (throws) {
         LOG.error(errorText)
@@ -156,7 +166,18 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         LOG.error(errorText)
       }
     }
-    LOG.info("Code analysis finished")
+    LOG.info("Code analysis waiting finished")
+  }
+
+  private fun registerWaiter(future: CompletableFuture<Unit>) {
+    synchronized(stateLock) {
+      if (!locked) {
+        future.complete(Unit)
+      }
+      else {
+        waitingJobs.add(future)
+      }
+    }
   }
 
   fun registerOpenedEditors(openedEditors: List<TextEditor>) {
