@@ -34,13 +34,13 @@ def get_column_types(table):
 
 # used by pydevd
 # noinspection PyUnresolvedReferences
-def get_data(table, start_index=None, end_index=None):
+def get_data(table, start_index=None, end_index=None, format=None):
     # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
 
     def convert_data_to_html(data, max_cols):
         return repr(__convert_to_df(data).to_html(notebook=True, max_cols=max_cols))
 
-    return _compute_sliced_data(table, convert_data_to_html, start_index, end_index)
+    return _compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
 
 
 # used by DSTableCommands
@@ -58,7 +58,7 @@ def __get_data_slice(table, start, end):
     return __convert_to_df(table).iloc[start:end]
 
 
-def _compute_sliced_data(table, fun, start_index=None, end_index=None):
+def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
     # type: (Union[pd.DataFrame, pd.Series], function, int, int) -> str
 
     max_cols, max_colwidth, max_rows = __get_tables_display_options()
@@ -66,10 +66,17 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None):
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
     _jb_max_rows = pd.get_option('display.max_rows')
+    if format is not None:
+        _jb_float_options = pd.get_option('display.float_format')
+
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_rows', max_rows)
     pd.set_option('display.max_colwidth', max_colwidth)
+
+    format_function = _define_format_function(format)
+    if format_function is not None:
+        pd.set_option('display.float_format', format_function)
 
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
@@ -79,9 +86,21 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None):
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
     pd.set_option('display.max_rows', _jb_max_rows)
+    if format is not None:
+        pd.set_option('display.float_format', _jb_float_options)
 
     return data
 
+
+def _define_format_function(format):
+    # type: (Union[None, str]) -> Union[Callable, None]
+    if format is None or format == 'null':
+        return None
+
+    if format.startswith("%"):
+        return lambda x: format % x
+
+    return None
 
 def get_column_descriptions(table):
     # type: (Union[pd.DataFrame, pd.Series]) -> str

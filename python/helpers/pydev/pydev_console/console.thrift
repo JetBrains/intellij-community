@@ -201,7 +201,7 @@ service PythonConsoleBackendService {
    */
   void loadFullValue(1: LoadFullValueRequestSeq seq, 2: list<string> variables) throws (1: PythonUnhandledException unhandledException),
 
-  string execTableCommand(1: string tableVariable, 2: string commandType, 3: string startIndex, 4: string endIndex) throws (1: PythonUnhandledException unhandledException, 2: PythonTableException tableException)
+  string execTableCommand(1: string tableVariable, 2: string commandType, 3: string startIndex, 4: string endIndex, 5: string format) throws (1: PythonUnhandledException unhandledException, 2: PythonTableException tableException)
 }
 
 exception KeyboardInterruptException {

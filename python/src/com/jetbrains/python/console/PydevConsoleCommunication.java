@@ -42,12 +42,12 @@ import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeR
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.tables.TableCommandParameters;
+import com.jetbrains.python.tables.TableCommandType;
 import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import com.jetbrains.python.tables.TableCommandParameters;
-import com.jetbrains.python.tables.TableCommandType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -372,12 +372,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         () -> {
           String startIndex = "";
           String endIndex = "";
+          String format = "";
           try {
             if (tableCommandParameters instanceof PyDevCommandParameters) {
               startIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getStart());
               endIndex = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getEnd());
+              format = String.valueOf(((PyDevCommandParameters)tableCommandParameters).getFormat());
             }
-            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name(), startIndex, endIndex);
+            return getPythonConsoleBackendClient().execTableCommand(command, commandType.name(), startIndex, endIndex, format);
           }
           catch (PythonTableException e) {
             throw new PyDebuggerException(e.message);
