@@ -313,7 +313,7 @@ object CommunityLibraryLicenses {
       "https://github.com/oshi/oshi/blob/master/LICENSE")
       .suppliedByOrganizations("The OSHI Project Contributors"),
     LibraryLicense(name = "googlecode.plist.dd", libraryName = "googlecode.plist.dd", url = "https://github.com/3breadt/dd-plist/")
-      .apache("https://github.com/3breadt/dd-plist/blob/master/LICENSE.txt"),
+      .mit("https://github.com/3breadt/dd-plist/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "Gradle", url = "https://gradle.org/", licenseUrl = "https://gradle.org/license")
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
       .suppliedByOrganizations("Gradle Inc."),
