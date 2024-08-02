@@ -61,9 +61,16 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                             //
                             // `Foo` does not need to implement `foo` since it inherits the implementation from `B`. But in the dialog, we should
                             // allow user to choose `foo` to implement.
-                            symbol.intersectionOverriddenSymbols
-                                .filter { it.modality == KaSymbolModality.ABSTRACT }
-                                .forEach { add(it) }
+                            val intersectionOverriddenSymbols = symbol.intersectionOverriddenSymbols
+                            val abstractSymbols = intersectionOverriddenSymbols.filter {
+                                it.modality == KaSymbolModality.ABSTRACT
+                            }
+                            if (abstractSymbols.isNotEmpty()) {
+                                addAll(abstractSymbols)
+                            } else {
+                                // This for the [MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED] and [MANY_IMPL_MEMBER_NOT_IMPLEMENTED] compiler errors.
+                                addAll(intersectionOverriddenSymbols)
+                            }
                         }
 
                         else -> {
