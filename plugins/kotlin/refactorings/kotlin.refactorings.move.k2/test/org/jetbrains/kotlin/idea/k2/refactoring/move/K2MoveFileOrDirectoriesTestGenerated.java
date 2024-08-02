@@ -75,6 +75,11 @@ public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDi
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/moveClassWithExtensionFunction/moveClassWithExtensionFunction.test");
     }
 
+    @TestMetadata("kotlin/moveDetachedComment/moveDetachedComment.test")
+    public void testKotlin_moveDetachedComment_MoveDetachedComment() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/moveDetachedComment/moveDetachedComment.test");
+    }
+
     @TestMetadata("kotlin/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test")
     public void testKotlin_moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir_MoveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test");

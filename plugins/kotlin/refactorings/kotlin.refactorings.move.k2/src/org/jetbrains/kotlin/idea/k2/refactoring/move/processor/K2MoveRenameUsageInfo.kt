@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.references.KtConstructorDelegationReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
@@ -228,13 +229,18 @@ sealed class K2MoveRenameUsageInfo(
          * @see restoreInternalUsages
          * @see K2MoveRenameUsageInfo.Source.refresh
          */
-        internal var KtReferenceExpression.internalUsageInfo: K2MoveRenameUsageInfo? by CopyablePsiUserDataProperty(Key.create("INTERNAL_USAGE_INFO"))
+        internal var KtElement.internalUsageInfo: K2MoveRenameUsageInfo? by CopyablePsiUserDataProperty(Key.create("INTERNAL_USAGE_INFO"))
 
         /**
          * Finds any usage inside [containing]. We need these usages because when moving [containing] to a different package references
          * that where previously imported by default might now require an explicit import.
          */
         fun markInternalUsages(containing: KtElement) {
+            containing.forEachDescendantOfType<KDocName> { name ->
+                val reference = name.mainReference
+                val resolved = reference.resolve() as? PsiNamedElement ?: return@forEachDescendantOfType
+                name.internalUsageInfo = Source(name, reference, resolved, true)
+            }
             containing.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
                 if (refExpr is KtEnumEntrySuperclassReferenceExpression) return@forEachDescendantOfType
                 if (refExpr.parent is KtSuperExpression || refExpr.parent is KtThisExpression) return@forEachDescendantOfType
@@ -310,18 +316,19 @@ sealed class K2MoveRenameUsageInfo(
          * @see internalUsageInfo
          */
         private fun restoreInternalUsages(
-            containingElement: KtElement,
+            containingElem: KtElement,
             oldToNewMap: Map<PsiElement, PsiElement>,
             fromCopy: Boolean
         ): List<UsageInfo> {
-            return containingElement.collectDescendantsOfType<KtReferenceExpression>().mapNotNull { refExpr ->
-                val usageInfo = refExpr.internalUsageInfo
-                if (!fromCopy && usageInfo?.element != null) return@mapNotNull usageInfo
-                val referencedElement = (usageInfo as? Source)?.referencedElement ?: return@mapNotNull null
-                val newReferencedElement = oldToNewMap[referencedElement] ?: referencedElement
-                if (!newReferencedElement.isValid || newReferencedElement !is PsiNamedElement) return@mapNotNull null
-                usageInfo.refresh(refExpr, newReferencedElement)
-            }
+            return (containingElem.collectDescendantsOfType<KDocName>() + containingElem.collectDescendantsOfType<KtReferenceExpression>())
+                .mapNotNull { refExpr ->
+                    val usageInfo = refExpr.internalUsageInfo
+                    if (!fromCopy && usageInfo?.element != null) return@mapNotNull usageInfo
+                    val referencedElement = (usageInfo as? Source)?.referencedElement ?: return@mapNotNull null
+                    val newReferencedElement = oldToNewMap[referencedElement] ?: referencedElement
+                    if (!newReferencedElement.isValid || newReferencedElement !is PsiNamedElement) return@mapNotNull null
+                    usageInfo.refresh(refExpr, newReferencedElement)
+                }
         }
 
         /**
