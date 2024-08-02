@@ -406,6 +406,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/InvokeFunctionCallWithOverloadAmbiguity_literalReceiver.kt");
             }
 
+            @TestMetadata("InvokeOnFunctionalTypeVsUnusedInvokeImport.kt")
+            public void testInvokeOnFunctionalTypeVsUnusedInvokeImport() throws Exception {
+                runTest("testData/editor/optimizeImports/common/InvokeOnFunctionalTypeVsUnusedInvokeImport.kt");
+            }
+
             @TestMetadata("IteratorFunction.kt")
             public void testIteratorFunction() throws Exception {
                 runTest("testData/editor/optimizeImports/common/IteratorFunction.kt");

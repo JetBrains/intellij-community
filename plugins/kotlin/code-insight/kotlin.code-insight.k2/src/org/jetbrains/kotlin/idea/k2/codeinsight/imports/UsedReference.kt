@@ -47,6 +47,14 @@ internal class UsedReference private constructor(val reference: KtReference) {
         get() = reference.resolvesByNames
 
     fun KaSession.isResolved(): Boolean {
+        if (reference is KtInvokeFunctionReference) {
+            // invoke references on Kotlin builtin functional types (like `() -> Unit`)
+            // always have empty `resolveToSymbols`, so we have to do the check another way
+            val callInfo = reference.element.resolveToCall() ?: return false
+
+            return callInfo.calls.isNotEmpty()
+        }
+
         val resolvedSymbols = reference.resolveToSymbols()
 
         return resolvedSymbols.isNotEmpty()

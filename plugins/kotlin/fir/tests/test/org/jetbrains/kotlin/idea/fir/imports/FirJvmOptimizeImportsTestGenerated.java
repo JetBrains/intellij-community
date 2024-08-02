@@ -669,6 +669,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/InvokeFunctionCallWithOverloadAmbiguity_literalReceiver.kt");
             }
 
+            @TestMetadata("InvokeOnFunctionalTypeVsUnusedInvokeImport.kt")
+            public void testInvokeOnFunctionalTypeVsUnusedInvokeImport() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/InvokeOnFunctionalTypeVsUnusedInvokeImport.kt");
+            }
+
             @TestMetadata("IteratorFunction.kt")
             public void testIteratorFunction() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/IteratorFunction.kt");
