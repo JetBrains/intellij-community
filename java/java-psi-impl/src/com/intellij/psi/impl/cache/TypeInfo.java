@@ -491,12 +491,12 @@ public /*sealed*/ abstract class TypeInfo {
       else if (refTokenType == JavaElementType.REFERENCE_PARAMETER_LIST) {
         List<LighterASTNode> subTypes = LightTreeUtil.getChildrenOfType(tree, refChild, JavaElementType.TYPE);
         if (!subTypes.isEmpty()) {
-          byte[] newPrefix = Arrays.copyOf(prefix, prefix.length + 2);
-          newPrefix[prefix.length] = TypeAnnotationContainer.Collector.TYPE_ARGUMENT;
           for (int i = 0; i < subTypes.size(); i++) {
-            newPrefix[prefix.length + 1] = (byte)i;
             TypeInfo componentInfo = info.genericComponent(i);
             if (componentInfo != null) {
+              byte[] newPrefix = Arrays.copyOf(prefix, prefix.length + 2);
+              newPrefix[prefix.length] = TypeAnnotationContainer.Collector.TYPE_ARGUMENT;
+              newPrefix[prefix.length + 1] = (byte)i;
               collectAnnotations(componentInfo, collector, tree, subTypes.get(i), newPrefix);
             }
           }

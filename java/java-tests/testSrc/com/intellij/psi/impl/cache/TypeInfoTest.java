@@ -72,6 +72,10 @@ public class TypeInfoTest extends LightJavaCodeInsightFixtureTestCase {
   public void testGenericNested() {
     doTest("X1<@A2 X2<? extends @A3 X3>>.@A4 X4<@A5 X5,@A6 X6 @A7 []>");
   }
+  
+  public void testGenericNested2() {
+    doTest("List1<Outer.@Anno2 Middle.@Anno @Anno1 Inner,Outer.@Anno2 Middle.@Anno1 @Anno2 Inner>");
+  }
 
   private void doTest(String typeText) {
     String javaFile = "class X { " + typeText + " x; }\n" + USED_CLASSES;
