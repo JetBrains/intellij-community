@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,6 +56,9 @@ public class JrtHandler extends ArchiveHandler {
       catch (RuntimeException | Error e) {
         throw new IOException("Error mounting JRT filesystem at " + path, e);
       }
+    }
+    else if (!fs.isOpen()) {
+      throw new ProcessCanceledException();
     }
     return fs;
   }
