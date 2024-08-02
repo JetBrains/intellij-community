@@ -6,10 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.PredefinedCodeStyle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public final class PredefinedCodeStyleUtil {
   private PredefinedCodeStyleUtil() {}
 
