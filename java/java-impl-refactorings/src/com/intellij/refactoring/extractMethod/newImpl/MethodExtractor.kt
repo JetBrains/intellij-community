@@ -61,12 +61,11 @@ class MethodExtractor {
     }
 
     coroutineScope.launch {
-      doExtract(editor, file, range)
+      extract(editor, file, range)
     }
   }
 
-  private suspend fun doExtract(editor: Editor, file: PsiFile, range: TextRange){
-
+  suspend fun extract(editor: Editor, file: PsiFile, range: TextRange) {
       val elements = readAction { ExtractSelector().suggestElementsToExtract(file, range) }
       if (elements.isEmpty()) {
         InplaceExtractUtils.showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
