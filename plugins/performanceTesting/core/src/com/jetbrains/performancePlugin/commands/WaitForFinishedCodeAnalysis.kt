@@ -63,25 +63,6 @@ internal class WaitForFinishedCodeAnalysis(text: String, line: Int) : Performanc
 
   override suspend fun doExecute(context: PlaybackContext) {
     LOG.info("WaitForFinishedCodeAnalysis started its execution")
-    val checkingJob = coroutineScope {
-      launch {
-        while (true) {
-          @Suppress("TestOnlyProblems")
-          if (!service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished()) {
-            delay(500)
-          }
-          else {
-            return@launch
-          }
-        }
-      }
-    }
-    checkingJob.join()
-    // WaitForFinishedCodeAnalysisFileEditorListener.fileOpenedSync works on EDT,
-    // so this is to ensure the reopened editor from startup would be caught by the listener before we ask ListenerState to wait
-    withContext(Dispatchers.EDT) {
-      // do nothing
-    }
     context.project.service<CodeAnalysisStateListener>().waitAnalysisToFinish()
   }
 
@@ -142,14 +123,38 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  fun waitAnalysisToFinish(timeout: Duration = 5.minutes, throws: Boolean = false) {
+  suspend fun waitAnalysisToFinish(timeout: Duration = 5.minutes, throws: Boolean = false) {
     LOG.info("Waiting for code analysis to finish in $timeout")
-    if (LightEdit.owns(project)) {
-      return
-    }
     val future = CompletableFuture<Unit>()
     future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
-    registerWaiter(future)
+    coroutineScope {
+      launch {
+        while (true) {
+          @Suppress("TestOnlyProblems")
+          if (!service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished() && !future.isDone) {
+            delay(500)
+          }
+          else {
+            break
+          }
+        }
+
+        if (future.isDone) {
+          return@launch
+        }
+
+        // WaitForFinishedCodeAnalysisFileEditorListener.fileOpenedSync works on EDT,
+        // so this is to ensure the reopened editor from startup would be caught by the listener before we ask ListenerState to wait
+        withContext(Dispatchers.EDT) {
+          // do nothing
+        }
+
+        if (!future.isDone) {
+          registerToWaitForAnalysisToFinish(future)
+        }
+      }
+    }
+
     try {
       future.join()
     }
@@ -167,6 +172,16 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       }
     }
     LOG.info("Code analysis waiting finished")
+  }
+
+  private fun registerToWaitForAnalysisToFinish(future: CompletableFuture<Unit>) {
+    if (LightEdit.owns(project)) {
+      future.complete(Unit)
+      return
+    }
+    if (!future.isDone) {
+      registerWaiter(future)
+    }
   }
 
   private fun registerWaiter(future: CompletableFuture<Unit>) {
