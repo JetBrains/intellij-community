@@ -29,9 +29,9 @@ object GradleDaemonOpenTelemetryUtil {
   }
 
   @JvmStatic
-  fun getTargetFilePath(): Path? {
+  fun getTargetFolder(): Path? {
     try {
-      val format = stringValue("gradle.daemon.opentelemetry.file")
+      val format = stringValue("gradle.daemon.opentelemetry.folder")
       if (format.isBlank()) {
         return null
       }

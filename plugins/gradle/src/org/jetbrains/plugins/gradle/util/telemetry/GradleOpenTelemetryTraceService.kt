@@ -14,8 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.URI
 import java.nio.file.StandardOpenOption
-import kotlin.io.path.exists
-import kotlin.io.path.writeBytes
+import kotlin.io.path.*
 
 @Service(Service.Level.APP)
 class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope) {
@@ -42,16 +41,18 @@ class GradleOpenTelemetryTraceService(private val coroutineScope: CoroutineScope
     if (holder.format == GradleTelemetryFormat.PROTOBUF) {
       return
     }
-    val targetFilePath = GradleDaemonOpenTelemetryUtil.getTargetFilePath() ?: return
-    if (!targetFilePath.parent.exists()) {
-      return
-    }
+    val targetFolder = GradleDaemonOpenTelemetryUtil.getTargetFolder() ?: return
     coroutineScope.launch(Dispatchers.IO) {
       try {
-        targetFilePath.writeBytes(holder.traces, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+        if (!targetFolder.exists()) {
+          targetFolder.createDirectory()
+        }
+        val targetFile = targetFolder.resolve("opentelemetry-${System.currentTimeMillis()}.json")
+          .createFile()
+        targetFile.writeBytes(holder.traces, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
       }
       catch (e: Exception) {
-        LOG.warn("Unable to dump performance traces to the file ($targetFilePath); Cause: ${e.message}")
+        LOG.warn("Unable to dump performance traces to the folder ($targetFolder); Cause: ${e.message}")
       }
     }
   }

@@ -217,8 +217,8 @@
                  description="Enable performance trace collection in the Gradle daemon"/>
     <registryKey key="gradle.daemon.opentelemetry.format" defaultValue="PROTOBUF"
                  description="Sets the expected serialization format for the collected traces"/>
-    <registryKey key="gradle.daemon.opentelemetry.file" defaultValue=""
-                 description="Sets the target destination for the collected telemetry"/>
+    <registryKey key="gradle.daemon.opentelemetry.folder" defaultValue=""
+                 description="Sets the target folder for the collected telemetry"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
