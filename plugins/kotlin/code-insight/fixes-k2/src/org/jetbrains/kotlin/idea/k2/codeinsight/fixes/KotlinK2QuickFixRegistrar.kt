@@ -440,6 +440,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(DeprecationFixFactory.deprecatedAliasWarning)
 
         registerFactory(ChangeMemberFunctionSignatureFixFactory.nothingToOverrideFixFactory)
+
+        registerFactory(ReplaceJvmFieldWithConstFixFactory.inapplicableJvmField)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {

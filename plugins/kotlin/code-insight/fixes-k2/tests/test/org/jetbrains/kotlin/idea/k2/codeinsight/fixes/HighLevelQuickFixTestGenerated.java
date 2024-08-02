@@ -10046,7 +10046,64 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst")
+    public static class ReplaceJvmFieldWithConst extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("class.kt")
+        public void testClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst/class.kt");
+        }
+
+        @TestMetadata("companionInInterface.kt")
+        public void testCompanionInInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst/companionInInterface.kt");
+        }
+
+        @TestMetadata("getter.kt")
+        public void testGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst/getter.kt");
+        }
+
+        @TestMetadata("nonConstantInitializer.kt")
+        public void testNonConstantInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst/nonConstantInitializer.kt");
+        }
+
+        @TestMetadata("nullable.kt")
+        public void testNullable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst/nullable.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst/object.kt");
+        }
+
+        @TestMetadata("stringTemplateWithConstants.kt")
+        public void testStringTemplateWithConstants() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst/stringTemplateWithConstants.kt");
+        }
+
+        @TestMetadata("stringTemplateWithVal.kt")
+        public void testStringTemplateWithVal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst/stringTemplateWithVal.kt");
+        }
+
+        @TestMetadata("toplevel.kt")
+        public void testToplevel() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/replaceJvmFieldWithConst/toplevel.kt");
+        }
+    }
 
 
 

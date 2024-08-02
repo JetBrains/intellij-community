@@ -645,7 +645,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ILLEGAL_INLINE_PARAMETER_MODIFIER.registerFactory(AddInlineToFunctionFix)
 
-        INAPPLICABLE_JVM_FIELD.registerFactory(ReplaceJvmFieldWithConstFix, RemoveAnnotationFix.JvmField)
+        INAPPLICABLE_JVM_FIELD.registerFactory(ReplaceJvmFieldWithConstFixFactory, RemoveAnnotationFix.JvmField)
 
         CONFLICTING_OVERLOADS.registerFactory(ChangeSuspendInHierarchyFix)
 
