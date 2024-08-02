@@ -21,6 +21,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -248,7 +249,11 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
                                @NotNull Collection<? extends HighlightInfo> infos,
                                @NotNull String text) {
     PsiFile file = getFile();
-    data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
+    ActionUtil.underModalProgress(myProject, "", () -> {
+      //line marker tooltips are called in BGT in production
+      data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
+      return null;
+    });
     data.checkResult(file, infos, text);
   }
 
