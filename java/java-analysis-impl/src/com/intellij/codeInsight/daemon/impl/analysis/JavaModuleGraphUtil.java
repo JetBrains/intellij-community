@@ -231,12 +231,12 @@ public final class JavaModuleGraphUtil {
     return getRequiresGraph(source).reads(source, destination);
   }
 
-  public static boolean reads(@NotNull PsiJavaModule source, @NotNull String destination) {
-    return getRequiresGraph(source).reads(source, source, destination);
+  public static @NotNull Set<PsiJavaModule> getAllDependencies(PsiJavaModule source) {
+    return getRequiresGraph(source).getAllDependencies(source, false);
   }
 
-  public static @NotNull Set<PsiJavaModule> getAllDependencies(PsiJavaModule source) {
-    return getRequiresGraph(source).getAllDependencies(source);
+  public static @NotNull Set<PsiJavaModule> getAllTransitiveDependencies(PsiJavaModule source) {
+    return getRequiresGraph(source).getAllDependencies(source, true);
   }
 
   public static @Nullable Trinity<String, PsiJavaModule, PsiJavaModule> findConflict(@NotNull PsiJavaModule module) {
@@ -510,26 +510,6 @@ public final class JavaModuleGraphUtil {
       myTransitiveEdges = transitiveEdges;
     }
 
-    public boolean reads(@NotNull PsiJavaModule source, @NotNull String destination) {
-      return reads(source, source, destination);
-    }
-
-    private boolean reads(@NotNull PsiJavaModule top, @NotNull PsiJavaModule source, @NotNull String destination) {
-      Collection<PsiJavaModule> nodes = myGraph.getNodes();
-      if (ContainerUtil.exists(nodes, m -> m.getName().equals(destination)) && nodes.contains(source)) {
-        Iterator<PsiJavaModule> directReaders = myGraph.getIn(source);
-        while (directReaders.hasNext()) {
-          PsiJavaModule next = directReaders.next();
-          if (top.equals(source)) {
-            if (next.getName().equals(destination) || reads(top, next, destination)) return true;
-          } else if(myTransitiveEdges.contains(key(next, source))) {
-            if (next.getName().equals(destination) || reads(top, next, destination)) return true;
-          }
-        }
-      }
-      return false;
-    }
-
     public boolean reads(PsiJavaModule source, PsiJavaModule destination) {
       Collection<PsiJavaModule> nodes = myGraph.getNodes();
       if (nodes.contains(destination) && nodes.contains(source)) {
@@ -595,18 +575,18 @@ public final class JavaModuleGraphUtil {
       return module.getName() + '/' + exporter.getName();
     }
 
-    public @NotNull Set<PsiJavaModule> getAllDependencies(@NotNull PsiJavaModule module) {
+    public @NotNull Set<PsiJavaModule> getAllDependencies(@NotNull PsiJavaModule module, boolean transitive) {
       Set<PsiJavaModule> requires = new HashSet<>();
-      collectDependencies(module, requires);
+      collectDependencies(module, requires, transitive);
       return requires;
     }
 
-    private void collectDependencies(@NotNull PsiJavaModule module, @NotNull Set<PsiJavaModule> dependencies) {
+    private void collectDependencies(@NotNull PsiJavaModule module, @NotNull Set<PsiJavaModule> dependencies, boolean transitive) {
       for (Iterator<PsiJavaModule> iterator = myGraph.getIn(module); iterator.hasNext();) {
         PsiJavaModule dependency = iterator.next();
-        if (!dependencies.contains(dependency)) {
+        if (!dependencies.contains(dependency) && (!transitive || myTransitiveEdges.contains(key(dependency, module)))) {
           dependencies.add(dependency);
-          collectDependencies(dependency, dependencies);
+          collectDependencies(dependency, dependencies, transitive);
         }
       }
     }
