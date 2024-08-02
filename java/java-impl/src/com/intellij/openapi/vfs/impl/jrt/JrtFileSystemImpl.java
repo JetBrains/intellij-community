@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.Disposable;
@@ -92,6 +92,7 @@ public class JrtFileSystemImpl extends JrtFileSystem implements Disposable {
 
     var app = ApplicationManager.getApplication();
     if (app.isDisposed()) return;  // we might perform a shutdown activity that includes visiting archives (IDEA-181620)
+    //noinspection IncorrectParentDisposable
     Disposer.register(app, this);
     app.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
