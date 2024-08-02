@@ -475,7 +475,7 @@ public class Maven40ProjectResolver {
 
     ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setRepositorySession(session.getRepositorySession());
-    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
+    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MAVEN_4_0);
     projectBuildingRequest.setResolveDependencies(false);
 
     if (files.size() == 1) {

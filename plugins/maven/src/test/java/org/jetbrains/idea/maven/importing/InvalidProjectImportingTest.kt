@@ -49,7 +49,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     }
 
     forMaven4 {
-      assertProblems(projectsManager.findProject(projectPom)!! , "'dependencies.dependency.systemPath' for junit:junit:jar is missing.")
+      assertProblems(projectsManager.findProject(projectPom)!!, "'dependencies.dependency.scope' for junit:junit:jar declares usage of deprecated 'system' scope ", "'dependencies.dependency.systemPath' for junit:junit:jar is missing.")
     }
 
 
@@ -191,7 +191,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
     val root = rootProjects[0]
     val problem = if (isMaven4
-    ) "'artifactId' with value '\${undefined}' does not match a valid coordinate id pattern."
+    ) "'artifactId' contains an expression but should be a constant., 'artifactId' with value '\${undefined}' does not match a valid coordinate id pattern."
     else "'artifactId' with value '\${undefined}' does not match a valid id pattern."
     assertProblems(root, problem)
   }
