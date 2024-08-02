@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
@@ -396,7 +395,6 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
 
             val service = getInstance(project)
             val fileManager = PsiManagerEx.getInstanceEx(project).fileManager
-            val fileIndexFacade = FileIndexFacade.getInstance(project)
             if (events.size >= FULL_DROP_THRESHOLD) {
                 service.onTooComplexChange()
             } else {
@@ -408,8 +406,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
                     }
                     .filter {
                         val vFile = it.file!!
-                        vFile.isDirectory ||
-                                (KotlinFileType.INSTANCE == fileTypeManager.getFileTypeByFileName(vFile.name) && fileIndexFacade.isInContent(vFile))
+                        vFile.isDirectory || KotlinFileType.INSTANCE == fileTypeManager.getFileTypeByFileName(vFile.name)
                     }
                     .filter {
                         // It expected that content change events will be duplicated with more precise PSI events and processed
