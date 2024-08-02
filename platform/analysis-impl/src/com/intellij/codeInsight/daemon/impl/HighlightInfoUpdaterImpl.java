@@ -511,7 +511,11 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                                                      @NotNull Document hostDocument,
                                                      @NotNull List<? extends PsiFile> injectedFragments,
                                                      @NotNull Set<? extends Pair<Object, PsiFile>> actualToolsRun,
-                                                     @NotNull HighlightingSession highlightingSession) {
+                                                     @NotNull HighlightingSession highlightingSession,
+                                                     @NotNull List<? extends LocalInspectionToolWrapper> disabledSmartOnlyToolWrappers) {
+
+    Set<String> inactiveSmartOnlyToolIds = ContainerUtil.map2Set(disabledSmartOnlyToolWrappers, toolWrapper -> toolWrapper.getShortName());
+
     for (PsiFile psiFile: ContainerUtil.append(injectedFragments, containingFile)) {
       getData(psiFile, hostDocument).entrySet().removeIf(entry -> {
         Object toolId = entry.getKey();
@@ -521,6 +525,10 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         }
 
         if (actualToolsRun.contains(Pair.create(toolId, psiFile))) {
+          return false;
+        }
+        if (inactiveSmartOnlyToolIds.contains(toolId)) {
+          // keep highlights from smart-only inspections in dumb mode
           return false;
         }
         for (List<? extends HighlightInfo> highlights : toolHighlights.elementHighlights.values()) {

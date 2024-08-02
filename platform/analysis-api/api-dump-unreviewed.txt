@@ -1262,7 +1262,7 @@ a:com.intellij.codeInspection.InspectionProfileEntry
 - s:getShortName(java.lang.String):java.lang.String
 - getStaticDescription():java.lang.String
 - getSuppressId():java.lang.String
-- s:getSuppressors(com.intellij.psi.PsiElement):java.util.Set
+- s:getSuppressors(com.intellij.psi.PsiElement):java.util.Collection
 - initialize(com.intellij.codeInspection.GlobalInspectionContext):V
 - isEnabledByDefault():Z
 - isInitialized():Z
@@ -1272,6 +1272,7 @@ a:com.intellij.codeInspection.InspectionProfileEntry
 - showDefaultConfigurationOptions():Z
 - writeSettings(org.jdom.Element):V
 com.intellij.codeInspection.InspectionSuppressor
+- com.intellij.openapi.project.PossiblyDumbAware
 - a:getSuppressActions(com.intellij.psi.PsiElement,java.lang.String):com.intellij.codeInspection.SuppressQuickFix[]
 - a:isSuppressedFor(com.intellij.psi.PsiElement,java.lang.String):Z
 com.intellij.codeInspection.InspectionToolProvider
@@ -1314,6 +1315,7 @@ c:com.intellij.codeInspection.LocalInspectionEP
 - com.intellij.codeInspection.InspectionEP
 - sf:LOCAL_INSPECTION:com.intellij.openapi.extensions.ExtensionPointName
 - alternativeId:java.lang.String
+- dumbAware:Z
 - dynamicGroup:Z
 - id:java.lang.String
 - runForWholeFile:Z
@@ -1327,6 +1329,7 @@ c:com.intellij.codeInspection.LocalInspectionEP
 - a:getGroupKey():java.lang.String
 a:com.intellij.codeInspection.LocalInspectionTool
 - com.intellij.codeInspection.InspectionProfileEntry
+- com.intellij.openapi.project.PossiblyDumbAware
 - sf:EMPTY_ARRAY:com.intellij.codeInspection.LocalInspectionTool[]
 - sf:VALID_ID_PATTERN:java.lang.String
 - <init>():V
