@@ -3,6 +3,7 @@
 
 package com.intellij.ide.ui.search
 
+import com.intellij.DynamicBundle
 import com.intellij.IntelliJResourceBundle
 import com.intellij._doResolveBundle
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
@@ -162,8 +163,11 @@ private fun findBundle(classLoader: ClassLoader, locale: Locale, bundlePath: Str
 
     val visited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
     visited.add(classLoader)
+    for (extension in DynamicBundle.LanguageBundleEP.EP_NAME.filterableLazySequence()) {
+      visited.add(extension.pluginDescriptor.classLoader)
+    }
     for (descriptor in getPluginSet().getEnabledModules()) {
-      if (visited.contains(descriptor.classLoader)) {
+      if (!visited.add(descriptor.classLoader)) {
         continue
       }
 
