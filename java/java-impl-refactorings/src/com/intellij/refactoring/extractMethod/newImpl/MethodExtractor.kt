@@ -5,19 +5,14 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiEditorUtil
@@ -114,7 +109,7 @@ class MethodExtractor {
     )
   }
 
-  private suspend fun prepareDescriptorsForAllTargetPlaces(project: Project, editor: Editor, elements: List<PsiElement>): List<ExtractOptions> {
+  suspend fun prepareDescriptorsForAllTargetPlaces(project: Project, editor: Editor, elements: List<PsiElement>): List<ExtractOptions> {
     val message = JavaRefactoringBundle.message("dialog.title.analyze.code.fragment.to.extract")
     return withBackgroundProgress(project, message, true) {
       try {
@@ -124,33 +119,6 @@ class MethodExtractor {
         emptyList()
       }
     }
-  }
-
-  @Deprecated("")
-  fun prepareDescriptorsForAllTargetPlaces(editor: Editor, file: PsiFile, range: TextRange): List<ExtractOptions> {
-    try {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return emptyList()
-      val elements = ExtractSelector().suggestElementsToExtract(file, range)
-      if (elements.isEmpty()) {
-        throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
-      }
-      return computeWithAnalyzeProgress<List<ExtractOptions>, ExtractException>(file.project) {
-        findAllOptionsToExtract(elements)
-      }
-    }
-    catch (exception: ExtractException) {
-      InplaceExtractUtils.showExtractErrorHint(editor, exception)
-      return emptyList()
-    }
-  }
-
-  private fun <T, E: Exception> computeWithAnalyzeProgress(project: Project, throwableComputable: ThrowableComputable<T, E>): T {
-    return ProgressManager.getInstance().run(object : Task.WithResult<T, E>(project,
-      JavaRefactoringBundle.message("dialog.title.analyze.code.fragment.to.extract"), true) {
-      override fun compute(indicator: ProgressIndicator): T {
-        return ReadAction.compute(throwableComputable)
-      }
-    })
   }
 
   private suspend fun runInplaceExtract(editor: Editor, range: TextRange, options: ExtractOptions){
