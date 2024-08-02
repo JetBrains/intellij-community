@@ -3,13 +3,12 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.PredefinedCodeStyle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApiStatus.Internal
 public final class PredefinedCodeStyleUtil {
@@ -17,7 +16,7 @@ public final class PredefinedCodeStyleUtil {
 
   public static boolean isCodeStyleSet(@NotNull Project project, @NotNull PredefinedCodeStyle predefinedCodeStyle) {
     CodeStyleSettings styleSettings = CodeStyle.getSettings(project);
-    AtomicBoolean isEqual = new AtomicBoolean();
+    Ref<Boolean> isEqual = Ref.create(false);
     CodeStyle.runWithLocalSettings(project, styleSettings, (cloneSettings) -> {
       predefinedCodeStyle.apply(cloneSettings);
       isEqual.set(styleSettings.equals(cloneSettings));
