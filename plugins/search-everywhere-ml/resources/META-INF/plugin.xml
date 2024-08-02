@@ -13,6 +13,9 @@
     As an experiment, some portion of users will also have it enabled in the All tab.</i>
   ]]></description>
 
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+  </dependencies>
   <content>
     <module name="intellij.searchEverywhereMl.typos"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
