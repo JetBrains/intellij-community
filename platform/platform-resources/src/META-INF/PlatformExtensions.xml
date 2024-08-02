@@ -1746,10 +1746,6 @@
                  defaultValue="true"
                  description="Enables preview of the selected element in the Search Everywhere"/>
 
-    <registryKey key="search.everywhere.preview.default"
-                 defaultValue="false"
-                 description="Show preview of the selected element in the Search Everywhere by default"/>
-
     <registryKey key="search.everywhere.recents"
                  defaultValue="true"
                  description="Enables recent items on search everywhere tabs"/>

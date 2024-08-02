@@ -2,6 +2,7 @@
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -551,6 +552,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       }
     }
 
+  var showPreviewInSearchEverywhere: Boolean
+    get() = state.showPreviewInSearchEverywhere
+    set(value) {
+      state.showPreviewInSearchEverywhere = value
+    }
+
   companion object {
     init {
       if (JBUIScale.SCALE_VERBOSE) {
@@ -723,7 +730,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   }
 
   /**
-   * Notifies all registered listeners that UI settings has been changed.
+   * Notifies all registered listeners that UI settings have been changed.
    */
   fun fireUISettingsChanged() {
     updateDeprecatedProperties()
@@ -806,6 +813,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (!state.allowMergeButtons) {
       Registry.get("ide.allow.merge.buttons").setValue(false)
       state.allowMergeButtons = true
+    }
+
+    // migrate old state of Search Everywhere preview
+    if (PropertiesComponent.getInstance().isValueSet("SearchEverywhere.previewPropertyKey")) {
+      state.showPreviewInSearchEverywhere = true
+      PropertiesComponent.getInstance().unsetValue("SearchEverywhere.previewPropertyKey")
     }
   }
 

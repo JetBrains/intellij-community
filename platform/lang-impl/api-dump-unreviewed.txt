@@ -13973,18 +13973,6 @@ c:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 - isEmptyPatternSupported():Z
 f:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor$Companion
 - f:createLanguageFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
-f:com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreview
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreviewToolbar
-- com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
-- <init>():V
-- getAutoHideable():Z
-- isApplicable(com.intellij.openapi.actionSystem.DataContext):Z
-- register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 f:com.intellij.ide.actions.searcheverywhere.ContributorDefinedTabsCustomizationStrategy
 - <init>():V
 - getSeparateTabContributors(java.util.List):java.util.List
@@ -14082,20 +14070,11 @@ f:com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributo
 - setSelected(java.lang.Object,Z):V
 f:com.intellij.ide.actions.searcheverywhere.PreviewAction
 - com.intellij.openapi.project.DumbAwareToggleAction
-- sf:Companion:com.intellij.ide.actions.searcheverywhere.PreviewAction$Companion
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.searcheverywhere.PreviewAction$Companion
-- f:togglePreview(Z):V
-f:com.intellij.ide.actions.searcheverywhere.PreviewActionKt
-- sf:PREVIEW_ACTION_ID:java.lang.String
-f:com.intellij.ide.actions.searcheverywhere.PreviewExperiment
-- sf:INSTANCE:com.intellij.ide.actions.searcheverywhere.PreviewExperiment
-- f:isExperimentEnabled():Z
-- f:isExperimentEnabled2024_1():Z
 *:com.intellij.ide.actions.searcheverywhere.PromoAction
 - a:getCallToAction():java.lang.String
 - a:getPromotedProductIcon():javax.swing.Icon

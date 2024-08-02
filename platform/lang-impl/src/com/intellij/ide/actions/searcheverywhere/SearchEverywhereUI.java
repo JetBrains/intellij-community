@@ -24,7 +24,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
@@ -162,8 +161,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final List<Disposable> myUsagePreviewDisposableList = new ArrayList<>();
   private UsageViewPresentation myUsageViewPresentation;
   private static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
-  static final String PREVIEW_PROPERTY_KEY = "SearchEverywhere.previewPropertyKey";
-  @ApiStatus.Experimental
+
   private int prevSelectedIndex = -1;
 
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors) {
@@ -186,10 +184,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       updateSearchFieldAdvertisement();
       scheduleRebuildList(SearchRestartReason.SCOPE_CHANGED);
     };
-
-    if (project != null && isPreviewEnabled() && isShowPreview() && !PropertiesComponent.getInstance().isValueSet(PREVIEW_PROPERTY_KEY)) {
-      PropertiesComponent.getInstance().setValue(PREVIEW_PROPERTY_KEY, true);
-    }
 
     AnAction showInFindToolWindowAction = project == null ? null : new ShowInFindToolWindowAction();
     myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
@@ -1122,16 +1116,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   static boolean isPreviewEnabled() {
-    return (PreviewExperiment.INSTANCE.isExperimentEnabled() || Registry.is("search.everywhere.preview"))
-           && !PlatformUtils.isJetBrainsClient();
-  }
-
-  static boolean isShowPreview() {
-    return Registry.is("search.everywhere.preview.default");
+    return PreviewExperiment.isExperimentEnabled() && !PlatformUtils.isJetBrainsClient();
   }
 
   private static boolean isPreviewActive() {
-    return PropertiesComponent.getInstance().isTrueValue(PREVIEW_PROPERTY_KEY);
+    return UISettings.getInstance().getShowPreviewInSearchEverywhere();
   }
 
   /**
