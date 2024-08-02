@@ -11340,9 +11340,11 @@ f:com.intellij.find.SearchReplaceComponent
 - addListener(com.intellij.find.SearchReplaceComponent$Listener):V
 - addTextToRecent(javax.swing.text.JTextComponent):V
 - s:buildFor(com.intellij.openapi.project.Project,javax.swing.JComponent):com.intellij.find.SearchReplaceComponent$Builder
+- s:buildFor(com.intellij.openapi.project.Project,javax.swing.JComponent,com.intellij.find.SearchSession):com.intellij.find.SearchReplaceComponent$Builder
 - close():V
 - getProject():com.intellij.openapi.project.Project
 - getReplaceTextComponent():javax.swing.text.JTextComponent
+- getSearchSession():com.intellij.find.SearchSession
 - getSearchTextComponent():javax.swing.text.JTextComponent
 - getStatusColor():java.awt.Color
 - getStatusText():java.lang.String

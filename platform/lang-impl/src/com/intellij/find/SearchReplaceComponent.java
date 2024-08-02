@@ -82,6 +82,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   private final Project myProject;
   private final JComponent myTargetComponent;
+  private final SearchSession mySearchSession;
   @Nullable private OnePixelSplitter mySplitter;
 
   private final Runnable myCloseRunnable;
@@ -105,12 +106,22 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final CloseAction myCloseAction = new CloseAction();
 
   @NotNull
+  public static Builder buildFor(@Nullable Project project,
+                                 @NotNull JComponent component,
+                                 @Nullable SearchSession session) {
+    return new Builder(project, component, session);
+  }
+
+  /** @deprecated Use {@link #buildFor(Project, JComponent, SearchSession)} instead */
+  @Deprecated(forRemoval = true)
+  @NotNull
   public static Builder buildFor(@Nullable Project project, @NotNull JComponent component) {
-    return new Builder(project, component);
+    return new Builder(project, component, null);
   }
 
   private SearchReplaceComponent(@Nullable Project project,
                                  @NotNull JComponent targetComponent,
+                                 @Nullable SearchSession searchSession,
                                  @NotNull DefaultActionGroup searchToolbar1Actions,
                                  @NotNull DefaultActionGroup searchToolbar2Actions,
                                  @NotNull DefaultActionGroup searchFieldActions,
@@ -129,6 +140,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                  boolean showSeparator) {
     myProject = project;
     myTargetComponent = targetComponent;
+    mySearchSession = searchSession;
     mySearchFieldActions = searchFieldActions;
     myReplaceFieldActions = replaceFieldActions;
     myReplaceRunnable = replaceRunnable;
@@ -394,11 +406,17 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(PlatformDataKeys.SPEED_SEARCH_TEXT, mySearchTextComponent.getText());
+    sink.set(SearchSession.KEY, mySearchSession);
+    DataSink.uiDataSnapshot(sink, mySearchSession);
     DataSink.uiDataSnapshot(sink, myDataProviderDelegate);
   }
 
   public Project getProject() {
     return myProject;
+  }
+
+  public SearchSession getSearchSession() {
+    return mySearchSession;
   }
 
   public void addListener(@NotNull Listener listener) {
@@ -745,6 +763,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   public static final class Builder {
     private final Project myProject;
     private final JComponent myTargetComponent;
+    private final SearchSession mySearchSession;
 
     private DataProvider myDataProvider;
 
@@ -768,12 +787,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
     private SearchComponentMode myMode;
 
-    private Builder(@Nullable Project project, @NotNull JComponent component) {
+    private Builder(@Nullable Project project, @NotNull JComponent component, @Nullable SearchSession searchSession) {
       myProject = project;
       myTargetComponent = component;
+      mySearchSession = searchSession;
       myMode = new TextAreaMode();
     }
 
+    /** @deprecated Use searchSession and {@link SearchReplaceComponent#buildFor(Project, JComponent, SearchSession)} */
+    @Deprecated(forRemoval = true)
     @NotNull
     public Builder withDataProvider(@NotNull DataProvider provider) {
       myDataProvider = provider;
@@ -852,6 +874,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     public SearchReplaceComponent build() {
       return new SearchReplaceComponent(myProject,
                                         myTargetComponent,
+                                        mySearchSession,
                                         mySearchActions,
                                         myExtraSearchActions,
                                         mySearchFieldActions,

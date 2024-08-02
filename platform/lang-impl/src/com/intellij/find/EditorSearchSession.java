@@ -8,9 +8,7 @@ import com.intellij.find.impl.HelpID;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -38,7 +36,6 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.update.Activatable;
@@ -100,7 +97,7 @@ public class EditorSearchSession implements SearchSession,
     myLivePreviewController = new LivePreviewController(mySearchResults, this, myDisposable);
 
     myComponent = SearchReplaceComponent
-      .buildFor(project, myEditor.getContentComponent())
+      .buildFor(project, myEditor.getContentComponent(), this)
       .addPrimarySearchActions(createPrimarySearchActions())
       .addExtraSearchActions(new ToggleMatchCase(),
                              new ToggleWholeWordsOnlyAction(),
@@ -113,7 +110,6 @@ public class EditorSearchSession implements SearchSession,
       .addExtraReplaceAction(new TogglePreserveCaseAction())
       .addReplaceFieldActions(new PrevOccurrenceAction(false),
                               new NextOccurrenceAction(false))
-      .withDataProvider(this)
       .withCloseAction(this::close)
       .withReplaceAction(this::replaceCurrent)
       .build();
@@ -271,10 +267,8 @@ public class EditorSearchSession implements SearchSession,
   @Nullable
   public static EditorSearchSession get(@Nullable Editor editor) {
     JComponent headerComponent = editor != null ? editor.getHeaderComponent() : null;
-    SearchReplaceComponent searchReplaceComponent = ObjectUtils.tryCast(headerComponent, SearchReplaceComponent.class);
-    DataContext dataContext = searchReplaceComponent == null ? null :
-                              IdeUiService.getInstance().createUiDataContext(searchReplaceComponent);
-    return dataContext == null ? null : SESSION_KEY.getData(dataContext);
+    SearchSession session = headerComponent instanceof SearchReplaceComponent o ? o.getSearchSession() : null;
+    return session instanceof EditorSearchSession o ? o : null;
   }
 
   @NotNull
