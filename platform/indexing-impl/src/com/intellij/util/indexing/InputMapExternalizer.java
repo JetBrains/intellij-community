@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.util.SmartList;
@@ -45,7 +45,8 @@ public final class InputMapExternalizer<Key, Value> implements DataExternalizer<
     final Collection<Key>[] keysForNullValue = new Collection[]{null};
     Map<Value, Collection<Key>> keysPerValue = null;
 
-    //TODO RC: why store Map<Key,Value> in 'inverted' form, as Map<Value, Collection<Key>> here?
+    //Store Map<Key,Value> in 'inverted' form (as Map<Value, Collection<Key>>) because it usually
+    // allows for more compact representation
     if (myValuesAreNullAlways) {
       keysForNullValue[0] = data.keySet();
     }
