@@ -111,7 +111,7 @@ public final class GradleBuildSrcProjectsResolver {
 
       final String buildSrcProjectPath = buildPath + "/buildSrc";
       DefaultProjectResolverContext buildSrcResolverCtx = new DefaultProjectResolverContext(
-        myResolverContext, buildSrcProjectPath, buildSrcProjectSettings
+        myResolverContext, buildSrcProjectPath, buildSrcProjectSettings, true
       );
       String buildName = index.buildNames().get(buildPath);
 
@@ -123,7 +123,7 @@ public final class GradleBuildSrcProjectsResolver {
                             index.buildClasspathNodesMap().getModifiable(Paths.get(buildPath)),
                             index.includedModulesPaths(),
                             buildSrcResolverCtx,
-                            myProjectResolver.getProjectDataFunction(buildSrcResolverCtx, myResolverChain, true));
+                            myProjectResolver.getProjectDataFunction(buildSrcResolverCtx, myResolverChain));
     }
   }
 
