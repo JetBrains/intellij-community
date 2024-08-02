@@ -53,9 +53,9 @@ class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackag
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
         val files = descriptor.files
         files.forEach { it.updatePackageDirective(descriptor.target) }
-        val oldToNewMap = files.flatMap { it.allDeclarationsToUpdate }.associateWith { it }
-        @Suppress("UNCHECKED_CAST")
-        retargetUsagesAfterMove(usages.toList(), oldToNewMap as Map<PsiElement, PsiElement>)
+        val oldToNewMap: MutableMap<PsiElement, PsiElement> = files.associateWith { it }.toMutableMap()
+        files.forEach { file -> file.allDeclarationsToUpdate.forEach { decl -> oldToNewMap[decl] = decl } }
+        retargetUsagesAfterMove(usages.toList(), oldToNewMap)
     }
 
     override fun getBeforeData(): RefactoringEventData = RefactoringEventData().apply {

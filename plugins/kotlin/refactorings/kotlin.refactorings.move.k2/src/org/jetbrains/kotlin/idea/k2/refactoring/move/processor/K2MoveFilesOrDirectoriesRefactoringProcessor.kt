@@ -109,6 +109,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
             file.updatePackageDirective(moveDestination)
         }
         file.packageNeedsUpdate = null
+        oldToNewMap[file] = file
         val declarations = file.allDeclarationsToUpdate
         declarations.forEach { oldToNewMap[it] = it } // to pass files that are moved through MoveFileHandler API
     }

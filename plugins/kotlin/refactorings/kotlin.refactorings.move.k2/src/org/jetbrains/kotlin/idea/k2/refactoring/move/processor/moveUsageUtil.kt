@@ -11,6 +11,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 
@@ -92,12 +93,15 @@ internal val KtNamedDeclaration.needsReferenceUpdate: Boolean
         }
     }
 
-internal fun KtDeclarationContainer.findUsages(
+internal fun KtFile.findUsages(
     searchInCommentsAndStrings: Boolean,
     searchForText: Boolean,
     newPkgName: FqName
 ): List<UsageInfo> {
-    return topLevelDeclarationsToUpdate.flatMap { it.findUsages(searchInCommentsAndStrings, searchForText, newPkgName) }
+    markInternalUsages(this)
+    return topLevelDeclarationsToUpdate.flatMap { decl ->
+        K2MoveRenameUsageInfo.findExternalUsages(decl) + decl.findNonCodeUsages(searchInCommentsAndStrings, searchForText, newPkgName)
+    }
 }
 
 /**
