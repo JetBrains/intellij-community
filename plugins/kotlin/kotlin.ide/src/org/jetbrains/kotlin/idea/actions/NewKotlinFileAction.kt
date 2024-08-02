@@ -97,7 +97,6 @@ internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
         builder
             .addKind(KotlinFileTemplate.Annotation)
             .addKind(KotlinFileTemplate.Script)
-            .addKind(KotlinFileTemplate.Worksheet)
             .addKind(KotlinFileTemplate.Object)
 
         builder.setValidator(NewKotlinFileNameValidator)
@@ -148,19 +147,10 @@ internal abstract class AbstractNewKotlinFileAction : CreateFileFromTemplateActi
         }
     }
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
-    override fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
-        val targetTemplate = if (KotlinFileTemplate.Worksheet.fileName != template.name) {
-            template
-        } else {
-            object : FileTemplate by template {
-                override fun getExtension(): String = KOTLIN_WORKSHEET_EXTENSION
-            }
-        }
-
-        return createFileFromTemplateWithStat(name, targetTemplate, dir)
-    }
+    override fun createFileFromTemplate(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? =
+        createFileFromTemplateWithStat(name, template, dir)
 }
 
 @ApiStatus.Internal
@@ -332,6 +322,5 @@ internal enum class KotlinFileTemplate(@NlsContexts.ListItem val title: String, 
     SealedClass(KotlinBundle.message("action.new.file.dialog.sealed.class.title"), KotlinIcons.CLASS, "Kotlin Sealed Class"),
     Annotation(KotlinBundle.message("action.new.file.dialog.annotation.title"), KotlinIcons.ANNOTATION, "Kotlin Annotation"),
     Script(KotlinBundle.message("action.new.script.name"), KotlinIcons.SCRIPT, "Kotlin Script"),
-    Worksheet(KotlinBundle.message("action.new.worksheet.name"), KotlinIcons.SCRIPT, "Kotlin Worksheet"),
     Object(KotlinBundle.message("action.new.file.dialog.object.title"), KotlinIcons.OBJECT, "Kotlin Object")
 }

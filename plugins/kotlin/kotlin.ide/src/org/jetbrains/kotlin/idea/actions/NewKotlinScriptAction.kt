@@ -29,13 +29,11 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
     }
 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
-        builder.setTitle(KotlinBundle.message("action.new.script.dialog.title"))
-
-        builder
-            .addKind(KotlinFileTemplate.Script)
-            .addKind(KotlinFileTemplate.Worksheet)
-
-        builder.setValidator(NewKotlinFileNameValidator)
+        with(builder) {
+            setTitle(KotlinBundle.message("action.new.script.dialog.title"))
+            addKind(KotlinFileTemplate.Script)
+            setValidator(NewKotlinFileNameValidator)
+        }
     }
 
     override fun getActionName(directory: PsiDirectory, newName: String, templateName: String): String =
