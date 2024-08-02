@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.BinFiles.devFilesDir
 import com.intellij.util.BinFiles.getBinFile
 import com.intellij.util.io.outputStream
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -17,6 +18,7 @@ import kotlin.io.path.exists
  * Use slashes `/` to separate file path. Path is always relative
  */
 @JvmInline
+@Internal
 value class FileName(val value: @NonNls String) {
   override fun toString(): String = value
   internal val relativePath: @NonNls String get() = value.trimStart('/').trimEnd('/')
@@ -27,6 +29,7 @@ value class FileName(val value: @NonNls String) {
  * Publish your binary file packed in jar in maven (consider using Space), add dependency to it and use [getBinFile] to retrieve it.
  * For local development create file in [devFilesDir] in your home dir.
  */
+@Internal
 object BinFiles {
   private const val BIN_FILES_DIR_NAME = "IJBinFiles"
   private val lock = Any()
