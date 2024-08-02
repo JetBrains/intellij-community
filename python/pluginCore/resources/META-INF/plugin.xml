@@ -854,7 +854,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
   <actions>
     <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"
-            icon="PlatformDebuggerImplIcons.Actions.Force_step_into"/>
+            icon="AllIcons.Debugger.ForceStepInto"/>
 
     <!-- Console -->
     <action id="com.jetbrains.python.console.RunPythonOrDebugConsoleAction"

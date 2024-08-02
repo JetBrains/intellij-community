@@ -659,8 +659,6 @@
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <bundledColorScheme id="High contrast" path="themes/highContrastScheme.xml"/>
 
-    <iconMapper mappingFile="CrossModuleIcons.json"/>
-
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
 
