@@ -173,6 +173,8 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
 USE_LOW_IMPACT_MONITORING = (IS_PY312_OR_GREATER and
                              os.environ.get('USE_LOW_IMPACT_MONITORING', False))
 
+SINGLE_PORT_MODE = os.environ.get("SINGLE_PORT_MODE")
+
 # The tool name to use in the API calls from PEP 669.
 PYDEVD_TOOL_NAME = 'pydevd'
 
