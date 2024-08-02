@@ -20,8 +20,6 @@ import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.HighlightedRegion;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.PlatformIcons;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -124,8 +122,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     // Update icon
 
     TodoPattern pattern = todoItem.getPattern();
-    Icon newIcon =
-      pattern != null ? pattern.getAttributes().getIcon() : IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoDefault);
+    Icon newIcon = pattern != null ? pattern.getAttributes().getIcon() : null;
 
     // Update highlighted regions
 

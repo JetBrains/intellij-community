@@ -1,24 +1,26 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
-import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public final class TodoAttributes implements Cloneable {
-  private Icon myIcon;
+  private @Nullable Icon myIcon;
   private TextAttributes myTextAttributes;
   private boolean myShouldUseCustomColors;
 
   private static final @NonNls String ATTRIBUTE_ICON = "icon";
+  private static final @NonNls String ICON_NULL = "null";
   private static final @NonNls String ICON_DEFAULT = "default";
   private static final @NonNls String ICON_QUESTION = "question";
   private static final @NonNls String ICON_IMPORTANT = "important";
@@ -27,20 +29,14 @@ public final class TodoAttributes implements Cloneable {
 
   @Internal
   TodoAttributes(@NotNull Element element, @NotNull TextAttributes defaultTodoAttributes) {
-    String icon = element.getAttributeValue(ATTRIBUTE_ICON, ICON_DEFAULT);
+    String icon = element.getAttributeValue(ATTRIBUTE_ICON, ICON_NULL);
 
-    IconManager iconManager = IconManager.getInstance();
-    if (ICON_DEFAULT.equals(icon)){
-      myIcon = iconManager.getPlatformIcon(PlatformIcons.TodoDefault);
-    }
-    else if (ICON_QUESTION.equals(icon)){
-      myIcon = iconManager.getPlatformIcon(PlatformIcons.TodoQuestion);
-    }
-    else if (ICON_IMPORTANT.equals(icon)){
-      myIcon = iconManager.getPlatformIcon(PlatformIcons.TodoImportant);
-    }
-    else{
-      throw new InvalidDataException(icon);
+    switch (icon) {
+      case ICON_DEFAULT -> myIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoDefault);
+      case ICON_QUESTION -> myIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoQuestion);
+      case ICON_IMPORTANT -> myIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoImportant);
+      case ICON_NULL -> myIcon = null;
+      default -> throw new InvalidDataException(icon);
     }
 
     myShouldUseCustomColors = Boolean.parseBoolean(element.getAttributeValue(USE_CUSTOM_COLORS_ATT));
@@ -48,7 +44,7 @@ public final class TodoAttributes implements Cloneable {
   }
 
   @Internal
-  public TodoAttributes(@NotNull Icon icon, @NotNull TextAttributes textAttributes) {
+  public TodoAttributes(@Nullable Icon icon, @NotNull TextAttributes textAttributes) {
     myIcon = icon;
     myTextAttributes = textAttributes;
   }
@@ -58,8 +54,8 @@ public final class TodoAttributes implements Cloneable {
     myTextAttributes = textAttributes;
   }
 
-  public @NotNull Icon getIcon(){
-    return ObjectUtils.chooseNotNull(myIcon, IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoDefault));
+  public @Nullable Icon getIcon(){
+    return myIcon;
   }
 
   public @NotNull TextAttributes getTextAttributes() {
@@ -70,12 +66,12 @@ public final class TodoAttributes implements Cloneable {
     return myTextAttributes;
   }
 
-  public void setIcon(Icon icon) {
+  public void setIcon(@Nullable Icon icon) {
     myIcon = icon;
   }
 
   public void writeExternal(@NotNull Element element) {
-    String icon = ICON_DEFAULT;
+    String icon = null;
     IconManager iconManager = IconManager.getInstance();
     if (myIcon == iconManager.getPlatformIcon(PlatformIcons.TodoQuestion)) {
       icon = ICON_QUESTION;
@@ -83,8 +79,10 @@ public final class TodoAttributes implements Cloneable {
     else if (myIcon == iconManager.getPlatformIcon(PlatformIcons.TodoImportant)) {
       icon = ICON_IMPORTANT;
     }
-
-    if (!icon.equals(ICON_DEFAULT)) {
+    else if (myIcon == iconManager.getPlatformIcon(PlatformIcons.TodoDefault)) {
+      icon = ICON_DEFAULT;
+    }
+    if (icon != null) {
       element.setAttribute(ATTRIBUTE_ICON, icon);
     }
 
@@ -99,7 +97,7 @@ public final class TodoAttributes implements Cloneable {
     if (!(o instanceof TodoAttributes attributes)) return false;
 
     return myIcon == attributes.myIcon &&
-           !(myTextAttributes != null ? !myTextAttributes.equals(attributes.myTextAttributes) : attributes.myTextAttributes != null) &&
+           Objects.equals(myTextAttributes, attributes.myTextAttributes) &&
            myShouldUseCustomColors == attributes.myShouldUseCustomColors;
   }
 
