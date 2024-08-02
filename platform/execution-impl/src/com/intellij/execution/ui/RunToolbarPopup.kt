@@ -212,14 +212,12 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
 }
 
 @ApiStatus.Internal
-class RunPopupVoidExecutionListener(private val project: Project) : ExecutionListener by createExecutionListener(
-  { _, _, _ -> project.messageBus.syncPublisher(VOID_EXECUTION_TOPIC).run() }
-) {
-  companion object {
-    @Topic.ProjectLevel
-    val VOID_EXECUTION_TOPIC = Topic("any execution event", Runnable::class.java)
-  }
-}
+@Topic.ProjectLevel
+val VOID_EXECUTION_TOPIC = Topic("any execution event", Runnable::class.java)
+
+@ApiStatus.Internal
+private class RunPopupVoidExecutionListener(project: Project) : MyExecutionListener(
+  { _, _, _ -> project.messageBus.syncPublisher(VOID_EXECUTION_TOPIC).run() })
 
 internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
                                                  dataContext: DataContext,
@@ -254,7 +252,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
     }
     listModel.syncModel()
 
-    project.messageBus.connect(this).subscribe(RunPopupVoidExecutionListener.VOID_EXECUTION_TOPIC, Runnable {
+    project.messageBus.connect(this).subscribe(VOID_EXECUTION_TOPIC, Runnable {
       ApplicationManager.getApplication().invokeLater {
         if (list.isShowing) {
           (myStep as ActionPopupStep).updateStepItems(list)
@@ -741,16 +739,18 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
 
 private class ExecutionReasonableHistoryManager : ProjectActivity {
   override suspend fun execute(project: Project) {
-    project.messageBus.simpleConnect().subscribe(ExecutionManager.EXECUTION_TOPIC, createExecutionListener { executorId, env, reason ->
+    project.messageBus.simpleConnect().subscribe(ExecutionManager.EXECUTION_TOPIC, MyExecutionListener { executorId, env, state ->
       getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
-        RunStatusHistory.getInstance(env.project).changeState(conf, executorId, reason)
+        RunStatusHistory.getInstance(env.project).changeState(conf, executorId, state)
       }
       ActivityTracker.getInstance().inc() // needed to update run toolbar
     })
   }
 }
 
-private fun createExecutionListener(onAnyChange: (executorId: String, env: ExecutionEnvironment, reason: RunState) -> Unit) = object : ExecutionListener {
+private open class MyExecutionListener(
+  val onAnyChange: (executorId: String, env: ExecutionEnvironment, reason: RunState) -> Unit
+) : ExecutionListener {
   override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {
     onAnyChange(executorId, env, RunState.SCHEDULED)
   }
