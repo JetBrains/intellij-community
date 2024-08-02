@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.*
@@ -445,14 +446,20 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
-    waitForImportWithinTimeout {
-      withContext(Dispatchers.EDT) {
-        myProjectTracker!!.scheduleProjectRefresh()
-      }
+    withContext(Dispatchers.EDT) {
+      myProjectTracker!!.scheduleProjectRefresh()
     }
+
+    awaitConfiguration()
 
     // otherwise project settings was modified while importing
     assertNoPendingProjectForReload()
+  }
+
+  protected suspend fun awaitConfiguration() {
+    Observation.awaitConfiguration(project) { message ->
+      MavenLog.LOG.warn(message)
+    }
   }
 
   protected suspend fun scheduleProjectImportAndWaitAsync() {
