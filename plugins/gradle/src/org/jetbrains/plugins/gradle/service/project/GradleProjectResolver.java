@@ -141,7 +141,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       GradleConnector.newCancellationTokenSource()
     );
     DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(
-      syncTaskId, projectPath, settings, listener, gradleResolverPolicy, projectResolverIndicator
+      syncTaskId, projectPath, settings, listener, gradleResolverPolicy, projectResolverIndicator, false
     );
     GradleProjectResolverResultHandler resolverResultHandler = new GradleProjectResolverResultHandler(resolverContext);
 
@@ -183,7 +183,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
 
       final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(resolverContext);
-      var projectDataFunction = getProjectDataFunction(resolverContext, projectResolverChain, false);
+      var projectDataFunction = getProjectDataFunction(resolverContext, projectResolverChain);
       final DataNode<ProjectData> projectDataNode = myHelper.execute(
         resolverContext.getProjectPath(),
         resolverContext.getSettings(),
@@ -208,11 +208,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  @NotNull
-  Function<ProjectConnection, DataNode<ProjectData>> getProjectDataFunction(DefaultProjectResolverContext resolverContext,
-                                                                            GradleProjectResolverExtension projectResolverChain,
-                                                                            boolean isBuildSrcProject) {
-    return new ProjectConnectionDataNodeFunction(resolverContext, projectResolverChain, isBuildSrcProject);
+
+  protected @NotNull Function<ProjectConnection, DataNode<ProjectData>> getProjectDataFunction(
+    @NotNull DefaultProjectResolverContext resolverContext,
+    @NotNull GradleProjectResolverExtension projectResolverChain
+  ) {
+    return new ProjectConnectionDataNodeFunction(resolverContext, projectResolverChain);
   }
 
   @NotNull
@@ -244,8 +245,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   @NotNull
   private DataNode<ProjectData> doResolveProjectInfo(
     @NotNull final DefaultProjectResolverContext resolverContext,
-    @NotNull final GradleProjectResolverExtension projectResolverChain,
-    boolean isBuildSrcProject
+    @NotNull final GradleProjectResolverExtension projectResolverChain
   )
     throws IllegalArgumentException, IllegalStateException {
 
@@ -267,7 +267,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
     }
 
-    configureExecutionArgumentsAndVmOptions(executionSettings, resolverContext, isBuildSrcProject);
+    configureExecutionArgumentsAndVmOptions(executionSettings, resolverContext);
     final Set<Class<?>> toolingExtensionClasses = new HashSet<>();
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
@@ -297,7 +297,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     GradleInitScriptUtil.attachTargetPathMapperInitScript(executionSettings);
-    var initScript = GradleInitScriptUtil.createMainInitScript(isBuildSrcProject, toolingExtensionClasses);
+    var initScript = GradleInitScriptUtil.createMainInitScript(resolverContext.isBuildSrcProject(), toolingExtensionClasses);
     executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
 
     if (!executionSettings.isDownloadSources()) {
@@ -366,7 +366,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .startSpan();
     try (Scope ignore = projectResolversSpan.makeCurrent()) {
       extractExternalProjectModels(models);
-      return convertData(executionSettings, resolverContext, projectResolverChain, isBuildSrcProject);
+      return convertData(executionSettings, resolverContext, projectResolverChain);
     }
     catch (Throwable t) {
       projectResolversErrorsCount += 1;
@@ -386,8 +386,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private @NotNull DataNode<ProjectData> convertData(
     @NotNull GradleExecutionSettings executionSettings,
     @NotNull DefaultProjectResolverContext resolverContext,
-    @NotNull GradleProjectResolverExtension tracedResolverChain,
-    boolean isBuildSrcProject
+    @NotNull GradleProjectResolverExtension tracedResolverChain
   ) {
     final long activityId = resolverContext.getExternalSystemTaskId().getId();
 
@@ -449,7 +448,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       tracedResolverChain.populateModuleContentRoots(ideaModule, moduleDataNode);
       tracedResolverChain.populateModuleCompileOutputSettings(ideaModule, moduleDataNode);
-      if (!isBuildSrcProject) {
+      if (!resolverContext.isBuildSrcProject()) {
         tracedResolverChain.populateModuleTasks(ideaModule, moduleDataNode, projectDataNode);
       }
 
@@ -605,8 +604,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   private static void configureExecutionArgumentsAndVmOptions(
     @NotNull GradleExecutionSettings executionSettings,
-    @NotNull DefaultProjectResolverContext resolverContext,
-    boolean isBuildSrcProject
+    @NotNull DefaultProjectResolverContext resolverContext
   ) {
     executionSettings.withArgument("-Didea.gradle.download.sources=" + executionSettings.isDownloadSources());
     executionSettings.withArgument("-Didea.sync.active=true");
@@ -616,7 +614,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     if (executionSettings.isParallelModelFetch()) {
       executionSettings.withArgument("-Didea.parallelModelFetch.enabled=true");
     }
-    if (!isBuildSrcProject) {
+    if (!resolverContext.isBuildSrcProject()) {
       for (GradleBuildParticipant buildParticipant : executionSettings.getExecutionWorkspace().getBuildParticipants()) {
         executionSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
       }
@@ -912,16 +910,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private final class ProjectConnectionDataNodeFunction implements Function<ProjectConnection, DataNode<ProjectData>> {
     private final @NotNull GradleProjectResolverExtension myProjectResolverChain;
     private final @NotNull DefaultProjectResolverContext myResolverContext;
-    private final boolean myIsBuildSrcProject;
 
     private ProjectConnectionDataNodeFunction(
       @NotNull DefaultProjectResolverContext resolverContext,
-      @NotNull GradleProjectResolverExtension projectResolverChain,
-      boolean isBuildSrcProject
+      @NotNull GradleProjectResolverExtension projectResolverChain
     ) {
       myResolverContext = resolverContext;
       myProjectResolverChain = projectResolverChain;
-      myIsBuildSrcProject = isBuildSrcProject;
     }
 
     @Override
@@ -932,7 +927,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       return computeCancellable(myResolverContext, () -> {
         try {
           myResolverContext.setConnection(connection);
-          return doResolveProjectInfo(myResolverContext, myProjectResolverChain, myIsBuildSrcProject);
+          return doResolveProjectInfo(myResolverContext, myProjectResolverChain);
         }
         catch (ProcessCanceledException e) {
           throw e;

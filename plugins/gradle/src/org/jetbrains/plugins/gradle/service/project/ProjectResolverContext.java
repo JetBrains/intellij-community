@@ -101,6 +101,8 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @Nullable
   String getProjectGradleVersion();
 
+  boolean isBuildSrcProject();
+
   @Nullable
   String getBuildSrcGroup();
 
