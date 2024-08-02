@@ -24,6 +24,8 @@
     <extensionPoint name="xdebugger.inlineBreakpointsDisabler" interface="com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler" dynamic="true"/>
 
     <extensionPoint name="xdebugger.textValueVisualizer" interface="com.intellij.xdebugger.ui.TextValueVisualizer" dynamic="true"/>
+
+    <extensionPoint name="xdebugger.hotSwapUiExtension" interface="com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

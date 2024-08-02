@@ -19,12 +19,23 @@ import com.intellij.xdebugger.XDebuggerBundle
 import icons.PlatformDebuggerImplIcons
 import kotlinx.coroutines.*
 import java.awt.FlowLayout
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+private val hotSwapIcon: Icon by lazy {
+  HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapIcon } ?: PlatformDebuggerImplIcons.Actions.Hot_swap
+}
+
+private fun createHelpTooltip(): HelpTooltip =
+  HotSwapUiExtension.computeSafeIfAvailable { it.createTooltip() }
+  ?: HelpTooltip()
+    .setTitle(XDebuggerBundle.message("xdebugger.hotswap.tooltip.apply"))
+    .setDescription(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
+
 internal class HotSwapModifiedFilesAction : AnAction(XDebuggerBundle.messagePointer("action.XDebugger.Hotswap.Modified.Files.text"),
                                                      XDebuggerBundle.messagePointer("action.XDebugger.Hotswap.Modified.Files.description"),
-                                                     PlatformDebuggerImplIcons.Actions.Hot_swap) {
+                                                     hotSwapIcon) {
   override fun actionPerformed(e: AnActionEvent) {
     val session = findSessionIfReady(e.project) ?: return
     HotSwapWithRebuildAction.performHotSwap(e.dataContext, session)
@@ -85,13 +96,9 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     tooltip.installOn(this)
   }
 
-  private fun createHelpTooltip() = HelpTooltip()
-    .setTitle(XDebuggerBundle.message("xdebugger.hotswap.tooltip.apply"))
-    .setDescription(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
-
   fun update(inProgress: Boolean, presentation: Presentation) {
     presentation.isEnabled = !inProgress
-    presentation.icon = if (inProgress) AnimatedIcon.Default.INSTANCE else PlatformDebuggerImplIcons.Actions.Hot_swap
+    presentation.icon = if (inProgress) AnimatedIcon.Default.INSTANCE else hotSwapIcon
     // Force animation in the disabled state
     presentation.disabledIcon = presentation.icon
   }
