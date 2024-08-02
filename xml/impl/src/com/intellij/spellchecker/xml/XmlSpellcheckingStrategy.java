@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.xml;
 
 import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,7 +29,7 @@ import java.util.List;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
+public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy implements DumbAware {
 
   private final Tokenizer<? extends PsiElement> myXmlTextTokenizer = createTextTokenizer();
 
