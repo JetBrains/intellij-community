@@ -3,6 +3,7 @@ package com.intellij.platform.backend.observation
 
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 
 object Observation {
 
@@ -50,6 +51,16 @@ object Observation {
       break
     }
     return isModificationOccurred
+  }
+
+  /**
+   * Used for debugging purposes.
+   * Returns stacktraces of the computations that are currently awaited by [awaitConfiguration]
+   * This method affects only those computations that use [ActivityKey], whereas [ActivityTracker] is out of reach for the platform.
+   */
+  @ApiStatus.Internal
+  fun getAllAwaitedActivities(): Set<Throwable> {
+    return dumpCurrentlyObservedComputations()
   }
 
   private interface GenericActivityTracker {

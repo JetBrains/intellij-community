@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.observation
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.components.Service
@@ -8,7 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.BlockingJob
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,8 @@ import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.jvm.Throws
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Allows tracking subsystem activities and getting a "dumb mode" with respect to tracked computations.
@@ -65,8 +67,8 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
    * This method is cheap to use: it does not perform any complex computations, and it is essentially equivalent to `withContext`.
    */
   suspend fun <T> trackConfigurationActivity(kind: ActivityKey, action: suspend () -> T): T {
-    return withBlockingJob(kind) { blockingJob ->
-      withContext(blockingJob) {
+    return withObservationTracker(kind) { observationTracker ->
+      withContext(observationTracker) {
         action()
       }
     }
@@ -79,24 +81,24 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
   @RequiresBlockingContext
   fun <T> trackConfigurationActivityBlocking(kind: ActivityKey, action: () -> T): T {
     val currentContext = currentThreadContext()
-    return withBlockingJob(kind) { blockingJob ->
-      installThreadContext(currentContext + blockingJob, true).use {
+    return withObservationTracker(kind) { observationTracker ->
+      installThreadContext(currentContext + observationTracker, true).use {
         action()
       }
     }
   }
 
 
-  private inline fun <T> withBlockingJob(kind: ActivityKey, consumer: (BlockingJob) -> T): T {
+  private inline fun <T> withObservationTracker(kind: ActivityKey, consumer: (ObservationTracker) -> T): T {
     val key = enterConfiguration(kind)
     // new job here to track those and only those computations which are invoked under explicit `trackConfigurationActivity`
     val tracker = Job()
     tracker.invokeOnCompletion {
       leaveConfiguration(kind, key)
     }
-    val blockingJob = BlockingJob(tracker)
+    val trackingElement = ObservationTracker(tracker, tracker)
     try {
-      return consumer(blockingJob)
+      return consumer(trackingElement)
     }
     finally {
       scope.launch {
@@ -104,6 +106,25 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
       }.invokeOnCompletion {
         tracker.complete()
       }
+    }
+  }
+
+
+  internal class ObservationTracker(private val mainJob: Job, val currentJob: CompletableJob) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+    companion object Key : CoroutineContext.Key<ObservationTracker>
+
+    override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement {
+      // we would like to know about all child computations, regardless of their relation to the current process
+      val newJob = Job(mainJob)
+      if (Registry.`is`("ide.activity.tracking.enable.debug", false)) {
+        computationMap[newJob] = Throwable()
+      }
+      return ObservationTracker(mainJob, newJob)
+    }
+
+    override fun afterChildCompleted(context: CoroutineContext) {
+      computationMap.remove(currentJob)
+      currentJob.complete()
     }
   }
 
@@ -187,14 +208,13 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
       // currentCounter != null => isInProgress == true => either currentCounter.job corresponds to the current configuration process,
       // or its configuration was completed earlier, and in this case join() will immediately return
       // currentCounter == null => isInProgress == false => immediately return, since no configuration process is here currently
-      while (true) {
-        if (currentCounter.job.isCompleted) {
-          break
-        }
-        delay(1000)
-      }
-      //currentCounter.job.join()
+      currentCounter.job.join()
     }
   }
 }
 
+private val computationMap : MutableMap<Job, Throwable?> = ConcurrentHashMap()
+
+internal fun dumpCurrentlyObservedComputations(): Set<Throwable> {
+  return computationMap.values.mapNotNullTo(HashSet()) { it }
+}

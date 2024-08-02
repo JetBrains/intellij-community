@@ -6,7 +6,13 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.configuration.ConfigurationResult
 import com.intellij.openapi.project.configuration.awaitCompleteProjectConfiguration
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.util.asSafely
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.minutes
 
 internal suspend fun configureProjectByActivities(args: OpenProjectArgs): Project {
   val projectFile = getProjectFile(args)
@@ -18,7 +24,9 @@ internal suspend fun configureProjectByActivities(args: OpenProjectArgs): Projec
   } ?: throw RuntimeException("Failed to open project, null is returned")
 
   val configurationError = runTaskAndLogTime("awaiting completion predicates") {
+    val loggerJob = launchActivityLogger()
     val result = project.awaitCompleteProjectConfiguration(WarmupLogger::logInfo)
+    loggerJob.cancel()
     dumpThreadsAfterConfiguration()
     result.asSafely<ConfigurationResult.Failure>()?.message
   }
@@ -31,4 +39,20 @@ internal suspend fun configureProjectByActivities(args: OpenProjectArgs): Projec
 
   WarmupLogger.logInfo("Project is ready for the import")
   return project
+}
+
+private fun CoroutineScope.launchActivityLogger(): Job {
+  return launch {
+    while (true) {
+      delay(10.minutes)
+      val currentComputations = Observation.getAllAwaitedActivities()
+      buildString {
+        appendLine("Currently awaited activities:")
+        for (trace in currentComputations) {
+          appendLine(trace.stackTraceToString())
+        }
+      }
+      WarmupLogger.logInfo(currentComputations.toString())
+    }
+  }
 }

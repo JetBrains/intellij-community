@@ -7,7 +7,6 @@ package com.intellij.platform.backend.observation
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -58,10 +57,10 @@ fun Project.trackActivity(key: ActivityKey, action: Runnable): Unit {
  */
 @RequiresBlockingContext
 fun CoroutineScope.launchTracked(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit) {
-  val blockingJob = currentThreadContext()[BlockingJob] ?: EmptyCoroutineContext
-  // since the `launch` is executed with the Job of `this`, we need to mimic the awaiting for the execution of `block` for `BlockingJob`
-  val childJob = Job(currentThreadContext()[BlockingJob]?.blockingJob)
-  launch(context + blockingJob, CoroutineStart.DEFAULT) {
+  val tracker = currentThreadContext()[PlatformActivityTrackerService.ObservationTracker]
+  // since the `launch` is executed with the Job of `this`, we need to mimic the awaiting for the execution of `block` for `ObservationTracker`
+  val childJob = Job(tracker?.currentJob)
+  launch(context + (tracker ?: EmptyCoroutineContext), CoroutineStart.DEFAULT) {
     try {
       block()
     }

@@ -388,7 +388,6 @@ internal fun <T, R> capturePropagationContext(function: Function<T, R>): Functio
   return f
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callable<V>, ns: Long): MyScheduledFutureTask<V> {
   val callable = captureClientIdInCallable(c)
   if (isContextAwareComputation(c)) {
