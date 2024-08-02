@@ -860,6 +860,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myCustomFilters.add(filter);
   }
 
+  public void clearMessageFilters() {
+    myCustomFilters.clear();
+  }
+
   @Override
   public void printHyperlink(@NotNull String hyperlinkText, @Nullable HyperlinkInfo info) {
     print(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info);
