@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.nodes;
 
@@ -22,6 +22,7 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
+import com.intellij.usageView.UsageTreeColors;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,7 +107,6 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     int endOffset = myRangeMarker.getEndOffset();
     int lineNumber = document.getLineNumber(startOffset);
     int lineStartOffset = document.getLineStartOffset(lineNumber);
-    int columnNumber = startOffset - lineStartOffset;
 
     // skip all white space characters
 
@@ -116,8 +116,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
     int lineEndOffset = document.getLineEndOffset(lineNumber);
 
-    String lineColumnPrefix = "(" + (lineNumber + 1) + ", " + (columnNumber + 1) + ") ";
-
+    String lineColumnPrefix = String.valueOf(lineNumber + 1) + " ";
     String highlightedText = chars.subSequence(lineStartOffset, Math.min(lineEndOffset, chars.length())).toString();
 
     String newName = lineColumnPrefix + highlightedText;
@@ -135,6 +134,11 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     collectHighlights(myHighlightedRegions, highlighter, lineStartOffset, lineEndOffset, lineColumnPrefix.length());
     TextAttributes attributes =
       pattern != null ? pattern.getAttributes().getTextAttributes() : TodoAttributesUtil.getDefaultColorSchemeTextAttributes();
+    myHighlightedRegions.add(new HighlightedRegion(
+      0,
+      lineColumnPrefix.length(),
+      UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes()
+    ));
     myHighlightedRegions.add(new HighlightedRegion(
       lineColumnPrefix.length() + startOffset - lineStartOffset,
       lineColumnPrefix.length() + endOffset - lineStartOffset,
