@@ -709,8 +709,8 @@ private class XmlSerializerPropertyCollectorListClassValue(
       aClass === String::class.java -> LOG.error("Do not compute bindings for String")
     }
 
-    LOG.warn("No accessors for ${aClass.name}. " +
-             "This means that state class cannot be serialized properly. Please see https://jb.gg/ij-psoc")
+    LOG.debug("No accessors for ${aClass.name}. " +
+              "This means that state class cannot be serialized properly. Please see https://jb.gg/ij-psoc")
     return Collections.emptyList()
   }
 }
