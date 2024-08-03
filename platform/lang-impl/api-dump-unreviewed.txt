@@ -5690,6 +5690,7 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler$DoHighlightRunnab
 - <init>(java.util.List,com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,Z):V
 - run():V
 a:com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
+- com.intellij.openapi.project.PossiblyDumbAware
 - pf:myEditor:com.intellij.openapi.editor.Editor
 - pf:myFile:com.intellij.psi.PsiFile
 - p:myHintText:java.lang.String
@@ -5708,6 +5709,7 @@ a:com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 - highlightUsages():V
 - pa:selectTargets(java.util.List,com.intellij.util.Consumer):V
 com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactory
+- com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createHighlightUsagesHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 - createHighlightUsagesHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.util.ProperTextRange):com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
