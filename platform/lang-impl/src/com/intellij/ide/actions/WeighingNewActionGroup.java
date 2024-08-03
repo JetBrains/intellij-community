@@ -73,6 +73,6 @@ public class WeighingNewActionGroup extends WeighingActionGroup implements DumbA
   }
 
   private static boolean isPopupGroup() {
-    return Registry.is("ide.project.view.new.file.popup", true);
+    return Registry.is("ide.project.view.new.file.popup");
   }
 }
