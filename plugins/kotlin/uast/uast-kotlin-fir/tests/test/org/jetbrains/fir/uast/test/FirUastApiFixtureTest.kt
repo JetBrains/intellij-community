@@ -146,6 +146,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkReceiverTypeOfExtensionFunction(myFixture)
     }
 
+    fun testSourcePsiOfLazyPropertyAccessor() {
+        checkSourcePsiOfLazyPropertyAccessor(myFixture)
+    }
+
     fun testTextRangeOfLocalVariable() {
         checkTextRangeOfLocalVariable(myFixture)
     }
