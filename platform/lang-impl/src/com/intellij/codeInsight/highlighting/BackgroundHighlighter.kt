@@ -91,16 +91,18 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
   }
 
   suspend fun runActivity(project: Project) {
-    val d = serviceAsync<BackgroundHighlighterPerProject>()
-    registerListeners(project = project, parentDisposable = d, alarm = alarm, coroutineScope = d.coroutineScope)
+    val perProjectDisposable = project.serviceAsync<BackgroundHighlighterPerProject>()
+    registerListeners(
+      project = project,
+      parentDisposable = perProjectDisposable,
+      alarm = alarm,
+      coroutineScope = perProjectDisposable.coroutineScope
+    )
   }
 }
 
 @Service(Service.Level.PROJECT)
-private class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineScope): Disposable {
-  override fun dispose() {
-  }
-}
+private class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineScope): Disposable.Default
 
 private fun registerListeners(
   project: Project,
