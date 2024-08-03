@@ -14,7 +14,6 @@ import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -562,11 +561,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @RequiresBackgroundThread
   protected suspend fun waitForImportWithinTimeout(action: suspend () -> Unit) {
-    waitForImportWithinTimeout(project, action)
-  }
-
-  @RequiresBackgroundThread
-  protected suspend fun waitForImportWithinTimeout(project: Project, action: suspend () -> Unit) {
     MavenLog.LOG.warn("waitForImportWithinTimeout started")
     val importStarted = AtomicBoolean(false)
     val importFinished = AtomicBoolean(false)
@@ -603,13 +597,13 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
     action()
 
-    assertWithinTimeout {
-      assertTrue("Import failed: start", importStarted.get())
-      assertTrue("Import failed: finish", importFinished.get())
-      assertTrue("Import failed: plugins", pluginResolutionFinished.get())
-      assertTrue("Import failed: artifacts", artifactDownloadingFinished.get())
-      MavenLog.LOG.warn("waitForImportWithinTimeout finished")
-    }
+    awaitConfiguration()
+
+    assertTrue("Import failed: start", importStarted.get())
+    assertTrue("Import failed: finish", importFinished.get())
+    assertTrue("Import failed: plugins", pluginResolutionFinished.get())
+    assertTrue("Import failed: artifacts", artifactDownloadingFinished.get())
+    MavenLog.LOG.warn("waitForImportWithinTimeout finished")
   }
 
   private class MavenImportLoggingListener : MavenImportListener {
