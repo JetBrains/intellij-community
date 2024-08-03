@@ -635,6 +635,8 @@
         "nodes/plugin.svg",
         "nodes/pluginobsolete.svg"
       ],
+      "pluginLogo.svg": "plugins/pluginLogo.svg",
+      "pluginLogoDisabled.svg": "plugins/pluginLogoDisabled.svg",
       "ppWeb.svg": "nodes/ppWeb.svg",
       "property.svg": [
         "nodes/property.svg",

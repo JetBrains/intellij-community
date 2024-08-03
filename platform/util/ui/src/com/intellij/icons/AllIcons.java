@@ -1084,8 +1084,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Disabled = load("plugins/disabled.svg", 819830524, 0);
     /** 12x12 */ public static final @NotNull Icon Downloads = load("plugins/downloads.svg", -1752016306, 2);
     /** 15x15 */ public static final @NotNull Icon ModifierInvalid = load("plugins/modifierInvalid.svg", 2038910854, 2);
-    /** 40x40 */ public static final @NotNull Icon PluginLogo = load("plugins/pluginLogo.svg", 899855946, 0);
-    /** 40x40 */ public static final @NotNull Icon PluginLogoDisabled = load("plugins/pluginLogoDisabled.svg", 1569910218, 0);
+    /** 40x40 */ public static final @NotNull Icon PluginLogo = load("expui/nodes/pluginLogo.svg", "plugins/pluginLogo.svg", 899855946, 0);
+    /** 40x40 */ public static final @NotNull Icon PluginLogoDisabled = load("expui/nodes/pluginLogoDisabled.svg", "plugins/pluginLogoDisabled.svg", 1569910218, 0);
     /** 12x12 */ public static final @NotNull Icon Rating = load("plugins/rating.svg", 1714785539, 2);
     /** 12x12 */ public static final @NotNull Icon Updated = load("plugins/updated.svg", 1725310914, 2);
   }
