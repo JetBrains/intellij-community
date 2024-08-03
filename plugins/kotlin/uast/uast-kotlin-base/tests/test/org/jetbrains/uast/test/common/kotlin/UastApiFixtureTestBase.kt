@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
@@ -1182,6 +1183,33 @@ interface UastApiFixtureTestBase {
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("Foo", uCallExpression.receiverType?.canonicalText)
+    }
+
+    fun checkSourcePsiOfLazyPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    var prop = "zzz"
+                        internal get
+                        private set
+                    var lazyProp by lazy { setOf("zzz") }
+                        private get
+                        internal set
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitMethod(node: UMethod): Boolean {
+                    if (node.isConstructor) {
+                        return super.visitMethod(node)
+                    }
+                    TestCase.assertTrue(node.sourcePsi?.text, node.sourcePsi is KtPropertyAccessor)
+                    return super.visitMethod(node)
+                }
+            }
+        )
     }
 
     fun checkTextRangeOfLocalVariable(myFixture: JavaCodeInsightTestFixture) {
