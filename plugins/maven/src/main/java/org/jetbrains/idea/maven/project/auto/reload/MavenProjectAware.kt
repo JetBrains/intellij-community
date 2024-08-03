@@ -44,7 +44,6 @@ class MavenProjectAware(
     }
     if (context.hasUndefinedModifications) {
       MavenLog.LOG.debug("MavenProjectAware.reloadProject - context.hasUndefinedModifications=true")
-      manager.findAllAvailablePomFilesIfNotMavenized()
       val spec = MavenSyncSpec.incremental("MavenProjectAware.reloadProject, undefined modifications", context.isExplicitReload)
       manager.scheduleUpdateAllMavenProjects(spec)
     }
@@ -69,7 +68,6 @@ class MavenProjectAware(
         manager.scheduleUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
       else {
-        manager.findAllAvailablePomFilesIfNotMavenized()
         val spec = MavenSyncSpec.incremental("MavenProjectAware.reloadProject, sync all", context.isExplicitReload)
         manager.scheduleUpdateAllMavenProjects(spec)
       }
