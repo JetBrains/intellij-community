@@ -134,6 +134,9 @@
                         serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTrackerImpl"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
+
+    <registryKey key="ide.project.view.new.file.popup" defaultValue="false"
+                 description="Switches submenu in File - New to popup step" />
   </extensions>
 
   <xi:include href="/META-INF/diff-impl.xml">
