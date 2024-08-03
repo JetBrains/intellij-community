@@ -27,6 +27,7 @@ import java.nio.file.Path
 
 fun buildDevMain(): Collection<Path> {
   //TracerProviderManager.setOutput(Path.of(System.getProperty("user.home"), "trace.json"))
+  @Suppress("TestOnlyProblems")
   val ideaProjectRoot = Path.of(PathManager.getHomePathFor(PathManager::class.java)!!)
   System.setProperty("idea.dev.project.root", ideaProjectRoot.toString().replace(File.separator, "/"))
 
@@ -41,7 +42,7 @@ fun buildDevMain(): Collection<Path> {
       .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "builder")))
       .build()
     try {
-      // don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing ~500KB JSON file
+      // don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing a ~500KB JSON file
       traceManagerInitializer = {
         val openTelemetry = OpenTelemetrySdk.builder()
           .setTracerProvider(tracerProvider)
@@ -61,6 +62,7 @@ fun buildDevMain(): Collection<Path> {
             newClassPath = classPath
             homePath = runDir.toString().replace(File.separator, "/")
 
+            @Suppress("SpellCheckingInspection")
             val exceptions = setOf("jna.boot.library.path", "pty4j.preferred.native.folder", "jna.nosys", "jna.noclasspath", "jb.vmOptionsFile")
             val systemProperties = System.getProperties()
             for ((name, value) in getIdeSystemProperties(runDir).map) {
@@ -78,8 +80,8 @@ fun buildDevMain(): Collection<Path> {
       traceManagerInitializer = { throw IllegalStateException("already built") }
     }
   }
-  if (homePath != null) {
-    System.setProperty(PathManager.PROPERTY_HOME_PATH, homePath!!)
+  homePath?.let {
+    System.setProperty(PathManager.PROPERTY_HOME_PATH, it)
   }
   return newClassPath!!
 }
