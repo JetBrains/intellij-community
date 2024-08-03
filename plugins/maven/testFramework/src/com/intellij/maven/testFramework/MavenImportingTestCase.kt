@@ -433,8 +433,9 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertNotEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
-  protected fun assertNoPendingProjectForReload() {
+  protected suspend fun assertNoPendingProjectForReload() {
     assertAutoReloadIsEnabled()
+    awaitConfiguration()
     assertFalse(myNotificationAware!!.isNotificationVisible())
     assertEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
@@ -457,8 +458,13 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected suspend fun awaitConfiguration() {
     Observation.awaitConfiguration(project) { message ->
-      MavenLog.LOG.warn(message)
+      logConfigurationMessage(message)
     }
+  }
+
+  private fun logConfigurationMessage(message: String) {
+    if (message.contains("scanning")) return
+    MavenLog.LOG.warn(message)
   }
 
   protected suspend fun scheduleProjectImportAndWaitAsync() {
