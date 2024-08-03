@@ -141,7 +141,7 @@
       "selfReference.svg": "debugger/selfreference.svg",
       "threads.svg": "debugger/threads.svg",
       "value.svg": "debugger/value.svg",
-      "watch.svg": "debugger/watch.svg"
+      "watch.svg": ["debugger/watch.svg", "debugger/db_watch.svg"]
     },
     "diff": {
       "applyNotConflicts.svg": "diff/applyNotConflicts.svg",
@@ -624,6 +624,7 @@
         "nodes/Module.svg",
         "actions/moduleDirectory.svg"
       ],
+      "moduleJava.svg": "nodes/javaModule.svg",
       "moduleGroup.svg": "nodes/moduleGroup.svg",
       "package.svg": "nodes/package.svg",
       "parameter.svg": [
@@ -723,7 +724,7 @@
       "attachToProcess.svg": "debugger/attachToProcess.svg",
       "debug.svg": "actions/startDebugger.svg",
       "dumpThreads.svg": "actions/dump.svg",
-      "evaluateExpression.svg": "debugger/evaluateExpression.svg",
+      "evaluateExpression.svg": ["debugger/evaluateExpression.svg", "debugger/db_evaluateNode.svg"],
       "forceRunToCursor.svg": "debugger/forceRunToCursor.svg",
       "forceStepInto.svg": "debugger/forceStepInto.svg",
       "forceStepOver.svg": "debugger/forceStepOver.svg",

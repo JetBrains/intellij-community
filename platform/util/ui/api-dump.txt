@@ -921,7 +921,6 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:Module:javax.swing.Icon
 - sf:Module8x8:javax.swing.Icon
 - sf:ModuleGroup:javax.swing.Icon
-- sf:ModuleJava:javax.swing.Icon
 - sf:MultipleTypeDefinitions:javax.swing.Icon
 - sf:NativeLibrariesFolder:javax.swing.Icon
 - sf:NewParameter:javax.swing.Icon
