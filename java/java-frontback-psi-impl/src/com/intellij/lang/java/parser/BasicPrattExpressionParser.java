@@ -821,14 +821,12 @@ public class BasicPrattExpressionParser {
         PsiBuilder.Marker marker = builder.mark();
         builder.advanceLexer();
         BasicReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(
-          builder, BasicReferenceParser.EAT_LAST_DOT | BasicReferenceParser.ELLIPSIS | BasicReferenceParser.WILDCARD);
+          builder, BasicReferenceParser.ELLIPSIS | BasicReferenceParser.WILDCARD);
         if (typeInfo != null) {
           IElementType t = builder.getTokenType();
-          if (t == JavaTokenType.IDENTIFIER ||
-              t == JavaTokenType.THIS_KEYWORD ||
-              t == JavaTokenType.RPARENTH && builder.lookAhead(1) == JavaTokenType.ARROW) {
-            lambda = true;
-          }
+          lambda = t == JavaTokenType.IDENTIFIER ||
+                   t == JavaTokenType.THIS_KEYWORD ||
+                   t == JavaTokenType.RPARENTH && builder.lookAhead(1) == JavaTokenType.ARROW;
         }
         marker.rollbackTo();
 
