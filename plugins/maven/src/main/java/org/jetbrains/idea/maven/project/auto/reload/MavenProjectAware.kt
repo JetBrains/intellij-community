@@ -74,13 +74,6 @@ class MavenProjectAware(
     }
   }
 
-  private fun hasPomFile(rootDirectory: String): Boolean {
-    val projectTree = manager.projectsTree
-    return MavenConstants.POM_NAMES.any {
-      projectTree.isPotentialProject("$rootDirectory/$it")
-    }
-  }
-
   private fun collectSettingsFiles(): Set<String> {
     val result = LinkedHashSet<String>()
     result.addAll(manager.projectsTree.managedFilesPaths)
@@ -93,9 +86,6 @@ class MavenProjectAware(
       result.add(rootDirectory + "/" + MavenConstants.JVM_CONFIG_RELATIVE_PATH)
       result.add(rootDirectory + "/" + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
       result.add(rootDirectory + "/" + MavenConstants.MAVEN_WRAPPER_RELATIVE_PATH)
-      if (hasPomFile(rootDirectory)) {
-        result.add(rootDirectory + "/" + MavenConstants.PROFILES_XML)
-      }
     }
     return result
   }
