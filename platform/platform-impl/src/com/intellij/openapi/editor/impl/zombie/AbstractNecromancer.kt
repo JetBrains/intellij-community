@@ -27,7 +27,7 @@ abstract class WeakNecromancer(name: String) : AbstractNecromancer<Nothing>(name
   override suspend fun shouldSpawnZombie(recipe: SpawnRecipe) = true
 
   final override fun turnIntoZombie(recipe: TurningRecipe) = null
-  final override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: FingerprintedZombie<Nothing>) = false
+  final override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: Nothing) = false
   final override suspend fun buryZombie(id: Int, zombie: FingerprintedZombie<Nothing>?) = Unit
   final override suspend fun exhumeZombie(id: Int) = null
   final override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: Nothing?) = spawn(recipe)
@@ -44,7 +44,7 @@ abstract class GravingNecromancer<Z : Zombie>(
 ) : AbstractNecromancer<Z>(graveName) {
   private val grave: Grave<Z> = GraveImpl(graveName, necromancy, project, coroutineScope)
 
-  override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: FingerprintedZombie<Z>): Boolean {
+  override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: Z): Boolean {
     return true
   }
 

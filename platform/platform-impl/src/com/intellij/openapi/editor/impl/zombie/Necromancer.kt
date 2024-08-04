@@ -47,7 +47,7 @@ interface Necromancer<Z : Zombie> {
    * Determines whether the zombie should be buried into grave.
    * Called on BGT
    */
-  suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: FingerprintedZombie<Z>): Boolean
+  suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: Z): Boolean
 
   /**
    * Burying the zombie into its grave via an IO operation.
