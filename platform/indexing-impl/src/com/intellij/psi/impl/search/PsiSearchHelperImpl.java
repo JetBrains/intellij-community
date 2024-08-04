@@ -450,8 +450,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   /**
-   * NOTE: candidateFile and file might be actually 2 different files (e.g. we may find class file in java, but the PsiFile
-   * will be from mirror source class)
+   * NOTE: candidateFile and file might be actually two different files (e.g., we may find a class file in java, but the PsiFile
+   * will be from the mirror source class)
    *
    * @param files to scan for references in this pass.
    * @param totalSize the number of files to scan in both passes. Can be different from {@code files.size()} in case of
