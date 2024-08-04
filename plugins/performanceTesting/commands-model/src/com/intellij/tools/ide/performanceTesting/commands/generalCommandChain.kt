@@ -382,6 +382,14 @@ fun <T : CommandChain> T.pressKey(key: Keys): T = apply {
   addCommand("${CMD_PREFIX}pressKey", key.name)
 }
 
+fun <T : CommandChain> T.pressKey(vararg key: Keys): T = apply {
+  key.forEach { addCommand("${CMD_PREFIX}pressKey", it.name) }
+}
+
+fun <T : CommandChain> T.pressKey(key: Keys, times: Int): T = apply {
+  repeat((1..times).count()) { addCommand("${CMD_PREFIX}pressKey", key.name) }
+}
+
 /**
  * @see [com.jetbrains.performancePlugin.commands.DelayTypeCommand]
  */
