@@ -253,7 +253,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModules("project", mn("project", "m"))
     runWriteAction<IOException> { m.delete(this) }
 
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertModules("project")
   }
 
@@ -279,12 +279,12 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                          <module>dir/module</module>
                        </modules>
                        """.trimIndent()))
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertEquals(2, MavenProjectsManager.getInstance(project).getProjects().size)
     val dir = projectRoot.findChild("dir")
     WriteCommandAction.writeCommandAction(project).run<IOException> { dir!!.delete(null) }
 
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertEquals(1, MavenProjectsManager.getInstance(project).getProjects().size)
   }
 
@@ -326,7 +326,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        </build>
                        """.trimIndent()))
     assertHasPendingProjectForReload()
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
   }
 
   @Test
@@ -350,7 +350,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                                       <artifactId>m</artifactId>
                                       <version>1</version>
                                       """.trimIndent())
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     val children = projectsTree.getModules(roots[0])
     assertEquals(1, children.size)
     assertEquals(m, children[0].file)
@@ -394,7 +394,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        </build>
                        """.trimIndent()))
     assertHasPendingProjectForReload()
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
   }
 
   @Test
@@ -441,7 +441,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
         </dependency>
       </dependencies>
       """.trimIndent()))
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertModuleModuleDeps("m1", "m2")
 
     // relying on transitive dependencies is not a good practice
@@ -468,7 +468,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                             <artifactId>m</artifactId>
                             <version>1</version>
                             """.trimIndent())
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
 
@@ -529,7 +529,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
     WriteCommandAction.writeCommandAction(project).run<IOException> { m2.delete(this) }
 
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertModules("project", "m1")
     assertModuleModuleDeps("m1")
 
@@ -566,7 +566,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        </modules>
                        """.trimIndent())
     //importProjectAsync();
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertEquals(1, projectsTree.rootProjects.size)
   }
 

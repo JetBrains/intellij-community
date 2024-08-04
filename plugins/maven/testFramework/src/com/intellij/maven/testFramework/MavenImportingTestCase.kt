@@ -466,21 +466,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     MavenLog.LOG.warn(message)
   }
 
-  protected suspend fun scheduleProjectImportAndWaitAsync() {
-    assertAutoReloadIsEnabled()
-
-    // otherwise all imports will be skipped
-    assertHasPendingProjectForReload()
-    waitForImportWithinTimeout {
-      withContext(Dispatchers.EDT) {
-        myProjectTracker!!.scheduleProjectRefresh()
-      }
-    }
-
-    // otherwise project settings was modified while importing
-    assertNoPendingProjectForReload()
-  }
-
   protected suspend fun updateAllProjects() {
     projectsManager.updateAllMavenProjects(MavenSyncSpec.incremental("MavenImportingTestCase incremental sync"))
   }
