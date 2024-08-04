@@ -11,8 +11,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileIconProvider implementation="org.jetbrains.idea.devkit.i18n.DevKitPropertiesIconProvider"/>
-
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"

@@ -222,6 +222,7 @@
       "html.svg": "fileTypes/html.svg",
       "ideaModule.svg": "nodes/ideaModule.svg",
       "idl.svg": "fileTypes/idl.svg",
+      "i18n.svg": "fileTypes/i18n.svg",
       "ignored.svg": "vcs/ignore_file.svg",
       "java.svg": [
         "fileTypes/java.svg",
