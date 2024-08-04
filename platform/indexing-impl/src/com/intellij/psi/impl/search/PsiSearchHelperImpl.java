@@ -1238,7 +1238,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull GlobalSearchScope scope,
                                                        @NotNull Processor<? super VirtualFile> processor,
                                                        TextIndexQuery @NotNull ... textIndexQueries) {
-    if (ContainerUtil.find(textIndexQueries, query -> !query.isEmpty()) == null) return true;
+    if (ContainerUtil.all(textIndexQueries, query -> query.isEmpty())) return true;
 
     if (LOG.isTraceEnabled()) {
       List<String> words = ContainerUtil.map(textIndexQueries, q -> StringUtil.join(q.getInitialWords(), " "));
