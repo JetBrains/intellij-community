@@ -30,7 +30,7 @@ class QodanaProductProperties(val productCode: String, val productName: String, 
     val appInfoOptions = listOf(
       "-Dqodana.product.name=$productName",
       "-Dqodana.build.number=$productCode-${context.buildNumber}",
-      "-Dqodana.eap=true",
+      "-Dqodana.eap=false",
     )
     return COMMON_ADDITIONAL_VM_OPTIONS + customVmOptions + appInfoOptions
   }
