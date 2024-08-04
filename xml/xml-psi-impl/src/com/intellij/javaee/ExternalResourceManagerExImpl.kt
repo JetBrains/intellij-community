@@ -1,668 +1,607 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.javaee;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.xml.Html5SchemaProvider;
-import com.intellij.xml.XmlSchemaProvider;
-import com.intellij.xml.index.XmlNamespaceIndex;
-import com.intellij.xml.util.XmlUtil;
-import kotlin.Unit;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+package com.intellij.javaee
 
-import java.io.File;
-import java.net.URL;
-import java.util.*;
+import com.intellij.application.options.PathMacrosImpl
+import com.intellij.application.options.ReplacePathToMacroMap
+import com.intellij.javaee.ExternalResourceManagerEx.XMLSchemaVersion
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ExpandMacroToPathMap
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl.URL_ATTR
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.containers.MultiMap
+import com.intellij.xml.Html5SchemaProvider
+import com.intellij.xml.XmlSchemaProvider
+import com.intellij.xml.index.XmlNamespaceIndex
+import com.intellij.xml.util.XmlUtil
+import org.jdom.Element
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.io.File
+import java.util.Collections
+import java.util.HashMap
+import java.util.HashSet
+import java.util.LinkedList
+import java.util.TreeSet
 
-@State(name = "ExternalResourceManagerImpl", storages = @Storage("javaeeExternalResources.xml"), category = SettingsCategory.CODE)
-public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance(ExternalResourceManagerExImpl.class);
+private val LOG = logger<ExternalResourceManagerExImpl>()
+private const val DEFAULT_VERSION = ""
 
-  public static final @NonNls String J2EE_1_3 = "http://java.sun.com/dtd/";
-  public static final @NonNls String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
-  public static final @NonNls String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
-  public static final @NonNls String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
-  public static final @NonNls String JCP_NS = "http://xmlns.jcp.org/xml/ns/javaee/";
-  public static final @NonNls String JAKARTA_NS = "https://jakarta.ee/xml/ns/jakartaee/";
+private const val CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES"
+private val XSD_1_1 = ExternalResourceManagerExImpl.Resource(
+  file = "/standardSchemas/XMLSchema-1_1/XMLSchema.xsd",
+  aClass = ExternalResourceManagerExImpl::class.java,
+  classLoader = null,
+).getResourceUrl()
 
-  private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";
-  private static final String XSD_1_1 = new Resource("/standardSchemas/XMLSchema-1_1/XMLSchema.xsd", ExternalResourceManagerExImpl.class, null).getResourceUrl();
+private const val HTML5_DOCTYPE_ELEMENT = "HTML5"
 
-  private final Map<String, Map<String, String>> myResources = new HashMap<>();
-  private final Set<String> myResourceLocations = new HashSet<>();
+private const val RESOURCE_ELEMENT: @NonNls String = "resource"
+private const val URL_ATTR: @NonNls String = "url"
+private const val LOCATION_ATTR: @NonNls String = "location"
+private const val IGNORED_RESOURCE_ELEMENT: @NonNls String = "ignored-resource"
+private const val HTML_DEFAULT_DOCTYPE_ELEMENT: @NonNls String = "default-html-doctype"
+private const val XML_SCHEMA_VERSION: @NonNls String = "xml-schema-version"
 
-  private final Set<String> myIgnoredResources = Collections.synchronizedSet(new TreeSet<>());
-  private final Set<String> myStandardIgnoredResources = Collections.synchronizedSet(new TreeSet<>());
+@State(name = "ExternalResourceManagerImpl", storages = [Storage("javaeeExternalResources.xml")], category = SettingsCategory.CODE)
+open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), PersistentStateComponent<Element?> {
+  private val resources = HashMap<String, MutableMap<String, String>>()
+  private val resourceLocations = HashSet<String>()
 
-  private final ClearableLazyValue<Map<String, Map<String, Resource>>> myStandardResources = ClearableLazyValue.create(() -> computeStdResources());
+  private val ignoredResources = Collections.synchronizedSet<String>(TreeSet<String>())
+  private val standardIgnoredResources = Collections.synchronizedSet<String>(TreeSet<String>())
 
-  private final CachedValueProvider<MultiMap<String, String>> myUrlByNamespaceProvider = () -> {
-    MultiMap<String, String> result = new MultiMap<>();
+  private val standardResources = SynchronizedClearableLazy { computeStdResources() }
 
-    Collection<Map<String, Resource>> values = myStandardResources.getValue().values();
-    for (Map<String, Resource> map : values) {
-      for (Map.Entry<String, Resource> entry : map.entrySet()) {
-        String url = entry.getValue().getResourceUrl();
-        if (url != null) {
-          VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
-          if (file != null) {
-            String namespace = XmlNamespaceIndex.computeNamespace(file);
-            if (namespace != null) {
-              result.putValue(namespace, entry.getKey());
-            }
-          }
-        }
+  private val urlByNamespaceProvider = CachedValueProvider {
+    val result = MultiMap<String, String>()
+    for (map in standardResources.value.values) {
+      for (entry in map.entries) {
+        val url = entry.value.getResourceUrl() ?: continue
+        val file = VfsUtilCore.findRelativeFile(url, null) ?: continue
+        val namespace = XmlNamespaceIndex.computeNamespace(file) ?: continue
+        result.putValue(namespace, entry.key)
       }
     }
-    return CachedValueProvider.Result.create(result, this);
-  };
+    CachedValueProvider.Result.create(result, this)
+  }
 
-  private String myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;
-  private XMLSchemaVersion myXMLSchemaVersion = XMLSchemaVersion.XMLSchema_1_0;
+  private var defaultHtmlDoctype: String? = HTML5_DOCTYPE_ELEMENT
+  private var xmlSchemaVersion = XMLSchemaVersion.XMLSchema_1_0
 
-  private String myCatalogPropertiesFile;
-  private XMLCatalogManager myCatalogManager;
-  private static final String HTML5_DOCTYPE_ELEMENT = "HTML5";
+  private var myCatalogPropertiesFile: String? = null
+  private var myCatalogManager: XMLCatalogManager? = null
 
-  protected Map<String, Map<String, Resource>> computeStdResources() {
-    ResourceRegistrarImpl registrar = new ResourceRegistrarImpl();
-    for (StandardResourceProvider provider : StandardResourceProvider.EP_NAME.getIterable()) {
-      provider.registerResources(registrar);
+  init {
+    StandardResourceProvider.EP_NAME.addChangeListener(::dropCache, null)
+    StandardResourceEP.EP_NAME.addChangeListener(::dropCache, null)
+  }
+
+  companion object {
+    const val J2EE_1_3: @NonNls String = "http://java.sun.com/dtd/"
+    const val J2EE_1_2: @NonNls String = "http://java.sun.com/j2ee/dtds/"
+    const val J2EE_NS: @NonNls String = "http://java.sun.com/xml/ns/j2ee/"
+    const val JAVAEE_NS: @NonNls String = "http://java.sun.com/xml/ns/javaee/"
+    const val JCP_NS: @NonNls String = "http://xmlns.jcp.org/xml/ns/javaee/"
+    const val JAKARTA_NS: @NonNls String = "https://jakarta.ee/xml/ns/jakartaee/"
+
+    fun <T> getOrCreateMap(resources: MutableMap<String, MutableMap<String, T>>, version: String?): MutableMap<String, T> {
+      return resources.computeIfAbsent(version ?: DEFAULT_VERSION) { HashMap() }
     }
-    StandardResourceEP.EP_NAME.processWithPluginDescriptor((extension, pluginDescriptor) -> {
-      registrar.addStdResource(extension.url, extension.version, extension.resourcePath, null, pluginDescriptor.getPluginClassLoader());
-      return Unit.INSTANCE;
-    });
 
-    myStandardIgnoredResources.clear();
-    myStandardIgnoredResources.addAll(registrar.getIgnored());
-    return registrar.getResources();
+    @TestOnly
+    @JvmStatic
+    fun registerResourceTemporarily(url: String, location: String, disposable: Disposable) {
+      val app = ApplicationManager.getApplication()
+      app.runWriteAction(Runnable { getInstance().addResource(url, location) })
+      Disposer.register(disposable, Disposable { app.runWriteAction(Runnable { getInstance().removeResource(url) }) })
+    }
   }
 
-  private static final @NonNls String RESOURCE_ELEMENT = "resource";
-  private static final @NonNls String URL_ATTR = "url";
-  private static final @NonNls String LOCATION_ATTR = "location";
-  private static final @NonNls String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
-  private static final @NonNls String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
-  private static final @NonNls String XML_SCHEMA_VERSION = "xml-schema-version";
+  internal open fun computeStdResources(): Map<String, MutableMap<String, Resource>> {
+    val registrar = ResourceRegistrarImpl()
+    for (provider in StandardResourceProvider.EP_NAME.lazySequence()) {
+      provider.registerResources(registrar)
+    }
+    for (item in StandardResourceEP.EP_NAME.filterableLazySequence()) {
+      val extension = item.instance ?: continue
+      registrar.addStdResource(
+        extension.url,
+        extension.version,
+        extension.resourcePath,
+        null,
+        item.pluginDescriptor.getPluginClassLoader(),
+      )
+    }
 
-  private static final String DEFAULT_VERSION = "";
-
-  public ExternalResourceManagerExImpl() {
-    StandardResourceProvider.EP_NAME.addChangeListener(this::dropCache, null);
-    StandardResourceEP.EP_NAME.addChangeListener(this::dropCache, null);
+    standardIgnoredResources.clear()
+    standardIgnoredResources.addAll(registrar.ignored)
+    return registrar.resources
   }
 
-  private void dropCache() {
-    myStandardResources.drop();
-    incModificationCount();
+  private fun dropCache() {
+    standardResources.drop()
+    incModificationCount()
   }
 
-  @Override
-  public boolean isStandardResource(VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    return parent != null && parent.getName().equals("standardSchemas");
+  override fun isStandardResource(file: VirtualFile): Boolean {
+    val parent = file.getParent()
+    return parent != null && parent.getName() == "standardSchemas"
   }
 
-  @Override
-  public boolean isUserResource(VirtualFile file) {
-    return myResourceLocations.contains(file.getUrl());
+  override fun isUserResource(file: VirtualFile): Boolean {
+    return resourceLocations.contains(file.getUrl())
   }
 
-  private static @Nullable <T> Map<String, T> getMap(@NotNull Map<String, Map<String, T>> resources, @Nullable String version) {
-    version = Strings.notNullize(version, DEFAULT_VERSION);
-    Map<String, T> map = resources.get(version);
-    return map == null && !version.equals(DEFAULT_VERSION) ? resources.get(DEFAULT_VERSION) : map;
-  }
+  override fun getResourceLocation(url: String): String = getResourceLocation(url, DEFAULT_VERSION)
 
-  static <T> @NotNull Map<String, T> getOrCreateMap(@NotNull Map<String, Map<String, T>> resources, @Nullable String version) {
-    version = Strings.notNullize(version, DEFAULT_VERSION);
-    return resources.computeIfAbsent(version, __ -> new HashMap<>());
-  }
-
-  @Override
-  public String getResourceLocation(@NotNull String url) {
-    return getResourceLocation(url, DEFAULT_VERSION);
-  }
-
-  @Override
-  public String getResourceLocation(@NotNull @NonNls String url, @Nullable String version) {
-    String result = getUserResource(url, Strings.notNullize(version, DEFAULT_VERSION));
+  override fun getResourceLocation(url: @NonNls String, version: String?): String {
+    var result = getUserResource(url, version ?: DEFAULT_VERSION)
     if (result == null) {
-      XMLCatalogManager manager = getCatalogManager();
+      val manager = getCatalogManager()
       if (manager != null) {
-        result = manager.resolve(url);
+        result = manager.resolve(url)
       }
 
       if (result == null) {
-        result = getStdResource(url, version);
+        result = getStdResource(url, version)
         if (result == null) {
-          return url;
+          return url
         }
       }
     }
-    return result;
+    return result
   }
 
-  @Override
-  public @Nullable String getUserResource(Project project, String url, String version) {
-    String resource = getProjectResources(project).getUserResource(url, version);
-    return resource == null ? getUserResource(url, version) : resource;
+  override fun getUserResource(project: Project, url: String, version: String?): String? {
+    return getProjectResources(project).getUserResource(url, version) ?: getUserResource(url, version)
   }
 
-  @Override
-  public @Nullable String getStdResource(@NotNull String url, @Nullable String version) {
-    Map<String, Resource> map = getMap(myStandardResources.getValue(), version);
-    if (map != null) {
-      Resource resource = map.get(url);
-      return resource == null ? null : resource.getResourceUrl();
+  override fun getStdResource(url: String, version: String?): String? {
+    val map = getMap(standardResources.value, version) ?: return null
+    val resource = map.get(url)
+    return if (resource == null) null else resource.getResourceUrl()
+  }
+
+  private fun getUserResource(url: String, version: String?): String? = getMap<String>(resources, version)?.get(url)
+
+  override fun getResourceLocation(url: @NonNls String, project: Project): String? {
+    return getResourceLocation(url = url, version = null, project = project)
+  }
+
+  private fun getResourceLocation(url: @NonNls String, version: String?, project: Project): String? {
+    val projectResources = getProjectResources(project)
+    val location = projectResources.getResourceLocation(url, version)
+    if (location != url) {
+      return location
     }
-    else {
-      return null;
-    }
-  }
 
-  private @Nullable String getUserResource(@NotNull String url, @Nullable String version) {
-    Map<String, String> map = getMap(myResources, version);
-    return map != null ? map.get(url) : null;
-  }
-
-  @Override
-  public String getResourceLocation(@NotNull @NonNls String url, @NotNull Project project) {
-    return getResourceLocation(url, null, project);
-  }
-
-  private String getResourceLocation(@NonNls String url, String version, @NotNull Project project) {
-    ExternalResourceManagerExImpl projectResources = getProjectResources(project);
-    String location = projectResources.getResourceLocation(url, version);
-    if (location == null || location.equals(url)) {
-      if (projectResources.myXMLSchemaVersion == XMLSchemaVersion.XMLSchema_1_1) {
-        if (XmlUtil.XML_SCHEMA_URI.equals(url)) return XSD_1_1;
-        if ((XmlUtil.XML_SCHEMA_URI + ".xsd").equals(url)) return XSD_1_1;
+    if (projectResources.xmlSchemaVersion == XMLSchemaVersion.XMLSchema_1_1) {
+      if (XmlUtil.XML_SCHEMA_URI == url) {
+        return XSD_1_1
       }
-      return getResourceLocation(url, version);
+      if ((XmlUtil.XML_SCHEMA_URI + ".xsd") == url) {
+        return XSD_1_1
+      }
     }
-    else {
-      return location;
-    }
+    return getResourceLocation(url, version)
   }
 
-  @Override
-  public @Nullable PsiFile getResourceLocation(final @NotNull @NonNls String url, final @NotNull PsiFile baseFile, final String version) {
-    final XmlFile schema = XmlSchemaProvider.findSchema(url, baseFile);
+  override fun getResourceLocation(url: @NonNls String, baseFile: PsiFile, version: String?): PsiFile? {
+    val schema = XmlSchemaProvider.findSchema(url, baseFile)
     if (schema != null) {
-      return schema;
+      return schema
     }
-    final String location = getResourceLocation(url, version, baseFile.getProject());
-    return XmlUtil.findXmlFile(baseFile, location);
+
+    val location = getResourceLocation(url, version, baseFile.getProject())
+    return XmlUtil.findXmlFile(baseFile, location!!)
   }
 
-  @Override
-  public String[] getResourceUrls(FileType fileType, boolean includeStandard) {
-    return getResourceUrls(fileType, DEFAULT_VERSION, includeStandard);
+  override fun getResourceUrls(fileType: FileType?, includeStandard: Boolean): Array<String?> {
+    return getResourceUrls(fileType, DEFAULT_VERSION, includeStandard)
   }
 
-  @Override
-  public String[] getResourceUrls(@Nullable FileType fileType, @Nullable @NonNls String version, boolean includeStandard) {
-    List<String> result = new LinkedList<>();
-    addResourcesFromMap(result, version, myResources);
+  override fun getResourceUrls(fileType: FileType?, version: @NonNls String?, includeStandard: Boolean): Array<String?> {
+    val result = LinkedList<String>()
+    addResourcesFromMap(result = result, version = version, resourcesMap = resources)
 
     if (includeStandard) {
-      addResourcesFromMap(result, version, myStandardResources.getValue());
+      addResourcesFromMap(result = result, version = version, resourcesMap = standardResources.value)
     }
 
-    return ArrayUtilRt.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result)
   }
 
-  private static <T> void addResourcesFromMap(@NotNull List<? super String> result, @Nullable String version, @NotNull Map<String, Map<String, T>> resourcesMap) {
-    Map<String, T> resources = getMap(resourcesMap, version);
-    if (resources != null) {
-      result.addAll(resources.keySet());
+  override fun addResource(url: String, location: String) {
+    addResource(url = url, version = DEFAULT_VERSION, location = location)
+  }
+
+  override fun addResource(url: @NonNls String, version: @NonNls String?, location: @NonNls String) {
+    ThreadingAssertions.assertWriteAccess()
+    addSilently(url, version, location)
+    fireExternalResourceChanged()
+  }
+
+  private fun addSilently(url: String, version: String?, location: String) {
+    getOrCreateMap(resources, version).put(url, location)
+    resourceLocations.add(location)
+    incModificationCount()
+  }
+
+  override fun removeResource(url: String) {
+    removeResource(url, DEFAULT_VERSION)
+  }
+
+  override fun removeResource(url: String, version: String?) {
+    ThreadingAssertions.assertWriteAccess()
+    val map = getMap(resources, version) ?: return
+    val location = map.remove(url)
+    if (location != null) {
+      resourceLocations.remove(location)
     }
+    incModificationCount()
+    fireExternalResourceChanged()
   }
 
-  @Override
-  public void addResource(@NotNull String url, String location) {
-    addResource(url, DEFAULT_VERSION, location);
+  override fun removeResource(url: String, project: Project) {
+    getProjectResources(project).removeResource(url)
   }
 
-  @Override
-  public void addResource(@NotNull @NonNls String url, @NonNls String version, @NonNls String location) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    addSilently(url, version, location);
-    fireExternalResourceChanged();
+  override fun addResource(url: @NonNls String, location: @NonNls String, project: Project) {
+    getProjectResources(project).addResource(url, location)
   }
 
-  private void addSilently(@NotNull String url, @Nullable String version, String location) {
-    getOrCreateMap(myResources, version).put(url, location);
-    myResourceLocations.add(location);
-    incModificationCount();
-  }
-
-  @Override
-  public void removeResource(@NotNull String url) {
-    removeResource(url, DEFAULT_VERSION);
-  }
-
-  @Override
-  public void removeResource(@NotNull String url, @Nullable String version) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    Map<String, String> map = getMap(myResources, version);
-    if (map != null) {
-      String location = map.remove(url);
-      if (location != null) {
-        myResourceLocations.remove(location);
-      }
-      incModificationCount();
-      fireExternalResourceChanged();
+  override fun getAvailableUrls(): Array<String?> {
+    val urls: MutableSet<String?> = HashSet<String?>()
+    for (map in resources.values) {
+      urls.addAll(map.keys)
     }
+    return ArrayUtilRt.toStringArray(urls)
   }
 
-  @Override
-  public void removeResource(String url, @NotNull Project project) {
-    getProjectResources(project).removeResource(url);
+  override fun getAvailableUrls(project: Project): Array<String?> {
+    return getProjectResources(project).getAvailableUrls()
   }
 
-  @Override
-  public void addResource(@NonNls String url, @NonNls String location, @NotNull Project project) {
-    getProjectResources(project).addResource(url, location);
+  override fun clearAllResources() {
+    resources.clear()
+    ignoredResources.clear()
   }
 
-  @Override
-  public String[] getAvailableUrls() {
-    Set<String> urls = new HashSet<>();
-    for (Map<String, String> map : myResources.values()) {
-      urls.addAll(map.keySet());
-    }
-    return ArrayUtilRt.toStringArray(urls);
+  override fun clearAllResources(project: Project) {
+    ThreadingAssertions.assertWriteAccess()
+    clearAllResources()
+    getProjectResources(project).clearAllResources()
+    incModificationCount()
+    fireExternalResourceChanged()
   }
 
-  @Override
-  public String[] getAvailableUrls(Project project) {
-    return getProjectResources(project).getAvailableUrls();
-  }
-
-  @Override
-  public void clearAllResources() {
-    myResources.clear();
-    myIgnoredResources.clear();
-  }
-
-  @Override
-  public void clearAllResources(Project project) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    clearAllResources();
-    getProjectResources(project).clearAllResources();
-    incModificationCount();
-    fireExternalResourceChanged();
-  }
-
-  @Override
-  public void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
-    Application app = ApplicationManager.getApplication();
+  override fun addIgnoredResources(urls: MutableList<String>, disposable: Disposable?) {
+    val app = ApplicationManager.getApplication()
     if (app.isWriteAccessAllowed()) {
-      doAddIgnoredResources(urls, disposable);
+      doAddIgnoredResources(urls, disposable)
     }
     else {
-      app.runWriteAction(() -> doAddIgnoredResources(urls, disposable));
+      app.runWriteAction(Runnable { doAddIgnoredResources(urls, disposable) })
     }
   }
 
-  private void doAddIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
-    long modificationCount = getModificationCount();
-    for (String url : urls) {
-      addIgnoredSilently(url);
+  private fun doAddIgnoredResources(urls: MutableList<String>, disposable: Disposable?) {
+    val modificationCount = getModificationCount()
+    for (url in urls) {
+      addIgnoredSilently(url)
     }
 
     if (modificationCount != getModificationCount()) {
       if (disposable != null) {
-        //noinspection CodeBlock2Expr
-        Disposer.register(disposable, () -> {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            boolean isChanged = false;
-            for (String url : urls) {
-              if (myIgnoredResources.remove(url)) {
-                isChanged = true;
+        Disposer.register(disposable, Disposable {
+          ApplicationManager.getApplication().runWriteAction(Runnable {
+            var isChanged = false
+            for (url in urls) {
+              if (ignoredResources.remove(url)) {
+                isChanged = true
               }
             }
-
             if (isChanged) {
-              fireExternalResourceChanged();
+              fireExternalResourceChanged()
             }
-          });
-        });
+          })
+        })
       }
 
-      fireExternalResourceChanged();
+      fireExternalResourceChanged()
     }
   }
 
-  private boolean addIgnoredSilently(@NotNull String url) {
-    if (myStandardIgnoredResources.contains(url)) {
-      return false;
+  private fun addIgnoredSilently(url: String) {
+    if (standardIgnoredResources.contains(url)) {
+      return
     }
 
-    if (myIgnoredResources.add(url)) {
-      incModificationCount();
-      return true;
-    }
-    else {
-      return false;
+    if (ignoredResources.add(url)) {
+      incModificationCount()
     }
   }
 
-  @Override
-  public boolean isIgnoredResource(@NotNull String url) {
-    if (myIgnoredResources.contains(url)) {
-      return true;
+  override fun isIgnoredResource(url: String): Boolean {
+    if (ignoredResources.contains(url)) {
+      return true
     }
 
     // ensure ignored resources are loaded
-    myStandardResources.getValue();
-    return myStandardIgnoredResources.contains(url) || isImplicitNamespaceDescriptor(url);
+    standardResources.value
+    return standardIgnoredResources.contains(url) || isImplicitNamespaceDescriptor(url)
   }
 
-  private static boolean isImplicitNamespaceDescriptor(@NotNull String url) {
-    for (ImplicitNamespaceDescriptorProvider provider : ImplicitNamespaceDescriptorProvider.EP_NAME.getExtensionList()) {
-      if (provider.getNamespaceDescriptor(null, url, null) != null) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public String[] getIgnoredResources() {
+  override fun getIgnoredResources(): Array<String?> {
     // ensure ignored resources are loaded
-    myStandardResources.getValue();
+    standardResources.value
 
-    if (myIgnoredResources.isEmpty()) {
-      return ArrayUtilRt.toStringArray(myStandardIgnoredResources);
+    if (ignoredResources.isEmpty()) {
+      return ArrayUtilRt.toStringArray(standardIgnoredResources)
     }
 
-    Set<String> set = new HashSet<>(myIgnoredResources.size() + myStandardIgnoredResources.size());
-    set.addAll(myIgnoredResources);
-    set.addAll(myStandardIgnoredResources);
-    return ArrayUtilRt.toStringArray(set);
+    val set: MutableSet<String?> = HashSet<String?>(ignoredResources.size + standardIgnoredResources.size)
+    set.addAll(ignoredResources)
+    set.addAll(standardIgnoredResources)
+    return ArrayUtilRt.toStringArray(set)
   }
 
-  @Override
-  public long getModificationCount(@NotNull Project project) {
-    return getProjectResources(project).getModificationCount();
+  override fun getModificationCount(project: Project): Long {
+    return getProjectResources(project).getModificationCount()
   }
 
-  @Override
-  public @Nullable Element getState() {
-    Element element = new Element("state");
+  override fun getState(): Element? {
+    val element = Element("state")
 
-    Set<String> urls = new TreeSet<>();
-    for (Map<String, String> map : myResources.values()) {
-      urls.addAll(map.keySet());
+    val urls: MutableSet<String?> = TreeSet<String?>()
+    for (map in resources.values) {
+      urls.addAll(map.keys)
     }
 
-    for (String url : urls) {
+    for (url in urls) {
       if (url == null) {
-        continue;
+        continue
       }
 
-      String location = getResourceLocation(url);
-      if (location == null) {
-        continue;
-      }
-
-      Element e = new Element(RESOURCE_ELEMENT);
-      e.setAttribute(URL_ATTR, url);
-      e.setAttribute(LOCATION_ATTR, location.replace(File.separatorChar, '/'));
-      element.addContent(e);
+      val location = getResourceLocation(url)
+      val e = Element(RESOURCE_ELEMENT)
+      e.setAttribute(URL_ATTR, url)
+      e.setAttribute(LOCATION_ATTR, location.replace(File.separatorChar, '/'))
+      element.addContent(e)
     }
 
-    myIgnoredResources.removeAll(myStandardIgnoredResources);
-    for (String ignoredResource : myIgnoredResources) {
-      Element e = new Element(IGNORED_RESOURCE_ELEMENT);
-      e.setAttribute(URL_ATTR, ignoredResource);
-      element.addContent(e);
+    ignoredResources.removeAll(standardIgnoredResources)
+    for (ignoredResource in ignoredResources) {
+      val e = Element(IGNORED_RESOURCE_ELEMENT)
+      e.setAttribute(URL_ATTR, ignoredResource)
+      element.addContent(e)
     }
 
-    if (myDefaultHtmlDoctype != null && !HTML5_DOCTYPE_ELEMENT.equals(myDefaultHtmlDoctype)) {
-      Element e = new Element(HTML_DEFAULT_DOCTYPE_ELEMENT);
-      e.setText(myDefaultHtmlDoctype);
-      element.addContent(e);
+    if (defaultHtmlDoctype != null && HTML5_DOCTYPE_ELEMENT != defaultHtmlDoctype) {
+      val e = Element(HTML_DEFAULT_DOCTYPE_ELEMENT)
+      e.setText(defaultHtmlDoctype)
+      element.addContent(e)
     }
-    if (myXMLSchemaVersion != XMLSchemaVersion.XMLSchema_1_0) {
-      Element e = new Element(XML_SCHEMA_VERSION);
-      e.setText(myXMLSchemaVersion.toString());
-      element.addContent(e);
+    if (xmlSchemaVersion != XMLSchemaVersion.XMLSchema_1_0) {
+      val e = Element(XML_SCHEMA_VERSION)
+      e.setText(xmlSchemaVersion.toString())
+      element.addContent(e)
     }
     if (myCatalogPropertiesFile != null) {
-      Element properties = new Element(CATALOG_PROPERTIES_ELEMENT);
-      properties.setText(myCatalogPropertiesFile);
-      element.addContent(properties);
+      val properties = Element(CATALOG_PROPERTIES_ELEMENT)
+      properties.setText(myCatalogPropertiesFile)
+      element.addContent(properties)
     }
 
-    ReplacePathToMacroMap macroReplacements = new ReplacePathToMacroMap();
-    PathMacrosImpl.getInstanceEx().addMacroReplacements(macroReplacements);
-    macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
-    return element;
+    val macroReplacements = ReplacePathToMacroMap()
+    PathMacrosImpl.getInstanceEx().addMacroReplacements(macroReplacements)
+    macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive)
+    return element
   }
 
-  @Override
-  public void loadState(@NotNull Element state) {
-    ExpandMacroToPathMap macroExpands = new ExpandMacroToPathMap();
-    PathMacrosImpl.getInstanceEx().addMacroExpands(macroExpands);
-    macroExpands.substitute(state, SystemInfo.isFileSystemCaseSensitive);
+  override fun loadState(state: Element) {
+    val macroExpands = ExpandMacroToPathMap()
+    PathMacrosImpl.getInstanceEx().addMacroExpands(macroExpands)
+    macroExpands.substitute(state, SystemInfo.isFileSystemCaseSensitive)
 
-    incModificationCount();
-    for (Element element : state.getChildren(RESOURCE_ELEMENT)) {
-      String url = element.getAttributeValue(URL_ATTR);
-      if (!Strings.isEmpty(url)) {
-        addSilently(url, DEFAULT_VERSION, Objects.requireNonNull(element.getAttributeValue(LOCATION_ATTR)).replace('/', File.separatorChar));
+    incModificationCount()
+    for (element in state.getChildren(RESOURCE_ELEMENT)) {
+      val url = element.getAttributeValue(URL_ATTR)
+      if (!url.isNullOrEmpty()) {
+        addSilently(url, DEFAULT_VERSION, element.getAttributeValue(LOCATION_ATTR)!!.replace('/', File.separatorChar))
       }
     }
 
-    myIgnoredResources.clear();
-    for (Element element : state.getChildren(IGNORED_RESOURCE_ELEMENT)) {
-      addIgnoredSilently(element.getAttributeValue(URL_ATTR));
+    ignoredResources.clear()
+    for (element in state.getChildren(IGNORED_RESOURCE_ELEMENT)) {
+      addIgnoredSilently(element.getAttributeValue(URL_ATTR))
     }
 
-    Element child = state.getChild(HTML_DEFAULT_DOCTYPE_ELEMENT);
+    val child = state.getChild(HTML_DEFAULT_DOCTYPE_ELEMENT)
     if (child != null) {
-      String text = child.getText();
+      var text = child.getText()
       if (FileUtil.toSystemIndependentName(text).endsWith(".jar!/resources/html5-schema/html5.rnc")) {
-        text = HTML5_DOCTYPE_ELEMENT;
+        text = HTML5_DOCTYPE_ELEMENT
       }
-      myDefaultHtmlDoctype = text;
+      defaultHtmlDoctype = text
     }
-    Element schemaElement = state.getChild(XML_SCHEMA_VERSION);
+    val schemaElement = state.getChild(XML_SCHEMA_VERSION)
     if (schemaElement != null) {
-      String text = schemaElement.getText();
-      myXMLSchemaVersion = XMLSchemaVersion.XMLSchema_1_1.toString().equals(text) ? XMLSchemaVersion.XMLSchema_1_1 : XMLSchemaVersion.XMLSchema_1_0;
+      val text = schemaElement.getText()
+      xmlSchemaVersion = if (XMLSchemaVersion.XMLSchema_1_1.toString() == text) XMLSchemaVersion.XMLSchema_1_1 else XMLSchemaVersion.XMLSchema_1_0
     }
-    Element catalogElement = state.getChild(CATALOG_PROPERTIES_ELEMENT);
+    val catalogElement = state.getChild(CATALOG_PROPERTIES_ELEMENT)
     if (catalogElement != null) {
-      myCatalogPropertiesFile = catalogElement.getTextTrim();
+      myCatalogPropertiesFile = catalogElement.getTextTrim()
     }
   }
 
-  private void fireExternalResourceChanged() {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ExternalResourceListener.TOPIC).externalResourceChanged();
-    incModificationCount();
+  private fun fireExternalResourceChanged() {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher<ExternalResourceListener>(
+      ExternalResourceListener.TOPIC).externalResourceChanged()
+    incModificationCount()
   }
 
-  final @NotNull Collection<Map<String, Resource>> getStandardResources() {
-    return myStandardResources.getValue().values();
-  }
+  internal fun getStandardResources(): Collection<MutableMap<String, Resource>> = standardResources.value.values
 
-  private static ExternalResourceManagerExImpl getProjectResources(@NotNull Project project) {
-    return project.getService(ExternalResourceManagerExImpl.class);
-  }
-
-  @Override
-  public @NotNull String getDefaultHtmlDoctype(@NotNull Project project) {
-    final String doctype = getProjectResources(project).myDefaultHtmlDoctype;
-    if (XmlUtil.XHTML_URI.equals(doctype)) {
-      return XmlUtil.XHTML4_SCHEMA_LOCATION;
+  override fun getDefaultHtmlDoctype(project: Project): String {
+    val doctype = getProjectResources(project).defaultHtmlDoctype
+    if (XmlUtil.XHTML_URI == doctype) {
+      return XmlUtil.XHTML4_SCHEMA_LOCATION
     }
-    else if (HTML5_DOCTYPE_ELEMENT.equals(doctype)) {
-      return Html5SchemaProvider.getHtml5SchemaLocation();
+    else if (HTML5_DOCTYPE_ELEMENT == doctype) {
+      return Html5SchemaProvider.getHtml5SchemaLocation()
     }
     else {
-      return doctype;
+      return doctype!!
     }
   }
 
-  @Override
-  public void setDefaultHtmlDoctype(@NotNull String defaultHtmlDoctype, @NotNull Project project) {
-    getProjectResources(project).setDefaultHtmlDoctype(defaultHtmlDoctype);
+  override fun setDefaultHtmlDoctype(defaultHtmlDoctype: String, project: Project) {
+    getProjectResources(project).setDefaultHtmlDoctype(defaultHtmlDoctype)
   }
 
-  @Override
-  public XMLSchemaVersion getXmlSchemaVersion(@NotNull Project project) {
-    return getProjectResources(project).myXMLSchemaVersion;
+  override fun getXmlSchemaVersion(project: Project): XMLSchemaVersion {
+    return getProjectResources(project).xmlSchemaVersion
   }
 
-  @Override
-  public void setXmlSchemaVersion(XMLSchemaVersion version, @NotNull Project project) {
-    getProjectResources(project).myXMLSchemaVersion = version;
-    fireExternalResourceChanged();
+  override fun setXmlSchemaVersion(version: XMLSchemaVersion, project: Project) {
+    getProjectResources(project).xmlSchemaVersion = version
+    fireExternalResourceChanged()
   }
 
-  @Override
-  public String getCatalogPropertiesFile() {
-    return myCatalogPropertiesFile;
+  override fun getCatalogPropertiesFile(): String? = myCatalogPropertiesFile
+
+  override fun setCatalogPropertiesFile(filePath: String?) {
+    myCatalogManager = null
+    myCatalogPropertiesFile = filePath
+    incModificationCount()
   }
 
-  @Override
-  public void setCatalogPropertiesFile(String filePath) {
-    myCatalogManager = null;
-    myCatalogPropertiesFile = filePath;
-    incModificationCount();
+  override fun getUrlsByNamespace(project: Project): MultiMap<String, String>? {
+    return CachedValuesManager.getManager(project).getCachedValue(project, urlByNamespaceProvider)
   }
 
-  @Override
-  public MultiMap<String, String> getUrlsByNamespace(Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, myUrlByNamespaceProvider);
-  }
-
-  private @Nullable XMLCatalogManager getCatalogManager() {
+  private fun getCatalogManager(): XMLCatalogManager? {
     if (myCatalogManager == null && myCatalogPropertiesFile != null) {
-      myCatalogManager = new XMLCatalogManager(myCatalogPropertiesFile);
+      myCatalogManager = XMLCatalogManager(myCatalogPropertiesFile!!)
     }
-    return myCatalogManager;
+    return myCatalogManager
   }
 
-  private void setDefaultHtmlDoctype(String defaultHtmlDoctype) {
-    incModificationCount();
+  private fun setDefaultHtmlDoctype(defaultHtmlDoctype: String?) {
+    incModificationCount()
 
-    if (Html5SchemaProvider.getHtml5SchemaLocation().equals(defaultHtmlDoctype)) {
-      myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;
+    if (Html5SchemaProvider.getHtml5SchemaLocation() == defaultHtmlDoctype) {
+      this@ExternalResourceManagerExImpl.defaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT
     }
     else {
-      myDefaultHtmlDoctype = defaultHtmlDoctype;
+      this@ExternalResourceManagerExImpl.defaultHtmlDoctype = defaultHtmlDoctype
     }
-    fireExternalResourceChanged();
+    fireExternalResourceChanged()
   }
 
-  @TestOnly
-  public static void registerResourceTemporarily(final String url, final String location, Disposable disposable) {
-    Application app = ApplicationManager.getApplication();
-    app.runWriteAction(() -> getInstance().addResource(url, location));
-    Disposer.register(disposable, () -> app.runWriteAction(() -> getInstance().removeResource(url)));
-  }
+  internal class Resource(file: String, aClass: Class<*>?, classLoader: ClassLoader?) {
+    private val file = file
+    private val classLoader = classLoader
+    private val aClass: Class<*>? = aClass
 
-  static final class Resource {
-    private final String myFile;
-    private final ClassLoader myClassLoader;
-    private final Class myClass;
-    private volatile String myResolvedResourcePath;
+    @Volatile
+    private var resolvedResourcePath: String? = null
 
-    Resource(String _file, Class _class, ClassLoader _classLoader) {
-      myFile = _file;
-      myClass = _class;
-      myClassLoader = _classLoader;
+    constructor(file: String, baseResource: Resource) : this(file = file, aClass = baseResource.aClass, classLoader = baseResource.classLoader)
+
+    fun directoryName(): String {
+      val i = file.lastIndexOf('/')
+      return if (i > 0) file.substring(0, i) else file
     }
 
-    Resource(String _file, Resource baseResource) {
-      this(_file, baseResource.myClass, baseResource.myClassLoader);
-    }
+    fun getResourceUrl(): String? {
+      val resolvedResourcePath = resolvedResourcePath
+      if (resolvedResourcePath != null) {
+        return resolvedResourcePath
+      }
 
-    String directoryName() {
-      int i = myFile.lastIndexOf('/');
-      return i > 0 ? myFile.substring(0, i) : myFile;
-    }
-
-    @Nullable
-    String getResourceUrl() {
-      String resolvedResourcePath = myResolvedResourcePath;
-      if (resolvedResourcePath != null) return resolvedResourcePath;
-
-      final URL resource = myClass == null ? myClassLoader.getResource(myFile) : myClass.getResource(myFile);
+      val resource = if (aClass == null) classLoader!!.getResource(file) else aClass.getResource(file)
 
       if (resource == null) {
-        String message = "Cannot find standard resource. filename:" + myFile + " class=" + myClass + ", classLoader:" + myClassLoader;
+        val message = "Cannot find standard resource. filename:${this@Resource.file} class=$aClass, classLoader:$classLoader"
         if (ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.error(message);
+          LOG.warn(message)
         }
         else {
-          LOG.warn(message);
+          LOG.warn(message)
         }
 
-        myResolvedResourcePath = null;
-        return null;
+        this@Resource.resolvedResourcePath = null
+        return null
       }
 
-      String path = FileUtil.unquote(resource.toString());
+      var path = FileUtil.unquote(resource.toString())
       // this is done by FileUtil for windows
-      path = path.replace('\\','/');
-      myResolvedResourcePath = path;
-      return path;
+      path = path.replace('\\', '/')
+      this@Resource.resolvedResourcePath = path
+      return path
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+    override fun equals(o: Any?): Boolean {
+      if (this === o) return true
+      if (o == null || javaClass != o.javaClass) return false
 
-      Resource resource = (Resource)o;
-
-      if (myClassLoader != resource.myClassLoader) return false;
-      if (myClass != resource.myClass) return false;
-      if (myFile != null ? !myFile.equals(resource.myFile) : resource.myFile != null) return false;
-
-      return true;
+      val resource = o as Resource
+      return classLoader == resource.classLoader && aClass == resource.aClass && file == resource.file
     }
 
-    @Override
-    public int hashCode() {
-      return myFile.hashCode();
-    }
+    override fun hashCode(): Int = this@Resource.file.hashCode()
 
-    @Override
-    public String toString() {
-      return myFile + " for " + myClassLoader;
-    }
+    override fun toString(): String = "${this@Resource.file} for $classLoader"
   }
 }
+
+private fun <T> getMap(resources: Map<String, MutableMap<String, T>>, version: String?): MutableMap<String, T>? {
+  var version = version ?: DEFAULT_VERSION
+  val map = resources.get(version)
+  return if (map == null && version != DEFAULT_VERSION) resources.get(DEFAULT_VERSION) else map
+}
+
+private fun <T> addResourcesFromMap(
+  result: MutableList<String>,
+  version: String?,
+  resourcesMap: Map<String, MutableMap<String, T>>,
+) {
+  getMap(resourcesMap, version)?.let {
+    result.addAll(it.keys)
+  }
+}
+
+private fun isImplicitNamespaceDescriptor(url: String): Boolean {
+  for (provider in ImplicitNamespaceDescriptorProvider.EP_NAME.extensionList) {
+    if (provider.getNamespaceDescriptor(null, url, null) != null) {
+      return true
+    }
+  }
+  return false
+}
+
+private fun getProjectResources(project: Project): ExternalResourceManagerExImpl = project.service<ExternalResourceManagerExImpl>()

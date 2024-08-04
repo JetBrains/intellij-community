@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
 import org.jetbrains.annotations.NonNls;
@@ -14,8 +14,8 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public final class ResourceRegistrarImpl implements ResourceRegistrar {
-  private final Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> myResources = new HashMap<>();
-  private final List<String> myIgnored = new ArrayList<>();
+  private final Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> resources = new HashMap<>();
+  private final List<String> ignored = new ArrayList<>();
 
   @Override
   public void addStdResource(@NonNls String resource, @NonNls String fileName) {
@@ -28,7 +28,7 @@ public final class ResourceRegistrarImpl implements ResourceRegistrar {
   }
 
   public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, @Nullable Class<?> klass, @Nullable ClassLoader classLoader) {
-    Map<String, ExternalResourceManagerExImpl.Resource> map = ExternalResourceManagerExImpl.getOrCreateMap(myResources, version);
+    Map<String, ExternalResourceManagerExImpl.Resource> map = ExternalResourceManagerExImpl.Companion.getOrCreateMap(resources, version);
     map.put(resource, new ExternalResourceManagerExImpl.Resource(fileName, klass, classLoader));
   }
 
@@ -39,7 +39,7 @@ public final class ResourceRegistrarImpl implements ResourceRegistrar {
 
   @Override
   public void addIgnoredResource(@NonNls String url) {
-    myIgnored.add(url);
+    ignored.add(url);
   }
 
   public void addInternalResource(@NonNls String resource, @NonNls String fileName) {
@@ -59,10 +59,10 @@ public final class ResourceRegistrarImpl implements ResourceRegistrar {
   }
 
   public @NotNull Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> getResources() {
-    return myResources;
+    return resources;
   }
 
   public @NotNull List<String> getIgnored() {
-    return myIgnored;
+    return ignored;
   }
 }
