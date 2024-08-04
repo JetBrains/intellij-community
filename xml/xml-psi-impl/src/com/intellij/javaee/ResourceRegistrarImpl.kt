@@ -34,6 +34,10 @@ class ResourceRegistrarImpl : ResourceRegistrar {
     addStdResource(resource = resource, version = version, fileName = fileName, aClass = aClass, classLoader = null)
   }
 
+  override fun addStdResource(resource: @NonNls String, fileName: @NonNls String, classLoader: ClassLoader) {
+    addStdResource(resource = resource, version = null, fileName = fileName, aClass = null, classLoader = classLoader)
+  }
+
   override fun addIgnoredResource(url: @NonNls String) {
     ignored.add(url)
   }

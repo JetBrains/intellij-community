@@ -1,18 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.javaee;
+package com.intellij.javaee
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls
 
 /**
  * @see StandardResourceProvider
  */
-public interface ResourceRegistrar {
-  void addStdResource(@NotNull @NonNls String resource, @NonNls String fileName);
+interface ResourceRegistrar {
+  fun addStdResource(resource: @NonNls String, fileName: @NonNls String)
 
-  void addStdResource(@NotNull @NonNls String resource, @NonNls String fileName, Class<?> klass);
+  fun addStdResource(resource: @NonNls String, fileName: @NonNls String, classLoader: ClassLoader)
 
-  void addStdResource(@NotNull @NonNls String resource, @NonNls String version, @NonNls String fileName, Class<?> klass);
+  fun addStdResource(resource: @NonNls String, fileName: @NonNls String, klass: Class<*>?)
 
-  void addIgnoredResource(@NotNull @NonNls String url);
+  fun addStdResource(resource: @NonNls String, version: @NonNls String?, fileName: @NonNls String, aClass: Class<*>?)
+
+  fun addIgnoredResource(url: @NonNls String)
 }
