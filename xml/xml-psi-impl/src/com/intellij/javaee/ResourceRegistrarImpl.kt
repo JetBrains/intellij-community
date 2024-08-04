@@ -26,7 +26,7 @@ class ResourceRegistrarImpl : ResourceRegistrar {
     aClass: Class<*>?,
     classLoader: ClassLoader?
   ) {
-    ExternalResourceManagerExImpl.getOrCreateMap<ExternalResourceManagerExImpl.Resource>(resources, version)
+    ExternalResourceManagerExImpl.getOrCreateMap(resources, version)
       .put(resource, ExternalResourceManagerExImpl.Resource(file = fileName, aClass = aClass, classLoader = classLoader))
   }
 
@@ -38,22 +38,28 @@ class ResourceRegistrarImpl : ResourceRegistrar {
     ignored.add(url)
   }
 
+  @Deprecated("Pass class loader explicitly", level = DeprecationLevel.ERROR)
   fun addInternalResource(resource: @NonNls String, fileName: @NonNls String?) {
-    addInternalResource(resource = resource, version = null, fileName = fileName, aClass = javaClass)
+    addStdResource(
+      resource = resource,
+      version = null,
+      fileName = ExternalResourceManagerEx.STANDARD_SCHEMAS.trimStart('/') + fileName,
+      aClass = null,
+      classLoader = javaClass.classLoader,
+    )
   }
 
-  fun addInternalResource(resource: @NonNls String, fileName: @NonNls String?, aClass: Class<*>?) {
-    addInternalResource(resource = resource, version = null, fileName = fileName, aClass = aClass)
+  fun addInternalResource(resource: @NonNls String, fileName: @NonNls String?, classLoader: ClassLoader) {
+    addInternalResource(resource = resource, version = null, fileName = fileName, classLoader = classLoader)
   }
 
-  @JvmOverloads
-  fun addInternalResource(resource: @NonNls String, version: @NonNls String?, fileName: @NonNls String?, aClass: Class<*>? = javaClass) {
+  fun addInternalResource(resource: @NonNls String, version: @NonNls String?, fileName: @NonNls String?, classLoader: ClassLoader) {
     addStdResource(
       resource = resource,
       version = version,
-      fileName = ExternalResourceManagerEx.STANDARD_SCHEMAS + fileName,
-      aClass = aClass,
-      classLoader = null,
+      fileName = ExternalResourceManagerEx.STANDARD_SCHEMAS.trimStart('/') + fileName,
+      aClass = null,
+      classLoader = classLoader,
     )
   }
 
