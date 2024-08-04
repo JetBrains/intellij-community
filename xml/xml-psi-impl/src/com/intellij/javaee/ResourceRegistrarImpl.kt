@@ -1,68 +1,61 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.javaee;
+package com.intellij.javaee
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls
+import java.util.ArrayList
+import java.util.HashMap
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+class ResourceRegistrarImpl : ResourceRegistrar {
+  private val resources = HashMap<String, MutableMap<String, ExternalResourceManagerExImpl.Resource>>()
+  private val ignored = ArrayList<String>()
 
-/**
- * @author Dmitry Avdeev
- */
-public final class ResourceRegistrarImpl implements ResourceRegistrar {
-  private final Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> resources = new HashMap<>();
-  private final List<String> ignored = new ArrayList<>();
+  internal fun getIgnoredResources(): List<String> = ignored
 
-  @Override
-  public void addStdResource(@NonNls String resource, @NonNls String fileName) {
-    addStdResource(resource, null, fileName, getClass());
+  override fun addStdResource(resource: @NonNls String, fileName: @NonNls String) {
+    addStdResource(resource = resource, version = null, fileName = fileName, aClass = javaClass)
   }
 
-  @Override
-  public void addStdResource(@NonNls String resource, @NonNls String fileName, Class klass) {
-    addStdResource(resource, null, fileName, klass);
+  override fun addStdResource(resource: @NonNls String, fileName: @NonNls String, aClass: Class<*>?) {
+    addStdResource(resource = resource, version = null, fileName = fileName, aClass = aClass)
   }
 
-  public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, @Nullable Class<?> klass, @Nullable ClassLoader classLoader) {
-    Map<String, ExternalResourceManagerExImpl.Resource> map = ExternalResourceManagerExImpl.Companion.getOrCreateMap(resources, version);
-    map.put(resource, new ExternalResourceManagerExImpl.Resource(fileName, klass, classLoader));
+  fun addStdResource(
+    resource: @NonNls String,
+    version: @NonNls String?,
+    fileName: @NonNls String,
+    aClass: Class<*>?,
+    classLoader: ClassLoader?
+  ) {
+    ExternalResourceManagerExImpl.getOrCreateMap<ExternalResourceManagerExImpl.Resource>(resources, version)
+      .put(resource, ExternalResourceManagerExImpl.Resource(file = fileName, aClass = aClass, classLoader = classLoader))
   }
 
-  @Override
-  public void addStdResource(@NonNls String resource, @Nullable @NonNls String version, @NonNls String fileName, Class klass) {
-    addStdResource(resource, version, fileName, klass, null);
+  override fun addStdResource(resource: @NonNls String, version: @NonNls String?, fileName: @NonNls String, aClass: Class<*>?) {
+    addStdResource(resource = resource, version = version, fileName = fileName, aClass = aClass, classLoader = null)
   }
 
-  @Override
-  public void addIgnoredResource(@NonNls String url) {
-    ignored.add(url);
+  override fun addIgnoredResource(url: @NonNls String) {
+    ignored.add(url)
   }
 
-  public void addInternalResource(@NonNls String resource, @NonNls String fileName) {
-    addInternalResource(resource, null, fileName, getClass());
+  fun addInternalResource(resource: @NonNls String, fileName: @NonNls String?) {
+    addInternalResource(resource = resource, version = null, fileName = fileName, aClass = javaClass)
   }
 
-  public void addInternalResource(@NonNls String resource, @NonNls String fileName, Class<?> clazz) {
-    addInternalResource(resource, null, fileName, clazz);
+  fun addInternalResource(resource: @NonNls String, fileName: @NonNls String?, aClass: Class<*>?) {
+    addInternalResource(resource = resource, version = null, fileName = fileName, aClass = aClass)
   }
 
-  public void addInternalResource(@NonNls String resource, @NonNls String version, @NonNls String fileName) {
-    addInternalResource(resource, version, fileName, getClass());
+  @JvmOverloads
+  fun addInternalResource(resource: @NonNls String, version: @NonNls String?, fileName: @NonNls String?, aClass: Class<*>? = javaClass) {
+    addStdResource(
+      resource = resource,
+      version = version,
+      fileName = ExternalResourceManagerEx.STANDARD_SCHEMAS + fileName,
+      aClass = aClass,
+      classLoader = null,
+    )
   }
 
-  public void addInternalResource(@NonNls String resource, @Nullable @NonNls String version, @NonNls String fileName, @Nullable Class<?> clazz) {
-    addStdResource(resource, version, ExternalResourceManagerEx.STANDARD_SCHEMAS + fileName, clazz, null);
-  }
-
-  public @NotNull Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> getResources() {
-    return resources;
-  }
-
-  public @NotNull List<String> getIgnored() {
-    return ignored;
-  }
+  internal fun getResources(): Map<String, MutableMap<String, ExternalResourceManagerExImpl.Resource>> = resources
 }

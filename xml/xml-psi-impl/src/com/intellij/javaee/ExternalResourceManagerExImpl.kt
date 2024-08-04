@@ -134,8 +134,8 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
     }
 
     standardIgnoredResources.clear()
-    standardIgnoredResources.addAll(registrar.ignored)
-    return registrar.resources
+    standardIgnoredResources.addAll(registrar.getIgnoredResources())
+    return registrar.getResources()
   }
 
   private fun dropCache() {
