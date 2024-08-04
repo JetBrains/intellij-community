@@ -2,16 +2,19 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readAndWriteAction
 import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.application
 import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 
@@ -173,5 +176,25 @@ class SuspendingReadAndWriteActionTest {
         }
       }
     }
+  }
+
+  @Test
+  fun `leaking readAction Marker`(): Unit = timeoutRunBlocking {
+    val job = Job()
+    readAction {
+      runBlockingCancellable {
+        application.executeOnPooledThread {
+          runBlockingMaybeCancellable {
+            readAndWriteAction {
+              writeAction {
+                job.complete()
+                Unit
+              }
+            }
+          }
+        }
+      }
+    }
+    job.join()
   }
 }
