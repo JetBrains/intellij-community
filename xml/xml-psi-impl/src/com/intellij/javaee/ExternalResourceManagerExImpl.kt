@@ -57,7 +57,6 @@ private val XSD_1_1 = ExternalResourceManagerExImpl.Resource(
 private const val HTML5_DOCTYPE_ELEMENT = "HTML5"
 
 private const val RESOURCE_ELEMENT: @NonNls String = "resource"
-private const val URL_ATTR: @NonNls String = "url"
 private const val LOCATION_ATTR: @NonNls String = "location"
 private const val IGNORED_RESOURCE_ELEMENT: @NonNls String = "ignored-resource"
 private const val HTML_DEFAULT_DOCTYPE_ELEMENT: @NonNls String = "default-html-doctype"
@@ -149,10 +148,9 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
     return parent != null && parent.getName() == "standardSchemas"
   }
 
-  override fun isUserResource(file: VirtualFile): Boolean {
-    return resourceLocations.contains(file.getUrl())
-  }
+  override fun isUserResource(file: VirtualFile): Boolean = resourceLocations.contains(file.url)
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun getResourceLocation(url: String): String = getResourceLocation(url, DEFAULT_VERSION)
 
   override fun getResourceLocation(url: @NonNls String, version: String?): String {
@@ -178,9 +176,7 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
   }
 
   override fun getStdResource(url: String, version: String?): String? {
-    val map = getMap(standardResources.value, version) ?: return null
-    val resource = map.get(url)
-    return if (resource == null) null else resource.getResourceUrl()
+    return getMap(standardResources.value, version)?.get(url)?.getResourceUrl()
   }
 
   private fun getUserResource(url: String, version: String?): String? = getMap<String>(resources, version)?.get(url)
@@ -367,23 +363,17 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
     return ArrayUtilRt.toStringArray(set)
   }
 
-  override fun getModificationCount(project: Project): Long {
-    return getProjectResources(project).getModificationCount()
-  }
+  override fun getModificationCount(project: Project): Long = getProjectResources(project).modificationCount
 
   override fun getState(): Element? {
     val element = Element("state")
 
-    val urls: MutableSet<String?> = TreeSet<String?>()
+    val urls = TreeSet<String>()
     for (map in resources.values) {
       urls.addAll(map.keys)
     }
 
     for (url in urls) {
-      if (url == null) {
-        continue
-      }
-
       val location = getResourceLocation(url)
       val e = Element(RESOURCE_ELEMENT)
       e.setAttribute(URL_ATTR, url)
@@ -453,7 +443,7 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
     }
     val catalogElement = state.getChild(CATALOG_PROPERTIES_ELEMENT)
     if (catalogElement != null) {
-      myCatalogPropertiesFile = catalogElement.getTextTrim()
+      myCatalogPropertiesFile = catalogElement.textTrim
     }
   }
 
@@ -537,6 +527,7 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
       return if (i > 0) file.substring(0, i) else file
     }
 
+    @Suppress("LoggingSimilarMessage")
     fun getResourceUrl(): String? {
       val resolvedResourcePath = resolvedResourcePath
       if (resolvedResourcePath != null) {

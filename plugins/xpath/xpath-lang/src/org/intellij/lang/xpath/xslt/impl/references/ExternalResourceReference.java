@@ -63,7 +63,7 @@ final class ExternalResourceReference implements PsiReference, LocalQuickFixProv
   @Override
   public @Nullable PsiElement resolve() {
     String value = attribute.getValue();
-    String resourceLocation = resourceManager.getResourceLocation(value, attribute.getProject());
+    String resourceLocation = value == null ? null : resourceManager.getResourceLocation(value, attribute.getProject());
     if (Objects.equals(resourceLocation, value)) {
       return null;
     }
