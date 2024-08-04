@@ -4,6 +4,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -18,7 +19,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
+public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> implements DumbAware {
   private final PsiElement myTarget;
 
   public HighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
