@@ -11,10 +11,6 @@ class ResourceRegistrarImpl : ResourceRegistrar {
 
   internal fun getIgnoredResources(): List<String> = ignored
 
-  override fun addStdResource(resource: @NonNls String, fileName: @NonNls String) {
-    addStdResource(resource = resource, version = null, fileName = fileName, aClass = javaClass)
-  }
-
   override fun addStdResource(resource: @NonNls String, fileName: @NonNls String, aClass: Class<*>?) {
     addStdResource(resource = resource, version = null, fileName = fileName, aClass = aClass)
   }

@@ -7,8 +7,6 @@ import org.jetbrains.annotations.NonNls
  * @see StandardResourceProvider
  */
 interface ResourceRegistrar {
-  fun addStdResource(resource: @NonNls String, fileName: @NonNls String)
-
   fun addStdResource(resource: @NonNls String, fileName: @NonNls String, classLoader: ClassLoader)
 
   fun addStdResource(resource: @NonNls String, fileName: @NonNls String, klass: Class<*>?)
