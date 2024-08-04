@@ -21,8 +21,8 @@ final class ExternalResourcesRootsProvider extends IndexableSetContributor {
     ExternalResourceManagerExImpl manager = (ExternalResourceManagerExImpl)ExternalResourceManager.getInstance();
     Set<String> duplicateCheck = new HashSet<>();
     Set<VirtualFile> set = new HashSet<>();
-    for (Map<String, ExternalResourceManagerExImpl.Resource> map : manager.getStandardResources$intellij_xml_psi_impl()) {
-      for (ExternalResourceManagerExImpl.Resource resource : map.values()) {
+    for (Map<String, ExternalResource> map : manager.getStandardResources$intellij_xml_psi_impl()) {
+      for (ExternalResource resource : map.values()) {
         String url = resource.getResourceUrl();
         if (url != null) {
           url = url.substring(0, url.lastIndexOf('/') + 1);

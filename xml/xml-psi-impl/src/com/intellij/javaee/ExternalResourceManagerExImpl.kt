@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl.URL_ATTR
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -30,6 +29,7 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.io.URLUtil
 import com.intellij.xml.Html5SchemaProvider
 import com.intellij.xml.XmlSchemaProvider
 import com.intellij.xml.index.XmlNamespaceIndex
@@ -48,7 +48,7 @@ private val LOG = logger<ExternalResourceManagerExImpl>()
 private const val DEFAULT_VERSION = ""
 
 private const val CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES"
-private val XSD_1_1 = ExternalResourceManagerExImpl.Resource(
+private val XSD_1_1 = ExternalResource(
   file = "/standardSchemas/XMLSchema-1_1/XMLSchema.xsd",
   aClass = ExternalResourceManagerExImpl::class.java,
   classLoader = null,
@@ -56,6 +56,7 @@ private val XSD_1_1 = ExternalResourceManagerExImpl.Resource(
 
 private const val HTML5_DOCTYPE_ELEMENT = "HTML5"
 
+private const val URL_ATTR: @NonNls String = "url"
 private const val RESOURCE_ELEMENT: @NonNls String = "resource"
 private const val LOCATION_ATTR: @NonNls String = "location"
 private const val IGNORED_RESOURCE_ELEMENT: @NonNls String = "ignored-resource"
@@ -104,7 +105,7 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
     const val JCP_NS: @NonNls String = "http://xmlns.jcp.org/xml/ns/javaee/"
     const val JAKARTA_NS: @NonNls String = "https://jakarta.ee/xml/ns/jakartaee/"
 
-    fun <T> getOrCreateMap(resources: MutableMap<String, MutableMap<String, T>>, version: String?): MutableMap<String, T> {
+    internal fun <T> getOrCreateMap(resources: MutableMap<String, MutableMap<String, T>>, version: String?): MutableMap<String, T> {
       return resources.computeIfAbsent(version ?: DEFAULT_VERSION) { HashMap() }
     }
 
@@ -117,7 +118,7 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
     }
   }
 
-  internal open fun computeStdResources(): Map<String, MutableMap<String, Resource>> {
+  internal open fun computeStdResources(): Map<String, MutableMap<String, ExternalResource>> {
     val registrar = ResourceRegistrarImpl()
     for (provider in StandardResourceProvider.EP_NAME.lazySequence()) {
       provider.registerResources(registrar)
@@ -417,9 +418,13 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
 
     incModificationCount()
     for (element in state.getChildren(RESOURCE_ELEMENT)) {
-      val url = element.getAttributeValue(URL_ATTR)
-      if (!url.isNullOrEmpty()) {
-        addSilently(url, DEFAULT_VERSION, element.getAttributeValue(LOCATION_ATTR)!!.replace('/', File.separatorChar))
+      val url = element.getAttributeValue(URL_ATTR) ?: continue
+      if (url.isNotEmpty()) {
+        addSilently(
+          url = url,
+          version = DEFAULT_VERSION,
+          location = element.getAttributeValue(LOCATION_ATTR)!!.replace('/', File.separatorChar),
+        )
       }
     }
 
@@ -453,18 +458,14 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
     incModificationCount()
   }
 
-  internal fun getStandardResources(): Collection<MutableMap<String, Resource>> = standardResources.value.values
+  internal fun getStandardResources(): Collection<MutableMap<String, ExternalResource>> = standardResources.value.values
 
   override fun getDefaultHtmlDoctype(project: Project): String {
     val doctype = getProjectResources(project).defaultHtmlDoctype
-    if (XmlUtil.XHTML_URI == doctype) {
-      return XmlUtil.XHTML4_SCHEMA_LOCATION
-    }
-    else if (HTML5_DOCTYPE_ELEMENT == doctype) {
-      return Html5SchemaProvider.getHtml5SchemaLocation()
-    }
-    else {
-      return doctype!!
+    return when {
+      XmlUtil.XHTML_URI == doctype -> XmlUtil.XHTML4_SCHEMA_LOCATION
+      HTML5_DOCTYPE_ELEMENT == doctype -> Html5SchemaProvider.getHtml5SchemaLocation()
+      else -> doctype!!
     }
   }
 
@@ -504,70 +505,66 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
     incModificationCount()
 
     if (Html5SchemaProvider.getHtml5SchemaLocation() == defaultHtmlDoctype) {
-      this@ExternalResourceManagerExImpl.defaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT
+      this.defaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT
     }
     else {
-      this@ExternalResourceManagerExImpl.defaultHtmlDoctype = defaultHtmlDoctype
+      this.defaultHtmlDoctype = defaultHtmlDoctype
     }
     fireExternalResourceChanged()
   }
+}
 
-  internal class Resource(file: String, aClass: Class<*>?, classLoader: ClassLoader?) {
-    private val file = file
-    private val classLoader = classLoader
-    private val aClass: Class<*>? = aClass
+internal class ExternalResource(file: String, aClass: Class<*>?, classLoader: ClassLoader?) {
+  private val file = file
+  private val classLoader = classLoader
+  private val aClass: Class<*>? = aClass
 
-    @Volatile
-    private var resolvedResourcePath: String? = null
+  @Volatile
+  private var resolvedResourcePath: String? = null
 
-    constructor(file: String, baseResource: Resource) : this(file = file, aClass = baseResource.aClass, classLoader = baseResource.classLoader)
+  constructor(file: String, baseResource: ExternalResource) : this(file = file, aClass = baseResource.aClass, classLoader = baseResource.classLoader)
 
-    fun directoryName(): String {
-      val i = file.lastIndexOf('/')
-      return if (i > 0) file.substring(0, i) else file
-    }
-
-    @Suppress("LoggingSimilarMessage")
-    fun getResourceUrl(): String? {
-      val resolvedResourcePath = resolvedResourcePath
-      if (resolvedResourcePath != null) {
-        return resolvedResourcePath
-      }
-
-      val resource = if (aClass == null) classLoader!!.getResource(file) else aClass.getResource(file)
-
-      if (resource == null) {
-        val message = "Cannot find standard resource. filename:${this@Resource.file} class=$aClass, classLoader:$classLoader"
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.warn(message)
-        }
-        else {
-          LOG.warn(message)
-        }
-
-        this@Resource.resolvedResourcePath = null
-        return null
-      }
-
-      var path = FileUtil.unquote(resource.toString())
-      // this is done by FileUtil for windows
-      path = path.replace('\\', '/')
-      this@Resource.resolvedResourcePath = path
-      return path
-    }
-
-    override fun equals(o: Any?): Boolean {
-      if (this === o) return true
-      if (o == null || javaClass != o.javaClass) return false
-
-      val resource = o as Resource
-      return classLoader == resource.classLoader && aClass == resource.aClass && file == resource.file
-    }
-
-    override fun hashCode(): Int = this@Resource.file.hashCode()
-
-    override fun toString(): String = "${this@Resource.file} for $classLoader"
+  fun directoryName(): String {
+    val i = file.lastIndexOf('/')
+    return if (i > 0) file.substring(0, i) else file
   }
+
+  @Suppress("LoggingSimilarMessage")
+  fun getResourceUrl(): String? {
+    resolvedResourcePath?.let {
+      return it
+    }
+
+    val resource = if (aClass == null) classLoader!!.getResource(file) else aClass.getResource(file)
+    if (resource == null) {
+      val message = "Cannot find standard resource. filename:${this@ExternalResource.file} class=$aClass, classLoader:$classLoader"
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.warn(message)
+      }
+      else {
+        LOG.warn(message)
+      }
+
+      resolvedResourcePath = null
+      return null
+    }
+
+    val path = URLUtil.unescapePercentSequences(resource.toString().replace('\\', '/'))
+    resolvedResourcePath = path
+    return path
+  }
+
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || javaClass != o.javaClass) return false
+
+    val resource = o as ExternalResource
+    return classLoader == resource.classLoader && aClass == resource.aClass && file == resource.file
+  }
+
+  override fun hashCode(): Int = this@ExternalResource.file.hashCode()
+
+  override fun toString(): String = "${this@ExternalResource.file} for $classLoader"
 }
 
 private fun <T> getMap(resources: Map<String, MutableMap<String, T>>, version: String?): MutableMap<String, T>? {
