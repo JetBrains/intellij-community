@@ -56,6 +56,8 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
       // we need to dispatch and postpone its execution.
       if (!EDT.isCurrentThreadEdt()) return true
       val contextModality = context.effectiveContextModality()
+      // If the context modality is explicitly any(), then no dispatch is performed,
+      // as dominates(any()) always returns false, no special any() handling required here.
       return ModalityState.current().dominates(contextModality)
     }
 
