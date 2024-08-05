@@ -77,7 +77,7 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
   }
 
   companion object {
-    internal fun <S> performHotSwap(context: DataContext, session: HotSwapSession<S>) {
+    fun <S> performHotSwap(context: DataContext, session: HotSwapSession<S>) {
       session.provider.performHotSwap(context, session)
     }
   }
@@ -87,6 +87,7 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
   : JPanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(4), 0)) {
 
   private val tooltip = createHelpTooltip()
+    .setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
   val button = ActionButton(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
     tooltip.installOn(this)
   }
