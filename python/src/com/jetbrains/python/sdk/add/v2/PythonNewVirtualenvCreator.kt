@@ -5,7 +5,6 @@ import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -192,15 +191,6 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
   }
 
   companion object {
-    private val LOG = logger<PythonNewVirtualenvCreator>()
-
-    /**
-     * We assume this is the default name of the directory that is located in user home and which contains user virtualenv Python
-     * environments.
-     *
-     * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
-     */
-    private const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
 
 
     /**

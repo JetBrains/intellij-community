@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
@@ -19,13 +18,11 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(FlowPreview::class)
 class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel) : PythonExistingEnvironmentConfigurator(model) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
-  private val lastLoadedConda = propertyGraph.property("")
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
@@ -116,7 +113,4 @@ class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pytho
                                      InterpreterCreationMode.CUSTOM)
   }
 
-  companion object {
-    private val LOG = logger<CondaExistingEnvironmentSelector>()
-  }
 }

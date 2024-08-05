@@ -11,13 +11,11 @@ class PythonAddInterpreterState(
   val propertyGraph: PropertyGraph, // todo move to presenter
   val projectPath: ObservableProperty<String>,
   val scope: CoroutineScope,
-  val basePythonSdks: ObservableMutableProperty<List<Sdk>>, // todo replace with flow, local properties for every creator
+  // todo replace with flow, local properties for every creator
   val allExistingSdks: ObservableMutableProperty<List<Sdk>>, // todo merge with allSdks, replace with flow and local properties
   val installableSdks: ObservableMutableProperty<List<Sdk>>, // todo not needed
-  val selectedVenv: ObservableMutableProperty<Sdk?>,
   val condaExecutable: ObservableMutableProperty<String>,
 ) {
   internal val allSdks: ObservableMutableProperty<List<Sdk>> = propertyGraph.property(initial = allExistingSdks.get())
 
-  val selectedVenvPath: ObservableMutableProperty<String?> = selectedVenv.transformToHomePathProperty(allSdks)
 }

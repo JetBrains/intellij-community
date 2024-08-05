@@ -31,9 +31,6 @@ import com.jetbrains.python.statistics.InterpreterType
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
-import java.io.File
-import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
@@ -172,33 +169,6 @@ class PyAddNewPoetryPanel(private val project: Project?,
       null
     } as? Module
 
-  private val isPoetry by lazy { existingSdks.filter { it.isPoetry }.associateBy { it.associatedModulePath } }
-  private val homePath by lazy { existingSdks.associateBy { it.homePath } }
-  private val pythonExecutable = ConcurrentHashMap<String, String>()
-  private val venvInProject = ConcurrentHashMap<String, Boolean?>()
-
-  private fun computePythonExecutable(homePath: String): String? {
-    return pythonExecutable.getOrPut(homePath) { getPythonExecutable(homePath) }
-  }
-
-  private fun isVenvInProject(path: String): Boolean? {
-    return venvInProject.getOrPut(path) { isVirtualEnvsInProject(Path.of(path)) }
-  }
-
-  /**
-   * Checks if the poetry for the project hasn't been already added.
-   */
-  private fun validatePoetryIsNotAdded(): ValidationInfo? {
-    val path = projectPath ?: return null
-    val addedPoetry = isPoetry[path] ?: return null
-    if (addedPoetry.homeDirectory == null) return null
-    // TODO: check existing envs
-    if (isVenvInProject(path) == false) return null
-    val inProjectEnvExecutable = inProjectEnvPath?.let { computePythonExecutable(it) } ?: return null
-    val inProjectEnv = homePath[inProjectEnvExecutable] ?: return null
-    return ValidationInfo(PyBundle.message("python.sdk.poetry.dialog.message.poetry.interpreter.has.been.already.added", inProjectEnv.name))
-  }
-
 
   /**
    * The effective project path for the new project or for the existing project.
@@ -206,7 +176,4 @@ class PyAddNewPoetryPanel(private val project: Project?,
   private val projectPath: String?
     get() = newProjectPath ?: selectedModule?.basePath ?: project?.basePath
 
-  private val inProjectEnvDir = ".venv"
-  private val inProjectEnvPath: String?
-    get() = projectPath?.let { it + File.separator + inProjectEnvDir }
 }

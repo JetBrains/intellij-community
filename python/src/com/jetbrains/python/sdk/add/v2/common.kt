@@ -80,7 +80,6 @@ enum class PythonInterpreterSelectionMode(val nameKey: String) {
 enum class PythonInterpreterCreationTargets(val nameKey: String, val icon: Icon) {
   LOCAL_MACHINE("sdk.create.targets.local", AllIcons.Nodes.HomeFolder),
   SSH("", AllIcons.Nodes.HomeFolder),
-  DOCKER("", AllIcons.Nodes.HomeFolder)
 }
 
 fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
@@ -115,16 +114,6 @@ internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
   }
   return installed
 }
-
-internal fun setupSdkIfDetected(sdk: Sdk, existingSdks: List<Sdk>): Sdk = when (sdk) {
-  is PyDetectedSdk -> {
-    val newSdk = sdk.setup(existingSdks)!!
-    SdkConfigurationUtil.addSdk(newSdk)
-    newSdk
-  }
-  else -> sdk
-}
-
 
 
 internal fun setupSdkIfDetected(interpreter: PythonSelectableInterpreter, existingSdks: List<Sdk>, targetConfig: TargetEnvironmentConfiguration? = null): Sdk? {
