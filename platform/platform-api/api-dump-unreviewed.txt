@@ -9705,8 +9705,10 @@ com.intellij.ui.jcef.JBCefApp$JBCefCustomSchemeHandlerFactory
 - a:registerCustomScheme(org.cef.callback.CefSchemeRegistrar):V
 *f:com.intellij.ui.jcef.JBCefAppArmorUtils
 - <init>():V
-- s:areUnprivilegedUserNameSpacesRestricted():Z
+- s:areUnprivilegedUserNamespacesRestricted():Z
 - s:createUnprivilegedUserNamespacesRestrictedBanner():com.intellij.ui.InlineBanner
+- s:getUnprivilegedUserNamespacesRestrictedStubPanel():javax.swing.JPanel
+- s:showUnprivilegedUserNamespacesRestrictedDialog(java.awt.Component):V
 com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider
 - sf:Companion:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
 - a:getOptions():java.util.List

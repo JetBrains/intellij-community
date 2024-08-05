@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -17,15 +18,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.InlineBanner;
 import com.intellij.util.LazyInitializer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,7 +55,7 @@ public final class JBCefAppArmorUtils {
    * The function runs `unshare` command and tries to create a new user namespace.
    * See <a href="https://man7.org/linux/man-pages/man1/unshare.1.html">man page</a>
    */
-  public static boolean areUnprivilegedUserNameSpacesRestricted() {
+  public static boolean areUnprivilegedUserNamespacesRestricted() {
     return myUnprivilegedUserNameSpacesRestricted.get();
   }
 
@@ -61,18 +68,7 @@ public final class JBCefAppArmorUtils {
         .showCloseButton(false)
         .addAction(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.add.apparmor.profile"),
                    () -> {
-                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                       try {
-                         installAppArmorProfile();
-                       }
-                       catch (IOException | ExecutionException ex) {
-                         Notification notification = JBCefApp.getNotificationGroup().createNotification(
-                           IdeBundle.message("notification.content.jcef.failed.to.install.apparmor.profile"), ex.getMessage(), NotificationType.ERROR);
-                         Notifications.Bus.notify(notification);
-                         return;
-                       }
-                       ApplicationManager.getApplication().restart();
-                     });
+                     installAppArmorProfile();
                    })
         .addAction(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.disable.sandbox"),
                    () -> {
@@ -85,9 +81,57 @@ public final class JBCefAppArmorUtils {
                    });
   }
 
+  public static void showUnprivilegedUserNamespacesRestrictedDialog(Component parentComponent) {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      int chose =
+        Messages.showDialog(parentComponent,
+                            IdeBundle.message("notification.content.jcef.enable.browser.dialog.message"),
+                            IdeBundle.message("notification.content.jcef.enable.browser.dialog.title"),
+                            new String[]{
+                              IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.add.apparmor.profile"),
+                              IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.disable.sandbox"),
+                              CommonBundle.getCancelButtonText()
+                            },
+                            0, // default option
+                            Messages.getQuestionIcon());
+
+      switch (chose) {
+        case 0:
+          installAppArmorProfile();
+          break;
+        case 1:
+          RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
+          ApplicationManager.getApplication().restart();
+          break;
+      }
+    });
+  }
+
+  public static JPanel getUnprivilegedUserNamespacesRestrictedStubPanel() {
+    JPanel stubPanel = new JPanel(new GridBagLayout());
+
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.anchor = GridBagConstraints.CENTER;
+    gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+    JLabel label = new JLabel(IdeBundle.message("notification.content.jcef.browser.suspended.text"));
+    JButton button = new JButton(IdeBundle.message("notification.content.jcef.enable.browser.button"));
+    button.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        showUnprivilegedUserNamespacesRestrictedDialog(stubPanel);
+      }
+    });
+
+    stubPanel.add(label, gbc);
+    stubPanel.add(button, gbc);
+
+    return stubPanel;
+  }
+
   /**
    * @deprecated The name of the function is not accurate.
-   * Use {@link JBCefAppArmorUtils#areUnprivilegedUserNameSpacesRestricted()}
+   * Use {@link JBCefAppArmorUtils#areUnprivilegedUserNamespacesRestricted()}
    * This function is here yet just to simplify cherry-picking.
    * To be removed by another commit.
    */
@@ -167,10 +211,21 @@ public final class JBCefAppArmorUtils {
     return null;
   }
 
-  private static void installAppArmorProfile() throws IOException, ExecutionException {
-    String installationPath = getApparmorProfilePath();
-    String profileText = getApparmorProfile();
-    installAppArmorProfile(installationPath, profileText);
+  private static void installAppArmorProfile() {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      String installationPath = getApparmorProfilePath();
+      String profileText = getApparmorProfile();
+      try {
+        installAppArmorProfile(installationPath, profileText);
+      }
+      catch (IOException | ExecutionException ex) {
+        Notification notification = JBCefApp.getNotificationGroup().createNotification(
+          IdeBundle.message("notification.content.jcef.failed.to.install.apparmor.profile"), ex.getMessage(), NotificationType.ERROR);
+        Notifications.Bus.notify(notification);
+        return;
+      }
+      ApplicationManager.getApplication().restart();
+    });
   }
 
   private static void installAppArmorProfile(String path, String content) throws IOException, ExecutionException {
