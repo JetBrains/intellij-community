@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -130,21 +130,17 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
 
     val duplicatesExtractOptions = duplicates.map { duplicate -> createExtractDescriptor(duplicate, parameters) }
 
-    if (duplicatesExtractOptions.any { options -> options.isStatic }) {
-      runWriteAction {
+    WriteCommandAction.writeCommandAction(project).withName(ExtractMethodHandler.getRefactoringName()).run<Throwable> {
+      if (duplicatesExtractOptions.any { options -> options.isStatic }) {
         extractedElements.method.modifierList.setModifierProperty(PsiModifier.STATIC, true)
       }
-    }
 
-    val replacedMethod = runWriteAction {
       replacePsiRange(calls, extractedElements.callElements)
-      method.replace(extractedElements.method) as PsiMethod
-    }
+      val replacedMethod = method.replace(extractedElements.method) as PsiMethod
 
-    duplicates.zip(duplicatesExtractOptions).forEach { (duplicate, extractOptions) ->
-      beforeDuplicateReplaced(duplicate.candidate)
-      val callElements = CallBuilder(extractOptions.elements.first()).createCall(replacedMethod, extractOptions)
-      runWriteAction {
+      duplicates.zip(duplicatesExtractOptions).forEach { (duplicate, extractOptions) ->
+        beforeDuplicateReplaced(duplicate.candidate)
+        val callElements = CallBuilder(extractOptions.elements.first()).createCall(replacedMethod, extractOptions)
         replacePsiRange(duplicate.candidate, callElements)
       }
     }
