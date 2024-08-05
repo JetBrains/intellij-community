@@ -3,6 +3,7 @@ package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -35,6 +36,7 @@ class ExecutorAction private constructor(val origin: AnAction,
   }
 
   companion object {
+    private val LOG = logger<ExecutorAction>()
 
     @JvmStatic
     val orderKey: DataKey<Int> = DataKey.create("Order")
@@ -47,30 +49,40 @@ class ExecutorAction private constructor(val origin: AnAction,
     @JvmOverloads
     fun getActionList(order: Int = 0): List<AnAction> {
       val actionManager = ActionManager.getInstance()
-      val createAction = actionManager.getAction("CreateRunConfiguration")
+
+      val extraActionsGroup = actionManager.getAction("RunLineMarkerExtraActions")
+      val extraActions = (extraActionsGroup as? DefaultActionGroup)?.getChildren(actionManager) ?: run {
+        LOG.error("extraActionsGroup doesn't inherit DefaultActionGroup. extraActionsGroup.class=${extraActionsGroup.javaClass.name}")
+        emptyArray<AnAction>()
+      }
       val extensions = Executor.EXECUTOR_EXTENSION_NAME.extensionList
-      val result = ArrayList<AnAction>(extensions.size + (if (createAction == null) 0 else 2))
+      val result = ArrayList<AnAction>(extensions.size + extraActions.size)
+
       extensions
         .mapNotNullTo(result) { executor ->
           actionManager.getAction(executor.contextActionId)?.let {
             ExecutorAction(it, executor, order)
           }
         }
-      if (createAction is ActionGroup) {
-        result.add(object : ActionGroupWrapper(createAction), DataSnapshotProvider {
-          override fun dataSnapshot(sink: DataSink) {
-            sink[orderKey] = order
-          }
 
-          override fun equals(other: Any?): Boolean {
-            return other is ActionGroupWrapper && delegate == other.delegate
-          }
+      for (extraAction in extraActions) {
+        if (extraAction is ActionGroup) {
+          result.add(object : ActionGroupWrapper(extraAction), DataSnapshotProvider {
+            override fun dataSnapshot(sink: DataSink) {
+              sink[orderKey] = order
+            }
 
-          override fun hashCode(): Int {
-            return delegate.hashCode()
-          }
-        })
+            override fun equals(other: Any?): Boolean {
+              return other is ActionGroupWrapper && delegate == other.delegate
+            }
+
+            override fun hashCode(): Int {
+              return delegate.hashCode()
+            }
+          })
+        }
       }
+
       return result
     }
 
