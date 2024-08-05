@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.createMenuBar
+import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
@@ -27,11 +27,13 @@ import javax.swing.event.ChangeListener
 
 private const val ALPHA = (255 * 0.6).toInt()
 
-internal class ExpandableMenu(private val headerContent: JComponent,
-                              coroutineScope: CoroutineScope,
-                              frame: JFrame,
-                              private val shouldBeColored: (() -> Boolean)? = null) {
-  val ideMenu: IdeJMenuBar = createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null)
+internal class ExpandableMenu(
+  private val headerContent: JComponent,
+  coroutineScope: CoroutineScope,
+  frame: JFrame,
+  private val shouldBeColored: (() -> Boolean)? = null
+) {
+  val ideMenu: IdeJMenuBar = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null)
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenu, coroutineScope = null)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null
@@ -49,7 +51,8 @@ internal class ExpandableMenu(private val headerContent: JComponent,
           hideExpandedMenuBar()
         }
       }
-    } else {
+    }
+    else {
       hideMenu = false
     }
   }
@@ -128,7 +131,7 @@ internal class ExpandableMenu(private val headerContent: JComponent,
     }
 
     menu ?: return
-    
+
     val subElements = menu.popupMenu.subElements
     if (subElements.isEmpty()) {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu)
@@ -150,7 +153,8 @@ internal class ExpandableMenu(private val headerContent: JComponent,
     val location = SwingUtilities.convertPoint(headerContent, 0, 0, rootPaneCopy)
     if (location == null) {
       headerColorfulPanel?.horizontalOffset = 0
-    } else {
+    }
+    else {
       val insets = headerContent.insets
       headerColorfulPanel?.horizontalOffset = location.x + insets.left
       expandedMenuBar?.let {
@@ -172,7 +176,7 @@ internal class ExpandableMenu(private val headerContent: JComponent,
     }
   }
 
-  private class HeaderColorfulPanel(component: JComponent, private val isColored: Boolean): JPanel() {
+  private class HeaderColorfulPanel(component: JComponent, private val isColored: Boolean) : JPanel() {
 
     var horizontalOffset = 0
 

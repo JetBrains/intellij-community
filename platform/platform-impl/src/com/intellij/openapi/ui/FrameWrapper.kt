@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -326,9 +327,9 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     FrameState.setFrameStateListener(this)
     glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
     if (SystemInfoRt.isMac && !Menu.isJbScreenMenuEnabled()) {
-      jMenuBar = createMenuBar(coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope(),
-                               frame = this,
-                               customMenuGroup = null)
+      jMenuBar = RootPaneUtil.createMenuBar(coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope(),
+                                            frame = this,
+                                            customMenuGroup = null)
     }
     MouseGestureManager.getInstance().add(this)
     focusTraversalPolicy = IdeFocusTraversalPolicy()
