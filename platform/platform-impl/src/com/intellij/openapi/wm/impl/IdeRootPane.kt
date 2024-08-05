@@ -345,7 +345,7 @@ open class IdeRootPane internal constructor(
   }
 
   protected open fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl =
-    IdeStatusBarImpl(coroutineScope, frameHelper,
+    IdeStatusBarImpl(coroutineScope, { frameHelper.project },
                      addToolWindowWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders)
 
   private fun updateStatusBarVisibility() {
