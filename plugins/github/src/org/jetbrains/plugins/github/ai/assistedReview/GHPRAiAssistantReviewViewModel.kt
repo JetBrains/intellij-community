@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.diff.util.Side
+import com.intellij.ml.llm.core.grazieAPI.tasks.vcs.reviewBuddy.ReviewBuddyFileData
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -25,7 +26,10 @@ data class ReviewFileAiData(
   val changeToNavigate: RefComparisonChange,
   val contentBefore: String?,
   val contentAfter: String?
-)
+) {
+  fun toTaskData() =
+    ReviewBuddyFileData(rawLocalPath, contentBefore, contentAfter)
+}
 
 sealed interface AiReviewResponseState
 
