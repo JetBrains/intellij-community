@@ -117,6 +117,7 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
    */
   fun startHotSwapListening(): HotSwapResultListener {
     HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
+    val statusBefore = currentStatus
     currentStatus = HotSwapVisibleStatus.IN_PROGRESS
     return object : HotSwapResultListener {
       override fun onSuccessfulReload() {
@@ -129,7 +130,7 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
       }
 
       override fun onCanceled() {
-        currentStatus = HotSwapVisibleStatus.CHANGES_READY
+        currentStatus = statusBefore
       }
     }
   }
