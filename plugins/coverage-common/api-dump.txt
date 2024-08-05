@@ -337,6 +337,7 @@ a:com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 - <init>(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.coverage.CoverageRunner):V
 - canHavePerTestCoverage():Z
 - p:coverageFileNameSeparator():java.lang.String
+- p:createCoverageFile():java.lang.String
 - createFileProvider():com.intellij.coverage.CoverageFileProvider
 - createSuiteName():java.lang.String
 - createTimestamp():J
