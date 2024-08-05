@@ -18,21 +18,21 @@ internal object GradleSyncCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("gradle.sync", 2)
+  private val GROUP = EventLogGroup("gradle.sync", 3)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
 
   private val MODEL_FETCH_FOR_BUILD_SRC = EventFields.Boolean("model_fetch_for_build_src")
   private val MODEL_FETCH_WITH_IDE_CACHES = EventFields.Boolean("first_model_fetch_with_ide_caches")
   private val MODEL_FETCH_ERROR_COUNT = EventFields.Int("model_fetch_error_count")
-  private val MODEL_FETCH_COMPLETION_STAMP = EventFields.Long("model_fetch_completion_stamp")
+  private val MODEL_FETCH_COMPLETION_STAMP = EventFields.Long("model_fetch_completion_stamp_ms")
 
-  private val PROJECT_LOADED_PHASE_COMPLETION_STAMP = EventFields.Long("project_loaded_phase_completion_stamp")
-  private val WARM_UP_PHASE_COMPLETION_STAMP = EventFields.Long("warm_up_phase_completion_stamp")
-  private val PROJECT_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("project_model_phase_completion_stamp")
-  private val PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP = EventFields.Long("project_source_set_phase_completion_stamp")
-  private val PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP = EventFields.Long("project_source_set_dependency_phase_completion_stamp")
-  private val ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("additional_model_phase_completion_stamp")
+  private val PROJECT_LOADED_PHASE_COMPLETION_STAMP = EventFields.Long("project_loaded_phase_completion_stamp_ms")
+  private val WARM_UP_PHASE_COMPLETION_STAMP = EventFields.Long("warm_up_phase_completion_stamp_ms")
+  private val PROJECT_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("project_model_phase_completion_stamp_ms")
+  private val PROJECT_SOURCE_SET_PHASE_COMPLETION_STAMP = EventFields.Long("project_source_set_phase_completion_stamp_ms")
+  private val PROJECT_SOURCE_SET_DEPENDENCY_PHASE_COMPLETION_STAMP = EventFields.Long("project_source_set_dependency_phase_completion_stamp_ms")
+  private val ADDITIONAL_MODEL_PHASE_COMPLETION_STAMP = EventFields.Long("additional_model_phase_completion_stamp_ms")
 
   private val MODEL_FETCH_COMPLETED_EVENT = GROUP.registerVarargEvent(
     "gradle.sync.model.fetch.completed",
