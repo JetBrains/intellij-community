@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
@@ -88,7 +89,9 @@ internal class InplaceMethodExtractor(private val editor: Editor,
 
   suspend fun extractAndRunTemplate(suggestedNames: List<String>) {
     try {
-      MethodExtractor.sendRefactoringStartedEvent(extractor.elements.toTypedArray())
+      readAction {
+        MethodExtractor.sendRefactoringStartedEvent(extractor.elements.toTypedArray())
+      }
       ExtractMethodHelper.mergeWriteCommands(editor, disposable, ExtractMethodHandler.getRefactoringName())
       val (callElements, method) = extractor.extract()
 
@@ -136,7 +139,11 @@ internal class InplaceMethodExtractor(private val editor: Editor,
             InplaceExtractMethodCollector.executed.log(defaultExtractor.extractOptions.methodName != methodName)
             installGotItTooltips(editor, callIdentifierRange?.asTextRange, methodIdentifierRange?.asTextRange)
             MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
-            extractor.replaceDuplicates(editor, extractedMethod)
+            runWithModalProgressBlocking(project, ExtractMethodHandler.getRefactoringName()) {
+              withContext(Dispatchers.EDT) {
+                extractor.replaceDuplicates(editor, extractedMethod)
+              }
+            }
           }
           .disposeWithTemplate(disposable)
           .createTemplate(file, listOf(templateFieldWithSettings))

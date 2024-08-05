@@ -6,6 +6,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.find.FindManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
@@ -35,6 +36,8 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl
 import com.intellij.ui.ReplacePromptDialog
 import com.siyeh.ig.psiutils.SideEffectChecker.mayHaveSideEffects
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetClass: PsiClass, val elements: List<PsiElement>) {
 
@@ -82,7 +85,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     return ExtractedElements(replacedCalls, replacedMethod)
   }
 
-  fun replaceDuplicates(editor: Editor, method: PsiMethod, beforeDuplicateReplaced: (candidate: List<PsiElement>) -> Unit = {}) {
+  suspend fun replaceDuplicates(editor: Editor, method: PsiMethod, beforeDuplicateReplaced: (candidate: List<PsiElement>) -> Unit = {}) {
     val prepareTimeStart = System.currentTimeMillis()
     val project = method.project
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
@@ -323,7 +326,9 @@ fun DuplicatesMethodExtractor.extractInDialog() {
   }
   MethodExtractor.sendRefactoringDoneEvent(method)
   val editor = PsiEditorUtil.findEditor(targetClass) ?: return
-  MethodExtractor().executeRefactoringCommand(targetClass.project) {
-    mappedExtractor.replaceDuplicates(editor, method)
+  runWithModalProgressBlocking(extractOptions.project, ExtractMethodHandler.getRefactoringName()) {
+    withContext(Dispatchers.EDT) {
+      mappedExtractor.replaceDuplicates(editor, method)
+    }
   }
 }
