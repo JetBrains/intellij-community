@@ -82,6 +82,8 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
   internal var currentStatus: HotSwapVisibleStatus = HotSwapVisibleStatus.NO_CHANGES
     private set(value) {
       if (field == value) return
+      // No further updates after the session is complete
+      if (field == HotSwapVisibleStatus.SESSION_COMPLETED) return
       field = value
       HotSwapSessionManager.getInstance(project).fireStatusChanged(this, value)
     }
