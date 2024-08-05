@@ -342,7 +342,7 @@ public final class UIUtil {
    * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
   @Deprecated
-  public static <T> T getClientProperty(Object component, @NotNull Key<T> key) {
+  public static <T> @Nullable T getClientProperty(Object component, @NotNull Key<T> key) {
     return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
 
