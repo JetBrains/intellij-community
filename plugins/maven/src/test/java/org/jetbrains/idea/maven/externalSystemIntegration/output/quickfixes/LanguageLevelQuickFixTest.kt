@@ -28,7 +28,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.properties")
+      val tag = findTagBlocking("project.properties")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -53,7 +53,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.properties")
+      val tag = findTagBlocking("project.properties")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -84,7 +84,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.properties")
+      val tag = findTagBlocking("project.properties")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -117,7 +117,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.build.plugins.plugin.configuration")
+      val tag = findTagBlocking("project.build.plugins.plugin.configuration")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -151,7 +151,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.properties")
+      val tag = findTagBlocking("project.properties")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -190,7 +190,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag(p2, "project.properties")
+      val tag = findTagBlocking(p2, "project.properties")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -237,7 +237,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag(p2, "project.build.plugins.plugin.configuration")
+      val tag = findTagBlocking(p2, "project.build.plugins.plugin.configuration")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -261,7 +261,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.properties")
+      val tag = findTagBlocking("project.properties")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -286,7 +286,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.properties")
+      val tag = findTagBlocking("project.properties")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -318,7 +318,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.build.plugins.plugin.configuration")
+      val tag = findTagBlocking("project.build.plugins.plugin.configuration")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -351,7 +351,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.build.plugins.plugin.configuration")
+      val tag = findTagBlocking("project.build.plugins.plugin.configuration")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -389,7 +389,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag(p2, "project.properties")
+      val tag = findTagBlocking(p2, "project.properties")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -428,7 +428,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.properties")
+      val tag = findTagBlocking("project.properties")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -474,7 +474,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag(p2, "project.build.plugins.plugin.configuration")
+      val tag = findTagBlocking(p2, "project.build.plugins.plugin.configuration")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
@@ -521,7 +521,7 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
       }
     }
     readAction {
-      val tag = findTag("project.build.plugins.plugin.configuration")
+      val tag = findTagBlocking("project.build.plugins.plugin.configuration")
       assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)

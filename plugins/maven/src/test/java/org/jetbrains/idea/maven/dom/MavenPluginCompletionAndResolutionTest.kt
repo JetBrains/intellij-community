@@ -118,7 +118,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFileBlocking(f))
     }
   }
 
@@ -234,7 +234,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFileBlocking(f))
     }
   }
 

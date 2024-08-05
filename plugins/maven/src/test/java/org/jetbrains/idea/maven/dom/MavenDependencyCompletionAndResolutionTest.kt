@@ -401,7 +401,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFileBlocking(f))
     }
   }
 
@@ -426,7 +426,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFileBlocking(f))
     }
   }
 
@@ -457,7 +457,7 @@ $relativePathUnixSeparator<caret></relativePath>
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFileBlocking(f))
     }
   }
 
@@ -498,7 +498,7 @@ $relativePathUnixSeparator<caret></relativePath>
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
 
     withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFileBlocking(f))
     }
   }
 
@@ -522,7 +522,7 @@ $relativePathUnixSeparator<caret></relativePath>
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
 
     withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFileBlocking(f))
     }
   }
 
@@ -559,7 +559,7 @@ $relativePathUnixSeparator<caret></relativePath>
                       """.trimIndent())
 
     withContext(Dispatchers.EDT){
-      assertResolved(m1, findPsiFile(m2))
+      assertResolved(m1, findPsiFileBlocking(m2))
     }
   }
 
@@ -583,7 +583,7 @@ $libPath</systemPath>
 """)
 
     withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
+      assertResolved(projectPom, findPsiFileBlocking(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
     }
     checkHighlighting()
   }
@@ -651,7 +651,7 @@ $libPath</depPath>
 """)
 
     withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
+      assertResolved(projectPom, findPsiFileBlocking(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
     }
     checkHighlighting()
   }
@@ -701,7 +701,7 @@ $libPath<caret></systemPath>
 """)
 
     withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
+      assertResolved(projectPom, findPsiFileBlocking(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
     }
     checkHighlighting()
   }
@@ -748,7 +748,7 @@ $libPath<caret></systemPath>
       val model = MavenDomUtil.getMavenDomProjectModel(project, projectPom)
       val dep = model!!.getDependencies().getDependencies()[0]
 
-      assertEquals(findPsiFile(libFile), dep.getSystemPath().getValue())
+      assertEquals(findPsiFileBlocking(libFile), dep.getSystemPath().getValue())
     }
   }
 

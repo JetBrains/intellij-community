@@ -42,7 +42,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.version"))
+      assertResolved(projectPom, findTagBlocking("project.version"))
     }
   }
 
@@ -56,7 +56,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.version"))
+      assertResolved(projectPom, findTagBlocking("project.version"))
     }
   }
 
@@ -70,7 +70,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.version"))
+      assertResolved(projectPom, findTagBlocking("project.version"))
     }
   }
 
@@ -175,7 +175,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.artifactId"))
+      assertResolved(projectPom, findTagBlocking("project.artifactId"))
     }
 
     updateProjectPom("""
@@ -186,7 +186,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.version"))
+      assertResolved(projectPom, findTagBlocking("project.version"))
     }
   }
 
@@ -202,7 +202,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.version"))
+      assertResolved(projectPom, findTagBlocking("project.version"))
     }
   }
 
@@ -218,7 +218,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.version"))
+      assertResolved(projectPom, findTagBlocking("project.version"))
     }
   }
 
@@ -246,7 +246,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.name"))
+      assertResolved(projectPom, findTagBlocking("project.name"))
     }
   }
 
@@ -260,7 +260,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.name"))
+      assertResolved(projectPom, findTagBlocking("project.name"))
     }
   }
 
@@ -274,7 +274,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.name"))
+      assertResolved(projectPom, findTagBlocking("project.name"))
     }
   }
 
@@ -288,7 +288,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.version"))
+      assertResolved(projectPom, findTagBlocking("project.version"))
     }
   }
 
@@ -301,7 +301,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.version"))
+      assertResolved(projectPom, findTagBlocking("project.version"))
     }
   }
 
@@ -317,7 +317,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.parent.version"))
+      assertResolved(projectPom, findTagBlocking("project.parent.version"))
     }
   }
 
@@ -334,7 +334,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag("project.parent.version"))
+      assertResolved(projectPom, findTagBlocking("project.parent.version"))
     }
   }
 
@@ -378,7 +378,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                       """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(child, findTag(projectPom, "project.build.directory"))
+      assertResolved(child, findTagBlocking(projectPom, "project.build.directory"))
     }
   }
 
@@ -408,7 +408,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                            </build>
                                            """.trimIndent())
 
-      assertResolved(projectPom, findTag(parent, "project.build.directory"))
+      assertResolved(projectPom, findTagBlocking(parent, "project.build.directory"))
     }
   }
 
@@ -438,7 +438,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                            </properties>
                                            """.trimIndent())
 
-      assertResolved(projectPom, findTag(parent, "project.properties.foo"))
+      assertResolved(projectPom, findTagBlocking(parent, "project.properties.foo"))
     }
   }
 
@@ -453,9 +453,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     val effectiveSuperPom = MavenUtil.resolveSuperPomFile(project, projectPom)
     assertNotNull(effectiveSuperPom)
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(effectiveSuperPom, "project.build.finalName"))
-    }
+    assertResolved(projectPom, findTag(effectiveSuperPom!!, "project.build.finalName"))
   }
 
   @Test
@@ -487,7 +485,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                       """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(projectPom, "project.name"))
+      assertResolved(projectPom, findTagBlocking(projectPom, "project.name"))
     }
   }
 
@@ -504,7 +502,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(projectPom, "project.properties.foo"))
+      assertResolved(projectPom, findTagBlocking(projectPom, "project.properties.foo"))
     }
   }
 
@@ -534,7 +532,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     readWithProfiles("two")
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+      assertResolved(projectPom, findTagBlocking(projectPom, "project.profiles[1].properties.foo"))
     }
   }
 
@@ -568,7 +566,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     readWithProfiles("one")
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+      assertResolved(projectPom, findTagBlocking(projectPom, "project.profiles[1].properties.foo"))
     }
   }
 
@@ -593,7 +591,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     readWithProfiles("one")
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(projectPom, "project.properties.foo"))
+      assertResolved(projectPom, findTagBlocking(projectPom, "project.properties.foo"))
     }
   }
 
@@ -626,7 +624,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     updateAllProjects()
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+      assertResolved(projectPom, findTagBlocking(projectPom, "project.profiles[1].properties.foo"))
     }
   }
 
@@ -659,7 +657,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     updateAllProjects()
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
+      assertResolved(projectPom, findTagBlocking(projectPom, "project.profiles[1].properties.foo"))
     }
   }
 
@@ -686,7 +684,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     readWithProfiles("one")
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(projectPom, "project.profiles[0].properties.foo"))
+      assertResolved(projectPom, findTagBlocking(projectPom, "project.profiles[0].properties.foo"))
     }
   }
 
@@ -725,7 +723,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     withContext(Dispatchers.EDT) {
       moveCaretTo(projectPom, "<name>${'$'}{<caret>foo}</name>")
-      assertResolved(projectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel::class.java))
+      assertResolved(projectPom, findTagBlocking(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel::class.java))
     }
   }
 
@@ -744,7 +742,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(profiles, "settings.localRepository", MavenDomSettingsModel::class.java))
+      assertResolved(projectPom, findTagBlocking(profiles, "settings.localRepository", MavenDomSettingsModel::class.java))
     }
   }
 
@@ -807,7 +805,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(projectPom, "project.name"))
+      assertResolved(projectPom, findTagBlocking(projectPom, "project.name"))
     }
   }
 
@@ -852,7 +850,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     readWithProfiles("two")
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findTag(profiles, "profiles[1].properties.foo", MavenDomProfiles::class.java))
+      assertResolved(projectPom, findTagBlocking(profiles, "profiles[1].properties.foo", MavenDomProfiles::class.java))
     }
   }
 
@@ -881,7 +879,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                              <foo>value</foo>
                                            </properties>
                                            """.trimIndent())
-      assertResolved(projectPom, findTag(parent, "project.properties.foo"))
+      assertResolved(projectPom, findTagBlocking(parent, "project.properties.foo"))
     }
   }
 

@@ -85,6 +85,6 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
   }
 
   private suspend fun getDocument(f: VirtualFile): Document {
-    return readAction { fixture.getDocument(findPsiFile(f)) }
+    return readAction { fixture.getDocument(findPsiFileBlocking(f)) }
   }
 }

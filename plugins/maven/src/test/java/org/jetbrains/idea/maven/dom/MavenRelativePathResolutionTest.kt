@@ -48,7 +48,7 @@ $relativePathUnixSeparator<caret></relativePath>
     val resolved = readAction { fixture.getElementAtCaret() }
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
-    val parentPsi = readAction { findPsiFile(f) }
+    val parentPsi = readAction { findPsiFileBlocking(f) }
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, parentPsi)
     }
@@ -84,7 +84,7 @@ $relativePathUnixSeparator<caret></relativePath>
     val parentPsi = readAction {
       assertTrue(resolved is XmlFileImpl)
       val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
-      findPsiFile(f)
+      findPsiFileBlocking(f)
     }
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, parentPsi)

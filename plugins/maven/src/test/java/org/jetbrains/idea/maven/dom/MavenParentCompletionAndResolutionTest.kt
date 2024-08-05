@@ -105,7 +105,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(m, findPsiFile(projectPom))
+      assertResolved(m, findPsiFileBlocking(projectPom))
     }
   }
 
@@ -132,7 +132,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val f = LocalFileSystem.getInstance().findFileByPath(filePath)
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findPsiFile(f))
+      assertResolved(projectPom, findPsiFileBlocking(f))
     }
   }
 
@@ -164,7 +164,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                            """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findPsiFile(parent))
+      assertResolved(projectPom, findPsiFileBlocking(parent))
     }
   }
 
@@ -202,7 +202,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       moveCaretTo(projectPom, """
         <parent>
           <groupId><caret>test</groupId>""".trimIndent())
-      assertResolved(projectPom, findPsiFile(parent))
+      assertResolved(projectPom, findPsiFileBlocking(parent))
     }
   }
 
@@ -234,7 +234,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findPsiFile(parent))
+      assertResolved(projectPom, findPsiFileBlocking(parent))
     }
   }
 

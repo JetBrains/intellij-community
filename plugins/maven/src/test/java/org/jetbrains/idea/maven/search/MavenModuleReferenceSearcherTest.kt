@@ -49,7 +49,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     renameDirectory(directory, newModulePath)
 
     withContext(Dispatchers.EDT) {
-      val tag = findTag(parentFile, "project.modules.module")
+      val tag = findTagBlocking(parentFile, "project.modules.module")
       assertEquals(newModulePath, tag.getValue().getText())
     }
   }
@@ -85,7 +85,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     renameDirectory(directory, newDirectoryName)
 
     withContext(Dispatchers.EDT) {
-      val tag = findTag(parentFile, "project.modules.module")
+      val tag = findTagBlocking(parentFile, "project.modules.module")
       assertEquals(newModulePath, tag.getValue().getText())
     }
   }
@@ -121,7 +121,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     renameDirectory(directory, newDirectoryName)
 
     withContext(Dispatchers.EDT) {
-      val tag = findTag(parentFile, "project.modules.module")
+      val tag = findTagBlocking(parentFile, "project.modules.module")
       assertEquals(newModulePath, tag.getValue().getText())
     }
   }
@@ -167,7 +167,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     renameDirectory(directory, newDirectoryName)
 
     withContext(Dispatchers.EDT) {
-      val tag = findTag(parent2File, "project.modules.module")
+      val tag = findTagBlocking(parent2File, "project.modules.module")
       assertEquals(newModulePath, tag.getValue().getText())
     }
   }
@@ -203,7 +203,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     renameDirectory(directory, newDirectoryName)
 
     withContext(Dispatchers.EDT) {
-      val tag = findTag(parentFile, "project.modules.module")
+      val tag = findTagBlocking(parentFile, "project.modules.module")
       assertEquals(newModulePath, tag.getValue().getText())
     }
   }
@@ -239,7 +239,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     renameDirectory(directory, newDirectoryName)
 
     withContext(Dispatchers.EDT) {
-      val tag = findTag(parentFile, "project.modules.module")
+      val tag = findTagBlocking(parentFile, "project.modules.module")
       assertEquals(newModulePath, tag.getValue().getText())
     }
   }
@@ -275,7 +275,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     renameDirectory(directory, newModulePath.trim { it <= ' ' })
 
     withContext(Dispatchers.EDT) {
-      val tag = findTag(parentFile, "project.modules.module")
+      val tag = findTagBlocking(parentFile, "project.modules.module")
       assertEquals(newModulePath, tag.getValue().getTrimmedText())
     }
   }

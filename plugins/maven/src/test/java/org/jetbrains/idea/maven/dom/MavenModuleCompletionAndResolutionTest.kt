@@ -195,7 +195,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile1 = readAction { findPsiFile(m1) }
+    val psiFile1 = readAction { findPsiFileBlocking(m1) }
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, psiFile1, "m1")
     }
@@ -211,7 +211,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile2 = readAction { findPsiFile(m2) }
+    val psiFile2 = readAction { findPsiFileBlocking(m2) }
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, psiFile2, "m2")
     }
@@ -260,7 +260,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile1 = readAction { findPsiFile(m) }
+    val psiFile1 = readAction { findPsiFileBlocking(m) }
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, psiFile1, "./m")
     }
@@ -275,7 +275,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile2 = readAction { findPsiFile(m) }
+    val psiFile2 = readAction { findPsiFileBlocking(m) }
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, psiFile2, ".\\m")
     }
@@ -318,7 +318,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile = readAction { findPsiFile(m) }
+    val psiFile = readAction { findPsiFileBlocking(m) }
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, psiFile, "subDir/m")
     }
@@ -336,7 +336,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val tag = readAction { findTag(projectPom, "project.properties.dirName") }
+    val tag = readAction { findTagBlocking(projectPom, "project.properties.dirName") }
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, tag)
     }

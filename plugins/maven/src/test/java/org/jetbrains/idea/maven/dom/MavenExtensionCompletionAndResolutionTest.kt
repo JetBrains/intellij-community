@@ -139,7 +139,7 @@ class MavenExtensionCompletionAndResolutionTest : MavenDomWithIndicesTestCase() 
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
     assertNotNull("file: $filePath not exists!", f)
-    withContext(Dispatchers.EDT) { assertResolved(projectPom, findPsiFile(f)) }
+    withContext(Dispatchers.EDT) { assertResolved(projectPom, findPsiFileBlocking(f)) }
   }
 
 

@@ -32,8 +32,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
     withContext(Dispatchers.EDT) {
       assertSearchResults(projectPom,
-                          findTag("project.name"),
-                          findTag("project.description"))
+                          findTagBlocking("project.name"),
+                          findTagBlocking("project.description"))
     }
   }
 
@@ -49,8 +49,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
     withContext(Dispatchers.EDT) {
       assertSearchResults(projectPom,
-                          findTag("project.name"),
-                          findTag("project.description"))
+                          findTagBlocking("project.name"),
+                          findTagBlocking("project.description"))
     }
   }
 
@@ -66,8 +66,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
     withContext(Dispatchers.EDT) {
       assertSearchResults(projectPom,
-                          findTag("project.name"),
-                          findTag("project.description"))
+                          findTagBlocking("project.name"),
+                          findTagBlocking("project.description"))
     }
   }
 
@@ -81,7 +81,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertSearchResults(projectPom, findTag("project.name"))
+      assertSearchResults(projectPom, findTagBlocking("project.name"))
     }
   }
 
@@ -98,7 +98,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertSearchResultsInclude(projectPom, findTag("project.name"))
+      assertSearchResultsInclude(projectPom, findTagBlocking("project.name"))
     }
   }
 
@@ -113,7 +113,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
+      assertSearchResultsInclude(projectPom, findTagBlocking("project.name"), findTagBlocking("project.description"))
     }
   }
 
@@ -128,7 +128,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
+      assertSearchResultsInclude(projectPom, findTagBlocking("project.name"), findTagBlocking("project.description"))
     }
   }
 
@@ -157,7 +157,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
     withContext(Dispatchers.EDT) {
       val result = search(f)
-      assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(project, f, "foo"))
+      assertContain(result, findTagBlocking("project.name"), MavenDomUtil.findPropertyValue(project, f, "foo"))
     }
   }
 
@@ -173,8 +173,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
     withContext(Dispatchers.EDT) {
       assertHighlighted(projectPom,
-                        HighlightPointer(findTag("project.name"), "project.version"),
-                        HighlightPointer(findTag("project.description"), "version"))
+                        HighlightPointer(findTagBlocking("project.name"), "project.version"),
+                        HighlightPointer(findTagBlocking("project.description"), "version"))
     }
   }
 }

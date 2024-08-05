@@ -25,7 +25,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val newModuleName = "newModule"
     renameModule(oldModuleName, newModuleName)
     readAction {
-      val tag = findTag("project.artifactId")
+      val tag = findTagBlocking("project.artifactId")
       assertEquals(newModuleName, tag.getValue().getText())
     }
   }
@@ -54,7 +54,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
     readAction {
-      val tag = findTag(m1File, "project.artifactId")
+      val tag = findTagBlocking(m1File, "project.artifactId")
       assertEquals(newModuleName, tag.getValue().getText())
     }
   }
@@ -83,7 +83,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val newModuleName = "newParent"
     renameModule(oldModuleName, newModuleName)
     readAction {
-      val tag = findTag(m1File, "project.parent.artifactId")
+      val tag = findTagBlocking(m1File, "project.parent.artifactId")
       assertEquals(newModuleName, tag.getValue().getText())
     }
   }
@@ -128,7 +128,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
     readAction {
-      val tag = findTag(m2File, "project.dependencies.dependency.artifactId")
+      val tag = findTagBlocking(m2File, "project.dependencies.dependency.artifactId")
       assertEquals(newModuleName, tag.getValue().getText())
     }
   }
@@ -175,7 +175,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
     readAction {
-      val tag = findTag(m2File, "project.dependencyManagement.dependencies.dependency.artifactId")
+      val tag = findTagBlocking(m2File, "project.dependencyManagement.dependencies.dependency.artifactId")
       assertEquals(newModuleName, tag.getValue().getText())
     }
   }
@@ -246,7 +246,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
     readAction {
-      val tag = findTag(m3File, "project.dependencies.dependency.exclusions.exclusion.artifactId")
+      val tag = findTagBlocking(m3File, "project.dependencies.dependency.exclusions.exclusion.artifactId")
       assertEquals(newModuleName, tag.getValue().getText())
     }
   }
@@ -295,7 +295,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
     readAction {
-      val tag = findTag(m2File, "project.dependencies.dependency.artifactId")
+      val tag = findTagBlocking(m2File, "project.dependencies.dependency.artifactId")
       assertEquals(oldModuleName, tag.getValue().getText())
     }
   }
@@ -311,7 +311,7 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val newModuleName = "group.module"
     renameModule(oldModuleName, newModuleName)
     readAction {
-      val tag = findTag("project.artifactId")
+      val tag = findTagBlocking("project.artifactId")
       assertEquals(oldModuleName, tag.getValue().getText())
     }
   }

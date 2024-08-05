@@ -44,7 +44,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                        <artifactId>m</artifactId>
                       """.trimIndent())
     withContext(Dispatchers.EDT) {
-      assertResolved(m, findPsiFile(projectPom))
+      assertResolved(m, findPsiFileBlocking(projectPom))
     }
     fixture.enableInspections(listOf<Class<out LocalInspectionTool?>>(MavenParentMissedVersionInspection::class.java))
     checkHighlighting(m)
@@ -134,7 +134,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                        </dependencies>
                       """.trimIndent())
     withContext(Dispatchers.EDT) {
-      assertResolved(m2, findPsiFile(m1))
+      assertResolved(m2, findPsiFileBlocking(m1))
     }
     checkHighlighting(m2)
   }
@@ -174,7 +174,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                         <artifactId>m1</artifactId>
                                        """.trimIndent())
     withContext(Dispatchers.EDT) {
-      assertResolved(m1, findPsiFile(projectPom))
+      assertResolved(m1, findPsiFileBlocking(projectPom))
     }
   }
 }
