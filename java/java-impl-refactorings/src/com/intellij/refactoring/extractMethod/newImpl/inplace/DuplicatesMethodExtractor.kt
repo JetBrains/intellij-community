@@ -10,7 +10,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -88,52 +87,35 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
   suspend fun replaceDuplicates(editor: Editor, method: PsiMethod, beforeDuplicateReplaced: (candidate: List<PsiElement>) -> Unit = {}) {
     val prepareTimeStart = System.currentTimeMillis()
     val project = method.project
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     val calls = callsToReplace?.map { it.element!! } ?: return
-    val parameterExpressions = extractOptions.inputParameters.flatMap { parameter -> parameter.references }.toSet()
-    val finder = JavaDuplicatesFinder(extractOptions.elements).withParametrizedExpressions(parameterExpressions)
-    var duplicates = finder
-      .findDuplicates(method.containingClass ?: file)
-      .filterNot { duplicate ->
-        findParentMethod(duplicate.candidate.first()) == method || areElementsIntersected(duplicate.candidate, calls)
-      }
 
-    //TODO check same data output
-    //TODO check same flow output (+ same return values)
-
-    val parametrizedExpressions = duplicates.flatMap { it.parametrizedExpressions.map(ParametrizedExpression::pattern) }
-    val duplicatesFinder = finder.withParametrizedExpressions(parametrizedExpressions.toSet())
-
-    val duplicatesWithUnifiedParameters = duplicates.mapNotNull { duplicatesFinder.createDuplicateIfPossible(it.pattern, it.candidate) }
+    val (exactDuplicates, duplicatesWithUnifiedParameters) = findDuplicates(method, calls)
 
     val updatedParameters: List<InputParameter> = findNewParameters(extractOptions.inputParameters, duplicatesWithUnifiedParameters)
 
     val parametrizedExtraction = MethodExtractor().prepareRefactoringElements(
       extractOptions.copy(inputParameters = updatedParameters, methodName = method.name))
 
-    //TODO clean up
-    val initialParameters = extractOptions.inputParameters.flatMap(InputParameter::references).toSet()
-    val exactDuplicates = duplicates.filter { duplicate ->
-      duplicate.parametrizedExpressions.all { changedExpression -> changedExpression.pattern in initialParameters }
-    }
     val prepareTimeEnd = System.currentTimeMillis()
     InplaceExtractMethodCollector.duplicatesSearched.log(prepareTimeEnd - prepareTimeStart)
 
-    val extractExtractElements = ExtractedElements(calls, method)
-    val shouldChangeSignature = askToChangeSignature(extractExtractElements, parametrizedExtraction, exactDuplicates, duplicates)
-    duplicates = if (shouldChangeSignature) duplicatesWithUnifiedParameters else exactDuplicates
+    val extractExactElements = ExtractedElements(calls, method)
+    val shouldChangeSignature = askToChangeSignature(extractExactElements, parametrizedExtraction, exactDuplicates, duplicatesWithUnifiedParameters)
+    val unconfirmedDuplicates = if (shouldChangeSignature) duplicatesWithUnifiedParameters else exactDuplicates
     val parameters = if (shouldChangeSignature) updatedParameters else extractOptions.inputParameters
-    val extractedElements = if (shouldChangeSignature) parametrizedExtraction else extractExtractElements
+    val extractedElements = if (shouldChangeSignature) parametrizedExtraction else extractExactElements
 
-    duplicates = when (replaceDuplicatesDefault) {
-      null -> confirmDuplicates (project, editor, duplicates)
-      true -> duplicates
+    val duplicates = when (replaceDuplicatesDefault) {
+      null -> confirmDuplicates(project, editor, unconfirmedDuplicates)
+      true -> unconfirmedDuplicates
       false -> emptyList()
     }
 
+    duplicates.forEach { beforeDuplicateReplaced(it.candidate) }
+
     val duplicatesExtractOptions = duplicates.map { duplicate -> createExtractDescriptor(duplicate, parameters) }
 
-    WriteCommandAction.writeCommandAction(project).withName(ExtractMethodHandler.getRefactoringName()).run<Throwable> {
+    writeCommandAction(project, ExtractMethodHandler.getRefactoringName()) {
       if (duplicatesExtractOptions.any { options -> options.isStatic }) {
         extractedElements.method.modifierList.setModifierProperty(PsiModifier.STATIC, true)
       }
@@ -142,12 +124,35 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
       val replacedMethod = method.replace(extractedElements.method) as PsiMethod
 
       duplicates.zip(duplicatesExtractOptions).forEach { (duplicate, extractOptions) ->
-        beforeDuplicateReplaced(duplicate.candidate)
         val callElements = CallBuilder(extractOptions.elements.first()).createCall(replacedMethod, extractOptions)
         replacePsiRange(duplicate.candidate, callElements)
       }
     }
   }
+
+  private fun findDuplicates(method: PsiMethod, calls: List<PsiElement>): DuplicatesSearchResult {
+    val searchScope = method.containingClass ?: method.containingFile
+    val parameterExpressions = extractOptions.inputParameters.flatMap { parameter -> parameter.references }.toSet()
+    val finder = JavaDuplicatesFinder(extractOptions.elements).withParametrizedExpressions(parameterExpressions)
+    var duplicates = finder
+      .findDuplicates(searchScope)
+      .filterNot { duplicate ->
+        findParentMethod(duplicate.candidate.first()) == method || areElementsIntersected(duplicate.candidate, calls)
+      }
+
+    val initialParameters = extractOptions.inputParameters.flatMap(InputParameter::references).toSet()
+    val exactDuplicates = duplicates.filter { duplicate ->
+      duplicate.parametrizedExpressions.all { changedExpression -> changedExpression.pattern in initialParameters }
+    }
+
+    val parametrizedExpressions = duplicates.flatMap { it.parametrizedExpressions.map(ParametrizedExpression::pattern) }
+    val duplicatesFinder = finder.withParametrizedExpressions(parametrizedExpressions.toSet())
+
+    val parametrizedDuplicates = duplicates.mapNotNull { duplicatesFinder.createDuplicateIfPossible(it.pattern, it.candidate) }
+    return DuplicatesSearchResult(exactDuplicates, parametrizedDuplicates)
+  }
+
+  private data class DuplicatesSearchResult(val exactDuplicates: List<Duplicate>, val parametrizedDuplicates: List<Duplicate>)
 
   private fun askToChangeSignature(exactExtractElements: ExtractedElements,
                                    parametrizedExtractElements: ExtractedElements,
