@@ -24,7 +24,7 @@ interface HotSwapProvider<T> {
   fun createChangesCollector(
     session: HotSwapSession<T>,
     coroutineScope: CoroutineScope,
-    listener: SourceFileChangesListener<T>,
+    listener: SourceFileChangesListener,
   ): SourceFileChangesCollector<T>
 
   /**
@@ -72,6 +72,14 @@ interface SourceFileChangesCollector<T> : Disposable {
  * Provides events on the source code changes.
  */
 @ApiStatus.Internal
-fun interface SourceFileChangesListener<T> {
-  fun onFileChange(change: T)
+interface SourceFileChangesListener {
+  /**
+   * Changes detected since the last reset.
+   */
+  fun onNewChanges()
+
+  /**
+   * Modified files were reverted to the original state, so no changes currently available.
+   */
+  fun onChangesCanceled()
 }

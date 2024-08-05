@@ -87,11 +87,7 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
     }
 
   internal fun init() {
-    changesCollector = provider.createChangesCollector(this, coroutineScope, SourceFileChangesListener {
-      if (hasActiveChanges.compareAndSet(false, true)) {
-        currentStatus = HotSwapVisibleStatus.CHANGES_READY
-      }
-    })
+    changesCollector = provider.createChangesCollector(this, coroutineScope, SessionSourceFileChangesListener())
     Disposer.register(this, changesCollector)
   }
 
@@ -132,6 +128,20 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
 
       override fun onCanceled() {
         currentStatus = HotSwapVisibleStatus.CHANGES_READY
+      }
+    }
+  }
+
+  private inner class SessionSourceFileChangesListener : SourceFileChangesListener {
+    override fun onNewChanges() {
+      if (hasActiveChanges.compareAndSet(false, true)) {
+        currentStatus = HotSwapVisibleStatus.CHANGES_READY
+      }
+    }
+
+    override fun onChangesCanceled() {
+      if (hasActiveChanges.compareAndSet(true, false)) {
+        currentStatus = HotSwapVisibleStatus.NO_CHANGES
       }
     }
   }

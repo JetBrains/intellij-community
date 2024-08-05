@@ -222,7 +222,7 @@ internal class MockHotSwapProvider : HotSwapProvider<MockVirtualFile> {
   override fun createChangesCollector(
     session: HotSwapSession<MockVirtualFile>,
     coroutineScope: CoroutineScope,
-    listener: SourceFileChangesListener<MockVirtualFile>,
+    listener: SourceFileChangesListener,
   ): SourceFileChangesCollector<MockVirtualFile> = MockChangesCollector(listener).also { collector = it }
 
   fun performHotSwap(session: HotSwapSession<MockVirtualFile>) = session.startHotSwapListening()
@@ -231,11 +231,11 @@ internal class MockHotSwapProvider : HotSwapProvider<MockVirtualFile> {
   }
 }
 
-internal class MockChangesCollector(private val listener: SourceFileChangesListener<MockVirtualFile>) : SourceFileChangesCollector<MockVirtualFile> {
+internal class MockChangesCollector(private val listener: SourceFileChangesListener) : SourceFileChangesCollector<MockVirtualFile> {
   private val files = mutableSetOf<MockVirtualFile>()
   fun addFile(file: MockVirtualFile) {
     files.add(file)
-    listener.onFileChange(file)
+    listener.onNewChanges()
   }
 
   override fun getChanges(): Set<MockVirtualFile> = files
