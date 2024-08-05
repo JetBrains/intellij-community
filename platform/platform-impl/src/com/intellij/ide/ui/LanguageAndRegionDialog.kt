@@ -233,9 +233,12 @@ private fun getLocaleFromGeneralPrefMacOs(rootPath: String): Region? {
     val file = File(fullPath)
     val rootDict = PropertyListParser.parse(file) as? NSDictionary ?: return null
     val localeText = rootDict.get("AppleLocale")?.toString() ?: return null
-    val regionText = localeText.toString().substringAfter("@rg=", "")
+    var regionText = localeText.substringAfter("@rg=", "")
     if (regionText.isNotEmpty()) {
-      return regionMapping.keys.find { regionText.startsWith(regionMapping[it]!!, true) }
+      return regionMapping.keys.find { regionText.startsWith(regionMapping[it]!!, true) } ?: Region.NOT_SET
+    } else {
+      regionText = localeText.substringAfter("_", "")
+      return regionMapping.keys.find { regionText.startsWith(regionMapping[it]!!) } ?: Region.NOT_SET
     }
     return Region.NOT_SET
   }
