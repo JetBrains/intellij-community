@@ -132,6 +132,7 @@ f:com.intellij.openapi.extensions.ExtensionPointName$Companion
 f:com.intellij.openapi.extensions.ExtensionPointUtil
 - s:createKeyedExtensionDisposable(java.lang.Object,com.intellij.openapi.extensions.ExtensionPoint):com.intellij.openapi.Disposable
 - s:dropLazyValueOnChange(com.intellij.openapi.util.ClearableLazyValue,com.intellij.openapi.extensions.ExtensionPointName,com.intellij.openapi.Disposable):com.intellij.openapi.util.ClearableLazyValue
+- s:dropLazyValueOnChange(com.intellij.util.concurrency.SynchronizedClearableLazy,com.intellij.openapi.extensions.ExtensionPointName,com.intellij.openapi.Disposable):java.util.function.Supplier
 f:com.intellij.openapi.extensions.Extensions
 - s:findExtension(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Class):java.lang.Object
 - s:getArea(com.intellij.openapi.extensions.AreaInstance):com.intellij.openapi.extensions.ExtensionsArea

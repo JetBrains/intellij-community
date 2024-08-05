@@ -21869,7 +21869,6 @@ a:com.intellij.remote.ui.CreateRemoteSdkDialog
 - com.intellij.remote.ui.RemoteSdkEditorContainer
 - pf:myExistingSdks:java.util.Collection
 - pf:myProject:com.intellij.openapi.project.Project
-- pf:mySdkFactoryProvider:com.intellij.openapi.util.NotNullLazyValue
 - <init>(com.intellij.openapi.project.Project,java.util.Collection):V
 - <init>(java.awt.Component,java.util.Collection):V
 - p:createCenterPanel():javax.swing.JComponent

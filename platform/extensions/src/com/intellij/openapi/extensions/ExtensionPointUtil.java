@@ -7,19 +7,27 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public final class ExtensionPointUtil {
-
   private ExtensionPointUtil() { }
 
   public static @NotNull <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
                                                                                    @NotNull ExtensionPointName<?> extensionPointName,
                                                                                    @Nullable Disposable parentDisposable) {
+    extensionPointName.addChangeListener(lazyValue::drop, parentDisposable);
+    return lazyValue;
+  }
+
+  public static <T> @NotNull Supplier<T> dropLazyValueOnChange(@NotNull SynchronizedClearableLazy<T> lazyValue,
+                                                               @NotNull ExtensionPointName<?> extensionPointName,
+                                                               @Nullable Disposable parentDisposable) {
     extensionPointName.addChangeListener(lazyValue::drop, parentDisposable);
     return lazyValue;
   }
