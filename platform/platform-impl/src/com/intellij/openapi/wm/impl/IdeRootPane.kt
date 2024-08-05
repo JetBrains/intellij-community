@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.jdkEx.JdkEx
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
@@ -19,7 +18,6 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeGlassPane
@@ -180,17 +178,6 @@ open class IdeRootPane internal constructor(
 
   internal fun createDecorator(): IdeFrameDecorator? {
     return IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, coroutineScope.childScope())
-  }
-
-  @Suppress("unused")
-  internal val isCoroutineScopeCancelled: Boolean
-    get() = !coroutineScope.isActive
-
-  @ApiStatus.Obsolete
-  internal fun createDisposable(): Disposable {
-    val disposable = Disposer.newDisposable()
-    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
-    return disposable
   }
 
   override fun updateUI() {

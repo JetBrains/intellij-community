@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.RecentProjectsManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowManager
@@ -40,6 +42,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.jetbrains.WindowDecorations.CustomTitleBar
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
 import java.awt.Window
@@ -361,6 +364,17 @@ open class ProjectFrameHelper internal constructor(
     if (!WindowManagerEx.getInstanceEx().isFrameReused(this)) {
       frame.doDispose()
     }
+  }
+
+  @Suppress("unused")
+  internal val isDisposed: Boolean
+    get() = !cs.isActive
+
+  @ApiStatus.Obsolete
+  internal fun createDisposable(): Disposable {
+    val disposable = Disposer.newDisposable()
+    cs.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
+    return disposable
   }
 
   override fun suggestChildFrameBounds(): Rectangle {

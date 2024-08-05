@@ -176,7 +176,7 @@ public class MacWinTabsHandler {
 
       for (int i = 0; i < frames.length; i++) {
         ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
-        if (helper.rootPane.isCoroutineScopeCancelled$intellij_platform_ide_impl()) {
+        if (helper.isDisposed$intellij_platform_ide_impl()) {
           visibleAndHeights[i] = 0;
           continue;
         }
