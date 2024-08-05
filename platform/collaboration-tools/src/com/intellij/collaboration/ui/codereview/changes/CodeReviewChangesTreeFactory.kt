@@ -42,8 +42,13 @@ class CodeReviewChangesTreeFactory(private val project: Project,
         VcsTreeModelData.uiDataSnapshot(sink, project, this)
       }
 
+      override fun getToggleClickCount(): Int {
+        return toggleClickCount
+      }
+
     }.apply {
       emptyText.text = emptyTextText
+      toggleClickCount = 2
     }.also {
       ClientProperty.put(it, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
       SelectionSaver.installOn(it)
