@@ -104,7 +104,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     val parametrizedExpressions = duplicates.flatMap { it.parametrizedExpressions.map(ParametrizedExpression::pattern) }
     val duplicatesFinder = finder.withParametrizedExpressions(parametrizedExpressions.toSet())
 
-    val duplicatesWithUnifiedParameters = duplicates.mapNotNull { duplicatesFinder.tryExtractDuplicate(it.pattern, it.candidate) }
+    val duplicatesWithUnifiedParameters = duplicates.mapNotNull { duplicatesFinder.createDuplicateIfPossible(it.pattern, it.candidate) }
 
     val updatedParameters: List<InputParameter> = findNewParameters(extractOptions.inputParameters, duplicatesWithUnifiedParameters)
 
