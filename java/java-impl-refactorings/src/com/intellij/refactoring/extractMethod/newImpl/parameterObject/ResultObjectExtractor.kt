@@ -7,8 +7,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.command.impl.FinishMarkAction
-import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
@@ -19,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractException
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
@@ -63,9 +62,8 @@ internal object ResultObjectExtractor {
     }
     val editorState = readAction { EditorState(project, editor) }
     val disposable = Disposer.newDisposable()
+    ExtractMethodHelper.mergeWriteCommands(editor, disposable, ExtractMethodHandler.getRefactoringName())
     writeCommandAction(project, ExtractMethodHandler.getRefactoringName()) {
-      val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
-      Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
       try {
         val (introducedClass, declaration, replacements) = introduceObjectForVariables(objectBuilder, variables, affectedReferences, scope.last())
         val introducedVariableReferences = replacements.map { replacement ->

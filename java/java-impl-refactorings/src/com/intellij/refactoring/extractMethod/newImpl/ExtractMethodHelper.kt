@@ -5,8 +5,14 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.impl.FinishMarkAction
+import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.Command
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
@@ -270,6 +276,18 @@ object ExtractMethodHelper {
       val replacedRange = replacePsiRange(elements, listOf(preparedElements.method))
       val replacedMethod = replacedRange.first() as PsiMethod
       return ExtractedElements(emptyList(), replacedMethod)
+    }
+  }
+
+  fun mergeWriteCommands(editor: Editor, disposable: Disposable, commandName: @Command String) {
+    val project = editor.project ?: return
+    val startMarkAction = WriteCommandAction.writeCommandAction(project).withName(commandName).compute<StartMarkAction, RuntimeException> {
+      StartMarkAction.start(editor, project, commandName)
+    }
+    Disposer.register(disposable) {
+      WriteCommandAction.writeCommandAction(project).withName(commandName).run<RuntimeException > {
+        FinishMarkAction.finish(project, editor, startMarkAction)
+      }
     }
   }
 

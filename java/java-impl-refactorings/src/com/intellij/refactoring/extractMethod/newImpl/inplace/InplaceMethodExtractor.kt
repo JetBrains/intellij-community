@@ -6,9 +6,6 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.FinishMarkAction
-import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
@@ -29,6 +26,7 @@ import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.CodeFragmentAnalyzer
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
@@ -92,13 +90,8 @@ internal class InplaceMethodExtractor(private val editor: Editor,
     try {
       val elements = readAction { ExtractSelector().suggestElementsToExtract(file, range) }
       readAction { MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray()) }
+      ExtractMethodHelper.mergeWriteCommands(editor, disposable, ExtractMethodHandler.getRefactoringName())
       val (callElements, method) = writeCommandAction(project, ExtractMethodHandler.getRefactoringName()) {
-        val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
-        Disposer.register(disposable) {
-          WriteCommandAction.writeCommandAction(project).withName(ExtractMethodHandler.getRefactoringName()).run<Throwable> {
-            FinishMarkAction.finish(project, editor, startMarkAction)
-          }
-        }
         extractor.extract()
       }
 
