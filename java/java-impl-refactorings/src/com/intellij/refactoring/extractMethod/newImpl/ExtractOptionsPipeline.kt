@@ -31,7 +31,6 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.refactoring.util.VariableData
 import com.siyeh.ig.psiutils.ClassUtils
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.CompletableFuture
 
 object ExtractMethodPipeline {
@@ -142,17 +141,6 @@ object ExtractMethodPipeline {
       .filterIsInstance<PsiClass>()
       .mapNotNull { targetClass -> withTargetClass(analyzer, extractOptions, targetClass) }
       .toList()
-  }
-
-  suspend fun selectOption(editor: Editor, options: List<ExtractOptions>): ExtractOptions {
-    require(options.isNotEmpty())
-    val project = options.first().project
-    return suspendCancellableCoroutine { continuation ->
-      selectOptionWithTargetClass(editor, project, options)
-        .thenApply { selectedOption ->
-          continuation.resumeWith(Result.success(selectedOption))
-        }
-    }
   }
 
   fun selectOptionWithTargetClass(editor: Editor, project: Project, options: List<ExtractOptions>): CompletableFuture<ExtractOptions> {
