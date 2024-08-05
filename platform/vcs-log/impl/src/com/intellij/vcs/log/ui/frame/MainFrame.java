@@ -28,7 +28,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
@@ -38,7 +37,6 @@ import com.intellij.vcs.log.ui.*;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
-import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -133,9 +131,28 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
 
-    MyCommitSelectionListenerForDiff listenerForDiff = new MyCommitSelectionListenerForDiff(changesLoadingPane);
-    myGraphTable.getSelectionModel().addListSelectionListener(listenerForDiff);
-    Disposer.register(this, () -> myGraphTable.getSelectionModel().removeListSelectionListener(listenerForDiff));
+    VcsLogCommitSelectionListenerForDiff commitSelectionListener =
+      new VcsLogCommitSelectionListenerForDiff(changesLoadingPane, myChangesBrowser, myGraphTable,
+                                               myLogData.getCommitDetailsGetter()) {
+        @Override
+        protected void onLoadingScheduled() {
+          myIsLoading = true;
+          myPathToSelect = null;
+        }
+
+        @Override
+        protected void onLoadingStopped() {
+          super.onLoadingStopped();
+          myIsLoading = false;
+          if (myPathToSelect != null) {
+            myChangesBrowser.selectFile(myPathToSelect);
+            myPathToSelect = null;
+          }
+        }
+      };
+
+    myGraphTable.getSelectionModel().addListSelectionListener(commitSelectionListener);
+    Disposer.register(disposable, () -> myGraphTable.getSelectionModel().removeListSelectionListener(commitSelectionListener));
 
     myNotificationLabel = new EditorNotificationPanel(UIUtil.getPanelBackground(), EditorNotificationPanel.Status.Warning);
     myNotificationLabel.setVisible(false);
@@ -222,7 +239,8 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
     textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
 
-    ActionGroup rightCornerGroup = (ActionGroup)Objects.requireNonNull(CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
+    ActionGroup rightCornerGroup = (ActionGroup)Objects.requireNonNull(
+      CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
     ActionToolbar rightCornerToolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, rightCornerGroup, true);
     rightCornerToolbar.setTargetComponent(this);
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
@@ -315,69 +333,6 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
   public void dispose() {
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
-  }
-
-  private class MyCommitSelectionListenerForDiff extends CommitSelectionListener<VcsFullCommitDetails> {
-    private final @NotNull JBLoadingPanel myChangesLoadingPane;
-
-    protected MyCommitSelectionListenerForDiff(@NotNull JBLoadingPanel changesLoadingPane) {
-      super(MainFrame.this.myGraphTable, MainFrame.this.myLogData.getCommitDetailsGetter());
-      myChangesLoadingPane = changesLoadingPane;
-    }
-
-    @Override
-    protected void onEmptySelection() {
-      myChangesBrowser.setSelectedDetails(Collections.emptyList());
-    }
-
-    @Override
-    protected void onDetailsLoaded(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-      int maxSize = VcsLogUtil.getMaxSize(detailsList);
-      if (maxSize > VcsLogUtil.getShownChangesLimit()) {
-        String sizeText = VcsLogUtil.getSizeText(maxSize);
-        myChangesBrowser.setEmptyWithText(statusText -> {
-          statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", detailsList.size(), sizeText));
-          statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.changes.too.many.show.anyway.status.action"),
-                                         SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                         e -> myChangesBrowser.setSelectedDetails(detailsList));
-        });
-      }
-      else {
-        myChangesBrowser.setSelectedDetails(detailsList);
-      }
-    }
-
-    @Override
-    protected int @NotNull [] onSelection(int @NotNull [] selection) {
-      myChangesBrowser.setEmpty();
-      return selection;
-    }
-
-    @Override
-    protected void onLoadingScheduled() {
-      myIsLoading = true;
-      myPathToSelect = null;
-    }
-
-    @Override
-    protected void onLoadingStarted() {
-      myChangesLoadingPane.startLoading();
-    }
-
-    @Override
-    protected void onLoadingStopped() {
-      myChangesLoadingPane.stopLoading();
-      myIsLoading = false;
-      if (myPathToSelect != null) {
-        myChangesBrowser.selectFile(myPathToSelect);
-        myPathToSelect = null;
-      }
-    }
-
-    @Override
-    protected void onError(@NotNull Throwable error) {
-      myChangesBrowser.setEmptyWithText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.changes.status")));
-    }
   }
 
   private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
