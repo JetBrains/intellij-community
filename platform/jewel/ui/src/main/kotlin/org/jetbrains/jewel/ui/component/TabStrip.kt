@@ -29,10 +29,12 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
+import org.jetbrains.jewel.ui.component.styling.TabStyle
 
 @Composable
 public fun TabStrip(
     tabs: List<TabData>,
+    style: TabStyle,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
@@ -42,24 +44,25 @@ public fun TabStrip(
 
     val scrollState = rememberScrollState()
     Box(
-        modifier.focusable(true, remember { MutableInteractionSource() })
+        modifier
+            .focusable(true, remember { MutableInteractionSource() })
             .onHover { tabStripState = tabStripState.copy(hovered = it) },
     ) {
         Row(
             modifier =
-                Modifier.horizontalScroll(scrollState)
-                    .scrollable(
-                        orientation = Orientation.Vertical,
-                        reverseDirection =
-                            ScrollableDefaults.reverseDirection(
-                                LocalLayoutDirection.current,
-                                Orientation.Vertical,
-                                false,
-                            ),
-                        state = scrollState,
-                        interactionSource = remember { MutableInteractionSource() },
-                    )
-                    .selectableGroup(),
+            Modifier
+                .horizontalScroll(scrollState)
+                .scrollable(
+                    orientation = Orientation.Vertical,
+                    reverseDirection =
+                    ScrollableDefaults.reverseDirection(
+                        LocalLayoutDirection.current,
+                        Orientation.Vertical,
+                        false,
+                    ),
+                    state = scrollState,
+                    interactionSource = remember { MutableInteractionSource() },
+                ).selectableGroup(),
         ) {
             tabs.forEach { TabImpl(isActive = tabStripState.isActive, tabData = it) }
         }
@@ -71,6 +74,7 @@ public fun TabStrip(
         ) {
             TabStripHorizontalScrollbar(
                 adapter = rememberScrollbarAdapter(scrollState),
+                style = style.scrollbarStyle,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

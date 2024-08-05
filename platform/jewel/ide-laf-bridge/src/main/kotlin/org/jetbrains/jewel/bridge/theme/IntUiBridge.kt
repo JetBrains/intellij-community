@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.util.registry.Registry
@@ -49,6 +48,7 @@ import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.DefaultComponentStyling
 import org.jetbrains.jewel.ui.component.styling.ButtonColors
@@ -96,9 +96,6 @@ import org.jetbrains.jewel.ui.component.styling.RadioButtonColors
 import org.jetbrains.jewel.ui.component.styling.RadioButtonIcons
 import org.jetbrains.jewel.ui.component.styling.RadioButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
-import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
-import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
-import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonColors
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
@@ -128,7 +125,7 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import javax.swing.UIManager
 import kotlin.time.Duration.Companion.milliseconds
 
-private val logger = Logger.getInstance("JewelIntUiBridge")
+private val logger = JewelLogger.getInstance("JewelIntUiBridge")
 
 internal val uiDefaults
     get() = UIManager.getDefaults()
@@ -178,13 +175,14 @@ public fun retrieveConsoleTextStyle(): TextStyle {
     )
 }
 
+private val isDark: Boolean
+    get() = !JBColor.isBright()
+
 internal fun createBridgeThemeDefinition(
     textStyle: TextStyle,
     editorTextStyle: TextStyle,
     consoleTextStyle: TextStyle,
 ): ThemeDefinition {
-    val isDark = !JBColor.isBright()
-
     logger.debug("Obtaining theme definition from Swing...")
 
     return ThemeDefinition(
@@ -697,7 +695,7 @@ private fun readMenuStyle(): MenuStyle {
         )
 
     return MenuStyle(
-        isDark = !JBColor.isBright(),
+        isDark = isDark,
         colors = colors,
         metrics =
             MenuMetrics(
@@ -809,31 +807,6 @@ private object NewUiRadioButtonMetrics : BridgeRadioButtonMetrics {
     override val radioButtonSize = 24.dp
     override val iconContentGap = 4.dp
 }
-
-private fun readScrollbarStyle(isDark: Boolean) =
-    ScrollbarStyle(
-        colors =
-            ScrollbarColors(
-                // See ScrollBarPainter.THUMB_OPAQUE_BACKGROUND
-                thumbBackground =
-                    retrieveColorOrUnspecified("ScrollBar.Mac.Transparent.thumbColor")
-                        .let { if (it.alpha == 0f) Color.Unspecified else it } // See https://github.com/JetBrains/jewel/issues/259
-                        .takeOrElse { if (isDark) Color(0x59808080) else Color(0x33000000) },
-                // See ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND
-                thumbBackgroundHovered =
-                    retrieveColorOrUnspecified("ScrollBar.Mac.Transparent.hoverThumbColor")
-                        .let { if (it.alpha == 0f) Color.Unspecified else it } // See https://github.com/JetBrains/jewel/issues/259
-                        .takeOrElse { if (isDark) Color(0x8C808080) else Color(0x80000000) },
-            ),
-        metrics =
-            ScrollbarMetrics(
-                thumbCornerSize = CornerSize(100),
-                thumbThickness = 8.dp,
-                minThumbLength = 16.dp,
-                trackPadding = PaddingValues(start = 7.dp, end = 3.dp),
-            ),
-        hoverDuration = 300.milliseconds,
-    )
 
 private fun readSegmentedControlButtonStyle(): SegmentedControlButtonStyle {
     val selectedBackground = SolidColor(JBUI.CurrentTheme.SegmentedButton.SELECTED_BUTTON_COLOR.toComposeColor())
@@ -1094,6 +1067,7 @@ private fun readDefaultTabStyle(): TabStyle {
                 contentHovered = 1f,
                 contentSelected = 1f,
             ),
+        scrollbarStyle = readScrollbarStyle(isDark),
     )
 }
 
@@ -1150,6 +1124,7 @@ private fun readEditorTabStyle(): TabStyle {
                 contentHovered = 1f,
                 contentSelected = 1f,
             ),
+        scrollbarStyle = readScrollbarStyle(isDark),
     )
 }
 

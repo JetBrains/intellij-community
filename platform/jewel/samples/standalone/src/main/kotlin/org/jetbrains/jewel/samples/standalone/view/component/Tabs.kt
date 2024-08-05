@@ -3,6 +3,7 @@
 package org.jetbrains.jewel.samples.standalone.view.component
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -27,27 +29,31 @@ import org.jetbrains.jewel.ui.component.SimpleTabContent
 import org.jetbrains.jewel.ui.component.TabData
 import org.jetbrains.jewel.ui.component.TabStrip
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
+import org.jetbrains.jewel.ui.theme.editorTabStyle
 import org.jetbrains.jewel.ui.util.thenIf
 import kotlin.math.max
 
 @Composable
 @View(title = "Tabs", position = 7, icon = "icons/components/tabs.svg")
 fun Tabs() {
-    Text("Default tabs", Modifier.fillMaxWidth())
-    DefaultTabShowcase()
+    Column {
+        Text("Default tabs", Modifier.fillMaxWidth())
+        DefaultTabShowcase()
 
-    Spacer(Modifier.height(16.dp))
-    Text("Editor tabs", Modifier.fillMaxWidth())
-    EditorTabShowcase()
+        Spacer(Modifier.height(16.dp))
+        Text("Editor tabs", Modifier.fillMaxWidth())
+        EditorTabShowcase()
+    }
 }
 
 @Composable
 private fun DefaultTabShowcase() {
-    var selectedTabIndex by remember { mutableStateOf(0) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     var tabIds by remember { mutableStateOf((1..12).toList()) }
     val maxId = remember(tabIds) { tabIds.maxOrNull() ?: 0 }
@@ -80,12 +86,13 @@ private fun DefaultTabShowcase() {
             }
         }
 
-    TabStripWithAddButton(tabs) {
+    TabStripWithAddButton(tabs, JewelTheme.defaultTabStyle) {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
         tabIds =
-            tabIds.toMutableList()
+            tabIds
+                .toMutableList()
                 .apply { add(insertionIndex, nextTabId) }
         selectedTabIndex = insertionIndex
     }
@@ -93,7 +100,7 @@ private fun DefaultTabShowcase() {
 
 @Composable
 private fun EditorTabShowcase() {
-    var selectedTabIndex by remember { mutableStateOf(0) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
 
     var tabIds by remember { mutableStateOf((1..12).toList()) }
     val maxId = remember(tabIds) { tabIds.maxOrNull() ?: 0 }
@@ -145,12 +152,13 @@ private fun EditorTabShowcase() {
             }
         }
 
-    TabStripWithAddButton(tabs) {
+    TabStripWithAddButton(tabs, JewelTheme.editorTabStyle) {
         val insertionIndex = (selectedTabIndex + 1).coerceIn(0..tabIds.size)
         val nextTabId = maxId + 1
 
         tabIds =
-            tabIds.toMutableList()
+            tabIds
+                .toMutableList()
                 .apply { add(insertionIndex, nextTabId) }
         selectedTabIndex = insertionIndex
     }
@@ -159,10 +167,11 @@ private fun EditorTabShowcase() {
 @Composable
 private fun TabStripWithAddButton(
     tabs: List<TabData>,
+    style: TabStyle,
     onAddClick: () -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        TabStrip(tabs, modifier = Modifier.weight(1f))
+        TabStrip(tabs, style, modifier = Modifier.weight(1f))
 
         IconButton(
             onClick = onAddClick,

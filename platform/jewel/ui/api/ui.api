@@ -578,8 +578,10 @@ public final class org/jetbrains/jewel/ui/component/RadioButtonState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/ScrollbarsKt {
+	public static final fun HorizontalScrollbar (Landroidx/compose/foundation/gestures/ScrollableState;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun HorizontalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
-	public static final fun TabStripHorizontalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun TabStripHorizontalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
+	public static final fun VerticalScrollbar (Landroidx/compose/foundation/gestures/ScrollableState;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun VerticalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
 }
 
@@ -824,7 +826,7 @@ public final class org/jetbrains/jewel/ui/component/TabState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/TabStripKt {
-	public static final fun TabStrip (Ljava/util/List;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun TabStrip (Ljava/util/List;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Landroidx/compose/ui/Modifier;ZLandroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TabStripState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
@@ -1858,10 +1860,16 @@ public final class org/jetbrains/jewel/ui/component/styling/RadioButtonStylingKt
 public final class org/jetbrains/jewel/ui/component/styling/ScrollbarColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ScrollbarColors$Companion;
-	public synthetic fun <init> (JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getThumbBackground-0d7_KjU ()J
 	public final fun getThumbBackgroundHovered-0d7_KjU ()J
+	public final fun getThumbBackgroundPressed-0d7_KjU ()J
+	public final fun getThumbBorder-0d7_KjU ()J
+	public final fun getThumbBorderHovered-0d7_KjU ()J
+	public final fun getThumbBorderPressed-0d7_KjU ()J
+	public final fun getTrackBackground-0d7_KjU ()J
+	public final fun getTrackBackgroundHovered-0d7_KjU ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1872,12 +1880,14 @@ public final class org/jetbrains/jewel/ui/component/styling/ScrollbarColors$Comp
 public final class org/jetbrains/jewel/ui/component/styling/ScrollbarMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ScrollbarMetrics$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/layout/PaddingValues;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;FFFLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMinThumbLength-D9Ej5fM ()F
 	public final fun getThumbCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
 	public final fun getThumbThickness-D9Ej5fM ()F
+	public final fun getThumbThicknessExpanded-D9Ej5fM ()F
 	public final fun getTrackPadding ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getTrackPaddingExpanded ()Landroidx/compose/foundation/layout/PaddingValues;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1888,11 +1898,12 @@ public final class org/jetbrains/jewel/ui/component/styling/ScrollbarMetrics$Com
 public final class org/jetbrains/jewel/ui/component/styling/ScrollbarStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle$Companion;
-	public synthetic fun <init> (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarColors;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarMetrics;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarColors;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarMetrics;Lorg/jetbrains/jewel/ui/component/styling/TrackClickBehavior;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/ScrollbarColors;
-	public final fun getHoverDuration-UwyO8pc ()J
 	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/ScrollbarMetrics;
+	public final fun getScrollbarVisibility ()Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility;
+	public final fun getTrackClickBehavior ()Lorg/jetbrains/jewel/ui/component/styling/TrackClickBehavior;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1902,6 +1913,33 @@ public final class org/jetbrains/jewel/ui/component/styling/ScrollbarStyle$Compa
 
 public final class org/jetbrains/jewel/ui/component/styling/ScrollbarStylingKt {
 	public static final fun getLocalScrollbarStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public abstract interface class org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible : org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling : org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;
+	public synthetic fun <init> (JJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAppearAnimationDuration-UwyO8pc ()J
+	public final fun getDisappearAnimationDuration-UwyO8pc ()J
+	public final fun getExpandAnimationDuration-UwyO8pc ()J
+	public final fun getLingerDuration-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlButtonColors {
@@ -2177,12 +2215,13 @@ public final class org/jetbrains/jewel/ui/component/styling/TabMetrics$Companion
 public final class org/jetbrains/jewel/ui/component/styling/TabStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TabStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TabColors;Lorg/jetbrains/jewel/ui/component/styling/TabMetrics;Lorg/jetbrains/jewel/ui/component/styling/TabIcons;Lorg/jetbrains/jewel/ui/component/styling/TabContentAlpha;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TabColors;Lorg/jetbrains/jewel/ui/component/styling/TabMetrics;Lorg/jetbrains/jewel/ui/component/styling/TabIcons;Lorg/jetbrains/jewel/ui/component/styling/TabContentAlpha;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/TabColors;
 	public final fun getContentAlpha ()Lorg/jetbrains/jewel/ui/component/styling/TabContentAlpha;
 	public final fun getIcons ()Lorg/jetbrains/jewel/ui/component/styling/TabIcons;
 	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/TabMetrics;
+	public final fun getScrollbarStyle ()Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -2393,6 +2432,14 @@ public final class org/jetbrains/jewel/ui/component/styling/TooltipStyle$Compani
 
 public final class org/jetbrains/jewel/ui/component/styling/TooltipStylingKt {
 	public static final fun getLocalTooltipStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/TrackClickBehavior : java/lang/Enum {
+	public static final field JumpToSpot Lorg/jetbrains/jewel/ui/component/styling/TrackClickBehavior;
+	public static final field NextPage Lorg/jetbrains/jewel/ui/component/styling/TrackClickBehavior;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/component/styling/TrackClickBehavior;
+	public static fun values ()[Lorg/jetbrains/jewel/ui/component/styling/TrackClickBehavior;
 }
 
 public abstract interface class org/jetbrains/jewel/ui/icon/IconKey {

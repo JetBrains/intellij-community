@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.TabColors
 import org.jetbrains.jewel.ui.component.styling.TabContentAlpha
 import org.jetbrains.jewel.ui.component.styling.TabIcons
@@ -25,7 +26,8 @@ public object IntUiDefaultTabStyleFactory {
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.default(),
-    ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha)
+        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.macOsLight(),
+    ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 
     @Composable
     public fun dark(
@@ -33,7 +35,8 @@ public object IntUiDefaultTabStyleFactory {
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.default(),
-    ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha)
+        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
+    ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 }
 
 public val TabStyle.Companion.Editor: IntUiEditorTabStyleFactory
@@ -46,7 +49,8 @@ public object IntUiEditorTabStyleFactory {
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.editor(),
-    ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha)
+        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.light(),
+    ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 
     @Composable
     public fun dark(
@@ -54,7 +58,8 @@ public object IntUiEditorTabStyleFactory {
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.editor(),
-    ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha)
+        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
+    ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 }
 
 public val TabColors.Companion.Default: IntUiDefaultTabColorsFactory

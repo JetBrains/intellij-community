@@ -125,6 +125,11 @@ public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeKt {
 	public static final fun retrieveEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
 }
 
+public final class org/jetbrains/jewel/bridge/theme/ScrollbarBridgeKt {
+	public static final fun defaults-6ksGUsA (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;JJJJ)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
+	public static synthetic fun defaults-6ksGUsA$default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;JJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
+}
+
 public final class org/jetbrains/jewel/bridge/theme/SwingBridgeThemeKt {
 	public static final fun SwingBridgeTheme (Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 }

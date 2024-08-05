@@ -21,6 +21,7 @@ public class TabStyle(
     public val metrics: TabMetrics,
     public val icons: TabIcons,
     public val contentAlpha: TabContentAlpha,
+    public val scrollbarStyle: ScrollbarStyle,
 ) {
     public companion object
 }
