@@ -59,7 +59,9 @@ public class UrlFilter implements Filter, DumbAware {
       resultList.addAll(findMatchingItems(line, URLUtil.FILE_URL_PATTERN, textStartOffset));
     }
 
-    resultList.addAll(findMatchingItems(line, URLUtil.URL_PATTERN, textStartOffset));
+    if (isPotentialUrl(line)) {
+      resultList.addAll(findMatchingItems(line, URLUtil.URL_PATTERN, textStartOffset));
+    }
 
     if (resultList.isEmpty()) {
       return null;
@@ -71,6 +73,14 @@ public class UrlFilter implements Filter, DumbAware {
     }
 
     return new Result(resultList);
+  }
+
+  private static boolean isPotentialUrl(String input) {
+    return input.contains("www") ||
+           input.contains("http") ||
+           input.contains("mailto") ||
+           input.contains("ftp") ||
+           input.contains("news");
   }
 
   protected @NotNull HyperlinkInfo buildHyperlinkInfo(@NotNull String url) {
