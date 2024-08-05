@@ -65,6 +65,7 @@ public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeysNotFoundE
 
 public final class org/jetbrains/jewel/bridge/JewelComposePanelKt {
 	public static final fun JewelComposePanel (Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
+	public static final fun JewelToolWindowComposePanel (Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
 	public static final fun getLocalComponent ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 

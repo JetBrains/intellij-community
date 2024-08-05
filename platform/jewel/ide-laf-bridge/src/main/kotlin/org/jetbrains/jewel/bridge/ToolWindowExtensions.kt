@@ -17,7 +17,7 @@ public fun ToolWindow.addComposeTab(
 
     val tabContent =
         contentManager.factory.createContent(
-            JewelComposePanel {
+            JewelToolWindowComposePanel {
                 val scope =
                     object : ToolWindowScope {
                         override val toolWindow: ToolWindow
