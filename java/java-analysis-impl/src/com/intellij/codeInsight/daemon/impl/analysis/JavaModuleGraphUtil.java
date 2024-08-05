@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
@@ -624,7 +623,7 @@ public final class JavaModuleGraphUtil {
   }
 
   public static class JavaModuleScope extends GlobalSearchScope {
-    @NotNull private final MultiMap<String, VirtualFile> myModules;
+    @NotNull private final MultiMap<String, PsiJavaModule> myModules;
     private final boolean myIncludeLibraries;
     private final boolean myIsInTests;
 
@@ -632,7 +631,7 @@ public final class JavaModuleGraphUtil {
       super(project);
       myModules = new MultiMap<>();
       for (PsiJavaModule module : modules) {
-        myModules.putValue(module.getName(), PsiImplUtil.getModuleVirtualFile(module));
+        myModules.putValue(module.getName(), module);
       }
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       myIncludeLibraries = ContainerUtil.or(modules, m -> {
@@ -674,9 +673,8 @@ public final class JavaModuleGraphUtil {
 
     private boolean contains(@Nullable PsiJavaModule module) {
       if (module == null || !module.isValid()) return false;
-      Collection<VirtualFile> myFiles = myModules.get(module.getName());
-      VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
-      return myFiles.contains(file);
+      Collection<PsiJavaModule> myCollectedModules = myModules.get(module.getName());
+      return myCollectedModules.contains(module);
     }
 
     private static boolean isJvmLanguageFile(@NotNull VirtualFile file) {

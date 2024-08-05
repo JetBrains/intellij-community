@@ -23,7 +23,10 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class JavaResolveUtil {
   public static PsiClass getContextClass(@NotNull PsiElement element) {
@@ -389,20 +392,10 @@ public final class JavaResolveUtil {
   }
 
   private static void collectAllTransitiveModulesIncludeCurrent(@NotNull PsiJavaModule module, @NotNull Set<PsiJavaModule> collected) {
-    Queue<PsiJavaModule> queue = new ArrayDeque<>();
-    queue.add(module);
+    JavaModuleGraphHelper helper = JavaModuleGraphHelper.getInstance();
+    Set<PsiJavaModule> dependencies = helper.getAllTransitiveDependencies(module);
+    collected.addAll(dependencies);
     collected.add(module);
-    while (!queue.isEmpty()) {
-      PsiJavaModule current = queue.poll();
-      for (PsiRequiresStatement require : current.getRequires()) {
-        if (!require.hasModifierProperty(PsiModifier.TRANSITIVE)) continue;
-        PsiJavaModule resolved = require.resolve();
-        if (resolved == null) continue;
-        if (collected.add(resolved)) {
-          queue.add(resolved);
-        }
-      }
-    }
   }
 
   private static List<PsiPackageAccessibilityStatement> getAllDeclaredExports(@NotNull PsiJavaModule module) {

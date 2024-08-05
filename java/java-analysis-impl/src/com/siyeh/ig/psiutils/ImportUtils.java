@@ -576,9 +576,9 @@ public final class ImportUtils {
             if (psiPackage.containsClassNamed(className)) return true;
           }
         }
+        if (myPackageStatements.containsKey(packageOrClassName)) return true;
       }
-      if (!name.isStatic && myPackageStatements.containsKey(packageOrClassName)) return true;
-      if (name.isStatic) {
+      else {
         PsiImportStaticStatement psiImportStaticStatement = myStaticImportStatements.get(packageOrClassName);
         if (psiImportStaticStatement != null) {
           if (psiImportStaticStatement.isOnDemand()) return true;
