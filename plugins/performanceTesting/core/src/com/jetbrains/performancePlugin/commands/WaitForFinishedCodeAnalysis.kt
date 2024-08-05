@@ -29,6 +29,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import java.util.UUID
@@ -273,6 +274,8 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   }
 
   private fun printCodeAnalyzerStatistic(editor: Editor) {
+    //Status can't be retrieved from EDT
+    if(EDT.isCurrentThreadEdt()) return
     try {
       ReadAction.run<Throwable> {
         LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).use { it.daemonCodeAnalyzerStatus }}")
