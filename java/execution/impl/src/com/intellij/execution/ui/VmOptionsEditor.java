@@ -4,8 +4,6 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.*;
@@ -14,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.util.Objects;
 
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
@@ -25,8 +21,6 @@ public class VmOptionsEditor extends JPanel implements FragmentWrapper, Expandab
   private final LanguageTextField myEditor;
   private LanguageTextField myPopupEditor;
   private final ExpandableEditorSupport mySupport;
-  private boolean myFocused = false;
-  private boolean myEdited = false;
 
   VmOptionsEditor(JavaRunConfigurationBase settings) {
     super(new BorderLayout());
@@ -35,7 +29,7 @@ public class VmOptionsEditor extends JPanel implements FragmentWrapper, Expandab
     myEditor.getAccessibleContext().setAccessibleName(message);
     myEditor.setPlaceholder(message);
     setupEditor(myEditor, settings);
-    trackUserEdits();
+    myEditor.setCaretPosition(0);
     add(myEditor, BorderLayout.CENTER);
     setMinimumWidth(this, 400);
     mySupport = new ExpandableEditorSupport(myEditor, ParametersListUtil.DEFAULT_LINE_PARSER, ParametersListUtil.DEFAULT_LINE_JOINER) {
@@ -43,28 +37,11 @@ public class VmOptionsEditor extends JPanel implements FragmentWrapper, Expandab
       protected @NotNull EditorTextField createPopupEditor(@NotNull EditorTextField field, @NotNull String text) {
         LanguageTextField popupEditor = new LanguageTextField(FileTypes.PLAIN_TEXT.getLanguage(), settings.getProject(), text);
         setupEditor(popupEditor, settings);
-        if (!myEdited) {
-          popupEditor.setCaretPosition(0);
-        }
         myPopupEditor = popupEditor;
+        myPopupEditor.setCaretPosition(Math.min(text.length(), myEditor.getCaretModel().getOffset()));
         return popupEditor;
       }
     };
-  }
-
-  private void trackUserEdits() {
-    myEditor.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        myFocused = true;
-      }
-    });
-    myEditor.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        if (myFocused) myEdited = true;
-      }
-    });
   }
 
   void setupEditor(LanguageTextField popupEditor, JavaRunConfigurationBase settings) {
