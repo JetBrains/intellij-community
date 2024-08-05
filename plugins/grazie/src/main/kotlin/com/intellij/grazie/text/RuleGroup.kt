@@ -36,20 +36,28 @@ open class RuleGroup(rules: Set<String>) {
     @JvmField
     val CASING = RuleGroup(SENTENCE_START_CASE)
 
+    /**
+     * Rules for checking for incorrect punctuation at sentence beginning or end.
+     * This group consists of [SENTENCE_END_PUNCTUATION] and [UNLIKELY_OPENING_PUNCTUATION].
+     */
+    @JvmField
+    val SENTENCE_BOUNDARY_PUNCTUATION = RuleGroup(SENTENCE_END_PUNCTUATION, UNLIKELY_OPENING_PUNCTUATION)
+
     /** Rules for checking punctuation errors */
     @JvmField
-    val PUNCTUATION = RuleGroup(SENTENCE_END_PUNCTUATION, UNLIKELY_OPENING_PUNCTUATION)
+    @Deprecated("use SENTENCE_BOUNDARY", ReplaceWith("SENTENCE_BOUNDARY_PUNCTUATION"))
+    val PUNCTUATION = SENTENCE_BOUNDARY_PUNCTUATION
 
     /** Rules that are usually disabled for literal strings */
     @JvmField
-    val LITERALS = CASING + PUNCTUATION
+    val LITERALS = CASING + SENTENCE_BOUNDARY_PUNCTUATION
 
     /**
      * Rules that allow for single sentences to be lowercase and lack starting/finishing punctuation,
      * useful in comments or commit messages
      */
     @JvmField
-    val UNDECORATED_SINGLE_SENTENCE = CASING + PUNCTUATION
+    val UNDECORATED_SINGLE_SENTENCE = CASING + SENTENCE_BOUNDARY_PUNCTUATION
   }
 
   operator fun plus(other: RuleGroup) = RuleGroup(rules + other.rules)
