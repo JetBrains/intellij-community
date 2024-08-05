@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.imports
 
 import org.jetbrains.annotations.TestOnly
@@ -24,10 +23,10 @@ class ImportMapper {
 
         private val CONCURRENT_TO_CANCELLATION
             get() = createPackageMapping(
-                javaPackage = "java.util.concurrent",
-                kotlinPackage = "kotlin.coroutines.cancellation",
-                version = ApiVersion.KOTLIN_1_4,
-                names = listOf("CancellationException"),
+              javaPackage = "java.util.concurrent",
+              kotlinPackage = "kotlin.coroutines.cancellation",
+              version = ApiVersion.Companion.KOTLIN_1_4,
+              names = listOf("CancellationException"),
             )
 
         private val LANG_TO_TEXT
@@ -39,18 +38,18 @@ class ImportMapper {
 
         private val CHARSET_TO_TEXT
             get() = createPackageMapping(
-                javaPackage = "java.nio.charset",
-                kotlinPackage = "kotlin.text",
-                version = ApiVersion.KOTLIN_1_4,
-                names = listOf("CharacterCodingException"),
+              javaPackage = "java.nio.charset",
+              kotlinPackage = "kotlin.text",
+              version = ApiVersion.Companion.KOTLIN_1_4,
+              names = listOf("CharacterCodingException"),
             )
 
         private val KOTLIN_JVM_TO_KOTLIN
             get() = createPackageMapping(
-                javaPackage = "kotlin.jvm",
-                kotlinPackage = "kotlin",
-                version = ApiVersion.KOTLIN_1_4,
-                names = listOf("Throws"),
+              javaPackage = "kotlin.jvm",
+              kotlinPackage = "kotlin",
+              version = ApiVersion.Companion.KOTLIN_1_4,
+              names = listOf("Throws"),
             )
 
         private val LANG_TO_KOTLIN
@@ -85,10 +84,10 @@ class ImportMapper {
             )
 
         private fun createPackageMapping(
-            javaPackage: String,
-            kotlinPackage: String,
-            version: ApiVersion = ApiVersion.KOTLIN_1_3,
-            names: List<String>,
+          javaPackage: String,
+          kotlinPackage: String,
+          version: ApiVersion = ApiVersion.Companion.KOTLIN_1_3,
+          names: List<String>,
         ): Map<FqName, FqNameWithVersion> = names.associate {
             FqName("$javaPackage.$it") to FqNameWithVersion(FqName("$kotlinPackage.$it"), version)
         }
