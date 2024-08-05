@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.CustomFrameButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxCustomFrameButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -91,6 +92,6 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
   }
 
   private fun createButtonsPane(): CustomFrameButtons? {
-    return if (IdeRootPane.hideNativeLinuxTitle) LinuxCustomFrameButtons.create(createCloseAction(this)) else null
+    return if (hideNativeLinuxTitle(UISettings.shadowInstance)) LinuxCustomFrameButtons.create(createCloseAction(this)) else null
   }
 }

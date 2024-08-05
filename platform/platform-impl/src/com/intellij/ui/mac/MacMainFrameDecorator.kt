@@ -7,6 +7,7 @@ import com.apple.eawt.FullScreenListener
 import com.apple.eawt.FullScreenUtilities
 import com.apple.eawt.event.FullScreenEvent
 import com.intellij.ide.ActiveWindowsWatcher
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -14,7 +15,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ToolbarService.Companion.getInstance
@@ -117,7 +118,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
         frame.togglingFullScreenInProgress = false
         // We can get the notification when the frame has been disposed
         val rootPane = frame.rootPane
-        if (!ExperimentalUI.isNewUI() || (rootPane as? IdeRootPane)?.isToolbarInHeader() == false) {
+        if (!ExperimentalUI.isNewUI() || !CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), false)) {
           getInstance().setCustomTitleBar(frame, rootPane) { runnable ->
             executeOnCancelInEdt(coroutineScope) { runnable.run() }
           }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -12,6 +13,7 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.DisposableWindow
@@ -128,7 +130,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
     isDisposed = false
-    if (IdeRootPane.hideNativeLinuxTitle && !isUndecorated) {
+    if (hideNativeLinuxTitle(UISettings.shadowInstance) && !isUndecorated) {
       isUndecorated = true
     }
     @Suppress("DEPRECATION")

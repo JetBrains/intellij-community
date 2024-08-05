@@ -37,10 +37,13 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
-import com.intellij.ui.*
+import com.intellij.ui.BadgeRectProvider
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.TextHoledIcon
 import com.intellij.ui.icons.TextIcon
@@ -319,8 +322,8 @@ private abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware,
     val project = presentation.getClientProperty(PROJECT) ?: return
     presentation.putClientProperty(NOT_FIRST_UPDATE, true)
 
-    val ideRootPane: IdeRootPane = (WindowManager.getInstance() as WindowManagerImpl).getProjectFrameRootPane(project) ?: return
-    ideRootPane.makeComponentToBeMouseTransparentInTitleBar(component)
+    val frameHelper = (WindowManager.getInstance() as WindowManagerImpl).getFrameHelper(project) ?: return
+    CustomWindowHeaderUtil.makeComponentToBeMouseTransparentInTitleBar(frameHelper, component)
   }
 }
 

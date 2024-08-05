@@ -5,7 +5,6 @@ import com.intellij.CommonBundle
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -13,9 +12,8 @@ import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isCompactHeader
 import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
-import com.intellij.openapi.wm.impl.headertoolbar.blockingComputeMainActionGroups
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
@@ -149,26 +147,19 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     updateSize()
   }
 
-  protected open fun updateSize() {
+  private fun updateSize() {
     if (!ExperimentalUI.isNewUI()) {
       return
     }
 
     val size = preferredSize
-    size.height = JBUI.scale(
-      when {
-        (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier = {
-          blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
-        }) == true -> {
-          HEADER_HEIGHT_DFM
-        }
-        UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
-        else -> HEADER_HEIGHT_NORMAL
-      }
-    )
+    val height = calcHeight()
+    size.height = JBUI.scale(height)
     preferredSize = size
     minimumSize = size
   }
+
+  protected open fun calcHeight(): Int = CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader(UISettings.getInstance()))
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
 
@@ -306,7 +297,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     return accessibleContext
   }
 
-  private inner class AccessibleCustomHeader: AccessibleJPanel() {
+  private inner class AccessibleCustomHeader : AccessibleJPanel() {
     override fun getAccessibleRole() = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }

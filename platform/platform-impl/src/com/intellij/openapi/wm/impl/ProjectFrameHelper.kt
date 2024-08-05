@@ -38,6 +38,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
+import com.jetbrains.WindowDecorations.CustomTitleBar
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
@@ -209,6 +210,8 @@ open class ProjectFrameHelper internal constructor(
     currentFile = file
     updateTitle(project)
   }
+
+  internal fun getCustomTitleBar(): CustomTitleBar? = rootPane.getCustomTitleBar()
 
   override fun getNorthExtension(key: String): JComponent? = project?.let { rootPane.findNorthUiComponentByKey(key = key) }
 

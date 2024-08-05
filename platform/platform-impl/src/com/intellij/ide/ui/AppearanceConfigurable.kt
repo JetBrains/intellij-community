@@ -45,8 +45,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.isMergeMainMenuWithWindowTitleOverridden
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.ui.*
@@ -437,7 +437,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield { checkBox(cdEnableMenuMnemonics) }
           yield { checkBox(cdShowMenuIcons) }
           yield { checkBox(cdKeepPopupsForToggles) }
-          if (SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable || IdeRootPane.hideNativeLinuxTitleAvailable) {
+          if (SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable || CustomWindowHeaderUtil.hideNativeLinuxTitleAvailable) {
             yield {
               val checkBox = checkBox(cdMergeMainMenuWithWindowTitle)
                 .gap(RightGap.SMALL)
@@ -445,7 +445,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 checkBox.enabled(false)
                 contextHelp(message("option.is.overridden.by.jvm.property", MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
               }
-              if (SystemInfo.isUnix && !SystemInfo.isMac && !IdeRootPane.hideNativeLinuxTitleSupported) {
+              if (SystemInfo.isUnix && !SystemInfo.isMac && !CustomWindowHeaderUtil.hideNativeLinuxTitleSupported) {
                 checkBox.enabled(false)
                 checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
               }

@@ -252,9 +252,6 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return getFrameHelper(project ?: IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null)
   }
 
-  @ApiStatus.Internal
-  fun getProjectFrameRootPane(project: Project?): IdeRootPane? = projectToFrame.get(project)?.frameHelper?.rootPane
-
   override fun getIdeFrame(project: Project?): IdeFrame? {
     if (project != null) {
       return getFrameHelper(project)

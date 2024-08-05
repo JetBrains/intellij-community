@@ -6,7 +6,9 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isCompactHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
+import com.intellij.openapi.wm.impl.headertoolbar.blockingComputeMainActionGroups
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
@@ -17,9 +19,12 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.event.ChangeListener
 
-internal class MenuFrameHeader(frame: JFrame,
-                               private val headerTitle: CustomHeaderTitle,
-                               private val ideMenu: IdeJMenuBar) : FrameHeader(frame), MainFrameCustomHeader {
+internal class MenuFrameHeader(
+  frame: JFrame,
+  private val headerTitle: CustomHeaderTitle,
+  private val ideMenu: IdeJMenuBar,
+  private val isAlwaysCompact: Boolean,
+) : FrameHeader(frame), MainFrameCustomHeader {
   private val menuHolder: JComponent
   private var changeListener: ChangeListener
 
@@ -60,6 +65,11 @@ internal class MenuFrameHeader(frame: JFrame,
     }
 
     menuHolder.isVisible = UISettings.getInstance().showMainMenu
+  }
+
+  override fun calcHeight(): Int {
+    val isCompactHeader = isAlwaysCompact || isCompactHeader(UISettings.getInstance()) { blockingComputeMainActionGroups() }
+    return CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader)
   }
 
   override fun getComponent(): JComponent = this

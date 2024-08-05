@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.stateStore
@@ -566,7 +567,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
           ideFrame.title = it
         }
 
-        IdeRootPane.customizeRawFrame(ideFrame)
+        CustomWindowHeaderUtil.customizeRawFrame(ideFrame)
         ideFrame.isVisible = true
         val task = Pair(path, OpenProjectTask {
           forceOpenInNewFrame = true

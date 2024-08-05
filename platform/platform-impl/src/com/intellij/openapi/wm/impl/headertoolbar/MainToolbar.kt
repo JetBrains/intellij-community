@@ -27,8 +27,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isMenuButtonInToolbar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
@@ -50,7 +51,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
-import java.util.WeakHashMap
+import java.util.*
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
@@ -92,13 +93,14 @@ class MainToolbar(
   private val frame: JFrame,
   isOpaque: Boolean = false,
   background: Color? = null,
+  private val isFullScreen: () -> Boolean,
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
 
   init {
     this.background = background
     this.isOpaque = isOpaque
-    flavor = if (IdeRootPane.isMenuButtonInToolbar) {
+    flavor = if (isMenuButtonInToolbar(UISettings.shadowInstance)) {
       MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame)
     }
     else {
@@ -207,13 +209,13 @@ class MainToolbar(
 
   override fun paintComponent(g: Graphics?) {
     super.paintComponent(g)
-    if ((frame.rootPane as? IdeRootPane)?.isToolbarInHeader() == false) {
+    if (!CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen())) {
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
     }
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
-    if (IdeRootPane.hideNativeLinuxTitle && !UISettings.shadowInstance.separateMainMenu) {
+    if (hideNativeLinuxTitle(UISettings.shadowInstance) && !UISettings.shadowInstance.separateMainMenu) {
       WindowMoveListener(this).apply {
         setLeftMouseButtonOnly(true)
         installTo(this@MainToolbar)
@@ -426,6 +428,11 @@ private suspend fun computeMainActionGroups(customActionSchema: CustomActionsSch
 }
 
 @RequiresBlockingContext
+internal fun blockingComputeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  return blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
+}
+
+@RequiresBlockingContext
 internal fun blockingComputeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
   return getMainToolbarGroups()
     .mapNotNull { info ->
@@ -442,22 +449,6 @@ private fun getMainToolbarGroups(): Sequence<GroupInfo> {
     GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
     GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
   )
-}
-
-internal fun isToolbarInHeader(isFullscreen: Boolean): Boolean {
-  if (IdeFrameDecorator.isCustomDecorationAvailable) {
-    if (SystemInfoRt.isMac) {
-      return true
-    }
-    val settings = UISettings.getInstance()
-    if (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle && !isFullscreen) {
-      return true
-    }
-  }
-  if (IdeRootPane.hideNativeLinuxTitle && !UISettings.getInstance().separateMainMenu && !isFullscreen) {
-    return true
-  }
-  return false
 }
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
