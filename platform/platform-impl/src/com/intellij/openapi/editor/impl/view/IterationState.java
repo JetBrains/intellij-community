@@ -594,8 +594,9 @@ public final class IterationState {
   }
 
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {
-    return myStartOffset > myCaretData.caretRowStart() && myStartOffset < myCaretData.caretRowEnd() ||
-           includeLineStart && myStartOffset == myCaretData.caretRowStart() || includeLineEnd && myStartOffset == myCaretData.caretRowEnd();
+    return myCaretData.caretRowStart() < myStartOffset && myStartOffset < myCaretData.caretRowEnd() ||
+           includeLineStart && myStartOffset == myCaretData.caretRowStart() ||
+           includeLineEnd && myStartOffset == myCaretData.caretRowEnd();
   }
 
   private @Nullable TextAttributes getSelectionAttributes(boolean isInSelection) {
