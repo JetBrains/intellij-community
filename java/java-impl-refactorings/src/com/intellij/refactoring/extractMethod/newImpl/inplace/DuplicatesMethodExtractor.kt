@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.childLeafs
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
@@ -190,8 +191,8 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
   private fun isGoodSignatureChange(exactExtractElements: ExtractedElements, parametrizedExtractElements: ExtractedElements): Boolean {
     val parametersSizeBefore = exactExtractElements.method.parameterList.parameters.size
     val parametersSizeAfter = parametrizedExtractElements.method.parameterList.parameters.size
-    val codeSizeBefore = extractOptions.elements.sumOf(::calculateCodeLeafs)
-    val callSizeAfter = parametrizedExtractElements.callElements.sumOf(::calculateCodeLeafs)
+    val codeSizeBefore = extractOptions.elements.sumOf(::countNonEmptyLeafs)
+    val callSizeAfter = parametrizedExtractElements.callElements.sumOf(::countNonEmptyLeafs)
     val addedParameters = parametersSizeAfter - parametersSizeBefore
     if (addedParameters <= 0) {
       // do not require reduce in call size if we just replace parameter
@@ -206,11 +207,8 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     }
   }
 
-  private fun calculateCodeLeafs(element: PsiElement): Int {
-    return SyntaxTraverser.psiTraverser(element)
-      .filter { psiElement -> psiElement.firstChild == null && psiElement.text.isNotBlank() }
-      .traverse()
-      .count()
+  private fun countNonEmptyLeafs(element: PsiElement): Int {
+    return element.childLeafs().filter { leaf -> leaf.text.isNotBlank() }.count()
   }
 
   private fun findMethodCallInside(element: PsiElement?): PsiMethodCallExpression? {
