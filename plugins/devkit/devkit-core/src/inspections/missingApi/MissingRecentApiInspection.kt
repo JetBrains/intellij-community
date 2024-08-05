@@ -52,12 +52,12 @@ class MissingRecentApiInspection : LocalInspectionTool() {
    * differ from the actual values. For example, it is the case for gradle-intellij-plugin,
    * which allows to override "since" and "until" values during plugin build.
    */
-  private var sinceBuildString: String? = null
+  var sinceBuildString: String? = null
 
   /**
    * Actual "until" build constraint of the plugin under development.
    */
-  private var untilBuildString: String? = null
+  var untilBuildString: String? = null
 
   private val sinceBuild: BuildNumber?
     get() = sinceBuildString?.let { BuildNumber.fromStringOrNull(it) }
