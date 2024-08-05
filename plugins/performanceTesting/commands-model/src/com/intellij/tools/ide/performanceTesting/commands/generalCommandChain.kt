@@ -76,6 +76,7 @@ fun <T : CommandChain> T.openFile(
   suppressErrors: Boolean = false,
   warmup: Boolean = false,
   disableCodeAnalysis: Boolean = false,
+  useWaitForCodeAnalysisCode: Boolean = false,
 ): T = apply {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
   if (timeoutInSeconds != 0L) {
@@ -89,6 +90,9 @@ fun <T : CommandChain> T.openFile(
   }
   if (warmup) {
     command.add(WARMUP)
+  }
+  if (useWaitForCodeAnalysisCode) {
+    command.add("-unwfca")
   }
 
   addCommand(*command.toTypedArray())
@@ -176,7 +180,7 @@ fun <T : CommandChain> T.navigateAndFindUsages(
     command.add("-scope $scope")
   }
 
-  if(runInBackground) {
+  if (runInBackground) {
     command.add("-runInBackground")
   }
 

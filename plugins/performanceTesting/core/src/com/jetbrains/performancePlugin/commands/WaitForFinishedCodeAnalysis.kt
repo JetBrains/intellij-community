@@ -122,10 +122,15 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  suspend fun waitAnalysisToFinish(timeout: Duration = 5.minutes, throws: Boolean = false) {
+  /**
+   * @throws TimeoutException when stopped due to provided [timeout]
+   */
+  suspend fun waitAnalysisToFinish(timeout: Duration? = 5.minutes, throws: Boolean = false) {
     LOG.info("Waiting for code analysis to finish in $timeout")
     val future = CompletableFuture<Unit>()
-    future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+    if (timeout != null) {
+      future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+    }
     coroutineScope {
       launch {
         while (true) {
@@ -162,12 +167,9 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
     catch (_: CompletionException) {
       val errorText = "Waiting for highlight to finish took more than $timeout."
+      LOG.error(errorText)
       if (throws) {
-        LOG.error(errorText)
         throw TimeoutException(errorText)
-      }
-      else {
-        LOG.error(errorText)
       }
     }
     LOG.info("Code analysis waiting finished")
