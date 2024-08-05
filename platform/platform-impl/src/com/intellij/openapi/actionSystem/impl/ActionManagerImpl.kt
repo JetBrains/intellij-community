@@ -1403,10 +1403,8 @@ private class CapturingListener(@JvmField val timerListener: TimerListener) : Ti
 
   override fun run() {
     // this is periodic runnable that is invoked on timer; it should not complete a parent job
-    childContext.runAsCoroutine(completeOnFinish = false, {
-      installThreadContext(childContext.context, true).use {
-        timerListener.run()
-      }
+    childContext.runInChildContext(completeOnFinish = false, {
+      timerListener.run()
     })
   }
 }

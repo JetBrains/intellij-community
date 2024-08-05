@@ -481,7 +481,7 @@ class CancellationPropagationTest {
     lock.timeoutWaitUp()
 
     childFuture1CanThrow.up()
-    waitAssertCompletedWithCancellation(childFuture1)
+    waitAssertCompletedWith(childFuture1, CancellationException::class)
     childFuture2CanFinish.up()
     waitAssertCompletedNormally(childFuture2)
     waitAssertCompletedNormally(rootJob)
@@ -854,8 +854,8 @@ class CancellationPropagationTest {
     val semaphore = Semaphore(1)
     val job = launch(Dispatchers.Default) {
       blockingContext {
-        semaphore.up()
         application.invokeAndWait {
+          semaphore.up()
           while (true) {
             Cancellation.checkCancelled()
           }

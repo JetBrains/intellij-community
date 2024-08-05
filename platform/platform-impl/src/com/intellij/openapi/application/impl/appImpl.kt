@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.progress.ProcessCanceledException
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
@@ -50,7 +51,8 @@ internal class OTelReadWriteActionsMonitor(meter: Meter) : AutoCloseable {
 @ApiStatus.Internal
 internal fun rethrowExceptions(transformer: (Runnable) -> Runnable, actual: Runnable) : Runnable {
   val exception: AtomicReference<Throwable> = AtomicReference(null)
-  val wrapped = transformer {
+  val localTransformer = { r: Runnable -> if (actual is ContextAwareRunnable) ContextAwareRunnable { r.run() } else r }
+  val wrapped = transformer(localTransformer {
     try {
       actual.run()
     }
@@ -60,9 +62,15 @@ internal fun rethrowExceptions(transformer: (Runnable) -> Runnable, actual: Runn
     catch (e: Throwable) {
       exception.set(e)
     }
-  }
+  })
   return Runnable {
-    wrapped.run()
+    try {
+      wrapped.run()
+    }
+    catch (e: ProcessCanceledException) {
+      // Throwing PCE from `invokeAndWait` is a potentially very dangerous change.
+      // This is definitely TODO, but not for now
+    }
     val caughtException = exception.get()
     if (caughtException != null) {
       throw caughtException

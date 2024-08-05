@@ -6,6 +6,7 @@ import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -250,13 +251,15 @@ public final class LaterInvocator {
       LOG.debug("leaveModal:" + modalEntity);
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false, modalEntity);
+    Cancellation.executeInNonCancelableSection(() -> {
+      ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false, modalEntity);
 
-    int index = ourModalEntities.indexOf(modalEntity);
-    LOG.assertTrue(index >= 0);
-    removeModality(modalEntity, index);
+      int index = ourModalEntities.indexOf(modalEntity);
+      LOG.assertTrue(index >= 0);
+      removeModality(modalEntity, index);
 
-    reincludeSkippedItemsAndRequestFlush();
+      reincludeSkippedItemsAndRequestFlush();
+    });
   }
 
   @TestOnly

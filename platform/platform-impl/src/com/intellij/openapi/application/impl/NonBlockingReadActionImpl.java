@@ -21,7 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -247,6 +250,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private final @Nullable ProgressIndicator myProgressIndicator;
     private final @NotNull NonBlockingReadActionImpl<T> builder;
     private final @NotNull ChildContext myChildContext;
+    private final @NotNull AccessToken childContextToken;
 
     // a sum composed of: 1 for non-done promise, 1 for each currently running thread,
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
@@ -261,6 +265,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       backendExecutor = backgroundThreadExecutor;
       this.builder = builder;
       myChildContext = Propagation.createChildContext("NonBlockingReadActionImpl.Submission: " + this);
+      childContextToken = myChildContext.applyContextActions(false);
       if (builder.myCoalesceEquality != null) {
         acquire();
       }
@@ -665,6 +670,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (job != null) {
         job.cancel(e);
       }
+      childContextToken.finish();
     }
 
     private void completeJob() {
@@ -672,6 +678,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (continuation != null) {
         continuation.resumeWith(Unit.INSTANCE);
       }
+      childContextToken.finish();
     }
 
     private void failJob(@NotNull Throwable reason) {
@@ -679,6 +686,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (continuation != null) {
         continuation.resumeWith(new Result.Failure(reason));
       }
+      childContextToken.finish();
     }
 
     private boolean checkObsolete() {

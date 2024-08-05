@@ -1,26 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.currentThreadContextOrNull
-import com.intellij.concurrency.getContextSkeleton
-import com.intellij.concurrency.installThreadContext
-import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import io.kotest.common.runBlocking
 import io.kotest.mpp.atomics.AtomicReference
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -28,11 +17,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.reflect.Method
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.*
 
 @OptIn(InternalCoroutinesApi::class)
 @TestApplication
@@ -63,11 +48,13 @@ class ImplicitBlockingContextTest {
     assertContextsEqual()
   }
 
-  class E : AbstractCoroutineContextElement(E) {
+  class E : AbstractCoroutineContextElement(E), IntelliJContextElement {
     companion object Key : CoroutineContext.Key<E>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
   }
 
-  class F : AbstractCoroutineContextElement(F) {
+  class F : AbstractCoroutineContextElement(F), IntelliJContextElement {
     companion object Key : CoroutineContext.Key<F>
   }
 
@@ -192,14 +179,14 @@ class ImplicitBlockingContextTest {
     }
   }
 
-  suspend fun assertContextsEqual() {
+  private suspend fun assertContextsEqual() {
     val context = coroutineContext
     assertEquals(context.minusKey(ContinuationInterceptor), currentThreadContext())
   }
 
-  fun assertContextRemainsOnFreeThread(context: CoroutineContext) {
+  private fun assertContextRemainsOnFreeThread(context: CoroutineContext) {
     assertNull(IntellijCoroutines.currentThreadCoroutineContext())
-    assertEquals(context.minusKey(Job).minusKey(ContinuationInterceptor), currentThreadContext())
+    val list = currentThreadContext().fold(ArrayList<CoroutineContext.Element>(), { list, elem -> list.apply { add(elem) } })
+    assertEquals(list.single().key, E)
   }
-
 }
