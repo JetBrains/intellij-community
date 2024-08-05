@@ -18,6 +18,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeGlassPane
@@ -56,7 +57,7 @@ import java.awt.event.WindowStateListener
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 
-private const val EXTENSION_KEY = "extensionKey"
+private val EXTENSION_KEY = Key.create<String>("extensionKey")
 
 @Suppress("LeakingThis")
 @ApiStatus.Internal
@@ -441,14 +442,14 @@ open class IdeRootPane internal constructor(
                 val count = northPanel.componentCount
                 for (i in count - 1 downTo 0) {
                   val c = northPanel.getComponent(i)
-                  if (c is JComponent && c.getClientProperty(EXTENSION_KEY) == key) {
+                  if (ClientProperty.isSet(c, EXTENSION_KEY, key)) {
                     northPanel.remove(i)
                     break
                   }
                 }
               }
               else {
-                component.putClientProperty(EXTENSION_KEY, key)
+                ClientProperty.put(component, EXTENSION_KEY, key)
                 northPanel.add(component)
               }
             }
@@ -459,7 +460,7 @@ open class IdeRootPane internal constructor(
 
       withContext(Dispatchers.EDT) {
         extension.createComponent(project, isDocked = false)?.let {
-          it.putClientProperty(EXTENSION_KEY, key)
+          ClientProperty.put(it, EXTENSION_KEY, key)
           northPanel.add(it)
         }
       }
@@ -467,7 +468,7 @@ open class IdeRootPane internal constructor(
   }
 
   fun findNorthUiComponentByKey(key: String): JComponent? =
-    northPanel.components.firstOrNull { (it as? JComponent)?.getClientProperty(EXTENSION_KEY) == key } as? JComponent
+    northPanel.components.firstOrNull { ClientProperty.isSet(it, EXTENSION_KEY, key) } as? JComponent
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     ComponentUtil.decorateWindowHeader(this)
