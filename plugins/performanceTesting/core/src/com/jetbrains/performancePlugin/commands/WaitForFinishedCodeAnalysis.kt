@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
-import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
@@ -215,7 +214,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  fun registerAnalysisStarted(fileEditors: Collection<TextEditor>) {
+  fun registerDaemonStarted(fileEditors: Collection<TextEditor>) {
     val errors = mutableListOf<AssertionError>()
     val isStartedInDumbMode = runReadAction { DumbService.isDumb(project) }
     synchronized(stateLock) {
@@ -275,7 +274,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  internal fun registerAnalysisFinished(highlightedEditors: Map<TextEditor, HighlightedEditor>, status: String, traceId: UUID) {
+  internal fun registerDaemonFinishedOrCancelled(highlightedEditors: Map<TextEditor, HighlightedEditor>, status: String, traceId: UUID) {
     val currentTime = System.currentTimeMillis()
     synchronized(stateLock) {
       val iterator = sessions.entries.iterator()
@@ -290,7 +289,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         else {
           val shouldWait = highlightedEditor.shouldWaitForNextHighlighting || exceptionWithTime.wasStartedInLimitedSetup
           LOG.info(""" 
-            Registering analysis finished for:
+            Registering daemon finished or cancelled for:
               daemon $status for ${highlightedEditor.editor.description},
               shouldWaitForHighlighting = ${shouldWait},
               shouldWaitForNextHighlighting = ${highlightedEditor.shouldWaitForNextHighlighting},
@@ -356,22 +355,22 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
     CodeAnalysisStateListener.LOG.info("Daemon starting with ${fileEditors.size} unfiltered editors: " +
                                        fileEditors.joinToString(separator = "\n") { it.description })
-    project.service<CodeAnalysisStateListener>().registerAnalysisStarted(fileEditors.getWorthy())
+    project.service<CodeAnalysisStateListener>().registerDaemonStarted(fileEditors.getWorthy())
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
     val traceId = UUID.randomUUID()
     CodeAnalysisStateListener.LOG.info("Daemon canceled by the reason of '$reason', traceId = $traceId")
-    daemonStopped(fileEditors, true, traceId)
+    daemonFinishedOrCancelled(fileEditors, true, traceId)
   }
 
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
     val traceId = UUID.randomUUID()
     CodeAnalysisStateListener.LOG.info("Daemon finished, traceId = $traceId")
-    daemonStopped(fileEditors, false, traceId)
+    daemonFinishedOrCancelled(fileEditors, false, traceId)
   }
 
-  private fun daemonStopped(fileEditors: Collection<FileEditor>, isCancelled: Boolean, traceId: UUID) {
+  private fun daemonFinishedOrCancelled(fileEditors: Collection<FileEditor>, isCancelled: Boolean, traceId: UUID) {
     val status = if (isCancelled) "cancelled" else "stopped"
     CodeAnalysisStateListener.LOG.info("Daemon $status with ${fileEditors.size} unfiltered editors, traceId = $traceId")
     val worthy = fileEditors.getWorthy()
@@ -382,7 +381,7 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
       worthy.associateWith { CodeAnalysisStateListener.HighlightedEditor.create(it, project, isCancelled = isCancelled, isFinishedInDumbMode = isFinishedInDumbMode) }
     }
 
-    project.service<CodeAnalysisStateListener>().registerAnalysisFinished(highlightedEditors, status, traceId)
+    project.service<CodeAnalysisStateListener>().registerDaemonFinishedOrCancelled(highlightedEditors, status, traceId)
   }
 }
 
