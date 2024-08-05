@@ -214,7 +214,9 @@ internal class InplaceMethodExtractor(private val editor: Editor,
     InplaceExtractMethodCollector.openExtractDialog.log(project, isLinkUsed)
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
     val elements = ExtractSelector().suggestElementsToExtract(extractor.targetClass.containingFile, range)
-    extractInDialog(extractor.targetClass, elements, methodName, popupProvider.makeStatic ?: extractor.extractOptions.isStatic)
+    val extractOptions = extractor.extractOptions.copy(methodName = methodName)
+    val extractor = DuplicatesMethodExtractor(extractOptions, extractor.targetClass, elements)
+    extractor.extractInDialog()
   }
 
   private suspend fun restartInplace() {

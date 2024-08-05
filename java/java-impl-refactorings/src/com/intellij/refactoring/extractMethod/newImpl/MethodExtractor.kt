@@ -88,15 +88,20 @@ class MethodExtractor {
       val options = withContext(Dispatchers.EDT) {
         selectOptionWithTargetClass(editor, file.project, descriptorsForAllTargetPlaces).await()
       }
+      val guessedNames = readAction { suggestSafeMethodNames(options) }
+      val methodName = guessedNames.first()
+      val extractor = readAction {
+        DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic)
+      }
       if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
         val templateStart = System.currentTimeMillis()
-        runInplaceExtract(editor, range, options)
+        runInplaceExtract(editor, range, extractor, guessedNames)
         val prepareTemplateTime = System.currentTimeMillis() - templateStart
         reportPerformanceStatistics(preparePlacesTime, prepareTemplateTime, descriptorsForAllTargetPlaces.size)
       }
       else {
         withContext(Dispatchers.EDT) {
-          extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
+          extractor.extractInDialog()
         }
       }
   }
@@ -122,12 +127,9 @@ class MethodExtractor {
     }
   }
 
-  private suspend fun runInplaceExtract(editor: Editor, range: TextRange, options: ExtractOptions){
-    val popupSettings = readAction { createInplaceSettingsPopup(options) }
-    val guessedNames = readAction { suggestSafeMethodNames(options) }
-    val methodName = guessedNames.first()
-    val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
-    val extractor = readAction { DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic) }
+  private suspend fun runInplaceExtract(editor: Editor, range: TextRange, extractor: DuplicatesMethodExtractor, methodNames: List<String>){
+    val popupSettings = readAction { createInplaceSettingsPopup(extractor.extractOptions) }
+    val suggestedNames = methodNames.takeIf { it.size > 1 }.orEmpty()
     val inplaceExtractor = readAction { InplaceMethodExtractor(editor, range, popupSettings, extractor) }
     inplaceExtractor.extractAndRunTemplate(suggestedNames)
   }

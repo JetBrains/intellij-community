@@ -305,17 +305,15 @@ private fun findExtractOptions(targetClass: PsiClass, elements: List<PsiElement>
   return options
 }
 
-fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean) {
-  val extractor = DuplicatesMethodExtractor.create(targetClass, elements, methodName, false)
-  val dialog = ExtractMethodDialogUtil.createDialog(extractor.extractOptions)
-  dialog.selectStaticFlag(makeStatic)
+fun DuplicatesMethodExtractor.extractInDialog() {
+  val dialog = ExtractMethodDialogUtil.createDialog(extractOptions)
   if (!dialog.showAndGet()) return
-  val dialogOptions = ExtractMethodPipeline.withDialogParameters(extractor.extractOptions, dialog)
-  val passFieldsAsParameters = extractor.extractOptions.inputParameters.size != dialogOptions.inputParameters.size
+  val dialogOptions = ExtractMethodPipeline.withDialogParameters(extractOptions, dialog)
+  val passFieldsAsParameters = extractOptions.inputParameters.size != dialogOptions.inputParameters.size
   if (!passFieldsAsParameters) {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = dialogOptions.isStatic
   }
-  val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, targetClass, extractor.elements)
+  val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, targetClass, elements)
   MethodExtractor().executeRefactoringCommand(targetClass.project) {
     MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
     val (_, method) = mappedExtractor.extract()
