@@ -63,6 +63,13 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectConfigurable groupId="language"
+                         bundle="messages.KotlinBundle"
+                         key="kotlin.scripting.configurable"
+                         id="preferences.language.Kotlin.scripting"
+                         instance="org.jetbrains.kotlin.idea.script.k2.KotlinScriptingSettingsConfigurable"
+                         parentId="preferences.language.Kotlin"/>
+
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptNotificationProvider"/>
 
     <registryKey defaultValue="false"
