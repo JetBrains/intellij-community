@@ -12,14 +12,12 @@ class PythonProblemFilter : ProblemFilter() {
     if (domain == TextContent.TextDomain.LITERALS) {
       return problem.fitsGroup(RuleGroup.LITERALS)
     }
-    if (domain == TextContent.TextDomain.DOCUMENTATION && seemsDocString(problem.text) &&
-        (ProblemFilterUtil.isUndecoratedSingleSentenceIssue(problem) || ProblemFilterUtil.isInitialCasingIssue(problem))) {
+    if (domain == TextContent.TextDomain.DOCUMENTATION &&
+        (ProblemFilterUtil.isUndecoratedSingleSentenceIssue(problem) ||
+         ProblemFilterUtil.isInitialCasingIssue(problem) ||
+         problem.fitsGroup(RuleGroup(RuleGroup.UNDECORATED_SENTENCE_SEPARATION)))) {
       return true
     }
     return false
   }
-
-  private fun seemsDocString(text: TextContent) =
-    text.containingFile.viewProvider.contents.subSequence(0, text.textOffsetToFile(0)).trim().endsWith(":")
-
 }
