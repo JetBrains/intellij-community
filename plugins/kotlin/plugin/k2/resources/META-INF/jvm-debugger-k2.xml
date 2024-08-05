@@ -10,10 +10,6 @@
 
     <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK2CodeFragmentFactory"/>
 
-    <debugger.dfaAssistProvider
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.debugger.dfaassist.K2DfaAssistProvider"/>
-
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentCompiler"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.evaluate.K2KotlinCodeFragmentCompiler"/>

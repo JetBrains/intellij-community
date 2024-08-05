@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.debugger.dfaassist
+package org.jetbrains.kotlin.idea.k2.debugger.dfaassist
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtVariableDescri
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import kotlin.collections.get
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 class K2DfaAssistProvider : DfaAssistProvider {
