@@ -195,9 +195,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     TrafficLightAction trafficLightAction = new TrafficLightAction();
     populateInspectionWidgetActionsFromExtensions();
-    DefaultActionGroup actions =
-      new DefaultActionGroup(inspectionWidgetActions, new InspectionsGroup(() -> analyzerStatus, editor), trafficLightAction,
-                             navigateGroup);
+    DefaultActionGroup actions = new StatusToolbarGroup(
+      inspectionWidgetActions, new InspectionsGroup(() -> analyzerStatus, editor), trafficLightAction, navigateGroup);
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
@@ -867,6 +866,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   @Override
   public @NotNull Editor getEditor() {
     return myEditor;
+  }
+
+  public @NotNull ActionToolbar getStatusToolbar() {
+    return statusToolbar;
   }
 
   @Override
@@ -1986,6 +1989,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       else {
         getDelegate().actionPerformed(delegateEvent);
       }
+    }
+  }
+
+  public static class StatusToolbarGroup extends DefaultActionGroup {
+    public StatusToolbarGroup(AnAction @NotNull ... actions) {
+      super(actions);
     }
   }
 }
