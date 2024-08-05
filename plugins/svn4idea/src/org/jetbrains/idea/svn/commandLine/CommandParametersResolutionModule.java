@@ -31,7 +31,6 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
       command.setWorkingDirectory(resolveWorkingDirectory(command));
     }
     command.setConfigDir(myAuthenticationService.getSpecialConfigDir().toFile());
-    command.saveOriginalParameters();
   }
 
   @Nullable
