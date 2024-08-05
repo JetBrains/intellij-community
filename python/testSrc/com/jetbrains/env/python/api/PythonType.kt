@@ -30,12 +30,12 @@ typealias PathToPythonBinary = Path
  */
 sealed class PythonType<T : Any>(private val tag: @NonNls String) {
 
-  suspend fun getTestEnvironment(): Result<Pair<T, AutoCloseable>> =
+  suspend fun getTestEnvironment(vararg additionalTags: @NonNls String): Result<Pair<T, AutoCloseable>> =
     PyEnvTestSettings
       .fromEnvVariables()
       .pythons
       .map { it.toPath() }
-      .firstOrNull { typeMatchesEnv(it) }
+      .firstOrNull { typeMatchesEnv(it, *additionalTags) }
       ?.let { envDir ->
         Result.success(pythonPathToEnvironment(Path.of(
           PythonSdkUtil.getPythonExecutable(envDir.toString())
@@ -90,12 +90,12 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
 
 
   @RequiresBackgroundThread
-  private fun typeMatchesEnv(env: Path): Boolean {
+  private fun typeMatchesEnv(env: Path, vararg additionalTags: @NonNls String): Boolean {
     val envTags = PyEnvTestCase.loadEnvTags(env.toString())
 
     for (badTag in PythonType::class.sealedSubclasses.filterNot { it.isInstance(this) }.map { it.objectInstance!!.tag }) {
       if (badTag in envTags) return false
     }
-    return tag in envTags
+    return tag in envTags && additionalTags.all { it in envTags }
   }
 }
