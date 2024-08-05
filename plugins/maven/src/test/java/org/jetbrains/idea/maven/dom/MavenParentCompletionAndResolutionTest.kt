@@ -104,9 +104,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       </parent>
       """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertResolved(m, findPsiFileBlocking(projectPom))
-    }
+    assertResolved(m, findPsiFile(projectPom))
   }
 
   @Test
@@ -131,9 +129,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
     val f = LocalFileSystem.getInstance().findFileByPath(filePath)
 
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findPsiFileBlocking(f))
-    }
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
@@ -163,9 +159,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                                            <version>1</version>
                                            """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findPsiFileBlocking(parent))
-    }
+    assertResolved(projectPom, findPsiFile(parent))
   }
 
   @Test
@@ -198,12 +192,10 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      moveCaretTo(projectPom, """
-        <parent>
-          <groupId><caret>test</groupId>""".trimIndent())
-      assertResolved(projectPom, findPsiFileBlocking(parent))
-    }
+    moveCaretTo(projectPom, """
+      <parent>
+        <groupId><caret>test</groupId>""".trimIndent())
+    assertResolved(projectPom, findPsiFile(parent))
   }
 
   @Test
@@ -233,9 +225,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, findPsiFileBlocking(parent))
-    }
+    assertResolved(projectPom, findPsiFile(parent))
   }
 
   @Test

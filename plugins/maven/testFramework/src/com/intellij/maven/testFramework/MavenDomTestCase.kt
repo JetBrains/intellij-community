@@ -46,7 +46,6 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.idea.maven.dom.MavenDomElement
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
@@ -93,11 +92,6 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  @Obsolete
-  protected fun findPsiFileBlocking(f: VirtualFile?): PsiFile {
-    return PsiManager.getInstance(project).findFile(f!!)!!
-  }
-
   protected suspend fun findPsiFile(f: VirtualFile?): PsiFile {
     return readAction { PsiManager.getInstance(project).findFile(f!!)!! }
   }
@@ -128,17 +122,19 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     configTest(f)
     val editorOffset = getEditorOffset(f)
     MavenLog.LOG.warn("MavenDomTestCase getReferenceAtCaret offset $editorOffset")
-    return readAction { findPsiFileBlocking(f).findReferenceAt(editorOffset) }
+    val psiFile = findPsiFile(f)
+    return readAction { psiFile.findReferenceAt(editorOffset) }
   }
 
   private suspend fun getReferenceAt(f: VirtualFile, offset: Int): PsiReference? {
     configTest(f)
-    return readAction { findPsiFileBlocking(f).findReferenceAt(offset) }
+    val psiFile = findPsiFile(f)
+    return readAction { psiFile.findReferenceAt(offset) }
   }
 
   protected suspend fun getElementAtCaret(f: VirtualFile): PsiElement? {
     configTest(f)
-    return findPsiFileBlocking(f).findElementAt(getEditorOffset(f))
+    return findPsiFile(f).findElementAt(getEditorOffset(f))
   }
 
   protected suspend fun getEditor() = getEditor(projectPom)
@@ -164,7 +160,9 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     val textOffset = documentText.indexOf(textWithoutCaret)
     assertTrue(textOffset > 0)
     val offset = textOffset + caretOffset
-    getEditor(f).caretModel.moveToOffset(offset)
+    withContext(Dispatchers.EDT) {
+      getEditor(f).caretModel.moveToOffset(offset)
+    }
   }
 
   protected suspend fun getTestPsiFile() = getTestPsiFile(projectPom)
@@ -425,7 +423,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       FileDocumentManager.getInstance().saveAllDocuments()
       UIUtil.dispatchAllInvocationEvents()
 
-      val psiFile = findPsiFileBlocking(f)
+      val psiFile = findPsiFile(f)
 
       val document = fixture.getDocument(psiFile)
       if (null == document) {
