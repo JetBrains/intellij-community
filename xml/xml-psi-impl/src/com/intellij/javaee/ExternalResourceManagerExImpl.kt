@@ -197,7 +197,7 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
       if (XmlUtil.XML_SCHEMA_URI == url) {
         return XSD_1_1
       }
-      if ((XmlUtil.XML_SCHEMA_URI + ".xsd") == url) {
+      if ("${XmlUtil.XML_SCHEMA_URI}.xsd" == url) {
         return XSD_1_1
       }
     }
@@ -205,13 +205,12 @@ open class ExternalResourceManagerExImpl : ExternalResourceManagerEx(), Persiste
   }
 
   override fun getResourceLocation(url: @NonNls String, baseFile: PsiFile, version: String?): PsiFile? {
-    val schema = XmlSchemaProvider.findSchema(url, baseFile)
-    if (schema != null) {
-      return schema
+    XmlSchemaProvider.findSchema(url, baseFile)?.let {
+      return it
     }
 
-    val location = getResourceLocation(url, version, baseFile.getProject())
-    return XmlUtil.findXmlFile(baseFile, location!!)
+    val location = getResourceLocation(url, version, baseFile.getProject())!!
+    return XmlUtil.findXmlFile(baseFile, location)
   }
 
   override fun getResourceUrls(fileType: FileType?, includeStandard: Boolean): Array<String?> {
