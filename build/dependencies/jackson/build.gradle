@@ -1,0 +1,136 @@
+/**
+ * How to run:
+ * - `gradle tasks` - to show all the available publishing configurations and tasks
+ * - `gradle publishRepackagedJarPublicationToMavenLocal` - to publish the repackaged Jar to the Maven Local repository
+ * - `gradle publishRepackagedJarPublicationToJetBrainsRepository` - to publish the repackaged Jar to the internal repository
+ */
+import java.nio.file.Files
+
+plugins {
+  id "base"
+  id "maven-publish"
+}
+
+// ----------------------------------------- CONFIGURATION ----------------------------------------- //
+
+def libraryGroup = "com.fasterxml.jackson.core"
+def libraryArtifactId = "jackson-core"
+def libraryVersion = readProperty("jacksonCoreVersion")
+
+def repackagedGroup = readProperty("intelliJDepsGroupId")
+def repackagedVersionSuffix = "-idea"
+
+def repackagerDir = new File(projectDir, "/build/")
+def repackagerDirTarget = new File(repackagerDir, "/exp")
+
+repositories {
+  mavenCentral()
+}
+
+// ----------------------------------------- HELPERS ----------------------------------------- //
+
+String readProperty(String property) {
+  def propertiesPath = project.projectDir
+    .toPath()
+    .resolve("../dependencies.properties")
+  def properties = new Properties()
+  try {
+    Files.newInputStream(propertiesPath).withCloseable { stream ->
+      properties.load(stream)
+    }
+  }
+  catch (Exception e) {
+    throw new IllegalStateException("Unable to read properties from $propertiesPath", e)
+  }
+  return Objects.requireNonNull(properties.getProperty(property), "Unable to find the value for the property: $property")
+}
+
+FileTree resolveLibraryFiles(String group, String artifact, String version, String classifier) {
+  def configurationName = "repackage-$classifier"
+  def dependencyNotation
+  if (classifier != null) {
+    dependencyNotation = "$group:$artifact:$version:$classifier"
+  }
+  else {
+    dependencyNotation = "$group:$artifact:$version"
+  }
+  def configuration = project.configurations.create(configurationName)
+  project.dependencies.add(configurationName, dependencyNotation)
+  configuration.resolve()
+
+  return zipTree(configuration.files.find {
+    if (classifier == null) {
+      it.name == "$artifact-$version" + '.jar'
+    }
+    else {
+      it.name == "$artifact-$version-$classifier" + '.jar'
+    }
+  })
+}
+
+// ----------------------------------------- TASKS ----------------------------------------- //
+
+tasks.register('disassembleJar', Copy) {
+  group "build"
+
+  from resolveLibraryFiles(libraryGroup, libraryArtifactId, libraryVersion, null)
+  exclude 'META-INF/versions/**'
+  into new File(repackagerDirTarget, "bin")
+}
+
+tasks.register('disassembleSourcesJar', Copy) {
+  group "build"
+
+  from resolveLibraryFiles(libraryGroup, libraryArtifactId, libraryVersion, "sources")
+  exclude 'META-INF/versions/**'
+  into new File(repackagerDirTarget, "sources")
+}
+
+tasks.register('buildJar', Zip) {
+  group "build"
+
+  dependsOn 'disassembleJar'
+  extension 'jar'
+  baseName libraryArtifactId
+  version "$libraryVersion$repackagedVersionSuffix"
+
+  from new File(repackagerDirTarget, "bin")
+}
+
+tasks.register('buildSourcesJar', Zip) {
+  group "build"
+
+  dependsOn 'disassembleSourcesJar'
+  extension 'jar'
+  classifier 'sources'
+  baseName libraryArtifactId
+  version "$libraryVersion$repackagedVersionSuffix"
+
+  from new File(repackagerDirTarget, "sources")
+}
+
+// ----------------------------------------- PUBLISHING ----------------------------------------- //
+
+publishing {
+  publications {
+    repackagedJar(MavenPublication) {
+      groupId repackagedGroup
+      artifactId libraryArtifactId
+      version "$libraryVersion$repackagedVersionSuffix"
+
+      artifact buildJar
+      artifact buildSourcesJar
+    }
+  }
+  repositories {
+    mavenLocal()
+    maven {
+      name "JetBrains"
+      url "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies"
+      credentials {
+        username = System.getenv('INTELLIJ_DEPENDENCIES_BOT')
+        password = System.getenv('INTELLIJ_DEPENDENCIES_TOKEN')
+      }
+    }
+  }
+}
