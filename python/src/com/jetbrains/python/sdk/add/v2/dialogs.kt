@@ -25,7 +25,7 @@ import javax.swing.event.AncestorEvent
 /**
  * @see PythonAddLocalInterpreterPresenter
  */
-class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLocalInterpreterPresenter) : DialogWrapper(dialogPresenter.project) {
+class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLocalInterpreterPresenter) : DialogWrapper(dialogPresenter.moduleOrProject.project) {
   val outerPanel = JPanel().apply {
     layout = BoxLayout(this, BoxLayout.X_AXIS)
     preferredSize = Dimension(500, 250) // todo scale dimensions
@@ -41,7 +41,7 @@ class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLoca
 
     outerPanel.addAncestorListener(object : AncestorListenerAdapter() {
       override fun ancestorAdded(event: AncestorEvent?) {
-        val basePath = dialogPresenter.basePathForEnv.toString()
+        val basePath = dialogPresenter.pathForVEnv.toString()
         model = PythonLocalAddInterpreterModel(service<PythonAddSdkService>().coroutineScope,
                                                Dispatchers.EDT + ModalityState.current().asContextElement(), AtomicProperty(basePath))
         model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
@@ -71,7 +71,7 @@ class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLoca
   @RequiresEdt
   override fun doOKAction() {
     super.doOKAction()
-    runWithModalProgressBlocking(dialogPresenter.project, "...") {
+    runWithModalProgressBlocking(dialogPresenter.moduleOrProject.project, "...") {
       dialogPresenter.okClicked(mainPanel.currentSdkManager)
     }
   }

@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -25,7 +24,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
 
-class PySdkPopupFactory(val project: Project, val module: Module) {
+class PySdkPopupFactory(val module: Module) {
 
   companion object {
     private fun nameInPopup(sdk: Sdk): String {
@@ -38,11 +37,11 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
 
     fun descriptionInPopup(sdk: Sdk) = "${nameInPopup(sdk)} [${path(sdk)}]".trimMiddle(150)
 
-    fun createAndShow(project: Project, module: Module) {
+    fun createAndShow(module: Module) {
       DataManager.getInstance()
         .dataContextFromFocusAsync
         .onSuccess {
-          val popup = PySdkPopupFactory(project, module).createPopup(it)
+          val popup = PySdkPopupFactory(module).createPopup(it)
 
           val component = SwingHelper.getComponentFromRecentMouseEvent()
           if (component != null) {
@@ -58,8 +57,8 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
   fun createPopup(context: DataContext): ListPopup {
     val group = DefaultActionGroup()
 
-    val interpreterList = PyConfigurableInterpreterList.getInstance(project)
-    val moduleSdksByTypes = groupModuleSdksByTypes(interpreterList.getAllPythonSdks(project, module), module) {
+    val interpreterList = PyConfigurableInterpreterList.getInstance(module.project)
+    val moduleSdksByTypes = groupModuleSdksByTypes(interpreterList.getAllPythonSdks(module.project, module), module) {
       !it.sdkSeemsValid ||
       PythonSdkType.hasInvalidRemoteCredentials(it) ||
       PythonSdkType.isIncompleteRemote(it) ||
@@ -86,17 +85,17 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
     if (Registry.get("python.use.targets.api").asBoolean()) {
       val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
-      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { switchToSdk(module, it, currentSdk) })
+      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(module)) { switchToSdk(module, it, currentSdk) })
       group.add(addNewInterpreterPopupGroup)
       group.addSeparator()
     }
     group.add(InterpreterSettingsAction())
     if (!Registry.get("python.use.targets.api").asBoolean()) {
-      group.add(AddInterpreterAction(project, module, currentSdk))
+      group.add(AddInterpreterAction(module.project, module, currentSdk))
     }
     group.add(object : AnAction(PyBundle.message("python.packaging.interpreter.widget.manage.packages")) {
       override fun actionPerformed(e: AnActionEvent) {
-        ToolWindowManager.getInstance(project).getToolWindow("Python Packages")?.show()
+        ToolWindowManager.getInstance(module.project).getToolWindow("Python Packages")?.show()
       }
     })
 
@@ -127,7 +126,7 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
 
   private inner class InterpreterSettingsAction : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.interpreter.settings")) {
     override fun actionPerformed(e: AnActionEvent) {
-      PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
+      PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(module.project, module)
     }
   }
 }

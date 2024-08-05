@@ -2,8 +2,10 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -18,16 +20,23 @@ import java.nio.file.Path
  *
  * @see PythonAddLocalInterpreterDialog
  */
-class PythonAddLocalInterpreterPresenter(internal val project: Project) {
+class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject) {
 
-  val basePathForEnv: Path get() = Path.of(project.basePath ?: (System.getProperty("user.home")))
+  /**
+   * Default path to create virtualenv it
+   */
+  val pathForVEnv: Path
+    get() = when (moduleOrProject) {
+              is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath()
+              is ModuleOrProject.ProjectOnly -> moduleOrProject.project.basePath?.toNioPathOrNull()
+            } ?: Path.of(System.getProperty("user.home"))
 
   private val _sdkShared = MutableSharedFlow<Sdk>(1)
   val sdkCreatedFlow: Flow<Sdk> = _sdkShared.asSharedFlow()
 
   suspend fun okClicked(addEnvironment: PythonAddEnvironment) {
     val sdk = withContext(Dispatchers.EDT) { addEnvironment.getOrCreateSdk() }
-    project.pySdkService.persistSdk(sdk)
+    moduleOrProject.project.pySdkService.persistSdk(sdk)
     _sdkShared.emit(sdk)
   }
 }

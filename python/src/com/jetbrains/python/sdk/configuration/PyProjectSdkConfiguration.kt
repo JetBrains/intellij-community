@@ -86,7 +86,7 @@ object PyProjectSdkConfiguration {
       NotificationType.INFORMATION
     ).apply {
       val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
-        PySdkPopupFactory.createAndShow(project, module)
+        PySdkPopupFactory.createAndShow(module)
       }
 
       addAction(configureSdkAction)

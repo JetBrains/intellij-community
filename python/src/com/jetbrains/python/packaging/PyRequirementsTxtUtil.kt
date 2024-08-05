@@ -84,7 +84,7 @@ internal fun syncWithImports(module: Module) {
   val sdk = PythonSdkUtil.findPythonSdk(module)
   if (sdk == null) {
     val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
-      PySdkPopupFactory.createAndShow(module.project, module)
+      PySdkPopupFactory.createAndShow(module)
     }
     showNotification(notificationGroup,
                      NotificationType.ERROR,

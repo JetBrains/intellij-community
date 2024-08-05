@@ -127,7 +127,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                                              @NotNull Component dataContextComponent,
                                                              @NotNull Consumer<Sdk> onSdkCreated) {
     DataContext dataContext = DataManager.getInstance().getDataContext(dataContextComponent);
-    List<AnAction> actions = AddInterpreterActions.collectAddInterpreterActions(project, module, onSdkCreated);
+    var moduleOrProject = (module != null) ? new ModuleOrProject.ModuleAndProject(module) : new ModuleOrProject.ProjectOnly(project);
+    List<AnAction> actions = AddInterpreterActions.collectAddInterpreterActions(moduleOrProject, onSdkCreated);
     return JBPopupFactory.getInstance().createActionGroupPopup(
       null,
       new DefaultActionGroup(actions),
