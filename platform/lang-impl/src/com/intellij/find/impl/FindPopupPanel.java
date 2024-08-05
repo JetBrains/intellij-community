@@ -1466,7 +1466,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   @Nullable
   public String getFileTypeMask() {
     String mask = null;
-    if (header.cbFileFilter != null && header.cbFileFilter.isSelected()) {
+    if (header.cbFileFilter.isSelected()) {
       mask = (String)header.fileMaskField.getSelectedItem();
     }
     return mask;
