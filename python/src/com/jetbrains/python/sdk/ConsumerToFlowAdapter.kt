@@ -14,13 +14,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.function.Consumer
 
+@Service
+private class MyService(val coroutineScope: CoroutineScope)
 
 /**
  * collects first item of flow in EDT and calls [consumer] to be used as an adapter.
  */
 internal fun <T : Any> Flow<T>.oneShotConsumer(consumer: Consumer<T>) {
-  @Service
-  class MyService(val coroutineScope: CoroutineScope)
+
   ApplicationManager.getApplication().service<MyService>().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     consumer.accept(this@oneShotConsumer.first())
   }
