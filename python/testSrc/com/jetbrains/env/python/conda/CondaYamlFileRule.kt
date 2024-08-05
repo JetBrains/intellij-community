@@ -30,7 +30,7 @@ internal class CondaYamlFileRule(private val condaRule: LocalCondaRule,
     val fullPathOnTarget = condaRule.condaPathOnTarget
     val command = PyCondaCommand(fullPathOnTarget, null, null)
     val condaEnvRequest = NewCondaEnvRequest.EmptyNamedEnv(languageLevel, envName)
-    runBlocking { PyCondaEnv.createEnv(command, condaEnvRequest).mapFlat { it.getResultStdoutStr() } }
+    runBlocking { PyCondaEnv.createEnv(command, condaEnvRequest).mapFlat { it.getResultStdoutStr() }.getOrThrow() }
     val targetReq = LocalTargetEnvironmentRequest()
     val builder = TargetedCommandLineBuilder(targetReq).apply {
       setExePath(fullPathOnTarget)
