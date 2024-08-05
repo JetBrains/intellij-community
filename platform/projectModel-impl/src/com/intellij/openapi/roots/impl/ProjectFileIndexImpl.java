@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +43,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
       Set<VirtualFile> allRecursiveRoots = new LinkedHashSet<>();
       List<VirtualFile> allNonRecursiveRoots = new ArrayList<>();
       myWorkspaceFileIndex.visitFileSets(fileSet -> {
+        ProgressManager.checkCanceled();
         if (fileSet.getKind().isContent()) {
           VirtualFile root = fileSet.getRoot();
           if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
