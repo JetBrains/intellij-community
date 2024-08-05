@@ -2,7 +2,10 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.concurrency.installThreadContext
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -27,6 +30,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
@@ -36,6 +40,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.*
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
@@ -77,6 +82,8 @@ open class ProjectFrameHelper internal constructor(
   @JvmField
   @Internal
   val rootPane: IdeRootPane
+
+  private var statusBar: IdeStatusBarImpl? = null
 
   private var balloonLayout: BalloonLayout? = null
   private val frameDecorator: IdeFrameDecorator?
@@ -179,7 +186,7 @@ open class ProjectFrameHelper internal constructor(
       return frame
     }
 
-    rootPane.createAndConfigureStatusBar(frameHelper = this)
+    createAndConfigureStatusBar()
     val frame = frame
     MnemonicHelper.init(frame)
     frame.focusTraversalPolicy = IdeFocusTraversalPolicy()
@@ -201,6 +208,24 @@ open class ProjectFrameHelper internal constructor(
     return frame
   }
 
+  private fun createAndConfigureStatusBar() {
+    val statusBar = createStatusBar()
+    this.statusBar = statusBar
+
+    fun updateStatusBarVisibility(uiSettings: UISettings = UISettings.shadowInstance) {
+      statusBar.isVisible = uiSettings.showStatusBar && !uiSettings.presentationMode
+    }
+    application.messageBus.connect(cs).subscribe(UISettingsListener.TOPIC, UISettingsListener(::updateStatusBarVisibility))
+    updateStatusBarVisibility()
+    rootPane.installStatusBar(statusBar)
+  }
+
+  @Internal
+  protected open fun createStatusBar(): IdeStatusBarImpl {
+    val addToolWindowWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders
+    return IdeStatusBarImpl(cs, ::project, addToolWindowWidget)
+  }
+
   fun postInit() {
     (rootPane.glassPane as IdeGlassPaneImpl).installPainters()
     if (SystemInfoRt.isMac) {
@@ -210,7 +235,7 @@ open class ProjectFrameHelper internal constructor(
 
   override fun getComponent(): JComponent? = frame.rootPane
 
-  override fun getStatusBar(): IdeStatusBarImpl? = rootPane.statusBar
+  override fun getStatusBar(): IdeStatusBarImpl? = statusBar
 
   override fun setFrameTitle(text: String) {
     frame.title = text
@@ -319,6 +344,9 @@ open class ProjectFrameHelper internal constructor(
 
   internal suspend fun setProject(project: Project) {
     rootPane.setProject(project)
+    statusBar?.let {
+      project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
+    }
     activationTimestamp?.let {
       serviceAsync<RecentProjectsManager>().setActivationTimestamp(project, it)
     }
@@ -347,7 +375,7 @@ open class ProjectFrameHelper internal constructor(
   }
 
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
-    rootPane.statusBar!!.init(project, frame)
+    statusBar!!.init(project, frame)
   }
 
   fun appClosing() {

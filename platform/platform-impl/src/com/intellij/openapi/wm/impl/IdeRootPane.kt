@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -29,7 +28,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.*
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.blockingComputeMainActionGroups
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.menu.ActionAwareIdeMenuBar
@@ -71,8 +69,7 @@ open class IdeRootPane internal constructor(
 
   private var toolbar: JComponent? = null
 
-  internal var statusBar: IdeStatusBarImpl? = null
-    private set
+  private var statusBar: StatusBar? = null
 
   private val northPanel = JBBox.createVerticalBox()
 
@@ -337,20 +334,14 @@ open class IdeRootPane internal constructor(
     }
   }
 
-  internal fun createAndConfigureStatusBar(frameHelper: ProjectFrameHelper) {
-    val statusBar = createStatusBar(frameHelper)
+  @RequiresEdt
+  internal fun installStatusBar(statusBar: StatusBar) {
+    check(this.statusBar == null) { "Updating a status bar is ot supported" }
     this.statusBar = statusBar
-    updateStatusBarVisibility()
-    contentPane!!.add(statusBar, BorderLayout.SOUTH)
-  }
-
-  protected open fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl =
-    IdeStatusBarImpl(coroutineScope, { frameHelper.project },
-                     addToolWindowWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders)
-
-  private fun updateStatusBarVisibility() {
-    val uiSettings = UISettings.shadowInstance
-    statusBar!!.isVisible = uiSettings.showStatusBar && !uiSettings.presentationMode
+    val component = statusBar.component
+    if (component != null) {
+      contentPane!!.add(component, BorderLayout.SOUTH)
+    }
   }
 
   private fun scheduleUpdateMainMenuVisibility() {
@@ -376,9 +367,6 @@ open class IdeRootPane internal constructor(
 
   suspend fun setProject(project: Project) {
     installNorthComponents(project)
-    statusBar?.let {
-      project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
-    }
 
     (helper as? FrameHeaderHelper.Decorated)?.selectedEditorFilePath?.project = project
   }
@@ -436,7 +424,6 @@ open class IdeRootPane internal constructor(
     ComponentUtil.decorateWindowHeader(this)
 
     updateToolbarVisibility()
-    updateStatusBarVisibility()
     val frame = frame
     frame.background = JBColor.PanelBackground
     (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()

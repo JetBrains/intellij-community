@@ -69,6 +69,16 @@ internal class LightEditFrameWrapper(
 
   override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(parentCs = cs, frame = frame)
 
+  override fun createStatusBar(): IdeStatusBarImpl {
+    return object : IdeStatusBarImpl(parentCs = cs, getProject = { project }, addToolWindowWidget = false) {
+      override fun updateUI() {
+        setUI(LightEditStatusBarUI())
+      }
+
+      override fun getPreferredSize(): Dimension = LightEditStatusBarUI.withHeight(super.getPreferredSize())
+    }
+  }
+
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
     val statusBar = statusBar!!
@@ -136,16 +146,6 @@ internal class LightEditFrameWrapper(
 
     override fun getToolWindowPane(): ToolWindowPane {
       throw IllegalStateException("Tool windows are unavailable in LightEdit")
-    }
-
-    override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(parentCs = this@LightEditRootPane.coroutineScope, getProject = { project }, addToolWindowWidget = false) {
-        override fun updateUI() {
-          setUI(LightEditStatusBarUI())
-        }
-
-        override fun getPreferredSize(): Dimension = LightEditStatusBarUI.withHeight(super.getPreferredSize())
-      }
     }
   }
 
