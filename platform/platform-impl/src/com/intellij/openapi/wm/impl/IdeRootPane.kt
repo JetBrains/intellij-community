@@ -53,7 +53,6 @@ import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
-import java.awt.event.WindowStateListener
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 
@@ -122,20 +121,6 @@ open class IdeRootPane internal constructor(
 
     ComponentUtil.decorateWindowHeader(this)
 
-    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
-      val windowStateListener = WindowStateListener {
-        installLinuxBorder(UISettings.shadowInstance, isFullScreen, it.newState)
-      }
-      frame.addWindowStateListener(windowStateListener)
-      coroutineScope.coroutineContext.job.invokeOnCompletion {
-        frame.removeWindowStateListener(windowStateListener)
-      }
-      installLinuxBorder(UISettings.shadowInstance, isFullScreen, frame.extendedState)
-    }
-    else {
-      border = UIManager.getBorder("Window.border")
-    }
-
     helper.init(frame, pane = this, coroutineScope)
     scheduleUpdateMainMenuVisibility()
 
@@ -181,15 +166,6 @@ open class IdeRootPane internal constructor(
     return IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, coroutineScope.childScope())
   }
 
-  override fun updateUI() {
-    super.updateUI()
-
-    @Suppress("SENSELESS_COMPARISON") // frame = null when called from init of super
-    if (frame != null && windowDecorationStyle == NONE) {
-      installLinuxBorder(UISettings.shadowInstance, isFullScreen, frame.extendedState)
-    }
-  }
-
   protected open fun createCenterComponent(frame: JFrame): Component {
     val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     val toolWindowButtonManager: ToolWindowButtonManager
@@ -226,17 +202,8 @@ open class IdeRootPane internal constructor(
     return (titlePane as? CustomHeader)?.customTitleBar ?: (titlePane as? MacToolbarFrameHeader)?.customTitleBar
   }
 
-  private fun installLinuxBorder(uiSettings: UISettings, isFullScreen: Boolean, frameState: Int) {
-    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
-      val maximized = frameState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH
-      val undecorated = !isFullScreen && !maximized && CustomWindowHeaderUtil.hideNativeLinuxTitle(uiSettings)
-      border = JBUI.CurrentTheme.Window.getBorder(undecorated)
-    }
-  }
-
   private fun updateScreenState(uiSettings: UISettings, isFullScreen: Boolean) {
     this.isFullScreen = isFullScreen
-    installLinuxBorder(uiSettings, isFullScreen, frame.extendedState)
     if (helper is FrameHeaderHelper.Decorated) {
       val wasCustomFrameHeaderVisible = helper.customFrameTitlePane.getComponent().isVisible
       val isCustomFrameHeaderVisible = isCustomFrameHeaderVisible(uiSettings, isFullScreen) {

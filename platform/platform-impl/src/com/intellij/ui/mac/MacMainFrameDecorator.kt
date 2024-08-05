@@ -184,11 +184,11 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     tabsHandler.exitFullScreen()
   }
 
-  override fun setStoredFullScreen() {
-    isInFullScreen = true
+  override fun setStoredFullScreen(state: Boolean) {
+    isInFullScreen = state
     val rootPane = frame.rootPane
     if (rootPane != null) {
-      rootPane.putClientProperty(FULL_SCREEN, true)
+      rootPane.putClientProperty(FULL_SCREEN, state)
       if (rootPane.border != null) {
         rootPane.setBorder(null)
       }

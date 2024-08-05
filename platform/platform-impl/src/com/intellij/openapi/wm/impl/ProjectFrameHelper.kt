@@ -92,8 +92,14 @@ open class ProjectFrameHelper internal constructor(
     @Suppress("LeakingThis")
     rootPane = createIdeRootPane(loadingState)
     frame.doSetRootPane(rootPane)
-    // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane
+
     frameDecorator = rootPane.createDecorator()
+    // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane via
+    // [com.intellij.openapi.wm.impl.IdeFrameDecorator.notifyFrameComponents]
+    frameDecorator?.setStoredFullScreen(getReusedFullScreenState())
+
+    IdeRootPaneBorderHelper.install(ApplicationManager.getApplication(), cs, frame, frameDecorator, rootPane)
+
     frame.setFrameHelper(object : FrameHelper {
       override fun uiDataSnapshot(sink: DataSink) {
         return this@ProjectFrameHelper.uiDataSnapshot(sink)
@@ -128,9 +134,7 @@ open class ProjectFrameHelper internal constructor(
         }
       }
     })
-    if (frameDecorator != null && getReusedFullScreenState()) {
-      frameDecorator.setStoredFullScreen()
-    }
+
     frame.background = JBColor.PanelBackground
     rootPane.preInit(isInFullScreen)
 

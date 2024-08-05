@@ -86,8 +86,8 @@ internal abstract class IdeFrameDecorator protected constructor(@JvmField protec
 
   abstract val isInFullScreen: Boolean
 
-  open fun setStoredFullScreen() {
-    notifyFrameComponents(state = true)
+  open fun setStoredFullScreen(state: Boolean) {
+    notifyFrameComponents(state)
   }
 
   open fun setProject() {
