@@ -237,8 +237,8 @@ public final class InvertIfConditionAction extends PsiUpdateModCommandAction<Psi
         element instanceof PsiForeachStatement && flow.getStartOffset(element) + 1 == endOffset) {
       PsiStatement statement = factory.createStatementFromText("continue;", ifStatement);
       statement = (PsiStatement)codeStyle.reformat(statement);
-      ifStatement = addAfterWithinCodeBlock(ifStatement, ct.markUnchanged(thenBranch), ct);
-      Objects.requireNonNull(ifStatement.getThenBranch()).replace(statement);
+      ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch, ct);
+      ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), statement);
       return ifStatement;
     }
 
@@ -372,6 +372,18 @@ public final class InvertIfConditionAction extends PsiUpdateModCommandAction<Psi
       ifStatement = (PsiIfStatement)wrapWithCodeBlock(ifStatement);
     }
     addAfter(ifStatement, branch, ct);
+    branch = ifStatement.getThenBranch();
+    if (branch instanceof PsiBlockStatement blockStatement) {
+      PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+      PsiElement start = codeBlock.getFirstBodyElement();
+      PsiElement end = codeBlock.getLastBodyElement();
+      if (start != null && end != null) {
+        ct.markRangeUnchanged(start, end);
+      }
+    }
+    else {
+      ct.markUnchanged(branch);
+    }
     return ifStatement;
   }
 
