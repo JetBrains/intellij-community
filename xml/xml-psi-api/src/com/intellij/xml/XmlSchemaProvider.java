@@ -24,8 +24,36 @@ import java.util.Set;
 public abstract class XmlSchemaProvider implements PossiblyDumbAware {
   public static final ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<>("com.intellij.xml.schemaProvider");
 
-  @Nullable
-  public static XmlFile findSchema(@NotNull @NonNls String namespace, @Nullable Module module, @NotNull PsiFile file) {
+  public abstract @Nullable XmlFile getSchema(@NotNull @NonNls String url, @Nullable Module module, final @NotNull PsiFile baseFile);
+
+  public boolean isAvailable(final @NotNull XmlFile file) {
+    return false;
+  }
+
+  public static @NotNull List<XmlSchemaProvider> getAvailableProviders(@NotNull XmlFile file) {
+    return ContainerUtil.findAll(EP_NAME.getExtensionList(), xmlSchemaProvider -> xmlSchemaProvider.isAvailable(file));
+  }
+
+  /**
+   * Provides specific namespaces for given XML file.
+   *
+   * @param file    XML or JSP file.
+   * @param tagName optional
+   * @return available namespace uris, or {@code null} if the provider did not recognize the file.
+   */
+  public @NotNull Set<String> getAvailableNamespaces(final @NotNull XmlFile file, final @Nullable String tagName) {
+    return Collections.emptySet();
+  }
+
+  public @Nullable String getDefaultPrefix(@NotNull @NonNls String namespace, final @NotNull XmlFile context) {
+    return null;
+  }
+
+  public @Nullable Set<String> getLocations(@NotNull @NonNls String namespace, final @NotNull XmlFile context) {
+    return null;
+  }
+
+  public static @Nullable XmlFile findSchema(@NotNull @NonNls String namespace, @Nullable Module module, @NotNull PsiFile file) {
     if (file.getProject().isDefault()) return null;
     for (XmlSchemaProvider provider : EP_NAME.getExtensionList()) {
       if (!DumbService.getInstance(file.getProject()).isUsableInCurrentContext(provider)) {
@@ -43,43 +71,8 @@ public abstract class XmlSchemaProvider implements PossiblyDumbAware {
     return null;
   }
 
-  @Nullable
-  public static XmlFile findSchema(@NotNull @NonNls String namespace, @NotNull PsiFile baseFile) {
+  public static @Nullable XmlFile findSchema(@NotNull @NonNls String namespace, @NotNull PsiFile baseFile) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(baseFile);
     return findSchema(namespace, module, baseFile);
-  }
-
-  public static @NotNull List<XmlSchemaProvider> getAvailableProviders(@NotNull XmlFile file) {
-    return ContainerUtil.findAll(EP_NAME.getExtensionList(), xmlSchemaProvider -> xmlSchemaProvider.isAvailable(file));
-  }
-
-  @Nullable
-  public abstract XmlFile getSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull final PsiFile baseFile);
-
-
-  public boolean isAvailable(@NotNull final XmlFile file) {
-    return false;
-  }
-
-  /**
-   * Provides specific namespaces for given XML file.
-   *
-   * @param file    XML or JSP file.
-   * @param tagName optional
-   * @return available namespace uris, or {@code null} if the provider did not recognize the file.
-   */
-  @NotNull
-  public Set<String> getAvailableNamespaces(@NotNull final XmlFile file, @Nullable final String tagName) {
-    return Collections.emptySet();
-  }
-
-  @Nullable
-  public String getDefaultPrefix(@NotNull @NonNls String namespace, @NotNull final XmlFile context) {
-    return null;
-  }
-
-  @Nullable
-  public Set<String> getLocations(@NotNull @NonNls String namespace, @NotNull final XmlFile context) {
-    return null;
   }
 }

@@ -33,8 +33,7 @@ public abstract class ExternalResourceManager extends SimpleModificationTracker 
 
   public abstract String getResourceLocation(@NotNull @NonNls String url, @NotNull Project project);
 
-  @Nullable
-  public abstract PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, @Nullable String version);
+  public abstract @Nullable PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, @Nullable String version);
 
   public abstract String[] getResourceUrls(@Nullable FileType fileType, boolean includeStandard);
 
