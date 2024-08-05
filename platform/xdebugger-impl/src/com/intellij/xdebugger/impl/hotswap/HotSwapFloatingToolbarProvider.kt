@@ -43,7 +43,8 @@ internal class HotSwapModifiedFilesAction : AnAction(XDebuggerBundle.messagePoin
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = findSessionIfReady(e.project) != null
+    e.presentation.isVisible = Registry.`is`("debugger.hotswap.floating.toolbar")
+    e.presentation.isEnabled = findSessionIfReady(e.project) != null
   }
 
   private fun findSessionIfReady(project: Project?): HotSwapSession<*>? {
