@@ -8,7 +8,6 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
@@ -43,10 +42,6 @@ public final class InvertIfConditionAction extends PsiUpdateModCommandAction<Psi
     final PsiExpression condition = ifStatement.getCondition();
     if (condition == null) return false;
     if (ifStatement.getThenBranch() == null) return false;
-    if (SyntaxTraverser.psiTraverser(condition)
-          .filter(PsiPrefixExpression.class)
-          .filter(prefixExpr -> PsiUtil.skipParenthesizedExprDown(prefixExpr.getOperand()) == null)
-          .first() != null) return false;
     if (element instanceof PsiKeyword keyword) {
       if (element.getParent() != ifStatement) {
         return false;
@@ -57,8 +52,8 @@ public final class InvertIfConditionAction extends PsiUpdateModCommandAction<Psi
       }
     }
     else {
-      final TextRange condTextRange = condition.getTextRange();
-      if (condTextRange == null || !condTextRange.contains(offset)) {
+      PsiJavaToken parenth = ifStatement.getRParenth();
+      if (parenth == null || offset > parenth.getTextOffset() + 1) {
         return false;
       }
     }
