@@ -33,7 +33,7 @@ internal fun listAppComponents(): List<ComponentDescriptor> {
   val descriptors = mutableListOf<ComponentDescriptor>()
   fun processImplementationClass(aClass: Class<*>, descriptor: PluginDescriptor?) {
     if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
-      val state = aClass.getAnnotation(State::class.java)
+      val state = getState(aClass)
       @Suppress("UNCHECKED_CAST")
       descriptors.add(
         ComponentDescriptor(
@@ -55,6 +55,12 @@ internal fun listAppComponents(): List<ComponentDescriptor> {
     compareBy<ComponentDescriptor> { it.name }.thenBy { it.aClass.name }
   )
   return descriptors
+}
+
+private fun getState(aClass: Class<*>): State? {
+  aClass.getAnnotation(State::class.java)?.let { return it }
+  aClass.superclass?.let { return getState(it) }
+  return null
 }
 
 
