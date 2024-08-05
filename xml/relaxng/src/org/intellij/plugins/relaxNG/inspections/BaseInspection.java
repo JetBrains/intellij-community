@@ -100,9 +100,8 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
 
   private SuppressQuickFix[] getXmlOnlySuppressions(PsiElement element) {
     return ContainerUtil.map(super.getBatchSuppressActions(element), action -> new SuppressQuickFix() {
-      @NotNull
       @Override
-      public String getName() {
+      public @NotNull String getName() {
         return action.getName();
       }
 
@@ -120,8 +119,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return action.getFamilyName();
       }
 
@@ -167,8 +165,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   }
 
   @Override
-  @NotNull
-  public abstract RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
+  public abstract @NotNull RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
 
   private abstract class SuppressAction implements SuppressQuickFix {
     private final String myLocation;
@@ -177,15 +174,13 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
       myLocation = location;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return RelaxngBundle.message("relaxng.suppress.action.name", myLocation);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return getDisplayName();
     }
 

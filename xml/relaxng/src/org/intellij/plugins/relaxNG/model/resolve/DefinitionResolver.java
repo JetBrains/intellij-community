@@ -122,8 +122,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
     }
   }
 
-  @Nullable
-  public static Set<Define> resolve(Grammar scope, final String value) {
+  public static @Nullable Set<Define> resolve(Grammar scope, final String value) {
     final Map<String, Set<Define>> map = getAllVariants(scope);
     if (map == null) {
       return null;
@@ -147,8 +146,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
     return set;
   }
 
-  @Nullable
-  public static Map<String, Set<Define>> getAllVariants(Grammar scope) {
+  public static @Nullable Map<String, Set<Define>> getAllVariants(Grammar scope) {
     final PsiElement psiElement = scope.getPsiElement();
     if (psiElement == null || !psiElement.isValid()) return null;
 
@@ -207,8 +205,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
       return myResult == null;
     }
 
-    @Nullable
-    public Set<Define> getResult() {
+    public @Nullable Set<Define> getResult() {
       return myResult != null ? Collections.singleton(myResult) : null;
     }
   }

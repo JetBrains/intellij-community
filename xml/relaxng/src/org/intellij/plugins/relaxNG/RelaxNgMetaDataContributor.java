@@ -53,15 +53,13 @@ public final class RelaxNgMetaDataContributor implements MetaDataContributor {
       ),
       RngNsDescriptor.class);
 
-    registrar.registerMetaData(
-      new ClassFilter(RncDocument.class),
-      RngNsDescriptor.class);
+    registrar.registerMetaData(new ClassFilter(RncDocument.class), RngNsDescriptor.class);
 
     registrar.registerMetaData(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         if (element instanceof XmlTag tag) {
-          final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
+          DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
           return domElement instanceof RngDefine;
         }
         return false;
@@ -74,8 +72,7 @@ public final class RelaxNgMetaDataContributor implements MetaDataContributor {
     }, RngDefineMetaData.class);
   }
 
-  @NotNull
-  public static List<Class<? extends LocalInspectionTool>> getInspectionClasses() {
+  public static @NotNull List<Class<? extends LocalInspectionTool>> getInspectionClasses() {
     return Arrays.asList(RngDomInspection.class, UnusedDefineInspection.class);
   }
 

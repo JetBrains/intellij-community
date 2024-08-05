@@ -40,12 +40,10 @@ import java.util.Set;
 final class RngDocumentationProvider implements DocumentationProvider {
   private static final Logger LOG = Logger.getInstance(RngDocumentationProvider.class);
 
-  @NonNls
-  private static final String COMPATIBILITY_ANNOTATIONS_1_0 = "http://relaxng.org/ns/compatibility/annotations/1.0";
+  private static final @NonNls String COMPATIBILITY_ANNOTATIONS_1_0 = "http://relaxng.org/ns/compatibility/annotations/1.0";
 
   @Override
-  @Nullable
-  public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  public @Nullable @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final XmlElement c = PsiTreeUtil.getParentOfType(originalElement, XmlTag.class, XmlAttribute.class);
     if (c != null && c.getManager() == null) {
       LOG.warn("Invalid context element passed to generateDoc()", new Throwable("<stack trace>"));

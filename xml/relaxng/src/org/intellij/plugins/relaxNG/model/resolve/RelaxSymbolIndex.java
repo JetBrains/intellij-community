@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -26,19 +26,16 @@ import java.util.Map;
 public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> NAME = ID.create("RelaxSymbolIndex");
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<String, Void> map(@NotNull FileContent inputData) {
+      public @NotNull Map<String, Void> map(@NotNull FileContent inputData) {
         final HashMap<String, Void> map = new HashMap<>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
@@ -103,15 +100,13 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, RncFileType.getInstance()) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {

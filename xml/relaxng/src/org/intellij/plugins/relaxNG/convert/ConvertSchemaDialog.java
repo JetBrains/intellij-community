@@ -67,8 +67,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return mySettings.getRoot();
   }
 
