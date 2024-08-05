@@ -24,8 +24,8 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "module"
     val newModuleName = "newModule"
     renameModule(oldModuleName, newModuleName)
+    val tag = findTag("project.artifactId")
     readAction {
-      val tag = findTagBlocking("project.artifactId")
       assertEquals(newModuleName, tag.getValue().getText())
     }
   }
@@ -310,8 +310,8 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "module"
     val newModuleName = "group.module"
     renameModule(oldModuleName, newModuleName)
+    val tag = findTag("project.artifactId")
     readAction {
-      val tag = findTagBlocking("project.artifactId")
       assertEquals(oldModuleName, tag.getValue().getText())
     }
   }

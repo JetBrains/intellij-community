@@ -174,11 +174,6 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   @Obsolete
-  protected fun findTagBlocking(path: String): XmlTag {
-    return findTagBlocking(projectPom, path)
-  }
-
-  @Obsolete
   protected fun findTagBlocking(file: VirtualFile, path: String, clazz: Class<out MavenDomElement> = MavenDomProjectModel::class.java): XmlTag {
     val model = MavenDomUtil.getMavenDomModel(project, file, clazz)
     assertNotNull("Model is not of $clazz", model)
@@ -557,25 +552,30 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun search(file: VirtualFile): List<PsiElement> {
     val context = createDataContext(file)
-    val targets = readAction {
-      UsageTargetUtil.findUsageTargets { dataId: String? -> context.getData(dataId!!) }
+    return readAction {
+      val targets = UsageTargetUtil.findUsageTargets { dataId: String? -> context.getData(dataId!!) }
+      val target = (targets[0] as PsiElement2UsageTargetAdapter).element
+      val result: List<PsiReference> = ArrayList(ReferencesSearch.search(target).findAll())
+      result.map { it.element }
     }
-    val target = (targets[0] as PsiElement2UsageTargetAdapter).element
-    val result: List<PsiReference> = ArrayList(ReferencesSearch.search(target).findAll())
-    return result.map { it.element }
   }
 
   protected suspend fun assertHighlighted(file: VirtualFile, vararg expected: HighlightPointer) {
     val editor = getEditor(file)
-    HighlightUsagesHandler.invoke(project, editor, getTestPsiFile(file))
+    val psiFile = getTestPsiFile(file)
+    withContext(Dispatchers.EDT) {
+      HighlightUsagesHandler.invoke(project, editor, psiFile)
+    }
 
     val highlighters = editor.markupModel.allHighlighters
     val actual: MutableList<HighlightPointer> = ArrayList()
     for (each in highlighters) {
       if (!each.isValid) continue
       val offset = each.startOffset
-      var element = getTestPsiFile(file).findElementAt(offset)
-      element = PsiTreeUtil.getParentOfType(element, XmlTag::class.java)
+      val elementAtOffset = readAction { psiFile.findElementAt(offset) }
+      val element = readAction {
+        PsiTreeUtil.getParentOfType(elementAtOffset, XmlTag::class.java)
+      }
       val text = editor.document.text.substring(offset, each.endOffset)
       actual.add(HighlightPointer(element, text))
     }
