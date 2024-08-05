@@ -23,7 +23,6 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
       border = JBUI.Borders.empty()
       viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE
-      horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
       name = "compilation-charts-scroll-pane"
     }
     val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(scroll.viewport)
