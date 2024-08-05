@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import org.cef.browser.CefBrowser;
@@ -312,6 +313,17 @@ public class JBCefBrowser extends JBCefBrowserBase {
       if (isMouseWheelEventEnabled) {
         enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
       }
+
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        if (JBCefAppArmorUtils.areUnprivilegedUserNamespacesRestricted()) {
+          SwingUtilities.invokeLater(() -> {
+            removeAll();
+            add(JBCefAppArmorUtils.getUnprivilegedUserNamespacesRestrictedStubPanel(), BorderLayout.CENTER);
+            revalidate();
+            repaint();
+          });
+        }
+      });
     }
 
     @Override
