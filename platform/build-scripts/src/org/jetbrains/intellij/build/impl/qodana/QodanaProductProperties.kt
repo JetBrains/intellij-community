@@ -18,6 +18,8 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Djdk.download.consent=true"
   )
 
+private const val IS_EAP = false
+
 /**
  * Represents a set of properties specific to the Qodana product.
  *
@@ -30,8 +32,13 @@ class QodanaProductProperties(val productCode: String, val productName: String, 
     val appInfoOptions = listOf(
       "-Dqodana.product.name=$productName",
       "-Dqodana.build.number=$productCode-${context.buildNumber}",
-      "-Dqodana.eap=false",
+      "-Dqodana.eap=${isEap(productCode)}",
     )
     return COMMON_ADDITIONAL_VM_OPTIONS + customVmOptions + appInfoOptions
   }
+}
+
+private fun isEap(productCode: String): Boolean = when (productCode) {
+  "QDCPP", "QDRST", "QDRUBY" -> true
+  else -> IS_EAP
 }
