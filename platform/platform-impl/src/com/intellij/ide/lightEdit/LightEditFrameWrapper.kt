@@ -32,6 +32,7 @@ import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.MacMainFrameDecorator.FSAdapter
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,7 +67,7 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(frame = frame)
+  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(parentCs = cs, frame = frame)
 
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
@@ -119,8 +120,9 @@ internal class LightEditFrameWrapper(
     super.dispose()
   }
 
-  private inner class LightEditRootPane(frame: IdeFrameImpl)
-    : IdeRootPane(frame = frame,
+  private inner class LightEditRootPane(parentCs: CoroutineScope, frame: IdeFrameImpl)
+    : IdeRootPane(parentCs = parentCs,
+                  frame = frame,
                   loadingState = null,
                   mainMenuActionGroup = getLightEditMainMenuActionGroup()), LightEditCompatible {
     override val isLightEdit: Boolean
@@ -137,7 +139,7 @@ internal class LightEditFrameWrapper(
     }
 
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope) {
+      return object : IdeStatusBarImpl(parentCs = this@LightEditRootPane.coroutineScope, frameHelper = frameHelper, addToolWindowWidget = false) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }

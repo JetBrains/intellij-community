@@ -63,14 +63,13 @@ private const val EXTENSION_KEY = "extensionKey"
 @Suppress("LeakingThis")
 @ApiStatus.Internal
 open class IdeRootPane internal constructor(
+  parentCs: CoroutineScope,
   private val frame: IdeFrameImpl,
   loadingState: FrameLoadingState?,
   /** a not-null action group, or `null` to use [IdeActions.GROUP_MAIN_MENU] action group */
-  mainMenuActionGroup: ActionGroup? = null
+  mainMenuActionGroup: ActionGroup? = null,
 ) : JRootPane(), UISettingsListener {
-  @Suppress("SSBasedInspection")
-  @JvmField
-  internal val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IdeRootPane"))
+  protected val coroutineScope = parentCs.childScope("IdeRootPane", Dispatchers.Default)
 
   private var toolbar: JComponent? = null
 
@@ -396,7 +395,7 @@ open class IdeRootPane internal constructor(
   }
 
   protected open fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl =
-    IdeStatusBarImpl(coroutineScope.childScope(), frameHelper,
+    IdeStatusBarImpl(coroutineScope, frameHelper,
                      addToolWindowWidget = !ExperimentalUI.isNewUI() && !GeneralSettings.getInstance().isSupportScreenReaders)
 
   private fun updateStatusBarVisibility() {

@@ -81,10 +81,11 @@ private val minIconHeight: Int
   get() = JBUIScale.scale(18 + 1 + 1)
 
 open class IdeStatusBarImpl internal constructor(
-  private val coroutineScope: CoroutineScope,
+  parentCs: CoroutineScope,
   private val frameHelper: ProjectFrameHelper,
   addToolWindowWidget: Boolean,
 ) : JComponent(), Accessible, StatusBarEx, UiDataProvider {
+  private val coroutineScope = parentCs.childScope("IdeStatusBarImpl", supervisor = false)
   private var infoAndProgressPanel: InfoAndProgressPanel? = null
 
   internal enum class WidgetEffect {
@@ -139,7 +140,7 @@ open class IdeStatusBarImpl internal constructor(
   @RequiresEdt
   override fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
-    val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope)
+    val bar = IdeStatusBarImpl(parentCs = coroutineScope, frameHelper = frameHelper, addToolWindowWidget = false)
     bar.editorProvider = editorProvider
     bar.isVisible = isVisible
     synchronized(this) {

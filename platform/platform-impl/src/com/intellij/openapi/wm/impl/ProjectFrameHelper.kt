@@ -61,6 +61,10 @@ open class ProjectFrameHelper internal constructor(
 ) : IdeFrameEx, AccessibleContextAccessor, UiDataProvider {
   constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null)
 
+  @Suppress("SSBasedInspection")
+  @Internal
+  protected val cs = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IDE Project Frame"))
+
   private val isUpdatingTitle = AtomicBoolean()
   private var title: String? = null
   private var fileTitle: String? = null
@@ -155,7 +159,7 @@ open class ProjectFrameHelper internal constructor(
   }
 
   internal open fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
-    return IdeRootPane(frame = frame, loadingState = loadingState)
+    return IdeRootPane(parentCs = cs, frame = frame, loadingState = loadingState)
   }
 
   private val isInitialized = AtomicBoolean()
@@ -340,6 +344,7 @@ open class ProjectFrameHelper internal constructor(
   }
 
   open fun dispose() {
+    cs.cancel()
     MouseGestureManager.getInstance().remove(this)
     balloonLayout?.let {
       balloonLayout = null
@@ -377,7 +382,7 @@ open class ProjectFrameHelper internal constructor(
       return CompletableDeferred(value = Unit)
     }
     else {
-      return rootPane.coroutineScope.launch {
+      return cs.launch {
         frameDecorator.toggleFullScreen(state)
       }
     }
