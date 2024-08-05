@@ -18,12 +18,11 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
@@ -190,18 +189,21 @@ internal object KotlinReferenceRestoringHelper {
             ReferenceToBindToFqName(sourceFqName, targetReference as KtSimpleNameReference)
         }
 
-        else -> {
-            val project = targetReference.element.project
-            val importedReference = KtPsiFactory(project).createImportDirective(ImportPath(sourceFqName, false)).importedReference
-            val importedExpression =
-                importedReference as? KtSimpleNameExpression ?: (importedReference as? KtDotQualifiedExpression)?.selectorExpression
-            val reference = importedExpression?.mainReference
-            val symbols = reference?.resolveToSymbols()
-            if (symbols?.isNotEmpty() == true) {
-                ReferenceToImport(sourceFqName)
-            } else {
-                null
-            }
-        }
+        isAccessible(targetReference, sourceFqName) -> ReferenceToImport(sourceFqName)
+
+        else -> null
+    }
+
+    context(KaSession)
+    private fun isAccessible(
+        targetReference: KtReference,
+        sourceFqName: FqName
+    ): Boolean {
+        val project = targetReference.element.project
+        val importedReference =
+            org.jetbrains.kotlin.psi.KtPsiFactory(project).createImportDirective(ImportPath(sourceFqName, false)).importedReference
+        val reference = importedReference?.getQualifiedElementSelector()?.mainReference ?: return false
+        val symbols = reference.resolveToSymbols()
+        return symbols.isNotEmpty()
     }
 }

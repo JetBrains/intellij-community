@@ -315,6 +315,11 @@ public abstract class K2InsertImportOnPasteTestGenerated extends AbstractK2Inser
                 runTest("../../idea/tests/testData/copyPaste/imports/Local.kt");
             }
 
+            @TestMetadata("MissingClass.kt")
+            public void testMissingClass() throws Exception {
+                runTest("../../idea/tests/testData/copyPaste/imports/MissingClass.kt");
+            }
+
             @TestMetadata("MultiCaretSelection.kt")
             public void testMultiCaretSelection() throws Exception {
                 runTest("../../idea/tests/testData/copyPaste/imports/MultiCaretSelection.kt");
@@ -880,6 +885,11 @@ public abstract class K2InsertImportOnPasteTestGenerated extends AbstractK2Inser
             @TestMetadata("Local.kt")
             public void testLocal() throws Exception {
                 runTest("../../idea/tests/testData/copyPaste/imports/Local.kt");
+            }
+
+            @TestMetadata("MissingClass.kt")
+            public void testMissingClass() throws Exception {
+                runTest("../../idea/tests/testData/copyPaste/imports/MissingClass.kt");
             }
 
             @TestMetadata("MultiCaretSelection.kt")
