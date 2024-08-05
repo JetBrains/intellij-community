@@ -72,8 +72,7 @@
     "DisclosureButton": {
       "defaultBackground": "#281A33",
       "hoverOverlay": "#450073",
-      "pressedOverlay": "#54008c",
-      "successBackground": "#092E15"
+      "pressedOverlay": "#54008c"
     },
 
     "Borders": {
