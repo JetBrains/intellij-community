@@ -197,14 +197,6 @@ open class IdeRootPane internal constructor(
           isFullScreen = this::isFullScreen
         )
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
-
-        val windowStateListener = WindowStateListener {
-          installLinuxBorder()
-        }
-        frame.addWindowStateListener(windowStateListener)
-        coroutineScope.coroutineContext.job.invokeOnCompletion {
-          frame.removeWindowStateListener(windowStateListener)
-        }
       }
       else {
         helper = UndecoratedHelper(isFloatingMenuBarSupported = true)
@@ -240,7 +232,14 @@ open class IdeRootPane internal constructor(
     ComponentUtil.decorateWindowHeader(this)
 
     if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
-      installLinuxBorder()
+      val windowStateListener = WindowStateListener {
+        installLinuxBorder(UISettings.shadowInstance, isFullScreen, it.newState)
+      }
+      frame.addWindowStateListener(windowStateListener)
+      coroutineScope.coroutineContext.job.invokeOnCompletion {
+        frame.removeWindowStateListener(windowStateListener)
+      }
+      installLinuxBorder(UISettings.shadowInstance, isFullScreen, frame.extendedState)
     }
     else {
       border = UIManager.getBorder("Window.border")
@@ -307,7 +306,7 @@ open class IdeRootPane internal constructor(
 
     @Suppress("SENSELESS_COMPARISON") // frame = null when called from init of super
     if (frame != null && windowDecorationStyle == NONE) {
-      installLinuxBorder()
+      installLinuxBorder(UISettings.shadowInstance, isFullScreen, frame.extendedState)
     }
   }
 
@@ -353,17 +352,17 @@ open class IdeRootPane internal constructor(
     layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
   }
 
-  private fun installLinuxBorder() {
+  private fun installLinuxBorder(uiSettings: UISettings, isFullScreen: Boolean, frameState: Int) {
     if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
-      val maximized = frame.extendedState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH
-      val undecorated = !isFullScreen && !maximized && hideNativeLinuxTitle(UISettings.shadowInstance)
+      val maximized = frameState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH
+      val undecorated = !isFullScreen && !maximized && hideNativeLinuxTitle(uiSettings)
       border = JBUI.CurrentTheme.Window.getBorder(undecorated)
     }
   }
 
   private fun updateScreenState(uiSettings: UISettings, isFullScreen: Boolean) {
     this.isFullScreen = isFullScreen
-    installLinuxBorder()
+    installLinuxBorder(uiSettings, isFullScreen, frame.extendedState)
     if (helper is DecoratedHelper) {
       val wasCustomFrameHeaderVisible = helper.customFrameTitlePane.getComponent().isVisible
       val isCustomFrameHeaderVisible = isCustomFrameHeaderVisible(uiSettings, isFullScreen) {
