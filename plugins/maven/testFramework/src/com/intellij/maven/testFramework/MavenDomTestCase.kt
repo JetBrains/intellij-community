@@ -14,6 +14,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
@@ -34,7 +36,6 @@ import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
-import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -491,29 +492,24 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  private suspend fun invokeRename(context: MapDataContext, handler: RenameHandler) {
+  private suspend fun invokeRename(context: DataContext, renameHandler: RenameHandler) {
     withContext(Dispatchers.EDT) {
-      handler.invoke(project, PsiElement.EMPTY_ARRAY, context)
+      renameHandler.invoke(project, PsiElement.EMPTY_ARRAY, context)
     }
   }
 
-  private suspend fun createDataContext(f: VirtualFile): MapDataContext {
-    val context = MapDataContext()
-
+  private suspend fun createRenameDataContext(f: VirtualFile, value: String?): DataContext {
     val editor = getEditor(f)
-    context.put(CommonDataKeys.EDITOR, editor)
-    context.put(CommonDataKeys.PSI_FILE, getTestPsiFile(f))
-    val targetElement = readAction {
-      TargetElementUtil.findTargetElement(editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED or TargetElementUtil.ELEMENT_NAME_ACCEPTED)
+    val psiFile = getTestPsiFile(f)
+    val context = CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
+      sink[CommonDataKeys.EDITOR] = editor
+      sink[PsiElementRenameHandler.DEFAULT_NAME] = value
+      sink.lazy(CommonDataKeys.PSI_FILE) { psiFile }
+      sink.lazy(CommonDataKeys.PSI_ELEMENT) {
+        TargetElementUtil.findTargetElement(
+          editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED or TargetElementUtil.ELEMENT_NAME_ACCEPTED)
+      }
     }
-    context.put(CommonDataKeys.PSI_ELEMENT, targetElement)
-
-    return context
-  }
-
-  private suspend fun createRenameDataContext(f: VirtualFile, value: String?): MapDataContext {
-    val context = createDataContext(f)
-    context.put(PsiElementRenameHandler.DEFAULT_NAME, value)
     return context
   }
 
@@ -526,11 +522,14 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected suspend fun search(file: VirtualFile): List<PsiElement> {
-    val context = createDataContext(file)
+    val editor = getEditor(file)
+    val psiFile = getTestPsiFile(file)
     return readAction {
-      val targets = UsageTargetUtil.findUsageTargets { dataId: String? -> context.getData(dataId!!) }
-      val target = (targets[0] as PsiElement2UsageTargetAdapter).element
-      val result: List<PsiReference> = ArrayList(ReferencesSearch.search(target).findAll())
+      val psiElement = TargetElementUtil.findTargetElement(
+        editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED or TargetElementUtil.ELEMENT_NAME_ACCEPTED)
+      val targets = UsageTargetUtil.findUsageTargets(editor, psiFile, psiElement)
+      val target = (targets?.firstOrNull() as? PsiElement2UsageTargetAdapter)?.element ?: return@readAction emptyList()
+      val result = ArrayList(ReferencesSearch.search(target).findAll())
       result.map { it.element }
     }
   }

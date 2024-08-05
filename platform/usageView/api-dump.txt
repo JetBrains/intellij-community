@@ -304,6 +304,7 @@ f:com.intellij.usages.UsageTargetUtil
 - <init>():V
 - s:findUsageTargets(com.intellij.openapi.actionSystem.DataProvider):com.intellij.usages.UsageTarget[]
 - s:findUsageTargets(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.usages.UsageTarget[]
+- s:findUsageTargets(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.PsiElement):com.intellij.usages.UsageTarget[]
 - s:findUsageTargets(com.intellij.psi.PsiElement):com.intellij.usages.UsageTarget[]
 a:com.intellij.usages.UsageToPsiElementProvider
 - <init>():V
