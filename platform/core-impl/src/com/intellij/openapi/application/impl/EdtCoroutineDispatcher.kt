@@ -55,8 +55,9 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
       // (e.g., one coroutine emits a value into a flow and another collects it).
       // If the context modality is lower than the current modality,
       // we need to dispatch and postpone its execution.
-      return !EDT.isCurrentThreadEdt() ||
-             context.contextModality()?.let { contextModality -> ModalityState.current().dominates(contextModality) } == true
+      if (!EDT.isCurrentThreadEdt()) return true
+      val contextModality = context.contextModality() ?: return false
+      return ModalityState.current().dominates(contextModality)
     }
 
     override fun toString(): String = "Dispatchers.EDT.immediate"
