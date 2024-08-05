@@ -36,18 +36,18 @@ class GHPRAIReviewDataProvider(
       it?.files?.map { it.comments }?.flatten().orEmpty()
     }.stateInNow(cs, emptyList())
 
-  suspend fun discardComment(comment: GHPRAIComment) {
+  fun discardComment(comment: GHPRAIComment) {
     comment.accepted.value = false
     comment.rejected.value = true
   }
 
-  suspend fun acceptComment(comment: GHPRAIComment) {
+  fun acceptComment(comment: GHPRAIComment) {
     comment.accepted.value = true
     comment.rejected.value = false
   }
 
-  suspend fun getChat(comment: GHPRAIComment): GHPRAICommentChat {
-    val aiComment = comment.id as AiComment
+  fun getChat(comment: GHPRAIComment): GHPRAICommentChat {
+    val aiComment = comment.id
     return service.chatAboutComment(aiComment)
   }
 
@@ -87,7 +87,10 @@ class GHPRAIReviewDataProvider(
               val filesRes = buildViewModel(sortedFilesResponse, files)
               reviewState.value = GHPRAIReview(idea.convertToHtml(project), sum?.convertToHtml(project), filesRes, reviewCompleted = true)
             }
-            is AiReviewFailed -> Unit
+            is AiReviewFailed -> {
+              println("Bad news...")
+              println(it.error)
+            }
           }
         }
       }
