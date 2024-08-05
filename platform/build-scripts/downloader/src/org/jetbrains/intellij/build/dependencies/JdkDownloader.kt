@@ -33,7 +33,7 @@ object JdkDownloader {
   }
 
   /**
-   * Will be used by JpsBootstrapMain when IJI-2074 is ready
+   * Used by JpsBootstrapMain
    */
   @Suppress("unused")
   @JvmStatic
