@@ -90,6 +90,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/JavaAnnotationWithValueParameterIsProperlyResolved.kt");
             }
 
+            @TestMetadata("JavaAnnotationWithValueParameterIsProperlyResolved2.kt")
+            public void testJavaAnnotationWithValueParameterIsProperlyResolved2() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/JavaAnnotationWithValueParameterIsProperlyResolved2.kt");
+            }
+
             @TestMetadata("KotlinAnnotationWithSingleArgumentIsProperlyResolved.kt")
             public void testKotlinAnnotationWithSingleArgumentIsProperlyResolved() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/KotlinAnnotationWithSingleArgumentIsProperlyResolved.kt");

@@ -90,6 +90,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/JavaAnnotationWithValueParameterIsProperlyResolved.kt");
             }
 
+            @TestMetadata("JavaAnnotationWithValueParameterIsProperlyResolved2.kt")
+            public void testJavaAnnotationWithValueParameterIsProperlyResolved2() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/JavaAnnotationWithValueParameterIsProperlyResolved2.kt");
+            }
+
             @TestMetadata("KotlinAnnotationWithSingleArgumentIsProperlyResolved.kt")
             public void testKotlinAnnotationWithSingleArgumentIsProperlyResolved() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports/KotlinAnnotationWithSingleArgumentIsProperlyResolved.kt");

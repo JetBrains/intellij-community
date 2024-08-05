@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.KDocReference
+import org.jetbrains.kotlin.idea.references.KtDefaultAnnotationArgumentReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -66,9 +67,11 @@ internal class UsedReference private constructor(val reference: KtReference) {
 
     companion object {
         fun KaSession.createFrom(reference: KtReference): UsedReference? {
-            if (isEmptyInvokeReference(reference)) return null
-
-            return UsedReference(reference)
+            return when {
+                isDefaultJavaAnnotationArgumentReference(reference) -> null
+                isEmptyInvokeReference(reference) -> null
+                else -> UsedReference(reference)
+            }
         }
     }
 }
@@ -86,6 +89,15 @@ internal class UsedSymbol(val reference: KtReference, val symbol: KaSymbol) {
 
         return canBeResolvedViaImport(reference, symbol)
     }
+}
+
+/**
+ * Currently, such references do not properly resolve to symbols (see KT-70476).
+ *
+ * Overall, such references cannot really influence the import optimization process.
+ */
+private fun isDefaultJavaAnnotationArgumentReference(reference: KtReference): Boolean {
+    return reference is KtDefaultAnnotationArgumentReference
 }
 
 /**
