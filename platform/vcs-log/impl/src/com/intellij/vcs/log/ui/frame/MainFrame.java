@@ -7,7 +7,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
@@ -15,7 +14,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -27,25 +25,20 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.*;
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
-import com.intellij.vcs.log.ui.table.IndexSpeedSearch;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -106,9 +99,10 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
 
     myFilterUi = filterUi;
 
-    myGraphTable = new MyVcsLogGraphTable(logUi, logData, logUi.getProperties(), colorManager,
-                                          () -> logUi.getRefresher().onRefresh(), () -> logUi.requestMore(EmptyRunnable.INSTANCE),
-                                          disposable);
+    myGraphTable = new VcsLogMainGraphTable(logUi, logData, logUi.getProperties(), colorManager,
+                                            () -> logUi.getRefresher().onRefresh(), () -> logUi.requestMore(EmptyRunnable.INSTANCE),
+                                            filterUi,
+                                            disposable);
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(logData.getProject(), logData.getLogProviders().values());
     myGraphTable.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.table.accessible.name", vcsDisplayName));
 
@@ -395,66 +389,6 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
                       myDiffPreview.getPreferredFocusedComponent(),
                       myFilterUi.getTextFilterComponent().getFocusedComponent())
       );
-    }
-  }
-
-  private class MyVcsLogGraphTable extends VcsLogGraphTable {
-    private final @NotNull Runnable myRefresh;
-
-    MyVcsLogGraphTable(@NotNull VcsLogUiEx logUi, @NotNull VcsLogData logData,
-                       @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
-                       @NotNull Runnable refresh, @NotNull Runnable requestMore,
-                       @NotNull Disposable disposable) {
-      super(logUi, logData, uiProperties, colorManager, requestMore, disposable);
-      myRefresh = refresh;
-      IndexSpeedSearch speedSearch = new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), myLogData.getStorage(), this) {
-        @Override
-        protected boolean isSpeedSearchEnabled() {
-          return Registry.is("vcs.log.speedsearch") && super.isSpeedSearchEnabled();
-        }
-      };
-      speedSearch.setupListeners();
-    }
-
-    @Override
-    protected void updateEmptyText() {
-      StatusText statusText = getEmptyText();
-      VisiblePack visiblePack = getModel().getVisiblePack();
-
-      DataPackBase dataPack = visiblePack.getDataPack();
-      if (dataPack instanceof DataPack.ErrorDataPack) {
-        setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(),
-                          VcsLogBundle.message("vcs.log.error.loading.commits.status"));
-        appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"),
-                                () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
-      }
-      else if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
-        setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), VcsLogBundle.message("vcs.log.error.filtering.status"));
-        if (visiblePack.getFilters().isEmpty()) {
-          appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"), myRefresh);
-        }
-        else {
-          VcsLogUiUtil.appendResetFiltersActionToEmptyText(myFilterUi, getEmptyText());
-        }
-      }
-      else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
-        if (visiblePack.getFilters().isEmpty()) {
-          statusText.setText(VcsLogBundle.message("vcs.log.no.commits.status")).
-            appendSecondaryText(VcsLogBundle.message("vcs.log.commit.status.action"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                ActionUtil.createActionListener(IdeActions.ACTION_CHECKIN_PROJECT, this,
-                                                                ActionPlaces.UNKNOWN));
-          String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHECKIN_PROJECT);
-          if (!shortcutText.isEmpty()) {
-            statusText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
-          }
-        }
-        else {
-          myFilterUi.setCustomEmptyText(getEmptyText());
-        }
-      }
-      else {
-        statusText.setText(VcsLogBundle.message("vcs.log.default.status"));
-      }
     }
   }
 }
