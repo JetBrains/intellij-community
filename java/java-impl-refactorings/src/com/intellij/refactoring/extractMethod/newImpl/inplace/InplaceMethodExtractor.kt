@@ -88,12 +88,9 @@ internal class InplaceMethodExtractor(private val editor: Editor,
 
   suspend fun extractAndRunTemplate(suggestedNames: List<String>) {
     try {
-      val elements = readAction { ExtractSelector().suggestElementsToExtract(file, range) }
-      readAction { MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray()) }
+      MethodExtractor.sendRefactoringStartedEvent(extractor.elements.toTypedArray())
       ExtractMethodHelper.mergeWriteCommands(editor, disposable, ExtractMethodHandler.getRefactoringName())
-      val (callElements, method) = writeCommandAction(project, ExtractMethodHandler.getRefactoringName()) {
-        extractor.extract()
-      }
+      val (callElements, method) = extractor.extract()
 
       val callExpression = readAction {
         PsiTreeUtil.findChildOfType(callElements.firstOrNull(), PsiMethodCallExpression::class.java, false)

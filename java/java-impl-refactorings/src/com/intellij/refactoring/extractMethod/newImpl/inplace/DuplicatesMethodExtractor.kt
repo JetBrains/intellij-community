@@ -6,17 +6,23 @@ import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.find.FindManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadConstraint
+import com.intellij.openapi.application.constrainedReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.JavaRefactoringSettings
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
 import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
@@ -53,23 +59,23 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
 
   private var callsToReplace: List<SmartPsiElementPointer<PsiElement>>? = null
 
-  fun extract(): ExtractedElements {
-    val file = targetClass.containingFile
-    val document = file.viewProvider.document
+  suspend fun extract(): ExtractedElements {
+    val file = readAction { targetClass.containingFile }
+    val project = file.project
 
-    val preparedElements = MethodExtractor().prepareRefactoringElements(extractOptions)
-    val (callsPointer, methodPointer) = runWriteAction {
+    val preparedElements = readAction { MethodExtractor().prepareRefactoringElements(extractOptions) }
+    val (callsPointer, methodPointer) = writeCommandAction(project, ExtractMethodHandler.getRefactoringName()) {
       val (calls, method) = replaceWithMethod(targetClass, elements, preparedElements)
       val methodPointer = SmartPointerManager.createPointer(method)
       val callsPointer = calls.map(SmartPointerManager::createPointer)
       Pair(callsPointer, methodPointer)
     }
-
-    val manager = PsiDocumentManager.getInstance(file.project)
-    manager.doPostponedOperationsAndUnblockDocument(document)
-    manager.commitDocument(document)
-    val replacedMethod = methodPointer.element ?: throw IllegalStateException()
-    val replacedCalls = callsPointer.map { it.element ?: throw IllegalStateException() }
+    val replacedMethod = constrainedReadAction(ReadConstraint.withDocumentsCommitted(file.project)) {
+      methodPointer.element ?: throw IllegalStateException()
+    }
+    val replacedCalls = constrainedReadAction(ReadConstraint.withDocumentsCommitted(file.project)) {
+      callsPointer.map { it.element ?: throw IllegalStateException() }
+    }
 
     this.callsToReplace = callsPointer
 
@@ -314,13 +320,14 @@ fun DuplicatesMethodExtractor.extractInDialog() {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = dialogOptions.isStatic
   }
   val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, targetClass, elements)
+  MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
+  //todo avoid blocking, suspend should be propagated further
+  val (_, method) = runWithModalProgressBlocking(extractOptions.project, ExtractMethodHandler.getRefactoringName()) {
+    mappedExtractor.extract()
+  }
+  MethodExtractor.sendRefactoringDoneEvent(method)
+  val editor = PsiEditorUtil.findEditor(targetClass) ?: return
   MethodExtractor().executeRefactoringCommand(targetClass.project) {
-    MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
-    val (_, method) = mappedExtractor.extract()
-    MethodExtractor.sendRefactoringDoneEvent(method)
-    val editor = PsiEditorUtil.findEditor(targetClass)
-    if (editor != null) {
-      mappedExtractor.replaceDuplicates(editor, method)
-    }
+    mappedExtractor.replaceDuplicates(editor, method)
   }
 }
