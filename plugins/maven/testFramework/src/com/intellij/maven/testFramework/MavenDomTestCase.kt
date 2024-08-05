@@ -15,6 +15,7 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Comparing
@@ -120,7 +121,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     configTest(f)
     val editorOffset = getEditorOffset(f)
     MavenLog.LOG.warn("MavenDomTestCase getReferenceAtCaret offset $editorOffset")
-    return findPsiFile(f).findReferenceAt(editorOffset)
+    return readAction { findPsiFile(f).findReferenceAt(editorOffset) }
   }
 
   private suspend fun getReferenceAt(f: VirtualFile, offset: Int): PsiReference? {
@@ -143,7 +144,8 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   protected suspend fun getEditorOffset() = getEditorOffset(projectPom)
 
   protected suspend fun getEditorOffset(f: VirtualFile): Int {
-    return getEditor(f).caretModel.offset
+    val editor = getEditor(f)
+    return readAction { editor.caretModel.offset }
   }
 
   private val caretElement = "<caret>"
@@ -253,11 +255,13 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
     val ref = getReferenceAtCaret(file)
     assertNotNull("reference at caret is null", ref)
-    var resolved = ref!!.resolve()
+    var resolved = readAction { ref!!.resolve() }
     if (resolved is MavenPsiElementWrapper) {
       resolved = resolved.wrappee
     }
-    assertEquals(expected.text, resolved?.text)
+    val expectedText = readAction { expected.text }
+    val resolvedText = readAction { resolved?.text }
+    assertEquals(expectedText, resolvedText)
     assertEquals(expected, resolved)
     return ref
   }

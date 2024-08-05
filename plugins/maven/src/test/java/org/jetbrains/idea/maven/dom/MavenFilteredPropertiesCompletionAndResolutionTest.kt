@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -277,9 +278,8 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${xx<caret>x}abc")
-    withContext(Dispatchers.EDT) {
-      assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
-    }
+    val psiElement = readAction { findPropertyPsiElement(filter, "xxx")!! }
+    assertResolved(f, psiElement)
   }
 
   private fun findPropertyPsiElement(filter: VirtualFile, propName: String): PsiElement? {
