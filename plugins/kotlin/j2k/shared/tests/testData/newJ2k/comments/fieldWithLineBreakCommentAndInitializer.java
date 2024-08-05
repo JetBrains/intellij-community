@@ -1,5 +1,3 @@
-// KTIJ-29640
-
 package some;
 
 public class Foo {
