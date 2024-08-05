@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -56,7 +56,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
       if(tag != null){
         final String namespacePrefix = tag.getPrefixByNamespace(namespace);
 
-        if (namespacePrefix != null && namespacePrefix.length() > 0) {
+        if (namespacePrefix != null && !namespacePrefix.isEmpty()) {
           final XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getRootTag();
           if (!isQualifiedForm() && tag.getNamespaceByPrefix("").isEmpty()
             && myDescriptorTag.getParentTag() != rootTag) {
@@ -274,7 +274,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
 
         boolean seenXmlNs = false;
         for(String ns:context.knownNamespaces()) {
-          if (!contextNs.equals(ns) && ns.length() > 0) {
+          if (!contextNs.equals(ns) && !ns.isEmpty()) {
             seenXmlNs |= XmlUtil.XML_NAMESPACE_URI.equals(ns);
             attributeDescriptors = updateAttributeDescriptorsFromAny(context, typeDescriptor, attributeDescriptors, ns);
           }
@@ -406,7 +406,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
         if (namespace == null ||
             namespace.equals(namespaceByContext) ||
             namespaceByContext.equals(XmlUtil.EMPTY_URI) ||
-            element.getName(context).equals(fullName) || (namespace.length() == 0) &&
+            element.getName(context).equals(fullName) || (namespace.isEmpty()) &&
                                                          element.getDefaultName().equals(fullName)
            ) {
           return element;

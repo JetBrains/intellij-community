@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
@@ -57,7 +57,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
       if (attributeValue.endsWith(type)) {
         final String namespacePrefix = myTag.getNamespacePrefix();
 
-        if (namespacePrefix.length() > 0) {
+        if (!namespacePrefix.isEmpty()) {
           return attributeValue.equals(namespacePrefix+":"+type);
         } else {
           return attributeValue.equals(type);
@@ -110,7 +110,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
         QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("attributeFormDefault")) ||
         shouldBeQualified(targetNs, contextTag)) {
       final String prefixByNamespace = contextTag.getPrefixByNamespace(targetNs);
-      if (prefixByNamespace!= null && prefixByNamespace.length() > 0) {
+      if (prefixByNamespace!= null && !prefixByNamespace.isEmpty()) {
         name = prefixByNamespace + ":" + name;
       }
     }
@@ -139,7 +139,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
           attributeShouldBeQualified = typeDescriptor.canContainAttribute(targetNs, null) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain;
         }
 
-        if (!attributeShouldBeQualified && contextNs.length() == 0 && targetNs.length() > 0) {
+        if (!attributeShouldBeQualified && contextNs.isEmpty() && !targetNs.isEmpty()) {
           attributeShouldBeQualified = !targetNs.equals(elementDescriptor.getNamespace());
         }
       }

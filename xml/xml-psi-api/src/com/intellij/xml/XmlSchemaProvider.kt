@@ -22,7 +22,7 @@ abstract class XmlSchemaProvider : PossiblyDumbAware {
 
     @JvmStatic
     fun findSchema(namespace: @NonNls String, module: Module?, file: PsiFile): XmlFile? {
-      if (file.getProject().isDefault()) {
+      if (file.getProject().isDefault) {
         return null
       }
 

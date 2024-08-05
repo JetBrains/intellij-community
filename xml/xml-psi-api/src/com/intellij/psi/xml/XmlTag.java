@@ -31,7 +31,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * Returns a tag attribute by qualified name.
    *
    * @param qname qualified attribute name, like "ns:name" or "name".
-   * @return null if the attribute not exist.
+   * @return null if the attribute not exists.
    * @see #getAttribute(String, String)
    */
   @Nullable XmlAttribute getAttribute(@NlsSafe String qname);
@@ -42,7 +42,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * Returns a tag attribute value by qualified name.
    *
    * @param qname qualified attribute name, like "ns:name" or "name".
-   * @return null if the attribute not exist.
+   * @return null if the attribute not exists.
    * @see #getAttributeValue(String, String)
    */
   @Nullable @NlsSafe String getAttributeValue(@NlsSafe String qname);
@@ -55,7 +55,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * @param localName new tag's name
    * @param namespace new tag's namespace
    * @param bodyText pass null to create collapsed tag, empty string means creating expanded one
-   * @param enforceNamespacesDeep if you pass some xml tags to {@code bodyText} parameter, this flag sets namespace prefixes for them
+   * @param enforceNamespacesDeep if you pass some XML tags to {@code bodyText} parameter, this flag sets namespace prefixes for them
    * @return created tag. Use {@link #addSubTag(XmlTag, boolean)}} to add it to parent
    */
   XmlTag createChildTag(@NlsSafe String localName, @NlsSafe String namespace, @Nullable @NlsSafe String bodyText, boolean enforceNamespacesDeep);
