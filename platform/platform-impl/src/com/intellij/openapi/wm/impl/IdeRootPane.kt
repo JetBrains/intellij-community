@@ -422,12 +422,7 @@ open class IdeRootPane internal constructor(
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     ComponentUtil.decorateWindowHeader(this)
-
     updateToolbarVisibility()
-    val frame = frame
-    frame.background = JBColor.PanelBackground
-    (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()
-
     updateScreenState(uiSettings, isFullScreen)
   }
 

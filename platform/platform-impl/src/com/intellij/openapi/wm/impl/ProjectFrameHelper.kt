@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
@@ -141,11 +142,17 @@ open class ProjectFrameHelper internal constructor(
         }
       }
     })
-
-    frame.background = JBColor.PanelBackground
     rootPane.preInit(isInFullScreen)
 
-    balloonLayout = ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
+    frame.background = JBColor.PanelBackground
+    val balloonLayout = ActionCenterBalloonLayout(rootPane, JBUI.insets(8)).also {
+      balloonLayout = it
+    }
+
+    application.messageBus.connect(cs).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      frame.background = JBColor.PanelBackground
+      balloonLayout.queueRelayout()
+    })
   }
 
   companion object {
