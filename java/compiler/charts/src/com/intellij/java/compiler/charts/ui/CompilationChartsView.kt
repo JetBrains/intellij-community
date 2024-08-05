@@ -47,7 +47,6 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       diagrams.statistic.time(vm.modules.end)
       diagrams.statistic.thread(vm.modules.threadCount)
 
-      diagrams.updateView()
       panel.updateLabel(vm.modules.get().keys, vm.filter.value)
     }
 
@@ -57,8 +56,6 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
       diagrams.statistic.cpu(statistics.newValueOpt?.data)
       diagrams.statistic.time(statistics.newValueOpt?.time)
-
-      if (vm.cpuMemory.value == CPU) diagrams.updateView()
     }
 
     vm.statistics.memoryUsed.advise(vm.lifetime) { statistics ->
@@ -69,7 +66,6 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       diagrams.statistic.maxMemory = vm.statistics.maxMemory
       diagrams.statistic.time(statistics.newValueOpt?.time)
 
-      if (vm.cpuMemory.value == MEMORY) diagrams.updateView()
     }
 
     vm.filter.advise(vm.lifetime) { filter ->
