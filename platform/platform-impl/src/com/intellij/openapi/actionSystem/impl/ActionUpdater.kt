@@ -5,6 +5,7 @@
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.ThreadDumpService
@@ -33,32 +34,24 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.ObjectUtils
-import com.intellij.util.SlowOperations
-import com.intellij.util.TimeoutUtil
+import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
-import com.intellij.util.takeWhileInclusive
 import com.intellij.util.ui.EDT
-import com.intellij.util.use
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.lang.Integer.max
-import java.util.IdentityHashMap
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import javax.swing.JComponent
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -907,8 +900,9 @@ private class OpElement(
   place: String,
   val sessionKey: SessionKey?,
   val forcedUpdateThread: ActionUpdateThread?,
-  val parent: OpElement?
-) : AbstractCoroutineContextElement(OpElement) {
+  val parent: OpElement?,
+) : AbstractCoroutineContextElement(OpElement), IntelliJContextElement {
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
   val operationName: String = Utils.operationName(action ?: sessionKey ?: ObjectUtils.NULL, opName, place)
   init {
     checkCyclicDependency(this)

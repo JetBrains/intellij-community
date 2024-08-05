@@ -2,6 +2,7 @@
 package com.intellij.ide.actionsOnSave.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.SaveDocumentAction
@@ -340,7 +341,10 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
     }
   }
 
-  private object ActionOnSaveContextElement : AbstractCoroutineContextElement(Key) {
+  private object ActionOnSaveContextElement : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
     object Key : CoroutineContext.Key<ActionOnSaveContextElement>
   }
 

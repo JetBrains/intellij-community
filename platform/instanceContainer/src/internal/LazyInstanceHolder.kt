@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.platform.instanceContainer.CycleInitializationException
 import com.intellij.util.findCycle
 import kotlinx.collections.immutable.PersistentSet
@@ -274,7 +275,8 @@ internal abstract class LazyInstanceHolder(
 }
 
 private class CurrentlyInitializingInstance(val holder: LazyInstanceHolder)
-  : AbstractCoroutineContextElement(CurrentlyInitializingInstance) {
+  : AbstractCoroutineContextElement(CurrentlyInitializingInstance), IntelliJContextElement {
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
   companion object : CoroutineContext.Key<CurrentlyInitializingInstance>
 }
 

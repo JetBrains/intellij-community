@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.InternalCoroutineContextKey
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.platform.util.coroutines.attachAsChildTo
@@ -42,7 +43,10 @@ internal fun ComponentManagerImpl.asContextElement(): CoroutineContext.Element {
 
 private class ComponentManagerElement(
   val componentManager: ComponentManagerImpl,
-) : AbstractCoroutineContextElement(ComponentManagerElementKey) {
+) : AbstractCoroutineContextElement(ComponentManagerElementKey), IntelliJContextElement {
+
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
   override fun toString(): String = "ComponentManager(${componentManager.debugString()})"
 }
 

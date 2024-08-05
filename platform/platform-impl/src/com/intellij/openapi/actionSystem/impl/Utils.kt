@@ -6,6 +6,7 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -1130,8 +1131,10 @@ private fun getFastTrackMaxTime(useFastTrack: Boolean,
   return result
 }
 
-private class PotemkinElement(val potemkin: PotemkinOverlayProgress) : ThreadContextElement<AccessToken> {
+private class PotemkinElement(val potemkin: PotemkinOverlayProgress) : ThreadContextElement<AccessToken>, IntelliJContextElement {
   companion object : CoroutineContext.Key<PotemkinElement>
+
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
   override val key: CoroutineContext.Key<*> get() = PotemkinElement
 

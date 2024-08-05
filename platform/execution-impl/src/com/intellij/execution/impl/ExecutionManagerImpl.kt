@@ -3,6 +3,7 @@ package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
 import com.intellij.build.BuildContentManager
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.execution.*
@@ -98,8 +99,10 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
       return installThreadContext(context + EnvDataContextElement(dataContext), true)
     }
 
-    private class EnvDataContextElement(val dataContext: DataContext?) : CoroutineContext.Element {
+    private class EnvDataContextElement(val dataContext: DataContext?) : CoroutineContext.Element, IntelliJContextElement {
       companion object : CoroutineContext.Key<EnvDataContextElement>
+
+      override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
       override val key: CoroutineContext.Key<*> = EnvDataContextElement
     }

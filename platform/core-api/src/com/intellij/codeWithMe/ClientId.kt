@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeWithMe
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.client.*
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.LoadingState
@@ -408,7 +409,9 @@ fun ClientId.asContextElement(): CoroutineContext.Element {
 
 private object ClientIdElementKey : CoroutineContext.Key<ClientIdElement>
 
-private class ClientIdElement(private val clientId: ClientId) : ThreadContextElement<AccessToken> {
+private class ClientIdElement(private val clientId: ClientId) : ThreadContextElement<AccessToken>, IntelliJContextElement {
+
+  override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
   override val key: CoroutineContext.Key<*> get() = ClientIdElementKey
 
@@ -423,7 +426,9 @@ private class ClientIdElement(private val clientId: ClientId) : ThreadContextEle
   }
 }
 
-private class ClientIdElement2(val clientId: ClientId) : AbstractCoroutineContextElement(Key) {
+private class ClientIdElement2(val clientId: ClientId) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+
+  override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
   override fun toString(): String = clientId.toString()
 
