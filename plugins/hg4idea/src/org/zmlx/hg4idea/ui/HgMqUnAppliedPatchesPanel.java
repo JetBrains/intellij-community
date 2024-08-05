@@ -205,13 +205,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements UiDataProvider,
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(MQ_PATCHES, this);
     String patchName = getPatchName(myPatchTable.getSelectedRow());
-    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
-      @Nullable VirtualFile patchVFile = null;
-      if (myMqPatchDir != null && myPatchTable.getSelectedRowCount() == 1) {
-        patchVFile = VfsUtil.findFileByIoFile(new File(myMqPatchDir.getPath(), patchName), true);
-      }
-      return patchVFile;
-    });
+    if (myMqPatchDir != null && myPatchTable.getSelectedRowCount() == 1) {
+      sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
+        return VfsUtil.findFileByIoFile(new File(myMqPatchDir.getPath(), patchName), true);
+      });
+    }
   }
 
   @Override
