@@ -41,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 
-public final class RelaxNgMetaDataContributor implements MetaDataContributor {
+final class RelaxNgMetaDataContributor implements MetaDataContributor {
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
 
   @Override

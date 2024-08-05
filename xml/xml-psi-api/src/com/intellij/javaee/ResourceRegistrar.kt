@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NonNls
 interface ResourceRegistrar {
   fun addStdResource(resource: @NonNls String, fileName: @NonNls String, classLoader: ClassLoader)
 
+  @Deprecated("Pass classLoader explicitly", ReplaceWith("addStdResource(resource, fileName, classLoader)"))
   fun addStdResource(resource: @NonNls String, fileName: @NonNls String, klass: Class<*>?)
 
   fun addStdResource(resource: @NonNls String, version: @NonNls String?, fileName: @NonNls String, aClass: Class<*>?)
