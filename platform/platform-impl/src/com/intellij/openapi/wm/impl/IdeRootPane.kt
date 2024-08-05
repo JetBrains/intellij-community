@@ -342,14 +342,9 @@ open class IdeRootPane internal constructor(
       return
     }
 
-    val componentCount = northPanel.componentCount
-    if (componentCount == 0 || (componentCount == 1 && northPanel.getComponent(0) === toolbar)) {
-      return
-    }
-
     for (i in 0 until componentCount) {
       val component = northPanel.getComponent(i)
-      if (component !== toolbar) {
+      if (ClientProperty.isSet(component, EXTENSION_KEY)) {
         component.revalidate()
       }
     }
