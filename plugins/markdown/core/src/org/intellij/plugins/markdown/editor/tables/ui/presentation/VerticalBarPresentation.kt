@@ -206,7 +206,7 @@ internal class VerticalBarPresentation(
   }
 
   private fun showToolbar() {
-    val targetComponent = TableActionKeys.createDataContextComponent(editor) { sink ->
+    val targetComponent = ToolbarUtils.createTargetComponent(editor) { sink ->
       uiDataSnapshot(sink, row)
     }
     ToolbarUtils.createImmediatelyUpdatedToolbar(

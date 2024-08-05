@@ -11414,10 +11414,6 @@ a:com.intellij.openapi.actionSystem.impl.ToolbarUpdater
 - p:updateActionTooltips():V
 - updateActions(Z,Z,Z):V
 - pa:updateActionsImpl(Z):V
-f:com.intellij.openapi.actionSystem.impl.ToolbarUtils
-- sf:INSTANCE:com.intellij.openapi.actionSystem.impl.ToolbarUtils
-- f:createImmediatelyUpdatedToolbar(com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,javax.swing.JComponent,Z,kotlin.jvm.functions.Function1):com.intellij.openapi.actionSystem.ActionToolbar
-- bs:createImmediatelyUpdatedToolbar$default(com.intellij.openapi.actionSystem.impl.ToolbarUtils,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,javax.swing.JComponent,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.actionSystem.ActionToolbar
 f:com.intellij.openapi.actionSystem.impl.UtilsKt
 - sf:rearrangeByPromotersImpl(java.util.List,com.intellij.openapi.actionSystem.DataContext,java.util.List):java.util.List
 - sf:runEdtLoop(kotlinx.coroutines.Job,kotlin.jvm.functions.Function0,java.awt.Component,java.awt.Component,kotlin.coroutines.Continuation):java.lang.Object

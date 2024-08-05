@@ -184,7 +184,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
   }
 
   private fun showToolbar(columnIndex: Int) {
-    val targetComponent = TableActionKeys.createDataContextComponent(editor) { sink ->
+    val targetComponent = ToolbarUtils.createTargetComponent(editor) { sink ->
       uiDataSnapshot(sink, table, columnIndex)
     }
     ToolbarUtils.createImmediatelyUpdatedToolbar(
