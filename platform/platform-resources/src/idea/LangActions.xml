@@ -5,6 +5,7 @@
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
     <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
+    <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
 
     <group id="RunConfiguration.Group">
       <action id="SaveTemporaryRunConfiguration" class="com.intellij.execution.actions.SaveTemporaryRunConfigurationAction"/>
@@ -16,7 +17,7 @@
         <!-- A dynamic group filled with executor actions -->
         <group id="RunContextExecutorsGroup"/>
         <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
-          <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+          <reference ref="CreateRunConfiguration"/>
           <separator/>
           <group id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
         </group>
@@ -25,6 +26,10 @@
     </group>
     <group id="RunContextPopupGroup" popup="false">
       <reference ref="RunContextGroup"/>
+    </group>
+
+    <group id="RunLineMarkerExtraActions">
+      <reference ref="CreateRunConfiguration"/>
     </group>
 
     <group id="LangCodeInsightActions">
