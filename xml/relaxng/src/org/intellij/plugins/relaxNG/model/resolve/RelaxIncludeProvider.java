@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class RelaxIncludeProvider extends FileIncludeProvider {
+final class RelaxIncludeProvider extends FileIncludeProvider {
   @Override
   public @NotNull String getId() {
     return "relax-ng";

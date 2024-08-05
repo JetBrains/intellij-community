@@ -41,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 
-final class RelaxNgMetaDataContributor implements MetaDataContributor {
+public final class RelaxNgMetaDataContributor implements MetaDataContributor {
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
 
   @Override
@@ -79,9 +79,10 @@ final class RelaxNgMetaDataContributor implements MetaDataContributor {
   static final class ResourceProvider implements StandardResourceProvider {
     @Override
     public void registerResources(ResourceRegistrar registrar) {
-      registrar.addStdResource(RNG_NAMESPACE, "/resources/relaxng.rng", getClass());
-      registrar.addStdResource(HtmlUtil.SVG_NAMESPACE, "/resources/html5-schema/svg20/svg20.rnc", getClass());
-      registrar.addStdResource(HtmlUtil.MATH_ML_NAMESPACE, "/resources/html5-schema/mml3/mathml3.rnc", getClass());
+      ClassLoader classLoader = getClass().getClassLoader();
+      registrar.addStdResource(RNG_NAMESPACE, "resources/relaxng.rng", classLoader);
+      registrar.addStdResource(HtmlUtil.SVG_NAMESPACE, "resources/html5-schema/svg20/svg20.rnc", classLoader);
+      registrar.addStdResource(HtmlUtil.MATH_ML_NAMESPACE, "resources/html5-schema/mml3/mathml3.rnc", classLoader);
       registrar.addIgnoredResource("http://relaxng.org/ns/compatibility/annotations/1.0");
     }
   }
