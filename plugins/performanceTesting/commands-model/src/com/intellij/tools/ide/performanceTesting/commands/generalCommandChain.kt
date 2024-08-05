@@ -802,6 +802,9 @@ fun <T : CommandChain> T.moveFiles(moveFileData: MoveFilesData): T = apply {
   addCommand("${CMD_PREFIX}moveFiles $jsonData")
 }
 
+fun <T : CommandChain> T.performGC(): T = apply {
+  addCommand("${CMD_PREFIX}performGC")
+}
 
 fun <T : CommandChain> T.copy(): T = apply {
   executeEditorAction("\$Copy")
@@ -908,10 +911,6 @@ fun <T : CommandChain> T.clearSourceCaches(): T = apply {
 
 fun <T : CommandChain> T.clearLibraryCaches(): T = apply {
   addCommand("${CMD_PREFIX}clearLibraryCaches")
-}
-
-fun <T : CommandChain> T.performGC(): T = apply {
-  addCommand("${CMD_PREFIX}performGC")
 }
 
 fun <T : CommandChain> T.convertJavaToKotlinByDefault(value: Boolean): T = apply {

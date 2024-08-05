@@ -1,9 +1,8 @@
-package com.intellij.performance.performancePlugin.commands
+package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
-import com.jetbrains.performancePlugin.commands.Waiter
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
