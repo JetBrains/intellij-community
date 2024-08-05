@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlTag
+import com.intellij.psi.xml.XmlTagValue
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.rename.RenameHandlerRegistry
@@ -173,13 +174,6 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return fixture.file
   }
 
-  @Obsolete
-  protected fun findTagBlocking(file: VirtualFile, path: String, clazz: Class<out MavenDomElement> = MavenDomProjectModel::class.java): XmlTag {
-    val model = MavenDomUtil.getMavenDomModel(project, file, clazz)
-    assertNotNull("Model is not of $clazz", model)
-    return MavenDomUtil.findTag(model!!, path)!!
-  }
-
   protected suspend fun findTag(path: String): XmlTag {
     return findTag(projectPom, path)
   }
@@ -189,6 +183,13 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       val model = MavenDomUtil.getMavenDomModel(project, file, clazz)
       assertNotNull("Model is not of $clazz", model)
       MavenDomUtil.findTag(model!!, path)!!
+    }
+  }
+
+  protected suspend fun findTagValue(file: VirtualFile, path: String, clazz: Class<out MavenDomElement> = MavenDomProjectModel::class.java): XmlTagValue {
+    val tag = findTag(file, path, clazz)
+    return readAction {
+      tag.value
     }
   }
 

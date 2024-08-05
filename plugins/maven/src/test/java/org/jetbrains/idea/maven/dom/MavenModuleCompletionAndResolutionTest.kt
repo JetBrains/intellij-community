@@ -195,10 +195,8 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile1 = readAction { findPsiFileBlocking(m1) }
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, psiFile1, "m1")
-    }
+    val psiFile1 = findPsiFile(m1)
+    assertResolved(projectPom, psiFile1, "m1")
 
     updateProjectPom("""
                        <groupId>test</groupId>
@@ -211,10 +209,8 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile2 = readAction { findPsiFileBlocking(m2) }
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, psiFile2, "m2")
-    }
+    val psiFile2 =  findPsiFile(m2)
+    assertResolved(projectPom, psiFile2, "m2")
 
     updateProjectPom("""
                        <groupId>test</groupId>
@@ -260,10 +256,8 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile1 = readAction { findPsiFileBlocking(m) }
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, psiFile1, "./m")
-    }
+    val psiFile1 = findPsiFile(m)
+    assertResolved(projectPom, psiFile1, "./m")
 
     updateProjectPom("""
                        <groupId>test</groupId>
@@ -275,10 +269,8 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile2 = readAction { findPsiFileBlocking(m) }
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, psiFile2, ".\\m")
-    }
+    val psiFile2 = findPsiFile(m)
+    assertResolved(projectPom, psiFile2, ".\\m")
   }
 
   @Test
@@ -318,10 +310,8 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val psiFile = readAction { findPsiFileBlocking(m) }
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, psiFile, "subDir/m")
-    }
+    val psiFile = findPsiFile(m)
+    assertResolved(projectPom, psiFile, "subDir/m")
 
     updateProjectPom("""
                        <groupId>test</groupId>
@@ -336,10 +326,8 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val tag = readAction { findTagBlocking(projectPom, "project.properties.dirName") }
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, tag)
-    }
+    val tag = findTag(projectPom, "project.properties.dirName")
+    assertResolved(projectPom, tag)
   }
 
   @Test
