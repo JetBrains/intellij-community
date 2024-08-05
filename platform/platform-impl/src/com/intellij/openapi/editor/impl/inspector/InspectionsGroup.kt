@@ -110,6 +110,10 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
       return ActionUpdateThread.BGT
     }
 
+    init {
+      templatePresentation.text = DaemonBundle.message("iw.inspection.cog.tooltip")
+    }
+
     override fun createCustomComponent(presentation: Presentation, place: String): ActionButton {
       return object : ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         /*override fun onMousePresenceChanged(setInfo: Boolean) {
