@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -46,11 +47,6 @@ public final class FieldFromParameterUtils {
 
   public static @Nullable PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
     PsiType type = getType(parameter);
-
-    if (type instanceof PsiArrayType) {
-      return type;
-    }
-
     PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(type);
     PsiClass psiClass = result.getElement();
     if (psiClass == null) {
@@ -75,10 +71,11 @@ public final class FieldFromParameterUtils {
       substitutor = substitutor.put(typeParameter, psiType != null ? subst.substitute(psiType) : null);
     }
 
-    if (psiClass instanceof PsiTypeParameter) {
-      return GenericsUtil.getVariableTypeByExpressionType(subst.substitute((PsiTypeParameter)psiClass));
-    }
-    return JavaPsiFacade.getElementFactory(parameter.getProject()).createType(psiClass, substitutor);
+    PsiType substitutedType = psiClass instanceof PsiTypeParameter
+                              ? GenericsUtil.getVariableTypeByExpressionType(subst.substitute((PsiTypeParameter)psiClass))
+                              : JavaPsiFacade.getElementFactory(parameter.getProject()).createType(psiClass, substitutor);
+    if (substitutedType == null) return null;
+    return PsiTypesUtil.createArrayType(substitutedType, type.getArrayDimensions());
   }
 
   public static @Nullable PsiField getParameterAssignedToField(@NotNull PsiParameter parameter) {
