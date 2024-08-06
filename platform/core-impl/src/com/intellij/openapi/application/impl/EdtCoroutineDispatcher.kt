@@ -55,7 +55,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
       // If the context modality is lower than the current modality,
       // we need to dispatch and postpone its execution.
       if (!EDT.isCurrentThreadEdt()) return true
-      val contextModality = context.contextModality() ?: return false
+      val contextModality = context.effectiveContextModality()
       return ModalityState.current().dominates(contextModality)
     }
 
