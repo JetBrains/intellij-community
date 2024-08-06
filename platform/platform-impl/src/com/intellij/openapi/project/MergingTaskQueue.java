@@ -65,11 +65,6 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   private final AtomicLong mySubmittedTasksCount = new AtomicLong();
 
   /**
-   * A thread context for each task
-   */
-  private final Map<T, ChildContext> myThreadContexts = new HashMap<>();
-
-  /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
    */
   public void disposePendingTasks() {
@@ -83,7 +78,6 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
       myTasksQueue.clear();
       myProgresses.clear();
-      myThreadContexts.clear();
     }
 
     cancelIndicatorSafe(indicatorsQueue);
@@ -126,16 +120,10 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     T newTask = task;
     SubmissionReceipt receipt;
 
-    var childContext = AppExecutorUtil.propagateContext() ? Propagation.createChildContext("MergingTaskQueue: " + task) : null;
-    CoroutineContext currentContext = childContext == null ? null : childContext.getContext();
-    Job job = childContext == null ? null : childContext.getJob();
-
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {
         T oldTask = myTasksQueue.get(i);
         ProgressIndicatorBase indicator = myProgresses.get(oldTask);
-        ChildContext otherChildContext = myThreadContexts.get(oldTask);
-        CoroutineContext otherContext = otherChildContext == null ? null : otherChildContext.getContext();
         //dispose cancelled tasks
         if (indicator == null || indicator.isCanceled()) {
           myTasksQueue.remove(i);
@@ -153,22 +141,10 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
         }
 
         T mergedTask = task.tryMergeWith(oldTask);
-        boolean contextsEqual;
-        if (AppExecutorUtil.propagateContext()) {
-          if ((currentContext == null) != (otherContext == null)) {
-            contextsEqual = false;
-          } else {
-            contextsEqual = currentContext == null || ThreadContext.getContextSkeleton(currentContext).equals(ThreadContext.getContextSkeleton(otherContext));
-          }
-        } else {
-          contextsEqual = true;
-        }
-        if (mergedTask == oldTask && contextsEqual) {
+        boolean contextsEqual = true;
+        if (mergedTask == oldTask) {
           // new task completely absorbed by the old task which means that we don't need to modify the queue
           newTask = null;
-          if (job != null) {
-            job.cancel(null);
-          }
           disposeQueue.add(task);
           break;
         }
@@ -192,15 +168,10 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
         mySubmittedTasksCount.incrementAndGet();
         ProgressIndicatorBase progress = new ProgressIndicatorBase();
         myProgresses.put(taskToAdd, progress);
-        myThreadContexts.put(taskToAdd, childContext);
         Disposer.register(taskToAdd, () -> {
           //a removed progress means the task would be ignored on queue processing
           synchronized (myLock) {
             myProgresses.remove(taskToAdd);
-            myThreadContexts.remove(taskToAdd);
-            if (job != null) {
-              job.cancel(null);
-            }
           }
           progress.cancel();
         });
@@ -239,8 +210,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
             disposeQueue.add(task);
             continue;
           }
-          var childContext = myThreadContexts.get(task);
-          return wrapTask(task, indicator, childContext);
+          return wrapTask(task, indicator);
         }
       }
     }
@@ -249,8 +219,8 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator, @Nullable ChildContext childContext) {
-    return new QueuedTask<>(task, indicator, childContext);
+  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator) {
+    return new QueuedTask<>(task, indicator);
   }
 
   public boolean isEmpty() {
@@ -298,12 +268,10 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   public static class QueuedTask<T extends MergeableQueueTask<T>> implements AutoCloseable {
     private final T task;
     private final ProgressIndicatorEx indicator;
-    private final @Nullable ChildContext myChildContext;
 
-    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress, @Nullable ChildContext childContext) {
+    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress) {
       this.task = task;
       indicator = progress;
-      myChildContext = childContext;
     }
 
     @Override
@@ -328,16 +296,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       indicator.checkCanceled();
 
       beforeTask();
-      if (AppExecutorUtil.propagateContext() && myChildContext != null) {
-        myChildContext.runAsCoroutine(() -> {
-          try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
-            task.perform(indicator);
-          }
-        });
-      }
-      else {
-        task.perform(indicator);
-      }
+      task.perform(indicator);
     }
 
     String getInfoString() {

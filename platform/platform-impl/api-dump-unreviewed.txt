@@ -16052,7 +16052,7 @@ c:com.intellij.openapi.project.MergingTaskQueue
 - extractNextTask():com.intellij.openapi.project.MergingTaskQueue$QueuedTask
 - getLatestSubmissionReceipt():com.intellij.openapi.project.MergingTaskQueue$SubmissionReceipt
 - isEmpty():Z
-- p:wrapTask(com.intellij.openapi.project.MergeableQueueTask,com.intellij.openapi.progress.util.ProgressIndicatorBase,com.intellij.util.concurrency.ChildContext):com.intellij.openapi.project.MergingTaskQueue$QueuedTask
+- p:wrapTask(com.intellij.openapi.project.MergeableQueueTask,com.intellij.openapi.progress.util.ProgressIndicatorBase):com.intellij.openapi.project.MergingTaskQueue$QueuedTask
 c:com.intellij.openapi.project.MergingTaskQueue$QueuedTask
 - java.lang.AutoCloseable
 - beforeTask():V

@@ -79,5 +79,4 @@ com/intellij/ui/popup/PopupComponentFactory$PopupType
 com/intellij/ui/popup/list/PopupInlineActionsSupport
 com/intellij/ui/wizard/WizardCallback
 com/intellij/util/SVGLoader$SvgElementColorPatcherProvider
-com/intellij/util/concurrency/ChildContext
 com/intellij/xml/breadcrumbs/BreadcrumbsComponent$Crumb

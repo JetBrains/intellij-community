@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.concurrency.ChildContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,16 +41,15 @@ public final class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbMode
   }
 
   @Override
-  protected QueuedDumbModeTask wrapTask(DumbModeTask task, ProgressIndicatorBase indicator, @Nullable ChildContext childContext) {
-    return new QueuedDumbModeTask(task, indicator, childContext);
+  protected QueuedDumbModeTask wrapTask(DumbModeTask task, ProgressIndicatorBase indicator) {
+    return new QueuedDumbModeTask(task, indicator);
   }
 
   final class QueuedDumbModeTask extends MergingTaskQueue.QueuedTask<DumbModeTask> {
 
     QueuedDumbModeTask(@NotNull DumbModeTask task,
-                       @NotNull ProgressIndicatorEx progress,
-                       @Nullable ChildContext childContext) {
-      super(task, progress, childContext);
+                       @NotNull ProgressIndicatorEx progress) {
+      super(task, progress);
     }
 
     @Override

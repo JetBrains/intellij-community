@@ -41,25 +41,6 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
 
   override fun runInDispatchThread(): Boolean = false
 
-  fun testDumbQueue() = doPropagationApplicationTest {
-    val element = TestElement("element")
-    val callTracker = CompletableDeferred<Boolean>()
-    withContext(element) {
-      blockingContext {
-        dumbService.queueTask(object : DumbModeTask() {
-          override fun performInDumbMode(indicator: ProgressIndicator) {
-            callTracker.complete(true)
-            assertSame(element, currentThreadContext()[TestElementKey])
-          }
-        })
-      }
-    }
-
-    assertFalse("dumb task should not be completed", callTracker.isCompleted)
-    withTimeout(1_000) { callTracker.await() }
-    assertTrue("dumb task should be completed", callTracker.isCompleted)
-  }
-
   fun testRunWhenSmart() = doPropagationApplicationTest {
     val element = TestElement("element")
     val callTracker = CompletableDeferred<Boolean>()
