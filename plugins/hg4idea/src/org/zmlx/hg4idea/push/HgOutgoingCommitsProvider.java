@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
@@ -71,6 +73,15 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgReposit
       }
       LOG.warn(resultErrors.toString());
     }
-    return new OutgoingResult(HgHistoryUtil.createFullCommitsFromResult(project, repository.getRoot(), result, version, true), errors);
+
+    try {
+      List<? extends VcsFullCommitDetails> fullCommits =
+        HgHistoryUtil.createFullCommitsFromResult(project, repository.getRoot(), result, version);
+      return new OutgoingResult(fullCommits, errors);
+    }
+    catch (VcsException e) {
+      errors.add(new VcsError(e.getMessage()));
+      return new OutgoingResult(Collections.emptyList(), errors);
+    }
   }
 }
