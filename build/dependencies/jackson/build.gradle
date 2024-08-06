@@ -68,22 +68,42 @@ FileTree resolveLibraryFiles(String group, String artifact, String version, Stri
   })
 }
 
+static void appendNoticeFile(File root) {
+  def noticeFile = new File(root, "META-INF/JB-NOTICE")
+  noticeFile.createNewFile()
+  noticeFile.withWriter { writer ->
+    writer << "Modifications to the original distribution:\n"
+    writer << "The library files are untouched and left as is.\n"
+    writer << "The only change is that the files for JEP 238: Multi-Release JAR Support have been removed from the distribution."
+  }
+}
+
 // ----------------------------------------- TASKS ----------------------------------------- //
 
 tasks.register('disassembleJar', Copy) {
   group "build"
 
+  def target = new File(repackagerDirTarget, "bin")
   from resolveLibraryFiles(libraryGroup, libraryArtifactId, libraryVersion, null)
   exclude 'META-INF/versions/**'
-  into new File(repackagerDirTarget, "bin")
+  into target
+
+  doLast {
+    appendNoticeFile(target)
+  }
 }
 
 tasks.register('disassembleSourcesJar', Copy) {
   group "build"
 
+  def target = new File(repackagerDirTarget, "sources")
   from resolveLibraryFiles(libraryGroup, libraryArtifactId, libraryVersion, "sources")
   exclude 'META-INF/versions/**'
-  into new File(repackagerDirTarget, "sources")
+  into target
+
+  doLast {
+    appendNoticeFile(target)
+  }
 }
 
 tasks.register('buildJar', Zip) {
