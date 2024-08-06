@@ -14,6 +14,9 @@ optional dependency on the module 'com.intellij.modules.androidstudio' declared 
   <content>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
+    <!-- GRPC is normally only included in IntelliJ Ultimate, but we need it for the Android plugin. -->
+    <module name="intellij.libraries.grpc"/>
+    <module name="intellij.libraries.grpc.netty.shaded"/>
   </content>
   <xi:include href="/META-INF/common-ide-modules.xml"/>
 </idea-plugin>
