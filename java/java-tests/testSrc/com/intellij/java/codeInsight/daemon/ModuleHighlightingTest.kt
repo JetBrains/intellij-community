@@ -880,7 +880,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val available = availableIntentions
       .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
       .filter { it.name.startsWith("com.intellij.codeInsight.") &&
-                !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))}
+                !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))
+                && !it.name.endsWith("DeclarativeHintsTogglingIntention")}
       .map { it.simpleName }
     assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
   }
