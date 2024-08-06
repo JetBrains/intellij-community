@@ -3,7 +3,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -16,13 +15,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class ClsPackageReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement, PsiQualifiedReferenceElement {
+  @NotNull
   private final PsiElement myParent;
+  @NotNull
   private final String myQualifiedName;
 
   public ClsPackageReferenceElementImpl(@NotNull PsiElement parent,
                                         @NotNull String canonicalText) {
     myParent = parent;
-    myQualifiedName = TypeInfo.internFrequentType(canonicalText);
+    myQualifiedName = canonicalText;
   }
 
   @Override
@@ -31,7 +32,7 @@ public class ClsPackageReferenceElementImpl extends ClsElementImpl implements Ps
   }
 
   @Override
-  public PsiElement getParent() {
+  public @NotNull PsiElement getParent() {
     return myParent;
   }
 
@@ -45,21 +46,16 @@ public class ClsPackageReferenceElementImpl extends ClsElementImpl implements Ps
     return myQualifiedName;
   }
 
-  private static class Resolver implements ResolveCache.PolyVariantContextResolver<ClsPackageReferenceElementImpl> {
+  private static class Resolver implements ResolveCache.AbstractResolver<ClsPackageReferenceElementImpl, JavaResolveResult> {
     public static final Resolver INSTANCE = new Resolver();
 
     @Override
-    public JavaResolveResult @NotNull [] resolve(@NotNull ClsPackageReferenceElementImpl ref,
-                                                 @NotNull PsiFile containingFile,
-                                                 boolean incompleteCode) {
-      final JavaResolveResult resolveResult = ref.advancedResolveImpl(containingFile);
-      return resolveResult == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{resolveResult};
+    public JavaResolveResult resolve(@NotNull ClsPackageReferenceElementImpl ref, boolean incompleteCode) {
+      return ref.advancedResolveImpl(ref.getContainingFile());
     }
   }
 
   private JavaResolveResult advancedResolveImpl(@NotNull PsiFile containingFile) {
-    PsiElement element = getParent();
-    if (element instanceof PsiPackage) return new CandidateInfo(element, PsiSubstitutor.EMPTY);
     PsiElement resolve = JavaPsiFacade.getInstance(containingFile.getProject()).findPackage(myQualifiedName);
     if (resolve == null) return null;
     return new CandidateInfo(resolve, PsiSubstitutor.EMPTY);
@@ -67,9 +63,9 @@ public class ClsPackageReferenceElementImpl extends ClsElementImpl implements Ps
 
   @Override
   public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
-    final JavaResolveResult[] results = multiResolve(incompleteCode);
-    if (results.length == 1) return results[0];
-    return JavaResolveResult.EMPTY;
+    JavaResolveResult result = ResolveCache.getInstance(getProject())
+      .resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
+    return result == null ? JavaResolveResult.EMPTY : result;
   }
 
   @Override
@@ -80,20 +76,18 @@ public class ClsPackageReferenceElementImpl extends ClsElementImpl implements Ps
       PsiUtilCore.ensureValid(Objects.requireNonNull(root));
       throw new PsiInvalidElementAccessException(this, "parent=" + myParent + ", root=" + root + ", canonicalText=" + myQualifiedName);
     }
-    final ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
-    ResolveResult[] results = resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode, file);
-    if (results.length == 0) return JavaResolveResult.EMPTY_ARRAY;
-    return (JavaResolveResult[])results;
+    JavaResolveResult result = advancedResolve(incompleteCode);
+    return result == JavaResolveResult.EMPTY ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{result};
   }
 
   @Override
   public PsiElement resolve() {
-    return advancedResolve(false).getElement();
+    return advancedResolve(true).getElement();
   }
 
   @Override
   public void processVariants(@NotNull PsiScopeProcessor processor) {
-    throw new RuntimeException("Variants are not available for light references");
+    throw new RuntimeException("Variants are not available for compiled references");
   }
 
   @Override
@@ -107,7 +101,7 @@ public class ClsPackageReferenceElementImpl extends ClsElementImpl implements Ps
   }
 
   @Override
-  public String getQualifiedName() {
+  public @NotNull String getQualifiedName() {
     return myQualifiedName;
   }
 
@@ -128,9 +122,9 @@ public class ClsPackageReferenceElementImpl extends ClsElementImpl implements Ps
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    if (!(element instanceof PsiClass)) return false;
-    PsiClass aClass = (PsiClass)element;
-    return myQualifiedName.equals(aClass.getQualifiedName()) || getManager().areElementsEquivalent(resolve(), element);
+    if (!(element instanceof PsiPackage)) return false;
+    PsiPackage aPackage = (PsiPackage)element;
+    return myQualifiedName.equals(aPackage.getQualifiedName()) || getManager().areElementsEquivalent(resolve(), element);
   }
 
   @Override
@@ -180,7 +174,7 @@ public class ClsPackageReferenceElementImpl extends ClsElementImpl implements Ps
 
   @Override
   public boolean isQualified() {
-    return false;
+    return true;
   }
 
   @Override

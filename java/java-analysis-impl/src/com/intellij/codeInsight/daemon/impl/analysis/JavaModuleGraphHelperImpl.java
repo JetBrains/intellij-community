@@ -4,12 +4,14 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.psi.JavaModuleGraphHelper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class JavaModuleGraphHelperImpl extends JavaModuleGraphHelper {
+  @Contract("null->null")
   @Override
   public @Nullable PsiJavaModule findDescriptorByElement(@Nullable PsiElement element) {
     return JavaModuleGraphUtil.findDescriptorByElement(element);

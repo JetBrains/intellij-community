@@ -372,7 +372,6 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       case PACKAGE -> myFilter.isClassAcceptable(PsiPackage.class);
       case VARIABLE -> myFilter.isClassAcceptable(PsiVariable.class);
       case ENUM_CONST -> myFilter.isClassAcceptable(PsiEnumConstant.class);
-      case MODULE -> myFilter.isClassAcceptable(PsiJavaModule.class);
     };
   }
 
