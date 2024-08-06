@@ -72,14 +72,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
 
   private static @NotNull AnActionEvent getEventWithReporter(@NotNull AnActionEvent e) {
     GotoDeclarationReporter reporter = new GotoDeclarationFUSReporter();
-    CustomizedDataContext context = CustomizedDataContext.create(e.getDataContext(), new DataProvider() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        if (GO_TO_DECLARATION_REPORTER_DATA_KEY.is(dataId)) {
-          return reporter;
-        }
-        return null;
-      }
+    DataContext context = CustomizedDataContext.withSnapshot(e.getDataContext(), sink -> {
+      sink.set(GO_TO_DECLARATION_REPORTER_DATA_KEY, reporter);
     });
     return e.withDataContext(context);
   }

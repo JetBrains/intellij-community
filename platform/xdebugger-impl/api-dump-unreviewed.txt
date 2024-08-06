@@ -1247,6 +1247,7 @@ com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithSeparatorAbove
 - setWithSeparator(Z):V
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - com.intellij.ui.components.JBList
+- com.intellij.openapi.actionSystem.UiDataProvider
 - sf:Companion:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
 - <init>(javax.swing.ListCellRenderer):V
 - f:clear():V
@@ -1255,6 +1256,7 @@ f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - f:getStackUnderMouse():com.intellij.xdebugger.impl.frame.StackInfo
 - locationToIndex(java.awt.Point):I
 - setModel(javax.swing.ListModel):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
 - f:create(javax.swing.ListCellRenderer):com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - f:createDefault():com.intellij.xdebugger.impl.frame.XDebuggerThreadsList

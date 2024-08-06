@@ -10801,7 +10801,6 @@ c:com.intellij.execution.console.IdeConsoleRootType
 c:com.intellij.execution.console.LanguageConsoleImpl
 - com.intellij.execution.impl.ConsoleViewImpl
 - com.intellij.execution.console.LanguageConsoleView
-- com.intellij.openapi.actionSystem.DataProvider
 - sf:Companion:com.intellij.execution.console.LanguageConsoleImpl$Companion
 - <init>(com.intellij.execution.console.LanguageConsoleImpl$Helper):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language):V
@@ -10845,8 +10844,10 @@ f:com.intellij.execution.console.LanguageConsoleImpl$Companion
 - f:printWithHighlighting(com.intellij.execution.console.LanguageConsoleView,com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange):java.lang.String
 f:com.intellij.execution.console.LanguageConsoleImpl$ConsoleEditorsPanel
 - javax.swing.JPanel
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.execution.console.LanguageConsoleImpl):V
 - f:getConsole():com.intellij.execution.console.LanguageConsoleImpl
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.execution.console.LanguageConsoleImpl$Helper
 - file:com.intellij.psi.PsiFile
 - f:project:com.intellij.openapi.project.Project
@@ -10854,7 +10855,6 @@ c:com.intellij.execution.console.LanguageConsoleImpl$Helper
 - f:virtualFile:com.intellij.openapi.vfs.VirtualFile
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 - f:getDocument():com.intellij.openapi.editor.Document
-- pf:getEditorData(com.intellij.openapi.editor.ex.EditorEx,java.lang.String):java.lang.Object
 - getFile():com.intellij.psi.PsiFile
 - f:getFileSafe():com.intellij.psi.PsiFile
 - f:setLanguage(com.intellij.lang.Language):V

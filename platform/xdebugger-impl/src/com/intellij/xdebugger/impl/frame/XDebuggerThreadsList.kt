@@ -2,6 +2,8 @@
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ColoredListCellRenderer
@@ -24,9 +26,8 @@ import javax.swing.*
 import javax.swing.plaf.FontUIResource
 
 
-class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : JBList<StackInfo>(
-    CollectionListModel()
-) {
+class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>
+) : JBList<StackInfo>(CollectionListModel()), UiDataProvider {
     private var mySelectedFrame: StackInfo? = null
 
     var stackUnderMouse: StackInfo? = null
@@ -56,12 +57,13 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
         if (font != null) {
             setFont(FontUIResource(font.name, font.style, font.size))
         }
-        setDataProvider {
-            return@setDataProvider if (THREADS_LIST.`is`(it)) this@XDebuggerThreadsList else null
-        }
     }
 
-    private fun doInit() {
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[THREADS_LIST] = this
+  }
+
+  private fun doInit() {
         selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
         cellRenderer = renderer
         selectionModel.addListSelectionListener { e ->
