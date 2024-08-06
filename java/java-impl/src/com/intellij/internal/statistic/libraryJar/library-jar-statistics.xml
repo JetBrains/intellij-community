@@ -198,7 +198,7 @@
   <technology name="spring-core" class="org.springframework.context.ApplicationContext"/>
   <technology name="spring-data-commons" class="org.springframework.data.repository.Repository"/>
   <technology name="spring-data-hadoop" class="org.springframework.data.hadoop.HadoopException"/>
-  <technology name="spring-data-jdbc-ext" class="org.springframework.data.jdbc.support.DatabaseType"/>
+  <technology name="spring-data-jdbc-ext" class="org.springframework.data.jdbc.support.JdbcUtil"/>
   <technology name="spring-data-jpa" class="org.springframework.data.jpa.repository.Query"/>
   <technology name="spring-data-mongo" class="org.springframework.data.mongodb.MongoDbFactory"/>
   <technology name="spring-data-neo4j" class="org.springframework.data.neo4j.config.Neo4jConfiguration"/>
