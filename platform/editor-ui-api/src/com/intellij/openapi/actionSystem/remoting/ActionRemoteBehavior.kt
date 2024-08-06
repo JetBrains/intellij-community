@@ -73,30 +73,18 @@ interface ActionRemoteBehaviorSpecification {
 
 
   companion object {
-    val REMOTE_UPDATE_KEY = Key.create<Unit>("REMOTE_UPDATE_KEY")
+    val REMOTE_UPDATE_KEY = Key.create<Boolean>("REMOTE_UPDATE_KEY")
 
     fun AnAction.getActionBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior? {
-      val specifiedRemoteBehaviour: ActionRemoteBehavior? = if (this is ActionRemoteBehaviorSpecification) {
-        val declaredBehavior = getBehavior()
-        if (useDeclaredBehaviour) return declaredBehavior
-        if (!(PlatformUtils.isRider() || PlatformUtils.isCLion())) return declaredBehavior
-
-        when (declaredBehavior) {
-          ActionRemoteBehavior.BackendOnly -> ActionRemoteBehavior.FrontendOnly
-          ActionRemoteBehavior.Disabled -> ActionRemoteBehavior.FrontendOnly
-          else -> declaredBehavior
-        }
+      val behavior = (this as? ActionRemoteBehaviorSpecification)?.getBehavior()
+      val isRiderOrCLion = PlatformUtils.isRider() || PlatformUtils.isCLion()
+      return when {
+        useDeclaredBehaviour || !isRiderOrCLion -> behavior
+        templatePresentation.getClientProperty(REMOTE_UPDATE_KEY) == true -> ActionRemoteBehavior.FrontendThenBackend
+        behavior == ActionRemoteBehavior.BackendOnly -> ActionRemoteBehavior.FrontendOnly
+        behavior == ActionRemoteBehavior.Disabled -> ActionRemoteBehavior.FrontendOnly
+        else -> behavior
       }
-      else null
-
-      // if action marked as REMOTE_UPDATE_KEY, then
-      // overriding undefined or frontend-only specification with a backend-dependent one
-      if ((specifiedRemoteBehaviour == null || specifiedRemoteBehaviour == ActionRemoteBehavior.FrontendOnly)
-          && templatePresentation.getClientProperty(REMOTE_UPDATE_KEY) != null) {
-        return ActionRemoteBehavior.FrontendThenBackend
-      }
-
-      return specifiedRemoteBehaviour
     }
   }
 }
