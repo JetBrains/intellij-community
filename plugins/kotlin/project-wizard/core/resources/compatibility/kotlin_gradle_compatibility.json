@@ -2,6 +2,7 @@
     {
         "ideVersion": "2023.1 EAP-INF",
         "kotlinVersions": [
+            "2.0.10",
             "2.0.0",
             "1.9.24",
             "1.9.23",
