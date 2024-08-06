@@ -89,42 +89,44 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     val prepareTimeStart = System.currentTimeMillis()
     val project = method.project
     val calls = callsToReplace?.map { it.element!! } ?: return
+    val defaultExtraction = ExtractedElements(calls, method)
 
     val (exactDuplicates, duplicatesWithUnifiedParameters) = findDuplicates(method, calls)
-
-    val updatedParameters: List<InputParameter> = findNewParameters(extractOptions.inputParameters, duplicatesWithUnifiedParameters)
-
-    val parametrizedExtraction = MethodExtractor().prepareRefactoringElements(
-      extractOptions.copy(inputParameters = updatedParameters, methodName = method.name))
+    val exactReplacement = ReplaceDescriptor(exactDuplicates, defaultExtraction, extractOptions.inputParameters)
+    val parametrizedReplacement = findParametrizedDescriptor(extractOptions.copy(methodName = method.name), duplicatesWithUnifiedParameters)
 
     val prepareTimeEnd = System.currentTimeMillis()
     InplaceExtractMethodCollector.duplicatesSearched.log(prepareTimeEnd - prepareTimeStart)
 
-    val extractExactElements = ExtractedElements(calls, method)
-    val shouldChangeSignature = askToChangeSignature(extractExactElements, parametrizedExtraction, exactDuplicates, duplicatesWithUnifiedParameters)
-    val unconfirmedDuplicates = if (shouldChangeSignature) duplicatesWithUnifiedParameters else exactDuplicates
-    val parameters = if (shouldChangeSignature) updatedParameters else extractOptions.inputParameters
-    val extractedElements = if (shouldChangeSignature) parametrizedExtraction else extractExactElements
+    val shouldChangeSignature = askToChangeSignature(exactReplacement, parametrizedReplacement)
+    val chosenReplacement = if (shouldChangeSignature) parametrizedReplacement else exactReplacement
 
     val duplicates = when (replaceDuplicatesDefault) {
-      null -> confirmDuplicates(project, editor, unconfirmedDuplicates)
-      true -> unconfirmedDuplicates
+      null -> confirmDuplicates(project, editor, chosenReplacement.duplicates)
+      true -> chosenReplacement.duplicates
       false -> emptyList()
     }
 
+    val replacement = chosenReplacement.copy(duplicates = duplicates)
+
     duplicates.forEach { beforeDuplicateReplaced(it.candidate) }
 
-    val duplicatesExtractOptions = duplicates.map { duplicate -> createExtractDescriptor(duplicate, parameters) }
+    replaceDuplicates(replacement, method, calls)
+  }
+
+  private suspend fun replaceDuplicates(replacement: ReplaceDescriptor, method: PsiMethod, calls: List<PsiElement>) {
+    val project = replacement.replacement.method.project
+    val duplicatesExtractOptions = replacement.duplicates.map { duplicate -> createExtractDescriptor(duplicate, replacement.parameters) }
 
     writeCommandAction(project, ExtractMethodHandler.getRefactoringName()) {
       if (duplicatesExtractOptions.any { options -> options.isStatic }) {
-        extractedElements.method.modifierList.setModifierProperty(PsiModifier.STATIC, true)
+        replacement.replacement.method.modifierList.setModifierProperty(PsiModifier.STATIC, true)
       }
 
-      replacePsiRange(calls, extractedElements.callElements)
-      val replacedMethod = method.replace(extractedElements.method) as PsiMethod
+      replacePsiRange(calls, replacement.replacement.callElements)
+      val replacedMethod = method.replace(replacement.replacement.method) as PsiMethod
 
-      duplicates.zip(duplicatesExtractOptions).forEach { (duplicate, extractOptions) ->
+      replacement.duplicates.zip(duplicatesExtractOptions).forEach { (duplicate, extractOptions) ->
         val callElements = CallBuilder(extractOptions.elements.first()).createCall(replacedMethod, extractOptions)
         replacePsiRange(duplicate.candidate, callElements)
       }
@@ -153,29 +155,38 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     return DuplicatesSearchResult(exactDuplicates, parametrizedDuplicates)
   }
 
+  private fun findParametrizedDescriptor(defaultExtractOptions: ExtractOptions, parametrizedDuplicates: List<Duplicate>): ReplaceDescriptor {
+    val updatedParameters: List<InputParameter> = findNewParameters(defaultExtractOptions.inputParameters, parametrizedDuplicates)
+    val parametrizedExtraction = MethodExtractor().prepareRefactoringElements(defaultExtractOptions.copy(inputParameters = updatedParameters))
+    return ReplaceDescriptor(parametrizedDuplicates, parametrizedExtraction, updatedParameters)
+  }
+
+  private data class ReplaceDescriptor(
+    val duplicates: List<Duplicate>,
+    val replacement: ExtractedElements,
+    val parameters: List<InputParameter>
+  )
+
   private data class DuplicatesSearchResult(val exactDuplicates: List<Duplicate>, val parametrizedDuplicates: List<Duplicate>)
 
-  private fun askToChangeSignature(exactExtractElements: ExtractedElements,
-                                   parametrizedExtractElements: ExtractedElements,
-                                   exactDuplicates: List<Duplicate>,
-                                   parametrizedDuplicates: List<Duplicate>): Boolean {
-    val oldMethodCall = findMethodCallInside(exactExtractElements.callElements.firstOrNull())
-    val newMethodCall = findMethodCallInside(parametrizedExtractElements.callElements.firstOrNull())
-    fun confirmChangeSignature(): Boolean {
-      if (oldMethodCall == null || newMethodCall == null) return false
-      val manager = CodeStyleManager.getInstance(exactExtractElements.method.project)
-      val initialMethod = manager.reformat(exactExtractElements.method.copy()) as PsiMethod
-      val parametrizedMethod = manager.reformat(parametrizedExtractElements.method) as PsiMethod
-      val dialog = SignatureSuggesterPreviewDialog(initialMethod, parametrizedMethod, oldMethodCall, newMethodCall,
-                                                   exactDuplicates.size, parametrizedDuplicates.size - exactDuplicates.size)
-      return dialog.showAndGet()
-    }
+  private fun askToChangeSignature(exactReplacement: ReplaceDescriptor, parametrizedReplacement: ReplaceDescriptor): Boolean {
+    val exactDuplicates = exactReplacement.duplicates.size
+    val parametrizedDuplicates = parametrizedReplacement.duplicates.size
+    if (parametrizedDuplicates <= exactDuplicates) return false
+    if (!isGoodSignatureChange(exactReplacement.replacement, parametrizedReplacement.replacement)) return false
+    val defaultResponse = changeSignatureDefault
+    if (defaultResponse != null) return defaultResponse
 
-    val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> { default } } ?: ::confirmChangeSignature
-    val isGoodSignatureChange = isGoodSignatureChange(exactExtractElements, parametrizedExtractElements)
+    val oldMethodCall = findMethodCallInside(exactReplacement.replacement.callElements.firstOrNull())
+    val newMethodCall = findMethodCallInside(parametrizedReplacement.replacement.callElements.firstOrNull())
+    if (oldMethodCall == null || newMethodCall == null) return false
+    val manager = CodeStyleManager.getInstance(exactReplacement.replacement.method.project)
+    val initialMethod = manager.reformat(exactReplacement.replacement.method.copy()) as PsiMethod
+    val parametrizedMethod = manager.reformat(parametrizedReplacement.replacement.method) as PsiMethod
 
-    val changeSignature = parametrizedDuplicates.size > exactDuplicates.size && isGoodSignatureChange && confirmChange()
-    return changeSignature
+    val dialog = SignatureSuggesterPreviewDialog(initialMethod, parametrizedMethod, oldMethodCall,
+                                                 newMethodCall, exactDuplicates, parametrizedDuplicates - exactDuplicates)
+    return dialog.showAndGet()
   }
 
   private fun createExtractDescriptor(duplicate: Duplicate, parameters: List<InputParameter>): ExtractOptions {
