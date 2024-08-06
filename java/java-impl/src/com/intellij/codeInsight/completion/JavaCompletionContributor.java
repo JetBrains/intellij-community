@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.*;
@@ -78,6 +77,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.codeInsight.completion.JavaQualifierAsArgumentContributor.JavaQualifierAsArgumentStaticMembersProcessor;
 import static com.intellij.patterns.PsiJavaPatterns.*;
@@ -1389,9 +1389,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   private static void addModuleReferences(PsiElement moduleRef, PsiElement position, PsiFile originalFile, CompletionResultSet result) {
     PsiElement statement = moduleRef.getParent();
-    boolean withAutoModules, checkAccess;
-    if ((withAutoModules = (checkAccess = statement instanceof PsiImportModuleStatement) || statement instanceof PsiRequiresStatement) ||
-        statement instanceof PsiPackageAccessibilityStatement) {
+    boolean checkAccess = statement instanceof PsiImportModuleStatement;
+    boolean withAutoModules = checkAccess || statement instanceof PsiRequiresStatement;
+    if (withAutoModules || statement instanceof PsiPackageAccessibilityStatement) {
       PsiElement parent = statement.getParent();
       if (parent != null) {
         Project project = moduleRef.getProject();
@@ -1418,12 +1418,11 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
-        PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(originalFile);
         for (String name : index.getAllKeys(project)) {
           Collection<PsiJavaModule> modules = index.getModules(name, project, scope);
           if (!modules.isEmpty() && filter.add(name)) {
             LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
-            if (checkAccess && !ContainerUtil.and(modules, module -> JavaModuleUtil.isModuleReadable(parent, module))) lookup = highlightLookup(lookup);
+            if (checkAccess && !ContainerUtil.and(modules, module -> JavaModuleGraphUtil.isModuleReadable(parent, module))) lookup = markAsInaccessible(lookup);
             if (withAutoModules) lookup = TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
             result.addElement(lookup);
           }
@@ -1444,14 +1443,15 @@ public final class JavaCompletionContributor extends CompletionContributor imple
                     shadowedNames.add(LightJavaModule.moduleName(jarRoot.getNameWithoutExtension()));
                   }
                 }
-                LookupElement lookup = getAutoModuleReference(name, parent, filter, lookupElement -> {
-                  if (!checkAccess) return PrioritizedLookupElement.withPriority(lookupElement, -1);
-                  if (!ContainerUtil.and(manifests, manifest -> JavaModuleUtil.isModuleReadable(parent, manifest)))
-                    return highlightLookup(lookupElement);
-                  return lookupElement;
-                });
-                if (lookup != null) {
-                  result.addElement(lookup);
+                LookupElement lookupElement = getAutoModuleReference(name, parent, filter);
+                if (lookupElement != null) {
+                  if (!checkAccess) {
+                    lookupElement = PrioritizedLookupElement.withPriority(lookupElement, -1);
+                  }
+                  else if (!ContainerUtil.and(manifests, manifest -> JavaModuleGraphUtil.isModuleReadable(parent, manifest))) {
+                    lookupElement = markAsInaccessible(lookupElement);
+                  }
+                  result.addElement(lookupElement);
                 }
               }
             }
@@ -1463,14 +1463,15 @@ public final class JavaCompletionContributor extends CompletionContributor imple
               }
               Collection<VirtualFile> files = JavaAutoModuleNameIndex.getFilesByKey(name, scope);
               if (!files.isEmpty()) {
-                LookupElement lookup = getAutoModuleReference(name, parent, filter, lookupElement -> {
-                  if (!checkAccess) return PrioritizedLookupElement.withPriority(lookupElement, -1);
-                  if (!ContainerUtil.and(files, file -> JavaModuleUtil.isModuleReadable(parent, file)))
-                    return highlightLookup(lookupElement);
-                  return lookupElement;
-                });
-                if (lookup != null) {
-                  result.addElement(lookup);
+                LookupElement lookupElement = getAutoModuleReference(name, parent, filter);
+                if (lookupElement != null) {
+                  if (!checkAccess) {
+                    lookupElement = PrioritizedLookupElement.withPriority(lookupElement, -1);
+                  }
+                  else if (!ContainerUtil.and(files, file -> JavaModuleGraphUtil.isModuleReadable(parent, file))) {
+                    lookupElement = markAsInaccessible(lookupElement);
+                  }
+                  result.addElement(lookupElement);
                 }
               }
             }
@@ -1481,14 +1482,13 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   /**
-   * Highlights the given {@link LookupElement} by modifying its appearance.
-   * The text of the element is displayed in red color.
+   * Marks the given {@code LookupElement} as inaccessible.
    *
-   * @param lookup the {@link LookupElement} to be highlighted
-   * @return a new {@link LookupElement} with adjusted proximity and custom rendering
+   * @param lookup the {@link LookupElement} to be marked as inaccessible
+   * @return the modified {@link LookupElement} marked as inaccessible
    */
   @NotNull
-  private static LookupElement highlightLookup(@NotNull LookupElement lookup) {
+  private static LookupElement markAsInaccessible(@NotNull LookupElement lookup) {
     return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(lookup, new LookupElementRenderer<>() {
       @Override
       public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
@@ -1537,10 +1537,10 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   @Nullable
   private static LookupElement getAutoModuleReference(@NotNull String name, @NotNull PsiElement parent,
-                                                      @NotNull Set<? super String> filter, @NotNull Function<LookupElement, LookupElement> wrapper) {
+                                                      @NotNull Set<? super String> filter) {
     if (PsiNameHelper.isValidModuleName(name, parent) && filter.add(name)) {
       LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
-      return wrapper.apply(TailTypeDecorator.withTail(lookup, TailTypes.semicolonType()));
+      return TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
     }
     return null;
   }

@@ -228,12 +228,9 @@ final class ModuleHighlightUtil {
       if (fixes == null) continue;
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(statement)
-        .descriptionAndTooltip(JavaErrorBundle.message("module.not.on.path", refElement.getReferenceText()));
+        .descriptionAndTooltip(fixes.message);
       fixes.fixes.forEach(fix -> info.registerFix(fix, null, null, null, null));
       return info;
-    }
-    if(!JavaModuleUtil.isModuleReadable(statement, target)) {
-      return getUnresolvedJavaModuleReason(statement, refElement);
     }
     return null;
   }
