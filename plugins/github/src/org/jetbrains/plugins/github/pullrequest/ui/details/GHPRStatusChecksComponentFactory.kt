@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -10,14 +10,15 @@ import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
-import com.intellij.ml.llm.MLLlmIcons
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyDialogComponentFactory.showBranchUpdateDialog
@@ -26,16 +27,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.github.ai.GithubAIBundle
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRRemoveReviewerAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.*
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModel
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -44,13 +43,21 @@ internal object GHPRStatusChecksComponentFactory {
   fun create(
     parentScope: CoroutineScope,
     project: Project,
-    reviewStatusVm: GHPRStatusViewModel,
-    reviewFlowVm: GHPRReviewFlowViewModel,
-    securityService: GHPRSecurityService,
-    avatarIconsProvider: GHAvatarIconsProvider,
+    detailsVm: GHPRDetailsViewModel,
   ): JComponent {
     val scope = parentScope.childScope(Dispatchers.Main.immediate)
+
+    val reviewStatusVm = detailsVm.statusVm
+    val reviewFlowVm = detailsVm.reviewFlowVm
+    val securityService = detailsVm.securityService
+    val avatarIconsProvider = detailsVm.avatarIconsProvider
+
     val loadingPanel = createLoadingComponent(scope, reviewStatusVm, securityService)
+
+    val actionManager = ActionManager.getInstance()
+    val additionalActionsGroup = actionManager.getAction("Github.PullRequest.StatusChecks.AdditionalActions") as DefaultActionGroup
+    val additionalActions = additionalActionsGroup.getChildren(actionManager).toList()
+
     val statusesPanel = VerticalListPanel().apply {
       add(createAccessDeniedLabel(scope, reviewStatusVm, securityService))
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, reviewStatusVm))
@@ -76,7 +83,8 @@ internal object GHPRStatusChecksComponentFactory {
           )
         }
       ))
-      add(createAiAssistantComponent(reviewStatusVm))
+      actionManager.createActionToolbar("Github.PullRequest.StatusChecks.Actions", DefaultActionGroup(additionalActions), true)
+      additionalActions.forEach { add(createActionLabel(it, detailsVm)) }
     }
     val scrollableStatusesPanel = ScrollPaneFactory.createScrollPane(statusesPanel, true).apply {
       isOpaque = false
@@ -170,9 +178,17 @@ internal object GHPRStatusChecksComponentFactory {
     }
   }
 
-  private fun createAiAssistantComponent(reviewStatusVm: GHPRStatusViewModel): JComponent {
-    return LinkLabel<Any>(GithubAIBundle.message("ai.review.reviewWithAI.text"), MLLlmIcons.AiAssistantColored, LinkListener { aSource, aLinkData ->
-      reviewStatusVm.requestAiReview()
-    })
+  private fun createActionLabel(action: AnAction, detailsVm: GHPRDetailsViewModel): JComponent {
+    val dataContext = detailsVm.getActionDataContext()
+
+    // TODO: Somehow make this update properly or stop using AnAction...
+    return ActionLink(action.templatePresentation.text) { e ->
+      val event = AnActionEvent.createFromInputEvent(null, "StatusChecksAction", null, dataContext)
+      action.actionPerformed(event)
+    }.apply {
+      icon = action.templatePresentation.icon
+      isEnabled = action.templatePresentation.isEnabled
+      isVisible = action.templatePresentation.isVisible
+    }
   }
 }

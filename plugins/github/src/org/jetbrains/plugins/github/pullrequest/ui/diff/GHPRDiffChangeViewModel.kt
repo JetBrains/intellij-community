@@ -10,25 +10,46 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Range
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.ai.comment.GHPRAIComment
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
+
+interface GHPRAICommentViewModelProvider {
+  companion object {
+    val EP_NAME = ExtensionPointName<GHPRAICommentViewModelProvider>("intellij.vcs.github.commentViewModelProvider")
+  }
+
+  fun getComments(
+    project: Project,
+    dataProvider: GHPRDataProvider,
+    change: RefComparisonChange,
+    diffData: GitTextFilePatchWithHistory,
+  ): Flow<List<GHPRAICommentViewModel>>
+}
 
 interface GHPRDiffChangeViewModel {
   val commentableRanges: List<Range>
@@ -36,7 +57,7 @@ interface GHPRDiffChangeViewModel {
 
   val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>>
   val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>>
-  val aiComments: StateFlow<Collection<GHPRReviewAICommentDiffViewModel>>
+  val aiComments: StateFlow<Collection<GHPRAICommentViewModel>>
 
   val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>>
 
@@ -54,7 +75,7 @@ internal class GHPRDiffChangeViewModelImpl(
   private val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
   private val threadsVms: GHPRThreadsViewModels,
-  private val discussionsViewOption: StateFlow<DiscussionsViewOption>
+  private val discussionsViewOption: StateFlow<DiscussionsViewOption>,
 ) : GHPRDiffChangeViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -90,14 +111,10 @@ internal class GHPRDiffChangeViewModelImpl(
   override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
     newCommentsContainer.mappingState.mapState { it.values }
 
-  override val aiComments: StateFlow<Collection<GHPRReviewAICommentDiffViewModel>> =
-    dataProvider.aiReviewData.comments
-      .map { it.orEmpty() }
-      .mapDataToModel({ it.id }, { createAiComment(it) }, { update(it) })
-      .stateIn(cs, SharingStarted.Lazily, emptyList())
-
-  private fun CoroutineScope.createAiComment(comment: GHPRAIComment): GHPRReviewAICommentDiffViewModel =
-    GHPRReviewAICommentDiffViewModel(project, this, dataContext, dataProvider, comment, change, diffData)
+  override val aiComments: StateFlow<Collection<GHPRAICommentViewModel>> =
+    GHPRAICommentViewModelProvider.EP_NAME.extensionList.firstOrNull()
+      ?.getComments(project, dataProvider, change, diffData)
+      ?.stateIn(cs, SharingStarted.Eagerly, emptyList()) ?: MutableStateFlow(emptyList())
 
   init {
     cs.launchNow {

@@ -168,6 +168,11 @@ fun <T1, T2, T3, R> combineStateIn(cs: CoroutineScope, sf1: StateFlow<T1>, sf2: 
                                    combiner: (T1, T2, T3) -> R): StateFlow<R> =
   combine(sf1, sf2, sf3, combiner).stateIn(cs, SharingStarted.Eagerly, combiner(sf1.value, sf2.value, sf3.value))
 
+@ApiStatus.Internal
+inline fun <reified T, R> combineStatesIn(cs: CoroutineScope, sfs: List<StateFlow<T>>,
+                                          crossinline combiner: (Array<T>) -> R): StateFlow<R> =
+  combine(sfs, combiner).stateIn(cs, SharingStarted.Eagerly, combiner(sfs.map { it.value }.toTypedArray()))
+
 /**
  * Special state flow which value is supplied by [valueSupplier] and collection is delegated to [source]
  *
@@ -335,7 +340,7 @@ fun <T, R> Flow<Iterable<T>>.mapDataToModel(sourceIdentifier: (T) -> Any,
 /**
  * Create a list of view models from models
  */
-fun <T, R> Flow<Iterable<T>>.mapModelsToViewModels(mapper: CoroutineScope.(T) -> R): Flow<List<R>> =
+fun <T, R> Flow<Iterable<T>>. mapModelsToViewModels(mapper: CoroutineScope.(T) -> R): Flow<List<R>> =
   associateCaching(HashingStrategy.identity(), mapper).map { it.values.toList() }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }

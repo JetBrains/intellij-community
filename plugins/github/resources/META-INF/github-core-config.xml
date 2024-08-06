@@ -11,6 +11,9 @@
     <extensionPoint qualifiedName="intellij.vcs.github.titleAndDescriptionGenerator"
                     interface="org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRTitleAndDescriptionGeneratorExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="intellij.vcs.github.commentViewModelProvider"
+                    interface="org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRAICommentViewModelProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.vcs.github.gistContentsCollector"
                     interface="org.jetbrains.plugins.github.GithubGistContentsCollector"
                     dynamic="true"/>
@@ -229,5 +232,6 @@
     </group>
 
     <group id="GitHub.Pull.Request.Create.Title.Actions"/>
+    <group id="Github.PullRequest.StatusChecks.AdditionalActions"/>
   </actions>
 </idea-plugin>

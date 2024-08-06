@@ -12,7 +12,6 @@ internal class GHPRDataProviderImpl(override val id: GHPRIdentifier,
                                     override val changesData: GHPRChangesDataProvider,
                                     override val commentsData: GHPRCommentsDataProvider,
                                     override val reviewData: GHPRReviewDataProvider,
-                                    override val aiReviewData: GHPRAIReviewDataProvider,
                                     override val viewedStateData: GHPRViewedStateDataProvider,
                                     private val timelineLoaderHolder: DisposalCountingHolder<GHListLoader<GHPRTimelineItem>>)
   : GHPRDataProvider {
