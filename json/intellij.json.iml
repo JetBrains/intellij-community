@@ -30,5 +30,6 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="module" module-name="intellij.json.split" exported="" />
   </component>
 </module>

@@ -1,0 +1,5 @@
+<idea-plugin package="com.intellij.json.split">
+  <module value="intellij.json.split"/>
+
+
+</idea-plugin>
