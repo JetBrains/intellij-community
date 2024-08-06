@@ -74,5 +74,6 @@
     <orderEntry type="module" module-name="kotlin.base.project-structure" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit.kotlin.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests.k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.tests" />
   </component>
 </module>
