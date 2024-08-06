@@ -453,18 +453,16 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
   }
 
-  protected suspend fun assertRenameResult(value: String?, expectedXml: String?) {
+  protected suspend fun assertRenameResult(value: String, expectedXml: String?) {
     doRename(projectPom, value)
     assertEquals(createPomXml(expectedXml), getTestPsiFile(projectPom).text)
   }
 
-  protected suspend fun doRename(f: VirtualFile, value: String?) {
-    withContext(Dispatchers.EDT) {
-      val context = createRenameDataContext(f, value)
-      val renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context)
-      assertNotNull(renameHandler)
-      invokeRename(context, renameHandler)
-    }
+  protected suspend fun doRename(f: VirtualFile, value: String) {
+    val context = createRenameDataContext(f, value)
+    val renameHandler = readAction { RenameHandlerRegistry.getInstance().getRenameHandler(context) }
+    assertNotNull(renameHandler)
+    invokeRename(context, renameHandler!!)
   }
 
   protected suspend fun doInlineRename(f: VirtualFile, value: String) {
@@ -480,23 +478,23 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected suspend fun assertCannotRename() {
-    withContext(Dispatchers.EDT) {
-      val context = createRenameDataContext(projectPom, "new name")
-      val handler = RenameHandlerRegistry.getInstance().getRenameHandler(context)
-      if (handler == null) return@withContext
-      try {
-        invokeRename(context, handler)
-      }
-      catch (e: RefactoringErrorHintException) {
-        if (!e.message!!.startsWith("Cannot perform refactoring.")) {
-          throw e
-        }
+    val context = createRenameDataContext(projectPom, "new name")
+    val handler = readAction { RenameHandlerRegistry.getInstance().getRenameHandler(context) }
+    if (null == handler) return
+    try {
+      invokeRename(context, handler)
+    }
+    catch (e: RefactoringErrorHintException) {
+      if (!e.message!!.startsWith("Cannot perform refactoring.")) {
+        throw e
       }
     }
   }
 
-  private fun invokeRename(context: MapDataContext, renameHandler: RenameHandler?) {
-    renameHandler!!.invoke(project, PsiElement.EMPTY_ARRAY, context)
+  private suspend fun invokeRename(context: MapDataContext, handler: RenameHandler) {
+    withContext(Dispatchers.EDT) {
+      handler.invoke(project, PsiElement.EMPTY_ARRAY, context)
+    }
   }
 
   private suspend fun createDataContext(f: VirtualFile): MapDataContext {
