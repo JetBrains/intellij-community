@@ -84,6 +84,9 @@
       <group id="RunDashboard.Filter" class="com.intellij.platform.execution.dashboard.actions.RunDashboardFilterActionGroup"/>
       <add-to-group group-id="ServiceView.ViewOptions"/>
     </group>
+    <action id="RunDashboard.AddConfiguration" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationAction">
+      <add-to-group group-id="ServiceView.AddService"/>
+    </action>
     <action id="RunDashboard.AddType" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationTypeAction">
       <add-to-group group-id="ServiceView.AddService"/>
     </action>
