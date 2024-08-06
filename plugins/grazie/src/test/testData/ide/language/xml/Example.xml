@@ -13,4 +13,11 @@
     System.out.println("Hello " + name)
     Hello John
   </code>
+  <description-multiple-paragraphs><![CDATA[
+      There is a possibility of such thing.<p>So that this is possible. And this is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> mistake.
+  ]]></description-multiple-paragraphs>
+  <description-single-sentence>
+    There is a <GRAMMAR_ERROR descr="POSSIBILTY_POSSIBLE">possibility</GRAMMAR_ERROR> of such thing so that this is possible.
+  </description-single-sentence
+  >
 </shiporder>

@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -28,13 +27,13 @@ public class PropertyTextExtractor extends TextExtractor {
   private static final Pattern trailingSlash = Pattern.compile("\\\\\n");
 
   @Override
-  public @Nullable TextContent buildTextContent(@NotNull PsiElement root,
-                                                @NotNull Set<TextContent.TextDomain> allowedDomains) {
+  protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement root, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     if (root instanceof PsiComment) {
       List<PsiElement> roots = PsiUtilsKt.getNotSoDistantSimilarSiblings(root, e ->
         PropertiesTokenTypes.COMMENTS.contains(PsiUtilCore.getElementType(e)));
-      return TextContent.joinWithWhitespace('\n', ContainerUtil.mapNotNull(roots, c ->
-        TextContentBuilder.FromPsi.removingIndents(" \t#!").build(c, COMMENTS)));
+      return ContainerUtil.createMaybeSingletonList(
+        TextContent.joinWithWhitespace('\n', ContainerUtil.mapNotNull(roots, c ->
+          TextContentBuilder.FromPsi.removingIndents(" \t#!").build(c, COMMENTS))));
     }
     if (PsiUtilCore.getElementType(root) == PropertiesTokenTypes.VALUE_CHARACTERS) {
       TextContent content = TextContent.builder().build(root, TextContent.TextDomain.PLAIN_TEXT);
@@ -61,8 +60,8 @@ public class PropertyTextExtractor extends TextExtractor {
         }
         content = content.markUnknown(new TextRange(start, end));
       }
-      return HtmlUtilsKt.removeHtml(content);
+      return HtmlUtilsKt.excludeHtml(content);
     }
-    return null;
+    return List.of();
   }
 }
