@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.uast.testFramework.env.findElementByText
@@ -2322,12 +2323,14 @@ interface UastResolveApiFixtureTestBase {
                     TestCase.assertEquals("mock", resolved!!.name)
                     if (first) {
                         TestCase.assertEquals("Mock", resolved.containingClass?.name)
+                        TestCase.assertFalse(resolved.hasModifier(JvmModifier.STATIC))
                         first = false
                     } else {
                         TestCase.assertEquals(
                             if (withJvmName) "Mocking" else "MockingKt",
                             resolved.containingClass?.name
                         )
+                        TestCase.assertTrue(resolved.hasModifier(JvmModifier.STATIC))
                     }
                     TestCase.assertNotNull(resolved.returnType)
                     TestCase.assertEquals("MyClass", resolved.returnType!!.canonicalText)
