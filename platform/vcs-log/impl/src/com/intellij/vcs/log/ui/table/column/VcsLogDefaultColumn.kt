@@ -53,12 +53,12 @@ internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", fa
   override fun getValue(model: GraphTableModel, row: Int): FilePath? {
     val visiblePack = model.visiblePack
     if (visiblePack.hasPathsInformation()) {
-      val path = visiblePack.filePathOrDefault(visiblePack.visibleGraph.getRowInfo(row).commit)
+      val path = visiblePack.filePathOrDefault(model.getRowInfo(row).commit)
       if (path != null) {
         return path
       }
     }
-    return visiblePack.getRoot(row)?.let(VcsUtil::getFilePath)
+    return model.getRootAtRow(row)?.let(VcsUtil::getFilePath)
   }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
@@ -79,7 +79,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
                          VcsLogMetadataColumn {
   override fun getValue(model: GraphTableModel, row: Int): GraphCommitCell {
     val printElements = if (VisiblePack.NO_GRAPH_INFORMATION.get(model.visiblePack, false)) emptyList()
-    else model.visiblePack.visibleGraph.getRowInfo(row).printElements
+    else model.getRowInfo(row).printElements
 
     val metadata = model.getCommitMetadata(row, true)
     return GraphCommitCell(

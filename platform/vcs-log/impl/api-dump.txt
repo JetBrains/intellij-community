@@ -1604,6 +1604,7 @@ f:com.intellij.vcs.log.ui.table.GraphTableModel
 - getRefsAtRow(I):java.util.List
 - getRootAtRow(I):com.intellij.openapi.vfs.VirtualFile
 - getRowCount():I
+- getRowInfo(I):com.intellij.vcs.log.graph.RowInfo
 - getValueAt(I,I):java.lang.Object
 - getValueAt(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):java.lang.Object
 - getVisiblePack():com.intellij.vcs.log.visible.VisiblePack

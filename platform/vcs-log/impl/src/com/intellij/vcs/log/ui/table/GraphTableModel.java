@@ -10,6 +10,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
@@ -108,7 +109,11 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
 
   @Override
   public int getId(int row) {
-    return myVisiblePack.getVisibleGraph().getRowInfo(row).getCommit();
+    return getRowInfo(row).getCommit();
+  }
+
+  public @NotNull RowInfo<Integer> getRowInfo(int row) {
+    return myVisiblePack.getVisibleGraph().getRowInfo(row);
   }
 
   public @Nullable VirtualFile getRootAtRow(int row) {
