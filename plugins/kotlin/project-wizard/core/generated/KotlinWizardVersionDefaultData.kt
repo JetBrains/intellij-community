@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersio
  * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
  */
 internal val DEFAULT_KOTLIN_WIZARD_VERSIONS = KotlinWizardVersionState(
-    kotlinPluginVersion = "2.0.0",
+    kotlinPluginVersion = "2.0.10",
     kotlinForComposeVersion = "1.7.20",
     composeCompilerExtension = "1.4.3",
     minGradleFoojayVersion = "7.6",
