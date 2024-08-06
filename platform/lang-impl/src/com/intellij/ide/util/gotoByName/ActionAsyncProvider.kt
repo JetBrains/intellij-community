@@ -304,7 +304,6 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
 
     val map = model.configurablesNames
     val registrar = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl
-    registrar.initialize()
 
     val words = registrar.getProcessedWords(pattern)
     val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
@@ -323,6 +322,7 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
       }
 
       var registrarDescriptions: MutableSet<OptionDescription>? = null
+      registrar.initialize()
       for (word in words) {
         val descriptions = registrar.findAcceptableDescriptions(word)
           ?.filter {
