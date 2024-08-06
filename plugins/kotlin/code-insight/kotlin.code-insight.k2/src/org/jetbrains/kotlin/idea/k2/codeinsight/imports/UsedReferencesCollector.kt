@@ -82,6 +82,9 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
                 val importableName = symbol.run { computeImportableFqName() } ?: continue
 
+                // Do not save symbols from the current package unless they are aliased
+                if (importableName.parent() == file.packageFqName && importableName !in aliases) continue
+
                 ProgressIndicatorProvider.checkCanceled()
 
                 val newNames = (aliases[importableName].orEmpty() + importableName.shortName()).intersect(names)
