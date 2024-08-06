@@ -373,6 +373,20 @@ public final class HotSwapUIImpl extends HotSwapUI {
     @Override
     public void started(@NotNull ProjectTaskContext context) {
       context.enableCollectionOfGeneratedFiles();
+      ensureListenerIsInstalled(context);
+    }
+
+    private void ensureListenerIsInstalled(@NotNull ProjectTaskContext context) {
+      HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
+      if (callback != null) return;
+      List<DebuggerSession> sessions = getHotSwappableDebugSessions(myProject);
+      HotSwapDebugSessionManager manager = HotSwapDebugSessionManager.getInstance(myProject);
+      for (DebuggerSession session : sessions) {
+        HotSwapStatusListener listener = manager.createSessionListenerOrNull(session);
+        if (listener == null) continue;
+        context.putUserData(HOT_SWAP_CALLBACK_KEY, listener);
+        return;
+      }
     }
 
     @Override
