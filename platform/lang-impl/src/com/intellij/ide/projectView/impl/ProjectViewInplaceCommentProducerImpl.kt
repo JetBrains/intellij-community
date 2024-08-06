@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.nodes.getVirtualFileForNodeOrItsPSI
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.InplaceCommentAppender
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -31,25 +32,27 @@ private fun ProjectViewNode<*>.shouldTryToShowInplaceComments(): Boolean {
     return true
   }
   val parentNode = parent ?: return false // It's the root? We don't even show it, so don't bother with further checks.
-  return parentNode.cantBeFile() // All members belong to files.
+  return cantBeFile(parentNode) // All members belong to files.
 }
 
-private fun Any?.cantBePsiMember(): Boolean =
-  this == null ||
-  this is PsiFileSystemItem || // The node itself is either a file or directory, not a member.
-  this !is PsiElement // All members inherit from PsiElement, so it's something else (e.g. a plain text file).
+private fun Any?.cantBePsiMember(): Boolean {
+  return this == null ||
+         this is PsiFileSystemItem || // The node itself is either a file or directory, not a member.
+         this !is PsiElement // All members inherit from PsiElement, so it's something else (e.g. a plain text file).
+}
 
-private fun <T> AbstractTreeNode<T>.cantBeFile(): Boolean =
-  isDirectory() || // Either we know for sure it's a directory,
-  !isFile() // or we know for sure it's not a file (could be neither, e.g. a package in Packages View).
+private fun <T> cantBeFile(node: AbstractTreeNode<T>): Boolean {
+  return isDirectory(node) || // Either we know for sure it's a directory,
+         !isFile(node) // or we know for sure it's not a file (could be neither, e.g. a package in Packages View).
+}
 
-private fun <T> AbstractTreeNode<T>.isDirectory(): Boolean {
-  val value = this.value
+private fun <T> isDirectory(node: AbstractTreeNode<T>): Boolean {
+  val value = node.value
   // The ProjectFileNode check is for Scope-based views that don't use PsiDirectory.
   return value is PsiDirectory || (value is ProjectFileNode && value.virtualFile.isDirectory)
 }
 
-private fun <T> AbstractTreeNode<T>.isFile(): Boolean = getVirtualFileForNodeOrItsPSI()?.isFile == true
+private fun <T> isFile(node: AbstractTreeNode<T>): Boolean = node.getVirtualFileForNodeOrItsPSI()?.isFile == true
 
 // To be used in Rider once it migrates from legacy logic, don't change the signature and/or visibility.
 fun appendInplaceComments(appender: InplaceCommentAppender, project: Project?, file: VirtualFile?) {
@@ -62,6 +65,6 @@ fun appendInplaceComments(appender: InplaceCommentAppender, project: Project?, f
   }
 
   if (Registry.`is`("show.last.visited.timestamps") && file != null && project != null) {
-    IdeDocumentHistoryImpl.appendTimestamp(project, appender, file)
+    (IdeDocumentHistory.getInstance(project) as IdeDocumentHistoryImpl).appendTimestamp(appender, file)
   }
 }

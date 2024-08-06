@@ -15,18 +15,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.function.Consumer
 import java.util.function.Function
 import kotlin.math.max
 import kotlin.math.min
 
-@ApiStatus.Internal
-internal class RecentLocationsDataModel(val project: Project,
-                                        private val placesSupplier: Function<in Boolean, out List<IdeDocumentHistoryImpl.PlaceInfo>>?,
-                                        private val placesRemover: Consumer<in List<IdeDocumentHistoryImpl.PlaceInfo>>?) {
-
+internal class RecentLocationsDataModel(
+  private val project: Project,
+  private val placesSupplier: Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>>?,
+  private val placesRemover: ((List<IdeDocumentHistoryImpl.PlaceInfo>) -> Unit)?,
+) {
   private val navigationPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, false)
 
   private val changedPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, true)
@@ -56,14 +54,14 @@ internal class RecentLocationsDataModel(val project: Project,
 
   @Nls
   private fun getBreadcrumbs(project: Project, placeInfo: IdeDocumentHistoryImpl.PlaceInfo): String {
-    val rangeMarker = placeInfo.getCaretPosition()
-    val fileName = placeInfo.getFile().name
+    val rangeMarker = placeInfo.caretPosition
+    val fileName = placeInfo.file.name
     if (rangeMarker == null) {
       return fileName
     }
 
-    val collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, placeInfo.getFile()) ?: return fileName
-    val crumbs = collector.computeCrumbs(placeInfo.getFile(), rangeMarker.document, rangeMarker.startOffset, true)
+    val collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, placeInfo.file) ?: return fileName
+    val crumbs = collector.computeCrumbs(placeInfo.file, rangeMarker.document, rangeMarker.startOffset, true)
 
     if (!crumbs.iterator().hasNext()) {
       return fileName
@@ -106,10 +104,11 @@ internal class RecentLocationsDataModel(val project: Project,
   }
 
   private fun newLocationItem(place: IdeDocumentHistoryImpl.PlaceInfo): RecentLocationItem? {
-    val positionOffset = place.getCaretPosition()
+    val positionOffset = place.caretPosition
     if (positionOffset == null || !positionOffset.isValid) {
       return null
     }
+
     assert(positionOffset.startOffset == positionOffset.endOffset)
 
     val fileDocument = positionOffset.document
@@ -123,21 +122,32 @@ internal class RecentLocationsDataModel(val project: Project,
   }
 
   fun removeItems(project: Project, isChanged: Boolean, items: List<RecentLocationItem>) {
-    if (isChanged) changedPlaces.drop() else navigationPlaces.drop()
-    if (placesRemover != null) {
-      placesRemover.accept(items.map { it.info })
+    if (isChanged) {
+      changedPlaces.drop()
+    }
+    else {
+      navigationPlaces.drop()
+    }
+
+    placesRemover?.let {
+      it(items.map { it.info })
       return
     }
+
     val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
     for (item in items) {
-      (if (isChanged) {
+      for (it in if (isChanged) {
         ideDocumentHistory.changePlaces
       }
       else {
         ideDocumentHistory.backPlaces.filter { IdeDocumentHistory.getInstance(project).isSame(it, item.info) }
-      }).forEach {
-        if (isChanged) ideDocumentHistory.removeChangePlace(it)
-        else ideDocumentHistory.removeBackPlace(it)
+      }) {
+        if (isChanged) {
+          ideDocumentHistory.removeChangePlace(it)
+        }
+        else {
+          ideDocumentHistory.removeBackPlace(it)
+        }
       }
     }
   }
@@ -185,10 +195,12 @@ internal class RecentLocationsDataModel(val project: Project,
     val startOffset = document.getLineStartOffset(startLine)
     val endOffset = document.getLineEndOffset(endLine)
 
-    return if (startOffset <= endOffset)
+    return if (startOffset <= endOffset) {
       TextRange.create(startOffset, endOffset)
-    else
+    }
+    else {
       DocumentUtil.getLineTextRange(document, line)
+    }
   }
 }
 
@@ -198,16 +210,19 @@ internal data class RecentLocationItem(
   @JvmField val linesShift: Int,
   @JvmField val ranges: Array<TextRange>
 ) {
-  override fun equals(other: Any?): Boolean = if (other !is RecentLocationItem) false
-  else {
-    info.getFile() == other.info.getFile() &&
-    linesShift == other.linesShift &&
-    text.length == other.text.length &&
-    ranges.size == other.ranges.size
+  override fun equals(other: Any?): Boolean {
+    if (other !is RecentLocationItem) {
+      return false
+    }
+
+    return info.file == other.info.file &&
+           linesShift == other.linesShift &&
+           text.length == other.text.length &&
+           ranges.size == other.ranges.size
   }
 
   override fun hashCode(): Int {
-    var result = info.getFile().hashCode()
+    var result = info.file.hashCode()
     result = 31 * result + linesShift
     result = 31 * result + text.length
     result = 31 * result + ranges.size

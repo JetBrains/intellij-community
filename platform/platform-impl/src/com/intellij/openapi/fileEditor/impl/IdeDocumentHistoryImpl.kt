@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.ui.UISettings
@@ -36,7 +38,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -46,7 +47,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.ExternalChangeAction
-import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -64,47 +64,54 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
-import java.nio.file.Path
 import java.util.ArrayDeque
 import java.util.ArrayList
 import java.util.Deque
 import java.util.HashSet
 import java.util.function.Predicate
 
+private val LOG = Logger.getInstance(IdeDocumentHistoryImpl::class.java)
+
+private val BACK_QUEUE_LIMIT = intValue("editor.navigation.history.stack.size")
+private val CHANGE_QUEUE_LIMIT = intValue("editor.navigation.history.stack.size")
+
+@ApiStatus.Internal
 @State(name = "IdeDocumentHistory", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
 open class IdeDocumentHistoryImpl(
   private val project: Project,
   coroutineScope: CoroutineScope,
 ) : IdeDocumentHistory(), Disposable, PersistentStateComponent<RecentlyChangedFilesState> {
-  private var myFileDocumentManager: FileDocumentManager? = null
+  private var fileDocumentManager: FileDocumentManager? = null
 
-  private val backPlaces: Deque<PlaceInfo> = ArrayDeque<PlaceInfo>()
-  private val forwardPlaces: Deque<PlaceInfo> = ArrayDeque<PlaceInfo>()
-  private var myBackInProgress = false
+  private val backPlaces = ArrayDeque<PlaceInfo>()
+  private val forwardPlaces = ArrayDeque<PlaceInfo>()
+  private var backInProgress = false
   private var forwardInProgress = false
-  private var myCurrentCommandGroupId: Any? = null
-  private var lastGroupId: Reference<Any?>? = null // weak reference to avoid memory leaks when clients pass some exotic objects as commandId
+  private var currentCommandGroupId: Any? = null
+  // weak reference to avoid memory leaks when clients pass some exotic objects as commandId
+  private var lastGroupId: Reference<Any?>? = null
   private var registeredBackPlaceInLastGroup = false
 
   // change's navigation
-  private val changePlaces: Deque<PlaceInfo> = ArrayDeque<PlaceInfo>()
+  private val changePlaces = ArrayDeque<PlaceInfo>()
   private var currentIndex = 0
 
   private var commandStartPlace: PlaceInfo? = null
   private var currentCommandIsNavigation = false
   private var currentCommandHasChanges = false
-  private val myChangedFilesInCurrentCommand = HashSet<VirtualFile>()
+  private val changedFilesInCurrentCommand = HashSet<VirtualFile>()
   private var currentCommandHasMoves = false
   private var reallyExcludeCurrentCommandFromNavigation = false
 
-  private val recentFileTimestampMap: SynchronizedClearableLazy<PersistentHashMap<String?, Long?>?>
+  private val recentFileTimestampMap: SynchronizedClearableLazy<PersistentHashMap<String, Long>>
 
+  @Volatile
   private var state = RecentlyChangedFilesState()
 
   init {
-    val busConnection = project.getMessageBus().connect(this)
-    busConnection.subscribe<BulkFileListener>(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: MutableList<out VFileEvent>) {
+    val connection = project.getMessageBus().connect(coroutineScope)
+    connection.subscribe<BulkFileListener>(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
         for (event in events) {
           if (event is VFileDeleteEvent) {
             removeInvalidFilesFromStacks()
@@ -113,42 +120,41 @@ open class IdeDocumentHistoryImpl(
         }
       }
     })
-    busConnection.subscribe<CommandListener>(CommandListener.TOPIC, object : CommandListener {
+    connection.subscribe(CommandListener.TOPIC, object : CommandListener {
       override fun commandStarted(event: CommandEvent) {
-        onCommandStarted(event.getCommandGroupId())
+        onCommandStarted(event.commandGroupId)
       }
 
       override fun commandFinished(event: CommandEvent) {
-        onCommandFinished(event.getProject(), event.getCommandGroupId())
+        onCommandFinished(event.project, event.commandGroupId)
       }
     })
 
-    val listener: EditorEventListener = object : EditorEventListener {
+    val listener = object : EditorEventListener {
       override fun documentChanged(e: DocumentEvent) {
-        val document = e.getDocument()
-        val file = getFileDocumentManager().getFile(document)
-        if (file != null && file !is LightVirtualFile &&
-            !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction::class.java)
-        ) {
+        val file = getFileDocumentManager().getFile(e.document)
+        if (file != null &&
+            file !is LightVirtualFile &&
+            !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction::class.java)) {
           ThreadingAssertions.assertEventDispatchThread()
           currentCommandHasChanges = true
-          myChangedFilesInCurrentCommand.add(file)
+          changedFilesInCurrentCommand.add(file)
         }
       }
 
       override fun caretPositionChanged(e: CaretEvent) {
-        if (e.getOldPosition().line == e.getNewPosition().line) {
+        if (e.oldPosition.line == e.newPosition.line) {
           return
         }
 
-        val document = e.getEditor().getDocument()
+        val document = e.editor.getDocument()
         if (getFileDocumentManager().getFile(document) != null) {
           currentCommandHasMoves = true
         }
       }
     }
 
-    recentFileTimestampMap = SynchronizedClearableLazy<PersistentHashMap<String?, Long?>?> { initRecentFilesTimestampMap(this.project) }
+    recentFileTimestampMap = SynchronizedClearableLazy { initRecentFilesTimestampMap(this.project) }
 
     val multicaster = EditorFactory.getInstance().getEventMulticaster()
     multicaster.addDocumentListener(listener, this)
@@ -157,72 +163,37 @@ open class IdeDocumentHistoryImpl(
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<FileEditorProvider> {
       override fun extensionRemoved(provider: FileEditorProvider, pluginDescriptor: PluginDescriptor) {
         val editorTypeId = provider.getEditorTypeId()
-        val clearStatePredicate = Predicate { e: PlaceInfo? -> editorTypeId == e!!.getEditorTypeId() }
+        val clearStatePredicate = Predicate { e: PlaceInfo -> editorTypeId == e.editorTypeId }
         if (changePlaces.removeIf(clearStatePredicate)) {
           currentIndex = changePlaces.size
         }
         backPlaces.removeIf(clearStatePredicate)
         forwardPlaces.removeIf(clearStatePredicate)
-        if (commandStartPlace != null && commandStartPlace!!.getEditorTypeId() == editorTypeId) {
+        if (commandStartPlace?.editorTypeId == editorTypeId) {
           commandStartPlace = null
         }
       }
     })
   }
 
-  companion object {
-    private val LOG = Logger.getInstance(IdeDocumentHistoryImpl::class.java)
-
-    private val BACK_QUEUE_LIMIT = intValue("editor.navigation.history.stack.size")
-    private val CHANGE_QUEUE_LIMIT = intValue("editor.navigation.history.stack.size")
-
-    private fun initRecentFilesTimestampMap(project: Project): PersistentHashMap<String?, Long?> {
-      val file = project.getProjectCachePath("recentFilesTimeStamps.dat")
-      try {
-        return IOUtil.openCleanOrResetBroken<PersistentHashMap<String?, Long?>>(ThrowableComputable { createMap(file) }, file)
-      }
-      catch (e: IOException) {
-        LOG.error("Cannot create PersistentHashMap in " + file, e)
-        throw RuntimeException(e)
-      }
+  fun appendTimestamp(appender: InplaceCommentAppender, file: VirtualFile) {
+    if (!UISettings.getInstance().showInplaceComments) {
+      return
     }
 
-    @Throws(IOException::class)
-    private fun createMap(file: Path): PersistentHashMap<String?, Long?> {
-      return PersistentHashMap<String?, Long?>(file,
-                                               EnumeratorStringDescriptor.INSTANCE,
-                                               EnumeratorLongDescriptor,
-                                               256,
-                                               0,
-                                               StorageLockContext())
+    try {
+      val timestamp = recentFileTimestampMap.value.get(file.getPath())
+      if (timestamp != null) {
+        appender.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        appender.append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      }
     }
-
-    fun appendTimestamp(
-      project: Project,
-      appender: InplaceCommentAppender,
-      file: VirtualFile
-    ) {
-      if (!UISettings.getInstance().showInplaceComments) {
-        return
-      }
-
-      try {
-        val timestamp = (getInstance(project) as IdeDocumentHistoryImpl).recentFileTimestampMap.value!!.get(
-          file.getPath())
-        if (timestamp != null) {
-          appender.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
-          appender.append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
-        }
-      }
-      catch (e: IOException) {
-        LOG.info("Cannot get a timestamp from a persistent hash map", e)
-      }
+    catch (e: IOException) {
+      LOG.info("Cannot get a timestamp from a persistent hash map", e)
     }
   }
 
-  protected open fun getFileEditorManager(): FileEditorManagerEx? {
-    return getInstanceExIfCreated(project)
-  }
+  protected open fun getFileEditorManager(): FileEditorManagerEx? = getInstanceExIfCreated(project)
 
   private fun registerViewed(file: VirtualFile) {
     if (ApplicationManager.getApplication().isUnitTestMode() || !UISettings.getInstance().showInplaceComments) {
@@ -230,7 +201,7 @@ open class IdeDocumentHistoryImpl(
     }
 
     try {
-      recentFileTimestampMap.value!!.put(file.getPath(), System.currentTimeMillis())
+      recentFileTimestampMap.value.put(file.getPath(), System.currentTimeMillis())
     }
     catch (e: IOException) {
       LOG.info("Cannot put a timestamp from a persistent hash map", e)
@@ -238,7 +209,9 @@ open class IdeDocumentHistoryImpl(
   }
 
   @Serializable
-  data class RecentlyChangedFilesState(val changedPaths: List<String> = emptyList<String>())
+  data class RecentlyChangedFilesState(
+    @JvmField val changedPaths: List<String> = emptyList<String>(),
+  )
 
   override fun getState(): RecentlyChangedFilesState = state
 
@@ -261,20 +234,17 @@ open class IdeDocumentHistoryImpl(
   }
 
   fun onCommandStarted(commandGroupId: Any?) {
-    myCurrentCommandGroupId = commandGroupId
+    currentCommandGroupId = commandGroupId
     commandStartPlace = getCurrentPlaceInfo()
     currentCommandIsNavigation = false
     currentCommandHasChanges = false
     currentCommandHasMoves = false
     reallyExcludeCurrentCommandFromNavigation = false
-    myChangedFilesInCurrentCommand.clear()
+    changedFilesInCurrentCommand.clear()
   }
 
   private fun getCurrentPlaceInfo(): PlaceInfo? {
-    val selectedEditorWithProvider = getSelectedEditor()
-    if (selectedEditorWithProvider == null) {
-      return null
-    }
+    val selectedEditorWithProvider = getSelectedEditor() ?: return null
     return createPlaceInfo(selectedEditorWithProvider.fileEditor, selectedEditorWithProvider.provider)
   }
 
@@ -294,19 +264,21 @@ open class IdeDocumentHistoryImpl(
   }
 
   fun onCommandFinished(project: Project?, commandGroupId: Any?) {
-    val lastGroupId = SoftReference.dereference<Any?>(this.lastGroupId)
-    if (!CommandMerger.canMergeGroup(commandGroupId, lastGroupId)) registeredBackPlaceInLastGroup = false
+    val lastGroupId = lastGroupId?.get()
+    if (!CommandMerger.canMergeGroup(commandGroupId, lastGroupId)) {
+      registeredBackPlaceInLastGroup = false
+    }
     if (commandGroupId !== lastGroupId) {
-      this.lastGroupId = if (commandGroupId == null) null else WeakReference<Any?>(commandGroupId)
+      this.lastGroupId = commandGroupId?.let { WeakReference(it) }
     }
 
     val commandStartPlace = commandStartPlace
     if (commandStartPlace != null && currentCommandIsNavigation && currentCommandHasMoves) {
-      if (!myBackInProgress) {
+      if (!backInProgress) {
         if (!registeredBackPlaceInLastGroup) {
           registeredBackPlaceInLastGroup = true
           putLastOrMerge(next = commandStartPlace, limit = BACK_QUEUE_LIMIT, isChanged = false, groupId = commandGroupId)
-          registerViewed(commandStartPlace.getFile())
+          registerViewed(commandStartPlace.file)
         }
         if (!forwardInProgress) {
           forwardPlaces.clear()
@@ -339,13 +311,13 @@ open class IdeDocumentHistoryImpl(
 
   private fun setCurrentChangePlace(acceptPlaceFromFocus: Boolean) {
     var placeInfo = getCurrentPlaceInfo()
-    if (placeInfo != null && !myChangedFilesInCurrentCommand.contains(placeInfo.getFile())) {
+    if (placeInfo != null && !changedFilesInCurrentCommand.contains(placeInfo.file)) {
       placeInfo = null
     }
     if (placeInfo == null && acceptPlaceFromFocus) {
       placeInfo = getPlaceInfoFromFocus(project)
     }
-    if (placeInfo != null && !myChangedFilesInCurrentCommand.contains(placeInfo.getFile())) {
+    if (placeInfo != null && !changedFilesInCurrentCommand.contains(placeInfo.file)) {
       placeInfo = null
     }
     if (placeInfo == null) {
@@ -354,7 +326,7 @@ open class IdeDocumentHistoryImpl(
 
     val limit = UISettings.getInstance().recentFilesLimit + 1
     synchronized(state) {
-      val path = placeInfo.getFile().getPath()
+      val path = placeInfo.file.getPath()
       val changedPaths = state.changedPaths.toMutableList()
       changedPaths.remove(path)
       changedPaths.add(path)
@@ -364,7 +336,7 @@ open class IdeDocumentHistoryImpl(
       state = RecentlyChangedFilesState(changedPaths)
     }
 
-    putLastOrMerge(next = placeInfo, limit = CHANGE_QUEUE_LIMIT, isChanged = true, groupId = myCurrentCommandGroupId)
+    putLastOrMerge(next = placeInfo, limit = CHANGE_QUEUE_LIMIT, isChanged = true, groupId = currentCommandGroupId)
     currentIndex = changePlaces.size
   }
 
@@ -394,6 +366,7 @@ open class IdeDocumentHistoryImpl(
 
   override fun back() {
     removeInvalidFilesFromStacks()
+    @Suppress("UsePropertyAccessSyntax")
     if (backPlaces.isEmpty()) {
       return
     }
@@ -406,24 +379,22 @@ open class IdeDocumentHistoryImpl(
       forwardPlaces.add(current)
     }
 
-    myBackInProgress = true
+    backInProgress = true
     try {
-      executeCommand(Runnable { gotoPlaceInfo(info) }, "", null)
+      executeCommand(runnable = { gotoPlaceInfo(info) }, name = "", groupId = null)
     }
     finally {
-      myBackInProgress = false
+      backInProgress = false
     }
   }
 
   override fun forward() {
     removeInvalidFilesFromStacks()
 
-    val target = getTargetForwardInfo()
-    if (target == null) return
-
+    val target = getTargetForwardInfo() ?: return
     forwardInProgress = true
     try {
-      executeCommand(Runnable { gotoPlaceInfo(target) }, "", null)
+      executeCommand(runnable = { gotoPlaceInfo(target) }, name = "", groupId = null)
     }
     finally {
       forwardInProgress = false
@@ -431,11 +402,15 @@ open class IdeDocumentHistoryImpl(
   }
 
   private fun getTargetForwardInfo(): PlaceInfo? {
-    if (forwardPlaces.isEmpty()) return null
+    @Suppress("UsePropertyAccessSyntax")
+    if (forwardPlaces.isEmpty()) {
+      return null
+    }
 
     var target = forwardPlaces.removeLast()
     val current = getCurrentPlaceInfo()
 
+    @Suppress("UsePropertyAccessSyntax")
     while (!forwardPlaces.isEmpty()) {
       if (current != null && isSame(current, target)) {
         target = forwardPlaces.removeLast()
@@ -447,32 +422,36 @@ open class IdeDocumentHistoryImpl(
     return target
   }
 
-  override fun isBackAvailable(): Boolean {
-    return !backPlaces.isEmpty()
-  }
+  @Suppress("UsePropertyAccessSyntax")
+  override fun isBackAvailable(): Boolean = !backPlaces.isEmpty()
 
-  override fun isForwardAvailable(): Boolean {
-    return !forwardPlaces.isEmpty()
-  }
+  @Suppress("UsePropertyAccessSyntax")
+  override fun isForwardAvailable(): Boolean = !forwardPlaces.isEmpty()
 
   override fun navigatePreviousChange() {
     removeInvalidFilesFromStacks()
-    if (currentIndex == 0) return
+    if (currentIndex == 0) {
+      return
+    }
+
     val currentPlace = getCurrentPlaceInfo()
     val changePlaces = getChangePlaces()
     for (i in currentIndex - 1 downTo 0) {
       val info = changePlaces.get(i)
       if (currentPlace == null || !isSame(currentPlace, info)) {
-        executeCommand(Runnable { gotoPlaceInfo(info, true) }, "", null)
+        executeCommand(runnable = { gotoPlaceInfo(info = info, requestFocus = true) }, name = "", groupId = null)
         currentIndex = i
         break
       }
     }
   }
 
-  override fun navigateNextChange() {
+  final override fun navigateNextChange() {
     removeInvalidFilesFromStacks()
-    if (currentIndex >= changePlaces.size) return
+    if (currentIndex >= changePlaces.size) {
+      return
+    }
+
     val currentPlace = getCurrentPlaceInfo()
     val changePlaces = getChangePlaces()
     for (i in currentIndex until changePlaces.size) {
@@ -485,27 +464,22 @@ open class IdeDocumentHistoryImpl(
     }
   }
 
-  override fun getBackPlaces(): MutableList<PlaceInfo?> {
-    return java.util.List.copyOf<PlaceInfo?>(backPlaces)
+  final override fun getBackPlaces(): List<PlaceInfo> = java.util.List.copyOf(backPlaces)
+
+  final override fun getChangePlaces(): List<PlaceInfo> = java.util.List.copyOf(changePlaces)
+
+  final override fun removeBackPlace(placeInfo: PlaceInfo) {
+    removePlaceInfo(placeInfo = placeInfo, places = backPlaces, changed = false)
   }
 
-  override fun getChangePlaces(): MutableList<PlaceInfo> {
-    return java.util.List.copyOf<PlaceInfo?>(changePlaces)
-  }
-
-  override fun removeBackPlace(placeInfo: PlaceInfo) {
-    removePlaceInfo(placeInfo, backPlaces, false)
-  }
-
-  override fun removeChangePlace(placeInfo: PlaceInfo) {
-    removePlaceInfo(placeInfo, changePlaces, true)
+  final override fun removeChangePlace(placeInfo: PlaceInfo) {
+    removePlaceInfo(placeInfo = placeInfo, places = changePlaces, changed = true)
   }
 
   private fun removePlaceInfo(placeInfo: PlaceInfo, places: MutableCollection<PlaceInfo>, changed: Boolean) {
     val removed = places.remove(placeInfo)
     if (removed) {
-      project.getMessageBus().syncPublisher<RecentPlacesListener>(RecentPlacesListener.Companion.TOPIC).recentPlaceRemoved(placeInfo,
-                                                                                                                           changed)
+      project.getMessageBus().syncPublisher(RecentPlacesListener.Companion.TOPIC).recentPlaceRemoved(placeInfo, changed)
     }
   }
 
@@ -522,14 +496,12 @@ open class IdeDocumentHistoryImpl(
     }
   }
 
-  override fun isNavigateNextChangeAvailable(): Boolean {
-    return currentIndex < changePlaces.size
-  }
+  override fun isNavigateNextChangeAvailable(): Boolean = currentIndex < changePlaces.size
 
   private fun removeInvalidFilesFrom(backPlaces: Deque<PlaceInfo>): Boolean {
     return backPlaces.removeIf { info ->
-      val file = info.getFile()
-      (file is OptionallyIncluded && !(file as OptionallyIncluded).isIncludedInDocumentHistory(project)) || !file.isValid()
+      val file = info.file
+      (file is OptionallyIncluded && !file.isIncludedInDocumentHistory(project)) || !file.isValid()
     }
   }
 
@@ -538,9 +510,7 @@ open class IdeDocumentHistoryImpl(
   }
 
   interface SkipFromDocumentHistory : OptionallyIncluded {
-    override fun isIncludedInDocumentHistory(project: Project): Boolean {
-      return false
-    }
+    override fun isIncludedInDocumentHistory(project: Project): Boolean = false
   }
 
   override fun gotoPlaceInfo(info: PlaceInfo) {
@@ -548,21 +518,25 @@ open class IdeDocumentHistoryImpl(
   }
 
   override fun gotoPlaceInfo(info: PlaceInfo, requestFocus: Boolean) {
-    val editorManager = getFileEditorManager()
-    val openOptions = FileEditorOpenOptions()
-      .withUsePreviewTab(info.isPreviewTab())
-      .withRequestFocus(requestFocus)
-      .withReuseOpen()
-      .withOpenMode(info.getOpenMode())
-    val editorsWithProviders = editorManager!!.openFile(info.getFile(), info.getWindow(), openOptions)
+    val editorManager = getFileEditorManager()!!
+    val editorsWithProviders = editorManager.openFile(
+      file = info.file,
+      window = info.getWindow(),
+      options = FileEditorOpenOptions(
+        usePreviewTab = info.isPreviewTab,
+        requestFocus = requestFocus,
+        reuseOpen = true,
+        openMode = info.getOpenMode(),
+      ),
+    )
 
-    editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId())
+    editorManager.setSelectedEditor(info.file, info.editorTypeId)
 
     val list = editorsWithProviders.allEditorsWithProviders
     for (item in list) {
       val typeId = item.provider.getEditorTypeId()
-      if (typeId == info.getEditorTypeId()) {
-        item.fileEditor.setState(info.getNavigationState())
+      if (typeId == info.editorTypeId) {
+        item.fileEditor.setState(info.navigationState)
       }
     }
   }
@@ -572,30 +546,36 @@ open class IdeDocumentHistoryImpl(
    */
   protected open fun getSelectedEditor(): FileEditorWithProvider? {
     val editorManager = getFileEditorManager()
-    val file = if (editorManager == null) null else editorManager.currentFile
-    return if (file == null) null else editorManager!!.getSelectedEditorWithProvider(file)
+    val file = editorManager?.currentFile ?: return null
+    return editorManager.getSelectedEditorWithProvider(file)
   }
 
-  // used by Rider
   protected open fun createPlaceInfo(fileEditor: FileEditor, fileProvider: FileEditorProvider): PlaceInfo? {
     if (!fileEditor.isValid()) {
       return null
     }
 
     val editorManager = getFileEditorManager()
-    val file = fileEditor.getFile()
-    LOG.assertTrue(file != null, fileEditor.javaClass.getName() + " getFile() returned null")
+    val file = requireNotNull(fileEditor.getFile()) {
+      "${fileEditor.javaClass.getName()} getFile() returned null"
+    }
 
-    if (file is SkipFromDocumentHistory && !(file as SkipFromDocumentHistory).isIncludedInDocumentHistory(project)) {
+    if (file is SkipFromDocumentHistory && !file.isIncludedInDocumentHistory(project)) {
       return null
     }
 
     val state = fileEditor.getState(FileEditorStateLevel.NAVIGATION)
-
-    val window = if (editorManager == null) null else editorManager.currentWindow
-    val composite = if (window != null) window.getComposite(file) else null
-    return PlaceInfo(file, state, fileProvider.getEditorTypeId(), window, composite != null && composite.isPreview,
-                     getCaretPosition(fileEditor), System.currentTimeMillis())
+    val window = editorManager?.currentWindow
+    val composite = window?.getComposite(file)
+    return PlaceInfo(
+      file = file,
+      navigationState = state,
+      editorTypeId = fileProvider.getEditorTypeId(),
+      window = window,
+      isPreviewTab = composite != null && composite.isPreview,
+      caretPosition = getCaretPosition(fileEditor),
+      timeStamp = System.currentTimeMillis(),
+    )
   }
 
   private fun getCaretPosition(fileEditor: FileEditor): RangeMarker? {
@@ -604,14 +584,15 @@ open class IdeDocumentHistoryImpl(
     }
 
     val editor = fileEditor.getEditor()
-    val offset = editor.getCaretModel().getOffset()
+    val offset = editor.getCaretModel().offset
     return editor.getDocument().createRangeMarker(offset, offset)
   }
 
   private fun putLastOrMerge(next: PlaceInfo, limit: Int, isChanged: Boolean, groupId: Any?) {
-    val list: Deque<PlaceInfo> = if (isChanged) changePlaces else backPlaces
+    val list = if (isChanged) changePlaces else backPlaces
     val messageBus = project.getMessageBus()
-    val listener = messageBus.syncPublisher<RecentPlacesListener>(RecentPlacesListener.Companion.TOPIC)
+    val listener = messageBus.syncPublisher(RecentPlacesListener.TOPIC)
+    @Suppress("UsePropertyAccessSyntax")
     if (!list.isEmpty()) {
       val prev = list.getLast()
       if (isSame(prev, next)) {
@@ -629,28 +610,24 @@ open class IdeDocumentHistoryImpl(
   }
 
   private fun getFileDocumentManager(): FileDocumentManager {
-    if (myFileDocumentManager == null) {
-      myFileDocumentManager = FileDocumentManager.getInstance()
+    var fileDocumentManager = fileDocumentManager
+    if (fileDocumentManager == null) {
+      fileDocumentManager = FileDocumentManager.getInstance()
+      this.fileDocumentManager = fileDocumentManager
     }
-    return myFileDocumentManager!!
+    return fileDocumentManager
   }
 
   class PlaceInfo(
-    file: VirtualFile,
-    navigationState: FileEditorState,
-    editorTypeId: String,
+    val file: VirtualFile,
+    val navigationState: FileEditorState,
+    val editorTypeId: String,
     window: EditorWindow?,
-    isPreviewTab: Boolean,
-    caretPosition: RangeMarker?,
-    stamp: Long
+    val isPreviewTab: Boolean,
+    val caretPosition: RangeMarker?,
+    val timeStamp: Long
   ) {
-    private val myFile = file
-    private val myNavigationState = navigationState
-    private val myEditorTypeId = editorTypeId
-    private val myWindow: Reference<EditorWindow?> = WeakReference<EditorWindow?>(window)
-    private val myIsPreviewTab: Boolean = isPreviewTab
-    private val myCaretPosition = caretPosition
-    private val myTimeStamp = stamp
+    private val windowRef = WeakReference(window)
 
     constructor(
       file: VirtualFile,
@@ -658,59 +635,34 @@ open class IdeDocumentHistoryImpl(
       editorTypeId: String,
       window: EditorWindow?,
       caretPosition: RangeMarker?
-    ) : this(file, navigationState, editorTypeId, window, false, caretPosition, -1)
+    ) : this(
+      file = file,
+      navigationState = navigationState,
+      editorTypeId = editorTypeId,
+      window = window,
+      isPreviewTab = false,
+      caretPosition = caretPosition,
+      timeStamp = -1,
+    )
 
-    fun getWindow(): EditorWindow? {
-      return myWindow.get()
-    }
+    fun getWindow(): EditorWindow? = windowRef.get()
 
-    fun getNavigationState(): FileEditorState {
-      return myNavigationState
-    }
-
-    fun getFile(): VirtualFile {
-      return myFile
-    }
-
-    fun getEditorTypeId(): String {
-      return myEditorTypeId
-    }
-
-    override fun toString(): String {
-      return getFile().getName() + " " + getNavigationState()
-    }
-
-    fun getCaretPosition(): RangeMarker? {
-      return myCaretPosition
-    }
-
-    fun getTimeStamp(): Long {
-      return myTimeStamp
-    }
-
-    fun isPreviewTab(): Boolean {
-      return myIsPreviewTab
-    }
+    override fun toString(): String = file.getName() + " " + navigationState
 
     @ApiStatus.Internal
     fun getOpenMode(): FileEditorManagerImpl.OpenMode? {
-      if (myNavigationState is FileEditorStateWithPreferredOpenMode) {
-        return myNavigationState.openMode
-      }
-      return null
+      return (navigationState as? FileEditorStateWithPreferredOpenMode)?.let { return it.openMode }
     }
   }
 
   override fun dispose() {
     lastGroupId = null
-    val map = recentFileTimestampMap.valueIfInitialized
-    if (map != null) {
-      try {
-        map.close()
-      }
-      catch (e: IOException) {
-        LOG.info("Cannot close persistent viewed files timestamps hash map", e)
-      }
+    val map = recentFileTimestampMap.valueIfInitialized ?: return
+    try {
+      map.close()
+    }
+    catch (e: IOException) {
+      LOG.info("Cannot close persistent viewed files timestamps hash map", e)
     }
   }
 
@@ -719,12 +671,11 @@ open class IdeDocumentHistoryImpl(
   }
 
   override fun isSame(first: PlaceInfo, second: PlaceInfo): Boolean {
-    if (first.getFile() == second.getFile()) {
-      val firstState = first.getNavigationState()
-      val secondState = second.getNavigationState()
+    if (first.file == second.file) {
+      val firstState = first.navigationState
+      val secondState = second.navigationState
       return firstState == secondState || firstState.canBeMergedWith(secondState, FileEditorStateLevel.NAVIGATION)
     }
-
     return false
   }
 
@@ -766,7 +717,26 @@ open class IdeDocumentHistoryImpl(
      * @param groupId     groupId of the command that caused the change place addition
      */
     fun recentPlaceAdded(changePlace: PlaceInfo, isChanged: Boolean, groupId: Any?) {
+      @Suppress("DEPRECATION")
       recentPlaceAdded(changePlace, isChanged)
     }
+  }
+}
+
+private fun initRecentFilesTimestampMap(project: Project): PersistentHashMap<String, Long> {
+  val file = project.getProjectCachePath("recentFilesTimeStamps.dat")
+  try {
+    return IOUtil.openCleanOrResetBroken({
+                                           PersistentHashMap(file,
+                                                             EnumeratorStringDescriptor.INSTANCE,
+                                                             EnumeratorLongDescriptor,
+                                                             256,
+                                                             0,
+                                                             StorageLockContext())
+                                         }, file)
+  }
+  catch (e: IOException) {
+    LOG.error("Cannot create PersistentHashMap in $file", e)
+    throw RuntimeException(e)
   }
 }

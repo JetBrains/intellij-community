@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -16,7 +16,7 @@ import org.junit.Assert
 class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
   override fun tearDown() {
     try {
-      IdeDocumentHistoryImpl.getInstance(project).clearHistory()
+      IdeDocumentHistory.getInstance(project).clearHistory()
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -40,7 +40,7 @@ class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
     assertThat(manager.getSelectedEditor(file)!!.name).isEqualTo(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
     manager.closeAllFiles()
-    IdeDocumentHistoryImpl.getInstance(project).back()
+    IdeDocumentHistory.getInstance(project).back()
     assertThat(manager.getSelectedEditor(file)?.name).isEqualTo(FileEditorManagerTest.MyFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
   }
 
@@ -68,7 +68,7 @@ class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
     CommandProcessor.getInstance().executeCommand(project, {
       manager.openFile(file = file3!!, focusEditor = true)
     }, null, group)
-    IdeDocumentHistoryImpl.getInstance(project).back()
+    IdeDocumentHistory.getInstance(project).back()
     val selectedFiles = manager.selectedFiles
     Assert.assertArrayEquals(arrayOf<VirtualFile?>(file2), selectedFiles)
   }
