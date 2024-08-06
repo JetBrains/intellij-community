@@ -194,7 +194,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
     importProjectAsync()
     assertModules("project", mn("project", "module1"), "module2")
 
-    createModulePom("m2", """
+    updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>module2</artifactId>
       <version>1</version>
@@ -209,7 +209,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
     assertCompletionVariants(m, "1")
 
-    createModulePom("m2", """
+    updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>module2</artifactId>
       <version>1</version>

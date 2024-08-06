@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.xml.XmlTag
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.junit.Test
 
@@ -251,12 +249,12 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(projectPom)
-      assertNotNull(ref)
+    val ref = getReferenceAtCaret(projectPom)
+    assertNotNull(ref)
+    readAction {
       ref!!.resolve() // shouldn't throw;
     }
-    return@runBlocking
+    Unit
   }
 
   @Test
@@ -382,9 +380,9 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(projectPom)
-      assertNotNull(ref)
+    val ref = getReferenceAtCaret(projectPom)
+    assertNotNull(ref)
+    readAction {
       val resolved = ref!!.resolve()
       assertNotNull(resolved)
       assertTrue(resolved is XmlTag)
@@ -412,9 +410,9 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(projectPom)
-      assertNotNull(ref)
+    val ref = getReferenceAtCaret(projectPom)
+    assertNotNull(ref)
+    readAction {
       val resolved = ref!!.resolve()
       assertNotNull(resolved)
       assertTrue(resolved is XmlTag)
@@ -447,7 +445,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     assertCompletionVariants(projectPom, "help", "compile", "testCompile")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -533,7 +531,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     assertCompletionVariants(projectPom, "help", "compile", "testCompile")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -580,10 +578,9 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(projectPom)
-      assertNotNull(ref)
-
+    val ref = getReferenceAtCaret(projectPom)
+    assertNotNull(ref)
+    readAction {
       val resolved = ref!!.resolve()
       assertNotNull(resolved)
       assertTrue(resolved is XmlTag)
@@ -622,10 +619,8 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                            </build>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(projectPom)
-      assertNotNull(ref)
-    }
+    val ref = getReferenceAtCaret(projectPom)
+    assertNotNull(ref)
   }
 
 
@@ -650,9 +645,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          </plugins>
                        </build>
                        """.trimIndent())
-    withContext(Dispatchers.EDT) {
-      assertCompletionVariants(projectPom)
-    }
+    assertCompletionVariants(projectPom)
 
     updateProjectPom("""
                        <groupId>test</groupId>
@@ -673,9 +666,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          </plugins>
                        </build>
                        """.trimIndent())
-    withContext(Dispatchers.EDT) {
-      assertUnresolved(projectPom)
-    }
+    assertUnresolved(projectPom)
   }
 
   @Test
@@ -700,7 +691,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     assertCompletionVariantsInclude(projectPom, "clean", "compile", "package")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>

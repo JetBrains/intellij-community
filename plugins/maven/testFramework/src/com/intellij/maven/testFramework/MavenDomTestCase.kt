@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,13 +35,11 @@ import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.MapDataContext
-import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.usages.UsageTargetUtil
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
@@ -203,7 +200,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   protected suspend fun assertUnresolved(file: VirtualFile) {
     val ref = getReferenceAtCaret(file)
     assertNotNull(ref)
-    assertNull(ref!!.resolve())
+    readAction { assertNull(ref!!.resolve()) }
   }
 
   protected suspend fun assertUnresolved(file: VirtualFile, expectedText: String?) {
@@ -396,10 +393,12 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected suspend fun assertDocumentation(expectedText: String?) {
-    withContext(Dispatchers.EDT) {
-      val originalElement = getElementAtCaret(projectPom)
+    val originalElement = getElementAtCaret(projectPom)
+    val editor = getEditor()
+    val psiFile = getTestPsiFile()
+    readAction {
       val targetElement = DocumentationManager.getInstance(project)
-        .findTargetElement(getEditor(), getTestPsiFile(), originalElement)
+        .findTargetElement(editor, psiFile, originalElement)
 
       val provider = DocumentationManager.getProviderFromElement(targetElement)
       assertEquals(expectedText, provider.generateDoc(targetElement, originalElement))
@@ -416,46 +415,28 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected suspend fun checkHighlighting(f: VirtualFile) {
-    withContext(Dispatchers.EDT) {
-      MavenLog.LOG.warn("checkHighlighting started")
-      VfsTestUtil.syncRefresh()
-      MavenLog.LOG.warn("checkHighlighting: VFS refreshed")
-      FileDocumentManager.getInstance().saveAllDocuments()
-      UIUtil.dispatchAllInvocationEvents()
-
-      val psiFile = findPsiFile(f)
-
-      val document = fixture.getDocument(psiFile)
-      if (null == document) {
-        MavenLog.LOG.warn("checkHighlighting: document is null")
-      }
-      else {
-        FileDocumentManager.getInstance().reloadFromDisk(document)
-        MavenLog.LOG.warn("checkHighlighting: document reloaded from disk")
-      }
-
-      configTest(f)
-      MavenLog.LOG.warn("checkHighlighting: test configured")
-
-      try {
-        UIUtil.dispatchAllInvocationEvents()
+    MavenLog.LOG.warn("checkHighlighting started")
+    configTest(f)
+    MavenLog.LOG.warn("checkHighlighting: test configured")
+    try {
+      withContext(Dispatchers.EDT) {
         fixture.testHighlighting(true, false, true, f)
       }
-      catch (throwable: Throwable) {
-        MavenLog.LOG.error("Exception during highlighting", throwable)
-        val cause1 = throwable.cause
-        if (null != cause1) {
-          MavenLog.LOG.error("Cause 1", cause1)
-          val cause2 = cause1.cause
-          if (null != cause2) {
-            MavenLog.LOG.error("Cause 2", cause2)
-          }
+    }
+    catch (throwable: Throwable) {
+      MavenLog.LOG.error("Exception during highlighting", throwable)
+      val cause1 = throwable.cause
+      if (null != cause1) {
+        MavenLog.LOG.error("Cause 1", cause1)
+        val cause2 = cause1.cause
+        if (null != cause2) {
+          MavenLog.LOG.error("Cause 2", cause2)
         }
-        throw RuntimeException(throwable)
       }
-      finally {
-        MavenLog.LOG.warn("checkHighlighting finished")
-      }
+      throw RuntimeException(throwable)
+    }
+    finally {
+      MavenLog.LOG.warn("checkHighlighting finished")
     }
   }
 
