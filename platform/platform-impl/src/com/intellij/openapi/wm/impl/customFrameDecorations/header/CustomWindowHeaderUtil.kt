@@ -11,20 +11,9 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.openapi.wm.impl.RootPaneUtil
-import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.X11UiUtil
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SelectedEditorFilePath
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
-import com.intellij.platform.ide.menu.ActionAwareIdeMenuBar
-import com.intellij.platform.ide.menu.IdeJMenuBar
-import com.intellij.platform.ide.menu.createIdeMainMenuActionGroup
-import com.intellij.platform.ide.menu.createMacMenuBar
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.ToolbarService
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.MacWinTabsHandler
@@ -33,13 +22,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations.CustomTitleBar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JFrame
-import javax.swing.JLayeredPane
-import javax.swing.JMenuBar
 import javax.swing.JRootPane
 
 @ApiStatus.Internal
@@ -148,147 +133,5 @@ object CustomWindowHeaderUtil {
     val listener = HeaderClickTransparentListener(customTitleBar)
     component.addMouseListener(listener)
     component.addMouseMotionListener(listener)
-  }
-
-  internal fun installCustomHeader(
-    parentCs: CoroutineScope,
-    frame: JFrame,
-    rootPane: JRootPane,
-    mainMenuActionGroup: ActionGroup?,
-    isAlwaysCompact: Boolean,
-    isFullScreen: () -> Boolean,
-  ): FrameHeaderHelper {
-    val uiSettings = UISettings.getInstance()
-    val isDecoratedMenu = isDecoratedMenu(uiSettings)
-    val isFloatingMenuBarSupported = isFloatingMenuBarSupported
-    return if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
-      createMacAwareMenuBar(parentCs.childScope(), frame, rootPane, mainMenuActionGroup)
-      val headerHelper = FrameHeaderHelper.Undecorated(isFloatingMenuBarSupported = false)
-      if (SystemInfoRt.isXWindow && !isMenuButtonInToolbar(uiSettings)) {
-        val menuBar = RootPaneUtil.createMenuBar(parentCs.childScope(), frame, mainMenuActionGroup).apply {
-          isOpaque = true
-        }
-        installMenuBar(rootPane, menuBar)
-      }
-      headerHelper
-    }
-    else {
-      val headerHelper = if (isDecoratedMenu) {
-        val selectedEditorFilePath: SelectedEditorFilePath?
-        val ideMenu: ActionAwareIdeMenuBar
-        val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
-          selectedEditorFilePath = null
-          ideMenu = createMacAwareMenuBar(parentCs.childScope(), frame, rootPane, mainMenuActionGroup)
-          if (SystemInfoRt.isMac) {
-            MacToolbarFrameHeader(parentCs.childScope(), frame, rootPane, isAlwaysCompact)
-          }
-          else {
-            ToolbarFrameHeader(parentCs.childScope(), frame, ideMenu as IdeJMenuBar, isAlwaysCompact, isFullScreen)
-          }
-        }
-        else {
-          CustomHeader.enableCustomHeader(frame)
-
-          ideMenu = RootPaneUtil.createMenuBar(parentCs.childScope(), frame, mainMenuActionGroup)
-          selectedEditorFilePath = CustomDecorationPath(frame)
-          MenuFrameHeader(frame, headerTitle = selectedEditorFilePath, ideMenu, isAlwaysCompact)
-        }
-        val headerHelper = FrameHeaderHelper.Decorated(
-          customFrameTitlePane,
-          selectedEditorFilePath,
-          ideMenu,
-          isFloatingMenuBarSupported,
-          isAlwaysCompact,
-          isFullScreen = isFullScreen)
-        rootPane.layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
-        headerHelper
-      }
-      else if (hideNativeLinuxTitle(uiSettings)) {
-        val ideMenu = RootPaneUtil.createMenuBar(parentCs.childScope(), frame, mainMenuActionGroup)
-        val customFrameTitlePane = ToolbarFrameHeader(parentCs.childScope(), frame, ideMenu, isAlwaysCompact, isFullScreen)
-        val headerHelper = FrameHeaderHelper.Decorated(
-          customFrameTitlePane,
-          selectedEditorFilePath = null,
-          ideMenu,
-          isFloatingMenuBarSupported = true,
-          isAlwaysCompact,
-          isFullScreen = isFullScreen
-        )
-        rootPane.layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
-        headerHelper
-      }
-      else {
-        FrameHeaderHelper.Undecorated(isFloatingMenuBarSupported = true)
-      }
-
-      if (isFloatingMenuBarSupported) {
-        val menuBar = RootPaneUtil.createMenuBar(parentCs.childScope(), frame, mainMenuActionGroup).apply {
-          isOpaque = true
-        }
-        installMenuBar(rootPane, menuBar)
-      }
-      headerHelper
-    }
-  }
-
-  private fun createMacAwareMenuBar(
-    coroutineScope: CoroutineScope,
-    frame: JFrame,
-    rootPane: JRootPane,
-    mainMenuActionGroup: ActionGroup?,
-  ): ActionAwareIdeMenuBar {
-    if (!SystemInfoRt.isMac) {
-      return RootPaneUtil.createMenuBar(coroutineScope, frame, mainMenuActionGroup)
-    }
-    else if (Menu.isJbScreenMenuEnabled()) {
-      return createMacMenuBar(coroutineScope, rootPane, frame) { mainMenuActionGroup ?: createIdeMainMenuActionGroup() }
-    }
-    else {
-      val menuBar = RootPaneUtil.createMenuBar(coroutineScope, frame, mainMenuActionGroup)
-      rootPane.jMenuBar = menuBar
-      return menuBar
-    }
-  }
-
-  private fun installMenuBar(rootPane: JRootPane, menuBar: JMenuBar) {
-    rootPane.jMenuBar = menuBar
-    rootPane.layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
-  }
-}
-
-internal sealed interface FrameHeaderHelper {
-  val toolbarHolder: ToolbarHolder?
-  val ideMenu: ActionAwareIdeMenuBar?
-  val isFloatingMenuBarSupported: Boolean
-
-  fun init(frame: JFrame, pane: JRootPane, coroutineScope: CoroutineScope) {}
-
-  class Undecorated(override val isFloatingMenuBarSupported: Boolean) : FrameHeaderHelper {
-    override val toolbarHolder: ToolbarHolder?
-      get() = null
-
-    override val ideMenu: ActionAwareIdeMenuBar?
-      get() = null
-
-    override fun init(frame: JFrame, pane: JRootPane, coroutineScope: CoroutineScope) {
-      ToolbarService.getInstance().setCustomTitleBar(frame, pane, onDispose = { runnable ->
-        coroutineScope.coroutineContext.job.invokeOnCompletion {
-          runnable.run()
-        }
-      })
-    }
-  }
-
-  class Decorated(
-    val customFrameTitlePane: MainFrameCustomHeader,
-    val selectedEditorFilePath: SelectedEditorFilePath?,
-    override val ideMenu: ActionAwareIdeMenuBar,
-    override val isFloatingMenuBarSupported: Boolean,
-    private val isLightEdit: Boolean,
-    private val isFullScreen: () -> Boolean,
-  ) : FrameHeaderHelper {
-    override val toolbarHolder: ToolbarHolder?
-      get() = (customFrameTitlePane as? ToolbarHolder)
-        ?.takeIf { ExperimentalUI.isNewUI() && (CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), isFullScreen()) || isLightEdit) }
   }
 }

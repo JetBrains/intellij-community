@@ -9,8 +9,10 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
@@ -80,9 +82,18 @@ open class ProjectFrameHelper internal constructor(
   private var currentFile: Path? = null
   private var project: Project? = null
 
+  @Internal
+  protected open val isLightEdit: Boolean = false
+
+  /** a not-null action group, or `null` to use [IdeActions.GROUP_MAIN_MENU] action group */
+  @Internal
+  protected open val mainMenuActionGroup: ActionGroup? = null
+
   @JvmField
   @Internal
   val rootPane: IdeRootPane
+
+  private val frameHeaderHelper: ProjectFrameCustomHeaderHelper
 
   private var statusBar: IdeStatusBarImpl? = null
 
@@ -107,6 +118,7 @@ open class ProjectFrameHelper internal constructor(
     frameDecorator?.setStoredFullScreen(getReusedFullScreenState())
 
     IdeRootPaneBorderHelper.install(ApplicationManager.getApplication(), cs, frame, frameDecorator, rootPane)
+    frameHeaderHelper = ProjectFrameCustomHeaderHelper(ApplicationManager.getApplication(), cs, frame, frameDecorator, rootPane, isLightEdit, mainMenuActionGroup)
 
     frame.setFrameHelper(object : FrameHelper {
       override fun uiDataSnapshot(sink: DataSink) {
@@ -142,7 +154,7 @@ open class ProjectFrameHelper internal constructor(
         }
       }
     })
-    rootPane.preInit(isInFullScreen)
+
 
     frame.background = JBColor.PanelBackground
     val balloonLayout = ActionCenterBalloonLayout(rootPane, JBUI.insets(8)).also {
@@ -254,7 +266,7 @@ open class ProjectFrameHelper internal constructor(
     updateTitle(project)
   }
 
-  internal fun getCustomTitleBar(): CustomTitleBar? = rootPane.getCustomTitleBar()
+  internal fun getCustomTitleBar(): CustomTitleBar? = frameHeaderHelper.getCustomTitleBar()
 
   override fun getNorthExtension(key: String): JComponent? = project?.let { rootPane.findNorthUiComponentByKey(key = key) }
 
@@ -309,13 +321,13 @@ open class ProjectFrameHelper internal constructor(
 
   fun updateView() {
     val rootPane = rootPane
-    rootPane.updateToolbar()
-    rootPane.updateMainMenuActions()
+    frameHeaderHelper.launchToolbarUpdate()
+    frameHeaderHelper.launchMainMenuActionsUpdate()
     rootPane.updateNorthComponents()
   }
 
   fun updateMainMenuActions() {
-    rootPane.updateMainMenuActions()
+    frameHeaderHelper.launchMainMenuActionsUpdate()
   }
 
   override fun getCurrentAccessibleContext(): AccessibleContext = frame.accessibleContext
@@ -351,6 +363,7 @@ open class ProjectFrameHelper internal constructor(
 
   internal suspend fun setProject(project: Project) {
     rootPane.setProject(project)
+    frameHeaderHelper.setProject(project)
     statusBar?.let {
       project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
     }

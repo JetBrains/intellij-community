@@ -7,6 +7,7 @@ import com.intellij.ide.lightEdit.menuBar.getLightEditMainMenuActionGroup
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -61,6 +62,9 @@ internal class LightEditFrameWrapper(
 ) : ProjectFrameHelper(frame = frame), Disposable, LightEditFrame {
   private var editPanel: LightEditPanel? = null
   private var frameTitleUpdateEnabled = true
+
+  override val isLightEdit: Boolean = true
+  override val mainMenuActionGroup: ActionGroup? = getLightEditMainMenuActionGroup()
 
   override fun getProject(): Project = project
 
@@ -133,8 +137,7 @@ internal class LightEditFrameWrapper(
   private inner class LightEditRootPane(parentCs: CoroutineScope, frame: IdeFrameImpl)
     : IdeRootPane(parentCs = parentCs,
                   frame = frame,
-                  loadingState = null,
-                  mainMenuActionGroup = getLightEditMainMenuActionGroup()), LightEditCompatible {
+                  loadingState = null), LightEditCompatible {
     override val isLightEdit: Boolean
       get() = true
 
