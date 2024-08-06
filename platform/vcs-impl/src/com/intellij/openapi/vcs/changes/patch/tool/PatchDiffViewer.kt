@@ -2,13 +2,14 @@
 package com.intellij.openapi.vcs.changes.patch.tool
 
 import com.intellij.diff.DiffContext
+import com.intellij.diff.DiffViewerEx
 import com.intellij.diff.EditorDiffViewer
 import com.intellij.diff.FrameDiffTool
-import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.SetEditorSettingsAction
 import com.intellij.diff.tools.holders.EditorHolder
 import com.intellij.diff.tools.holders.TextEditorHolder
 import com.intellij.diff.tools.util.DiffDataKeys
+import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
 import com.intellij.diff.tools.util.SimpleDiffPanel
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
@@ -30,8 +31,10 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.ints.IntConsumer
 import javax.swing.JComponent
 
-internal class PatchDiffViewer(private val diffContext: DiffContext,
-                               private val diffRequest: PatchDiffRequest) : DiffViewer, EditorDiffViewer {
+internal class PatchDiffViewer(
+  private val diffContext: DiffContext,
+  private val diffRequest: PatchDiffRequest,
+) : DiffViewerEx, EditorDiffViewer {
   private val project: Project? = diffContext.getProject()
 
   private val panel: SimpleDiffPanel
@@ -79,6 +82,8 @@ internal class PatchDiffViewer(private val diffContext: DiffContext,
   override fun getPreferredFocusedComponent(): JComponent = editor.getContentComponent()
 
   override fun getEditors(): List<Editor?> = listOf(editor)
+
+  override fun getDifferenceIterable(): PrevNextDifferenceIterable = prevNextDifferenceIterable
 
   override fun init(): FrameDiffTool.ToolbarComponents {
     panel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, diffContext, diffRequest))

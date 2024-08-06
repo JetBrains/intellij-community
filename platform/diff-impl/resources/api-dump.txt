@@ -34,6 +34,10 @@ a:com.intellij.diff.DiffContextEx
 - a:reopenDiffRequest():V
 - a:setWindowTitle(java.lang.String):V
 - a:showProgressBar(Z):V
+com.intellij.diff.DiffViewerEx
+- com.intellij.diff.FrameDiffTool$DiffViewer
+- getDifferenceIterable():com.intellij.diff.tools.util.PrevNextDifferenceIterable
+- getNavigatable():com.intellij.pom.Navigatable
 a:com.intellij.diff.actions.BaseShowDiffAction
 - com.intellij.openapi.project.DumbAwareAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -1135,6 +1139,7 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - getContents():java.util.List
 - p:getCurrentChange():com.intellij.diff.tools.fragmented.UnifiedDiffChange
 - getDiffChanges():java.util.List
+- getDifferenceIterable():com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - getDocument(com.intellij.diff.util.Side):com.intellij.openapi.editor.Document
 - getEditor():com.intellij.openapi.editor.ex.EditorEx
 - getEditors():java.util.List
@@ -1336,6 +1341,7 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer
 - p:doScrollToChange(com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy):Z
 - p:doScrollToContext(com.intellij.openapi.diff.DiffNavigationContext):Z
 - getDiffChanges():java.util.List
+- getDifferenceIterable():com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - getFoldingModel():com.intellij.diff.tools.util.FoldingModelSupport
 - getFoldingModelSettings():com.intellij.diff.tools.util.FoldingModelSupport$Settings
 - getModifierProvider():com.intellij.diff.tools.util.KeyboardModifierListener
@@ -1470,6 +1476,7 @@ a:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx
 - pa:getChanges():java.util.List
 - getChangesCount():I
 - getConflictsCount():I
+- getDifferenceIterable():com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - pa:getDividerPaintable(com.intellij.diff.util.Side):com.intellij.diff.util.DiffDividerDrawUtil$DividerPaintable
 - getFoldingModelSettings():com.intellij.diff.tools.util.FoldingModelSupport$Settings
 - p:getSelectedChange(com.intellij.diff.util.ThreeSide):com.intellij.diff.tools.simple.ThreesideDiffChangeBase
@@ -1790,7 +1797,7 @@ a:com.intellij.diff.tools.util.base.DiffPanelBase
 - setTopPanel(javax.swing.JComponent):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 a:com.intellij.diff.tools.util.base.DiffViewerBase
-- com.intellij.diff.FrameDiffTool$DiffViewer
+- com.intellij.diff.DiffViewerEx
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - pf:myContext:com.intellij.diff.DiffContext
@@ -1805,7 +1812,6 @@ a:com.intellij.diff.tools.util.base.DiffViewerBase
 - p:forceRediffSynchronously():Z
 - getContext():com.intellij.diff.DiffContext
 - p:getListeners():java.util.List
-- getNavigatable():com.intellij.pom.Navigatable
 - getProject():com.intellij.openapi.project.Project
 - getRequest():com.intellij.diff.requests.ContentDiffRequest
 - p:getStatusPanel():javax.swing.JComponent

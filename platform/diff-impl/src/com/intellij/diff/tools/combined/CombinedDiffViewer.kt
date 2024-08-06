@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
-import com.intellij.diff.DiffContext
-import com.intellij.diff.EditorDiffViewer
-import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.*
 import com.intellij.diff.FrameDiffTool.DiffViewer
+import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleDiffViewer
@@ -14,7 +13,6 @@ import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.util.DiffUtil
-import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -124,13 +122,13 @@ class CombinedDiffViewer(
   private val blockListeners = EventDispatcher.create(BlockListener::class.java)
 
   private fun updateDiffInfo(blockId: CombinedBlockId) {
-    val viewer = diffViewers[blockId] as? DiffViewerBase
-    if (viewer == null) {
+    val request = (diffViewers[blockId] as? DiffViewerBase)?.request
+    if (request !is ContentDiffRequest) {
       viewState.setDiffInfo(CombinedDiffUIState.DiffInfoState.Empty)
       return
     }
 
-    val titles = viewer.request.contentTitles.filter { it != null && it.isNotBlank() }
+    val titles = request.contentTitles.filter { it != null && it.isNotBlank() }
     val newDiffInfo = when (titles.size) {
       0 -> CombinedDiffUIState.DiffInfoState.Empty
       1 -> CombinedDiffUIState.DiffInfoState.SingleTitle(titles[0])
@@ -262,7 +260,7 @@ class CombinedDiffViewer(
     val diffViewer = getCurrentDiffViewer()
     sink[CommonDataKeys.PROJECT] = project
     sink[DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE] = currentDiffIterable
-    sink[DiffDataKeys.NAVIGATABLE] = (diffViewer as? DiffViewerBase)?.navigatable
+    sink[DiffDataKeys.NAVIGATABLE] = (diffViewer as? DiffViewerEx)?.navigatable
     sink[DiffDataKeys.DIFF_VIEWER] = diffViewer
     sink[COMBINED_DIFF_VIEWER] = this
     sink[DiffDataKeys.CURRENT_EDITOR] = diffViewer?.currentEditor
@@ -759,9 +757,8 @@ class CombinedDiffViewer(
 
     inner class CombinedDiffPrevNextDifferenceIterable : PrevNextDifferenceIterable {
       private fun CombinedDiffViewer.getDifferencesIterable(): PrevNextDifferenceIterable? {
-        val cur = getCurrentDiffViewer() ?: return null
-        val dataContext = DataManager.getInstance().getDataContext(cur.component)
-        return DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.getData(dataContext)
+        val currentViewer = getCurrentDiffViewer() ?: return null
+        return (currentViewer as? DiffViewerEx)?.differenceIterable
       }
 
       override fun canGoNext(): Boolean {

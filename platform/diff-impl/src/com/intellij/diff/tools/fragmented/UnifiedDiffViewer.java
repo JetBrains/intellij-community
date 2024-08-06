@@ -1070,10 +1070,14 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   //
 
   @Override
+  public @Nullable PrevNextDifferenceIterable getDifferenceIterable() {
+    return myPrevNextDifferenceIterable;
+  }
+
+  @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     super.uiDataSnapshot(sink);
     UnifiedDiffChange change = getCurrentChange();
-    sink.set(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE, myPrevNextDifferenceIterable);
     sink.set(DiffDataKeys.CURRENT_EDITOR, myEditor);
     if (change != null) {
       sink.set(DiffDataKeys.CURRENT_CHANGE_RANGE, new LineRange(change.getLine1(), change.getLine2()));

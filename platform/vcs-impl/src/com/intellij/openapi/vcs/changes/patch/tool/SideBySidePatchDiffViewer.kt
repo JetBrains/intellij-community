@@ -2,9 +2,9 @@
 package com.intellij.openapi.vcs.changes.patch.tool
 
 import com.intellij.diff.DiffContext
+import com.intellij.diff.DiffViewerEx
 import com.intellij.diff.EditorDiffViewer
 import com.intellij.diff.FrameDiffTool
-import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.FocusOppositePaneAction
 import com.intellij.diff.actions.impl.SetEditorSettingsAction
 import com.intellij.diff.comparison.ByWord
@@ -46,8 +46,8 @@ import javax.swing.JComponent
 
 internal class SideBySidePatchDiffViewer(
   private val diffContext: DiffContext,
-  private val diffRequest: PatchDiffRequest
-) : DiffViewer, EditorDiffViewer {
+  private val diffRequest: PatchDiffRequest,
+) : DiffViewerEx, EditorDiffViewer {
   private val project: Project? = diffContext.getProject()
 
   private val panel: SimpleDiffPanel
@@ -130,6 +130,8 @@ internal class SideBySidePatchDiffViewer(
   override fun getCurrentEditor(): EditorEx = currentSide.select(editors)
 
   override fun getEditors(): List<Editor> = editors
+
+  override fun getDifferenceIterable(): PrevNextDifferenceIterable = prevNextDifferenceIterable
 
   val editor1: EditorEx get() = editors[0]
   val editor2: EditorEx get() = editors[1]

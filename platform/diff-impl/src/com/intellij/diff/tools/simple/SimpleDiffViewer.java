@@ -714,10 +714,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   @Override
+  public @Nullable PrevNextDifferenceIterable getDifferenceIterable() {
+    return myPrevNextDifferenceIterable;
+  }
+
+  @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     super.uiDataSnapshot(sink);
     SimpleDiffChange change = getSelectedChange(getCurrentSide());
-    sink.set(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE, myPrevNextDifferenceIterable);
     if (change != null) {
       sink.set(DiffDataKeys.CURRENT_CHANGE_RANGE, new LineRange(
         change.getStartLine(getCurrentSide()), change.getEndLine(getCurrentSide())));

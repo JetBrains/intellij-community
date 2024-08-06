@@ -2,8 +2,8 @@
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffViewerEx;
 import com.intellij.diff.FrameDiffTool;
-import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffTaskQueue;
@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -30,7 +29,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class DiffViewerBase implements DiffViewer, UiCompatibleDataProvider {
+public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
 
   @NotNull private final List<DiffViewerListener> listeners = new SmartList<>();
@@ -240,11 +239,6 @@ public abstract class DiffViewerBase implements DiffViewer, UiCompatibleDataProv
     Disposer.dispose(taskAlarm);
   }
 
-  @Nullable
-  public Navigatable getNavigatable() {
-    return null;
-  }
-
   //
   // Listeners
   //
@@ -285,6 +279,7 @@ public abstract class DiffViewerBase implements DiffViewer, UiCompatibleDataProv
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(DiffDataKeys.NAVIGATABLE, getNavigatable());
+    sink.set(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE, getDifferenceIterable());
     sink.set(CommonDataKeys.PROJECT, myProject);
   }
 
