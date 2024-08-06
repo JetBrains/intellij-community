@@ -15,14 +15,10 @@
  */
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.psi.PsiDocumentManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
@@ -697,12 +693,10 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
         </modules>
         """.trimIndent()))
 
-    withContext(Dispatchers.EDT) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      val i = getIntentionAtCaret(parentPom, createModuleWithParentIntention)
-      assertNotNull(i)
-      fixture.launchAction(i!!)
-    }
+    //PsiDocumentManager.getInstance(project).commitAllDocuments()
+    val i = getIntentionAtCaret(parentPom, createModuleWithParentIntention)
+    assertNotNull(i)
+    fixture.launchAction(i!!)
 
     assertCreateModuleFixResult(
       "ppp/newModule/pom.xml",
