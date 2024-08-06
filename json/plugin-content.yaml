@@ -1,3 +1,6 @@
+- name: lib/json-split.jar
+  modules:
+  - name: intellij.json.split
 - name: lib/json.jar
   modules:
   - name: intellij.json
