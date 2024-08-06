@@ -674,7 +674,7 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass"
-            implements=" org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"/>
+            implements="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.extensionClassShouldNotBePublicProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
