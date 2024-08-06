@@ -26,7 +26,7 @@ internal class ShellRuntimeContextProviderImpl(
   val tracer = TelemetryManager.getTracer(Scope(TerminalCommandSpecCompletionContributor.TERMINAL_COMPLETION_OTL_SCOPE))
 
   private val realGeneratorRunner: ShellCommandExecutor = ShellCommandExecutor { command ->
-    tracer.spanBuilder("terminal-completion-run-generator")
+    tracer.spanBuilder("terminal-completion-run-generator-command")
       .setAttribute("terminal.command", command)
       .useWithScope {
       session.commandExecutionManager.runGeneratorAsync(command).await()
