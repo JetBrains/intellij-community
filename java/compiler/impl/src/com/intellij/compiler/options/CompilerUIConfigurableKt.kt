@@ -97,10 +97,12 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
       }
       row {
         label(JavaCompilerBundle.message("settings.compile.independent.modules.in.parallel"))
-          .comment
         comboboxJpsParallelCompilation = comboBox(ParallelCompilationOption.entries)
-          .comment(JavaCompilerBundle.message("settings.parallel.module.compile.may.require.larger.heap.size"))
           .component
+        contextHelp(
+          title = JavaCompilerBundle.message("settings.parallel.module.compile.context.help.title"),
+          description = JavaCompilerBundle.message("settings.parallel.module.compile.context.help.description")
+        )
       }
     }
 
