@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.lang.LighterASTNode
 import com.intellij.lang.LighterASTTokenNode
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.tree.TokenSet
@@ -28,6 +29,12 @@ import org.jetbrains.kotlin.serialization.deserialization.getClassId
 class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection<String>>() {
     companion object {
         val NAME: ID<String, Collection<String>> = ID.create(KotlinShortClassNameFileIndex::class.java.simpleName)
+    }
+
+    init {
+        if (!isShortNameFilteringEnabled) {
+            throw ExtensionNotApplicableException.create()
+        }
     }
 
     override fun getName(): ID<String, Collection<String>> = NAME
