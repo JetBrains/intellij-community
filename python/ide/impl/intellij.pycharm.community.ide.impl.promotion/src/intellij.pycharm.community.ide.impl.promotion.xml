@@ -6,14 +6,6 @@
     <module name="intellij.pycharm.community.ide.impl"/>
   </dependencies>
 
-
-  <extensions defaultExtensionNs="com.intellij">
-    <annotator language="Python" implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmProfessionalAdvertiser"/>
-    <annotator language="TEXT" implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmProfessionalAdvertiser"/>
-    <annotator language="JSON" implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmProfessionalAdvertiser"/>
-    <projectService serviceImplementation="com.intellij.pycharm.community.ide.impl.promotion.PyCharmProfessionalAdvertiserSettings"/>
-  </extensions>
-
   <actions resource-bundle="messages.PyCharmCommunityCustomizationBundle">
     <action class="com.intellij.pycharm.community.ide.impl.promotion.PromoDataFrameAction"
             id="PromoDataFrameAction"
