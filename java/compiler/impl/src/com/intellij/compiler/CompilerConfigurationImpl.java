@@ -330,12 +330,14 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
   @Override
   public void setParallelCompilationEnabled(boolean enabled) {
-    myParallelCompilationOptionSetExplicitly = true;
+    ParallelCompilationOption option;
     if (enabled) {
-      myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.ENABLED;
+      option = ParallelCompilationOption.ENABLED;
     } else {
-      myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.DISABLED;
+      option = ParallelCompilationOption.DISABLED;
     }
+
+    setParallelCompilationOption(option);
   }
 
   @Override
@@ -347,8 +349,11 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
   @Override
   public void setParallelCompilationOption(@NotNull ParallelCompilationOption option) {
-    myParallelCompilationOptionSetExplicitly = true;
-    myState.PARALLEL_COMPILATION_OPTION = option;
+    ParallelCompilationOption oldOption = getParallelCompilationOption();
+    if (oldOption != option) {
+      myParallelCompilationOptionSetExplicitly = true;
+      myState.PARALLEL_COMPILATION_OPTION = option;
+    }
   }
 
   @Override
