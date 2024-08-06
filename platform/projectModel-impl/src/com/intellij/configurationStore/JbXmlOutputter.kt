@@ -463,7 +463,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
 
     if (!shouldCheckElement(element)) return
 
-    if (doesNameSuggestSensitiveInformation(name!!)) {
+    if (doesNameSuggestSensitiveInformation(name!!) && !element.isEmpty) {
       logSensitiveInformationError(name, "Element", element.parentElement)
     }
 
