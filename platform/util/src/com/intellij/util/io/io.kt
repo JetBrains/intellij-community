@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
-import com.intellij.util.SmartList
 import com.intellij.util.text.CharSequenceBackedByChars
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -29,46 +28,6 @@ fun Reader.readCharSequence(length: Int): CharSequence {
     }
     return CharSequenceBackedByChars(chars, 0, count)
   }
-}
-
-/**
- * Think twice before use - consider to specify length.
- */
-fun Reader.readCharSequence(): CharSequence {
-  var chars = CharArray(DEFAULT_BUFFER_SIZE)
-  var buffers: MutableList<CharArray>? = null
-  var count = 0
-  var total = 0
-  while (true) {
-    val n = read(chars, count, chars.size - count)
-    if (n <= 0) {
-      break
-    }
-
-    count += n
-    total += n
-    if (count == chars.size) {
-      if (buffers == null) {
-        buffers = SmartList()
-      }
-      buffers.add(chars)
-      val newLength = min(1024 * 1024, chars.size * 2)
-      chars = CharArray(newLength)
-      count = 0
-    }
-  }
-
-  if (buffers == null) {
-    return CharSequenceBackedByChars(chars, 0, total)
-  }
-
-  val result = CharArray(total)
-  for (buffer in buffers) {
-    System.arraycopy(buffer, 0, result, result.size - total, buffer.size)
-    total -= buffer.size
-  }
-  System.arraycopy(chars, 0, result, result.size - total, total)
-  return CharSequenceBackedByChars(result)
 }
 
 fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
@@ -122,7 +81,7 @@ suspend fun InputStream.copyToAsync(
         try {
           read(buffer, 0, min(limit - totalRead, buffer.size.toLong()).toInt())
         }
-        catch (ignored: SocketTimeoutException) {
+        catch (_: SocketTimeoutException) {
           continue
         }
       when {
