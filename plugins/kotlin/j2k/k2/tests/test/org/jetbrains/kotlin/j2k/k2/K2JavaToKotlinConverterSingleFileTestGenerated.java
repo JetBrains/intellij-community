@@ -2037,6 +2037,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/detectProperties/OverridesOfExternalCode.java");
         }
 
+        @TestMetadata("privateNestedClass.java")
+        public void testPrivateNestedClass() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/privateNestedClass.java");
+        }
+
         @TestMetadata("PropertyAndFieldConflicts.java")
         public void testPropertyAndFieldConflicts() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/PropertyAndFieldConflicts.java");
