@@ -70,7 +70,7 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(fileToAnnotate, revisionNumber);
     //for uncommitted renamed file we should provide local name otherwise --follow will fail
     final List<HgFileRevision> logResult =
-      HgHistoryProvider.getHistory(revision == null ? hgFile.toFilePath() : fileToAnnotate.toFilePath(), vcsRoot, myProject, null, -1);
+      HgHistoryProvider.getHistoryOrFail(revision == null ? hgFile.toFilePath() : fileToAnnotate.toFilePath(), vcsRoot, myProject, null, -1);
     return new HgAnnotation(myProject, hgFile, annotationResult, logResult,
                             revisionNumber != null ? revisionNumber : new HgWorkingCopyRevisionsCommand(myProject).tip(vcsRoot));
   }
@@ -85,7 +85,7 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
     final HgFile hgFile = new HgFile(vcsRoot, path);
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(hgFile, (HgRevisionNumber)revision);
     final List<HgFileRevision> logResult = HgHistoryProvider
-      .getHistory(hgFile.toFilePath(), vcsRoot, myProject, (HgRevisionNumber)revision, -1);
+      .getHistoryOrFail(hgFile.toFilePath(), vcsRoot, myProject, (HgRevisionNumber)revision, -1);
     return new HgAnnotation(myProject, hgFile, annotationResult, logResult, revision);
   }
 }
