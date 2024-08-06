@@ -102,8 +102,6 @@ private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) ->
   }
 }
 
-@VisibleForTesting
-@TestOnly
 @ApiStatus.Internal
 fun currentThreadOverriddenContextOrNull(): CoroutineContext? {
   return tlCoroutineContext.get().context

@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.ui.ShowingContainer
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.isCoroutineWILEnabled
-import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.logger
 import java.awt.*
 import java.awt.event.FocusEvent
@@ -57,9 +55,7 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
         id == WindowEvent.WINDOW_LOST_FOCUS ||
         id == FocusEvent.FOCUS_GAINED ||
         id == FocusEvent.FOCUS_LOST) {
-      ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).firstOrNull()?.let {
-        return withClientId(it.clientId)
-      }
+      return resetThreadContext()
     }
     return AccessToken.EMPTY_ACCESS_TOKEN
   }

@@ -6,6 +6,7 @@ package com.intellij.concurrency.client
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
@@ -14,11 +15,14 @@ import java.util.function.Function
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
+private val logger = logger<ClientIdStringContextElement>()
+
 @ApiStatus.Internal
 class ClientIdStringContextElement(val clientIdString: String?) : AbstractCoroutineContextElement(Key) {
+  private val creationTrace: Throwable? = if (logger.isTraceEnabled) Throwable() else null
   object Key : CoroutineContext.Key<ClientIdStringContextElement>
 
-  override fun toString(): String = "ClientId=$clientIdString"
+  override fun toString(): String = if (creationTrace != null) "ClientId=$clientIdString. Created at:\r$creationTrace" else "ClientId=$clientIdString"
 }
 
 val CoroutineContext.clientIdStringContextElement: ClientIdStringContextElement?
@@ -45,6 +49,7 @@ internal fun <T> withClientId(clientId: String?, callable: Callable<T>) = withCl
 
 @ApiStatus.Internal
 fun captureClientIdInRunnable(runnable: Runnable): Runnable {
+  return runnable
   if (!propagateClientIdAcrossThreads) return runnable
   val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return runnable
   val currentId = idStringContextElement.clientIdString
@@ -57,6 +62,7 @@ fun captureClientIdInRunnable(runnable: Runnable): Runnable {
 
 @ApiStatus.Internal
 fun <T> captureClientIdInCallable(callable: Callable<T>): Callable<T> {
+  return callable
   if (!propagateClientIdAcrossThreads) return callable
   val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return callable
   return Callable {
@@ -68,6 +74,7 @@ fun <T> captureClientIdInCallable(callable: Callable<T>): Callable<T> {
 
 @ApiStatus.Internal
 fun <T> captureClientIdInProcessor(processor: Processor<T>): Processor<T> {
+  return processor
   if (!propagateClientIdAcrossThreads) return processor
   val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return processor
   return Processor {
@@ -79,6 +86,7 @@ fun <T> captureClientIdInProcessor(processor: Processor<T>): Processor<T> {
 
 @ApiStatus.Internal
 fun <T> captureClientId(action: () -> T): () -> T {
+  return action
   if (propagateClientIdAcrossThreads) return action
   val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return action
   return {
@@ -90,6 +98,7 @@ fun <T> captureClientId(action: () -> T): () -> T {
 
 @ApiStatus.Internal
 fun <T, R> captureClientIdInFunction(function: Function<T, R>): Function<T, R> {
+  return function
   if (!propagateClientIdAcrossThreads) return function
   val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return function
   return Function {
@@ -101,6 +110,7 @@ fun <T, R> captureClientIdInFunction(function: Function<T, R>): Function<T, R> {
 
 @ApiStatus.Internal
 fun <T, U> captureClientIdInBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
+  return biConsumer
   if (!propagateClientIdAcrossThreads) return biConsumer
   val idStringContextElement = currentThreadContext().clientIdStringContextElement ?: return biConsumer
   return BiConsumer { t, u ->

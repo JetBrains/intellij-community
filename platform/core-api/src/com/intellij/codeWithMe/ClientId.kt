@@ -4,6 +4,7 @@ package com.intellij.codeWithMe
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.client.*
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
@@ -307,7 +308,17 @@ data class ClientId(val value: String) {
         null
       }
 
-      return installThreadContext(ClientIdStringContextElement(newClientIdValue))
+      val currentThreadContext = currentThreadContextOrNull()
+      if (currentThreadContext == null) {
+        return installThreadContext(ClientIdStringContextElement(newClientIdValue))
+      }
+
+      val currentClientIdStringContextElement = currentThreadContext.clientIdStringContextElement
+      val newContext = currentThreadContext + ClientIdStringContextElement(newClientIdValue)
+      if (currentClientIdStringContextElement != null && currentClientIdStringContextElement.clientIdString != newClientIdValue)  {
+        logger.error("Trying to set ClientId=$newClientIdValue, but it's already set to ${currentThreadContext.clientIdStringContextElement}")
+      }
+      return installThreadContext(newContext, replace = true)
     }
 
     private var service: Ref<ClientSessionsManager<*>?>? = null

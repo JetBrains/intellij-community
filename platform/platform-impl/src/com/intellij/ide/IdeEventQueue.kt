@@ -6,6 +6,8 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.EventWatcher
 import com.intellij.diagnostic.LoadingState
@@ -845,9 +847,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   private fun attachClientIdIfNeeded(event: AWTEvent): AWTEvent? {
-    if (!ClientId.propagateAcrossThreads) {
-      return null
-    }
     // We don't 'attach' a current client ID to `PeerEvent` instances for two reasons.
     // First, they are often posted to `EventQueue` indirectly (first to `sun.awt.PostEventQueue`, and then to the `EventQueue` by
     // `SunToolkit#flushPendingEvents`), so a current client ID might be unrelated to the code that created those events.
@@ -855,11 +854,18 @@ class IdeEventQueue private constructor() : EventQueue() {
     // and changes the overall events' processing order.
     if (event is InvocationEvent && event !is PeerEvent) {
       val runnable = InvocationUtil.extractRunnable(event)
-      if (runnable is ContextAwareRunnable) {
+      if (runnable == null || runnable is ContextAwareRunnable) {
         return null
       }
-      val clientId = current
-      return InvocationEvent(event.source) { withClientId(clientId).use { dispatchEvent(event) } }
+      val captured = currentThreadContext()
+      return InvocationEvent(event.source) {
+        // TODO: daniil: if just to pass `runnable` into the InvocationEvent instead of calling `dispatchEvent`
+        // the event isn't marked as dispatched and `com.intellij.testFramework.UITestUtil.replaceIdeEventQueueSafely`
+        // hangs forever on `EventQueue.invokeAndWait(EmptyRunnable.getInstance());`
+        installThreadContext(captured).use {
+          dispatchEvent(event)
+        }
+      }
     }
     if (event.id in ComponentEvent.COMPONENT_FIRST..ComponentEvent.COMPONENT_LAST) {
       return ComponentEventWithClientId((event as ComponentEvent).component, event.id, current)

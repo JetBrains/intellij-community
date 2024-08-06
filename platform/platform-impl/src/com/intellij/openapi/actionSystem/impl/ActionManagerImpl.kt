@@ -1315,11 +1315,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
       _timerEvents.tryEmit(Unit)
 
-      @Suppress("ForbiddenInSuspectContextMethod")
-      withClientId(clientId).use {
-        for (listener in listeners) {
-          runListenerAction(listener)
-        }
+      for (listener in listeners) {
+        runListenerAction(listener)
       }
     }
   }
