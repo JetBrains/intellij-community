@@ -117,10 +117,6 @@ private fun searchForAllChangedIcons(context: Context) {
 }
 
 private fun searchForChangedIconsByDesigners(context: Context) {
-  if (!isUnderTeamCity()) {
-    gitPull(context.iconRepo)
-  }
-
   fun asIcons(files: Collection<String>): List<String> {
     return files.asSequence()
       .filter { ImageExtension.fromName(it) != null }

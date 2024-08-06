@@ -20,18 +20,6 @@ internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?
   }
 }
 
-internal fun gitPull(repo: Path) {
-  try {
-    execute(repo, GIT, "pull", "--rebase")
-  }
-  catch (e: Exception) {
-    callSafely(printStackTrace = false) {
-      execute(repo, GIT, "rebase", "--abort")
-    }
-    log("Unable to pull changes for $repo: ${e.message}")
-  }
-}
-
 /**
  * @param dirToList optional dir in [repo] from which to list files
  * @return map of file paths (relative to [dirToList]) to [GitObject]
@@ -43,7 +31,6 @@ internal fun listGitObjects(repo: Path, dirToList: Path?, fileFilter: (Path) -> 
 private fun listGitTree(repo: Path, dirToList: Path?, fileFilter: (Path) -> Boolean): Stream<Pair<String, GitObject>> {
   val relativeDirToList = dirToList?.toFile()?.relativeTo(repo.toFile())?.path ?: ""
   log("Inspecting $repo/$relativeDirToList")
-  if (!isUnderTeamCity()) gitPull(repo)
   return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .trim().lines().stream()
     .filter(String::isNotBlank).map { line ->
