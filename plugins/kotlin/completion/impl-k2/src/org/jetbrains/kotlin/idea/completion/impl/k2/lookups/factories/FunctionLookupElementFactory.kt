@@ -42,14 +42,14 @@ internal class FunctionLookupElementFactory {
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
     ): LookupElementBuilder {
-        val insertEmptyLambda = insertLambdaBraces(signature, options)
+        val insertEmptyLambda = insertLambdaBraces(signature, options.insertionStrategy)
         val lookupObject = FunctionCallLookupObject(
-            name,
-            options,
-            renderFunctionParameters(signature),
+            shortName = name,
+            options = options,
+            renderedDeclaration = renderFunctionParameters(signature),
             inputValueArgumentsAreRequired = signature.valueParameters.isNotEmpty(),
             inputTypeArgumentsAreRequired = !functionCanBeCalledWithoutExplicitTypeArguments(signature.symbol, expectedType),
-            insertEmptyLambda,
+            insertEmptyLambda = insertEmptyLambda,
         )
 
         val builder = LookupElementBuilder.create(lookupObject, name.asString())
