@@ -65,7 +65,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     }
   }
 
-  fun testOnChanges(): Unit = runBlocking {
+  fun testOnChanges() {
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable = Disposer.newDisposable(testRootDisposable)
     try {
@@ -93,7 +93,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     }
   }
 
-  fun testHotSwap(): Unit = runBlocking {
+  fun testHotSwap() {
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable = Disposer.newDisposable(testRootDisposable)
     try {
@@ -150,6 +150,40 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     finally {
       Disposer.dispose(disposable)
     }
+  }
+
+  fun testSameHotSwapStatusHasNoEffect() {
+    val manager = HotSwapSessionManager.getInstance(project)
+    val disposable0 = Disposer.newDisposable(testRootDisposable)
+    val disposable1 = Disposer.newDisposable(testRootDisposable)
+    val list = mutableListOf<HotSwapVisibleStatus>()
+    manager.addListener(HotSwapChangesListener { _, status ->
+      list.add(status)
+    }, disposable0)
+
+    val provider = MockHotSwapProvider()
+    val hotSwapSession = manager.createSession(provider, disposable1)
+
+    provider.collector.addFile(MockVirtualFile("a.txt"))
+    assertEquals(HotSwapVisibleStatus.CHANGES_READY, list.single())
+
+    val listener = hotSwapSession.startHotSwapListening()
+    assertEquals(2, list.size)
+    assertEquals(HotSwapVisibleStatus.IN_PROGRESS, list.last())
+
+    listener.onCanceled()
+    assertEquals(3, list.size)
+    assertEquals(HotSwapVisibleStatus.CHANGES_READY, list.last())
+
+    listener.onCanceled()
+    assertEquals(3, list.size)
+
+    Disposer.dispose(disposable1)
+    assertEquals(4, list.size)
+    assertEquals(HotSwapVisibleStatus.SESSION_COMPLETED, list.last())
+
+    listener.onCanceled()
+    assertEquals(4, list.size)
   }
 
   fun testAddingListenerConcurrentlyToChanges() {
@@ -213,6 +247,166 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
         }
       }
     }
+  }
+
+  fun testMultipleSessionsNotifyLastOneWhenNoSelected() {
+    val disposable0 = Disposer.newDisposable(testRootDisposable)
+    val disposable1 = Disposer.newDisposable(testRootDisposable)
+    val disposable2 = Disposer.newDisposable(testRootDisposable)
+
+    val manager = HotSwapSessionManager.getInstance(project)
+    val provider1 = MockHotSwapProvider()
+    val session1 = manager.createSession(provider1, disposable1)
+    val provider2 = MockHotSwapProvider()
+    val session2 = manager.createSession(provider2, disposable2)
+
+    val list = mutableListOf<Pair<HotSwapSession<*>, HotSwapVisibleStatus>>()
+    manager.addListener(HotSwapChangesListener { session, status ->
+      list.add(session to status)
+    }, disposable0)
+
+    assertSame(session2, manager.currentSession)
+    assertEquals(session2 to HotSwapVisibleStatus.NO_CHANGES, list.single())
+
+    provider1.collector.addFile(MockVirtualFile("a.txt"))
+    assertEquals(session2 to HotSwapVisibleStatus.NO_CHANGES, list.single())
+
+    provider2.collector.addFile(MockVirtualFile("a.txt"))
+    assertEquals(2, list.size)
+    assertEquals(session2 to HotSwapVisibleStatus.CHANGES_READY, list.last())
+
+    Disposer.dispose(disposable2)
+    assertEquals(4, list.size)
+    assertEquals(session2 to HotSwapVisibleStatus.SESSION_COMPLETED, list[list.size - 2])
+    assertEquals(session1 to HotSwapVisibleStatus.CHANGES_READY, list.last())
+
+    Disposer.dispose(disposable1)
+    assertEquals(5, list.size)
+    assertEquals(session1 to HotSwapVisibleStatus.SESSION_COMPLETED, list.last())
+
+    Disposer.dispose(disposable0)
+    assertEquals(5, list.size)
+  }
+
+  fun testCloseNonSelectedSession() {
+    val disposable0 = Disposer.newDisposable(testRootDisposable)
+    val disposable1 = Disposer.newDisposable(testRootDisposable)
+    val disposable2 = Disposer.newDisposable(testRootDisposable)
+
+    val manager = HotSwapSessionManager.getInstance(project)
+    val provider1 = MockHotSwapProvider()
+    manager.createSession(provider1, disposable1)
+    val provider2 = MockHotSwapProvider()
+    val session2 = manager.createSession(provider2, disposable2)
+
+    val list = mutableListOf<Pair<HotSwapSession<*>, HotSwapVisibleStatus>>()
+    manager.addListener(HotSwapChangesListener { session, status ->
+      list.add(session to status)
+    }, disposable0)
+
+    assertSame(session2, manager.currentSession)
+    assertEquals(session2 to HotSwapVisibleStatus.NO_CHANGES, list.single())
+
+    provider1.collector.addFile(MockVirtualFile("a.txt"))
+    provider2.collector.addFile(MockVirtualFile("a.txt"))
+
+    assertEquals(2, list.size)
+    Disposer.dispose(disposable1)
+    assertEquals(2, list.size)
+
+    Disposer.dispose(disposable2)
+    assertEquals(3, list.size)
+    assertEquals(session2 to HotSwapVisibleStatus.SESSION_COMPLETED, list.last())
+
+    Disposer.dispose(disposable0)
+    assertEquals(3, list.size)
+  }
+
+  fun testSessionSelection() {
+    val disposable0 = Disposer.newDisposable(testRootDisposable)
+    val disposable1 = Disposer.newDisposable(testRootDisposable)
+    val disposable2 = Disposer.newDisposable(testRootDisposable)
+
+    val manager = HotSwapSessionManager.getInstance(project)
+    val provider1 = MockHotSwapProvider()
+    val session1 = manager.createSession(provider1, disposable1)
+    val provider2 = MockHotSwapProvider()
+    val session2 = manager.createSession(provider2, disposable2)
+
+    val list = mutableListOf<Pair<HotSwapSession<*>, HotSwapVisibleStatus>>()
+    manager.addListener(HotSwapChangesListener { session, status ->
+      list.add(session to status)
+    }, disposable0)
+
+    assertSame(session2, manager.currentSession)
+    assertEquals(session2 to HotSwapVisibleStatus.NO_CHANGES, list.single())
+
+    manager.onSessionSelected(session1)
+    assertSame(session1, manager.currentSession)
+    assertEquals(2, list.size)
+    assertEquals(session1 to HotSwapVisibleStatus.NO_CHANGES, list.last())
+
+    provider1.collector.addFile(MockVirtualFile("a.txt"))
+    assertEquals(3, list.size)
+    assertEquals(session1 to HotSwapVisibleStatus.CHANGES_READY, list.last())
+
+    manager.onSessionSelected(session2)
+    assertSame(session2, manager.currentSession)
+    assertEquals(4, list.size)
+    assertEquals(session2 to HotSwapVisibleStatus.NO_CHANGES, list.last())
+
+    provider2.collector.addFile(MockVirtualFile("a.txt"))
+    assertEquals(5, list.size)
+    assertEquals(session2 to HotSwapVisibleStatus.CHANGES_READY, list.last())
+
+    Disposer.dispose(disposable2)
+    assertEquals(7, list.size)
+    assertEquals(session2 to HotSwapVisibleStatus.SESSION_COMPLETED, list[list.size - 2])
+    assertEquals(session1 to HotSwapVisibleStatus.CHANGES_READY, list.last())
+
+    Disposer.dispose(disposable1)
+    assertEquals(8, list.size)
+    assertEquals(session1 to HotSwapVisibleStatus.SESSION_COMPLETED, list.last())
+
+    Disposer.dispose(disposable0)
+    assertEquals(8, list.size)
+  }
+
+  fun testSelectionAlreadySelectedOrClosedHasNoEffect() {
+    val disposable0 = Disposer.newDisposable(testRootDisposable)
+    val disposable1 = Disposer.newDisposable(testRootDisposable)
+
+    val manager = HotSwapSessionManager.getInstance(project)
+    val provider1 = MockHotSwapProvider()
+    val session1 = manager.createSession(provider1, disposable1)
+
+    val list = mutableListOf<HotSwapVisibleStatus>()
+    manager.addListener(HotSwapChangesListener { _, status ->
+      list.add(status)
+    }, disposable0)
+
+    assertSame(session1, manager.currentSession)
+    assertEquals(HotSwapVisibleStatus.NO_CHANGES, list.single())
+
+    manager.onSessionSelected(session1)
+    assertSame(session1, manager.currentSession)
+    assertEquals(HotSwapVisibleStatus.NO_CHANGES, list.last())
+
+    manager.onSessionSelected(session1)
+    assertSame(session1, manager.currentSession)
+    assertEquals(HotSwapVisibleStatus.NO_CHANGES, list.last())
+
+    Disposer.dispose(disposable1)
+    assertNull(manager.currentSession)
+    assertEquals(2, list.size)
+    assertEquals(HotSwapVisibleStatus.SESSION_COMPLETED, list.last())
+
+    manager.onSessionSelected(session1)
+    assertNull(manager.currentSession)
+    assertEquals(2, list.size)
+    assertEquals(HotSwapVisibleStatus.SESSION_COMPLETED, list.last())
+
+    Disposer.dispose(disposable0)
   }
 }
 
