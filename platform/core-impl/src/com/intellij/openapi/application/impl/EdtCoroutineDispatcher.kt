@@ -30,8 +30,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
     check(!context.isRunBlockingUnderReadAction()) {
       "Switching to Dispatchers.EDT from `runBlockingCancellable` inside in a read-action leads to possible deadlock."
     }
-    val state = context.contextModality()
-                ?: ModalityState.nonModal() // dispatch with NON_MODAL by default
+    val state = context.effectiveContextModality()
     val runnable = if (state === ModalityState.any()) {
       ContextAwareRunnable(block::run)
     }
@@ -63,3 +62,6 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
     override fun toString(): String = "Dispatchers.EDT.immediate"
   }
 }
+
+private fun CoroutineContext.effectiveContextModality(): ModalityState =
+  contextModality() ?: ModalityState.nonModal() // dispatch with NON_MODAL by default
