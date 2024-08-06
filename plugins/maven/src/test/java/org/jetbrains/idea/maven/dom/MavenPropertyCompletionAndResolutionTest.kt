@@ -4,14 +4,11 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.lang.properties.IProperty
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlTag
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
@@ -77,9 +74,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     val baseDir = readAction { PsiManager.getInstance(project).findDirectory(projectPom.getParent())!! }
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, baseDir)
-    }
+    assertResolved(projectPom, baseDir)
 
     updateProjectPom("""
                        <groupId>test</groupId<artifactId>project</artifactId>
@@ -88,9 +83,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent())
 
 
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, baseDir)
-    }
+    assertResolved(projectPom, baseDir)
 
     updateProjectPom("""
                        <groupId>test</groupId<artifactId>project</artifactId>
@@ -98,9 +91,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>pom.basedir}</name>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, baseDir)
-    }
+    assertResolved(projectPom, baseDir)
   }
 
   @Test
@@ -113,10 +104,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        </properties>>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val multimoduleDir = PsiManager.getInstance(project).findDirectory(projectPom.getParent())
-      assertResolved(projectPom, multimoduleDir!!)
-    }
+    val multimoduleDir = readAction { PsiManager.getInstance(project).findDirectory(projectPom.getParent()) }
+    assertResolved(projectPom, multimoduleDir!!)
   }
 
   @Test
@@ -153,10 +142,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                          <myDir>${'$'}{<caret>maven.multiModuleProjectDirectory}</myDir>
                                        </properties>
                                        """.trimIndent())
-    withContext(Dispatchers.EDT) {
-      val multimoduleDir = PsiManager.getInstance(project).findDirectory(projectPom.getParent())
-      assertResolved(m1, multimoduleDir!!)
-    }
+    val multimoduleDir = readAction { PsiManager.getInstance(project).findDirectory(projectPom.getParent()) }
+    assertResolved(m1, multimoduleDir!!)
   }
 
   @Test
@@ -217,9 +204,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>project.bar}</name>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertUnresolved(projectPom)
-    }
+    assertUnresolved(projectPom)
   }
 
   @Test
@@ -671,9 +656,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
     readWithProfiles("two")
 
-    withContext(Dispatchers.EDT) {
-      moveCaretTo(projectPom, "<name>${'$'}{<caret>foo}</name>")
-    }
+    moveCaretTo(projectPom, "<name>${'$'}{<caret>foo}</name>")
     assertResolved(projectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel::class.java))
   }
 
@@ -764,9 +747,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>settings.foo.bar}</name>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertUnresolved(projectPom)
-    }
+    assertUnresolved(projectPom)
   }
 
   @Test
@@ -834,10 +815,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>user.home}</name>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom,
-                     MavenPropertiesVirtualFileSystem.getInstance().findSystemProperty(project, "user.home")!!.getPsiElement())
-    }
+    val psiElement = readAction { MavenPropertiesVirtualFileSystem.getInstance().findSystemProperty(project, "user.home")!!.getPsiElement() }
+    assertResolved(projectPom, psiElement)
   }
 
   @Test
@@ -849,9 +828,8 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   <name>${"$"}{<caret>env.${envVar}}</name>
   """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(project, envVar)!!.getPsiElement())
-    }
+    val psiElement = readAction { MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(project, envVar)!!.getPsiElement() }
+    assertResolved(projectPom, psiElement)
   }
 
   @Test
@@ -865,10 +843,10 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>env.PATH}</name>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      val ref = getReferenceAtCaret(projectPom)
-      assertNotNull(ref)
+    val ref = getReferenceAtCaret(projectPom)
+    assertNotNull(ref)
 
+    readAction {
       val resolved = ref!!.resolve()
       assertEquals(System.getenv("Path").replace("[^A-Za-z]".toRegex(), ""),
                    (resolved as IProperty?)!!.getValue()!!.replace("[^A-Za-z]".toRegex(), ""))
@@ -886,9 +864,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>env.PaTH}</name>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertUnresolved(projectPom)
-    }
+    assertUnresolved(projectPom)
   }
 
   @Test
@@ -902,9 +878,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>env.Path}</name>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertUnresolved(projectPom)
-    }
+    assertUnresolved(projectPom)
   }
 
 
