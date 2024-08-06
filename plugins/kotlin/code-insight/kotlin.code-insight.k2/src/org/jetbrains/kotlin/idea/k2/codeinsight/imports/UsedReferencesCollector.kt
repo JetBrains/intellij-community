@@ -17,10 +17,12 @@ internal class UsedReferencesCollector(private val file: KtFile) {
     data class Result(
         val usedDeclarations: Map<FqName, Set<Name>>,
         val unresolvedNames: Set<Name>,
+        val importableSymbols: Set<ImportableKaSymbolPointer>,
     )
 
     private val unresolvedNames: HashSet<Name> = hashSetOf()
     private val usedDeclarations: HashMap<FqName, MutableSet<Name>> = hashMapOf()
+    private val importableSymbols: HashSet<ImportableKaSymbol> = hashSetOf()
 
     private val aliases: Map<FqName, List<Name>> = collectImportAliases(file)
 
@@ -42,7 +44,11 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             }
         })
 
-        return Result(usedDeclarations, unresolvedNames)
+        val importableSymbolPointers = importableSymbols
+            .map { it.run { createPointer() } }
+            .toSet()
+
+        return Result(usedDeclarations, unresolvedNames, importableSymbolPointers)
     }
 
     private fun KaSession.collectReferencesFrom(element: KtElement) {
@@ -80,6 +86,8 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
                 val newNames = (aliases[importableName].orEmpty() + importableName.shortName()).intersect(names)
                 usedDeclarations.getOrPut(importableName) { hashSetOf() } += newNames
+
+                importableSymbols += symbol.run { toImportableKaSymbol() }
             }
         }
     }

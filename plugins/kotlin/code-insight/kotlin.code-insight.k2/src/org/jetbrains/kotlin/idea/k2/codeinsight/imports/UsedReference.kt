@@ -89,6 +89,21 @@ internal class UsedSymbol(val reference: KtReference, val symbol: KaSymbol) {
 
         return canBeResolvedViaImport(reference, symbol)
     }
+
+    fun KaSession.toImportableKaSymbol(): ImportableKaSymbol {
+        return when (symbol) {
+            is KaCallableSymbol -> {
+                val dispatcherReceiver = resolveDispatchReceiver(reference.element) as? KaImplicitReceiverValue
+                val containingClassSymbol = dispatcherReceiver?.symbol as? KaClassLikeSymbol
+
+                ImportableKaSymbol.create(symbol, containingClassSymbol)
+            }
+
+            is KaClassLikeSymbol -> ImportableKaSymbol.create(symbol)
+
+            else -> error("Unexpected symbol type ${symbol::class}")
+        }
+    }
 }
 
 /**
