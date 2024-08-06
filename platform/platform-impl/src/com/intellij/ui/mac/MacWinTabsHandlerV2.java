@@ -30,17 +30,13 @@ import java.util.Objects;
 public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
   private static final String WINDOW_TABS_CONTAINER = "WINDOW_TABS_CONTAINER_KEY";
 
-  static @NotNull JComponent _wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
-    JPanel panel = new NonOpaquePanel(new BorderLayout());
-
+  static @NotNull JComponent _createAndInstallHandlerComponent(@NotNull JRootPane rootPane) {
     JPanel tabsContainer = new NonOpaquePanel(new BorderLayout());
     tabsContainer.setVisible(false);
 
-    panel.add(tabsContainer, BorderLayout.NORTH);
-    panel.add(northComponent);
     rootPane.putClientProperty(WINDOW_TABS_CONTAINER, tabsContainer);
     rootPane.putClientProperty("Window.transparentTitleBarHeight", 28);
-    return panel;
+    return tabsContainer;
   }
 
   static void _fastInit(@NotNull IdeFrameImpl frame) {

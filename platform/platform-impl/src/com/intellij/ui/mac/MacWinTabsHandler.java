@@ -14,7 +14,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -49,22 +48,18 @@ public class MacWinTabsHandler {
   private static Callback myObserverCallback; // don't convert to local var
   private static ID myObserverDelegate;
 
-  public static @NotNull JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
+  public static @NotNull JComponent createAndInstallHandlerComponent(@NotNull JRootPane rootPane) {
     if (isVersion2()) {
-      return MacWinTabsHandlerV2._wrapRootPaneNorthSide(rootPane, northComponent);
+      return MacWinTabsHandlerV2._createAndInstallHandlerComponent(rootPane);
     }
-
-    JPanel panel = new NonOpaquePanel(new BorderLayout());
 
     JPanel filler = new OpaquePanel();
     filler.setBorder(JBUI.Borders.customLineBottom(UIUtil.getTooltipSeparatorColor()));
     filler.setVisible(false);
 
-    panel.add(filler, BorderLayout.NORTH);
-    panel.add(northComponent);
     rootPane.putClientProperty(WIN_TAB_FILLER, filler);
     rootPane.putClientProperty("Window.transparentTitleBarHeight", 28);
-    return panel;
+    return filler;
   }
 
   public static void fastInit(@NotNull IdeFrameImpl frame) {

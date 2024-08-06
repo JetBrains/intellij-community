@@ -129,7 +129,6 @@ internal class ProjectFrameCustomHeaderHelper(
 
     cs.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       toolbar?.let { it.isVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) { computeMainActionGroups() } }
-      rootPane.contentPane!!.revalidate()
     }
   }
 

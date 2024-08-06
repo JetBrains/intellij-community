@@ -25145,6 +25145,7 @@ c:com.intellij.ui.mac.MacWinTabsHandler
 - pf:myFrame:com.intellij.openapi.wm.impl.IdeFrameImpl
 - <init>(com.intellij.openapi.wm.impl.IdeFrameImpl,kotlinx.coroutines.CoroutineScope):V
 - appClosing():V
+- s:createAndInstallHandlerComponent(javax.swing.JRootPane):javax.swing.JComponent
 - enterFullScreen():V
 - enteringFullScreen():V
 - exitFullScreen():V
@@ -25154,7 +25155,6 @@ c:com.intellij.ui.mac.MacWinTabsHandler
 - s:isVersion2():Z
 - setProject():V
 - s:switchFrameIfPossible(javax.swing.JFrame,Z):V
-- s:wrapRootPaneNorthSide(javax.swing.JRootPane,javax.swing.JComponent):javax.swing.JComponent
 f:com.intellij.ui.mac.MacWinTabsHandlerV2
 - com.intellij.ui.mac.MacWinTabsHandler
 - <init>(com.intellij.openapi.wm.impl.IdeFrameImpl,kotlinx.coroutines.CoroutineScope):V
