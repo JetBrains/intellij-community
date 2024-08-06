@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.shared.ui
 
+import com.intellij.icons.AllIcons.Actions
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.shared.DependencyState
 import com.intellij.ide.starters.shared.DependencyUnavailable
 import com.intellij.ide.starters.shared.LibraryInfo
-import com.intellij.icons.AllIcons.Actions
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.ui.InplaceButton
@@ -29,6 +29,7 @@ class SelectedLibrariesPanel : JBPanelWithEmptyText(BorderLayout()) {
 
   var libraryRemoveListener: ((LibraryInfo) -> Unit)? = null
   var dependencyStateFunction: ((LibraryInfo) -> DependencyState)? = null
+  var libraryRemovablePredicate: ((LibraryInfo) -> Boolean)? = null
 
   init {
     this.background = UIUtil.getListBackground()
@@ -62,16 +63,20 @@ class SelectedLibrariesPanel : JBPanelWithEmptyText(BorderLayout()) {
         }
       }
 
-      val removeButton = InplaceButton(IconButton(
-        JavaStartersBundle.message("button.tooltip.remove"),
-        Actions.Close, Actions.CloseHovered)) {
-        libraryRemoveListener?.invoke(library)
-      }
-      removeButton.setTransform(0, -JBUIScale.scale(2.coerceAtLeast(dependencyLabel.font.size / 15)))
-      removeButton.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-
-      dependencyPanel.addToLeft(removeButton)
       dependencyPanel.addToCenter(dependencyLabel)
+
+      val libraryCanBeRemoved = libraryRemovablePredicate?.invoke(library) != false
+      if (libraryCanBeRemoved) {
+        val removeButton = InplaceButton(IconButton(
+          JavaStartersBundle.message("button.tooltip.remove"),
+          Actions.Close, Actions.CloseHovered)) {
+          libraryRemoveListener?.invoke(library)
+        }
+        removeButton.setTransform(0, -JBUIScale.scale(2.coerceAtLeast(dependencyLabel.font.size / 15)))
+        removeButton.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+
+        dependencyPanel.addToRight(removeButton)
+      }
 
       scrollablePanel.add(dependencyPanel)
     }
