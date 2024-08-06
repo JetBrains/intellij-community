@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.client.ClientSession;
-import com.intellij.openapi.client.ClientSessionsManager;
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.ChildContext;
+import com.intellij.util.concurrency.Propagation;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -103,7 +104,10 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
           sessionData.state = SessionData.State.RUNNING;
           final Channel channel = sessionData.channel;
           if (channel != null && channel.isActive()) {
-            sessionData.handler.buildStarted(preloadedSessionId);
+            // context is already captured inside ContextAwareBuilderMessageHandler
+            try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+              sessionData.handler.buildStarted(preloadedSessionId);
+            }
             channel.writeAndFlush(CmdlineProtoUtil.toMessage(preloadedSessionId, params));
             succeeded = true;
           }
@@ -236,46 +240,37 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
 
     private SessionData(@NotNull UUID sessionId, @NotNull BuilderMessageHandler handler, CmdlineRemoteProto.Message.ControllerMessage params) {
       this.sessionId = sessionId;
-      ClientSession clientSession = ClientId.getPropagateAcrossThreads() ? ClientSessionsManager.getAppSession() : null;
-      this.handler = clientSession != null ? new ClientIdAwareBuilderMessageHandler(handler, clientSession) : handler;
+      this.handler = new ContextAwareBuilderMessageHandler(handler);
       this.params = params;
     }
 
-    private static class ClientIdAwareBuilderMessageHandler implements BuilderMessageHandler {
+    private static class ContextAwareBuilderMessageHandler implements BuilderMessageHandler {
       private final BuilderMessageHandler myDelegate;
-      private final ClientSession myClientSession;
+      private final @NotNull ChildContext myCapturedContext;
 
-      private ClientIdAwareBuilderMessageHandler(BuilderMessageHandler delegate, ClientSession clientSession) {
+      private ContextAwareBuilderMessageHandler(BuilderMessageHandler delegate) {
         myDelegate = delegate;
-        myClientSession = clientSession;
+        myCapturedContext = Propagation.createChildContext(BuildMessageDispatcher.class.getSimpleName());
       }
 
       @Override
       public void buildStarted(@NotNull UUID sessionId) {
-        try (var ignored = ClientId.withClientId(myClientSession.getClientId())) {
-          myDelegate.buildStarted(sessionId);
-        }
+        myCapturedContext.runInChildContext(() -> myDelegate.buildStarted(sessionId));
       }
 
       @Override
       public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
-        try (var ignored = ClientId.withClientId(myClientSession.getClientId())) {
-          myDelegate.handleBuildMessage(channel, sessionId, msg);
-        }
+        myCapturedContext.runInChildContext(() -> myDelegate.handleBuildMessage(channel, sessionId, msg));
       }
 
       @Override
       public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-        try (var ignored = ClientId.withClientId(myClientSession.getClientId())) {
-          myDelegate.handleFailure(sessionId, failure);
-        }
+        myCapturedContext.runInChildContext(() -> myDelegate.handleFailure(sessionId, failure));
       }
 
       @Override
       public void sessionTerminated(@NotNull UUID sessionId) {
-        try (var ignored = ClientId.withClientId(myClientSession.getClientId())) {
-          myDelegate.sessionTerminated(sessionId);
-        }
+        myCapturedContext.runInChildContext(() -> myDelegate.sessionTerminated(sessionId));
       }
     }
   }
