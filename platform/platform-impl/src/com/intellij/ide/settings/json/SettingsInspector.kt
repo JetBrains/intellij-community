@@ -161,7 +161,8 @@ internal data class ComponentDescriptor(
     when (accessor.genericType.typeName) {
       "java.util.List<java.lang.String>" -> return JsonSettingsModel.PropertyType.StringList
       "java.util.Set<java.lang.String>" -> return JsonSettingsModel.PropertyType.StringSet
-      "java.util.Collection<java.lang.String>" -> JsonSettingsModel.PropertyType.StringList
+      "java.util.Collection<java.lang.String>" -> return JsonSettingsModel.PropertyType.StringList
+      "java.util.Map<java.lang.String, java.lang.String>" -> return JsonSettingsModel.PropertyType.StringMap
     }
     return JsonSettingsModel.PropertyType.Unsupported
   }
