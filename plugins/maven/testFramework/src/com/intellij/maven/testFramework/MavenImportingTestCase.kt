@@ -461,7 +461,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     if (isEdt) {
       MavenLog.LOG.warn("Calling awaitConfiguration() from EDT sometimes causes deadlocks, even though it shouldn't")
     }
-    //assertFalse("Call awaitConfiguration() from background thread", isEdt)
+    assertFalse("Call awaitConfiguration() from background thread", isEdt)
     Observation.awaitConfiguration(project) { message ->
       logConfigurationMessage(message)
     }
