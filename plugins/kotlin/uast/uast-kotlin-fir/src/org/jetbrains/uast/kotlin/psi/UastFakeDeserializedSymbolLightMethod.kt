@@ -6,6 +6,7 @@ import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -46,6 +47,17 @@ internal class UastFakeDeserializedSymbolLightMethod(
     LightModifierList(context.manager),
     containingClass
 ) {
+
+    init {
+        analyzeForUast(context) {
+            val functionSymbol = original.restoreSymbol()
+            if (functionSymbol?.location == KaSymbolLocation.TOP_LEVEL ||
+                functionSymbol?.isStatic == true
+            ) {
+                addModifier(PsiModifier.STATIC)
+            }
+        }
+    }
 
     private val returnTypePart = UastLazyPart<PsiType?>()
 
