@@ -1101,6 +1101,15 @@ private val INDENT_RULES = arrayOf(
         .within(VALUE_PARAMETER)
         .forElement { node -> node.psi != null && node.psi == (node.psi.parent as? KtParameter)?.defaultValue }
         .continuationIf(KotlinCodeStyleSettings::CONTINUATION_INDENT_FOR_EXPRESSION_BODIES, indentFirst = true),
+
+    strategy("Named arguments")
+        .within(VALUE_ARGUMENT)
+        .notForType(EQ, VALUE_ARGUMENT_NAME)
+        .forElement { node ->
+            val parent = node.psi?.parent
+            parent is KtValueArgument && parent.isNamed()
+        }
+        .continuationIf(KotlinCodeStyleSettings::CONTINUATION_INDENT_FOR_EXPRESSION_BODIES, indentFirst = true),
 )
 
 
