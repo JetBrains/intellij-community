@@ -46,14 +46,11 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected val parameters: CompletionParameters get() = basicContext.parameters
     protected val sink: LookupElementSink = basicContext.sink.withPriority(priority)
     protected val originalKtFile: KtFile get() = basicContext.originalKtFile
-    protected val fakeKtFile: KtFile get() = basicContext.fakeKtFile
     protected val project: Project get() = basicContext.project
     protected val targetPlatform: TargetPlatform get() = basicContext.targetPlatform
     protected val symbolFromIndexProvider: KtSymbolFromIndexProvider get() = basicContext.symbolFromIndexProvider
     protected val lookupElementFactory: KotlinFirLookupElementFactory get() = basicContext.lookupElementFactory
     protected val importStrategyDetector: ImportStrategyDetector get() = basicContext.importStrategyDetector
-    protected val visibleScope = basicContext.visibleScope
-
 
     protected val scopeNameFilter: (Name) -> Boolean =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }

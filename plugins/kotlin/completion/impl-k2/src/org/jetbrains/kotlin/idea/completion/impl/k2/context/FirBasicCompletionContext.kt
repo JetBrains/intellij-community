@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -37,8 +36,6 @@ internal class FirBasicCompletionContext(
     val importStrategyDetector = ImportStrategyDetector(originalKtFile, project)
 
     val lookupElementFactory = KotlinFirLookupElementFactory()
-
-    val visibleScope = KotlinSourceFilterScope.projectFiles(originalKtFile.resolveScope, project)
 
     companion object {
 
