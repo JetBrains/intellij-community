@@ -169,8 +169,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           }
           OrderEntry entryForFile = moduleFileIndex.getOrderEntryForFile(virtualFile);
           if (entryForFile != null) {
-            boolean testScopeLibraryInProduction = entryForFile instanceof ExportableOrderEntry && 
-                                                   ((ExportableOrderEntry)entryForFile).getScope() == DependencyScope.TEST && 
+            boolean testScopeLibraryInProduction = entryForFile instanceof ExportableOrderEntry exportableOrderEntry &&
+                                                   exportableOrderEntry.getScope() == DependencyScope.TEST &&
                                                    !moduleFileIndex.isInTestSourceContent(refVFile);
             if (testScopeLibraryInProduction) {
               withTestScope.add(library);
@@ -222,8 +222,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     if (reference.isQualified()) {
       qualifiedName = reference.getQualifiedName();
     }
-    else if (containingFile instanceof PsiJavaFile) {
-      PsiImportList list = ((PsiJavaFile)containingFile).getImportList();
+    else if (containingFile instanceof PsiJavaFile psiJavaFile) {
+      PsiImportList list = psiJavaFile.getImportList();
       if (list != null) {
         PsiImportStatementBase statement = list.findSingleImportStatement(shortReferenceName);
         if (statement != null) {
@@ -245,8 +245,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .filter(Objects::nonNull).toList();
 
     PsiElement statement = reference.getElement().getParent();
-    boolean exported = statement instanceof PsiRequiresStatement &&
-                       ((PsiRequiresStatement)statement).hasModifierProperty(PsiModifier.TRANSITIVE);
+    boolean exported = statement instanceof PsiRequiresStatement requires && requires.hasModifierProperty(PsiModifier.TRANSITIVE);
 
     Set<Module> modules = targets.stream()
       .map(e -> !(e instanceof PsiCompiledElement) ? e.getContainingFile() : null)
@@ -260,9 +259,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     }
 
     Set<Library> lightLibraries = targets.stream()
-      .map(e -> e instanceof LightJavaModule ? ((LightJavaModule)e).getRootVirtualFile() : null)
+      .map(e -> e instanceof LightJavaModule light ? light.getRootVirtualFile() : null)
       .flatMap(vf -> vf != null ? index.getOrderEntriesForFile(vf).stream() : Stream.empty())
-      .map(e -> e instanceof LibraryOrderEntry ? ((LibraryOrderEntry)e).getLibrary() : null)
+      .map(e -> e instanceof LibraryOrderEntry lib ? lib.getLibrary() : null)
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
     if (!lightLibraries.isEmpty()) {
@@ -275,7 +274,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .map(f -> f != null ? f.getVirtualFile() : null)
       .filter(vf -> vf != null && !index.isInSource(vf))
       .flatMap(vf -> index.getOrderEntriesForFile(vf).stream())
-      .map(e -> e instanceof LibraryOrderEntry ? ((LibraryOrderEntry)e).getLibrary() : null)
+      .map(e -> e instanceof LibraryOrderEntry lib ? lib.getLibrary() : null)
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
     if (!clsLibraries.isEmpty()) {

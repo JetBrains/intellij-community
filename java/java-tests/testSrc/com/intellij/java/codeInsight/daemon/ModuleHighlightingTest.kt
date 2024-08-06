@@ -65,7 +65,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testModuleImportDeclarationUnresolvedModule() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
-      addFile("moodule-info.java", "module current.module.name {}");
+      addFile("moodule-info.java", "module current.module.name {}")
       highlight("Test.java", """
         import module M2;
         import module current.module.name;
@@ -776,9 +776,9 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       highlight("A.java", """
         import module current.module.name;
         import module first.module.name;
-        <error descr="Module is not in dependencies: second.module.name">import module second.module.name;</error>
+        <error descr="Module 'second.module.name' fails to read 'current.module.name'">import module second.module.name;</error>
         import module first.auto.module.name;
-        <error descr="Module is not in dependencies: second.auto.module.name">import module second.auto.module.name;</error>
+        <error descr="Module 'second.auto.module.name' fails to read 'current.module.name'">import module second.auto.module.name;</error>
         
         public class A {
         }

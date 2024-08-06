@@ -15,8 +15,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 
 abstract class LightJava9ModulesCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
-  private val virtualFiles = HashMap<VirtualFileKey, VirtualFile>()
-
   override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
 
   override fun tearDown() {
@@ -32,19 +30,15 @@ abstract class LightJava9ModulesCodeInsightFixtureTestCase : LightJavaCodeInsigh
   }
 
   protected fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =
-    VfsTestUtil.createFile(module.sourceRoot()!!, path, text).also { file -> virtualFiles[VirtualFileKey(path, module.sourceRoot()!!)] = file }
-
-  protected fun deleteFile(path: String, module: ModuleDescriptor = MAIN) {
-    virtualFiles[VirtualFileKey(path, module.sourceRoot()!!)]?.let { file -> VfsTestUtil.deleteFile(file) }
-  }
+    VfsTestUtil.createFile(module.sourceRoot()!!, path, text)
 
   @JvmOverloads
   protected fun addTestFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =
-    VfsTestUtil.createFile(module.testRoot()!!, path, text).also { file -> virtualFiles[VirtualFileKey(path, module.testRoot()!!)] = file }
+    VfsTestUtil.createFile(module.testRoot()!!, path, text)
 
   @Suppress("SameParameterValue")
   protected fun addResourceFile(path: String, text: String, module: ModuleDescriptor = MAIN): VirtualFile =
-    VfsTestUtil.createFile(module.resourceRoot()!!, path, text).also { file -> virtualFiles[VirtualFileKey(path, module.resourceRoot()!!)] = file }
+    VfsTestUtil.createFile(module.resourceRoot()!!, path, text)
 
   /**
    * @param classNames is like <code>arrayOf("foo.api.Api", "foo.impl.Impl")</code>; the file's directory path is created based on FQN
@@ -69,6 +63,4 @@ abstract class LightJava9ModulesCodeInsightFixtureTestCase : LightJavaCodeInsigh
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, true, testDirPath)
   }
-
-  private data class VirtualFileKey(val path: String, val root: VirtualFile)
 }

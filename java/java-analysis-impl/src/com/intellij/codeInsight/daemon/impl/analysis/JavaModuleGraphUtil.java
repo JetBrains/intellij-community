@@ -246,6 +246,32 @@ public final class JavaModuleGraphUtil {
     return getRequiresGraph(module).findOrigin(module, packageName);
   }
 
+  /**
+   * Determines if a specified module is readable from a given context
+   *
+   * @param place            current module/position
+   * @param targetModuleFile file from the target module
+   * @return {@code true} if the target module is readable from the place; {@code false} otherwise.
+   */
+  public static boolean isModuleReadable(@NotNull PsiElement place,
+                                         @NotNull VirtualFile targetModuleFile) {
+    PsiJavaModule targetModule = findDescriptorByFile(targetModuleFile, place.getProject());
+    if (targetModule == null) return true;
+    return isModuleReadable(place, targetModule);
+  }
+
+  /**
+   * Determines if the specified modules are readable from a given context.
+   *
+   * @param place        the current position or element from where readability is being checked
+   * @param targetModule the target module to check readability against
+   * @return {@code true} if any of the target modules are readable from the current context; {@code false} otherwise
+   */
+  public static boolean isModuleReadable(@NotNull PsiElement place,
+                                         @NotNull PsiJavaModule targetModule) {
+    return ContainerUtil.and(JavaModuleSystem.EP_NAME.getExtensionList(), sys -> sys.isAccessible(targetModule, place));
+  }
+
   public static boolean addDependency(@NotNull PsiJavaModule from,
                                       @NotNull String to,
                                       @Nullable DependencyScope scope,
