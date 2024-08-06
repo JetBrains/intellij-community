@@ -13,8 +13,7 @@ public interface ElementClassHint {
     METHOD,
     VARIABLE,
     FIELD,
-    ENUM_CONST,
-    MODULE
+    ENUM_CONST
   }
 
   boolean shouldProcess(@NotNull DeclarationKind kind);
