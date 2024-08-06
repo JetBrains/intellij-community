@@ -34,4 +34,7 @@ abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
 
         return null
     }
+
+    override val nameCountToUseStarImportDefault: Int
+        get() = Integer.MAX_VALUE
 }
