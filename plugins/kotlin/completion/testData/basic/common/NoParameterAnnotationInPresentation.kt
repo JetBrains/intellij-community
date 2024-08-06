@@ -1,6 +1,5 @@
 // FIR_COMPARISON
-// FIR_IDENTICAL
-fun foo(@Suppress("UNCHECKED_CAST") p: () -> Unit){}
+fun foo(@Suppress("UNCHECKED_CAST") p: () -> Unit) {}
 
 fun bar() {
     <caret>

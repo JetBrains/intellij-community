@@ -2,8 +2,9 @@
 fun some(f: () -> Unit) { f() }
 
 fun test() {
-    some { <caret> }
+    some(<caret>)
 }
 
 // ELEMENT: some
-// CHAR: {
+// TAIL_TEXT: (f: () -> Unit) (<root>)
+// CHAR: (

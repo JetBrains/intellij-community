@@ -1,5 +1,4 @@
 // FIR_COMPARISON
-// FIR_IDENTICAL
 class Foo {
     val x = runCatchin<caret>
 }

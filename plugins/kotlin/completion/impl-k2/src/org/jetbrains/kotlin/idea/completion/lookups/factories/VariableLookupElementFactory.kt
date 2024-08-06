@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailTextForVariableCall
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
@@ -31,7 +30,7 @@ internal object VariableLookupElementFactory {
     fun createLookup(
         signature: KaVariableSignature<*>,
         options: CallableInsertionOptions,
-    ): LookupElementBuilder {
+    ): LookupElement {
         val rendered = renderVariable(signature)
         var builder = createLookupElementBuilder(options, signature, rendered)
 
@@ -62,7 +61,7 @@ internal object VariableLookupElementFactory {
                     rendered,
                     inputValueArgumentsAreRequired = functionalType.parameterTypes.isNotEmpty(),
                     inputTypeArgumentsAreRequired = false,
-                    insertEmptyLambda = insertLambdaBraces(functionalType),
+                    trailingLambdaTemplate = null, // TODO
                 )
 
                 val tailText = getTailTextForVariableCall(functionalType, signature)

@@ -1,0 +1,10 @@
+// FIR_COMPARISON
+package foo
+
+abstract class Some
+
+fun foo() {
+    val some = Some<caret>
+}
+
+// ELEMENT: Some

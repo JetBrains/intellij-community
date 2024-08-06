@@ -17,4 +17,4 @@ class C : A, B {
 }
 
 // ELEMENT: "foo"
-// TAIL_TEXT: " {...} (lambda: () -> Unit) for A"
+// TAIL_TEXT: " { lambda: () -> Unit } for A"

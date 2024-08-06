@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // FIR_COMPARISON
 fun usage() {
     fun myLocalFun(action: () -> Unit) {}

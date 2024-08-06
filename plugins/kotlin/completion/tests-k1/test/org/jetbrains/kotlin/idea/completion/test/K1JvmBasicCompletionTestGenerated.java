@@ -4319,6 +4319,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/java/SAMAdaptersStatic.kt");
             }
 
+            @TestMetadata("SamAdapters.kt")
+            public void testSamAdapters() throws Exception {
+                runTest("../testData/basic/java/SamAdapters.kt");
+            }
+
             @TestMetadata("StandardKotlinTypeAliasAfterExplicitlyImported.kt")
             public void testStandardKotlinTypeAliasAfterExplicitlyImported() throws Exception {
                 runTest("../testData/basic/java/StandardKotlinTypeAliasAfterExplicitlyImported.kt");
