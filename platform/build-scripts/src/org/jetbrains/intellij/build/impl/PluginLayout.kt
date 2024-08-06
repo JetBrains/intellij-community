@@ -87,6 +87,9 @@ class PluginLayout private constructor(
   var retainProductDescriptorForBundledPlugin: Boolean = false
   var enableSymlinksAndExecutableResources: Boolean = false
 
+  @JvmField
+  internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
+
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
 

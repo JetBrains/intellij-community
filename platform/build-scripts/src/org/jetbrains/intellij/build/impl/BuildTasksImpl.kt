@@ -689,9 +689,9 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
         }
       }
     }
-  }
 
-  checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description", context)
+    checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description", context)
+  }
 }
 
 private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>) {

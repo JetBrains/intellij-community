@@ -40,9 +40,6 @@ sealed class BaseLayout {
   internal val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
   val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
 
-  @JvmField
-  internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
-
   internal var patchers: PersistentList<LayoutPatcher> = persistentListOf()
     private set
 

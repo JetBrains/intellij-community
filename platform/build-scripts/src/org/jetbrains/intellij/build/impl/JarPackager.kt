@@ -315,7 +315,7 @@ class JarPackager private constructor(
     }
     moduleSources.add(DirSource(dir = moduleOutDir, excludes = excludes))
 
-    if (layout != null && !layout.modulesWithExcludedModuleLibraries.contains(moduleName)) {
+    if (layout != null && (layout !is PluginLayout || !layout.modulesWithExcludedModuleLibraries.contains(moduleName))) {
       computeSourcesForModuleLibs(item = item, module = module, layout = layout, copiedFiles = copiedFiles, asset = jarAsset)
     }
   }
