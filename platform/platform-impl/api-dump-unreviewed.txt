@@ -6943,6 +6943,7 @@ f:com.intellij.ide.plugins.DynamicPlugins
 - bs:loadPlugin$default(com.intellij.ide.plugins.DynamicPlugins,com.intellij.ide.plugins.IdeaPluginDescriptorImpl,com.intellij.openapi.project.Project,I,java.lang.Object):Z
 - f:loadPlugins(java.util.Collection,com.intellij.openapi.project.Project):Z
 - f:onPluginUnload(com.intellij.openapi.Disposable,java.lang.Runnable):V
+- f:runAfter(Z,java.lang.Runnable):V
 - f:unloadPlugin(com.intellij.ide.plugins.IdeaPluginDescriptorImpl):Z
 - f:unloadPlugin(com.intellij.ide.plugins.IdeaPluginDescriptorImpl,com.intellij.ide.plugins.DynamicPlugins$UnloadPluginOptions):Z
 - bs:unloadPlugin$default(com.intellij.ide.plugins.DynamicPlugins,com.intellij.ide.plugins.IdeaPluginDescriptorImpl,com.intellij.ide.plugins.DynamicPlugins$UnloadPluginOptions,I,java.lang.Object):Z

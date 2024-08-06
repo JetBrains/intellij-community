@@ -8,6 +8,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
 import com.intellij.ide.RegionSettings.RegionSettingsListener
+import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.localization.statistics.EventSource
 import com.intellij.ide.ui.localization.statistics.LocalizationActionsStatistics
@@ -76,9 +77,7 @@ class LanguageAndRegionUi {
 
             localizationService.setSelectedLocale(it.toLanguageTag())
 
-            application.invokeLater {
-              application.service<RestartDialog>().showRestartRequired()
-            }
+            showRestartDialog()
           }
           languageBox.bindItem(property)
 
@@ -127,8 +126,12 @@ class LanguageAndRegionUi {
 
           private fun updateComboModel() {
             val newLocales = getAllAvailableLocales()
+            var selection = languageComponent.selectedItem as Locale
+            if (!newLocales.first.contains(selection)) {
+              selection = newLocales.first.first()
+            }
             languageComponent.renderer = LanguageComboBoxRenderer(newLocales)
-            languageComponent.model = CollectionComboBoxModel(newLocales.first, languageComponent.selectedItem as Locale)
+            languageComponent.model = CollectionComboBoxModel(newLocales.first, selection)
           }
         }, parentDisposable)
       }
@@ -149,9 +152,7 @@ class LanguageAndRegionUi {
 
             RegionSettings.setRegion(it)
 
-            application.invokeLater {
-              application.service<RestartDialog>().showRestartRequired()
-            }
+            showRestartDialog()
           }
           regionBox.bindItem(property)
 
@@ -190,6 +191,14 @@ class LanguageAndRegionUi {
             statistics.regionExpanded()
           }
         })
+      }
+    }
+
+    fun showRestartDialog(runAlways: Boolean = true) {
+      DynamicPlugins.runAfter(runAlways) {
+        application.invokeLater {
+          application.service<RestartDialog>().showRestartRequired()
+        }
       }
     }
 
@@ -240,9 +249,7 @@ internal class LanguageAndRegionConfigurable :
     if (initSelectionLanguage.toLanguageTag() != selectedLocale.toLanguageTag() ||
         initSelectionRegion != selectedRegion) {
       LocalizationActionsStatistics().apply { setSource(eventSource) }.settingsUpdated(selectedLocale, initSelectionLanguage, selectedRegion, initSelectionRegion)
-      application.invokeLater {
-        application.service<RestartDialog>().showRestartRequired()
-      }
+      LanguageAndRegionUi.showRestartDialog()
     }
   }
 }
