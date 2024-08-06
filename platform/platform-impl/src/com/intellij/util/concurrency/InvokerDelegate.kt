@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
-import com.intellij.codeWithMe.clientIdStringContextElement
+import com.intellij.codeWithMe.clientIdContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -28,8 +28,8 @@ internal class InvokerService(private val scope: CoroutineScope) {
 
   fun forEdt(description: String): InvokerDelegate =
     if (useCoroutineInvoker) {
-      val clientIdStringContextElement = currentThreadContext().clientIdStringContextElement ?: EmptyCoroutineContext
-      EdtCoroutineInvokerDelegate(description, scope.childScope(description, clientIdStringContextElement))
+      val clientIdContextElement = currentThreadContext().clientIdContextElement ?: EmptyCoroutineContext
+      EdtCoroutineInvokerDelegate(description, scope.childScope(description, clientIdContextElement))
     }
     else {
       EdtLegacyInvokerDelegate(description)
@@ -37,12 +37,12 @@ internal class InvokerService(private val scope: CoroutineScope) {
 
   fun forBgt(description: String, useReadAction: Boolean, maxThreads: Int): InvokerDelegate =
     if (useCoroutineInvoker) {
-      val clientIdStringContextElement = currentThreadContext().clientIdStringContextElement ?: EmptyCoroutineContext
+      val clientIdContextElement = currentThreadContext().clientIdContextElement ?: EmptyCoroutineContext
       if (maxThreads == 1) {
-        SequentialBgtCoroutineInvokerDelegate(description, scope.childScope(description, clientIdStringContextElement), useReadAction)
+        SequentialBgtCoroutineInvokerDelegate(description, scope.childScope(description, clientIdContextElement), useReadAction)
       }
       else {
-        ConcurrentBgtCoroutineInvokerDelegate(description, scope.childScope(description, clientIdStringContextElement), useReadAction, maxThreads)
+        ConcurrentBgtCoroutineInvokerDelegate(description, scope.childScope(description, clientIdContextElement), useReadAction, maxThreads)
       }
     }
     else {

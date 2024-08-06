@@ -4,7 +4,7 @@
 
 package com.intellij.util
 
-import com.intellij.codeWithMe.clientIdStringContextElement
+import com.intellij.codeWithMe.clientIdContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
@@ -371,7 +371,7 @@ open class Alarm @Internal constructor(
   ) {
     @JvmField
     var job: Job? = null // guarded by LOCK
-    private val clientIdContext = currentThreadContext().clientIdStringContextElement
+    private val clientIdContext = currentThreadContext().clientIdContextElement
 
     fun schedule(owner: Alarm) {
       assert(job == null)

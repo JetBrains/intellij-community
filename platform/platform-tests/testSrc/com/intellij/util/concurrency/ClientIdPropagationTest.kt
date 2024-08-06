@@ -2,8 +2,8 @@
 package com.intellij.util.concurrency
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientIdStringContextElement
-import com.intellij.codeWithMe.currentThreadClientIdString
+import com.intellij.codeWithMe.ClientIdContextElement
+import com.intellij.codeWithMe.currentThreadClientId
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 
-private const val TEST_CLIENT_ID = "OurTestClientId"
+private val TEST_CLIENT_ID = ClientId("OurTestClientId")
 
 class ClientIdPropagationTest : LightPlatformTestCase() {
 
@@ -54,16 +54,16 @@ class ClientIdPropagationTest : LightPlatformTestCase() {
   }
 
 
-  private val resultClientId = CompletableFuture<String?>()
+  private val resultClientId = CompletableFuture< ClientId?>()
 
   private fun doAction() {
-    resultClientId.complete(currentThreadClientIdString)
+    resultClientId.complete(currentThreadClientId)
   }
 
   private fun doTest(testRunnable: Runnable) {
     service<ClientSessionsManager<ClientAppSession>>().registerSession(testRootDisposable,
                                                                        TestClientAppSession(application as ApplicationImpl))
-    installThreadContext(ClientIdStringContextElement(TEST_CLIENT_ID)).use {
+    installThreadContext(ClientIdContextElement(TEST_CLIENT_ID)).use {
       testRunnable.run()
     }
 
@@ -74,7 +74,7 @@ class ClientIdPropagationTest : LightPlatformTestCase() {
   override fun runInDispatchThread() = false
 
   class TestClientAppSession(application: ApplicationImpl)
-    : ClientAppSessionImpl(ClientId(TEST_CLIENT_ID), ClientType.CONTROLLER, application) {
+    : ClientAppSessionImpl(TEST_CLIENT_ID, ClientType.CONTROLLER, application) {
     override val name: String
       get() = "TestAppSession"
   }

@@ -229,31 +229,31 @@ data class ClientId(val value: String) {
 
       val newClientIdValue = if (clientId == null || service.isValid(clientId)) {
         if (clientId != null && isFakeLocalId(clientId))
-          localId.value
+          localId
         else
-          clientId?.value
+          clientId
       }
       else {
         getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
         null
       }
 
-      return withClientId(newClientIdValue) {
-        action()
+      installThreadContext(ClientIdContextElement(newClientIdValue), replace = true).use {
+        return action()
       }
     }
 
     private fun getCurrentIdValidated(): String? {
-      val currentValue = currentThreadClientIdString
-      if (currentValue != null) {
+      val currentId = currentThreadClientId
+      if (currentId != null) {
         val service = getCachedService()
-        if (service != null && !service.isValid(ClientId(currentValue))) {
-          getClientIdLogger().trace { "Invalid ClientId $currentValue replaced with null at ${Throwable().fillInStackTrace()}" }
+        if (service != null && !service.isValid(currentId)) {
+          getClientIdLogger().trace { "Invalid ClientId $currentId replaced with null at ${Throwable().fillInStackTrace()}" }
           // TODO: is it ok to throw CE? I believe that is client has gone all its activity should be cancelled
-          throw CancellationException("ClientId=$currentValue is not valid anymore")
+          throw CancellationException("$currentId is not valid anymore")
         }
       }
-      return currentValue
+      return currentId?.value
     }
 
     /**
@@ -287,16 +287,17 @@ data class ClientId(val value: String) {
       if (service == null) {
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
-      val oldClientIdValue = currentThreadClientIdString ?: localId.value
-      if (clientIdValue == oldClientIdValue) {
+      val oldClientId = currentThreadClientId ?: localId
+      if (clientIdValue == oldClientId.value) {
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
 
-      val newClientIdValue = if (service.isValid(ClientId(clientIdValue))) {
+      val clientId = ClientId(clientIdValue)
+      val newClientId = if (service.isValid(clientId)) {
         if (fakeLocalIds.contains(clientIdValue))
-          localId.value
+          localId
         else
-          clientIdValue
+          clientId
       }
       else {
         LOG.trace { "Invalid ClientId $clientIdValue replaced with null at ${Throwable().fillInStackTrace()}" }
@@ -305,13 +306,13 @@ data class ClientId(val value: String) {
 
       val currentThreadContext = currentThreadContextOrNull()
       if (currentThreadContext == null) {
-        return installThreadContext(ClientIdStringContextElement(newClientIdValue))
+        return installThreadContext(ClientIdContextElement(newClientId))
       }
 
-      val currentClientIdStringContextElement = currentThreadContext.clientIdStringContextElement
-      val newContext = currentThreadContext + ClientIdStringContextElement(newClientIdValue)
-      if (currentClientIdStringContextElement != null && currentClientIdStringContextElement.clientIdString != newClientIdValue)  {
-        logger.error("Trying to set ClientId=$newClientIdValue, but it's already set to ${currentThreadContext.clientIdStringContextElement}")
+      val currentClientIdContextElement = currentThreadContext.clientIdContextElement
+      val newContext = currentThreadContext + ClientIdContextElement(newClientId)
+      if (currentClientIdContextElement != null && currentClientIdContextElement.clientId != newClientId)  {
+        logger.error("Trying to set ClientId=$newClientId, but it's already set to ${currentThreadContext.clientIdContextElement}")
       }
       return installThreadContext(newContext, replace = true)
     }
@@ -352,6 +353,7 @@ data class ClientId(val value: String) {
       }
     }
 
+    // TODO: drop this wrappers along with ClientIdPropagation.kt
     @JvmStatic
     fun <T> decorateFunction(action: () -> T): () -> T {
       return captureClientId(action)
@@ -396,73 +398,26 @@ fun isOnGuest(): Boolean {
 
 fun ClientId.asContextElement(): CoroutineContext.Element {
   if (ClientId.isFakeLocalId(this))
-    return ClientIdStringContextElement(ClientId.localId.value)
+    return ClientIdContextElement(ClientId.localId)
 
-  return ClientIdStringContextElement(value)
+  return ClientIdContextElement(this)
 }
 
-//private object ClientIdElementKey : CoroutineContext.Key<ClientIdElement>
-//
-//private class ClientIdElement(private val clientId: ClientId) : ThreadContextElement<AccessToken>, IntelliJContextElement {
-
-  //override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
-//
-//  override val key: CoroutineContext.Key<*> get() = ClientIdElementKey
-//
-//  override fun toString(): String = clientId.toString()
-//
-//  override fun updateThreadContext(context: CoroutineContext): AccessToken {
-//    return ClientId.withClientId(clientId)
-//  }
-//
-//  override fun restoreThreadContext(context: CoroutineContext, oldState: AccessToken) {
-//    oldState.finish()
-//  }
-//}
-
-//private class ClientIdElement2(val clientId: ClientId) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
-
-  //override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
-//
-//  override fun toString(): String = clientId.toString()
-//
-//  object Key : CoroutineContext.Key<ClientIdElement2>
-//}
-//
-//@ApiStatus.Internal
-//fun ClientId.asContextElement2(): CoroutineContext.Element {
-//  if (ClientId.isFakeLocalId(this))
-//    return ClientIdElement2(ClientId.localId)
-//
-//  return ClientIdElement2(this)
-//}
+@ApiStatus.Internal
+fun CoroutineContext.clientId(): ClientId? = this[ClientIdContextElement.Key]?.clientId
 
 @ApiStatus.Internal
-fun CoroutineContext.clientId(): ClientId? = this[ClientIdStringContextElement.Key]?.clientIdString?.let { ClientId(it) }
-
-@ApiStatus.Internal
-fun currentThreadClientId(): ClientId? = currentThreadContext().clientId()
-
-@ApiStatus.Internal
-class ClientIdStringContextElement(val clientIdString: String?) : AbstractCoroutineContextElement(Key) {
+class ClientIdContextElement(val clientId: ClientId?) : AbstractCoroutineContextElement(Key) {
   private val creationTrace: Throwable? = if (logger.isTraceEnabled) Throwable() else null
-  object Key : CoroutineContext.Key<ClientIdStringContextElement>
+  object Key : CoroutineContext.Key<ClientIdContextElement>
 
-  override fun toString(): String = if (creationTrace != null) "ClientId=$clientIdString. Created at:\r$creationTrace" else "ClientId=$clientIdString"
+  override fun toString(): String = if (creationTrace != null) "$clientId. Created at:\r$creationTrace" else "$clientId"
 }
 
-val CoroutineContext.clientIdStringContextElement: ClientIdStringContextElement?
-  get() = this[ClientIdStringContextElement.Key]
+val CoroutineContext.clientIdContextElement: ClientIdContextElement?
+  @ApiStatus.Internal
+  get() = this[ClientIdContextElement.Key]
 
-val currentThreadClientIdString: String? get() = currentThreadContext().clientIdStringContextElement?.clientIdString
-
-
-inline fun <T> withClientId(clientId: String?, action: () -> T): T {
-  return withClientId(ClientIdStringContextElement(clientId), action)
-}
-
-inline fun <T> withClientId(idStringContextElement: ClientIdStringContextElement, action: () -> T): T {
-  installThreadContext(idStringContextElement, replace = true).use {
-    return action()
-  }
-}
+val currentThreadClientId: ClientId?
+  @ApiStatus.Internal
+  get() = currentThreadContext().clientIdContextElement?.clientId
