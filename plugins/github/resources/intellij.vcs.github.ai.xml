@@ -6,6 +6,16 @@
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow id="PR AI Assistant" icon="org.jetbrains.plugins.github.GithubIcons.PullRequestsToolWindow"
                 anchor="right" doNotActivateOnStart="true" canCloseContents="false"
-                factoryClass="org.jetbrains.plugins.github.ai.assistedReview.GHPRAiAssistantToolwindowFactory"/>
+                factoryClass="org.jetbrains.plugins.github.ai.assistedReview.GHPRAIReviewToolwindowFactory"/>
   </extensions>
+
+  <extensions defaultExtensionNs="intellij.vcs.github">
+    <commentViewModelProvider implementation="org.jetbrains.plugins.github.ai.assistedReview.GHPRAIReviewCommentViewModelProvider"/>
+  </extensions>
+
+  <actions>
+    <action class="org.jetbrains.plugins.github.ai.assistedReview.GHPRAIReviewOpenAction">
+      <add-to-group group-id="Github.PullRequest.StatusChecks.AdditionalActions"/>
+    </action>
+  </actions>
 </idea-plugin>

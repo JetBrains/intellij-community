@@ -2,7 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.CommonBundle
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.collectScoped
+import com.intellij.collaboration.async.inverted
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.HorizontalListPanel
@@ -10,7 +15,11 @@ import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
-import com.intellij.collaboration.ui.codereview.comment.*
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewAIUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
@@ -24,13 +33,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel.CommentItem
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
-import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewAICommentDiffViewModel
 import javax.swing.AbstractAction
 import javax.swing.Action
+import javax.swing.Icon
 import javax.swing.JComponent
 
 internal object GHPRReviewEditorComponentsFactory {
@@ -165,7 +175,7 @@ internal object GHPRReviewEditorComponentsFactory {
     }
   }
 
-  fun createAICommentIn(cs: CoroutineScope, vm: GHPRReviewAICommentDiffViewModel): JComponent {
+  fun createAICommentIn(cs: CoroutineScope, userIcon: Icon, vm: GHPRAICommentViewModel): JComponent {
     val textPane = SimpleHtmlPane().apply {
       bindTextHtmlIn(cs, vm.textHtml)
     }
@@ -223,7 +233,7 @@ internal object GHPRReviewEditorComponentsFactory {
               val commentPanel = CodeReviewChatItemUIUtil.build(CodeReviewChatItemUIUtil.ComponentType.SUPER_COMPACT,
                                                                 {
                                                                   if (comment.isResponse) IconUtil.resizeSquared(MLLlmIcons.AiAssistantColored, it)
-                                                                  else vm.getUserIcon(it)
+                                                                  else userIcon
                                                                 },
                                                                 SimpleHtmlPane(comment.message)) {
                 maxContentWidth = null

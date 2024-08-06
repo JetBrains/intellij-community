@@ -26,14 +26,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import org.jetbrains.plugins.github.ai.GithubAIBundle
-import org.jetbrains.plugins.github.pullrequest.data.ai.comment.GHPRAIComment
+import org.jetbrains.plugins.github.ai.assistedReview.model.GHPRAIComment
+import org.jetbrains.plugins.github.ai.assistedReview.model.GHPRAIReview
+import org.jetbrains.plugins.github.ai.assistedReview.model.GHPRAIReviewFile
 import java.awt.*
 import java.awt.event.ActionListener
 import javax.swing.*
 import javax.swing.event.ChangeListener
 
-object GHPRAiAssistantReviewComponentFactory {
-  fun create(scope: CoroutineScope, vm: GHPRAiAssistantReviewVm): JComponent {
+object GHPRAIReviewReviewComponentFactory {
+  fun create(scope: CoroutineScope, vm: GHPRAiAssistantReviewViewModel): JComponent {
     val reviewPanel = VerticalListPanel(10).apply {
       border = JBUI.Borders.empty(8)
     }
@@ -130,7 +132,7 @@ object GHPRAiAssistantReviewComponentFactory {
     return contentPanel
   }
 
-  private fun CoroutineScope.createAiResponseComponent(vm: GHPRAiAssistantReviewVm,
+  private fun CoroutineScope.createAiResponseComponent(vm: GHPRAiAssistantReviewViewModel,
                                                        review: GHPRAIReview,
                                                        stickyHeaderComponents: MutableList<Pair<JComponent, () -> JComponent>>): JComponent {
     return VerticalListPanel(5).apply {
@@ -185,7 +187,7 @@ object GHPRAiAssistantReviewComponentFactory {
     }
   }
 
-  private fun CoroutineScope.createFileReviewComponent(vm: GHPRAiAssistantReviewVm, file: GHPRAIReviewFile): JComponent {
+  private fun CoroutineScope.createFileReviewComponent(vm: GHPRAiAssistantReviewViewModel, file: GHPRAIReviewFile): JComponent {
     return VerticalListPanel(5).apply {
       add(createSingleFileComponent(vm, file))
       file.comments.let {
@@ -194,7 +196,7 @@ object GHPRAiAssistantReviewComponentFactory {
     }
   }
 
-  private fun createSingleFileComponent(vm: GHPRAiAssistantReviewVm, file: GHPRAIReviewFile): JComponent {
+  private fun createSingleFileComponent(vm: GHPRAiAssistantReviewViewModel, file: GHPRAIReviewFile): JComponent {
     val singleFilePanelContent = BorderLayoutPanel().apply {
       border = JBUI.Borders.empty(5, 10)
       background = JBColor(0xEBECF0, 0x494B57)
@@ -230,7 +232,7 @@ object GHPRAiAssistantReviewComponentFactory {
     return singleFilePanel
   }
 
-  private fun CoroutineScope.createFileHighlightsComponent(vm: GHPRAiAssistantReviewVm, file: GHPRAIReviewFile, highlights: List<GHPRAIComment>): JComponent {
+  private fun CoroutineScope.createFileHighlightsComponent(vm: GHPRAiAssistantReviewViewModel, file: GHPRAIReviewFile, highlights: List<GHPRAIComment>): JComponent {
     return VerticalListPanel(5).apply {
       border = JBUI.Borders.emptyLeft(5)
       for (highlight in highlights) {
@@ -239,7 +241,7 @@ object GHPRAiAssistantReviewComponentFactory {
     }
   }
 
-  private fun CoroutineScope.createAiCommentComponent(vm: GHPRAiAssistantReviewVm, change: RefComparisonChange, comment: GHPRAIComment): JComponent {
+  private fun CoroutineScope.createAiCommentComponent(vm: GHPRAiAssistantReviewViewModel, change: RefComparisonChange, comment: GHPRAIComment): JComponent {
     val cs = this
     val icon = JBLabel(AllIcons.General.InspectionsEye).apply {
       bindIconIn(cs, comment.accepted.combine(comment.rejected) { acc, rej ->

@@ -6,7 +6,6 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -29,13 +28,11 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
-import org.jetbrains.plugins.github.ai.assistedReview.GHPRAiAssistantReviewService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import java.util.*
 
 internal class GHPRDataProviderRepositoryImpl(
-  private val project: Project,
   parentCs: CoroutineScope,
   private val repositoryService: GHPRRepositoryDataService,
   private val detailsService: GHPRDetailsService,
@@ -43,7 +40,6 @@ internal class GHPRDataProviderRepositoryImpl(
   private val filesService: GHPRFilesService,
   private val commentService: GHPRCommentService,
   private val changesService: GHPRChangesService,
-  private val aiReviewService: GHPRAiAssistantReviewService,
   private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>,
 )
   : GHPRDataProviderRepository {
@@ -101,7 +97,6 @@ internal class GHPRDataProviderRepositoryImpl(
 
     val changesData = GHPRChangesDataProviderImpl(providerCs, changesService, { detailsData.loadDetails().refs }, id)
     val reviewData = GHPRReviewDataProviderImpl(providerCs, reviewService, changesData, id, messageBus)
-    val aiReviewData = GHPRAIReviewDataProvider(project, providerCs, aiReviewService, changesData)
     val viewedStateData = GHPRViewedStateDataProviderImpl(providerCs, filesService, id)
     val commentsData = GHPRCommentsDataProviderImpl(commentService, id, messageBus)
 
@@ -154,7 +149,7 @@ internal class GHPRDataProviderRepositoryImpl(
     })
 
     return GHPRDataProviderImpl(
-      id, detailsData, changesData, commentsData, reviewData, aiReviewData, viewedStateData, timelineLoaderHolder
+      id, detailsData, changesData, commentsData, reviewData, viewedStateData, timelineLoaderHolder
     )
   }
 

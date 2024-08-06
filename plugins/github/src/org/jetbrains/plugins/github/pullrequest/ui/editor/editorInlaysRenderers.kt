@@ -4,8 +4,9 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewAICommentDiffViewModel
+import javax.swing.Icon
 
 @ApiStatus.Internal
 class GHPRReviewThreadEditorInlayRenderer internal constructor(cs: CoroutineScope, vm: GHPRCompactReviewThreadViewModel)
@@ -19,7 +20,7 @@ class GHPRNewCommentEditorInlayRenderer internal constructor(cs: CoroutineScope,
   GHPRReviewEditorComponentsFactory.createNewCommentIn(cs, vm)
 )
 
-internal class GHPRAICommentEditorInlayRenderer internal constructor(cs: CoroutineScope, vm: GHPRReviewAICommentDiffViewModel)
+internal class GHPRAICommentEditorInlayRenderer internal constructor(cs: CoroutineScope, userIcon: Icon, vm: GHPRAICommentViewModel)
   : CodeReviewComponentInlayRenderer(
-  GHPRReviewEditorComponentsFactory.createAICommentIn(cs, vm)
+  GHPRReviewEditorComponentsFactory.createAICommentIn(cs, userIcon, vm)
 )

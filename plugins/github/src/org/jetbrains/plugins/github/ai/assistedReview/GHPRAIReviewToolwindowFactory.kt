@@ -18,17 +18,17 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.github.ai.GithubAIBundle
 
-internal class GHPRAiAssistantToolwindowFactory : ToolWindowFactory, DumbAware {
+internal class GHPRAIReviewToolwindowFactory : ToolWindowFactory, DumbAware {
   override fun init(toolWindow: ToolWindow) {
     toolWindow.setStripeShortTitleProvider(GithubAIBundle.messagePointer("tab.title.pr.ai.assistant"))
   }
 
   override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
-    toolWindow.project.serviceAsync<GHPRAiAssistantToolwindowController>().manageIconInToolbar(toolWindow)
+    toolWindow.project.serviceAsync<GHPRAIReviewToolwindowController>().manageIconInToolbar(toolWindow)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    project.service<GHPRAiAssistantToolwindowController>().manageContent(toolWindow)
+    project.service<GHPRAIReviewToolwindowController>().manageContent(toolWindow)
   }
 
   override fun shouldBeAvailable(project: Project): Boolean = true
@@ -36,12 +36,12 @@ internal class GHPRAiAssistantToolwindowFactory : ToolWindowFactory, DumbAware {
 
 
 @Service(Service.Level.PROJECT)
-private class GHPRAiAssistantToolwindowController(private val project: Project, parentCs: CoroutineScope) {
+private class GHPRAIReviewToolwindowController(private val project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(Dispatchers.Main)
 
   suspend fun manageIconInToolbar(toolWindow: ToolWindow) {
     coroutineScope {
-      val vm = project.serviceAsync<GHPRAiAssistantToolwindowViewModel>()
+      val vm = project.serviceAsync<GHPRAIReviewToolwindowViewModel>()
 
       launch {
         vm.activationRequests.collect {
@@ -59,10 +59,10 @@ private class GHPRAiAssistantToolwindowController(private val project: Project, 
 
     // so it's not closed when all content is removed
     cs.launch {
-      val vm = project.serviceAsync<GHPRAiAssistantToolwindowViewModel>()
+      val vm = project.serviceAsync<GHPRAIReviewToolwindowViewModel>()
       toolWindow.dontHideOnEmptyContent()
-      val displayName = "Review AI Assistant"
-      val component = GHPRAiAssistantToolwindowComponentFactory.create(cs, vm)
+      val displayName = GithubAIBundle.message("tab.title.github.review.buddy")
+      val component = GHPRAIReviewToolwindowComponentFactory.create(cs, vm)
       toolWindow.contentManager.addContent(ContentFactory.getInstance().createContent(component, displayName, false))
     }
   }
