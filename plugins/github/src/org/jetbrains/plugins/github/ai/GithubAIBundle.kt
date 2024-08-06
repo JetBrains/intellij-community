@@ -12,12 +12,12 @@ object GithubAIBundle {
   private const val BUNDLE: @NonNls String = "messages.GithubAIBundle"
   private val INSTANCE: DynamicBundle = DynamicBundle(GithubAIBundle::class.java, BUNDLE)
 
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): @Nls String {
-    return INSTANCE.getMessage(key, params)
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): @Nls String {
+    return INSTANCE.getMessage(key, *params)
   }
 
   @NotNull
-  fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<String> {
-    return INSTANCE.getLazyMessage(key, params)
+  fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): Supplier<String> {
+    return INSTANCE.getLazyMessage(key, *params)
   }
 }

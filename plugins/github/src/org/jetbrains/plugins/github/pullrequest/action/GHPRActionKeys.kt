@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
+import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
@@ -19,4 +21,10 @@ object GHPRActionKeys {
   @JvmStatic
   val PULL_REQUESTS_PROJECT_VM = DataKey.create<GHPRToolWindowProjectViewModel>(
     "org.jetbrains.plugins.github.pullrequest.project.vm")
+
+  @JvmStatic
+  val PULL_REQUEST_REPOSITORY = DataKey.create<GitRepository>("org.jetbrains.plugins.github.pullrequest.repository")
+
+  @JvmStatic
+  val PULL_REQUEST_DATA_PROVIDER = DataKey.create<GHPRDataProvider>("org.jetbrains.plugins.github.pullrequest.dataprovider")
 }

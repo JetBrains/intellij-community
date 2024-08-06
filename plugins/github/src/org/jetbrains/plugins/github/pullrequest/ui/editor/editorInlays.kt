@@ -4,8 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 import com.intellij.collaboration.util.Hideable
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewAICommentDiffViewModel
 
 sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel {
   sealed interface Editor : GHPREditorMappedComponentModel
@@ -23,7 +23,7 @@ sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel {
   abstract class NewComment<VM : GHPRReviewNewCommentEditorViewModel>(val vm: VM)
     : GHPREditorMappedComponentModel, Editor, Diff
 
-  abstract class AIComment(val vm: GHPRReviewAICommentDiffViewModel)
+  abstract class AIComment(val vm: GHPRAICommentViewModel)
     : GHPREditorMappedComponentModel, Diff, Hideable {
     final override val key: Any = vm.key
     final override val hiddenState = MutableStateFlow(false)

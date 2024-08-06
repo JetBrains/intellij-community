@@ -20,6 +20,7 @@ import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -29,10 +30,14 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
 interface GHPRDiffViewModel : ComputedDiffViewModel, CodeReviewDiscussionsViewModel {
   val reviewVm: GHPRReviewViewModel
   val isLoadingReviewData: StateFlow<Boolean>
+
+  val iconProvider: GHAvatarIconsProvider
+  val currentUser: GHUser
 
   fun getViewModelFor(change: RefComparisonChange): Flow<GHPRDiffChangeViewModel?>
 
@@ -56,6 +61,9 @@ internal class GHPRDiffViewModelImpl(
 ) : GHPRDiffViewModel {
   private val cs = parentCs.childScope("GitHub Pull Request Diff View Model")
   private val reviewDataProvider = dataProvider.reviewData
+
+  override val iconProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
+  override val currentUser: GHUser = dataContext.securityService.currentUser
 
   override val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)
 

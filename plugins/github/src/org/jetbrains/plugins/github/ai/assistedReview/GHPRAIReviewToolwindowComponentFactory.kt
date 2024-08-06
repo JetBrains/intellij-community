@@ -11,8 +11,8 @@ import org.jetbrains.plugins.github.ai.GithubAIBundle
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-object GHPRAiAssistantToolwindowComponentFactory {
-  fun create(scope: CoroutineScope, vm: GHPRAiAssistantToolwindowViewModel): JComponent {
+object GHPRAIReviewToolwindowComponentFactory {
+  fun create(scope: CoroutineScope, vm: GHPRAIReviewToolwindowViewModel): JComponent {
     val panel = BorderLayoutPanel().apply {
       add(JLabel(GithubAIBundle.message("request.ai.review.in.review.toolwindow")))
     }
@@ -20,7 +20,9 @@ object GHPRAiAssistantToolwindowComponentFactory {
       vm.requestedReview.collect {
         withContext(Dispatchers.EDT) {
           panel.removeAll()
-          panel.addToCenter(GHPRAiAssistantReviewComponentFactory.create(scope, it))
+          if (it != null) {
+            panel.addToCenter(GHPRAIReviewReviewComponentFactory.create(scope, it))
+          }
           panel.revalidate()
           panel.repaint()
         }

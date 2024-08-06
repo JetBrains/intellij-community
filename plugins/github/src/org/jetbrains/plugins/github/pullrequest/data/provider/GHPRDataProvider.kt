@@ -12,7 +12,6 @@ interface GHPRDataProvider {
   val changesData: GHPRChangesDataProvider
   val commentsData: GHPRCommentsDataProvider
   val reviewData: GHPRReviewDataProvider
-  val aiReviewData: GHPRAIReviewDataProvider
   val viewedStateData: GHPRViewedStateDataProvider
   val timelineLoader: GHListLoader<GHPRTimelineItem>?
 
