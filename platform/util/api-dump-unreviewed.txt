@@ -5837,6 +5837,7 @@ a:com.intellij.util.xmlb.Converter
 f:com.intellij.util.xmlb.JDOMXIncluder
 - sf:DEFAULT_PATH_RESOLVER:com.intellij.util.xmlb.JDOMXIncluder$PathResolver
 - s:resolve(org.jdom.Element,java.net.URL):java.util.List
+- s:resolveWithDefaultPluginPointer(org.jdom.Element,java.net.URL):java.util.List
 com.intellij.util.xmlb.JDOMXIncluder$PathResolver
 - a:resolvePath(java.lang.String,java.net.URL):java.net.URL
 com.intellij.util.xmlb.RootBinding
