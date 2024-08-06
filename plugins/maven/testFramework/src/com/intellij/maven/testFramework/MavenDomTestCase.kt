@@ -228,7 +228,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return getReferenceAt(file, index)
   }
 
-  protected suspend fun getReference(file: VirtualFile, referenceText: String, index: Int): PsiReference? {
+  protected suspend fun resolveReference(file: VirtualFile, referenceText: String, index: Int): PsiElement? {
     var index = index
     val text = VfsUtilCore.loadText(file)
     var k = -1
@@ -239,7 +239,8 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
     while (--index >= 0)
 
-    return getReferenceAt(file, k)
+    val psiReference =  getReferenceAt(file, k)!!
+    return readAction { psiReference.resolve() }
   }
 
   protected suspend fun resolveReference(file: VirtualFile, referenceText: String): PsiElement? {

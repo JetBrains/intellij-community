@@ -2,12 +2,9 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.testFramework.UsefulTestCase
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.Test
@@ -118,7 +115,7 @@ class MavenConfigImportingTest : MavenDomTestCase() {
                     <version>${'$'}{config.version}</version>
                     """.trimIndent())
 
-    val resolvedReference = withContext(Dispatchers.EDT) { getReference(projectPom, "config.version", 0)!!.resolve() }
+    val resolvedReference = resolveReference(projectPom, "config.version", 0)
     assertNotNull(resolvedReference)
 
     UsefulTestCase.assertInstanceOf(resolvedReference, MavenPsiElementWrapper::class.java)
