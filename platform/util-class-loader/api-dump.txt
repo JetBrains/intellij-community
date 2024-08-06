@@ -27,7 +27,6 @@ c:com.intellij.util.lang.UrlClassLoader
 - hasLoadedClass(java.lang.String):Z
 - isByteBufferSupported(java.lang.String):Z
 - p:isPackageDefined(java.lang.String):Z
-- loadClassInsideSelf(java.lang.String,java.lang.String,J,Z):java.lang.Class
 - f:processResources(java.lang.String,java.util.function.Predicate,java.util.function.BiConsumer):V
 - ps:registerInClassLoaderValueMap(java.lang.ClassLoader,java.lang.ClassLoader):V
 - ps:toCanonicalPath(java.lang.String):java.lang.String

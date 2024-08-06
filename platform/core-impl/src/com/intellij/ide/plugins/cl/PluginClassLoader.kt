@@ -223,7 +223,7 @@ class PluginClassLoader(
               }
               continue
             }
-            c = classloader.loadClassInsideSelf(name, fileName, packageNameHash, false)
+            c = classloader.loadClassWithPrecomputedMeta(name, fileName, fileNameWithoutExtension, packageNameHash)
           }
           catch (e: IOException) {
             throw ClassNotFoundException(name, e)
@@ -314,7 +314,7 @@ class PluginClassLoader(
     return loadClassInsideSelf(name, fileName, packageNameHash, false)
   }
 
-  override fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long, forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
+  private fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long, forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
     synchronized(getClassLoadingLock(name)) {
       var c = findLoadedClass(name)
       if (c?.classLoader === this) {
