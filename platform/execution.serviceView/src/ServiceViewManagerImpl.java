@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -73,7 +74,8 @@ import java.util.function.Function;
 
 import static com.intellij.execution.services.ServiceViewContributor.CONTRIBUTOR_EP_NAME;
 
-@State(name = "ServiceViewManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), getStateRequiresEdt = true)
+@State(name = "ServiceViewManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  getStateRequiresEdt = true, defaultStateAsResource = true)
 public final class ServiceViewManagerImpl implements ServiceViewManager, PersistentStateComponent<ServiceViewManagerImpl.State> {
   private static final @NonNls String HELP_ID = "services.tool.window";
 
@@ -842,6 +844,12 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   @Override
   public void noStateLoaded() {
+    if (!myProject.isDefault()) {
+      ServiceViewManagerImpl defaultManager =
+        (ServiceViewManagerImpl)ServiceViewManager.getInstance(ProjectManager.getInstance().getDefaultProject());
+      myState.excluded.addAll(defaultManager.myState.excluded);
+      myState.included.addAll(defaultManager.myState.included);
+    }
     loadGroups();
   }
 
