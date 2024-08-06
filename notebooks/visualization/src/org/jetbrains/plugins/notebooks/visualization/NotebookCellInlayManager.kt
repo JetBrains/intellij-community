@@ -171,6 +171,10 @@ class NotebookCellInlayManager private constructor(
     val selectedCells = selectionModel.selectedCells.map { it.ordinal }
     for (cell in cells) {
       cell.selected = cell.intervalPointer.get()?.ordinal in selectedCells
+
+      if (cell.selected)  {
+        editor.project?.messageBus?.syncPublisher(JupyterCellSelectionNotifier.TOPIC)?.cellSelected(cell.interval, editor)
+      }
     }
   }
 
