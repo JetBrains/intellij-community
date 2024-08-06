@@ -6,6 +6,7 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.CompilerConfigurationUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -323,7 +324,8 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   @Override
   public boolean isParallelCompilationEnabled() {
     return switch (getParallelCompilationOption()) {
-        case ENABLED, AUTOMATIC -> true;
+        case ENABLED -> true;
+        case AUTOMATIC -> CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs();
         case DISABLED -> false;
       };
   }
