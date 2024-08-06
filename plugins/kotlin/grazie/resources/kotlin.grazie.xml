@@ -6,5 +6,6 @@
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinTextExtractor"/>
     <problemFilter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinProblemFilter"/>
+    <problemFilter language="kotlin" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
   </extensions>
 </idea-plugin>
