@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
-import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.ui.popup.Balloon
@@ -9,7 +8,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyInlineProgressIndicator
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.BalloonLayoutImpl
@@ -155,18 +153,16 @@ private fun getBalloonLayout(pane: JRootPane): BalloonLayoutImpl? {
 }
 
 private fun getAnchor(pane: JRootPane): Component {
-  if (pane is IdeRootPane && pane !is LightEditCompatible) {
-    val component = pane.getToolWindowPane().getDocumentComponent()
-    return if (component == null || !component.isShowing) pane else component
+  val splitters = UIUtil.findComponentOfType(pane, EditorsSplitters::class.java)
+  if (splitters != null && splitters.isShowing) {
+    return splitters
   }
 
   val tabWrapper: Component? = UIUtil.findComponentOfType(pane, TabbedPaneWrapper.TabWrapper::class.java)
   if (tabWrapper != null && tabWrapper.isShowing) {
     return tabWrapper
   }
-
-  val splitters = UIUtil.findComponentOfType(pane, EditorsSplitters::class.java)
-  return if (splitters == null || !splitters.isShowing) pane else splitters
+  return pane
 }
 
 private fun isBottomSideToolWindowsVisible(parent: JRootPane): Boolean {
