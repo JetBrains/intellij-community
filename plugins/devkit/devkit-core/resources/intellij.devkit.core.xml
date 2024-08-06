@@ -395,7 +395,7 @@
                      groupPathKey="inspections.group.path"
                      key="inspections.action.update.thread.display.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.MissingActionUpdateThread"/>
-    <localInspection language="JVM"
+    <localInspection language="UAST"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path"
                      key="inspections.jcomponent.data.provider.display.name" groupKey="inspections.group.code" enabledByDefault="true"
