@@ -140,9 +140,7 @@ internal class InplaceMethodExtractor(private val editor: Editor,
             installGotItTooltips(editor, callIdentifierRange?.asTextRange, methodIdentifierRange?.asTextRange)
             MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
             runWithModalProgressBlocking(project, ExtractMethodHandler.getRefactoringName()) {
-              withContext(Dispatchers.EDT) {
-                extractor.replaceDuplicates(editor, extractedMethod)
-              }
+              extractor.replaceDuplicates(editor, extractedMethod)
             }
           }
           .disposeWithTemplate(disposable)

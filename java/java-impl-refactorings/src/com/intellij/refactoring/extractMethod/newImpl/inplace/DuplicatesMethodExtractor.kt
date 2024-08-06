@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.LocalSearchScope
@@ -85,22 +86,31 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
   }
 
   suspend fun replaceDuplicates(editor: Editor, method: PsiMethod, beforeDuplicateReplaced: (candidate: List<PsiElement>) -> Unit = {}) {
-    val prepareTimeStart = System.currentTimeMillis()
-    val calls = callsToReplace?.map { it.element!! } ?: return
+    val project = readAction { editor.project } ?: return
+    val calls = readAction { callsToReplace?.map { it.element!! } }?: return
     val defaultExtraction = ExtractedElements(calls, method)
 
-    val (exactDuplicates, parametrizedDuplicates) = findDuplicates(method, calls)
-    val exactReplacement = ReplaceDescriptor(exactDuplicates, defaultExtraction, extractOptions.inputParameters)
-    val parametrizedReplacement = findParametrizedDescriptor(extractOptions.copy(methodName = method.name), parametrizedDuplicates)
+    val prepareTimeStart = System.currentTimeMillis()
+
+    val searchTitle = JavaRefactoringBundle.message("extract.method.progress.search.duplicates")
+    val (exactReplacement, parametrizedReplacement) = withBackgroundProgress(project, searchTitle) {
+      readAction {
+        val (exactDuplicates, parametrizedDuplicates) = findDuplicates(method, calls)
+        val exactReplacement = ReplaceDescriptor(exactDuplicates, defaultExtraction, extractOptions.inputParameters)
+        val parametrizedReplacement = findParametrizedDescriptor(extractOptions.copy(methodName = method.name), parametrizedDuplicates)
+        exactReplacement to parametrizedReplacement
+      }
+    }
 
     val prepareTimeEnd = System.currentTimeMillis()
     InplaceExtractMethodCollector.duplicatesSearched.log(prepareTimeEnd - prepareTimeStart)
 
-    val shouldChangeSignature = askToChangeSignature(exactReplacement, parametrizedReplacement)
-    val chosenReplacement = if (shouldChangeSignature) parametrizedReplacement else exactReplacement
-
-    val confirmedDuplicates = confirmDuplicates(editor, chosenReplacement.duplicates)
-    val replacement = chosenReplacement.copy(duplicates = confirmedDuplicates)
+    val replacement = withContext(Dispatchers.EDT) {
+      val shouldChangeSignature = askToChangeSignature(exactReplacement, parametrizedReplacement)
+      val chosenReplacement = if (shouldChangeSignature) parametrizedReplacement else exactReplacement
+      val confirmedDuplicates = confirmDuplicates(editor, chosenReplacement.duplicates)
+       chosenReplacement.copy(duplicates = confirmedDuplicates)
+    }
 
     replacement.duplicates.forEach { beforeDuplicateReplaced(it.candidate) }
 
@@ -108,8 +118,13 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
   }
 
   private suspend fun replaceDuplicates(replacement: ReplaceDescriptor, method: PsiMethod, calls: List<PsiElement>) {
-    val project = replacement.elements.method.project
-    val duplicatesExtractOptions = replacement.duplicates.map { duplicate -> createExtractDescriptor(duplicate, replacement.parameters) }
+    val project = readAction { method.project }
+    val replaceTitle = JavaRefactoringBundle.message("extract.method.progress.replace.duplicates")
+    val duplicatesExtractOptions = withBackgroundProgress(project, replaceTitle) {
+      readAction {
+        replacement.duplicates.map { duplicate -> createExtractDescriptor(duplicate, replacement.parameters) }
+      }
+    }
 
     writeCommandAction(project, ExtractMethodHandler.getRefactoringName()) {
       if (duplicatesExtractOptions.any { options -> options.isStatic }) {
@@ -337,8 +352,6 @@ fun DuplicatesMethodExtractor.extractInDialog() {
   MethodExtractor.sendRefactoringDoneEvent(method)
   val editor = PsiEditorUtil.findEditor(targetClass) ?: return
   runWithModalProgressBlocking(extractOptions.project, ExtractMethodHandler.getRefactoringName()) {
-    withContext(Dispatchers.EDT) {
-      mappedExtractor.replaceDuplicates(editor, method)
-    }
+    mappedExtractor.replaceDuplicates(editor, method)
   }
 }
