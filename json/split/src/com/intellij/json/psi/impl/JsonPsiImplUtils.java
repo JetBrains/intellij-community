@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
