@@ -71,7 +71,7 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(parentCs = cs, frame = frame)
+  override fun createIdeRootPane(): IdeRootPane = LightEditRootPane(parentCs = cs, frame = frame)
 
   override fun createStatusBar(): IdeStatusBarImpl {
     return object : IdeStatusBarImpl(parentCs = cs, getProject = { project }, addToolWindowWidget = false) {
@@ -135,9 +135,7 @@ internal class LightEditFrameWrapper(
   }
 
   private inner class LightEditRootPane(parentCs: CoroutineScope, frame: IdeFrameImpl)
-    : IdeRootPane(parentCs = parentCs,
-                  frame = frame,
-                  loadingState = null), LightEditCompatible {
+    : IdeRootPane(parentCs = parentCs, frame = frame), LightEditCompatible {
     override val isLightEdit: Boolean
       get() = true
 

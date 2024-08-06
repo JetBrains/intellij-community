@@ -33,20 +33,24 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.*
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.jetbrains.WindowDecorations.CustomTitleBar
 import kotlinx.coroutines.*
@@ -109,16 +113,20 @@ open class ProjectFrameHelper internal constructor(
     frame.addWindowListener(WindowCloseListener)
 
     @Suppress("LeakingThis")
-    rootPane = createIdeRootPane(loadingState)
+    rootPane = createIdeRootPane()
     frame.doSetRootPane(rootPane)
 
-    frameDecorator = rootPane.createDecorator()
+    val glassPane = IdeGlassPaneImpl(rootPane, loadingState, cs.childScope())
+    rootPane.overrideGlassPane(glassPane)
+
+    frameDecorator = IdeFrameDecorator.decorate(frame, glassPane, cs.childScope())
     // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane via
     // [com.intellij.openapi.wm.impl.IdeFrameDecorator.notifyFrameComponents]
     frameDecorator?.setStoredFullScreen(getReusedFullScreenState())
 
     IdeRootPaneBorderHelper.install(ApplicationManager.getApplication(), cs, frame, frameDecorator, rootPane)
     frameHeaderHelper = ProjectFrameCustomHeaderHelper(ApplicationManager.getApplication(), cs, frame, frameDecorator, rootPane, isLightEdit, mainMenuActionGroup)
+    installLinuxResizeHandler(cs, frame, glassPane)
 
     frame.setFrameHelper(object : FrameHelper {
       override fun uiDataSnapshot(sink: DataSink) {
@@ -191,8 +199,8 @@ open class ProjectFrameHelper internal constructor(
     }
   }
 
-  internal open fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
-    return IdeRootPane(parentCs = cs, frame = frame, loadingState = loadingState)
+  internal open fun createIdeRootPane(): IdeRootPane {
+    return IdeRootPane(parentCs = cs, frame = frame)
   }
 
   private val isInitialized = AtomicBoolean()
@@ -509,6 +517,23 @@ open class ProjectFrameHelper internal constructor(
 
 private fun isTemporaryDisposed(frame: RootPaneContainer?): Boolean {
   return ClientProperty.isTrue(frame?.rootPane, ScreenUtil.DISPOSE_TEMPORARY)
+}
+
+private fun installLinuxResizeHandler(cs: CoroutineScope, frame: JFrame, glassPane: IdeGlassPane) {
+  if (CustomWindowHeaderUtil.hideNativeLinuxTitle(UISettings.shadowInstance)) {
+    // Under Wayland, interactive resizing can only be done with the help
+    // of the server as soon as it involves the change in the location
+    // of the window like resizing from the top/left does.
+    // Therefore, resizing is implemented entirely in JBR and does not require
+    // any additional work. For other toolkits, we resize programmatically
+    // with WindowResizeListenerEx
+    val toolkitCannotResizeUndecorated = !StartupUiUtil.isWaylandToolkit()
+    if (toolkitCannotResizeUndecorated) {
+      val windowResizeListener = WindowResizeListenerEx(glassPane, content = frame, border = JBUI.insets(4), corner = null)
+      windowResizeListener.install(cs)
+      windowResizeListener.setLeftMouseButtonOnly(true)
+    }
+  }
 }
 
 // static object to ensure that we do not retain a project

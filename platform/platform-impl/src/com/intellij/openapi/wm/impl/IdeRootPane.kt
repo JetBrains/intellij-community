@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
@@ -28,7 +27,6 @@ import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.mac.MacWinTabsHandler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers
@@ -47,8 +45,7 @@ private val EXTENSION_KEY = Key.create<String>("extensionKey")
 @ApiStatus.Internal
 open class IdeRootPane internal constructor(
   parentCs: CoroutineScope,
-  private val frame: IdeFrameImpl,
-  loadingState: FrameLoadingState?,
+  frame: IdeFrameImpl,
 ) : JRootPane() {
   protected val coroutineScope = parentCs.childScope("IdeRootPane", Dispatchers.Default)
 
@@ -60,7 +57,7 @@ open class IdeRootPane internal constructor(
   private val northPanel = JBBox.createVerticalBox()
 
   private var toolWindowPane: ToolWindowPane? = null
-  private val glassPaneInitialized: Boolean
+  private var fixedGlassPane: Boolean = false
 
   protected open val isLightEdit: Boolean
     get() = false
@@ -76,25 +73,6 @@ open class IdeRootPane internal constructor(
     // listen to mouse motion events for a11y
     contentPane.addMouseMotionListener(object : MouseMotionAdapter() {})
 
-    val glassPane = IdeGlassPaneImpl(rootPane = this, loadingState, coroutineScope.childScope())
-    setGlassPane(glassPane)
-    glassPaneInitialized = true
-
-    if (CustomWindowHeaderUtil.hideNativeLinuxTitle(UISettings.shadowInstance)) {
-      // Under Wayland, interactive resizing can only be done with the help
-      // of the server as soon as it involves the change in the location
-      // of the window like resizing from the top/left does.
-      // Therefore, resizing is implemented entirely in JBR and does not require
-      // any additional work. For other toolkits, we resize programmatically
-      // with WindowResizeListenerEx
-      val toolkitCannotResizeUndecorated = !StartupUiUtil.isWaylandToolkit()
-      if (toolkitCannotResizeUndecorated) {
-        val windowResizeListener = WindowResizeListenerEx(glassPane, content = frame, border = JBUI.insets(4), corner = null)
-        windowResizeListener.install(coroutineScope)
-        windowResizeListener.setLeftMouseButtonOnly(true)
-      }
-    }
-
     putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
 
     if (SystemInfoRt.isMac && JdkEx.isTabbingModeAvailable()) {
@@ -106,10 +84,6 @@ open class IdeRootPane internal constructor(
 
     @Suppress("LeakingThis")
     contentPane.add(createCenterComponent(frame), BorderLayout.CENTER)
-  }
-
-  internal fun createDecorator(): IdeFrameDecorator? {
-    return IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, coroutineScope.childScope())
   }
 
   protected open fun createCenterComponent(frame: JFrame): Component {
@@ -152,9 +126,14 @@ open class IdeRootPane internal constructor(
     }
   }
 
-  final override fun setGlassPane(glass: Component) {
-    check(!glassPaneInitialized) { "Setting of glass pane for IdeFrame is prohibited" }
+  final override fun setGlassPane(glass: Component?) {
+    check(!fixedGlassPane) { "Setting of glass pane for IdeFrame is prohibited" }
     super.setGlassPane(glass)
+  }
+
+  fun overrideGlassPane(glassPane: Component) {
+    setGlassPane(glassPane)
+    fixedGlassPane = true
   }
 
   /**
