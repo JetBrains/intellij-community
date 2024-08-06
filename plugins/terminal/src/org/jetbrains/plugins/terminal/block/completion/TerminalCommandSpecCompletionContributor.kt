@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
@@ -38,8 +37,7 @@ import java.io.File
  * Main entry point to the Block Terminal Completion.
  */
 internal class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAware {
-
-  val tracer = TelemetryManager.getTracer(Scope(TERMINAL_COMPLETION_OTL_SCOPE))
+  val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
@@ -290,7 +288,4 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       get() = parameters.editor.project!!
   }
 
-  companion object {
-    const val TERMINAL_COMPLETION_OTL_SCOPE = "terminal-completion"
-  }
 }

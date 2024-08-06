@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.terminal.completion.ShellCommandSpecsManager
@@ -55,7 +54,7 @@ import java.time.Duration
 @Service
 internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
 
-  val tracer = TelemetryManager.getTracer(Scope("terminal"))
+  val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
   /**
    * Cache for all **Light** json-based and code based specs with resolved conflicts.
