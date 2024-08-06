@@ -18,8 +18,9 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import kotlin.text.StringsKt;
 import one.util.streamex.IntStreamEx;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
@@ -76,8 +77,8 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testHtmlNbsp() {
-    assertEquals("hello world", unknownOffsets(extractText("a.md", "hello&nbsp;world", 3)));
-    assertEquals("hello world", unknownOffsets(extractText("a.html", "hello&nbsp;world", 3)));
+    assertEquals("hello world", unknownOffsets(extractText("a.md", "hello&nbsp;world", 3)));
+    assertEquals("hello world", unknownOffsets(extractText("a.html", "hello&nbsp;world", 3)));
   }
   public void testMarkdownInlineCode() {
     TextContent extracted = extractText("a.md", "you can use a number of predefined fields (e.g. `EventFields.InputEvent`)", 0);
@@ -286,6 +287,10 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("|def", unknownOffsets(extractText("a.html", "<code>abc</code>def", 18)));
     assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<code>abc</code>", 6)));
 
+    // exclude entities
+    assertEquals(inlineTagsSupported ? "A | B\tC" : "|A | B|\t|C|",
+                 unknownOffsets(extractText("a.html", "<b>A &amp; B &#9; C</b>", 4)));
+
     if (inlineTagsSupported) {
       String longHtml = "<body><a>Hello</a> <b>world</b><code>without code</code>!<div/>Another text.</body>";
 
@@ -340,7 +345,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
   public void testBuildingPerformance_removingNbsp() {
     String text = "b&nbsp;".repeat(10_000);
-    String expected = "b ".repeat(10_000).trim();
+    String expected = StringsKt.trim("b ".repeat(10_000)).toString();
     PsiFile file = myFixture.configureByText("a.md", text);
     var psi = PsiTreeUtil.findElementOfClassAtOffset(file, 10, MarkdownParagraph.class, false);
     TextExtractor extractor = new MarkdownTextExtractor();

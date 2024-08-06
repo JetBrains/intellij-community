@@ -91,6 +91,7 @@ public class XmlTextExtractor extends TextExtractor {
       final Map<PsiElement, TextContent> result = new HashMap<>();
       final List<PsiElement> group = new ArrayList<>();
       final Set<Integer> markupIndices = new HashSet<>();
+      final Set<Integer> unknownIndices = new HashSet<>();
       final Set<XmlTag> inlineTags = new HashSet<>();
       boolean unknownBefore = unknownContainer;
 
@@ -116,6 +117,13 @@ public class XmlTextExtractor extends TextExtractor {
         if (isText(each)) {
           group.add(each);
         }
+        else if (PsiUtilCore.getElementType(each) == XmlTokenType.XML_CHAR_ENTITY_REF) {
+          if (HtmlUtilsKt.isSpaceEntity(each.getText())) {
+            group.add(each);
+          } else {
+            unknownIndices.add(group.size());
+          }
+        }
         super.visitElement(each);
       }
 
@@ -133,19 +141,15 @@ public class XmlTextExtractor extends TextExtractor {
         for (int i = 0; i < group.size(); i++) {
           PsiElement e = group.get(i);
           TextContent component = extractRange(fullContent.getValue(), e.getTextRange().shiftLeft(containerStart));
-          if (markupIndices.contains(i)) {
-            component = component.excludeRanges(List.of(new Exclusion(0, 0, ExclusionKind.markup)));
-          }
-          if (markupIndices.contains(i + 1)) {
-            component = component.excludeRanges(List.of(new Exclusion(component.length(), component.length(), ExclusionKind.markup)));
-          }
+          component = applyExclusions(i, component, markupIndices, ExclusionKind.markup);
+          component = applyExclusions(i, component, unknownIndices, ExclusionKind.unknown);
           components.add(component);
         }
         TextContent content = TextContent.join(components);
         if (content != null) {
           if (unknownBefore) content = content.markUnknown(TextRange.from(0, 0));
           if (unknownAfter) content = content.markUnknown(TextRange.from(content.length(), 0));
-          content = HtmlUtilsKt.nbspToSpace(content.removeIndents(Set.of(' ', '\t')));
+          content = HtmlUtilsKt.inlineSpaceEntities(content.removeIndents(Set.of(' ', '\t')));
           if (content != null) {
             for (PsiElement e : group) {
               result.put(e, content);
@@ -153,6 +157,16 @@ public class XmlTextExtractor extends TextExtractor {
           }
         }
         group.clear();
+      }
+
+      private static TextContent applyExclusions(int index, TextContent component, Set<Integer> indices, ExclusionKind kind) {
+        if (indices.contains(index)) {
+          component = component.excludeRanges(List.of(new Exclusion(0, 0, kind)));
+        }
+        if (indices.contains(index + 1)) {
+          component = component.excludeRanges(List.of(new Exclusion(component.length(), component.length(), kind)));
+        }
+        return component;
       }
     };
     container.acceptChildren(visitor);
@@ -178,7 +192,7 @@ public class XmlTextExtractor extends TextExtractor {
 
     IElementType type = PsiUtilCore.getElementType(leaf);
     return type == XmlTokenType.XML_WHITE_SPACE || type == TokenType.WHITE_SPACE ||
-           type == XmlTokenType.XML_CHAR_ENTITY_REF || type == XmlTokenType.XML_DATA_CHARACTERS;
+           type == XmlTokenType.XML_DATA_CHARACTERS;
   }
 
   private boolean hasSuitableDialect(@NotNull PsiElement element) {

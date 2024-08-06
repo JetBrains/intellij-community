@@ -72,11 +72,14 @@ fun removeHtml(_content: TextContent?): TextContent? {
 }
 
 private val nbsp = Pattern.compile("&nbsp;")
+private val tab = Pattern.compile("&#9;")
 
-fun nbspToSpace(content: TextContent?): TextContent? {
+fun isSpaceEntity(text: String): Boolean = text == nbsp.pattern() || text == tab.pattern()
+
+private fun inlineEntity(content: TextContent?, pattern: Pattern, space: Char): TextContent? {
   if (content == null) return null
 
-  val spaces = Text.allOccurrences(nbsp, content)
+  val spaces = Text.allOccurrences(pattern, content)
   if (spaces.isEmpty()) return content.trimWhitespace()
 
   val components = arrayListOf<TextContent?>()
@@ -85,6 +88,14 @@ fun nbspToSpace(content: TextContent?): TextContent? {
     components.add(content.subText(TextRange(prevEnd, spaces[i].startOffset))?.trimWhitespace())
   }
   components.add(content.subText(TextRange(spaces.last().endOffset, content.length))?.trimWhitespace())
-  return TextContent.joinWithWhitespace(' ', components.filterNotNull())
+  return TextContent.joinWithWhitespace(space, components.filterNotNull())
+}
+
+fun inlineSpaceEntities(content: TextContent?): TextContent? {
+  return inlineEntity(nbspToSpace(content), tab, '\t')
+}
+
+fun nbspToSpace(content: TextContent?): TextContent? {
+  return inlineEntity(content, nbsp, ' ')
 }
 
