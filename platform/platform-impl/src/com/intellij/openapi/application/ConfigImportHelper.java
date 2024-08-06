@@ -6,7 +6,6 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
-import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
@@ -188,16 +187,7 @@ public final class ConfigImportHelper {
           importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
         }
         else if (guessedOldConfigDirs.isEmpty()) {
-          boolean importedFromCloud = false;
-          CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
-          if (configProvider != null) {
-            importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
-
-            if (importedFromCloud) {
-              importScenarioStatistics = IMPORTED_FROM_CLOUD;
-            }
-          }
-          if (!importedFromCloud && !veryFirstStartOnThisComputer) {
+          if (!veryFirstStartOnThisComputer) {
             oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
             importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
           }
