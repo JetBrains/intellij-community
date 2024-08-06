@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
@@ -306,7 +306,6 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       toIgnore.add(Pass.LINE_MARKERS);
       toIgnore.add(Pass.SLOW_LINE_MARKERS);
       toIgnore.add(Pass.LOCAL_INSPECTIONS);
-      toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);
       toIgnore.add(Pass.UPDATE_ALL);
     }

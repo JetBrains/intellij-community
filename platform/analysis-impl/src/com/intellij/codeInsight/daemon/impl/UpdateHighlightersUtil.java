@@ -241,7 +241,6 @@ public final class UpdateHighlightersUtil {
     int group = info.getGroup();
     if (group != Pass.LOCAL_INSPECTIONS
         && group != Pass.EXTERNAL_TOOLS
-        && group != Pass.WHOLE_FILE_LOCAL_INSPECTIONS
         && group != Pass.UPDATE_ALL
         && group != GeneralHighlightingPass.POST_UPDATE_ALL
     ) {

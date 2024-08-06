@@ -142,7 +142,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
           || id == Pass.WOLF
           || id == Pass.LINE_MARKERS
           || id == Pass.SLOW_LINE_MARKERS
-          || id == Pass.WHOLE_FILE_LOCAL_INSPECTIONS
           ) {
         continue;
       }
