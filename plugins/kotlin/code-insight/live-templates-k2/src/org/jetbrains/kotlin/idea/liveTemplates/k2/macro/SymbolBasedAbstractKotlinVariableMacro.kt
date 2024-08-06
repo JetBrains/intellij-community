@@ -43,7 +43,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
 
         return resolveCandidates(context) f@ { file, variables ->
             val importStrategyDetector = ImportStrategyDetector(file, context.project)
-            variables.mapTo(ArrayList()) { lookupElementFactory.createLookupElement(it, importStrategyDetector) }
+            variables.mapTo(ArrayList()) { KotlinFirLookupElementFactory.createLookupElement(it, importStrategyDetector) }
                 .toTypedArray()
         }
     }
@@ -92,9 +92,5 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
             is KaKotlinPropertySymbol -> variable.psi?.containingFile == file
             else -> false
         }
-    }
-
-    private companion object {
-        private val lookupElementFactory = KotlinFirLookupElementFactory()
     }
 }

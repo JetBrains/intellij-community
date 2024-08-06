@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
@@ -14,8 +14,9 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render
 
-internal class PackagePartLookupElementFactory {
-    fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement {
+internal object PackagePartLookupElementFactory {
+
+    fun createLookup(packagePartFqName: FqName): LookupElement {
         val shortName = packagePartFqName.shortName()
         return LookupElementBuilder.create(PackagePartLookupObject(shortName), "${shortName.render()}.")
             .withInsertHandler(PackagePartInsertionHandler)

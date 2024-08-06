@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
-import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -34,8 +33,6 @@ internal class FirBasicCompletionContext(
         get() = originalKtFile.project
 
     val importStrategyDetector = ImportStrategyDetector(originalKtFile, project)
-
-    val lookupElementFactory = KotlinFirLookupElementFactory()
 
     companion object {
 

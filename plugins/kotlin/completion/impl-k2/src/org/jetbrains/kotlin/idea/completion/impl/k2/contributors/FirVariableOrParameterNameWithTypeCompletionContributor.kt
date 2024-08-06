@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOri
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalElementOfSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupObject
+import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.VariableOrParameterNameWithTypeWeigher.nameWithTypePriority
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -103,7 +104,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
             val type = parameter.returnType
             if (typeIsVisible(type, visibilityChecker, availableTypeParameters)) {
 
-                val typeLookupElement = lookupElementFactory.createTypeLookupElement(type) ?: return@mapNotNull null
+                val typeLookupElement = KotlinFirLookupElementFactory.createTypeLookupElement(type) ?: return@mapNotNull null
                 val lookupElement = createLookupElement(variableOrParameter, name, typeLookupElement)
 
                 lookupElement to name
@@ -175,7 +176,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
             is KaClassLikeSymbol -> symbol.name?.asString()
         } ?: return
 
-        val typeLookupElement = lookupElementFactory.createTypeLookupElement(symbol) ?: return
+        val typeLookupElement = KotlinFirLookupElementFactory.createTypeLookupElement(symbol) ?: return
 
         val nameSuggestions = KotlinNameSuggester.getCamelNames(
             shortNameString,

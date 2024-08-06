@@ -23,14 +23,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 @ApiStatus.Internal
-class KotlinFirLookupElementFactory {
-    private val classLookupElementFactory = ClassLookupElementFactory()
-    private val variableLookupElementFactory = VariableLookupElementFactory()
-    private val functionLookupElementFactory = FunctionLookupElementFactory()
-    private val typeParameterLookupElementFactory = TypeParameterLookupElementFactory()
-    private val packagePartLookupElementFactory = PackagePartLookupElementFactory()
-    private val namedArgumentLookupElementFactory = NamedArgumentLookupElementFactory()
-    private val typeLookupElementFactory = TypeLookupElementFactory()
+object KotlinFirLookupElementFactory {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
@@ -48,10 +41,10 @@ class KotlinFirLookupElementFactory {
                 expectedType,
             )
 
-            is KaClassLikeSymbol -> classLookupElementFactory
+            is KaClassLikeSymbol -> ClassLookupElementFactory
                 .createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol))
 
-            is KaTypeParameterSymbol -> typeParameterLookupElementFactory.createLookup(symbol)
+            is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(symbol)
             else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
         }
     }
@@ -64,28 +57,28 @@ class KotlinFirLookupElementFactory {
         expectedType: KaType? = null,
     ): LookupElementBuilder {
         return when (signature) {
-            is KaFunctionSignature<*> -> functionLookupElementFactory.createLookup(name, signature, options, expectedType)
-            is KaVariableSignature<*> -> variableLookupElementFactory.createLookup(signature, options)
+            is KaFunctionSignature<*> -> FunctionLookupElementFactory.createLookup(name, signature, options, expectedType)
+            is KaVariableSignature<*> -> VariableLookupElementFactory.createLookup(signature, options)
         }
     }
 
     fun createPackagePartLookupElement(packagePartFqName: FqName): LookupElement =
-        packagePartLookupElementFactory.createPackagePartLookupElement(packagePartFqName)
+        PackagePartLookupElementFactory.createLookup(packagePartFqName)
 
     context(KaSession)
     fun createNamedArgumentLookupElement(name: Name, types: List<KaType>): LookupElement =
-        namedArgumentLookupElementFactory.createNamedArgumentLookup(name, types)
+        NamedArgumentLookupElementFactory.createLookup(name, types)
 
     fun createNamedArgumentWithValueLookupElement(name: Name, value: String): LookupElement =
-        namedArgumentLookupElementFactory.createNamedArgumentWithValueLookup(name, value)
+        NamedArgumentLookupElementFactory.createLookup(name, value)
 
     context(KaSession)
     fun createTypeLookupElement(type: KaType): LookupElement? =
-        typeLookupElementFactory.createLookup(type)
+        TypeLookupElementFactory.createLookup(type)
 
     context(KaSession)
     fun createTypeLookupElement(classSymbol: KaClassifierSymbol): LookupElement? =
-        typeLookupElementFactory.createLookup(classSymbol)
+        TypeLookupElementFactory.createLookup(classSymbol)
 
     context(KaSession)
     fun createLookupElementForClassLikeSymbol(
@@ -93,7 +86,7 @@ class KotlinFirLookupElementFactory {
         importingStrategy: ImportStrategy,
     ): LookupElement? {
         if (symbol !is KaNamedSymbol) return null
-        return classLookupElementFactory.createLookup(symbol, importingStrategy)
+        return ClassLookupElementFactory.createLookup(symbol, importingStrategy)
     }
 }
 

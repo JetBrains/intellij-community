@@ -49,7 +49,6 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected val project: Project get() = basicContext.project
     protected val targetPlatform: TargetPlatform get() = basicContext.targetPlatform
     protected val symbolFromIndexProvider: KtSymbolFromIndexProvider get() = basicContext.symbolFromIndexProvider
-    protected val lookupElementFactory: KotlinFirLookupElementFactory get() = basicContext.lookupElementFactory
     protected val importStrategyDetector: ImportStrategyDetector get() = basicContext.importStrategyDetector
 
     protected val scopeNameFilter: (Name) -> Boolean =
@@ -59,7 +58,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected fun addSymbolToCompletion(expectedType: KaType?, symbol: KaSymbol) {
         if (symbol !is KaNamedSymbol) return
 
-        lookupElementFactory
+        KotlinFirLookupElementFactory
             .createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
             .let(sink::addElement)
     }
@@ -73,7 +72,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     ) {
         if (symbol !is KaNamedSymbol) return
 
-        val lookup = with(lookupElementFactory) {
+        val lookup = with(KotlinFirLookupElementFactory) {
             when (symbol) {
                 is KaClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
                 is KaTypeParameterSymbol -> createLookupElement(symbol, importStrategyDetector)
@@ -101,7 +100,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
             else -> null
         } ?: return
 
-        val lookup = lookupElementFactory.createCallableLookupElement(name, signature, options, context.expectedType)
+        val lookup = KotlinFirLookupElementFactory.createCallableLookupElement(name, signature, options, context.expectedType)
 
         priority?.let { lookup.priority = it }
 

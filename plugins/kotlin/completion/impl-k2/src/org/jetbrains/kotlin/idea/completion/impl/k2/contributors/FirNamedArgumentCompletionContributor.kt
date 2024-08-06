@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
@@ -72,7 +73,7 @@ internal class FirNamedArgumentCompletionContributor(
 
             val elements = buildList {
                 for ((name, indexedTypes) in namedArgumentInfos) {
-                    with(lookupElementFactory) {
+                    with(KotlinFirLookupElementFactory) {
                         add(createNamedArgumentLookupElement(name, indexedTypes.map { it.value }))
 
                         // suggest default values only for types from parameters with matching positions to not clutter completion
