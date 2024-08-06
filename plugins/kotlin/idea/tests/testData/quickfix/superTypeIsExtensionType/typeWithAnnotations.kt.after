@@ -1,6 +1,12 @@
 // "Convert supertype to '(String, T) -> Unit'" "true"
+@Target(AnnotationTarget.TYPE)
+annotation class TestA
+@Target(AnnotationTarget.TYPE)
+annotation class TestB
+@Target(AnnotationTarget.TYPE)
+annotation class TestC
 
-class Foo<T> : <caret>(String, T) -> Unit {
+class Foo<T> : (@TestA String, @TestB T) -> @TestC Unit {
     override fun invoke(p1: String, p2: T) {
     }
 }

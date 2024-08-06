@@ -442,6 +442,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeMemberFunctionSignatureFixFactory.nothingToOverrideFixFactory)
 
         registerFactory(ReplaceJvmFieldWithConstFixFactory.inapplicableJvmField)
+
+        registerFactory(ConvertExtensionToFunctionTypeFixFactory.superTypeIsExtensionFunctionType)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {

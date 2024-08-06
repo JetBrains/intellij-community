@@ -15834,6 +15834,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/superTypeIsExtensionType/typeWith1Argument.kt");
         }
 
+        @TestMetadata("typeWithAnnotations.kt")
+        public void testTypeWithAnnotations() throws Exception {
+            runTest("testData/quickfix/superTypeIsExtensionType/typeWithAnnotations.kt");
+        }
+
         @TestMetadata("typeWithNoArgument.kt")
         public void testTypeWithNoArgument() throws Exception {
             runTest("testData/quickfix/superTypeIsExtensionType/typeWithNoArgument.kt");
