@@ -78,6 +78,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
@@ -119,10 +120,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private val sideStack = SideStack()
   private val toolWindowPanes = LinkedHashMap<String, ToolWindowPane>()
 
-  private var frameHelper: ProjectFrameHelper?
-    get() = state.frame
+  private var projectFrame: JFrame?
+    get() = state.projectFrame
     set(value) {
-      state.frame = value
+      state.projectFrame = value
     }
 
   override var layoutToRestoreLater: DesktopLayout?
@@ -499,39 +500,39 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
   }
 
-  suspend fun init(
-    frameHelperDeferred: Deferred<ProjectFrameHelper>,
+  internal suspend fun init(
+    pane: ToolWindowPane,
     reopeningEditorJob: Job,
     taskListDeferred: Deferred<List<RegisterToolWindowTask>>,
   ) {
-    doInit(frameHelperDeferred = frameHelperDeferred,
+    doInit(pane = pane,
            connection = project.messageBus.connect(coroutineScope),
            reopeningEditorJob = reopeningEditorJob,
-           taskListDeferred = taskListDeferred)
+           taskListDeferred = taskListDeferred
+    )
   }
 
+  @Internal
   @VisibleForTesting
   suspend fun doInit(
-    frameHelperDeferred: Deferred<ProjectFrameHelper>,
+    pane: ToolWindowPane,
     connection: SimpleMessageBusConnection,
     reopeningEditorJob: Job,
     taskListDeferred: Deferred<List<RegisterToolWindowTask>>?,
   ) {
     withContext(ModalityState.any().asContextElement()) {
-      val frameHelper = frameHelperDeferred.await()
       launch(Dispatchers.EDT) {
-        this@ToolWindowManagerImpl.frameHelper = frameHelper
+        this@ToolWindowManagerImpl.projectFrame = pane.frame
 
         // Make sure we haven't already created the root tool window pane.
         // We might have created panes for secondary frames, as they get
         // registered differently, but we shouldn't have the main pane yet
         LOG.assertTrue(!toolWindowPanes.containsKey(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID))
 
-        val toolWindowPane = frameHelper.rootPane.getToolWindowPane()
         // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor.
         // If we're reopening other frames, their tool window panes will be added,
         // but we still need to initialise the tool windows themselves.
-        toolWindowPanes.put(toolWindowPane.paneId, toolWindowPane)
+        toolWindowPanes.put(pane.paneId, pane)
       }
       connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
       toolWindowSetInitializer.initUi(reopeningEditorJob, taskListDeferred)
@@ -783,7 +784,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   override val activeToolWindowId: String?
     get() {
-      val frame = toolWindowPanes.values.firstOrNull { it.frame.isActive }?.frame ?: frameHelper?.frame ?: return null
+      val frame = toolWindowPanes.values.firstOrNull { it.frame.isActive }?.frame ?: projectFrame ?: return null
       if (frame.isActive) {
         return getToolWindowIdForComponent(frame.mostRecentFocusOwner)
       }

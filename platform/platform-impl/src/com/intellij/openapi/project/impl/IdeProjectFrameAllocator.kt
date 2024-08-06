@@ -79,7 +79,7 @@ internal class IdeProjectFrameAllocator(
   private val options: OpenProjectTask,
   private val projectStoreBaseDir: Path,
 ) : ProjectFrameAllocator {
-  private val deferredProjectFrameHelper = CompletableDeferred<ProjectFrameHelper>()
+  private val deferredProjectFrameHelper = CompletableDeferred<IdeProjectFrameHelper>()
 
   override suspend fun preInitProject(project: Project) {
     (project.serviceAsync<FileEditorManager>() as? FileEditorManagerImpl)?.initJob?.join()
@@ -125,7 +125,7 @@ internal class IdeProjectFrameAllocator(
           val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
           fileEditorManager.initJob.join()
           withContext(Dispatchers.EDT) {
-            frameHelper.rootPane.getToolWindowPane().setDocumentComponent(fileEditorManager.mainSplitters)
+            frameHelper.toolWindowPane.setDocumentComponent(fileEditorManager.mainSplitters)
           }
         }
 
@@ -157,8 +157,11 @@ internal class IdeProjectFrameAllocator(
             val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
               computeToolWindowBeans(project = project)
             }
+            val toolWindowPane = withContext(Dispatchers.EDT) {
+              deferredProjectFrameHelper.await().toolWindowPane
+            }
             toolWindowManager.await()?.init(
-              deferredProjectFrameHelper,
+              toolWindowPane,
               reopeningEditorJob = reopeningEditorJob,
               taskListDeferred = taskListDeferred,
             )
@@ -204,9 +207,9 @@ internal class IdeProjectFrameAllocator(
 
     if (frame != null) {
       withContext(Dispatchers.EDT) {
-        val frameHelper = ProjectFrameHelper(frame = frame, loadingState = loadingState)
+        val frameHelper = IdeProjectFrameHelper(frame = frame, loadingState = loadingState)
 
-        completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {
+        completeFrameAndCloseOnCancel(frameHelper) {
           if (options.forceOpenInNewFrame) {
             updateFullScreenState(frameHelper, getFrameInfo())
           }
@@ -221,23 +224,23 @@ internal class IdeProjectFrameAllocator(
     val preAllocated = getAndUnsetSplashProjectFrame() as IdeFrameImpl?
     if (preAllocated != null) {
       val frameHelper = withContext(Dispatchers.EDT) {
-        val frameHelper = ProjectFrameHelper(frame = preAllocated, loadingState = loadingState)
+        val frameHelper = IdeProjectFrameHelper(frame = preAllocated, loadingState = loadingState)
         frameHelper.init()
         frameHelper
       }
-      completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {}
+      completeFrameAndCloseOnCancel(frameHelper) {}
       return
     }
 
     val frameInfo = getFrameInfo()
     val frameProducer = createNewProjectFrameProducer(frameInfo = frameInfo)
     withContext(Dispatchers.EDT) {
-      val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
+      val frameHelper = IdeProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
       // must be after preInit (frame decorator is required to set a full-screen mode)
       frameHelper.frame.isVisible = true
       updateFullScreenState(frameHelper, frameInfo)
 
-      completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {
+      completeFrameAndCloseOnCancel(frameHelper) {
         span("ProjectFrameHelper.init") {
           frameHelper.init()
         }
@@ -247,8 +250,7 @@ internal class IdeProjectFrameAllocator(
   }
 
   private suspend inline fun completeFrameAndCloseOnCancel(
-    frameHelper: ProjectFrameHelper,
-    deferredProjectFrameHelper: CompletableDeferred<ProjectFrameHelper>,
+    frameHelper: IdeProjectFrameHelper,
     task: () -> Unit,
   ) {
     try {
@@ -368,7 +370,7 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
 }
 
 private suspend fun postOpenEditors(
-  frameHelper: ProjectFrameHelper,
+  frameHelper: IdeProjectFrameHelper,
   fileEditorManager: FileEditorManagerImpl,
   project: Project,
   toolWindowInitJob: Job,

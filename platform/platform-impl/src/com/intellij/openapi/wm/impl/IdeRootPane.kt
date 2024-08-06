@@ -17,10 +17,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.*
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
-import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
-import com.intellij.toolWindow.ToolWindowPaneOldButtonManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLayeredPane
@@ -92,16 +89,9 @@ open class IdeRootPane internal constructor(
 
   protected open fun createCenterComponent(frame: JFrame): Component {
     val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
-    val toolWindowButtonManager: ToolWindowButtonManager
-    if (ExperimentalUI.isNewUI()) {
-      toolWindowButtonManager = ToolWindowPaneNewButtonManager(paneId)
-    }
-    else {
-      toolWindowButtonManager = ToolWindowPaneOldButtonManager(paneId)
-    }
-    toolWindowButtonManager.setupContentPane(contentPane as JComponent)
-    toolWindowPane = ToolWindowPane(frame, coroutineScope, paneId, toolWindowButtonManager)
-    return toolWindowPane!!
+    val pane = ToolWindowPane.create(frame, coroutineScope, paneId)
+    toolWindowPane = pane
+    return pane.buttonManager.wrapWithControls(pane)
   }
 
   override fun getAccessibleContext(): AccessibleContext {

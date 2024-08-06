@@ -15,10 +15,9 @@ import javax.swing.JComponent
 internal interface ToolWindowButtonManager {
   val isNewUi: Boolean
 
-  fun setupContentPane(pane: JComponent)
+  fun setupToolWindowPane(pane: JComponent)
 
-  fun setupToolWindowPane(pane: JComponent) {
-  }
+  fun wrapWithControls(pane: ToolWindowPane): JComponent
 
   fun initMoreButton(project: Project) {}
 

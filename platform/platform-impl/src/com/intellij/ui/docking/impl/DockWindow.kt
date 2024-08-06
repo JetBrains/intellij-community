@@ -108,23 +108,22 @@ internal class DockWindow(
     val buttonManager: ToolWindowButtonManager
     if (ExperimentalUI.isNewUI()) {
       buttonManager = ToolWindowPaneNewButtonManager(paneId, false)
-      buttonManager.setupContentPane(dockContentUiContainer)
       buttonManager.initMoreButton(dockManager.project)
       buttonManager.updateResizeState(null)
     }
     else {
       buttonManager = ToolWindowPaneOldButtonManager(paneId)
-      buttonManager.setupContentPane(dockContentUiContainer)
     }
     val containerComponent = container.containerComponent
-    toolWindowPane = ToolWindowPane(frame = frame, coroutineScope = coroutineScope!!.childScope(), paneId = paneId,
-                                    buttonManager = buttonManager)
+    toolWindowPane = ToolWindowPane.create(frame = frame, coroutineScope = coroutineScope!!.childScope(), paneId = paneId,
+                                           buttonManager = buttonManager)
     val toolWindowManagerImpl = ToolWindowManager.getInstance(dockManager.project) as ToolWindowManagerImpl
     toolWindowManagerImpl.addToolWindowPane(toolWindowPane!!, this)
 
     toolWindowPane!!.setDocumentComponent(containerComponent)
     dockContentUiContainer.remove(containerComponent)
-    dockContentUiContainer.add(toolWindowPane!!, BorderLayout.CENTER)
+    val toolWindowsComponent = buttonManager.wrapWithControls(toolWindowPane!!)
+    dockContentUiContainer.add(toolWindowsComponent, BorderLayout.CENTER)
 
     // Close the container if it's empty, and we've just removed the last tool window
     dockManager.project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {

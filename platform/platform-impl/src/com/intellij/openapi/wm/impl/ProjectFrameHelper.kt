@@ -70,12 +70,10 @@ private const val INIT_BOUNDS_KEY = "InitBounds"
 private val LOG: Logger
   get() = logger<ProjectFrameHelper>()
 
-open class ProjectFrameHelper internal constructor(
+abstract class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
   loadingState: FrameLoadingState? = null,
 ) : IdeFrameEx, AccessibleContextAccessor, UiDataProvider {
-  @Internal
-  constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null)
 
   @Suppress("SSBasedInspection")
   @Internal
@@ -94,9 +92,8 @@ open class ProjectFrameHelper internal constructor(
   @Internal
   protected open val mainMenuActionGroup: ActionGroup? = null
 
-  @JvmField
   @Internal
-  val rootPane: IdeRootPane
+  protected val rootPane: IdeRootPane
 
   private val frameHeaderHelper: ProjectFrameCustomHeaderHelper
 
