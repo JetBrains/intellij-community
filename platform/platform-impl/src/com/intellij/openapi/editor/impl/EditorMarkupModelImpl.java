@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.actionSystem.remoting.ActionWithMergeId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -168,7 +170,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private boolean reportErrorStripeInconsistency = true;
   private final @NotNull TrafficLightPopup myTrafficLightPopup;
   private final Alarm statusTimer = new Alarm(resourcesDisposable);
-  private final DefaultActionGroup inspectionWidgetActions = new DefaultActionGroup();
+  private final DefaultActionGroup myExtraActions;
   private final Map<InspectionWidgetActionProvider, AnAction> extensionActions = new HashMap<>();
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
@@ -181,22 +183,15 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall);
     AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall);
-    DefaultActionGroup navigateGroup = new DefaultActionGroup(prevErrorAction, nextErrorAction) {
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
 
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(showNavigation);
-      }
-    };
-
-    TrafficLightAction trafficLightAction = new TrafficLightAction();
+    myExtraActions = new ExtraActionGroup();
     populateInspectionWidgetActionsFromExtensions();
+
     DefaultActionGroup actions = new StatusToolbarGroup(
-      inspectionWidgetActions, new InspectionsGroup(() -> analyzerStatus, editor), trafficLightAction, navigateGroup);
+      myExtraActions,
+      new InspectionsGroup(() -> analyzerStatus, editor),
+      new TrafficLightAction(),
+      new NavigationGroup(prevErrorAction, nextErrorAction));
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
@@ -471,16 +466,16 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   @Override
   public void addInspectionWidgetAction(@NotNull AnAction action, @Nullable Constraints constraints) {
     if (constraints != null) {
-      inspectionWidgetActions.add(action, constraints);
+      myExtraActions.add(action, constraints);
     }
     else {
-      inspectionWidgetActions.add(action);
+      myExtraActions.add(action);
     }
   }
 
   @Override
   public void removeInspectionWidgetAction(@NotNull AnAction action) {
-    inspectionWidgetActions.remove(action);
+    myExtraActions.remove(action);
   }
 
   private @NotNull AnAction createAction(@NotNull String id, @NotNull Icon icon) {
@@ -1544,7 +1539,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final Key<List<StatusItem>> EXPANDED_STATUS = new Key<>("EXPANDED_STATUS");
   private static final Key<Boolean> TRANSLUCENT_STATE = new Key<>("TRANSLUCENT_STATE");
 
-  private final class TrafficLightAction extends DumbAwareAction implements CustomComponentAction {
+  private final class TrafficLightAction extends DumbAwareAction
+    implements CustomComponentAction, ActionRemoteBehaviorSpecification.Frontend {
+
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
@@ -1992,8 +1989,29 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  public static class StatusToolbarGroup extends DefaultActionGroup {
-    public StatusToolbarGroup(AnAction @NotNull ... actions) {
+  private class NavigationGroup extends DefaultActionGroup implements ActionRemoteBehaviorSpecification.Frontend {
+
+    NavigationGroup(AnAction @NotNull ... actions) {
+      super(actions);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(showNavigation);
+    }
+  }
+
+  private static class ExtraActionGroup extends DefaultActionGroup implements ActionWithMergeId {
+  }
+
+  private static class StatusToolbarGroup extends DefaultActionGroup implements ActionWithMergeId {
+
+    StatusToolbarGroup(AnAction @NotNull ... actions) {
       super(actions);
     }
   }

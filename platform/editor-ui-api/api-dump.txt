@@ -1440,6 +1440,8 @@ com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 - getInlineActions():java.util.List
 com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 - a:alwaysShowIconInMainMenu():Z
+com.intellij.openapi.actionSystem.remoting.ActionWithMergeId
+- getMergeId():java.lang.String
 com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:AUTOLAYOUT_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - sf:COMPRESSING_STRATEGY:com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
