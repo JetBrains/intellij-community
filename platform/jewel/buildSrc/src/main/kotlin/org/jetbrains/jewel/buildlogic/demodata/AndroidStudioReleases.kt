@@ -1,6 +1,8 @@
 package org.jetbrains.jewel.buildlogic.demodata
 
 import com.squareup.kotlinpoet.ClassName
+import gradle.kotlin.dsl.accessors._34fcf23848cfa0f534eebf6913e08a53.kotlin
+import gradle.kotlin.dsl.accessors._34fcf23848cfa0f534eebf6913e08a53.sourceSets
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.gradle.api.DefaultTask
@@ -25,7 +27,11 @@ open class StudioVersionsGenerationExtension(project: Project) {
     val targetDir: DirectoryProperty =
         project.objects
             .directoryProperty()
-            .convention(project.layout.buildDirectory.dir("generated/studio-releases/"))
+            .convention(
+                project.layout.dir(
+                    project.provider { project.sourceSets.named("main").get().kotlin.srcDirs.first() }
+                )
+            )
 
     val resourcesDirs: SetProperty<File> =
         project.objects
