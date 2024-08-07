@@ -108,7 +108,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/convertLateinitPropertyToNotNullDelegate", pattern = pattern)
             model("$idea/quickfix/convertPropertyInitializerToGetter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/convertToAnonymousObject", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/convertToIsArrayOfCall", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/convertToIsArrayOfCall", pattern = pattern)
             model("$idea/quickfix/createFromUsage", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/createLabel", pattern = pattern, isIgnored = true) // Remove `isIgnored` after KT-69829 is fixed
             model("$idea/quickfix/declarationCantBeInlined", pattern = pattern, isIgnored = true)

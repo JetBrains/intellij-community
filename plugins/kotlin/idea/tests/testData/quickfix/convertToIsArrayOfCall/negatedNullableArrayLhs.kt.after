@@ -5,3 +5,4 @@ fun test(a: Array<*>?) {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertToIsArrayOfCallFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertToIsArrayOfCallFix

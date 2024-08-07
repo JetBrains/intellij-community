@@ -51,7 +51,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.EXPOSED_TYPE_PARAMETER_BOUND
     ),
     diagnosticBasedProcessing(
-        ConvertToIsArrayOfCallFix,
+        ConvertToIsArrayOfCallFixFactory,
         Errors.CANNOT_CHECK_FOR_ERASED,
     ),
     fixTypeMismatchDiagnosticBasedProcessing

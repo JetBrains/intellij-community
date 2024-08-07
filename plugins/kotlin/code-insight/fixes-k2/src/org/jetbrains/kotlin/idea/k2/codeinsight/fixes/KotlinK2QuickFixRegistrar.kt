@@ -309,6 +309,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(SpecifyRemainingArgumentsByNameFixFactory.noValueForParameter)
 
         registerFactory(AddConstructorParameterFromSuperTypeCallFixFactory.noValueForParameter)
+
+        registerFactory(ConvertToIsArrayOfCallFixFactory.cannotCheckForErased)
     }
 
     private val whenStatements = KtQuickFixesListBuilder.registerPsiQuickFix {

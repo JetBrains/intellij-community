@@ -7071,7 +7071,54 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/convertToIsArrayOfCall")
+    public static class ConvertToIsArrayOfCall extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("arrayLhs.kt")
+        public void testArrayLhs() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToIsArrayOfCall/arrayLhs.kt");
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToIsArrayOfCall/basic.kt");
+        }
+
+        @TestMetadata("list.kt")
+        public void testList() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToIsArrayOfCall/list.kt");
+        }
+
+        @TestMetadata("negatedArrayLhs.kt")
+        public void testNegatedArrayLhs() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToIsArrayOfCall/negatedArrayLhs.kt");
+        }
+
+        @TestMetadata("negatedBasic.kt")
+        public void testNegatedBasic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToIsArrayOfCall/negatedBasic.kt");
+        }
+
+        @TestMetadata("negatedNullableArrayLhs.kt")
+        public void testNegatedNullableArrayLhs() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToIsArrayOfCall/negatedNullableArrayLhs.kt");
+        }
+
+        @TestMetadata("nullableArrayLhs.kt")
+        public void testNullableArrayLhs() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/convertToIsArrayOfCall/nullableArrayLhs.kt");
+        }
+    }
 
 
 

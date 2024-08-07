@@ -341,7 +341,7 @@ class QuickFixRegistrar : QuickFixContributor {
         UNCHECKED_CAST.registerFactory(ChangeToStarProjectionFixFactory)
         CANNOT_CHECK_FOR_ERASED.registerFactory(ChangeToStarProjectionFixFactory)
 
-        CANNOT_CHECK_FOR_ERASED.registerFactory(ConvertToIsArrayOfCallFix)
+        CANNOT_CHECK_FOR_ERASED.registerFactory(ConvertToIsArrayOfCallFixFactory)
 
         UNINITIALIZED_PARAMETER.registerFactory(ReorderParametersFix)
         UNINITIALIZED_PARAMETER_WARNING.registerFactory(ReorderParametersFix)
