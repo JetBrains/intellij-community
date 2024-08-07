@@ -19,7 +19,7 @@ import java.util.List;
 public abstract class XExecutionStack {
   public static final XExecutionStack[] EMPTY_ARRAY = new XExecutionStack[0];
   private final @Nls String myDisplayName;
-  private final Icon myIcon;
+  private Icon myIcon;
 
   /**
    * @param displayName presentable name of the thread to be shown in the combobox in 'Frames' tab
@@ -51,6 +51,11 @@ public abstract class XExecutionStack {
   @Nullable
   public final Icon getIcon() {
     return myIcon;
+  }
+
+  @Nullable
+  public final void setIcon(Icon icon) {
+    myIcon = icon;
   }
 
   /**
