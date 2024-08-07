@@ -12,6 +12,11 @@ import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
+import org.jetbrains.kotlin.descriptors.Visibilities.Private
+import org.jetbrains.kotlin.descriptors.Visibilities.Protected
+import org.jetbrains.kotlin.descriptors.Visibilities.Public
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.ClassId
@@ -55,10 +60,7 @@ private class ImplementReadResolveQuickFix : LocalQuickFix {
 }
 
 private fun KtObjectDeclaration.doesImplementSerializable(): Boolean = analyze(this) {
-    true == (this@doesImplementSerializable.symbol as? KaClassSymbol)
-        ?.let(::buildClassType)
-        ?.allSupertypes
-        ?.any { it.isClassType(ClassId.fromString(JAVA_IO_SERIALIZABLE_CLASS_ID)) }
+    buildClassType(symbol).isSubtypeOf(ClassId.fromString(JAVA_IO_SERIALIZABLE_CLASS_ID))
 }
 
 private fun KtObjectDeclaration.doesImplementReadResolve(): Boolean = analyze(this) {
