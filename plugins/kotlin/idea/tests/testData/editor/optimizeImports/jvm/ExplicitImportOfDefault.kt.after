@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 fun main(args: Array<String>) {
     run {
         throw IllegalArgumentException()

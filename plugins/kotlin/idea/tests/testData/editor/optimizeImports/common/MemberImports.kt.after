@@ -1,4 +1,3 @@
-// IGNORE_K2
 // NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS: 2
 package test
 

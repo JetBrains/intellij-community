@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 class Action {
     fun test() {
         val test : ArrayList<Int>? = null
