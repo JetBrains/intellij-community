@@ -76,7 +76,7 @@ fun <T : CommandChain> T.openFile(
   suppressErrors: Boolean = false,
   warmup: Boolean = false,
   disableCodeAnalysis: Boolean = false,
-  useWaitForCodeAnalysisCode: Boolean = false,
+  useWaitForCodeAnalysisCode: Boolean = true,
 ): T = apply {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
   if (timeoutInSeconds != 0L) {
