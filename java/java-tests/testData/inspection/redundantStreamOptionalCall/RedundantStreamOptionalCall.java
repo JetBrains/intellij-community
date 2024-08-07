@@ -23,6 +23,7 @@ public class RedundantStreamOptionalCall {
     Object xyz4 = Optional.of(123).map(Integer::longValue).orElse(null);
     Object xyz5 = IntStream.of(123).<warning descr="Redundant 'map()' call">map(i -> Integer.valueOf(i))</warning>.count();
     Object xyz6 = Stream.of(123).<warning descr="Redundant 'map()' call">map(i -> Integer.valueOf(i))</warning>.count();
+    Object xyz7 = Stream.of(1, 2, 3).<warning descr="Redundant 'map()' call">map(Integer.class::cast)</warning>.count();
     Optional.of("xyz").<warning descr="Redundant 'flatMap()' call">flatMap(Optional::ofNullable)</warning>.ifPresent(System.out::println);
     Optional.of("xyz").<warning descr="Redundant 'flatMap()' call">flatMap(Optional::of)</warning>.ifPresent(System.out::println);
 
