@@ -23,7 +23,7 @@ internal class CompilerSettingsCollector : ProjectUsagesCollector() {
     usages.add(CLEAR_OUTPUT_DIRECTORY.metric(workspaceConfig.CLEAR_OUTPUT_DIRECTORY))
     usages.add(MAKE_PROJECT_ON_SAVE.metric(workspaceConfig.MAKE_PROJECT_ON_SAVE))
     usages.add(PARALLEL_COMPILATION_OPTION.metric(config.parallelCompilationOption))
-    usages.add(IS_PARALLEL_COMPILATION_ALLOWED_IN_AUTOMATIC_MODE.metric(CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs()))
+    usages.add(IS_PARALLEL_COMPILATION_ALLOWED_IN_AUTOMATIC_MODE.metric(CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs(project)))
     usages.add(REBUILD_ON_DEPENDENCY_CHANGE.metric(workspaceConfig.REBUILD_ON_DEPENDENCY_CHANGE))
     usages.add(COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT.metric(workspaceConfig.COMPILE_AFFECTED_UNLOADED_MODULES_BEFORE_COMMIT))
 

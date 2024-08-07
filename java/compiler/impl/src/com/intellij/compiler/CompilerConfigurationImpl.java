@@ -325,7 +325,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   public boolean isParallelCompilationEnabled() {
     return switch (getParallelCompilationOption()) {
         case ENABLED -> true;
-        case AUTOMATIC -> CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs();
+        case AUTOMATIC -> CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs(myProject);
         case DISABLED -> false;
       };
   }
