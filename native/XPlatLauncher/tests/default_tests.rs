@@ -247,13 +247,9 @@ mod tests {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("\0\0\0\0-Xmx512m\n");
 
-        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
-        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
-
-        let nul_message = "Invalid character ('\\0') found in VM options file";
-        let nul_message_present = result.stderr.find(nul_message);
-        assert!(nul_message_present.is_some(), "Error message ('{}') is missing: {:?}", nul_message, result);
+        assert_eq!(dump.systemProperties["jb.vmOptionsFile.corrupted"], "true");
     }
 
     #[test]
