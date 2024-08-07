@@ -10,7 +10,10 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
@@ -30,23 +33,19 @@ object KotlinFirLookupElementFactory {
     fun createLookupElement(
         symbol: KaNamedSymbol,
         importStrategyDetector: ImportStrategyDetector,
-        importingStrategy: ImportStrategy? = null,
-        expectedType: KaType? = null,
-    ): LookupElement {
-        return when (symbol) {
-            is KaCallableSymbol -> createCallableLookupElement(
-                symbol.name,
-                symbol.asSignature(),
-                detectCallableOptions(symbol, importStrategyDetector),
-                expectedType,
-            )
+    ): LookupElement = when (symbol) {
+        is KaCallableSymbol -> createCallableLookupElement(
+            symbol.name,
+            symbol.asSignature(),
+            detectCallableOptions(symbol, importStrategyDetector),
+            expectedType = null,
+        )
 
-            is KaClassLikeSymbol -> ClassLookupElementFactory
-                .createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol))
+        is KaClassLikeSymbol -> ClassLookupElementFactory
+            .createLookup(symbol, importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol))
 
-            is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(symbol)
-            else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
-        }
+        is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(symbol)
+        else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
     }
 
     context(KaSession)

@@ -57,15 +57,6 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
     context(KaSession)
-    protected fun addSymbolToCompletion(expectedType: KaType?, symbol: KaSymbol) {
-        if (symbol !is KaNamedSymbol) return
-
-        KotlinFirLookupElementFactory
-            .createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
-            .let(sink::addElement)
-    }
-
-    context(KaSession)
     protected fun addClassifierSymbolToCompletion(
         symbol: KaClassifierSymbol,
         context: WeighingContext,
