@@ -192,7 +192,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   ) {
     // include module file descriptor if not specified as `depends` (old way - xi:include)
     // must be first because merged into raw descriptor
-    if (!isSub) {
+    // skipping for plugins to be installed into a future IDE version (not needed for `PluginDownloader`)
+    if (!isSub && context.productBuildNumber().baselineVersion <= PluginManagerCore.buildNumber.baselineVersion) {
       for (module in content.modules) {
         val subDescriptorFile = module.configFile ?: "${module.name}.xml"
         val subDescriptor = createSub(
