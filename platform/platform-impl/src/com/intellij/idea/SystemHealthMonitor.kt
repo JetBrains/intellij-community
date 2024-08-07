@@ -52,6 +52,7 @@ internal suspend fun startSystemHealthMonitor() {
   withContext(Dispatchers.IO) {
     checkInstallationIntegrity()
   }
+  checkCorruptedVmOptionsFile()
   checkIdeDirectories()
   withContext(Dispatchers.IO) {
     checkRuntime()
@@ -97,6 +98,15 @@ private fun checkInstallationIntegrity() {
   }
   catch (e: IOException) {
     LOG.warn("${e.javaClass.name}: ${e.message}")
+  }
+}
+
+private fun checkCorruptedVmOptionsFile() {
+  if (System.getProperty("jb.vmOptionsFile.corrupted").toBoolean()) {
+    val file = VMOptions.getUserOptionsFile()
+    if (file != null) {
+      showNotification("vm.options.file.corrupted", suppressable = false, action = null, shorten(file.toString()))
+    }
   }
 }
 
