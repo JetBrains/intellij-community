@@ -54,7 +54,10 @@ public interface TestIndexingModeSupporter {
 
       @Override
       public void ensureIndexingStatus(@NotNull Project project) {
-        new UnindexedFilesScanner(project, INDEXING_REASON).queue();
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          // if not invoked from EDT scanning will be queued asynchronously
+          new UnindexedFilesScanner(project, INDEXING_REASON).queue();
+        });
         IndexingTestUtil.waitUntilIndexesAreReady(project);
       }
     }, DUMB_RUNTIME_ONLY_INDEX {
@@ -87,7 +90,9 @@ public interface TestIndexingModeSupporter {
     private static void onlyAllowOwnTasks(@NotNull Project project, @NotNull Disposable testRootDisposable) {
       UnindexedFilesScannerExecutorImpl.getInstance(project)
         .setTaskFilterInTest(testRootDisposable, task -> Strings.areSameInstance(task.getIndexingReason(), INDEXING_REASON));
-      UnindexedFilesScannerExecutorImpl.getInstance(project).cancelAllTasksAndWait();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        UnindexedFilesScannerExecutorImpl.getInstance(project).cancelAllTasksAndWait();
+      });
     }
 
     public static final class ShutdownToken {

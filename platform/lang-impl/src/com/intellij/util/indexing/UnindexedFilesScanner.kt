@@ -48,11 +48,9 @@ import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.Future
 import java.util.function.BiPredicate
-import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -67,7 +65,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
                                                       private val startCondition: Future<*>?,
                                                       private val shouldHideProgressInSmartMode: Boolean?= null,
                                                       private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
-                                                      private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false) : FilesScanningTask, Closeable {
+                                                      private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false) : FilesScanningTask {
 
   enum class TestMode {
     PUSHING, PUSHING_AND_SCANNING
@@ -596,11 +594,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
         uniqueIterators.putIfAbsent(iterator.origin, iterator)
       }
       return ArrayList(uniqueIterators.values)
-    }
-
-    @JvmStatic
-    fun isIndexUpdateInProgress(project: Project): Boolean {
-      return UnindexedFilesScannerExecutor.getInstance(project).isRunning.value
     }
 
     private fun collectProviders(project: Project, index: FileBasedIndexImpl): Pair<List<IndexableFilesIterator>, StatusMark?> {

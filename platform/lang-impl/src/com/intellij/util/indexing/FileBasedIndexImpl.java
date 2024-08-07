@@ -2059,7 +2059,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     boolean dumb = ActionUtil.isDumbMode(project);
     if (!dumb) return f -> true;
 
-    if (DumbServiceImpl.ALWAYS_SMART && project != null && UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
+    if (DumbServiceImpl.ALWAYS_SMART && project != null && UnindexedFilesUpdater.isScanningInProgress(project)) {
       return f -> true;
     }
 

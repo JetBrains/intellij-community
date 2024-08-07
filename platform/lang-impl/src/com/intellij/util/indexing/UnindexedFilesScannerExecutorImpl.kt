@@ -1,11 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.google.common.util.concurrent.FutureCallback
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.PingProgress
@@ -16,6 +23,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
@@ -35,11 +43,14 @@ import java.util.concurrent.locks.LockSupport
 import java.util.function.Predicate
 
 @ApiStatus.Internal
-class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: CoroutineScope) : Disposable,
-                                                                                            UnindexedFilesScannerExecutor {
+class UnindexedFilesScannerExecutorImpl(private val project: Project, private val scope: CoroutineScope) : Disposable,
+                                                                                                           UnindexedFilesScannerExecutor {
   // helpers for tests
   private val scanningWaitsForNonDumbModeOverride = MutableStateFlow<Boolean?>(null)
   private var taskFilter: Predicate<UnindexedFilesScanner>? = null
+
+  @Volatile
+  private var schedulingTasksScope: CoroutineScope = createSchedulingTasksScope()
 
   // note that shouldShowProgressIndicator = false in UnindexedFilesScannerExecutor, so there is no suspender for the progress indicator
   private val pauseReason = MutableStateFlow<PersistentList<String>>(persistentListOf())
@@ -75,7 +86,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   init {
     // Note about Dispatchers.IO: we'll do "runBlocking" in UnindexedFilesScanner.ScanningSession.collectIndexableFilesConcurrently
     // Make sure that we are not using limited dispatchers here (e.g., Dispatchers.Default).
-    cs.childScope("Scanning (root)", Dispatchers.IO).launch {
+    scope.childScope("Scanning (root)", Dispatchers.IO).launch {
       suspendIfShouldStartSuspended()
       while (true) {
         try {
@@ -85,10 +96,9 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           // isRunning=false, hasScheduledTask=false, but in fact we do have a scheduled task
           // which is about to be running.
 
-          // write action is needed, because otherwise we may get "Constraint inSmartMode cannot be satisfied" in NBRA
-          writeAction {
-            isRunning.value = true
-          }
+          // we don't need a write action here to ensure that 'is in smart mode' doesn't change during read action
+          // because scheduling of scanning tasks happens in write action and smart RA waits for scheduled scannings
+          isRunning.value = true
 
           startedOrStoppedEvent.getAndUpdate(Int::inc)
 
@@ -146,6 +156,8 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       }
     }
   }
+
+  private fun createSchedulingTasksScope(): CoroutineScope = scope.childScope("UnindexedFilesScannerExecutor scheduling tasks scope")
 
   private suspend fun suspendIfShouldStartSuspended() {
     if (IndexInfrastructure.isIndexesInitializationSuspended()) {
@@ -242,27 +254,59 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     task as UnindexedFilesScanner
     LOG.debug(Throwable("submit task, ${project.name}[${project.locationHash}], thread=${Thread.currentThread()}"))
 
+    var modality = ModalityState.defaultModalityState()
+    if (modality == ModalityState.any()) {
+      LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL")
+      modality = ModalityState.nonModal()
+    }
+
+    val historyFuture = SettableFuture.create<ProjectScanningHistory>()
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      ApplicationManager.getApplication().runWriteAction {
+        submitTaskOnEdt(task, historyFuture)
+      }
+    }
+    else {
+      schedulingTasksScope.launch(modality.asContextElement() + Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
+        try {
+          ensureActive()
+          blockingContext {
+            ApplicationManager.getApplication().runWriteAction {
+              submitTaskOnEdt(task, historyFuture)
+            }
+          }
+        }
+        catch (_: CancellationException) {
+          task.close()
+        }
+      }
+    }
+    return historyFuture
+  }
+
+  private fun submitTaskOnEdt(task: UnindexedFilesScanner, historyFuture: SettableFuture<ProjectScanningHistory>) {
+    ThreadingAssertions.assertEventDispatchThread() // make sure that it's not executed in parallel with cancelAllTasksAndWait
+    ThreadingAssertions.assertWriteAccess() // state of 'smart mode' should not change in RA
+
     if (taskFilter?.test(task) == false) {
       logInfo("Skipping task (rejected by filter): $task")
       task.close()
-      return SettableFuture.create<ProjectScanningHistory>().also { settableFuture ->
-        settableFuture.setException(RejectedExecutionException("(rejected by filter)"))
-      }
+      historyFuture.setException(RejectedExecutionException("(rejected by filter)"))
+      return
     }
 
     // Two tasks with limited checks should be just run one after another.
     // A case of a full check followed by a limited change cancelling the first one and making a full check anew results
     // in endless restart of full checks on Windows with empty Maven cache.
     // So only in case the second one is a full check should the first one be cancelled.
-    if (task.isFullIndexUpdate()) {
-      // we don't want to execute any of the existing tasks - the only task we want to execute will be submitted the few lines below
+    if (task.isFullIndexUpdate()) { // we don't want to execute any of the existing tasks - the only task we want to execute will be submitted the few lines below
       cancelAllTasks("Full scanning is queued")
     }
 
-    return startTaskInSmartMode(task)
+    startTaskInSmartMode(task, historyFuture)
   }
 
-  private fun startTaskInSmartMode(task: UnindexedFilesScanner): Future<ProjectScanningHistory> {
+  private fun startTaskInSmartMode(task: UnindexedFilesScanner, historyFuture: SettableFuture<ProjectScanningHistory>) {
     lateinit var new: ScheduledScanningTask
     do {
       val old = scanningTask.value
@@ -270,12 +314,15 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
         ScheduledScanningTask(old.task.tryMergeWith(task), old.futureHistory)
       }
       else {
-        ScheduledScanningTask(task, SettableFuture.create())
+        ScheduledScanningTask(task, historyFuture)
       }
 
       val updated = scanningTask.compareAndSet(old, new)
       if (updated) {
-        old?.close()
+        if (old != null) {
+          old.close()
+          historyFuture.listenTo(old.futureHistory)
+        }
         if (new.task != task) {
           task.close()
         }
@@ -285,15 +332,21 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       }
     }
     while (!updated)
-    return new.futureHistory
   }
 
   override fun cancelAllTasksAndWait() {
+    ThreadingAssertions.assertEventDispatchThread()
+
     cancelAllTasks("cancelAllTasksAndWait") // this also cancels a running task even if it is paused by ProgressSuspender
     while (isRunning.value && !project.isDisposed) {
       PingProgress.interactWithEdtProgress()
       LockSupport.parkNanos(50_000_000)
     }
+
+    val oldTaskScope = schedulingTasksScope
+    schedulingTasksScope = createSchedulingTasksScope()
+    // schedulingTasksScope cannot be running because is uses EDT, but we should cancel scheduled and not launched yet jobs
+    oldTaskScope.cancel("UnindexedFilesScannerExecutor.cancelAllTasksAndWait", ProcessCanceledException())
   }
 
   override fun dispose() {
@@ -338,4 +391,19 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     @JvmStatic
     fun getInstance(project: Project): UnindexedFilesScannerExecutorImpl = UnindexedFilesScannerExecutor.getInstance(project) as UnindexedFilesScannerExecutorImpl
   }
+}
+
+private fun <T> SettableFuture<T>.listenTo(future: SettableFuture<T>) {
+  val listeningFuture = this
+
+  Futures.addCallback(future, object : FutureCallback<T> {
+    override fun onSuccess(result: T?) {
+      listeningFuture.set(result)
+    }
+
+    override fun onFailure(t: Throwable) {
+      listeningFuture.setException(t)
+    }
+
+  }, MoreExecutors.directExecutor())
 }

@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,8 @@ public final class UnindexedFilesUpdater {
     return ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
   }
 
-  public static boolean isIndexUpdateInProgress(@NotNull Project project) {
-    return UnindexedFilesScanner.isIndexUpdateInProgress(project);
+  public static boolean isScanningInProgress(@NotNull Project project) {
+    UnindexedFilesScannerExecutor executor = UnindexedFilesScannerExecutor.getInstance(project);
+    return executor.getHasQueuedTasks() || executor.isRunning().getValue();
   }
 }

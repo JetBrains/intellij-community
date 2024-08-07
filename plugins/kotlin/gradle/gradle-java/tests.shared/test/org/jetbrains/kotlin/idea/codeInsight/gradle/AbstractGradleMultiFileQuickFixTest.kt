@@ -55,6 +55,8 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             if (action != null) {
                 action.invoke(myProject, null, ktFile)
 
+                IndexingTestUtil.waitUntilIndexesAreReady(myProject)
+
                 val expected = afterDirectory.toPath().refreshAndGetVirtualDirectory()
 
                 val projectVFile = projectPath.refreshAndGetVirtualDirectory()
