@@ -59,8 +59,8 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
 
   fun buildPanel(outerPanel: Panel) {
     //presenter = PythonAddInterpreterPresenter(state, uiContext = Dispatchers.EDT + ModalityState.current().asContextElement())
-    model = PythonLocalAddInterpreterModel(service<PythonAddSdkService>().coroutineScope,
-                                           Dispatchers.EDT + ModalityState.current().asContextElement(), projectPath)
+    model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
+                                           Dispatchers.EDT + ModalityState.current().asContextElement(), projectPath))
     model.navigator.selectionMode = selectedMode
     //presenter.controller = model
 

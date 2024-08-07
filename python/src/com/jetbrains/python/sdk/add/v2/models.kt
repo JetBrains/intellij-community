@@ -9,7 +9,6 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
@@ -26,19 +25,20 @@ import com.jetbrains.python.sdk.poetry.poetryPath
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.nio.file.Path
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.pathString
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
-abstract class PythonAddInterpreterModel(val scope: CoroutineScope, val uiContext: CoroutineContext, projectPathProperty: ObservableProperty<String>? = null) {
+abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
 
   val propertyGraph = PropertyGraph()
   val navigator = PythonNewEnvironmentDialogNavigator()
   open val state = AddInterpreterState(propertyGraph)
   open val targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null
 
-  val projectPath = projectPathProperty ?: propertyGraph.property("") // todo how to populate?
+  val projectPath = params.projectPathProperty ?: propertyGraph.property("") // todo how to populate?
+  internal val scope = params.scope
+  internal val uiContext = params.uiContext
 
   internal val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
   internal val detectedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
@@ -144,8 +144,8 @@ abstract class PythonAddInterpreterModel(val scope: CoroutineScope, val uiContex
 }
 
 
-abstract class PythonMutableTargetAddInterpreterModel(scope: CoroutineScope, uiContext: CoroutineContext, projectPathProperty: ObservableProperty<String>? = null)
-  : PythonAddInterpreterModel(scope, uiContext, projectPathProperty) {
+abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModelParams)
+  : PythonAddInterpreterModel(params) {
   override val state: MutableTargetState = MutableTargetState(propertyGraph)
 
   override suspend fun initialize() {
@@ -190,8 +190,8 @@ abstract class PythonMutableTargetAddInterpreterModel(scope: CoroutineScope, uiC
 }
 
 
-open class PythonLocalAddInterpreterModel(scope: CoroutineScope, uiContext: CoroutineContext, projectPathProperty: ObservableProperty<String>? = null)
-  : PythonMutableTargetAddInterpreterModel(scope, uiContext, projectPathProperty) {
+class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
+  : PythonMutableTargetAddInterpreterModel(params) {
 
   override suspend fun initialize() {
     super.initialize()

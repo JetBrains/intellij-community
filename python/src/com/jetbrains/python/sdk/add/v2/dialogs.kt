@@ -42,8 +42,8 @@ class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLoca
     outerPanel.addAncestorListener(object : AncestorListenerAdapter() {
       override fun ancestorAdded(event: AncestorEvent?) {
         val basePath = dialogPresenter.pathForVEnv.toString()
-        model = PythonLocalAddInterpreterModel(service<PythonAddSdkService>().coroutineScope,
-                                               Dispatchers.EDT + ModalityState.current().asContextElement(), AtomicProperty(basePath))
+        model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
+                                               Dispatchers.EDT + ModalityState.current().asContextElement(), AtomicProperty(basePath)))
         model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
         mainPanel = PythonAddCustomInterpreter(model)
 
