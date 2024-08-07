@@ -49,7 +49,6 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator.MavenProgressTracker
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.junit.Assert
 import org.junit.AssumptionViolatedException
 import java.awt.HeadlessException
 import java.io.File
@@ -442,6 +441,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     dir.refresh(false, false)
     var f = dir.findChild(fileName) ?: throw AssertionError("can't find file ${filePath.absolutePathString()} in VFS")
     myAllPoms.add(f)
+    refreshFiles(listOf(f))
     return f
   }
 
