@@ -292,7 +292,7 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
       PsiMethod mainMethod = implicitClass.getMethods()[0];
       ApplicationRunLineMarkerProvider provider = new ApplicationRunLineMarkerProvider();
       DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-        RunLineMarkerContributor.Info info = provider.getSlowInfo(mainMethod.getNameIdentifier());
+        RunLineMarkerContributor.Info info = provider.getInfo(mainMethod.getNameIdentifier());
         assertNotNull(info);
       });
     });
@@ -309,7 +309,7 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
       PsiClass psiClass = file.getClasses()[0];
       ApplicationRunLineMarkerProvider provider = new ApplicationRunLineMarkerProvider();
       DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-        RunLineMarkerContributor.Info info = provider.getSlowInfo(psiClass.getNameIdentifier());
+        RunLineMarkerContributor.Info info = provider.getInfo(psiClass.getNameIdentifier());
         assertNotNull(info);
       });
     });
