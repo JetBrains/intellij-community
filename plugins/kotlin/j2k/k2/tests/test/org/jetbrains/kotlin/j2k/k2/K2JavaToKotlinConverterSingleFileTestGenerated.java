@@ -1406,11 +1406,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("multiline.java")
-        public void testMultiline() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/conditionalExpression/multiline.java");
-        }
-
         @TestMetadata("simple.java")
         public void testSimple() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/conditionalExpression/simple.java");
