@@ -665,7 +665,7 @@ class LineStatusTrackerManager(
       }
 
       if (tracker is LocalLineStatusTrackerImpl<*>) {
-        ClientId.withClientId(ClientId.localId) {
+        ClientId.withExplicitClientId(ClientId.localId) {
           tracker.setBaseRevision(text)
           log("Offered content", tracker.virtualFile)
         }
@@ -1284,7 +1284,8 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
 
       isScheduled = true
       scope.launch {
-        ClientId.withClientId(ClientId.localId) {
+        // TODO: replace with context
+        ClientId.withExplicitClientId(ClientId.localId) {
           coroutineToIndicator {
             handleRequests()
           }

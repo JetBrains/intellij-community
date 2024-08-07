@@ -774,7 +774,7 @@ open class FileEditorManagerImpl(
   @RequiresEdt
   fun closeFile(file: VirtualFile, moveFocus: Boolean, closeAllCopies: Boolean) {
     if (closeAllCopies) {
-      ClientId.withClientId(ClientId.localId).use {
+      ClientId.withExplicitClientId(ClientId.localId).use {
         openFileSetModificationCount.increment()
         for (each in getAllSplitters()) {
           runBulkTabChangeInEdt(each) { each.closeFile(file = file, moveFocus = moveFocus) }

@@ -1267,7 +1267,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundEditorHighlighter highlighter;
 
-    try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
+    try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       highlighter = fileEditor.getBackgroundHighlighter();
     }
     TextEditor textEditor = fileEditor instanceof TextEditor t ? t : null;
@@ -1300,7 +1300,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
     HighlightingSessionImpl session;
-    try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
+    try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       TextRange compositeDocumentDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
       PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.renewFile(myProject, document);
       if (psiFileToSubmit == null) return null;
@@ -1362,7 +1362,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             throw new ProcessCanceledException();
           }
           session.additionalSetupFromBackground(psiFile);
-          try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
+          try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
             HighlightingPass[] r = backgroundEditorHighlighter.createPassesForEditor();
             if (passesToIgnore.length != 0) {
               r = ContainerUtil.findAllAsArray(r, pass->!(pass instanceof TextEditorHighlightingPass te) || ArrayUtil.indexOf(passesToIgnore, te.getId()) == -1);

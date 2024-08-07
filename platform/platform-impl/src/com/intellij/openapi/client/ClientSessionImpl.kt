@@ -79,7 +79,7 @@ abstract class ClientSessionImpl(
   }
 
   final override suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
-    return ClientId.withClientId(clientId) {
+    return withContext(clientId.asContextElement()) {
       super.preloadService(service, serviceInterface)
     }
   }
@@ -115,7 +115,7 @@ abstract class ClientSessionImpl(
   fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean, fallbackToShared: Boolean): T? {
     if (!fallbackToShared && !hasComponent(serviceClass)) return null
 
-    val clientService = ClientId.withClientId(clientId) {
+    val clientService = ClientId.withExplicitClientId(clientId) {
       super.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded)
     }
     if (clientService != null || !fallbackToShared) {
@@ -133,7 +133,7 @@ abstract class ClientSessionImpl(
       }
     }
 
-    ClientId.withClientId(ClientId.localId) {
+    ClientId.withExplicitClientId(ClientId.localId) {
       return if (createIfNeeded) {
         sharedComponentManager.getService(serviceClass)
       }

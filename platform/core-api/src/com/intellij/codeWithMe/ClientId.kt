@@ -225,7 +225,15 @@ data class ClientId(val value: String) {
     @JvmStatic
     @RequiresBlockingContext
     inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
-      return withClientId(clientId).use {
+      return withClientId(clientId, errorOnMismatch = true).use {
+        action()
+      }
+    }
+
+    @JvmStatic
+    @RequiresBlockingContext
+    inline fun <T> withExplicitClientId(clientId: ClientId?, action: () -> T): T {
+      return withClientId(clientId, errorOnMismatch = false).use {
         action()
       }
     }
@@ -252,13 +260,25 @@ data class ClientId(val value: String) {
     @JvmStatic
     @RequiresBlockingContext
     fun withClientId(clientId: ClientId?): AccessToken {
+      return withClientId(clientId, errorOnMismatch = true)
+    }
+
+    @JvmStatic
+    @RequiresBlockingContext
+    fun withExplicitClientId(clientId: ClientId?): AccessToken {
+      return withClientId(clientId, errorOnMismatch = false)
+    }
+
+    @JvmStatic
+    @RequiresBlockingContext
+    fun withClientId(clientId: ClientId?, errorOnMismatch: Boolean): AccessToken {
       if (clientId == null) {
         if (absenceBehaviorValue == AbsenceBehavior.LOG_ERROR) {
           logger.error("Attempt to call withClientId with ClientId==null")
         }
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
-      return withClientId(clientId.value)
+      return withClientIdImpl(clientId.value, errorOnMismatch = errorOnMismatch)
     }
 
     /**
@@ -270,6 +290,16 @@ data class ClientId(val value: String) {
     @JvmStatic
     @RequiresBlockingContext
     fun withClientId(clientIdValue: String): AccessToken {
+      return withClientIdImpl(clientIdValue, errorOnMismatch = true)
+    }
+
+    @JvmStatic
+    @RequiresBlockingContext
+    fun withExplicitClientId(clientIdValue: String): AccessToken {
+      return withClientIdImpl(clientIdValue, errorOnMismatch = false)
+    }
+
+    private fun withClientIdImpl(clientIdValue: String, errorOnMismatch: Boolean): AccessToken {
       val service = getCachedService()
       if (service == null) {
         return AccessToken.EMPTY_ACCESS_TOKEN
@@ -298,8 +328,10 @@ data class ClientId(val value: String) {
 
       val currentClientIdContextElement = currentThreadContext.clientIdContextElement
       val newContext = currentThreadContext + ClientIdContextElement(newClientId)
-      if (currentClientIdContextElement != null && currentClientIdContextElement.clientId != newClientId)  {
-        logger.error("Trying to set $newClientId, but it's already set to ${currentClientIdContextElement}")
+      if (errorOnMismatch) {
+        if (currentClientIdContextElement != null && currentClientIdContextElement.clientId != newClientId) {
+          logger.error("Trying to set $newClientId, but it's already set to ${currentClientIdContextElement}")
+        }
       }
       return installThreadContext(newContext, replace = true)
     }
