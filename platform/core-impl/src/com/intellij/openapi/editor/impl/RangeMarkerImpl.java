@@ -429,7 +429,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public long getScalarRange() {
     RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {
-      return -1;
+      return myId;
     }
     long range = node.toScalarRange();
     int delta = node.computeDeltaUpToRoot();
@@ -440,7 +440,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   long toScalarRange() {
     RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {
-      return -1;
+      return myId;
     }
     return node.toScalarRange();
   }

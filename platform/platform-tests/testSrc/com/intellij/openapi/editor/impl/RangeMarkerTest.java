@@ -1675,13 +1675,14 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       });
   }
 
-  private void createRemoveCheck(Supplier<? extends RangeMarker> creator, Consumer<? super RangeMarker> remover) {
+  private static void createRemoveCheck(Supplier<? extends RangeMarker> creator, Consumer<? super RangeMarker> remover) {
     RangeMarker marker = creator.get();
     assertTrue(marker.isValid());
     TextRange range = marker.getTextRange();
     remover.accept(marker);
     assertFalse(marker.isValid());
     assertEquals(range, marker.getTextRange());
+    assertEquals(TextRangeScalarUtil.toScalarRange(range), ((RangeMarkerImpl)marker).getScalarRange());
   }
 
   public void testInvalidOffsetMustThrow() {
