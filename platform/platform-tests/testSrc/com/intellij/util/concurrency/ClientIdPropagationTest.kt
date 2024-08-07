@@ -4,6 +4,7 @@ package com.intellij.util.concurrency
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.codeWithMe.currentThreadClientId
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -12,7 +13,6 @@ import com.intellij.openapi.client.ClientAppSessionImpl
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.client.ClientType
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.Alarm
 import com.intellij.util.application
@@ -44,11 +44,17 @@ class ClientIdPropagationTest : LightPlatformTestCase() {
   }
 
   fun testChildCoroutine() = doTest {
-    prepareThreadContext { ctx ->
-      runBlocking(ctx) {
-        launch(Dispatchers.EDT) {
-          doAction()
-        }
+    runBlocking(ClientId.coroutineContext()) {
+      launch(Dispatchers.EDT) {
+        doAction()
+      }
+    }
+  }
+
+  fun testChildCoroutineViaThreadContext() = doTest {
+    runBlocking(currentThreadContext()) {
+      launch(Dispatchers.EDT) {
+        doAction()
       }
     }
   }
