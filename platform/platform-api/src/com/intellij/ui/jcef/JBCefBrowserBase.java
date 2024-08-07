@@ -91,7 +91,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   private static final Logger LOG = Logger.getInstance(JBCefBrowserBase.class);
-  private static final boolean IS_REMOTE_ENABLED = JBCefApp.isRemoteEnabled();
   protected static final @NotNull String BLANK_URI = "about:blank";
   private static final @NotNull Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
 
@@ -347,19 +346,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         return consume;
       }
     }, myCefBrowser);
-  }
-
-  private @NotNull CefBrowser createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
-                                               @NotNull CefClient client,
-                                               @Nullable String url,
-                                               @Nullable CefRequestContext context,
-                                               // not-null parentBrowser creates a DevTools browser for it
-                                               @Nullable CefBrowser parentBrowser,
-                                               @Nullable Point inspectAt,
-                                               boolean isMouseWheelEventEnabled,
-                                               CefBrowserSettings settings) {
-    return CefOsrBrowserFactory.getInstance()
-      .createOsrBrowser(factory, client, url, context, parentBrowser, inspectAt, isMouseWheelEventEnabled, settings);
   }
 
   /**
