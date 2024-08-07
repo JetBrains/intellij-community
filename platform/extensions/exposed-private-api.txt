@@ -1,6 +1,0 @@
-com/intellij/diagnostic/ActivityCategory
-com/intellij/openapi/extensions/ExtensionsArea
-com/intellij/openapi/extensions/LoadingOrder
-com/intellij/openapi/extensions/LoadingOrder$Orderable
-com/intellij/openapi/extensions/impl/ExtensionPointImpl
-com/intellij/openapi/extensions/impl/ExtensionsAreaImpl

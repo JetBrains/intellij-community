@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
@@ -13,14 +13,13 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 class ConvertIllegalEscapeToUnicodeEscapeFix private constructor(
     element: KtElement,
     private val unicodeEscape: String
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtElement, Unit>(element, Unit) {
+) : PsiUpdateModCommandAction<KtElement>(element) {
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.unicode.escape")
 
     override fun invoke(
         actionContext: ActionContext,
         element: KtElement,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         val psiFactory = KtPsiFactory(actionContext.project)

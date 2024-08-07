@@ -2,12 +2,15 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.DfaNullability
+import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 
-class KtThisDescriptor(private val dfType: DfType) : VariableDescriptor {
+class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null) : VariableDescriptor {
+    private val dfType = TypeConstraints.exactClass(this@KtThisDescriptor.classDef).instanceOf().asDfType()
+    
     override fun isStable(): Boolean = true
 
     override fun isImplicitReadPossible(): Boolean = true

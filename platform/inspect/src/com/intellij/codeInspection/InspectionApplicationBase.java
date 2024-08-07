@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbService;
@@ -665,19 +667,27 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
                                 @NotNull AnalysisScope scope,
                                 @NotNull Path resultsDataPath,
                                 @NotNull List<? super Path> inspectionsResults) {
-    ProgressManager.getInstance().runProcess(() -> {
-      configureProject(projectPath, project, scope);
+    Task.Backgroundable task = new Task.Backgroundable(project, "") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        configureProject(projectPath, project, scope);
 
-      if (!GlobalInspectionContextUtil.canRunInspections(project, false, () -> {
-      })) {
-        onFailure(InspectionsBundle.message("inspection.application.cannot.configure.project.to.run.inspections"));
+        if (!GlobalInspectionContextUtil.canRunInspections(project, false, () -> {
+        })) {
+          onFailure(InspectionsBundle.message("inspection.application.cannot.configure.project.to.run.inspections"));
+        }
+        context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+        reportMessage(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
+        if (!myErrorCodeRequired) {
+          closeProject(project);
+        }
       }
-      context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
-      reportMessage(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
-      if (!myErrorCodeRequired) {
-        closeProject(project);
-      }
-    }, createProgressIndicator());
+    };
+    new ProgressRunner<>(task)
+        .onThread(ProgressRunner.ThreadToUse.POOLED)
+        .withProgress(createProgressIndicator())
+        .sync()
+        .submitAndGet();
   }
 
   private @NotNull ProgressIndicatorBase createProgressIndicator() {

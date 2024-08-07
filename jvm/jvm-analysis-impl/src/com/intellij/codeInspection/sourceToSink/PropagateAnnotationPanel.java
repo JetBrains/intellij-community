@@ -68,8 +68,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER;
-
 public final class PropagateAnnotationPanel extends JPanel implements Disposable {
   private final Tree myTree;
   @NotNull
@@ -418,25 +416,18 @@ public final class PropagateAnnotationPanel extends JPanel implements Disposable
     }
   }
 
-  private static final class PropagateTree extends Tree implements DataProvider {
+  private static final class PropagateTree extends Tree implements UiDataProvider {
     private PropagateTree(TreeModel treeModel) {
       super(treeModel);
       getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(slowId);
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId) {
-      if (!CommonDataKeys.PSI_ELEMENT.is(dataId)) return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
       TaintNode[] selectedNodes = getSelectedNodes(TaintNode.class, null);
-      if (selectedNodes.length != 1) return null;
-      return selectedNodes[0].getRef();
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        return selectedNodes.length == 1 ? selectedNodes[0].getRef() : null;
+      });
     }
 
     @Contract("_, _ -> new")

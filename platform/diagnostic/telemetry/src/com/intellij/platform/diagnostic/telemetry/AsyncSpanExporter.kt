@@ -6,13 +6,11 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface AsyncSpanExporter {
-  val exporterVersion: Int // to help with breaking changes / analyses of backward compatibility
-
   suspend fun export(spans: Collection<SpanData>)
 
   suspend fun flush() {}
 
-  /** Should clean any previously exported metrics */
+  /** Should discard any previously exported metrics */
   suspend fun reset() {}
 
   suspend fun shutdown() {}

@@ -53,12 +53,13 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     ByteArrayOutputStream().use { stream ->
       SettingsSnapshotZipSerializer.serializeToStream(snapshot, stream)
       val content = stream.toByteArray()
-      client.write(currentSnapshotFilePath(), ByteArrayInputStream(content))
+      val (snapshotFilePath, _) = currentSnapshotFilePath() ?: return
+      client.write(snapshotFilePath, ByteArrayInputStream(content))
     }
   }
 
   override fun getVersionOnServer(): SettingsSnapshot? {
-    val snapshotFilePath = currentSnapshotFilePath()
+    val (snapshotFilePath, _) = currentSnapshotFilePath() ?: return null
     return getSnapshotFromVersion(filesAndVersions[snapshotFilePath]?.content)
   }
 

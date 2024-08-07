@@ -62,7 +62,6 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +79,7 @@ import java.util.List;
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
 @Deprecated(forRemoval = true)
-public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
+public class DocumentationComponent extends JPanel implements Disposable, UiCompatibleDataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   static final DataProvider HELP_DATA_PROVIDER =
     dataId -> PlatformCoreDataKeys.HELP_ID.is(dataId)
@@ -356,15 +355,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DocumentationManager.SELECTED_QUICK_DOC_TEXT.is(dataId)) {
-      // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
-      // with raw white spaces. See IDEA-86633 for more details.
-      String selectedText = myEditorPane.getSelectedText();
-      return selectedText == null ? null : selectedText.replace((char)160, ' ');
-    }
-
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
+    // with raw white spaces. See IDEA-86633 for more details.
+    String selectedText = myEditorPane.getSelectedText();
+    sink.set(DocumentationManager.SELECTED_QUICK_DOC_TEXT,
+             selectedText == null ? null : selectedText.replace((char)160, ' '));
   }
 
   @NotNull

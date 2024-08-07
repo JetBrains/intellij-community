@@ -143,6 +143,8 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
   public boolean GROUP_MULTIFILE_MERGE_BY_DIRECTORY = false;
 
+  public boolean NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS = true;
+
   private static final int MAX_STORED_MESSAGES = 25;
 
   @Override

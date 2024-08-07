@@ -43,7 +43,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
   fun testChangeConfigInOurProjectShouldCallUpdatePomFile() = runBlocking {
     assertNoPendingProjectForReload()
     val mavenConfig = createProjectSubFile(".mvn/maven.config")
-    importProjectAsync()
+    updateAllProjects()
     assertNoPendingProjectForReload()
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
     assertHasPendingProjectForReload()

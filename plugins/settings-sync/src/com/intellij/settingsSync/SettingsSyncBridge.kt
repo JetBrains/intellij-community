@@ -10,6 +10,7 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.progress.withLockCancellable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -54,7 +55,7 @@ class SettingsSyncBridge(
     get() = queueJob != null
 
 
-  private val eventsLock = ReentrantLock()
+  private val eventsLock = AtomicBoolean()
 
   private val settingsChangeListener = object : SettingsSyncEventListener {
     override fun settingChanged(event: SyncSettingsEvent) {
@@ -63,22 +64,27 @@ class SettingsSyncBridge(
         pendingExclusiveEvents.add(event)
         coroutineScope.launch {
           var locked = false
+          val lockAcquireStartTime = System.currentTimeMillis()
           try {
             do {
-              locked = eventsLock.tryLock(1, TimeUnit.SECONDS)
-              if (!locked) {
-                LOG.info("Couldn't obtain event lock in 1 second")
+              locked = eventsLock.compareAndSet(false, true)
+              yield()
+              if (System.currentTimeMillis() - lockAcquireStartTime > 60*1000) {
+                LOG.error("Give up waiting for events lock (exclusive event)", Throwable())
+                return@launch
               }
             }
             while (!locked)
             processExclusiveEvent(event)
           }
           catch (th: Throwable) {
-            LOG.error("An error occurred while obtaining lock for exclusive event")
+            LOG.error("An error occurred while obtaining lock for exclusive event", th)
           }
           finally {
             if (locked) {
-              eventsLock.unlock()
+              if (!eventsLock.compareAndSet(true, false)) {
+                LOG.error("eventsLock already unlocked by someone else!!!")
+              }
             }
             pendingExclusiveEvents.remove(event)
           }
@@ -94,7 +100,11 @@ class SettingsSyncBridge(
     coroutineScope.launch {
       withProgressText(SettingsSyncBundle.message(initMode.messageKey)) {
         try {
+          // We only due it on `PushToServer` because  with other init modes this method can be called too early in the IDE initialization process
+          // and cause saving settings to fail — see fhttps://github.com/JetBrains/intellij-community/pull/2793#discussion_r1692737467 for context.
           if (initMode == InitMode.PushToServer) {
+            // Flush settings explicitly – if this is not done before sending sync events, then remotely synced settings
+            // might not contain the most up–to–date settings state (e.g. sync settings will be stale).
             saveIdeSettings()
           }
           settingsLog.initialize()
@@ -141,6 +151,19 @@ class SettingsSyncBridge(
 
     settingsLog.logExistingSettings()
     try {
+      // We need to create this remote file before the first sync, otherwise the settings value (even if persisted) will be overwritten by
+      // the sync-server-side value when `com.intellij.settingsSync.CloudConfigServerCommunicator#currentSnapshotFilePath` applies
+      // the remote config received in the first sync.
+      val fileExists = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
+      if (SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
+        if (!fileExists)
+          remoteCommunicator.createFile(CROSS_IDE_SYNC_MARKER_FILE, "")
+      }
+      else {
+        if (fileExists)
+          remoteCommunicator.deleteFile(CROSS_IDE_SYNC_MARKER_FILE)
+      }
+
       when (initMode) {
         is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
         InitMode.PushToServer -> mergeAndPush(previousState.idePosition, previousState.cloudPosition, FORCE_PUSH)
@@ -258,17 +281,21 @@ class SettingsSyncBridge(
   }
 
   private suspend fun processPendingEvents(force: Boolean = false) {
-    var locked = eventsLock.tryLock()
+    var locked = false
     try {
-      while (!locked) {
-        if (force) {
-          locked = eventsLock.tryLock()
+      val lockAcquireStartTime = System.currentTimeMillis()
+      while (!eventsLock.compareAndSet(false, true)) {
+        if (!force) {
+          LOG.info("Couldn't obtain event lock. Will retry later")
+          return
         }
-        else {
-          LOG.debug("Couldn't obtain event lock. Will retry later")
+        yield()
+        if (System.currentTimeMillis() - lockAcquireStartTime > 60*1000) {
+          LOG.error("Give up waiting for events lock (exclusive event)", Throwable())
           return
         }
       }
+      locked = true
       if (pendingEvents.isEmpty()) {
         LOG.debug("Pending events is empty")
         return
@@ -324,7 +351,9 @@ class SettingsSyncBridge(
     }
     finally {
       if (locked) {
-        eventsLock.unlock()
+        if (!eventsLock.compareAndSet(true, false)) {
+          LOG.error("Lock is already unlocked by someone else?!")
+        }
       }
     }
   }
@@ -393,7 +422,7 @@ class SettingsSyncBridge(
     }
     SettingsSyncSettings.getInstance().syncEnabled = false
     if (exception != null) {
-      SettingsSyncStatusTracker.getInstance().updateOnError(exception.localizedMessage)
+      SettingsSyncStatusTracker.getInstance().updateOnError(exception.localizedMessage ?: exception.toString())
     }
 
     ideMediator.removeStreamProvider()

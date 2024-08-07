@@ -4,6 +4,7 @@ package com.intellij.maven.server.m40.utils;
 import com.intellij.maven.server.m40.Maven40ServerEmbedderImpl;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -48,12 +49,22 @@ public final class Maven40EffectivePomDumper {
     Model model = project.getModel();
     if (null == model) return null;
 
+    StringBuilder stringBuilder = new StringBuilder();
     List<Dependency> dependencies = model.getDependencies();
-    if (null == dependencies) return null;
+    stringBuilder.append(dependencyListHash(dependencies));
 
-    if (dependencies.isEmpty()) return "";
+    DependencyManagement dependencyManagement = model.getDependencyManagement();
+    if (null != dependencyManagement) {
+      stringBuilder.append(dependencyListHash(dependencyManagement.getDependencies()));
+    }
 
+    return ChecksumUtil.checksum(stringBuilder.toString());
+  }
+
+  private static @NotNull StringBuffer dependencyListHash(@Nullable List<Dependency> dependencies ) {
     StringBuffer stringBuffer = new StringBuffer();
+    if (null == dependencies || dependencies.isEmpty()) return stringBuffer;
+
     for (Dependency dependency : dependencies) {
       append(stringBuffer, dependency.getGroupId());
       append(stringBuffer, dependency.getArtifactId());
@@ -74,29 +85,11 @@ public final class Maven40EffectivePomDumper {
       append(stringBuffer, dependency.getOptional());
     }
 
-    return ChecksumUtil.checksum(stringBuffer.toString());
+    return stringBuffer;
   }
 
   private static void append(StringBuffer buffer, String s) {
     if (null != s) buffer.append(s);
-  }
-
-  public static @Nullable String checksum(@Nullable MavenProject project) {
-    if (null == project) return null;
-
-    Model pom = project.getModel();
-    cleanModel(pom);
-
-    StringWriter sWriter = new StringWriter();
-    MavenXpp3Writer pomWriter = new MavenXpp3Writer();
-    try {
-      pomWriter.write(sWriter, pom);
-    }
-    catch (IOException e) {
-      return null;
-    }
-
-    return ChecksumUtil.checksum(sWriter.toString());
   }
 
   // See org.apache.maven.plugins.help.EffectivePomMojo#execute from maven-help-plugin

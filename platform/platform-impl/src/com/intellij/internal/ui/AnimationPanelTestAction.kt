@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
 import com.intellij.icons.AllIcons
@@ -25,6 +25,7 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.hover.HoverStateListener
+import com.intellij.util.Alarm
 import com.intellij.util.animation.*
 import com.intellij.util.animation.components.BezierPainter
 import com.intellij.util.ui.EmptyIcon
@@ -48,9 +49,7 @@ import kotlin.math.absoluteValue
 import kotlin.math.pow
 
 internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
-
   private class DemoPanel(val disposable: Disposable, val bezier: () -> Easing) : BorderLayoutPanel() {
-
     val textArea: JBTextArea
 
     init {
@@ -263,7 +262,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
         wheel.add(it)
       }
       fun updateColor(color: RColors) {
-        val colors = RColors.values()
+        val colors = RColors.entries.toTypedArray()
         fields.forEachIndexed { index, label ->
           label.text = colors[(color.ordinal + index) % colors.size].toString()
         }
@@ -273,7 +272,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
 
       addToBottom(JButton("Start").apply {
         addActionListener(object : ActionListener {
-          val animator = JBAnimator(JBAnimator.Thread.POOLED_THREAD, disposable)
+          val animator = JBAnimator(Alarm.ThreadToUse.POOLED_THREAD, disposable)
           val context = AnimationContext<RColors>()
           var taskId = -1L
           override fun actionPerformed(e: ActionEvent?) {
@@ -283,17 +282,18 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
                 isCyclic = true
                 type = JBAnimator.Type.EACH_FRAME
                 taskId = animate(
-                  Animation.withContext(context, DoubleArrayFunction(RColors.values())).apply {
+                  Animation.withContext(context, DoubleArrayFunction(RColors.entries.toTypedArray())).apply {
                     val oneElementTimeOnScreen = 30
                     easing = Easing.LINEAR
-                    duration = RColors.values().size * oneElementTimeOnScreen
+                    duration = RColors.entries.size * oneElementTimeOnScreen
                     runWhenUpdated {
                       context.value?.let(::updateColor)
                     }
                   }
                 )
               }
-            } else {
+            }
+            else {
               text = "The ${context.value} wins! Try again!"
               animator.stop()
             }
@@ -316,7 +316,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
         animation(linear::value::set),
         animation { content.repaint() }
       )
-      val fillers = JBAnimator(JBAnimator.Thread.POOLED_THREAD, disposable)
+      val fillers = JBAnimator(Alarm.ThreadToUse.POOLED_THREAD, disposable)
       var taskId = -1L
 
       addToCenter(AnimationSettings { options, button, info ->
@@ -485,7 +485,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
           spinner(0..100, 5).bindIntValue(options::coerceMax)
         }
         row {
-          comboBox(JBAnimator.Type.values().toList(), SimpleListCellRenderer.create { label, value, _ ->
+          comboBox(JBAnimator.Type.entries, SimpleListCellRenderer.create { label, value, _ ->
             label.text = value.toString().split("_").joinToString(" ") {
               it.toLowerCase().capitalize()
             }

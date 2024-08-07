@@ -15,15 +15,19 @@ internal object CreateLabelFixFactory {
         val labelReferenceExpression = diagnostic.psi as? KtLabelReferenceExpression ?: return@IntentionBased emptyList()
         val fixes = when ((labelReferenceExpression.parent as? KtContainerNode)?.parent) {
             is KtBreakExpression, is KtContinueExpression -> {
-                if (labelReferenceExpression.getContainingLoops()
-                        .any()
-                ) listOf(CreateLabelFix.ForLoop(labelReferenceExpression)) else emptyList()
+                if (labelReferenceExpression.getContainingLoops().any()) {
+                    listOf(CreateLabelFix.ForLoop(labelReferenceExpression))
+                } else {
+                    emptyList()
+                }
             }
 
             is KtReturnExpression -> {
-                if (labelReferenceExpression.getContainingLambdas()
-                        .any()
-                ) listOf(CreateLabelFix.ForLambda(labelReferenceExpression)) else emptyList()
+                if (labelReferenceExpression.getContainingLambdas().any()) {
+                    listOf(CreateLabelFix.ForLambda(labelReferenceExpression))
+                } else {
+                    emptyList()
+                }
             }
 
             else -> emptyList()

@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
-import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
@@ -19,8 +18,11 @@ internal open class CallableImportCandidatesProvider(
     override val positionContext: KotlinNameReferencePositionContext,
     indexProvider: KtSymbolFromIndexProvider,
 ) : ImportCandidatesProvider(indexProvider) {
-    protected open fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean = kotlinCallable.canBeImported()
-    protected open fun acceptsJavaCallable(javaCallable: PsiMember): Boolean = javaCallable.canBeImported()
+    protected open fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
+        !kotlinCallable.isImported() && kotlinCallable.canBeImported()
+
+    protected open fun acceptsJavaCallable(javaCallable: PsiMember): Boolean =
+        !javaCallable.isImported() && javaCallable.canBeImported()
 
     context(KaSession)
     override fun collectCandidates(): List<KaCallableSymbol> {
@@ -37,15 +39,14 @@ internal open class CallableImportCandidatesProvider(
                 addAll(indexProvider.getJavaCallableSymbolsByName(unresolvedName, ::acceptsJavaCallable))
             }
 
-            val receiverTypes = when (val context = positionContext) {
-                is KotlinSimpleNameReferencePositionContext ->
-                    collectReceiverTypesForElement(context.nameExpression, context.explicitReceiver)
+            when (val context = positionContext) {
+                is KotlinSimpleNameReferencePositionContext -> {
+                    val receiverTypes = collectReceiverTypesForElement(context.nameExpression, context.explicitReceiver)
+                    addAll(indexProvider.getExtensionCallableSymbolsByName(unresolvedName, receiverTypes) { acceptsKotlinCallable(it) })
+                }
 
-                is KDocNameReferencePositionContext -> emptyList()
+                else -> {}
             }
-
-            addAll(indexProvider.getTopLevelExtensionCallableSymbolsByName(unresolvedName, receiverTypes, ::acceptsKotlinCallable))
-            addAll(indexProvider.getDeclaredInObjectExtensionCallableSymbolsByName(unresolvedName, receiverTypes, ::acceptsKotlinCallable))
         }
 
         return candidates.filter { it.isVisible(fileSymbol) && it.callableId != null }

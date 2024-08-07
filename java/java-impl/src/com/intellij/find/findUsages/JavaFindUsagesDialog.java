@@ -19,7 +19,7 @@ import java.util.List;
 import static com.intellij.find.findUsages.JavaFindUsagesCollector.*;
 
 public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends CommonFindUsagesDialog {
-  private StateRestoringCheckBox myCbIncludeOverloadedMethods;
+  protected StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable;
 
   protected JavaFindUsagesDialog(@NotNull PsiElement element,

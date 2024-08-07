@@ -4,7 +4,6 @@ package com.intellij.java.compiler.charts.ui
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -25,12 +24,11 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       border = JBUI.Borders.empty()
       viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE
       name = "compilation-charts-scroll-pane"
-
-      val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(viewport)
-      addMouseWheelListener(rightAdhesionScrollBarListener)
-      horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     }
+    val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(scroll.viewport)
+    scroll.horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     val diagrams = CompilationChartsDiagramsComponent(vm, zoom, scroll.viewport).apply {
+      addMouseWheelListener(rightAdhesionScrollBarListener)
       name = "compilation-charts-diagrams-component"
       isFocusable = true
     }
@@ -49,7 +47,6 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       diagrams.statistic.time(vm.modules.end)
       diagrams.statistic.thread(vm.modules.threadCount)
 
-      diagrams.updateView()
       panel.updateLabel(vm.modules.get().keys, vm.filter.value)
     }
 
@@ -59,8 +56,6 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
       diagrams.statistic.cpu(statistics.newValueOpt?.data)
       diagrams.statistic.time(statistics.newValueOpt?.time)
-
-      if (vm.cpuMemory.value == CPU) diagrams.updateView()
     }
 
     vm.statistics.memoryUsed.advise(vm.lifetime) { statistics ->
@@ -71,22 +66,21 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       diagrams.statistic.maxMemory = vm.statistics.maxMemory
       diagrams.statistic.time(statistics.newValueOpt?.time)
 
-      if (vm.cpuMemory.value == MEMORY) diagrams.updateView()
     }
 
     vm.filter.advise(vm.lifetime) { filter ->
       diagrams.modules.filter = filter
-      diagrams.updateView()
+      diagrams.forceRepaint()
     }
 
     vm.cpuMemory.advise(vm.lifetime) { filter ->
       diagrams.cpuMemory = filter
-      diagrams.updateView()
+      diagrams.forceRepaint()
     }
-  }
 
-  companion object {
-    val LOG = Logger.getInstance(CompilationChartsView::class.java)
+    vm.scrollToEndEvent.advise(vm.lifetime) { _ ->
+      rightAdhesionScrollBarListener.scrollToEnd()
+    }
   }
 }
 

@@ -65,7 +65,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView, Disposable {
+public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements ExternalProjectsView, Disposable {
   public static final Logger LOG = Logger.getInstance(ExternalProjectsViewImpl.class);
 
   private final @NotNull Project myProject;

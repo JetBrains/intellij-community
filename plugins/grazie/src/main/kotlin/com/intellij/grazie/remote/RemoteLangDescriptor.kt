@@ -19,7 +19,7 @@ enum class RemoteLangDescriptor(
   BRETON(listOf("Breton"), "2 MB", LanguageISO.BR, "bf0210b228ae15ebf6c1011fcffaab29"),
   CATALAN(listOf("Catalan", "ValencianCatalan"), "4 MB", LanguageISO.CA, "2022f39ebdae27293f920c3ad7698982"),
   DANISH(listOf("Danish"), "1 MB", LanguageISO.DA, "86a0378dfdcf414a89288542b4bcb945"),
-  GERMAN(listOf("GermanyGerman", "AustrianGerman"), "20 MB", LanguageISO.DE, "07011be6808e3b855e27968da47978f2"),
+  GERMAN(listOf("GermanyGerman", "AustrianGerman", "SwissGerman"), "20 MB", LanguageISO.DE, "07011be6808e3b855e27968da47978f2"),
   GREEK(listOf("Greek"), "1 MB", LanguageISO.EL, "37444aaefee6c92c65646e65fe21b398"),
   ENGLISH(
     listOf("BritishEnglish", "AmericanEnglish", "CanadianEnglish"),

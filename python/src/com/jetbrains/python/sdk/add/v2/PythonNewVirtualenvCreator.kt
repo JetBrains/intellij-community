@@ -5,7 +5,6 @@ import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -184,21 +183,14 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
     return currentName.removeSuffix(digitSuffix) + newSuffix
   }
 
-  override fun getOrCreateSdk(): Sdk? {
+  override fun getOrCreateSdk(): Sdk {
     // todo remove project path, or move to controller
-    return model.setupVirtualenv((Path.of(model.state.venvPath.get())), model.projectPath.get(), model.state.baseInterpreter.get()!!)
+    val projectPath = model.projectPath.get()
+    assert(projectPath.isNotBlank()) {"Project path can't be blank"}
+    return model.setupVirtualenv((Path.of(model.state.venvPath.get())), Path.of(projectPath), model.state.baseInterpreter.get()!!).getOrThrow()
   }
 
   companion object {
-    private val LOG = logger<PythonNewVirtualenvCreator>()
-
-    /**
-     * We assume this is the default name of the directory that is located in user home and which contains user virtualenv Python
-     * environments.
-     *
-     * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
-     */
-    private const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
 
 
     /**

@@ -9,10 +9,12 @@ import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import kotlinx.coroutines.ensureActive
 import org.jdom.Element
 import java.io.IOException
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.coroutines.coroutineContext
 
 private const val IGNORE_ACTION_TAG = "ignoreAction"
 private const val NAME_ATT = "name"
@@ -73,24 +75,25 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
   fun unregisterMetaData(intentionAction: IntentionAction) {
     IntentionsMetadataService.getInstance().unregisterMetaData(intentionAction)
   }
+}
 
-  internal class IntentionSearchableOptionContributor : SearchableOptionContributor() {
+private class IntentionSearchableOptionContributor : SearchableOptionContributor() {
+  private val HTML_PATTERN = Pattern.compile("<[^<>]*>")
 
-    private val HTML_PATTERN = Pattern.compile("<[^<>]*>")
+  override suspend fun contribute(processor: SearchableOptionProcessor) {
+    for (metaData in serviceAsync<IntentionsMetadataService>().getUniqueMetadata()) {
+      coroutineContext.ensureActive()
 
-    override fun processOptions(processor: SearchableOptionProcessor) {
-      for (metaData in getInstance().getMetaData()) {
-        try {
-          val descriptionText = HTML_PATTERN.matcher(metaData.description.text.lowercase(Locale.ENGLISH)).replaceAll(" ")
-          val displayName = IntentionSettingsConfigurable.getDisplayNameText()
-          val configurableId = IntentionSettingsConfigurable.HELP_ID
-          val family = metaData.family
-          processor.addOptions(descriptionText, family, family, configurableId, displayName, false)
-          processor.addOptions(family, family, family, configurableId, displayName, true)
-        }
-        catch (e: IOException) {
-          logger<IntentionManagerSettings>().error(e)
-        }
+      try {
+        val descriptionText = HTML_PATTERN.matcher(metaData.description.getText().lowercase(Locale.ENGLISH)).replaceAll(" ")
+        val displayName = IntentionSettingsConfigurable.getDisplayNameText()
+        val configurableId = IntentionSettingsConfigurable.HELP_ID
+        val family = metaData.family
+        processor.addOptions(descriptionText, family, family, configurableId, displayName, false)
+        processor.addOptions(family, family, family, configurableId, displayName, true)
+      }
+      catch (e: IOException) {
+        logger<IntentionManagerSettings>().error(e)
       }
     }
   }

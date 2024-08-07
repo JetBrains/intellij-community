@@ -41,6 +41,7 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
@@ -102,6 +103,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   protected static final @NonNls String PYCHARM_DEBUG = "PYCHARM_DEBUG";
   protected static final @NonNls String USE_LOW_IMPACT_MONITORING = "USE_LOW_IMPACT_MONITORING";
   protected static final @NonNls String HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME = "HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME";
+  protected static final @NonNls String SINGLE_PORT_MODE = "SINGLE_PORT_MODE";
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
@@ -148,21 +150,19 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return false;
   }
 
+  @RequiresEdt
   protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, final @NotNull ExecutionEnvironment environment) {
-    return AppUIExecutor.onUiThread()
-      .submit(FileDocumentManager.getInstance()::saveAllDocuments)
-      .thenAsync(ignored -> {
-        if (Registry.is("python.use.targets.api")) {
-          return createSessionUsingTargetsApi(state, environment);
-        }
-        if (PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
-          Project project = environment.getProject();
-          Module module = PyRunnerUtil.getModule(state);
-          throw new RuntimeExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
-                                                  () -> showPythonInterpreterSettings(project, module));
-        }
-        return createSessionLegacy(state, environment);
-      });
+    FileDocumentManager.getInstance().saveAllDocuments();
+    if (Registry.is("python.use.targets.api")) {
+      return createSessionUsingTargetsApi(state, environment);
+    }
+    if (PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
+      Project project = environment.getProject();
+      Module module = PyRunnerUtil.getModule(state);
+      throw new RuntimeExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
+                                              () -> showPythonInterpreterSettings(project, module));
+    }
+    return createSessionLegacy(state, environment);
   }
 
   private @NotNull Promise<XDebugSession> createSessionUsingTargetsApi(@NotNull RunProfileState state,
@@ -705,6 +705,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     if (registryManager.is("python.debug.halt.variable.resolve.threads.on.step.resume")) {
       environmentController.putFixedValue(HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME, "True");
     }
+
+    if (registryManager.is("python.debug.use.single.port")) {
+      environmentController.putFixedValue(SINGLE_PORT_MODE, "True");
+    }
   }
 
   /**
@@ -820,7 +824,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
   private static void configureDebugConnectionParameters(@NotNull ParamsGroup debugParams, int serverLocalPort) {
-    final String[] debuggerArgs = new String[]{
+    final String[] debuggerArgs = {
       CLIENT_PARAM, "127.0.0.1",
       PORT_PARAM, String.valueOf(serverLocalPort),
       FILE_PARAM

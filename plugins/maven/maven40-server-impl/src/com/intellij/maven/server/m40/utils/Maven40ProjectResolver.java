@@ -284,12 +284,8 @@ public class Maven40ProjectResolver {
 
       List<DependencyNode> dependencyNodes = dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
       model = Maven40AetherModelConverter.convertModelWithAetherDependencyTree(
-        mavenProject.getModel(),
-        mavenProject.getCompileSourceRoots(),
-        mavenProject.getTestCompileSourceRoots(),
-        mavenProject.getArtifacts(),
+        mavenProject,
         dependencyNodes,
-        Collections.emptyList(), //mavenProject.getExtensionArtifacts(),
         myLocalRepositoryFile);
     }
     catch (Exception e) {
@@ -479,7 +475,9 @@ public class Maven40ProjectResolver {
 
     ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setRepositorySession(session.getRepositorySession());
-    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
+    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MAVEN_3_1);
+    projectBuildingRequest.setActiveProfileIds(request.getActiveProfiles());
+    projectBuildingRequest.setInactiveProfileIds(request.getInactiveProfiles());
     projectBuildingRequest.setResolveDependencies(false);
 
     if (files.size() == 1) {

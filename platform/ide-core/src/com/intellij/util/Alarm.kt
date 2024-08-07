@@ -21,6 +21,7 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Async
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.TimeUnit
@@ -42,6 +43,7 @@ private val LOG: Logger = logger<Alarm>()
  * Two requests scheduled with the same delay are executed sequentially, one after the other.
  * [.cancelAllRequests] and [.cancelRequest] allow canceling already scheduled requests.
  */
+@Obsolete
 open class Alarm @Internal constructor(
   private val threadToUse: ThreadToUse,
   parentDisposable: Disposable?,

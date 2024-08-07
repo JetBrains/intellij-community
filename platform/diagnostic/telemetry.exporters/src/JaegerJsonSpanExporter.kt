@@ -9,6 +9,8 @@ import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.StatusData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -31,8 +33,6 @@ class JaegerJsonSpanExporter(
   val serviceVersion: String? = null,
   val serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  override val exporterVersion: Int = 2
-
   private val fileChannel: FileChannel
   private var writer: JsonGenerator
 
@@ -56,8 +56,7 @@ class JaegerJsonSpanExporter(
     beginWriter(w = writer,
                 serviceName = serviceName,
                 serviceVersion = serviceVersion,
-                serviceNamespace = serviceNamespace,
-                exporterVersion = exporterVersion)
+                serviceNamespace = serviceNamespace)
   }
 
   @Suppress("DuplicatedCode")
@@ -197,10 +196,14 @@ class JaegerJsonSpanExporter(
         return@withReentrantLock
       }
 
-      writer.flush()
-      fileChannel.write(ByteBuffer.wrap(jsonEnd))
-      fileChannel.force(false)
-      fileChannel.position(fileChannel.position() - jsonEnd.size)
+      runInterruptible {
+        runBlocking(Dispatchers.IO) {
+          writer.flush()
+          fileChannel.write(ByteBuffer.wrap(jsonEnd))
+          fileChannel.force(false)
+          fileChannel.position(fileChannel.position() - jsonEnd.size)
+        }
+      }
     }
   }
 
@@ -212,13 +215,16 @@ class JaegerJsonSpanExporter(
       }
 
       writer = initWriter()
-      fileChannel.truncate(0)
+      runInterruptible {
+        runBlocking(Dispatchers.IO) {
+          fileChannel.truncate(0)
 
-      beginWriter(w = writer,
-                  serviceName = serviceName,
-                  serviceVersion = serviceVersion,
-                  serviceNamespace = serviceNamespace,
-                  exporterVersion = exporterVersion)
+          beginWriter(w = writer,
+                      serviceName = serviceName,
+                      serviceVersion = serviceVersion,
+                      serviceNamespace = serviceNamespace)
+        }
+      }
     }
   }
 }
@@ -228,10 +234,8 @@ private fun beginWriter(
   serviceName: String,
   serviceVersion: String?,
   serviceNamespace: String?,
-  exporterVersion: Int,
 ) {
   w.writeStartObject()
-  w.writeNumberField("exporterVersion", exporterVersion)
   w.writeArrayFieldStart("data")
   w.writeStartObject()
   w.writeStringField("traceID", IdGenerator.random().generateTraceId())

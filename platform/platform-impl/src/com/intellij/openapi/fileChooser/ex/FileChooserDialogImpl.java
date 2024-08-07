@@ -470,7 +470,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
-  protected final class MyPanel extends JPanel implements DataProvider {
+  protected final class MyPanel extends JPanel implements UiDataProvider {
     final PasteProvider myPasteProvider = new PasteProvider() {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -515,17 +515,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (FileSystemTree.DATA_KEY.is(dataId)) {
-        return myFileSystemTree;
-      }
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles();
-      }
-      if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-        return myPasteProvider;
-      }
-      return myChooserDescriptor.getUserData(dataId);
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
+      sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());
+      sink.set(PlatformDataKeys.PASTE_PROVIDER, myPasteProvider);
+      DataSink.uiDataSnapshot(sink, dataId -> myChooserDescriptor.getUserData(dataId));
     }
   }
 

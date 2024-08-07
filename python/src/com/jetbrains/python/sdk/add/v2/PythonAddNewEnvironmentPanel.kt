@@ -11,22 +11,19 @@ import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindText
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
-import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
-import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Path
 
@@ -95,7 +92,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
                            message("sdk.create.conda.executable.path"),
                            message("sdk.create.conda.missing.text"),
                            createInstallCondaFix(model))
-          //.displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
+        //.displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
       }.visibleIf(_baseConda)
 
       row("") {
@@ -128,15 +125,18 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
     }
   }
 
-  fun getSdk(): Sdk? {
+  fun getSdk(): Sdk {
     model.navigator.saveLastState()
     return when (selectedMode.get()) {
-      PROJECT_VENV -> model.setupVirtualenv(Path.of(projectPath.get(), ".venv"), // todo just keep venv path, all the rest is in the model
-                                            projectPath.get(),
-                                                //pythonBaseVersion.get()!!)
-                                            model.state.baseInterpreter.get()!!)
+      PROJECT_VENV -> {
+        val projectPath = Path.of(projectPath.get())
+        model.setupVirtualenv(projectPath.resolve(".venv"), // todo just keep venv path, all the rest is in the model
+                              projectPath,
+          //pythonBaseVersion.get()!!)
+                              model.state.baseInterpreter.get()!!).getOrThrow()
+      }
       BASE_CONDA -> model.selectCondaEnvironment(model.state.baseCondaEnv.get()!!.envIdentity)
-      CUSTOM -> custom.getSdk()
+      CUSTOM -> custom.currentSdkManager.getOrCreateSdk()
     }
   }
 
@@ -147,7 +147,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
                                               false,
                                               false,
                                               false,
-                                              //presenter.projectLocationContext is WslContext,
+      //presenter.projectLocationContext is WslContext,
                                               false,
                                               InterpreterCreationMode.SIMPLE)
     BASE_CONDA -> InterpreterStatisticsInfo(InterpreterType.BASE_CONDA,
@@ -155,7 +155,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
                                             false,
                                             false,
                                             true,
-                                            //presenter.projectLocationContext is WslContext,
+      //presenter.projectLocationContext is WslContext,
                                             false,
                                             InterpreterCreationMode.SIMPLE)
     CUSTOM -> custom.createStatisticsInfo()

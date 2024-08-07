@@ -76,11 +76,6 @@ abstract class CommonLogicForOnboardingTours(id: String, @Nls lessonName: String
   @NlsSafe
   private var jdkAtStart: String = "undefined"
 
-  override val properties: LessonProperties = LessonProperties(
-    canStartInDumbMode = true,
-    openFileAtStart = false
-  )
-
   override val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   open fun TaskRuntimeContext.rememberJdkAtStart() {

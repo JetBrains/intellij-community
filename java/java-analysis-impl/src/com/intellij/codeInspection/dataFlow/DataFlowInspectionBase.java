@@ -665,9 +665,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                                            PsiExpression expression,
                                                            PsiExpression top, boolean alwaysNull) {
     PsiParameter parameter = MethodCallUtils.getParameterForArgument(top);
-    if (parameter != null && BaseIntentionAction.canModify(parameter) && AnnotationUtil.isAnnotatingApplicable(parameter)) {
+    if (parameter == null) return;
+    PsiModifierListOwner target = Objects.requireNonNullElse(JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter), parameter);
+    if (BaseIntentionAction.canModify(target) && AnnotationUtil.isAnnotatingApplicable(target)) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, top, reporter.isOnTheFly(), alwaysNull);
-      fixes.add(AddAnnotationPsiFix.createAddNullableFix(parameter));
+      fixes.add(AddAnnotationPsiFix.createAddNullableFix(target));
       reporter.registerProblem(expression, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }

@@ -232,7 +232,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       else -> null
     }
     val panels = listOf(newCondaEnvPanel,
-                        PyAddExistingCondaEnvPanel(project, module, existingSdks, null, context))
+                        PyAddExistingCondaEnvPanel(project, existingSdks, null))
       .filterNotNull()
     val defaultPanel = if (PyCondaSdkCustomizer.instance.preferExistingEnvironments) panels[1] else panels[0]
     return PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.conda.environment"),

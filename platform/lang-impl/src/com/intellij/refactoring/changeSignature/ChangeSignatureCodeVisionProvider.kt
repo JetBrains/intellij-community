@@ -7,12 +7,12 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEn
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
-import com.intellij.core.CoreFileTypeRegistry
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.findPsiFile
@@ -132,7 +132,7 @@ class ChangeSignatureCodeVisionProvider : CodeVisionProvider<Unit> {
     get() = PlatformCodeVisionIds.CHANGE_SIGNATURE.key
 
   override fun isAvailableFor(project: Project): Boolean {
-    return CoreFileTypeRegistry.getInstance().registeredFileTypes.any {
+    return FileTypeManager.getInstance().registeredFileTypes.any {
       RefactoringCodeVisionSupport.isChangeSignatureCodeVisionEnabled(it)
     }
   }

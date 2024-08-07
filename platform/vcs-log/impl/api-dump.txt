@@ -970,11 +970,11 @@ f:com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 - <init>():V
 f:com.intellij.vcs.log.ui.VcsLogPanel
 - com.intellij.ui.components.JBPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.vcs.log.ui.VcsLogUiHolder
 - <init>(com.intellij.vcs.log.impl.VcsLogManager,com.intellij.vcs.log.ui.VcsLogUiEx):V
-- getData(java.lang.String):java.lang.Object
 - getVcsLogUi():com.intellij.vcs.log.ui.VcsLogUiEx
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 a:com.intellij.vcs.log.ui.VcsLogUiBase
 - com.intellij.vcs.log.ui.VcsLogUiEx
 - pf:myDisposableFlag:com.intellij.openapi.util.CheckedDisposable
@@ -1443,18 +1443,18 @@ c:com.intellij.vcs.log.ui.frame.CommitPresentationUtil$CommitPresentation
 c:com.intellij.vcs.log.ui.frame.MainFrame
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.ui.AbstractVcsLogUi,com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx,com.intellij.vcs.log.ui.VcsLogColorManager,Z,com.intellij.openapi.Disposable):V
 - p:createActionsToolbar():javax.swing.JComponent
 - dispose():V
 - getChangesBrowser():com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
-- getData(java.lang.String):java.lang.Object
 - getFilterUi():com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 - getGraphTable():com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - getToolbar():javax.swing.JComponent
 - selectFilePath(com.intellij.openapi.vcs.FilePath,Z):V
 - setExplanationHtml(java.lang.String):V
 - showDetails(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateDataPack(com.intellij.vcs.log.visible.VisiblePack,Z):V
 f:com.intellij.vcs.log.ui.frame.ProgressStripe
 - com.intellij.vcs.ui.ProgressStripe

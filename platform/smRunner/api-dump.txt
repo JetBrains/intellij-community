@@ -604,7 +604,6 @@ c:com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView
 - com.intellij.execution.testframework.TestTreeView
 - sf:SM_TEST_RUNNER_VIEW:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
-- getData(java.lang.String):java.lang.Object
 - p:getPresentableName(com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
 - p:getRenderer(com.intellij.execution.testframework.TestConsoleProperties):javax.swing.tree.TreeCellRenderer
 - getResultsViewer():com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
@@ -612,6 +611,7 @@ c:com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView
 - s:getTestProxyFor(java.lang.Object):com.intellij.execution.testframework.sm.runner.SMTestProxy
 - *:setAccessibleStatus(java.lang.String):V
 - setTestResultsViewer(com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler
 - com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer$EventsListener
 - <init>(com.intellij.execution.testframework.TestConsoleProperties):V

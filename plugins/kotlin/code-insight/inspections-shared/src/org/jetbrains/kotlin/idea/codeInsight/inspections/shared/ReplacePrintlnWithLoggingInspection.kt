@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 
@@ -32,6 +33,10 @@ internal class ReplacePrintlnWithLoggingInspection : AbstractKotlinInspection() 
         isOnTheFly: Boolean,
         session: LocalInspectionToolSession
     ): KtVisitorVoid = callExpressionVisitor(fun(call) {
+        val originalFile = call.containingFile.originalFile
+
+        if (originalFile is KtFile && originalFile.isScript()) return
+
         val identifier = call.calleeExpression?.text ?: return
 
         val callableId = analyze(call) {

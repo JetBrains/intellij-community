@@ -3524,6 +3524,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/useExpressionBody/leftBrace.kt");
             }
 
+            @TestMetadata("leftBraceNotApplicableInsideWhitespace.kt")
+            public void testLeftBraceNotApplicableInsideWhitespace() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/useExpressionBody/leftBraceNotApplicableInsideWhitespace.kt");
+            }
+
             @TestMetadata("multiLine.kt")
             public void testMultiLine() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/useExpressionBody/multiLine.kt");

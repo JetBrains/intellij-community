@@ -47,5 +47,7 @@
     <orderEntry type="module" module-name="kotlin.test-framework" />
     <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.formatter.minimal" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" scope="TEST" />
   </component>
 </module>

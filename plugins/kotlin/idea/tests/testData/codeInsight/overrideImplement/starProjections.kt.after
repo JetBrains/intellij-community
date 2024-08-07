@@ -10,3 +10,5 @@ class Derived : Base {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "foo(c: C<*>): Unit"

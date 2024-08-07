@@ -20,11 +20,11 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
+import org.jetbrains.plugins.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import org.jetbrains.plugins.notebooks.visualization.ui.*
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener.*
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
-import org.jetbrains.plugins.notebooks.visualization.ui.keepScrollingPositionWhile
 import java.util.*
 
 class NotebookCellInlayManager private constructor(
@@ -171,6 +171,10 @@ class NotebookCellInlayManager private constructor(
     val selectedCells = selectionModel.selectedCells.map { it.ordinal }
     for (cell in cells) {
       cell.selected = cell.intervalPointer.get()?.ordinal in selectedCells
+
+      if (cell.selected)  {
+        editor.project?.messageBus?.syncPublisher(JupyterCellSelectionNotifier.TOPIC)?.cellSelected(cell.interval, editor)
+      }
     }
   }
 
@@ -232,6 +236,7 @@ class NotebookCellInlayManager private constructor(
       }.toMutableList()
     }
 
+    JupyterBoundsChangeHandler.get(editor)?.postponeUpdates()
     _cells.forEach {
       it.view?.postInitInlays()
     }
@@ -240,6 +245,7 @@ class NotebookCellInlayManager private constructor(
 
     cellEventListeners.multicaster.onEditorCellEvents(_cells.map { CellCreated(it) })
     inlaysChanged()
+    JupyterBoundsChangeHandler.get(editor)?.performPostponed()
   }
 
   private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, this, interval) { cell ->
@@ -250,10 +256,10 @@ class NotebookCellInlayManager private constructor(
     changedListener?.inlaysChanged()
   }
 
-  private fun updateCellsFolding(editorCells: List<EditorCell>) = update { ctx ->
+  private fun updateCellsFolding(editorCells: List<EditorCell>) = update { updateContext ->
     val cellsForFoldingUpdate = editorCells.filter { it.view?.shouldUpdateFolding == true }
     cellsForFoldingUpdate.forEach { cell ->
-      cell.view?.updateCellFolding(ctx)
+      cell.view?.updateCellFolding(updateContext)
     }
   }
 
@@ -321,8 +327,12 @@ class NotebookCellInlayManager private constructor(
         add(editor.document.getLineEndOffset(cell.interval.lines.last))
       }
     }
-    val wronglyPlacedInlays = editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength)
+
+    val wronglyPlacedInlays = _cells.asSequence()
+      .mapNotNull { it.view }
+      .flatMap { it.getInlays() }
       .filter { it.offset !in inlaysOffsets }
+      .toSet()
     if (wronglyPlacedInlays.isNotEmpty()) {
       thisLogger().error("Expected offsets: $inlaysOffsets. Wrongly placed offsets: ${wronglyPlacedInlays.map { it.offset }} of inlays $wronglyPlacedInlays, for file = '${editor.virtualFile?.name}'")
     }
@@ -379,22 +389,6 @@ class NotebookCellInlayManager private constructor(
       invalidationListeners.forEach { it.run() }
     }
   }
-
-  fun validateCells() {
-    if (!valid) {
-      _cells.forEach {
-        it.view?.also { view ->
-          view.bounds = view.calculateBounds()
-          view.validate()
-        }
-      }
-      valid = true
-    }
-  }
-
-  fun onInvalidate(function: () -> Unit) {
-    invalidationListeners.add(function)
-  }
 }
 
 class UpdateContext(val force: Boolean = false) {
@@ -410,5 +404,4 @@ class UpdateContext(val force: Boolean = false) {
       foldingOperations.forEach { it() }
     }
   }
-
 }

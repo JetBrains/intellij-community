@@ -22,7 +22,7 @@ internal abstract class JKInMemoryFilesSearcher {
 
 internal class JKSingleFileInMemoryFilesSearcher(private val scopeElement: PsiElement) : JKInMemoryFilesSearcher() {
     override fun search(element: KtElement, scope: PsiElement?): Iterable<PsiReference> =
-        ReferencesSearch.search(element, LocalSearchScope(scope ?: scopeElement))
+        doSearch(element, LocalSearchScope(scope ?: scopeElement))
 }
 
 
@@ -32,12 +32,15 @@ internal class JKSingleFileInMemoryFilesSearcher(private val scopeElement: PsiEl
 internal class JKMultipleFilesInMemoryFilesSearcher(private val scopeElements: List<PsiElement>) : JKInMemoryFilesSearcher() {
     override fun search(element: KtElement, scope: PsiElement?): Iterable<PsiReference> {
         if (scope != null) {
-            return ReferencesSearch.search(element, LocalSearchScope(scope))
+            return doSearch(element, LocalSearchScope(scope))
         }
         val result = mutableListOf<PsiReference>()
         for (scopeElement in scopeElements) {
-            result += ReferencesSearch.search(element, LocalSearchScope(scopeElement))
+            result += doSearch(element, LocalSearchScope(scopeElement))
         }
         return result
     }
 }
+
+private fun doSearch(element: KtElement, scope: LocalSearchScope) =
+    ReferencesSearch.search(element, scope, /* ignoreAccessScope = */ true)

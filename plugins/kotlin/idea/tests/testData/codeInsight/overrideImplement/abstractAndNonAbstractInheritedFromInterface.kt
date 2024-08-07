@@ -10,3 +10,5 @@ interface U {
 class C1 : T, U {
     <caret>
 }
+
+// MEMBER: "getFoo(): String"

@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.project.DumbAware
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.PersistentFSConstants
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
@@ -41,6 +43,9 @@ abstract class AutoScrollToSourceHandler {
         }
       },
       delay = Registry.intValue("ide.autoscroll.to.source.delay", 100),
+      parentDisposable = null,
+      threadToUse = Alarm.ThreadToUse.SWING_THREAD,
+      modalityState = ModalityState.defaultModalityState(),
     )
   }
 

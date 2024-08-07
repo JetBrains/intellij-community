@@ -259,7 +259,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myInitialSelection = initialSelection;
   }
 
-  public final class JPanelProvider extends JPanel implements DataProvider, QuickSearchComponent {
+  public final class JPanelProvider extends JPanel implements UiDataProvider, QuickSearchComponent {
     private JBPopup myHint;
     private boolean myFocusRequested;
 
@@ -267,44 +267,31 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        return myModel.getHelpId();
-      }
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        List<Object> selection = getChosenElements();
-        return (DataProvider)slowId -> getSlowData(slowId, selection);
-      }
-      else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
-        return getBounds();
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      List<Object> selection = getChosenElements();
+      sink.set(PlatformCoreDataKeys.HELP_ID, myModel.getHelpId());
+      sink.set(PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE, getBounds());
+
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        if (myCalcElementsThread != null) return null;
+        return getElement(ContainerUtil.getOnlyItem(selection));
+      });
+      sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+        if (myCalcElementsThread != null) return null;
+        List<PsiElement> result = ContainerUtil.mapNotNull(
+          selection, o -> getElement(o));
+        return PsiUtilCore.toPsiElementArray(result);
+      });
     }
 
-    private @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<Object> selection) {
-      if (myCalcElementsThread != null) {
-        return null;
+    private static @Nullable PsiElement getElement(Object element) {
+      if (element instanceof PsiElement o) {
+        return o;
       }
-
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        Object element = ContainerUtil.getOnlyItem(selection);
-        if (element instanceof PsiElement) {
-          return element;
-        }
-
-        if (element instanceof DataProvider) {
-          Object data = ((DataProvider)element).getData(dataId);
-          return data == null ? null : DataValidators.validOrNull(data, dataId, element);
-        }
-      }
-      else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        List<PsiElement> result = new ArrayList<>(selection.size());
-        for (Object element : selection) {
-          if (element instanceof PsiElement) {
-            result.add((PsiElement)element);
-          }
-        }
-        return PsiUtilCore.toPsiElementArray(result);
+      if (element instanceof DataProvider o) {
+        PsiElement data = CommonDataKeys.PSI_ELEMENT.getData(o);
+        return data == null ? null : (PsiElement)DataValidators.validOrNull(
+          data, CommonDataKeys.PSI_ELEMENT.getName(), element);
       }
       return null;
     }
@@ -1069,7 +1056,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   protected void chosenElementMightChange() {
   }
 
-  protected final class MyTextField extends JTextField implements PopupOwner, DataProvider {
+  protected final class MyTextField extends JTextField implements PopupOwner, UiDataProvider {
     private final KeyStroke myCompletionKeyStroke;
     private final KeyStroke forwardStroke;
     private final KeyStroke backStroke;
@@ -1114,16 +1101,12 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       return null;
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-        return myDropdownPopup != null && myDropdownPopup.isVisible() ? myDropdownPopup : null;
-      }
-      else if (LangDataKeys.PARENT_POPUP.is(dataId)) {
-        return myTextPopup != null && myTextPopup.isVisible() ? myTextPopup : null;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(LangDataKeys.POSITION_ADJUSTER_POPUP,
+               myDropdownPopup != null && myDropdownPopup.isVisible() ? myDropdownPopup : null);
+      sink.set(LangDataKeys.PARENT_POPUP,
+               myTextPopup != null && myTextPopup.isVisible() ? myTextPopup : null);
     }
 
     @Override

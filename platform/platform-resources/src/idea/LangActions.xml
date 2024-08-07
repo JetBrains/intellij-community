@@ -5,6 +5,7 @@
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
     <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
+    <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
 
     <group id="RunConfiguration.Group">
       <action id="SaveTemporaryRunConfiguration" class="com.intellij.execution.actions.SaveTemporaryRunConfigurationAction"/>
@@ -16,7 +17,7 @@
         <!-- A dynamic group filled with executor actions -->
         <group id="RunContextExecutorsGroup"/>
         <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
-          <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+          <reference ref="CreateRunConfiguration"/>
           <separator/>
           <group id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
         </group>
@@ -25,6 +26,10 @@
     </group>
     <group id="RunContextPopupGroup" popup="false">
       <reference ref="RunContextGroup"/>
+    </group>
+
+    <group id="RunLineMarkerExtraActions">
+      <reference ref="CreateRunConfiguration"/>
     </group>
 
     <group id="LangCodeInsightActions">
@@ -769,7 +774,9 @@
       <group id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
-    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup" popup="true" searchable="false"/>
+    <!--suppress PluginXmlValidity -->
+    <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"
+           popup="true" searchable="false" use-shortcut-of="NewElement"/>
     <reference ref="AssociateWithFileType"/>
 
     <reference id="OpenInRightSplit">
@@ -1171,13 +1178,13 @@
         <group id="DebugReloadGroup"/>
         <separator/>
         <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="AllIcons.Actions.TraceOver"/>
-        <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="PlatformDebuggerImplIcons.Actions.Force_step_over"/>
+        <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="AllIcons.Debugger.ForceStepOver"/>
         <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="AllIcons.Actions.TraceInto"/>
-        <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="PlatformDebuggerImplIcons.Actions.Force_step_into"/>
+        <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="AllIcons.Debugger.ForceStepInto"/>
         <action id="SmartStepInto" class="com.intellij.xdebugger.impl.actions.SmartStepIntoAction" icon="AllIcons.Debugger.SmartStepInto"/>
         <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="AllIcons.Actions.StepOut"/>
         <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
-        <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="PlatformDebuggerImplIcons.Actions.Force_run_to_cursor"/>
+        <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="AllIcons.Debugger.ForceRunToCursor"/>
         <action id="Debugger.PopFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
         <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
         <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>

@@ -17,6 +17,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModified
 import training.learn.LearnBundle
 import training.learn.NewUsersOnboardingExperimentAccessor
+import training.learn.course.LessonProperties
 import training.learn.course.LessonType
 import training.learn.lesson.general.run.clearBreakpoints
 import training.project.ProjectUtils
@@ -28,6 +29,11 @@ import javax.swing.tree.TreePath
 
 abstract class OnboardingTourLessonBase(id: String) : CommonLogicForOnboardingTours(id, JavaLessonsBundle.message("java.onboarding.lesson.name")) {
   override val lessonType: LessonType = LessonType.PROJECT
+
+  override val properties: LessonProperties = LessonProperties(
+    canStartInDumbMode = true,
+    openFileAtStart = false
+  )
 
   private lateinit var openLearnTaskId: TaskContext.TaskId
 

@@ -9,6 +9,7 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.json"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -3,7 +3,7 @@ class Test {
         return "response"
     }
 
-    private val notNullInitializerField = notNullString(3)
+    private val notNullInitializerField: String = notNullString(3)
     var notNullInitializerPublicField: String = notNullString(3)
 
     fun testProperty() {

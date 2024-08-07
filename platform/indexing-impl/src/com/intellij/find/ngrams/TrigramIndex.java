@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,9 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,7 +94,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, @NotNull Collection<Integer> value) throws IOException {
-        final int numberOfValues = value.size();
+        int numberOfValues = value.size();
 
         int[] buffer = SPARE_BUFFER_LOCAL.getBuffer(numberOfValues);
         int ptr = 0;
@@ -117,7 +119,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
       @Override
       public @NotNull Collection<Integer> read(@NotNull DataInput in) throws IOException {
         int size = DataInputOutputUtil.readINT(in);
-        List<Integer> result = new ArrayList<>(size);
+        IntList result = new IntArrayList(size);
         int prev = 0;
         while (size-- > 0) {
           int l = (int)(DataInputOutputUtil.readLONG(in) + prev);

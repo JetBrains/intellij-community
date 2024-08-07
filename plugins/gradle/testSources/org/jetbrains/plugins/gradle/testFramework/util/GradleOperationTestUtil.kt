@@ -5,6 +5,8 @@ package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.diagnostic.ThreadDumper
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
@@ -26,17 +28,20 @@ import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.observable.operation.core.waitForOperationAndPumpEdt
 import com.intellij.testFramework.withProjectAsync
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
+private val DEFAULT_SYNC_TIMEOUT: Duration = 10.minutes
 
 private object TestGradleProjectConfigurationActivityKey: ActivityKey {
   override val presentableName: @Nls String
@@ -45,61 +50,74 @@ private object TestGradleProjectConfigurationActivityKey: ActivityKey {
 
 suspend fun awaitGradleOpenProjectConfiguration(openProject: suspend () -> Project): Project {
   return openProject()
-    .withProjectAsync { awaitGradleProjectConfiguration(it) }
+    .withProjectAsync { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it, ::println) }
 }
 
 suspend fun <R> awaitGradleProjectConfiguration(project: Project, action: suspend () -> R): R {
   return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
-    .also { awaitGradleProjectConfiguration(project) }
+    .also { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project, ::println) }
 }
 
-private suspend fun awaitGradleProjectConfiguration(project: Project) {
-  withTimeout(10.minutes) {
-    Observation.awaitConfiguration(project) { message ->
-      println(message)
+suspend fun awaitConfiguration(timeout: Duration, project: Project, messageCallback: ((String) -> Unit)? = null) {
+  try {
+    withTimeout(timeout) {
+      Observation.awaitConfiguration(project, messageCallback)
     }
+  }
+  catch (e: TimeoutCancellationException) {
+    val coroutineDump = dumpCoroutines()
+    val threadDump = ThreadDumper.dumpThreadsToString()
+    throw AssertionError("""
+      |The waiting takes too long
+      |------- Thread dump begin -------
+      |$threadDump
+      |-------- Thread dump end --------
+      |------ Coroutine dump begin -----
+      |$coroutineDump
+      |------- Coroutine dump end ------
+    """.trimMargin())
   }
 }
 
 fun <R> waitForAnyGradleTaskExecution(action: ThrowableComputable<R, Throwable>): R {
   return Disposer.newDisposable("waitForAnyGradleTaskExecution").use { disposable ->
     getGradleTaskExecutionOperation(disposable)
-      .waitForOperationAndPumpEdt(10.seconds, 10.minutes, action = action)
+      .waitForOperationAndPumpEdt(DEFAULT_TEST_TIMEOUT, DEFAULT_SYNC_TIMEOUT, action = action)
   }
 }
 
 suspend fun <R> awaitAnyGradleTaskExecution(action: suspend () -> R): R {
   return Disposer.newDisposable("awaitAnyGradleTaskExecution").use { disposable ->
     getGradleTaskExecutionOperation(disposable)
-      .awaitOperation(10.seconds, 10.minutes, action = action)
+      .awaitOperation(DEFAULT_TEST_TIMEOUT, DEFAULT_SYNC_TIMEOUT, action = action)
   }
 }
 
 fun <R> waitForGradleEventDispatcherClosing(action: () -> R): R {
   return Disposer.newDisposable("waitForGradleEventDispatcherClosing").use { disposable ->
     getGradleEventDispatcherOperation(disposable)
-      .waitForOperationAndPumpEdt(10.seconds, 10.minutes, action)
+      .waitForOperationAndPumpEdt(DEFAULT_TEST_TIMEOUT, DEFAULT_SYNC_TIMEOUT, action)
   }
 }
 
 suspend fun <R> awaitGradleEventDispatcherClosing(action: suspend () -> R): R {
   return Disposer.newDisposable("awaitGradleEventDispatcherClosing").use { disposable ->
     getGradleEventDispatcherOperation(disposable)
-      .awaitOperation(10.seconds, 10.minutes, action)
+      .awaitOperation(DEFAULT_TEST_TIMEOUT, DEFAULT_SYNC_TIMEOUT, action)
   }
 }
 
 fun <R> waitForAnyExecution(project: Project, action: () -> R): R {
   return Disposer.newDisposable("waitForAnyExecution").use { disposable ->
     getExecutionOperation(project, disposable)
-      .waitForOperationAndPumpEdt(10.seconds, 10.minutes, action)
+      .waitForOperationAndPumpEdt(DEFAULT_TEST_TIMEOUT, DEFAULT_SYNC_TIMEOUT, action)
   }
 }
 
 suspend fun <R> awaitAnyExecution(project: Project, action: suspend () -> R): R {
   return Disposer.newDisposable("awaitAnyExecution").use { disposable ->
     getExecutionOperation(project, disposable)
-      .awaitOperation(10.seconds, 10.minutes, action)
+      .awaitOperation(DEFAULT_TEST_TIMEOUT, DEFAULT_SYNC_TIMEOUT, action)
   }
 }
 

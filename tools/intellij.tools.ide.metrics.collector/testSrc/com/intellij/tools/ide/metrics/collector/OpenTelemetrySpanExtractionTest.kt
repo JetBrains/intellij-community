@@ -4,7 +4,6 @@ import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metri
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsBasedOnDiffBetweenSpans
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsForStartup
-import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
@@ -35,9 +34,10 @@ class OpenTelemetrySpanExtractionTest {
 
   @Test
   fun testTagsFilter() {
-    val result = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry.json"), SpanFilter.hasTags(
-      Pair("class", "com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter"), Pair("plugin", "com.intellij"))
-    )
+    val result = OpenTelemetrySpanCollector(
+      SpanFilter.hasTags(Pair("class", "com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter"), Pair("plugin", "com.intellij"))
+    ).collect(openTelemetryReports / "opentelemetry.json")
+
     result.shouldContainExactlyInAnyOrder(Metric.newDuration("run activity", 0))
   }
 
@@ -46,15 +46,18 @@ class OpenTelemetrySpanExtractionTest {
     val spanNames = listOf("%findUsages", "run activity")
     val file = (openTelemetryReports / "opentelemetry.json")
     val expected = spanNames.map { spanName ->
-      getMetricsFromSpanAndChildren(file, SpanFilter.nameEquals(spanName))
+      OpenTelemetrySpanCollector(SpanFilter.nameEquals(spanName)).collect(file)
     }.flatten()
-    val result = getMetricsFromSpanAndChildren(file, SpanFilter.containsNameIn(spanNames))
+
+    val result = OpenTelemetrySpanCollector(SpanFilter.containsNameIn(spanNames))
+      .collect(file)
+
     result.shouldContainExactlyInAnyOrder(expected)
   }
 
   @Test
   fun metricsCorrectlyCollected() {
-    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry.json"), SpanFilter.nameEquals("%findUsages"))
+    val metrics = OpenTelemetrySpanCollector(SpanFilter.nameEquals("%findUsages")).collect(openTelemetryReports / "opentelemetry.json")
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("%findUsages_1", 530),
       Metric.newDuration("%findUsages_2", 4109),
@@ -81,8 +84,8 @@ class OpenTelemetrySpanExtractionTest {
 
   @Test
   fun metricsWithSingleSpan() {
-    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_main_timer.json"),
-                                                SpanFilter.nameEquals("performance_test"))
+    val metrics = OpenTelemetrySpanCollector(SpanFilter.nameEquals("performance_test"))
+      .collect(openTelemetryReports / "opentelemetry_with_main_timer.json")
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("performance_test", 13497),
       Metric.newDuration("delayType", 3739),
@@ -93,8 +96,9 @@ class OpenTelemetrySpanExtractionTest {
 
   @Test
   fun metricsCorrectlyCollected2() {
-    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry2.json"),
-                                                SpanFilter.nameEquals("performance_test"))
+    val metrics = OpenTelemetrySpanCollector(SpanFilter.nameEquals("performance_test"))
+      .collect(openTelemetryReports / "opentelemetry2.json")
+
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("performance_test", 81444),
       Metric.newDuration("timer_1", 1184),
@@ -128,8 +132,9 @@ class OpenTelemetrySpanExtractionTest {
 
   @Test
   fun metricsCorrectlyCollectedAvoidingZeroValue() {
-    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_zero_values.json"),
-                                                SpanFilter.nameEquals("performance_test"))
+    val metrics = OpenTelemetrySpanCollector(SpanFilter.nameEquals("performance_test"))
+      .collect(openTelemetryReports / "opentelemetry_with_zero_values.json")
+
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("performance_test", 27989),
       Metric.newDuration("firstCodeAnalysis", 1725),
@@ -254,8 +259,9 @@ class OpenTelemetrySpanExtractionTest {
 
   @Test
   fun metricsWithAttributesMaxAndMeanValue() {
-    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_max_mean_attributes.json"),
-                                                SpanFilter.nameEquals("performance_test"))
+    val metrics = OpenTelemetrySpanCollector(SpanFilter.nameEquals("performance_test"))
+      .collect(openTelemetryReports / "opentelemetry_with_max_mean_attributes.json")
+
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("typing#latency#max", 51),
       Metric.newDuration("typing#latency#mean_value", 3),
@@ -264,8 +270,9 @@ class OpenTelemetrySpanExtractionTest {
 
   @Test
   fun opentelemetryWithWarmupSpans() {
-    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_warmup_spans.json"),
-                                                SpanFilter.nameEquals("performance_test"))
+    val metrics = OpenTelemetrySpanCollector(SpanFilter.nameEquals("performance_test"))
+      .collect(openTelemetryReports / "opentelemetry_with_warmup_spans.json")
+
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("localInspections#mean_value", 368),
       Metric.newDuration("localInspections_1", 375),
@@ -306,8 +313,9 @@ class OpenTelemetrySpanExtractionTest {
 
   @Test
   fun findUsageWithWarmUp() {
-    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_findUsage_with_warmup.json"),
-                                                SpanFilter.nameEquals("performance_test"))
+    val metrics = OpenTelemetrySpanCollector(SpanFilter.nameEquals("performance_test"))
+      .collect(openTelemetryReports / "opentelemetry_findUsage_with_warmup.json")
+
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("findUsagesParent_1", 361),
       Metric.newDuration("findUsagesParent_2", 337),
@@ -330,8 +338,9 @@ class OpenTelemetrySpanExtractionTest {
   @Test
   fun metricAliases() {
     val aliases = mapOf(Pair("findUsagesParent", "alias"))
-    val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_findUsage_with_warmup.json"),
-                                                SpanFilter.nameEquals("performance_test"), aliases = aliases)
+    val metrics = OpenTelemetrySpanCollector(SpanFilter.nameEquals("performance_test"), spanAliases = aliases)
+      .collect(openTelemetryReports / "opentelemetry_findUsage_with_warmup.json")
+
     assertThat(metrics).containsAll(listOf(
       Metric.newDuration("alias", 3335),
       Metric.newDuration("alias_1", 361),

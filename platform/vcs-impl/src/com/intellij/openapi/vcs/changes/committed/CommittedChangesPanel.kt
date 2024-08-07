@@ -5,7 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -14,7 +15,7 @@ import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 
-abstract class CommittedChangesPanel(val project: Project) : BorderLayoutPanel(), DataProvider, Disposable {
+abstract class CommittedChangesPanel(val project: Project) : BorderLayoutPanel(), UiDataProvider, Disposable {
 
   protected val browser: CommittedChangesTreeBrowser =
     CommittedChangesTreeBrowser(project, emptyList()).also { Disposer.register(this, it) }
@@ -49,7 +50,9 @@ abstract class CommittedChangesPanel(val project: Project) : BorderLayoutPanel()
 
   abstract fun refreshChanges()
 
-  override fun getData(dataId: String): Any? = browser.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    DataSink.uiDataSnapshot(sink, browser)
+  }
 
   override fun dispose() = Unit
 }

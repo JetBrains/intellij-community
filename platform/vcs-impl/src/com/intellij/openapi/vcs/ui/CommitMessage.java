@@ -9,10 +9,7 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
@@ -42,7 +39,10 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,7 +58,7 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyLimitSettings;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
+public class CommitMessage extends JPanel implements Disposable, UiCompatibleDataProvider, CommitMessageUi, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
   public static final Key<Supplier<Iterable<Change>>> CHANGES_SUPPLIER_KEY = Key.create("Vcs.CommitMessage.CompletionContext");
 
@@ -179,18 +179,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return toolbar.getComponent();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.is(dataId)) {
-      return this;
-    }
-    if (VcsDataKeys.COMMIT_MESSAGE_DOCUMENT.is(dataId)) {
-      Editor editor = myEditorField.getEditor();
-      if (editor == null) return null;
-      return editor.getDocument();
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    Editor editor = myEditorField.getEditor();
+    sink.set(VcsDataKeys.COMMIT_MESSAGE_CONTROL, this);
+    sink.set(VcsDataKeys.COMMIT_MESSAGE_DOCUMENT, editor == null ? null : editor.getDocument());
   }
 
   public void setSeparatorText(@NotNull @NlsContexts.Separator String text) {

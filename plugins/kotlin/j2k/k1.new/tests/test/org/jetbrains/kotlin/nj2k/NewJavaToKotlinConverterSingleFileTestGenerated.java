@@ -1406,11 +1406,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("multiline.java")
-        public void testMultiline() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/conditionalExpression/multiline.java");
-        }
-
         @TestMetadata("simple.java")
         public void testSimple() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/conditionalExpression/simple.java");
@@ -2035,6 +2030,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("OverridesOfExternalCode.java")
         public void testOverridesOfExternalCode() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/OverridesOfExternalCode.java");
+        }
+
+        @TestMetadata("privateNestedClass.java")
+        public void testPrivateNestedClass() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/privateNestedClass.java");
         }
 
         @TestMetadata("PropertyAndFieldConflicts.java")
@@ -5769,6 +5769,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("removeUnnecessaryParentheses.java")
         public void testRemoveUnnecessaryParentheses() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/removeUnnecessaryParentheses.java");
+        }
+
+        @TestMetadata("removeUnnecessaryParenthesesConditionalExpression.java")
+        public void testRemoveUnnecessaryParenthesesConditionalExpression() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/removeUnnecessaryParenthesesConditionalExpression.java");
         }
 
         @TestMetadata("removeUnnecessaryParenthesesConditionalOperators.java")

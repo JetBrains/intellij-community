@@ -44,6 +44,8 @@ public final class PyDefUseUtil {
   private PyDefUseUtil() {
   }
 
+  private static final int MAX_CONTROL_FLOW_SIZE = 200;
+
   @NotNull
   public static List<Instruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor, boolean acceptTypeAssertions,
                                                 boolean acceptImplicitImports, @NotNull TypeEvalContext context) {
@@ -88,8 +90,9 @@ public final class PyDefUseUtil {
                                     }
                                     // not a back edge
                                     if (instruction.num() < startNum && context.getOrigin() == callInstruction.getElement().getContainingFile()) {
-                                      var newContext = TypeEvalContext.codeAnalysis(context.getOrigin().getProject(),
-                                                                                    context.getOrigin());
+                                      var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
+                                        ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
+                                        : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
                                       if (callInstruction.isNoReturnCall(newContext)) return ControlFlowUtil.Operation.CONTINUE;
                                     }
                                   }
@@ -99,8 +102,9 @@ public final class PyDefUseUtil {
                                       && instruction instanceof ConditionalInstruction conditionalInstruction
                                       && instruction.num() < startNum) {
                                     if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() == typedElement.getContainingFile()) {
-                                      var newContext = TypeEvalContext.codeAnalysis(context.getOrigin().getProject(),
-                                                                                    context.getOrigin());
+                                      var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
+                                                       ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
+                                                       : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
                                       if (newContext.getType(typedElement) instanceof PyNarrowedType narrowedType) {
                                         if (narrowedType.getQname().equals(varName)) {
                                           pendingTypeGuard.put(narrowedType.getOriginal(), conditionalInstruction);

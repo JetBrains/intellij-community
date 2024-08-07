@@ -18,7 +18,6 @@ class A {
     }
 }
 
-// IGNORE_K2
 // EXIST: { lookupString: "fooForA", itemText: "fooForA", icon: "Function"}
 // EXIST: { lookupString: "fooForB", itemText: "fooForB", icon: "Function"}
 // EXIST: { lookupString: "fooForT", itemText: "fooForT", icon: "Function"}

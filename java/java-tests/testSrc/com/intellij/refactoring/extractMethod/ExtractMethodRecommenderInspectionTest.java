@@ -5,9 +5,12 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.utils.coroutines.CoroutinesTestUtilKt.waitCoroutinesBlocking;
 
 public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -51,9 +54,7 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
     myFixture.enableInspections(inspection);
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
-    IntentionAction intention = myFixture.getAvailableIntention(JavaBundle.message("intention.extract.method.text"));
-    assertNotNull(intention);
-    intention.invoke(getProject(), getEditor(), getFile());
+    invokeExtractMethodIntention();
     myFixture.checkResultByFile("after" + getTestName(false) + ".java");
   }
 
@@ -68,10 +69,15 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
     myFixture.enableInspections(inspection);
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
+    invokeExtractMethodIntention();
+    myFixture.checkResultByFile("after" + getTestName(false) + ".java");
+  }
+
+  private void invokeExtractMethodIntention() {
     IntentionAction intention = myFixture.getAvailableIntention(JavaBundle.message("intention.extract.method.text"));
     assertNotNull(intention);
     intention.invoke(getProject(), getEditor(), getFile());
-    myFixture.checkResultByFile("after" + getTestName(false) + ".java");
+    waitCoroutinesBlocking(ExtractMethodService.getInstance(getProject()).getScope());
   }
 
   @Override

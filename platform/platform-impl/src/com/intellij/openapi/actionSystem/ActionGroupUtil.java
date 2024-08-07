@@ -56,7 +56,7 @@ public final class ActionGroupUtil {
       @Override
       @NotNull Presentation createTemplatePresentation() {
         Presentation presentation = super.createTemplatePresentation();
-        presentation.putClientProperty(ActionUtil.HIDE_INVISIBLE_CHILDREN, true);
+        presentation.putClientProperty(ActionUtil.HIDE_DISABLED_CHILDREN, true);
         return presentation;
       }
     }

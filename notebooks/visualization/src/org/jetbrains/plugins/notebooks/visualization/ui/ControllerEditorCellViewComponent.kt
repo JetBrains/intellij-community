@@ -3,34 +3,21 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.asSafely
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
 import org.jetbrains.plugins.notebooks.visualization.UpdateContext
 import java.awt.Rectangle
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import javax.swing.JComponent
 
 class ControllerEditorCellViewComponent(
   internal val controller: NotebookCellInlayController,
-  private val parent: EditorCellInput,
   private val editor: Editor,
   private val cell: EditorCell,
 ) : EditorCellViewComponent(), HasGutterIcon {
 
-  private val listener = object : ComponentAdapter() {
-    override fun componentResized(e: ComponentEvent) {
-      parent.invalidate()
-    }
-  }
 
   private var foldedRegion: FoldRegion? = null
-
-  init {
-    controller.inlay.renderer.asSafely<JComponent>()?.addComponentListener(listener)
-  }
 
   override fun updateGutterIcons(gutterAction: AnAction?) {
     val inlay = controller.inlay
@@ -39,7 +26,6 @@ class ControllerEditorCellViewComponent(
   }
 
   override fun doDispose() {
-    controller.inlay.renderer.asSafely<JComponent>()?.removeComponentListener(listener)
     controller.let { controller -> Disposer.dispose(controller.inlay) }
     disposeFolding()
   }
@@ -57,8 +43,7 @@ class ControllerEditorCellViewComponent(
   }
 
   override fun calculateBounds(): Rectangle {
-    val component = controller.inlay.renderer as JComponent
-    return component.bounds
+    return controller.inlay.bounds ?: Rectangle(0, 0, 0, 0)
   }
 
   override fun updateCellFolding(updateContext: UpdateContext) {
@@ -82,4 +67,8 @@ class ControllerEditorCellViewComponent(
 
   private fun createFoldRegion(foldingModel: FoldingModelEx, regionToFold: IntRange): FoldRegion? =
     foldingModel.createFoldRegion(regionToFold.first, regionToFold.last, "", null, true)
+
+  override fun doGetInlays(): Sequence<Inlay<*>> {
+    return sequenceOf(controller.inlay)
+  }
 }

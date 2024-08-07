@@ -180,7 +180,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
 
         scriptingDebugLog { "save script models after import: ${sync.models}" }
 
-        val newData = GradleBuildRootData(sync.ts, sync.projectRoots, gradleHome, sync.javaHome, sync.models)
+        val newData = GradleBuildRootData(sync.creationTimestamp, sync.projectRoots, gradleHome, sync.javaHome, sync.models)
         val mergedData = if (sync.failed && oldRoot is Imported) merge(oldRoot.data, newData) else newData
 
         val newRoot = tryCreateImportedRoot(sync.workingDir, LastModifiedFiles()) { mergedData } ?: return null

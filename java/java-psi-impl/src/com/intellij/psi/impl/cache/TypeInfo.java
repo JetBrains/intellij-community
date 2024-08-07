@@ -276,7 +276,7 @@ public /*sealed*/ abstract class TypeInfo {
     /**
      * @return outer type; null if this type is not an inner type
      */
-    public @Nullable TypeInfo outerType() {
+    public @Nullable RefTypeInfo outerType() {
       return myOuter;
     }
   }
@@ -381,6 +381,9 @@ public /*sealed*/ abstract class TypeInfo {
 
   /**
    * @return type created from {@link LighterAST}
+   * @param tree tree structure
+   * @param element element (variable, parameter, field, method, etc.) to create a type for.
+   * @param parentStub parent stub element for context
    */
   public static @NotNull TypeInfo create(@NotNull LighterAST tree, @NotNull LighterASTNode element, StubElement<?> parentStub) {
     int arrayCount = 0;
@@ -428,7 +431,6 @@ public /*sealed*/ abstract class TypeInfo {
                                          @NotNull LighterAST tree,
                                          @NotNull LighterASTNode element,
                                          byte @NotNull [] prefix) {
-    // TODO: support bounds, generics and enclosing types
     int arrayCount = 0;
     List<LighterASTNode> children = tree.getChildren(element);
     for (LighterASTNode child : children) {
@@ -444,7 +446,10 @@ public /*sealed*/ abstract class TypeInfo {
       if (tokenType == JavaTokenType.EXTENDS_KEYWORD || tokenType == JavaTokenType.SUPER_KEYWORD) {
         bound = true;
       }
-      if (tokenType == JavaElementType.TYPE && info instanceof DerivedTypeInfo) {
+      else if (tokenType == JavaElementType.JAVA_CODE_REFERENCE && info instanceof RefTypeInfo) {
+        collectAnnotationsFromReference((RefTypeInfo)info, collector, tree, child, prefix);
+      }
+      else if (tokenType == JavaElementType.TYPE && info instanceof DerivedTypeInfo) {
         byte[] newPrefix;
         if (bound) {
           newPrefix = Arrays.copyOf(prefix, prefix.length + 1);
@@ -463,6 +468,42 @@ public /*sealed*/ abstract class TypeInfo {
         byte[] typePath = Arrays.copyOf(prefix, prefix.length + nestingLevel);
         Arrays.fill(typePath, prefix.length, typePath.length, TypeAnnotationContainer.Collector.ARRAY_ELEMENT);
         collector.add(typePath, anno);
+      }
+    }
+  }
+
+  private static void collectAnnotationsFromReference(@NotNull RefTypeInfo info,
+                                                      TypeAnnotationContainer.@NotNull Collector collector,
+                                                      @NotNull LighterAST tree,
+                                                      @NotNull LighterASTNode child,
+                                                      byte @NotNull [] prefix) {
+    List<LighterASTNode> refChildren = tree.getChildren(child);
+    for (LighterASTNode refChild : refChildren) {
+      IElementType refTokenType = refChild.getTokenType();
+      if (refTokenType == JavaElementType.JAVA_CODE_REFERENCE) {
+        RefTypeInfo outerType = info.outerType();
+        if (outerType != null) {
+          byte[] newPrefix = Arrays.copyOf(prefix, prefix.length + 1);
+          newPrefix[prefix.length] = TypeAnnotationContainer.Collector.ENCLOSING_CLASS;
+          collectAnnotationsFromReference(outerType, collector, tree, refChild, newPrefix);
+        }
+      }
+      else if (refTokenType == JavaElementType.REFERENCE_PARAMETER_LIST) {
+        List<LighterASTNode> subTypes = LightTreeUtil.getChildrenOfType(tree, refChild, JavaElementType.TYPE);
+        if (!subTypes.isEmpty()) {
+          for (int i = 0; i < subTypes.size(); i++) {
+            TypeInfo componentInfo = info.genericComponent(i);
+            if (componentInfo != null) {
+              byte[] newPrefix = Arrays.copyOf(prefix, prefix.length + 2);
+              newPrefix[prefix.length] = TypeAnnotationContainer.Collector.TYPE_ARGUMENT;
+              newPrefix[prefix.length + 1] = (byte)i;
+              collectAnnotations(componentInfo, collector, tree, subTypes.get(i), newPrefix);
+            }
+          }
+        }
+      }
+      else if (refTokenType == JavaElementType.ANNOTATION) {
+        collector.add(prefix, LightTreeUtil.toFilteredString(tree, refChild, null));
       }
     }
   }
@@ -554,6 +595,7 @@ public /*sealed*/ abstract class TypeInfo {
    * Instead, create the type structure explicitly, using the corresponding constructors of {@link SimpleTypeInfo}, {@link RefTypeInfo} and
    * {@link DerivedTypeInfo}.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull TypeInfo fromString(@Nullable String text, boolean ellipsis) {
     TypeInfo typeInfo = fromString(text);

@@ -1885,6 +1885,18 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     assertEquals(pomBB.canonicalFile!!.getParent().getPath(), workingDir)
   }
 
+  @Test
+  fun testExcludeTargetForAggregator() = runBlocking {
+    importProjectAsync("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       """.trimIndent())
+    assertModules("project")
+    assertExcludes("project", "target")
+  }
+
   private suspend fun resolveFoldersAndImport() {
     MavenFolderResolver(projectsManager.project).resolveFoldersAndImport(projectsManager.getProjects())
   }

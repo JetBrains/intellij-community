@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.util.List;
 import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.LOCAL_TYPE_ID;
 import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.createFeatureUsageData;
 
+@ApiStatus.Internal
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
   private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 78);
@@ -171,6 +173,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
+  @ApiStatus.Internal
   public static final class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
     @Override
     public @NotNull String getRuleId() {
@@ -189,6 +192,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
+  @ApiStatus.Internal
   public static final class RunTargetValidator extends CustomValidationRule {
     public static final String RULE_ID = "run_target";
 
@@ -212,5 +216,6 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
+  @ApiStatus.Internal
   public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN, TERMINATED_BY_STOP, TERMINATED_DUE_TO_RERUN}
 }

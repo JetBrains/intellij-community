@@ -34,7 +34,6 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.function.Function;
 
-public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
+public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvider, Disposable {
   private final ComponentListener myMoveListener = new ComponentAdapter() {
     @Override
     public void componentMoved(ComponentEvent e) {
@@ -350,20 +349,13 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   }
 
   @Override
-  public @Nullable Object getData(final @NotNull @NonNls String dataId) {
-    if (XDEBUGGER_TREE_KEY.is(dataId)) {
-      return this;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    XValueNodeImpl[] selection = getSelectedNodes(XValueNodeImpl.class, null);
+    sink.set(XDEBUGGER_TREE_KEY, this);
+    sink.set(SELECTED_NODES, List.of(selection));
+    if (selection.length == 1 && selection[0].getFullValueEvaluator() == null) {
+      sink.set(PlatformDataKeys.PREDEFINED_TEXT, DebuggerUIUtil.getNodeRawValue(selection[0]));
     }
-    if (SELECTED_NODES.is(dataId)) {
-      return List.of(getSelectedNodes(XValueNodeImpl.class, null));
-    }
-    if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
-      XValueNodeImpl[] selectedNodes = getSelectedNodes(XValueNodeImpl.class, null);
-      if (selectedNodes.length == 1 && selectedNodes[0].getFullValueEvaluator() == null) {
-        return DebuggerUIUtil.getNodeRawValue(selectedNodes[0]);
-      }
-    }
-    return null;
   }
 
   public void rebuildAndRestore(final XDebuggerTreeState treeState) {

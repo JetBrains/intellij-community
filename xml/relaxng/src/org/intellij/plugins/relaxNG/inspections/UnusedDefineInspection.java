@@ -55,8 +55,7 @@ import static com.intellij.util.ObjectUtils.doIfNotNull;
 public class UnusedDefineInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyElementVisitor(holder);
   }
 
@@ -183,8 +182,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private static class MyFix<T extends PsiElement> implements LocalQuickFix {
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return RelaxngBundle.message("relaxng.quickfix.remove-define");
       }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.xml;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -31,7 +31,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * Returns a tag attribute by qualified name.
    *
    * @param qname qualified attribute name, like "ns:name" or "name".
-   * @return null if the attribute not exist.
+   * @return null if the attribute not exists.
    * @see #getAttribute(String, String)
    */
   @Nullable XmlAttribute getAttribute(@NlsSafe String qname);
@@ -42,7 +42,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * Returns a tag attribute value by qualified name.
    *
    * @param qname qualified attribute name, like "ns:name" or "name".
-   * @return null if the attribute not exist.
+   * @return null if the attribute not exists.
    * @see #getAttributeValue(String, String)
    */
   @Nullable @NlsSafe String getAttributeValue(@NlsSafe String qname);
@@ -55,7 +55,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * @param localName new tag's name
    * @param namespace new tag's namespace
    * @param bodyText pass null to create collapsed tag, empty string means creating expanded one
-   * @param enforceNamespacesDeep if you pass some xml tags to {@code bodyText} parameter, this flag sets namespace prefixes for them
+   * @param enforceNamespacesDeep if you pass some XML tags to {@code bodyText} parameter, this flag sets namespace prefixes for them
    * @return created tag. Use {@link #addSubTag(XmlTag, boolean)}} to add it to parent
    */
   XmlTag createChildTag(@NlsSafe String localName, @NlsSafe String namespace, @Nullable @NlsSafe String bodyText, boolean enforceNamespacesDeep);
@@ -99,15 +99,13 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
     return true;
   }
 
-  @Nullable
-  default @NlsSafe String getRealNs(@Nullable String value) {
+  default @Nullable @NlsSafe String getRealNs(@Nullable String value) {
     return value;
   }
 
   @Experimental
-  @Nullable
   @Override
-  default @NlsSafe String getHostName() {
+  default @Nullable @NlsSafe String getHostName() {
     return getLocalName();
   }
 }

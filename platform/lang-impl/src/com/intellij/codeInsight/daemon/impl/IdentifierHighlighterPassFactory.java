@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -26,12 +27,16 @@ public final class IdentifierHighlighterPassFactory {
                                                           @NotNull TextRange visibleRange) {
     if (editor.isOneLineMode() && ((EditorEx)editor).isEmbeddedIntoDialogWrapper()) return null;
     if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET ||
-        DumbService.isDumb(file.getProject()) ||
+        !checkDumbMode(file) ||
         !isEnabled() ||
         (!file.isPhysical() && !file.getOriginalFile().isPhysical())) {
       return null;
     }
     return new IdentifierHighlighterPass(file, editor, visibleRange);
+  }
+
+  private static boolean checkDumbMode(@NotNull PsiFile file) {
+    return !DumbService.isDumb(file.getProject()) || Registry.is("identifier.highlighter.pass.in.dumb.mode");
   }
 
   public static boolean isEnabled() {

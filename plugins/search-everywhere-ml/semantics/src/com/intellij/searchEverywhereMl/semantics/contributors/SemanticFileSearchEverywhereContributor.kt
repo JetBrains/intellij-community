@@ -2,15 +2,13 @@ package com.intellij.searchEverywhereMl.semantics.contributors
 
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
-import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
-import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticFilesProvider
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
@@ -26,6 +24,7 @@ import java.util.function.Consumer
 open class SemanticFileSearchEverywhereContributor(initEvent: AnActionEvent)
   : FileSearchEverywhereContributor(initEvent), SemanticSearchEverywhereContributor,
     SearchEverywhereConcurrentPsiElementsFetcher, PossibleSlowContributor {
+
   override val itemsProvider = SemanticFilesProvider(project)
 
   override var notifyCallback: Consumer<String>? = null
@@ -58,4 +57,8 @@ open class SemanticFileSearchEverywhereContributor(initEvent: AnActionEvent)
     itemsProvider.model = createModel(project)
     itemsProvider.searchScope = myScopeDescriptor.scope as GlobalSearchScope
   }
+
+  override fun createExtendedInfo(): ExtendedInfo? = createPsiExtendedInfo(
+    project = null, file = null, psiElement = ::tryPsiElementFromPossiblySemanticEntry
+  )
 }

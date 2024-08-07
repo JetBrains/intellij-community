@@ -156,6 +156,7 @@
   - name: kotlin.compiler-plugins.kapt
   - name: kotlin.compiler-plugins.kotlinx-serialization.common
   - name: kotlin.compiler-plugins.kotlinx-serialization.gradle
+  - name: kotlin.compiler-plugins.kotlinx-serialization.k2
   - name: kotlin.compiler-plugins.kotlinx-serialization.maven
   - name: kotlin.compiler-plugins.lombok.gradle
   - name: kotlin.compiler-plugins.lombok.maven
@@ -181,9 +182,6 @@
   - name: kotlin.features-trainer
   - name: kotlin.fir
   - name: kotlin.fir.fir-low-level-api-ide-impl
-    libraries:
-      opentest4j:
-      - name: $MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1/opentest4j-1.jar
   - name: kotlin.fir.frontend-independent
   - name: kotlin.formatter
   - name: kotlin.git
@@ -219,6 +217,7 @@
   - name: kotlin.jvm-debugger.eval4j
   - name: kotlin.jvm-debugger.evaluation
   - name: kotlin.jvm-debugger.evaluation.k1
+  - name: kotlin.jvm-debugger.evaluation.k2
   - name: kotlin.jvm-debugger.sequence.k1
   - name: kotlin.jvm-decompiler
   - name: kotlin.maven

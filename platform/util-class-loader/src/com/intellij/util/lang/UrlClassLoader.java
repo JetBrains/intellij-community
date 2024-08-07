@@ -63,7 +63,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   /**
-   * There are two definitions of the `ClassPath` class: one from the app class loader that is used by bootstrap,
+   * There are two definitions of the `ClassPath` class: one from the app class loader that bootstrap uses,
    * and another one from the core class loader produced as a result of creating a plugin class loader.
    * The core class loader doesn't use bootstrap class loader as a parent - instead, only platform classloader is used (only JRE classes).
    */
@@ -215,24 +215,51 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     //
     // com.intellij.util.lang
     // see XxHash3Test.packages
-    if (isSystemClassLoader && packageNameHash == -9217824570049207139L) {
-      // these two classes from com.intellij.util.lang are located in intellij.platform.util module, which shouldn't be loaded by appClassLoader (IDEA-331043)
-      if (!fileNameWithoutExtension.endsWith("/CompoundRuntimeException") && !fileNameWithoutExtension.endsWith("/JavaVersion")) {
-        return appClassLoader.loadClass(name);
-      }
+    if (isSystemClassLoader && packageNameHash == -9217824570049207139L && isNotExcludedLangClasses(fileNameWithoutExtension)) {
+      return appClassLoader.loadClass(name);
     }
 
-    Class<?> clazz;
+    Class<?> aClass;
     try {
-      clazz = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
+      aClass = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
     }
     catch (IOException e) {
       throw new ClassNotFoundException(name, e);
     }
-    if (clazz == null) {
+    if (aClass == null) {
       throw new ClassNotFoundException(name);
     }
-    return clazz;
+    return aClass;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Class<?> loadClassWithPrecomputedMeta(String name,
+                                                         String fileName,
+                                                         String fileNameWithoutExtension,
+                                                         long packageNameHash) throws IOException, ClassNotFoundException {
+    synchronized (getClassLoadingLock(name)) {
+      Class<?> c = findLoadedClass(name);
+      if (c != null) {
+        return c;
+      }
+
+      ClassLoader parent = getParent();
+      if (parent != null) {
+        try {
+          c = parent.loadClass(name);
+        }
+        catch (ClassNotFoundException ignored) {
+        }
+      }
+
+      if (c != null) {
+        return c;
+      }
+      if (isSystemClassLoader && packageNameHash == -9217824570049207139L && isNotExcludedLangClasses(fileNameWithoutExtension)) {
+        return appClassLoader.loadClass(name);
+      }
+      return classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
+    }
   }
 
   private void definePackageIfNeeded(String name) {
@@ -353,32 +380,10 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   @ApiStatus.Internal
   public @Nullable BiFunction<String, Boolean, String> resolveScopeManager;
 
-  public @Nullable Class<?> loadClassInsideSelf(String name,
-                                                String fileName,
-                                                long packageNameHash,
-                                                boolean forceLoadFromSubPluginClassloader) throws IOException {
-    synchronized (getClassLoadingLock(name)) {
-      Class<?> c = findLoadedClass(name);
-      if (c != null) {
-        return c;
-      }
-
-      if (!forceLoadFromSubPluginClassloader) {
-        // "self" makes sense for PluginClassLoader, but not for UrlClassLoader - our parent it is implementation detail
-        ClassLoader parent = getParent();
-        if (parent != null) {
-          try {
-            c = parent.loadClass(name);
-          }
-          catch (ClassNotFoundException ignore) { }
-        }
-
-        if (c != null) {
-          return c;
-        }
-      }
-      return classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
-    }
+  private static boolean isNotExcludedLangClasses(String fileNameWithoutExtension) {
+    // these two classes from com.intellij.util.lang are located in intellij.platform.util module,
+    // which shouldn't be loaded by appClassLoader (IDEA-331043)
+    return !fileNameWithoutExtension.endsWith("/CompoundRuntimeException") && !fileNameWithoutExtension.endsWith("/JavaVersion");
   }
 
   /**
@@ -610,7 +615,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     /**
      * `ZipFile` handles opened in `JarLoader` will be kept in as soft references.
      * Depending on OS, the option significantly speeds up classloading from libraries.
-     * Caveat: on Windows, an unclosed handle locks a file, preventing its modification.
+     *  Warning: on Windows, an unclosed handle locks a file, preventing its modification.
      * Thus, the option is recommended when .jar files are not modified or a process that uses this option is transient.
      */
     public @NotNull UrlClassLoader.Builder allowLock(boolean lockJars) {
@@ -635,10 +640,11 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * `FileLoader` will save a list of files/packages under its root and use this information instead of walking files.
      * Should be used only when the caches can be properly invalidated (when e.g., a new file appears under `FileLoader`'s root).
      * Currently, the flag is used for faster unit tests / debug IDE instance, because IDEA's build process (as of 14.1) ensures deletion of
-     * such information upon appearing new file for output root.
+     * such information upon appearing a new file for output root.
      * <p>
-     * IDEA's building process does not ensure deletion of cached information upon deletion of some file under a local root,
-     * but false positives are not a logical error, since code is prepared for that and disk access is performed upon class/resource loading.
+     * IDEA's building process does not ensure deletion of cached information upon deletion of some file under a local root.
+     * However, false positives are not a logical error,
+     * since code is prepared for that and disk access is performed upon class/resource loading.
      */
     public @NotNull UrlClassLoader.Builder usePersistentClasspathIndexForLocalClassDirectories() {
       this.isClassPathIndexEnabled = true;

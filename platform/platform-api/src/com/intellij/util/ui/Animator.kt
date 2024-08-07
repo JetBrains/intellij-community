@@ -2,7 +2,6 @@
 package com.intellij.util.ui
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -14,18 +13,23 @@ import java.awt.GraphicsEnvironment
 import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.microseconds
 
-abstract class Animator @JvmOverloads constructor(private val name: @NonNls String?,
-                                                  private val totalFrames: Int,
-                                                  private val cycleDuration: Int,
-                                                  private val isRepeatable: Boolean,
-                                                  @JvmField protected val isForward: Boolean = true,
-                                                  coroutineScope: CoroutineScope? = null) : Disposable {
+abstract class Animator @JvmOverloads constructor(
+  private val name: @NonNls String?,
+  private val totalFrames: Int,
+  private val cycleDuration: Int,
+  private val isRepeatable: Boolean,
+  @JvmField protected val isForward: Boolean = true,
+  coroutineScope: CoroutineScope? = null,
+) {
   private var ticker: Job? = null
   private var currentFrame = 0
   private var startTime: Long = 0
   private var startDeltaTime: Long = 0
   private var initialStep = false
-  private val coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() + Dispatchers.Default + ClientId.coroutineContext())
+  private val coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() +
+                                                                Dispatchers.Default +
+                                                                ModalityState.defaultModalityState().asContextElement() +
+                                                                ClientId.coroutineContext())
 
   @Obsolete
   fun isForward(): Boolean = isForward
@@ -133,7 +137,7 @@ abstract class Animator @JvmOverloads constructor(private val name: @NonNls Stri
 
   abstract fun paintNow(frame: Int, totalFrames: Int, cycle: Int)
 
-  override fun dispose() {
+  open fun dispose() {
     stopTicker()
     coroutineScope.cancel()
     isDisposed = true

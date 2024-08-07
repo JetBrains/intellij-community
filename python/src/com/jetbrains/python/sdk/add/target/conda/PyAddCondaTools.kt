@@ -46,7 +46,7 @@ val condaSupportedLanguages: List<LanguageLevel>
  */
 suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(condaIdentity: PyCondaEnvIdentity,
                                                          existingSdks: List<Sdk>,
-                                                         project: Project): Sdk {
+                                                         project: Project?): Sdk {
   val condaEnv = PyCondaEnv(condaIdentity, fullCondaPathOnTarget)
   val flavorAndData = PyFlavorAndData(PyCondaFlavorData(condaEnv), CondaEnvSdkFlavor.getInstance())
 
@@ -74,7 +74,7 @@ private const val PRINT_SYS_EXECUTABLE_SCRIPT = "import sys; print(sys.executabl
 /**
  * @return path to Conda interpreter binary on target
  */
-private suspend fun getCondaPythonBinaryPath(project: Project,
+private suspend fun getCondaPythonBinaryPath(project: Project?,
                                              condaEnv: PyCondaEnv,
                                              targetConfig: TargetEnvironmentConfiguration?): Result<FullPathOnTarget> =
   getCondaInterpreterOutput(project, condaEnv, EmptyProgressIndicator(), PRINT_SYS_EXECUTABLE_SCRIPT, targetConfig).map { it.trim() }
@@ -82,7 +82,7 @@ private suspend fun getCondaPythonBinaryPath(project: Project,
 /**
  * Runs python [command] and returns stdout or error
  */
-private suspend fun getCondaInterpreterOutput(project: Project,
+private suspend fun getCondaInterpreterOutput(project: Project?,
                                               condaEnv: PyCondaEnv,
                                               indicator: ProgressIndicator,
                                               command: String,

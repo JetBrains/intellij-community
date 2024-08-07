@@ -119,12 +119,14 @@ internal class SmoothRobot : Robot {
         }
 
         override fun mouseReleased(e: MouseEvent?) {
-          this.mouseClicked(e)
+          clickLatch.countDown()
+          logger.info("Mouse released on $component")
         }
 
         //on some components, mouse clicked/released are not registered on click
         override fun mousePressed(e: MouseEvent?) {
-          this.mouseClicked(e)
+          clickLatch.countDown()
+          logger.info("Mouse pressed on $component")
         }
       }
 

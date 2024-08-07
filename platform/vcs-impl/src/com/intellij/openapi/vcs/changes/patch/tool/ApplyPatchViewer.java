@@ -41,7 +41,6 @@ import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +49,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-class ApplyPatchViewer implements DataProvider, Disposable {
+class ApplyPatchViewer implements Disposable {
   @Nullable private final Project myProject;
   @NotNull private final DiffContext myContext;
   @NotNull private final ApplyPatchRequest myPatchRequest;
@@ -117,7 +116,14 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     myContentPanel = TwosideContentPanel.createFromHolders(holders);
     myContentPanel.setTitles(titleComponents);
-    myPanel = new SimpleDiffPanel(myContentPanel, this, myContext);
+    myPanel = new SimpleDiffPanel(myContentPanel, myContext) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
+        sink.set(CommonDataKeys.PROJECT, myProject);
+        sink.set(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE, myPrevNextDifferenceIterable);
+      }
+    };
 
     myModel = new MyModel(myProject, myResultEditor.getDocument());
 
@@ -237,18 +243,6 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   @NotNull
   public List<ApplyPatchChange> getPatchChanges() {
     return myPatchChanges;
-  }
-
-  @Nullable
-  @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    else if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
-      return myPrevNextDifferenceIterable;
-    }
-    return null;
   }
 
   @NotNull

@@ -24,6 +24,8 @@
     <extensionPoint name="xdebugger.inlineBreakpointsDisabler" interface="com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler" dynamic="true"/>
 
     <extensionPoint name="xdebugger.textValueVisualizer" interface="com.intellij.xdebugger.ui.TextValueVisualizer" dynamic="true"/>
+
+    <extensionPoint name="xdebugger.hotSwapUiExtension" interface="com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -109,6 +111,7 @@
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
     <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.debugger.messages"/>
+    <notificationGroup id="HotSwap Messages" displayType="BALLOON" bundle="messages.XDebuggerBundle" key="notification.group.debugger.hotswap.messages" isLogByDefault="false"/>
     <notificationGroup id="Breakpoint hit" displayType="NONE" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.breakpoint.hit"/>
     <notificationGroup id="Attach to Process action" displayType="BALLOON" bundle="messages.XDebuggerBundle" key="notification.group.attach.to.process"/>
 
@@ -134,6 +137,8 @@
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JsonTextVisualizer"/>
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JwtTextVisualizer"/>
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
+
+    <editorFloatingToolbarProvider implementation="com.intellij.xdebugger.impl.hotswap.HotSwapFloatingToolbarProvider"/>
   </extensions>
 
   <actions>
@@ -195,6 +200,10 @@
 
     <group id="XDebugger.RunToCursorInlayExtraActions">
     </group>
+
+    <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.xdebugger.impl.hotswap.HotSwapModifiedFilesAction">
+      <add-to-group group-id="DebugReloadGroup" anchor="first"/>
+    </action>
   </actions>
 
   <projectListeners>

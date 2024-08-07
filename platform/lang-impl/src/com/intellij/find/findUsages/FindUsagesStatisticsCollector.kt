@@ -9,7 +9,9 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.usages.impl.ScopeRuleValidator
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object FindUsagesStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 

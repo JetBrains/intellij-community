@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
@@ -73,14 +72,22 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use MutableProperty and Kotlin UI DSL 2")
+@Deprecated("Use MutableProperty and Kotlin UI DSL 2", level = DeprecationLevel.HIDDEN)
 fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
   return PropertyBinding({ get() }, { set(it!!) })
 }
 
+private fun <T> PropertyBinding<T>.intToNullable(): PropertyBinding<T?> {
+  return PropertyBinding({ get() }, { set(it!!) })
+}
+
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 inline fun <reified T : Any> KMutableProperty0<T>.toBinding(): PropertyBinding<T> {
+  return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
+}
+
+inline fun <reified T : Any> KMutableProperty0<T>.intToBinding(): PropertyBinding<T> {
   return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
 }
 
@@ -210,8 +217,12 @@ interface CellBuilder<out T : JComponent> {
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBuilder<T> {
+  return also { task(component) }
+}
+
+private fun <T : JComponent> CellBuilder<T>.intApplyToComponent(task: T.() -> Unit): CellBuilder<T> {
   return also { task(component) }
 }
 
@@ -322,7 +333,7 @@ abstract class Cell : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun checkBox(@Checkbox text: String, prop: KMutableProperty0<Boolean>, @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
-    return checkBox(text, prop.toBinding(), comment)
+    return checkBox(text, prop.intToBinding(), comment)
   }
 
   @ApiStatus.ScheduledForRemoval
@@ -346,7 +357,7 @@ abstract class Cell : BaseBuilder {
                property: GraphProperty<Boolean>,
                comment: @DetailedDescription String? = null): CellBuilder<JBCheckBox> {
     val component = JBCheckBox(text, property.get())
-    return component(comment = comment).withGraphProperty(property).applyToComponent { component.bind(property) }
+    return component(comment = comment).withGraphProperty(property).intApplyToComponent { component.bind(property) }
   }
 
   @ApiStatus.ScheduledForRemoval
@@ -373,7 +384,7 @@ abstract class Cell : BaseBuilder {
                    modelBinding: PropertyBinding<T?>,
                    renderer: ListCellRenderer<T?>? = null): CellBuilder<ComboBox<T>> {
     return component(ComboBox(model))
-      .applyToComponent {
+      .intApplyToComponent {
         this.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
         selectedItem = modelBinding.get()
       }
@@ -391,14 +402,14 @@ abstract class Cell : BaseBuilder {
     property: GraphProperty<T>,
     renderer: ListCellRenderer<T?>? = null
   ): CellBuilder<ComboBox<T>> {
-    return comboBoxInt(model, PropertyBinding(property::get, property::set).toNullable(), renderer)
+    return comboBoxInt(model, PropertyBinding(property::get, property::set).intToNullable(), renderer)
       .withGraphProperty(property)
-      .applyToComponent { bind(property) }
+      .intApplyToComponent { bind(property) }
   }
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JBTextField> = textFieldInt(prop.toBinding(), columns)
+  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JBTextField> = textFieldInt(prop.intToBinding(), columns)
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)

@@ -432,7 +432,7 @@ private suspend fun createBuildContext(
           projectHome = request.projectDir,
           tempDir = tempDir,
           artifactDir = buildDir.resolve("artifacts"),
-          searchableOptionDir = request.projectDir.normalize().toAbsolutePath().resolve("out/dev-data/searchable-options"),
+          searchableOptionDir = request.projectDir.resolve("out/dev-data/searchable-options"),
         )
         Files.createDirectories(tempDir)
 
@@ -596,3 +596,7 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
 }
 
 private fun getCommunityHomePath(homePath: Path): Path = if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
+
+fun getAdditionalPluginMainModules(): List<String> {
+  return System.getProperty("additional.modules")?.splitToSequence(',')?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList() ?: emptyList()
+}

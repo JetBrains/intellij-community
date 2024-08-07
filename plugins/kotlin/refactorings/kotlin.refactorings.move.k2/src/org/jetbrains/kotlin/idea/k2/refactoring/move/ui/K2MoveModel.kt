@@ -161,21 +161,17 @@ sealed class K2MoveModel {
         override val moveCallBack: MoveCallback? = null
     ) : K2MoveModel() {
         override fun toDescriptor(): K2MoveOperationDescriptor.Declarations {
-            val srcDescr = source.toDescriptor()
-            val targetDescr = target.toDescriptor()
-            val searchReferences = if (inSourceRoot) searchReferences.state else false
-            val moveDescriptor = K2MoveDescriptor.Declarations(
-                project,
-                srcDescr,
-                targetDescr
-            )
             return K2MoveOperationDescriptor.Declarations(
                 project,
-                listOf(moveDescriptor),
+                source.elements,
+                target.directory,
+                target.fileName,
+                target.pkgName,
                 searchForText.state,
-                searchReferences,
+                if (inSourceRoot) searchReferences.state else false,
                 searchInComments.state,
-                dirStructureMatchesPkg = true,
+                true,
+                mppDeclarations.state,
                 moveCallBack
             )
         }
@@ -254,9 +250,18 @@ sealed class K2MoveModel {
                 return null
             }
 
+            val declarationsFromFiles = elementsToMove.flatMap { elem ->
+                when (elem) {
+                    is KtFile -> elem.declarations.filterIsInstance<KtNamedDeclaration>()
+                    is KtNamedDeclaration -> listOf(elem)
+                    else -> listOf()
+                }
+            }
+
             val inSourceRoot = inSourceRoot(elementsToMove)
             return when {
-                targetContainer is PsiDirectory || isMultiFileMove(elementsToMove) -> { // this move can contain foreign language files
+                targetContainer is PsiDirectory || isMultiFileMove(elementsToMove) || declarationsFromFiles.isEmpty() -> {
+                    // this move can contain foreign language files
                     val source = K2MoveSourceModel.FileSource(elementsToMove.fileElements().toSet())
                     val target = if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
@@ -271,14 +276,7 @@ sealed class K2MoveModel {
                     Files(project, source, target, inSourceRoot, moveCallBack)
                 }
                 targetContainer is KtFile || targetContainer.isSingleClassContainer() || isSingleFileMove(elementsToMove) -> {
-                    val elementsFromFiles = elementsToMove.flatMap { elem ->
-                        when (elem) {
-                            is KtFile -> elem.declarations.filterIsInstance<KtNamedDeclaration>()
-                            is KtNamedDeclaration -> listOf(elem)
-                            else -> error("Element to move should be a file or declaration")
-                        }
-                    }.toSet()
-                    val source = K2MoveSourceModel.ElementSource(elementsFromFiles)
+                    val source = K2MoveSourceModel.ElementSource(declarationsFromFiles.toSet())
                     val targetFile = targetContainer?.containingFile
                     val target = if (targetFile is KtFile) {
                         K2MoveTargetModel.File(targetFile)

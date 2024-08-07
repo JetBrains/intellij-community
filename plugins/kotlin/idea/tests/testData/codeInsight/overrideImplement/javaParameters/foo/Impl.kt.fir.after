@@ -5,3 +5,6 @@ class Impl(): Intf {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER_K2: "fooBar(i: Int, s: Array<out String?>?, foo: Any?): Unit"
+// MEMBER_K1: "fooBar(i: Int, s: Array<(out) String!>!, foo: Any!): Unit"

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -19,6 +19,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusOwner;
 import com.intellij.util.messages.impl.MessageBusFactoryImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
   private boolean myDisposed;
 
+  @Internal
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     picoContainer = new DefaultPicoContainer((DefaultPicoContainer)parent) {
       @Override

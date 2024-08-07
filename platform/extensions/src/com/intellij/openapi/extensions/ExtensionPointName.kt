@@ -149,6 +149,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
                                                  parentDisposable = parentDisposable)
   }
 
+  @Internal
   fun addExtensionPointListener(coroutineScope: CoroutineScope, listener: ExtensionPointListener<T>) {
     getPointImpl(null).addExtensionPointListener(listener = listener,
                                                  invokeForLoadedExtensions = false,
@@ -184,6 +185,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * `cacheId` is required because it's dangerous to rely on identity of functional expressions.
    * JLS doesn't specify whether a new instance is produced or some common instance is reused for lambda expressions (see 15.27.4).
    */
+  @Internal
   @ApiStatus.Experimental
   fun <K : Any> getByGroupingKey(key: K, cacheId: Class<*>, keyMapper: Function<T, K?>): List<T> {
     return getByGroupingKey(point = getPointImpl(null), cacheId = cacheId, key = key, keyMapper = keyMapper)
@@ -194,6 +196,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    *
    * To exclude an extension from cache, return a null key.
    */
+  @Internal
   @ApiStatus.Experimental
   fun <K : Any> getByKey(key: K, cacheId: Class<*>, keyMapper: Function<T, K?>): T? {
     return getByKey(point = getPointImpl(null), key = key, cacheId = cacheId, keyMapper = keyMapper)
@@ -204,6 +207,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    *
    * To exclude an extension from cache, return a null key.
    */
+  @Internal
   @ApiStatus.Experimental
   fun <K : Any, V : Any> getByKey(key: K,
                                   cacheId: Class<*>,
@@ -212,6 +216,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     return getByKey(point = getPointImpl(null), key = key, cacheId = cacheId, keyMapper = keyMapper, valueMapper = valueMapper)
   }
 
+  @Internal
   @ApiStatus.Experimental
   fun <K : Any, V : Any> computeIfAbsent(key: K, cacheId: Class<*>, valueMapper: Function<K, V>): V {
     return computeIfAbsent(point = getPointImpl(null), key = key, cacheId = cacheId, valueProducer = valueMapper)

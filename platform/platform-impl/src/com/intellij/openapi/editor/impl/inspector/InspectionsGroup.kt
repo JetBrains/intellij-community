@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
@@ -44,7 +45,9 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
-class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: EditorImpl) : DefaultActionGroup() {
+class InspectionsGroup(
+  val analyzerGetter: () -> AnalyzerStatus, val editor: EditorImpl
+) : DefaultActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
   companion object {
     val INSPECTION_TYPED_ERROR = DataKey.create<StatusItem>("INSPECTION_TYPED_ERROR")
     val idCounter = AtomicInteger(0)
@@ -108,6 +111,10 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
   private class InspectionsSettingAction(val analyzerGetter: () -> AnalyzerStatus, val fusTabId: Int) : DumbAwareAction(), CustomComponentAction {
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.BGT
+    }
+
+    init {
+      templatePresentation.text = DaemonBundle.message("iw.inspection.cog.tooltip")
     }
 
     override fun createCustomComponent(presentation: Presentation, place: String): ActionButton {

@@ -24,6 +24,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.python-core-capable"/>
+    <plugin id="com.intellij.modules.json"/>
     <plugin id="org.toml.lang"/>
   </dependencies>
 
@@ -50,7 +51,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.grazie"/>
     <module name="intellij.python.langInjection"/>
     <module name="intellij.python.markdown"/>
-    <module name="intellij.python.reStructuredText"/>
     <module name="intellij.python.terminal"/>
   </content>
 
@@ -456,6 +456,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <registryKey defaultValue="true" description="Halt variable resolve threads on step/resume" restartRequired="false"
                  key="python.debug.halt.variable.resolve.threads.on.step.resume"/>
 
+    <registryKey defaultValue="false" description="Use a single port for communication between PyCharm and the debugger"
+                 restartRequired="false" key="python.debug.use.single.port"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
@@ -741,6 +744,14 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <extensionPoint qualifiedName="Pythonid.customProcessHandlerProvider"
                     interface="com.jetbrains.python.run.PyCustomProcessHandlerProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.jetbrains.python.testing.pyTestLineMarkerContributorCustomizer"
+                    interface="com.jetbrains.python.testing.PyTestLineMarkerContributorCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.jetbrains.python.configuration.pyIntegratedToolsTestPanelCustomizer"
+                    interface="com.jetbrains.python.configuration.PyIntegratedToolsTestPanelCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -844,7 +855,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
   <actions>
     <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"
-            icon="PlatformDebuggerImplIcons.Actions.Force_step_into"/>
+            icon="AllIcons.Debugger.ForceStepInto"/>
 
     <!-- Console -->
     <action id="com.jetbrains.python.console.RunPythonOrDebugConsoleAction"

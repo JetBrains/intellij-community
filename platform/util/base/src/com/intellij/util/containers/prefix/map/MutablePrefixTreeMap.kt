@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see PrefixTreeMap
  */
 @ApiStatus.NonExtendable
+@ApiStatus.Internal
 interface MutablePrefixTreeMap<Key, Value> : PrefixTreeMap<Key, Value> {
 
   operator fun set(key: Key, value: Value): Value?

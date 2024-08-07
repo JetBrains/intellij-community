@@ -36,6 +36,6 @@ class CollapsingComponentBorder(private val editor: Editor) : Border {
   override fun isBorderOpaque(): Boolean = false
 
   companion object {
-    private val borderInsets = JBUI.insetsBottom(10)
+    private val borderInsets = JBUI.insetsBottom(JBUI.scale(4))
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector.logActionBlocked
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference
  * or explicitly asks the user if it should proceed in a limited way or cancel (copying, moving, see IDEA-192489, IDEA-240078, IDEA-240078).
  * This case is not handled by this collector.
  */
+@ApiStatus.Internal
 object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 8)
 

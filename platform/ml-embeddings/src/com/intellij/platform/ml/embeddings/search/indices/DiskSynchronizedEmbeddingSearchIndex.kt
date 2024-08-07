@@ -6,11 +6,11 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.progress.Cancellation.checkCancelled
 import com.intellij.platform.ml.embeddings.search.indices.EntitySourceType.DEFAULT
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.search.utils.SuspendingReadWriteLock
 import com.intellij.util.containers.CollectionFactory
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.nio.file.Path
@@ -85,7 +85,7 @@ open class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var lim
     shouldCount: Boolean,
   ) = lock.write {
     for ((id, embedding) in values) {
-      ensureActive()
+      checkCancelled()
       uncheckedIds.remove(id)
       if (limit != null && idToEntry.size >= limit!!) break
       val entry = idToEntry.getOrPut(id) {
@@ -134,7 +134,7 @@ open class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var lim
           .findClosest(searchEmbedding, topK, similarityThreshold)
       }
       catch (e: Exception) {
-        ensureActive()
+        checkCancelled()
         if (ApplicationManager.getApplication().isInternal) throw e
         continue
       }

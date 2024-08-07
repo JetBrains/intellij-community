@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.visualization.inlay.JupyterBoundsChangeHandler
+import org.jetbrains.plugins.notebooks.visualization.inlay.JupyterBoundsChangeListener
 import org.jetbrains.plugins.notebooks.visualization.use
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -14,13 +16,19 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 class EditorCellFoldingBar(
-  private val editor: EditorEx,
+  private val editor: EditorImpl,
   private val yAndHeightSupplier: () -> Pair<Int, Int>,
   private val toggleListener: () -> Unit,
 ) {
   // Why not use the default approach with RangeHighlighters?
   // Because it is not possible to create RangeHighlighter for every single inlay, only on a chain of consequential inlays.
   private var panel: JComponent? = null
+
+  private val boundsChangeListener = object : JupyterBoundsChangeListener {
+    override fun boundsChanged() {
+      updateBounds()
+    }
+  }
 
   var visible: Boolean
     get() = panel?.isVisible == true
@@ -31,6 +39,7 @@ class EditorCellFoldingBar(
         val panel = createFoldingBar()
         editor.gutterComponentEx.add(panel)
         this.panel = panel
+        JupyterBoundsChangeHandler.get(editor)?.subscribe(boundsChangeListener)
         updateBounds()
       }
       else {
@@ -52,6 +61,7 @@ class EditorCellFoldingBar(
         remove(it)
         repaint()
       }
+      JupyterBoundsChangeHandler.get(editor)?.unsubscribe(boundsChangeListener)
       panel = null
     }
   }

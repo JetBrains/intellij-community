@@ -1,16 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.labels;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -25,7 +21,7 @@ import java.awt.event.InputEvent;
  * @deprecated use {@link com.intellij.ui.components.AnActionLink} instead
  */
 @Deprecated(forRemoval = true)
-public class ActionLink extends LinkLabel<Object> implements DataProvider {
+public class ActionLink extends LinkLabel<Object> implements UiCompatibleDataProvider {
   private static final EmptyIcon ICON = JBUIScale.scaleIcon(EmptyIcon.create(0, 12));
   private final AnAction myAction;
   private InputEvent myEvent;
@@ -94,15 +90,12 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
-      final Point p = SwingUtilities.getRoot(this).getLocationOnScreen();
-      return new Rectangle(p.x, p.y + getHeight(), 0, 0);
-    }
-    if (PlatformDataKeys.CONTEXT_MENU_POINT.is(dataId)) {
-      return SwingUtilities.convertPoint(this, 0, getHeight(), UIUtil.getRootPane(this));
-    }
-    return myAction instanceof DataProvider ? ((DataProvider)myAction).getData(dataId) : null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    Point p = SwingUtilities.getRoot(this).getLocationOnScreen();
+    sink.set(PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE, new Rectangle(p.x, p.y + getHeight(), 0, 0));
+    sink.set(PlatformDataKeys.CONTEXT_MENU_POINT,
+             SwingUtilities.convertPoint(this, 0, getHeight(), UIUtil.getRootPane(this)));
+    DataSink.uiDataSnapshot(sink, myAction);
   }
 
   @TestOnly

@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
@@ -52,7 +52,7 @@ fun reorderJar(relativePath: String, file: Path) {
   spanBuilder("reorder jar")
     .setAttribute("relativePath", relativePath)
     .setAttribute("file", file.toString())
-    .useWithoutActiveScope {
+    .use {
       reorderJar(jarFile = file, orderedNames = orderedNames)
     }
 }
@@ -62,7 +62,7 @@ internal val excludedLibJars: Set<String> = java.util.Set.of(PlatformJarNames.TE
 internal fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
   spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
-    .useWithoutActiveScope { span ->
+    .use { span ->
       val existing = HashSet<Path>()
       addJarsFromDir(dir = libDir) { paths ->
         paths.filterTo(existing) { !excludedLibJars.contains(it.fileName.toString()) }

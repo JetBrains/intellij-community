@@ -19,11 +19,10 @@ import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
 
 // Please do not make this class concrete<PsiElement>.
 // This prevents languages with polyadic expressions or sequences
@@ -113,22 +112,7 @@ public abstract class OccurrencesChooser<T> {
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
-      .setRenderer(new DefaultListCellRenderer() {
-        @Override
-        public Component getListCellRendererComponent(final JList list,
-                                                      final Object value,
-                                                      final int index,
-                                                      final boolean isSelected,
-                                                      final boolean cellHasFocus) {
-          final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          @SuppressWarnings("unchecked") final C choices = (C)value;
-
-          if (choices != null) {
-            setText(choices.formatDescription(occurrencesMap.get(choices).size()));
-          }
-          return rendererComponent;
-        }
-      })
+      .setRenderer(textListCellRenderer(c -> c == null ? "" : c.formatDescription(occurrencesMap.get(c).size())))
       .setItemSelectedCallback(value -> {
         if (value == null) return;
         dropHighlighters();

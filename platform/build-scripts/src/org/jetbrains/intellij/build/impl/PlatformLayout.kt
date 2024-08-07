@@ -77,8 +77,6 @@ class PlatformLayout: BaseLayout() {
   }
 
   private fun isSkippedLibrary(library: JpsLibrary, libsToUnpack: Collection<String>): Boolean {
-    return library.createReference().parentReference is JpsModuleReference ||
-           libsToUnpack.contains(library.name) ||
-           isProjectLibraryExcluded(library.name)
+    return library.createReference().parentReference is JpsModuleReference || libsToUnpack.contains(library.name) || isProjectLibraryExcluded(library.name)
   }
 }

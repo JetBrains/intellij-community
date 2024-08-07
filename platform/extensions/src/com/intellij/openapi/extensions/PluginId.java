@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * via {@link com.intellij.ide.plugins.PluginManagerCore#getPlugin(PluginId)} method.
  */
 public final class PluginId implements Comparable<PluginId> {
+  @Internal
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
   private static final Map<String, PluginId> registeredIds = new ConcurrentHashMap<>();
@@ -38,6 +40,7 @@ public final class PluginId implements Comparable<PluginId> {
     return null;
   }
 
+  @Internal
   @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableSet()")
   public static @NotNull Set<PluginId> getRegisteredIds() {
     return Collections.unmodifiableSet(new HashSet<>(registeredIds.values()));

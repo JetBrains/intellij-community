@@ -119,7 +119,7 @@
 
     <persistentFsConnectionListener implementation="com.intellij.openapi.fileTypes.impl.IgnoredFileCacheCleaner"/>
 
-    <applicationService serviceImplementation="com.intellij.util.net.OverrideDefaultJdkProxy" preload="true"/>
+    <applicationInitializedListener implementation="com.intellij.util.net.OverrideDefaultJdkProxy"/>
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable"/>
     <applicationService serviceInterface="com.intellij.util.net.ProxySettings"
                         serviceImplementation="com.intellij.util.net.OverrideCapableProxySettingsImpl"/>
@@ -658,8 +658,6 @@
 
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <bundledColorScheme id="High contrast" path="themes/highContrastScheme.xml"/>
-
-    <iconMapper mappingFile="CrossModuleIcons.json"/>
 
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
@@ -1283,10 +1281,6 @@
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.GCTroubleInfoCollector"/>
 
     <!-- experiments -->
-    <experimentalFeature id="wsl.legacy.distribution" percentOfUsers="0">
-      <description>Makes legacy Ubuntu distribution (bash.exe) available</description>
-    </experimentalFeature>
-
     <experimentalFeature id="linux.native.menu" percentOfUsers="100" requireRestart="true">
       <description>Integration with global menu in Linux</description>
     </experimentalFeature>
@@ -1739,10 +1733,6 @@
     <registryKey key="search.everywhere.preview"
                  defaultValue="true"
                  description="Enables preview of the selected element in the Search Everywhere"/>
-
-    <registryKey key="search.everywhere.preview.default"
-                 defaultValue="false"
-                 description="Show preview of the selected element in the Search Everywhere by default"/>
 
     <registryKey key="search.everywhere.recents"
                  defaultValue="true"

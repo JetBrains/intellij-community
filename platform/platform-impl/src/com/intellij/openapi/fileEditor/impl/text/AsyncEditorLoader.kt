@@ -130,24 +130,22 @@ class AsyncEditorLoader internal constructor(
       )
       // await instead of join to get errors here
       try {
-        LOG.trace { "async editor task awaiting for $editorFileName" }
         task.await()
         LOG.trace { "async editor task finished for $editorFileName" }
       }
       finally {
         indicatorJob.cancel()
-        LOG.trace { "spinner icon canceled for $editorFileName" }
       }
 
-      // mark as loaded before daemonCodeAnalyzer restart
-      val delayedActions = delayedActions.getAndSet(null)
-      textEditor.editor.putUserData(ASYNC_LOADER, null)
-
-      val scrollingModel = textEditor.editor.scrollingModel
       withContext(Dispatchers.EDT + CoroutineName("execute delayed actions")) {
+        // mark as loaded before daemonCodeAnalyzer restart
+        // do it from EDT to avoid execution of any following scroll requests before already scheduled delayedActions
+        textEditor.editor.putUserData(ASYNC_LOADER, null)
+
+        val scrollingModel = textEditor.editor.scrollingModel
         scrollingModel.disableAnimation()
         try {
-          executeDelayedActions(delayedActions)
+          executeDelayedActions(delayedActions.getAndSet(null))
         }
         finally {
           scrollingModel.enableAnimation()
@@ -221,7 +219,7 @@ private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedSc
 
   fun isReady(): Boolean {
     val extentSize = viewport.extentSize
-    return extentSize != null && extentSize.width != 0 && extentSize.height != 0
+    return extentSize.width != 0 && extentSize.height != 0
   }
 
   if (viewport.isShowing && isReady()) {
@@ -256,12 +254,9 @@ private fun CoroutineScope.showLoadingIndicator(
   require(startDelay >= Duration.ZERO)
 
   val scheduleTimeMs = System.currentTimeMillis()
-  LOG.trace { "spinner icon scheduled for $editorFileName at $scheduleTimeMs ms" }
 
   return launch {
     val delayBeforeIcon = max(0, startDelay.inWholeMilliseconds - (System.currentTimeMillis() - scheduleTimeMs))
-    LOG.trace { "spinner icon delaying $delayBeforeIcon ms for $editorFileName" }
-
     delay(delayBeforeIcon)
 
     val processIconRef = AtomicReference<AnimatedIcon>()

@@ -95,7 +95,7 @@ internal class WorkspaceFolderImporter(
                         StandardMavenModuleType.MAIN_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
                         StandardMavenModuleType.TEST_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
                         StandardMavenModuleType.COMPOUND_MODULE -> cachedFolders.folders.filter { exceptSources(it) }
-                        StandardMavenModuleType.AGGREGATOR -> emptyList()
+                        StandardMavenModuleType.AGGREGATOR -> cachedFolders.folders.filter { it is ContentRootCollector.ExcludedFolder }
                         else -> cachedFolders.folders
                       })
   }

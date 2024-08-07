@@ -504,8 +504,6 @@ class WSLDistributionTest {
 enum class WslTestStrategy { Legacy, Ijent }
 
 private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
-  override val id: IjentId get() = throw UnsupportedOperationException()
-
   override val platform: IjentPlatform get() = throw UnsupportedOperationException()
 
   override val isRunning: Boolean get() = true
@@ -513,6 +511,8 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
   override val info: IjentPosixInfo get() = throw UnsupportedOperationException()
 
   override fun close(): Unit = Unit
+
+  override suspend fun waitUntilExit(): Unit = Unit
 
   override val exec: IjentExecApi get() = MockIjentExecApi(adapter, rootUser)
 

@@ -33,7 +33,8 @@ import javax.swing.*
 /**
  * @author Eugene Belyaev
  */
-class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl) : AnchoredButton(), DataProvider {
+class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
+  : AnchoredButton(), UiDataProvider {
   /**
    * This is analog of Swing mnemonic. We cannot use the standard ones
    * because it causes typing of "funny" characters into the editor.
@@ -93,12 +94,9 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   val id: String
     get() = toolWindow.id
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      PlatformDataKeys.TOOL_WINDOW.`is`(dataId) -> toolWindow
-      CommonDataKeys.PROJECT.`is`(dataId) -> toolWindow.toolWindowManager.project
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.TOOL_WINDOW] = toolWindow
+    sink[CommonDataKeys.PROJECT] = toolWindow.toolWindowManager.project
   }
 
   override fun getMnemonic(): Int = mnemonic

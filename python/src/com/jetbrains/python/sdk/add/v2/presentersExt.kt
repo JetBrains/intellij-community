@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -13,9 +12,10 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
-import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
+import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.suggestAssociatedSdkName
@@ -23,7 +23,7 @@ import java.nio.file.Path
 
 
 // todo should it be overriden for targets?
-internal fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Path, projectPath: String, baseSdk: PythonSelectableInterpreter): Sdk? {
+internal fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Path, projectPath: Path, baseSdk: PythonSelectableInterpreter): Result<Sdk> {
 
   val venvPathOnTarget = venvPath.convertToPathOnTarget(targetEnvironmentConfiguration)
 
@@ -35,48 +35,35 @@ internal fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pa
   }
 
 
-  createVirtualenv(baseSdkPath!!,  // todo handle null
+  createVirtualenv(baseSdkPath!!,
                    venvPathOnTarget,
                    projectPath,
-                   targetEnvironmentConfiguration,
-                   this.existingSdks,
-                   null,
-                   null,
-                   inheritSitePackages = state.inheritSitePackages.get(),
-                   makeShared = state.makeAvailable.get())
+                   inheritSitePackages = state.inheritSitePackages.get())
 
-  if (targetEnvironmentConfiguration == null) {
-    val venvPython = PythonSdkUtil.getPythonExecutable(venvPathOnTarget)
+  if (targetEnvironmentConfiguration != null) error("Remote targets aren't supported")
+  val venvPython = PythonSdkUtil.getPythonExecutable(venvPathOnTarget)
 
-    val homeFile = try {
-      StandardFileSystems.local().refreshAndFindFileByPath(venvPython!!)!!
-    }
-    catch (e: ExecutionException) {
-      showSdkExecutionException(null, e, PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
-      return null
-    }
-
-    val suggestedName = /*suggestedSdkName ?:*/ suggestAssociatedSdkName(homeFile.path, projectPath)
-    val newSdk = SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
-                                         PythonSdkType.getInstance(),
-                                         false, null, suggestedName)
-
-    SdkConfigurationUtil.addSdk(newSdk!!)
-
-    // todo check exclude
-    ProjectManager.getInstance().openProjects
-      .firstNotNullOfOrNull { ModuleUtil.findModuleForFile(homeFile, it) }
-      ?.excludeInnerVirtualEnv(newSdk)
-
-
-    return newSdk
-
+  val homeFile = try {
+    StandardFileSystems.local().refreshAndFindFileByPath(venvPython!!)!!
   }
-  // todo find venv path on target
+  catch (e: ExecutionException) {
+    return Result.failure(e)
+  }
 
-  return null
+  val suggestedName = /*suggestedSdkName ?:*/ suggestAssociatedSdkName(homeFile.path, projectPath.toString())
+  val newSdk = SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
+                                             PythonSdkType.getInstance(),
+                                             false, null, suggestedName)
+
+  SdkConfigurationUtil.addSdk(newSdk!!)
+
+  // todo check exclude
+  ProjectManager.getInstance().openProjects
+    .firstNotNullOfOrNull { ModuleUtil.findModuleForFile(homeFile, it) }
+    ?.excludeInnerVirtualEnv(newSdk)
+  return Result.success(newSdk)
+
 }
-
 
 
 // todo rewrite this
@@ -89,8 +76,8 @@ internal fun PythonAddInterpreterModel.selectCondaEnvironment(identity: PyCondaE
                                          TaskCancellation.nonCancellable()) {
     //PyCondaCommand(condaExecutableOnTarget, targetConfig = targetEnvironmentConfiguration)
     PyCondaCommand(state.condaExecutable.get(), targetConfig = targetEnvironmentConfiguration).createCondaSdkFromExistingEnv(identity,
-                                                                                                                         this@selectCondaEnvironment.existingSdks,
-                                                                                                                         ProjectManager.getInstance().defaultProject)
+                                                                                                                             this@selectCondaEnvironment.existingSdks,
+                                                                                                                             ProjectManager.getInstance().defaultProject)
   }
 
   (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
@@ -103,5 +90,6 @@ internal fun PythonAddInterpreterModel.installPythonIfNeeded(interpreter: Python
   // todo use target config
   return if (interpreter is InstallableSelectableInterpreter) {
     installBaseSdk(interpreter.sdk, existingSdks)?.homePath ?: return null
-  } else interpreter.homePath
+  }
+  else interpreter.homePath
 }

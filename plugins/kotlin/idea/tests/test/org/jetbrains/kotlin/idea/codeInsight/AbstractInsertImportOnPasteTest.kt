@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndRemoveRedundantEmptyLinesAtTheEnd
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
+    private val CLEAR_FILE_DIRECTIVE = "// CLEAR_FILE"
     private val TODO_INVESTIGATE_DIRECTIVE = "// TODO: Investigation is required"
     private val NO_ERRORS_DUMP_DIRECTIVE = "// NO_ERRORS_DUMP"
     private val DELETE_DEPENDENCIES_BEFORE_PASTE_DIRECTIVE = "// DELETE_DEPENDENCIES_BEFORE_PASTE"
@@ -104,6 +106,13 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
                 runWriteAction {
                     dependencyPsiFile1?.virtualFile?.delete(null)
                     dependencyPsiFile2?.virtualFile?.delete(null)
+                }
+            }
+
+            if (InTextDirectivesUtils.isDirectiveDefined(testFileText, CLEAR_FILE_DIRECTIVE)) {
+                myFixture.project.executeWriteCommand("") {
+                    val fileDocument = myFixture.file.fileDocument
+                    fileDocument.deleteString(0, fileDocument.textLength)
                 }
             }
 

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 import kotlin.collections.indexOf
 
-object AddConstructorParameterFromSuperTypeCallFixFactory {
+internal object AddConstructorParameterFromSuperTypeCallFixFactory {
     @OptIn(KaExperimentalApi::class)
     private fun KaSession.createCallFix(diagnostic: KaFirDiagnostic.NoValueForParameter): AddConstructorParameterFromSuperTypeCallFix? {
         val superTypeCallEntry = diagnostic.psi as? KtSuperTypeCallEntry ?: return null

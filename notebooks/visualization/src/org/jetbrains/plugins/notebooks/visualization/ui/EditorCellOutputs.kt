@@ -12,6 +12,7 @@ import com.intellij.util.asSafely
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import org.jetbrains.plugins.notebooks.visualization.SwingClientProperty
+import org.jetbrains.plugins.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import org.jetbrains.plugins.notebooks.visualization.outputs.*
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComponent
@@ -23,8 +24,6 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.Toolkit
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 
 class EditorCellOutputs(
@@ -53,7 +52,7 @@ class EditorCellOutputs(
   val outputs: List<EditorCellOutput>
     get() = _outputs
 
-  private val innerComponent = InnerComponent().also {
+  internal val innerComponent = InnerComponent().also {
     it.maxHeight = if (!ApplicationManager.getApplication().isUnitTestMode) {
       (Toolkit.getDefaultToolkit().screenSize.height * 0.3).toInt()
     }
@@ -65,7 +64,18 @@ class EditorCellOutputs(
   private val outerComponent = SurroundingComponent.create(editor, innerComponent).also {
     DataManager.registerDataProvider(it, NotebookCellDataProvider(editor, it, interval))
   }
-  private var inlay: Inlay<*>? = null
+
+  internal var inlay: Inlay<*>? = null
+    private set(value) {
+      val oldHeight = field?.heightInPixels ?: 0
+      val newHeight = value?.heightInPixels ?: 0
+
+      val shouldUpdate = oldHeight != newHeight
+      field = value
+
+      if (shouldUpdate)
+        JupyterBoundsChangeHandler.get(editor)?.boundsChanged()
+    }
 
   init {
     update()
@@ -227,15 +237,6 @@ class EditorCellOutputs(
     priority = editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY,
     offset = computeInlayOffset(editor.document, interval().lines),
   ).also { inlay ->
-    inlay.renderer.asSafely<JComponent>()?.addComponentListener(object : ComponentAdapter() {
-      private fun update() {
-        invalidate()
-        outputs.forEach { it.folding.updateBounds() }
-      }
-
-      override fun componentResized(e: ComponentEvent) = update()
-      override fun componentMoved(e: ComponentEvent?) = update()
-    })
     Disposer.register(inlay) {
       onInlayDisposed(this)
     }
@@ -286,6 +287,10 @@ class EditorCellOutputs(
         it.paintGutter(editor, yOffset, g2, r)
       }
     }
+  }
+
+  override fun doGetInlays(): Sequence<Inlay<*>> {
+    return inlay?.let { sequenceOf(it) } ?: emptySequence()
   }
 }
 

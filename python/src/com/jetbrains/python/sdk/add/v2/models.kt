@@ -17,9 +17,7 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.ProjectLocationContexts
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
-import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterPresenter.ProjectPathWithContext
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.interpreters.detectSystemInterpreters
@@ -29,6 +27,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
+import kotlin.io.path.pathString
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -166,7 +165,7 @@ abstract class PythonMutableTargetAddInterpreterModel(scope: CoroutineScope, uiC
       scope.launch(Dispatchers.IO) {
         val poetryExecutable = com.jetbrains.python.sdk.poetry.detectPoetryExecutable()
         withContext(Dispatchers.EDT + modalityState) {
-          poetryExecutable?.let { state.poetryExecutable.set(it.path) }
+          poetryExecutable?.let { state.poetryExecutable.set(it.pathString) }
         }
       }
     }
@@ -229,28 +228,6 @@ open class PythonLocalAddInterpreterModel(scope: CoroutineScope, uiContext: Coro
     return FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.get()))
   }
 }
-
-class PythonWslCapableLocalAddInterpreterModel(scope: CoroutineScope, uiContext: CoroutineContext) : PythonMutableTargetAddInterpreterModel(scope, uiContext) {
-
-  private val projectLocationContexts = ProjectLocationContexts()
-  private val _projectWithContextFlow: MutableStateFlow<ProjectPathWithContext> =
-    MutableStateFlow(projectPath.get().associateWithContext())
-
-  init {
-    projectPath.afterChange { projectPath ->
-      val context = projectLocationContexts.getProjectLocationContextFor(projectPath)
-      _projectWithContextFlow.value = ProjectPathWithContext(projectPath, context)
-    }
-  }
-
-  private fun String.associateWithContext(): ProjectPathWithContext =
-    ProjectPathWithContext(projectPath = this, projectLocationContexts.getProjectLocationContextFor(projectPath = this))
-}
-
-class PythonSshAddInterpreterModel(scope: CoroutineScope, uiContext: CoroutineContext) : PythonMutableTargetAddInterpreterModel(scope, uiContext)
-
-class PythonDockerAddInterpreterModel(scope: CoroutineScope, uiContext: CoroutineContext) : PythonAddInterpreterModel(scope, uiContext)
-
 
 
 // todo does it need target configuration

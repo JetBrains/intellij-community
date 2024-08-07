@@ -9,14 +9,12 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
@@ -616,13 +614,20 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         // Here we bail out syntactical statements that are very obvious.
         if (ktExpression is KtLoopExpression || ktExpression is KtWhenEntry)
             return null
+        // Obvious constructor calls
+        val parent = ktExpression.parent
+        // E.g. class Sub : Base(...)
+        if (ktExpression is KtSuperTypeCallEntry || parent is KtSuperTypeCallEntry)
+            return null
+        // E.g. constructor(...) : this(...)
+        if (ktExpression is KtConstructorDelegationCall || parent is KtConstructorDelegationCall)
+            return null
 
         analyzeForUast(ktExpression) {
             val ktType = ktExpression.expressionType ?: return null
             // Again, Analysis API returns [Unit] for statements, so we need to filter out
             // some cases that are not actually expression's return type.
             if (ktType.isUnitType) {
-                val parent = ktExpression.parent
                 // E.g., AnnotationTarget.FIELD, reference to enum class is resolved to the constructor call,
                 // and then returned as Unit expression type. Same for path segments in a fully qualified name
                 if ((parent is KtQualifiedExpression || parent is KtDoubleColonExpression) &&
@@ -784,23 +789,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun evaluate(uExpression: UExpression): Any? {
-        val ktExpression = uExpression.sourcePsi as? KtExpression ?: return null
-        analyzeForUast(ktExpression) {
-            val expressionToEvaluate = ktExpression.unwrapKotlinValPropertyReference()
-            return expressionToEvaluate?.evaluate()
-                ?.takeUnless { it is KaConstantValue.ErrorValue }?.value
-        }
-    }
-
-    context(KaSession)
-    @OptIn(KaExperimentalApi::class)
-    private fun KtExpression.unwrapKotlinValPropertyReference(): KtExpression? {
-        if (this !is KtNameReferenceExpression) return this
-        val propertySymbol = resolveToCall()?.successfulVariableAccessCall()?.symbol as? KaPropertySymbol ?: return this
-        if (!propertySymbol.isVal) {
-            // can't evaluate non-final variables
-            return null
-        }
-        return propertySymbol.initializer?.initializerPsi
+        return FirKotlinUastConstantEvaluator.evaluate(uExpression)
     }
 }

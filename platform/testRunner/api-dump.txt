@@ -204,12 +204,11 @@ a:com.intellij.execution.testframework.TestStatusListener
 a:com.intellij.execution.testframework.TestTreeView
 - com.intellij.ui.treeStructure.Tree
 - com.intellij.ide.CopyProvider
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:MODEL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
 - attachToModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getData(java.lang.String):java.lang.Object
 - p:getPresentableName(com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
 - pa:getRenderer(com.intellij.execution.testframework.TestConsoleProperties):javax.swing.tree.TreeCellRenderer
 - getSelectedTest():com.intellij.execution.testframework.AbstractTestProxy
@@ -219,6 +218,7 @@ a:com.intellij.execution.testframework.TestTreeView
 - isCopyEnabled(com.intellij.openapi.actionSystem.DataContext):Z
 - isCopyVisible(com.intellij.openapi.actionSystem.DataContext):Z
 - performCopy(com.intellij.openapi.actionSystem.DataContext):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.execution.testframework.TestTreeViewAction
 a:com.intellij.execution.testframework.TestTreeViewStructure
 - com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -437,7 +437,7 @@ a:com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView
 a:com.intellij.execution.testframework.ui.TestResultsPanel
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - pf:myConsole:javax.swing.JComponent
 - pf:myConsoleActions:com.intellij.openapi.actionSystem.AnAction[]
 - pf:myProperties:com.intellij.execution.testframework.TestConsoleProperties
@@ -449,12 +449,12 @@ a:com.intellij.execution.testframework.ui.TestResultsPanel
 - p:createStatusLine():com.intellij.execution.testframework.ui.TestStatusLine
 - pa:createTestTreeView():javax.swing.JComponent
 - dispose():V
-- getData(java.lang.String):java.lang.Object
 - getStatusLine():com.intellij.execution.testframework.ui.TestStatusLine
 - p:getTreeView():com.intellij.execution.testframework.TestTreeView
 - p:hideToolbar():V
 - initUI():V
 - p:setLeftComponent(javax.swing.JComponent):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.execution.testframework.ui.TestStatusLine
 - com.intellij.ui.components.panels.NonOpaquePanel
 - pf:myProgressBar:javax.swing.JProgressBar

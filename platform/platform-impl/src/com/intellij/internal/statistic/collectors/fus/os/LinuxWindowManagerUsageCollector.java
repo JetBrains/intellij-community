@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.X11UiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -19,6 +20,7 @@ import java.util.function.Predicate;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 6);
 

@@ -24,7 +24,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
@@ -37,6 +36,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -54,7 +54,6 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -79,7 +78,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
-import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -123,12 +121,13 @@ import java.util.stream.Stream;
 import static com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.toPsi;
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
+import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
 
 /**
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
  */
-public final class SearchEverywhereUI extends BigPopupUI implements DataProvider, QuickSearchComponent {
+public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvider, QuickSearchComponent {
 
   public static final Topic<SearchListener> SEARCH_EVENTS = Topic.create("Search events", SearchListener.class);
 
@@ -165,8 +164,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final List<Disposable> myUsagePreviewDisposableList = new ArrayList<>();
   private UsageViewPresentation myUsageViewPresentation;
   private static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
-  static final String PREVIEW_PROPERTY_KEY = "SearchEverywhere.previewPropertyKey";
-  @ApiStatus.Experimental
+
   private int prevSelectedIndex = -1;
 
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors) {
@@ -189,10 +187,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       updateSearchFieldAdvertisement();
       scheduleRebuildList(SearchRestartReason.SCOPE_CHANGED);
     };
-
-    if (project != null && isPreviewEnabled() && isShowPreview() && !PropertiesComponent.getInstance().isValueSet(PREVIEW_PROPERTY_KEY)) {
-      PropertiesComponent.getInstance().setValue(PREVIEW_PROPERTY_KEY, true);
-    }
 
     AnAction showInFindToolWindowAction = project == null ? null : new ShowInFindToolWindowAction();
     myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
@@ -482,46 +476,28 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
-      return getSearchPattern();
-    }
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    if (SELECTED_ITEM_INFO.is(dataId)) {
-      return ContainerUtil.getOnlyItem(getSelectedInfos());
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      SearchEverywhereFoundElementInfo info = ContainerUtil.getOnlyItem(getSelectedInfos());
-      return info == null ? null : info.getElement();
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
-      if (selection.isEmpty()) return null;
-      return ContainerUtil.map2Array(selection, Object.class, SearchEverywhereFoundElementInfo::getElement);
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
-      return (DataProvider)slowId -> getSlowData(slowId, selection);
-    }
-    return null;
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
+    SearchEverywhereFoundElementInfo onlyItem = ContainerUtil.getOnlyItem(selection);
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<? extends SearchEverywhereFoundElementInfo> selection) {
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    sink.set(PlatformDataKeys.PREDEFINED_TEXT, getSearchPattern());
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(SELECTED_ITEM_INFO, onlyItem);
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEM, onlyItem == null ? null : onlyItem.getElement());
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS,
+             ContainerUtil.map2Array(selection, Object.class, SearchEverywhereFoundElementInfo::getElement));
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       List<PsiElement> list =
         ContainerUtil.mapNotNull(selection, o -> (PsiElement)getDataFromElementInfo(CommonDataKeys.PSI_ELEMENT.getName(), o));
       return list.isEmpty() ? null : list.toArray(PsiElement.EMPTY_ARRAY);
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       List<VirtualFile> list =
         ContainerUtil.mapNotNull(selection, o -> (VirtualFile)getDataFromElementInfo(CommonDataKeys.VIRTUAL_FILE.getName(), o));
       return list.isEmpty() ? null : list.toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
       List<Navigatable> list = ContainerUtil.mapNotNull(selection, o -> {
         Navigatable navigatable = (Navigatable)getDataFromElementInfo(CommonDataKeys.NAVIGATABLE.getName(), o);
         if (navigatable != null) return navigatable;
@@ -530,9 +506,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         return psi instanceof Navigatable ? (Navigatable)psi : null;
       });
       return list.isEmpty() ? null : list.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    });
+    if (onlyItem != null) {
+      sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, dataId -> {
+        return getDataFromElementInfo(dataId, onlyItem);
+      });
     }
-    SearchEverywhereFoundElementInfo single = ContainerUtil.getOnlyItem(selection);
-    return single == null ? null : getDataFromElementInfo(dataId, single);
   }
 
   private static @Nullable Object getDataFromElementInfo(@NotNull String dataId, SearchEverywhereFoundElementInfo info) {
@@ -543,7 +522,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     return contributor.getDataForItem(info.getElement(), dataId);
   }
 
-  private @NotNull List<SearchEverywhereFoundElementInfo> getSelectedInfos() {
+  @NotNull List<SearchEverywhereFoundElementInfo> getSelectedInfos() {
     return Arrays.stream(myResultsList.getSelectedIndices())
       .mapToObj(myListModel::getRawFoundElementAt)
       .filter(o -> o.getElement() != SearchListModel.MORE_ELEMENT
@@ -665,12 +644,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         mySearchField.setText(text);
         mySearchField.selectAll();
       })
-      .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
-        @Override
-        public @Nullable String getTextFor(@NlsContexts.ListItem String value) {
-          return value;
-        }
-      }))
+      .setRenderer(textListCellRenderer((@Nls var s) -> s))
       .createPopup()
       .show(relativePoint);
   }
@@ -1050,6 +1024,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       // In Wayland focus is always lost when the window is being moved.
       return;
     }
+    if(ApplicationManagerEx.isInIntegrationTest()){
+      return;
+    }
     Component oppositeComponent = e.getOppositeComponent();
     if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(this, oppositeComponent)) {
       sendStatisticsAndClose();
@@ -1098,7 +1075,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         if (myProject == null) return null;
 
         PsiElement psiElement = toPsi(selectedValue);
-        if (psiElement == null) return null;
+        if (psiElement == null || !psiElement.isValid()) return null;
 
         PsiFile psiFile = psiElement instanceof PsiFile ? (PsiFile)psiElement : null;
         if (psiFile == null) {
@@ -1140,16 +1117,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   static boolean isPreviewEnabled() {
-    return (PreviewExperiment.INSTANCE.isExperimentEnabled() || Registry.is("search.everywhere.preview"))
-           && !PlatformUtils.isJetBrainsClient();
-  }
-
-  static boolean isShowPreview() {
-    return Registry.is("search.everywhere.preview.default");
+    return PreviewExperiment.isExperimentEnabled() && !PlatformUtils.isJetBrainsClient();
   }
 
   private static boolean isPreviewActive() {
-    return PropertiesComponent.getInstance().isTrueValue(PREVIEW_PROPERTY_KEY);
+    return UISettings.getInstance().getShowPreviewInSearchEverywhere();
   }
 
   /**

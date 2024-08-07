@@ -5,7 +5,6 @@ import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.table.JBTable
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -30,7 +29,6 @@ class CompilationChartsDiagramsComponent(
 ) : JBPanelWithEmptyText(BorderLayout()) {
   companion object {
     val ROW_HEIGHT = JBTable().rowHeight * 1.5
-    val LOG = Logger.getInstance(CompilationChartsDiagramsComponent::class.java)
   }
 
   val modules: CompilationChartsViewModel.ViewModules = CompilationChartsViewModel.ViewModules()
@@ -39,12 +37,11 @@ class CompilationChartsDiagramsComponent(
   var memory: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
   val statistic: Statistic = Statistic()
   var cpuMemory = MEMORY
-  private var shouldRepaint: Boolean = true
   private val mouseAdapter: CompilationChartsMouseAdapter
   private var image: BufferedImage? = null
   private val charts: Charts
 
-  private val isRepaintScheduled = AtomicBoolean(false)
+  private val isChartImageOutdated = AtomicBoolean(false)
 
   private val focusableEmptyButton = JButton().apply {
     preferredSize = Dimension(0, 0)
@@ -123,14 +120,12 @@ class CompilationChartsDiagramsComponent(
 
     AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts component", 1).scheduleWithFixedDelay(
       {
-        if (isRepaintScheduled.compareAndSet(true, false)) {
-          forceRepaint()
-        }
+        forceRepaint()
       }, 0, 1, TimeUnit.SECONDS)
   }
 
-  private fun forceRepaint() {
-    shouldRepaint = true
+  internal fun forceRepaint() {
+    isChartImageOutdated.set(true)
     revalidate()
     repaint()
   }
@@ -168,22 +163,18 @@ class CompilationChartsDiagramsComponent(
 
   private fun tryCacheImage(g2d: Graphics2D, draw: (saveToImage: Boolean) -> BufferedImage?) {
     if (zoom.shouldCacheImage()) {
-      if (!shouldRepaint) {
+      if (!isChartImageOutdated.get()) {
         image?.let { img -> g2d.drawImage(img, this) }
         return
       }
 
-      shouldRepaint = false
+      isChartImageOutdated.set(false)
       image?.flush()
       image = draw(true)
     }
     else {
       draw(false)
     }
-  }
-
-  internal fun updateView() {
-    isRepaintScheduled.set(true)
   }
 
   internal fun setFocus() {

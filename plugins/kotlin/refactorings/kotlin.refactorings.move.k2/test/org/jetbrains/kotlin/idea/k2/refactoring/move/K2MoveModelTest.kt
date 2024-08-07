@@ -20,6 +20,22 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
+    fun `test empty file from source directory without target move`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        val fooFile = myFixture.addFileToProject("Foo.kt", """
+            package foo
+        """.trimIndent()) as KtFile
+        val barFile = myFixture.addFileToProject("Bar.kt", """
+            import foo.Bar
+        """.trimIndent()) as KtFile
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
+        assertInstanceOf<K2MoveModel.Files>(moveModel)
+        val moveDeclarationsModel = moveModel as K2MoveModel.Files
+        assertSize(2, moveDeclarationsModel.source.elements)
+        val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
+        assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
+    }
+
     fun `test file from source directory to file move`() {
         PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """

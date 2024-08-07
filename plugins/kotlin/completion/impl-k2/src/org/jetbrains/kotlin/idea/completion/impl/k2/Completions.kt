@@ -1,16 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.completion.impl.k2
 
-package org.jetbrains.kotlin.idea.completion
-
+import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.completion.context.*
-import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
-import org.jetbrains.kotlin.idea.completion.contributors.complete
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.findValueArgument
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.withPolicyController
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.*
@@ -19,97 +21,133 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
+
     context(KaSession)
     fun complete(
-        factory: FirCompletionContributorFactory,
+        basicContext: FirBasicCompletionContext,
         positionContext: KotlinRawPositionContext,
-        weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
+        policyController: PolicyController,
     ) {
+        val weighingContext = createWeighingContext(basicContext, positionContext)
+        val sessionParameters = FirCompletionSessionParameters(basicContext, positionContext)
+
         when (positionContext) {
             is KotlinExpressionNameReferencePositionContext -> if (positionContext.allowsOnlyNamedArguments()) {
-                complete(factory.namedArgumentContributor(0), positionContext, weighingContext, sessionParameters)
+                FirNamedArgumentCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             } else {
-                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.namedArgumentContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.callableContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.packageCompletionContributor(1), positionContext, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirNamedArgumentCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirCallableCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirClassifierCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirPackageCompletionContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinSuperReceiverNameReferencePositionContext -> {
-                complete(factory.superMemberContributor(0), positionContext, weighingContext, sessionParameters)
+                FirSuperMemberCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinTypeNameReferencePositionContext -> {
                 if (sessionParameters.allowClassifiersAndPackagesForPossibleExtensionCallables) {
-                    complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
+                    FirClassifierCompletionContributor(basicContext)
+                        .completeWithPolicyController(policyController, weighingContext, sessionParameters)
                 }
-                complete(factory.keywordContributor(1), positionContext, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
                 if (sessionParameters.allowClassifiersAndPackagesForPossibleExtensionCallables) {
-                    complete(factory.packageCompletionContributor(2), positionContext, weighingContext, sessionParameters)
+                    FirPackageCompletionContributor(basicContext, priority = 2)
+                        .completeWithPolicyController(policyController, weighingContext, sessionParameters)
                 }
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
-                complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext, sessionParameters)
-                complete(factory.declarationFromOverridableMembersContributor(1), positionContext, weighingContext, sessionParameters)
-                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext, sessionParameters)
+                FirDeclarationFromUnresolvedNameContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirDeclarationFromOverridableMembersContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirVariableOrParameterNameWithTypeCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinAnnotationTypeNameReferencePositionContext -> {
-                complete(factory.annotationsContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.keywordContributor(1), positionContext, weighingContext, sessionParameters)
-                complete(factory.packageCompletionContributor(2), positionContext, weighingContext, sessionParameters)
+                FirAnnotationCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirPackageCompletionContributor(basicContext, priority = 2)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinSuperTypeCallNameReferencePositionContext -> {
-                complete(factory.superEntryContributor(0), positionContext, weighingContext, sessionParameters)
+                FirSuperEntryContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinImportDirectivePositionContext -> {
-                complete(factory.packageCompletionContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.importDirectivePackageMembersContributor(0), positionContext, weighingContext, sessionParameters)
+                FirPackageCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirImportDirectivePackageMembersCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinPackageDirectivePositionContext -> {
-                complete(factory.packageCompletionContributor(0), positionContext, weighingContext, sessionParameters)
+                FirPackageCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinTypeConstraintNameInWhereClausePositionContext -> {
-                complete(factory.typeParameterConstraintNameInWhereClauseContributor(), positionContext, weighingContext, sessionParameters)
+                FirTypeParameterConstraintNameInWhereClauseCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinMemberDeclarationExpectedPositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinLabelReferencePositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinUnknownPositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinClassifierNamePositionContext -> {
-                complete(factory.classifierNameContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext, sessionParameters)
+                FirSameAsFileClassifierNameCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirDeclarationFromUnresolvedNameContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinWithSubjectEntryPositionContext -> {
-                complete(factory.whenWithSubjectConditionContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.callableContributor(1), positionContext, weighingContext, sessionParameters)
+                FirWhenWithSubjectConditionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirCallableCompletionContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinCallableReferencePositionContext -> {
-                complete(factory.classReferenceContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.callableReferenceContributor(1), positionContext, weighingContext, sessionParameters)
-                complete(factory.classifierReferenceContributor(1), positionContext, weighingContext, sessionParameters)
+                FirClassReferenceCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirCallableReferenceCompletionContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirClassifierReferenceCompletionContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinInfixCallPositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.infixCallableContributor(0), positionContext, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirInfixCallableCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinIncorrectPositionContext -> {
@@ -118,49 +156,56 @@ internal object Completions {
 
             is KotlinSimpleParameterPositionContext -> {
                 // for parameter declaration
-                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext, sessionParameters)
+                FirDeclarationFromUnresolvedNameContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirVariableOrParameterNameWithTypeCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KotlinPrimaryConstructorParameterPositionContext -> {
                 // for parameter declaration
-                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.declarationFromOverridableMembersContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext, sessionParameters)
+                FirDeclarationFromUnresolvedNameContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirDeclarationFromOverridableMembersContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirVariableOrParameterNameWithTypeCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KDocParameterNamePositionContext -> {
-                complete(factory.kDocParameterNameContributor(0), positionContext, weighingContext, sessionParameters)
+                FirKDocParameterNameContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
 
             is KDocLinkNamePositionContext -> {
-                complete(factory.kDocCallableContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
-                complete(factory.packageCompletionContributor(1), positionContext, weighingContext, sessionParameters)
+                FirKDocCallableCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirClassifierCompletionContributor(basicContext)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirPackageCompletionContributor(basicContext, priority = 1)
+                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
             }
         }
     }
 
     context(KaSession)
-    fun createWeighingContext(
+    private fun createWeighingContext(
         basicContext: FirBasicCompletionContext,
         positionContext: KotlinRawPositionContext
     ): WeighingContext = when (positionContext) {
-        is KotlinSuperReceiverNameReferencePositionContext -> {
-            val expectedType = positionContext.nameExpression.expectedType
-            val receiver = positionContext.superExpression
-
+        is KotlinSuperReceiverNameReferencePositionContext ->
             // Implicit receivers do not match for this position completion context.
             WeighingContext.createWeighingContext(
-                basicContext,
-                receiver,
-                expectedType,
+                basicContext = basicContext,
+                receiver = positionContext.superExpression,
+                expectedType = positionContext.nameExpression.expectedType,
                 implicitReceivers = emptyList(),
-                positionContext.position
+                positionInFakeCompletionFile = positionContext.position,
             )
-        }
 
         is KotlinWithSubjectEntryPositionContext -> {
             val subjectReference = (positionContext.subjectExpression as? KtSimpleNameExpression)?.mainReference
@@ -170,6 +215,19 @@ internal object Completions {
 
         is KotlinNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
         else -> WeighingContext.createEmptyWeighingContext(basicContext, positionContext.position)
+    }
+
+    context(KaSession)
+    private fun <C : KotlinRawPositionContext> FirCompletionContributor<C>.completeWithPolicyController(
+        policyController: PolicyController,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
+        withPolicyController(policyController).complete(
+            positionContext = @Suppress("UNCHECKED_CAST") (sessionParameters.positionContext as C), // TODO address dirty cast
+            weighingContext = weighingContext,
+            sessionParameters = sessionParameters,
+        )
     }
 
     context(KaSession)

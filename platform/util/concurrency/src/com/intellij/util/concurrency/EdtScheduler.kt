@@ -39,15 +39,12 @@ class EdtScheduler(@JvmField val coroutineScope: CoroutineScope) {
     }
   }
 
-  fun schedule(delayMillis: Int, task: Runnable): Job = schedule(delayMillis.milliseconds, task = task)
+  fun schedule(delayMillis: Int, task: Runnable): Job {
+    return schedule(delay = delayMillis.milliseconds, task = task, modality = ModalityState.defaultModalityState())
+  }
 
   fun schedule(delay: Duration, task: Runnable): Job {
-    return coroutineScope.launch {
-      delay(delay)
-      withContext(Dispatchers.EDT) {
-        task.run()
-      }
-    }
+    return schedule(delay = delay, task = task, modality = ModalityState.defaultModalityState())
   }
 
   fun schedule(delay: Int, modality: ModalityState, task: Runnable): Job {

@@ -2,13 +2,15 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal object MoveWhenElseBranchFixFactory : KotlinSingleIntentionActionFactory() {
-    override fun createAction(diagnostic: Diagnostic): MoveWhenElseBranchFix? {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val whenExpression = diagnostic.psiElement.getNonStrictParentOfType<KtWhenExpression>() ?: return null
-        return MoveWhenElseBranchFix(whenExpression)
+
+        return MoveWhenElseBranchFix.createIfApplicable(whenExpression)?.asIntention()
     }
 }

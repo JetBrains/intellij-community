@@ -166,6 +166,8 @@ com.intellij.usages.UsageContextPanel
 - a:createComponent():javax.swing.JComponent
 - a:updateLayout(com.intellij.openapi.project.Project,java.util.List):V
 - updateLayout(com.intellij.openapi.project.Project,java.util.List,com.intellij.usages.UsageView):V
+- a:updateLayout(java.util.List):V
+- updateLayout(java.util.List,com.intellij.usages.UsageView):V
 com.intellij.usages.UsageContextPanel$Provider
 - a:create(com.intellij.usages.UsageView):com.intellij.usages.UsageContextPanel
 - a:getTabTitle():java.lang.String
@@ -302,6 +304,7 @@ f:com.intellij.usages.UsageTargetUtil
 - <init>():V
 - s:findUsageTargets(com.intellij.openapi.actionSystem.DataProvider):com.intellij.usages.UsageTarget[]
 - s:findUsageTargets(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.usages.UsageTarget[]
+- s:findUsageTargets(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.PsiElement):com.intellij.usages.UsageTarget[]
 - s:findUsageTargets(com.intellij.psi.PsiElement):com.intellij.usages.UsageTarget[]
 a:com.intellij.usages.UsageToPsiElementProvider
 - <init>():V

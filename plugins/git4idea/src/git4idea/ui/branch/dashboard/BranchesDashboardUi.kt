@@ -280,19 +280,16 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     })
   }
 
-  inner class BranchesTreePanel : BorderLayoutPanel(), DataProvider, QuickActionProvider {
-    override fun getData(dataId: String): Any? {
-      return when {
-        SELECTED_ITEMS.`is`(dataId) -> filteringTree.component.selectionPaths
-        GIT_BRANCHES.`is`(dataId) -> filteringTree.getSelectedBranches()
-        GIT_BRANCH_FILTERS.`is`(dataId) -> filteringTree.getSelectedBranchFilters()
-        GIT_BRANCH_REMOTES.`is`(dataId) -> filteringTree.getSelectedRemotes()
-        GIT_BRANCH_DESCRIPTORS.`is`(dataId) -> filteringTree.getSelectedBranchNodes()
-        BRANCHES_UI_CONTROLLER.`is`(dataId) -> uiController
-        VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId) -> logUi.properties
-        QuickActionProvider.KEY.`is`(dataId) -> this
-        else -> null
-      }
+  inner class BranchesTreePanel : BorderLayoutPanel(), UiDataProvider, QuickActionProvider {
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[SELECTED_ITEMS] = filteringTree.component.selectionPaths
+      sink[GIT_BRANCHES] = filteringTree.getSelectedBranches()
+      sink[GIT_BRANCH_FILTERS] = filteringTree.getSelectedBranchFilters()
+      sink[GIT_BRANCH_REMOTES] = filteringTree.getSelectedRemotes()
+      sink[GIT_BRANCH_DESCRIPTORS] = filteringTree.getSelectedBranchNodes()
+      sink[BRANCHES_UI_CONTROLLER] = uiController
+      sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = logUi.properties
+      sink[QuickActionProvider.KEY] = this
     }
 
     override fun getActions(originalProvider: Boolean): List<AnAction> {

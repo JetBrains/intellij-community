@@ -5,11 +5,12 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -63,7 +64,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .build()
 
     Benchmark.newBenchmark(testName) {
-      runWithSpan(tracer, customSpanName) {
+      tracer.spanBuilder(customSpanName).use {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }
 
@@ -107,7 +108,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
     val customSpanName = "custom span"
 
     val perfTest = Benchmark.newBenchmark(testName) {
-      runWithSpan(tracer, customSpanName) {
+      tracer.spanBuilder(customSpanName).use {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }
 

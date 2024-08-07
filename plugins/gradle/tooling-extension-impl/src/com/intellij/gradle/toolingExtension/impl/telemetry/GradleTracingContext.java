@@ -10,6 +10,8 @@ import java.util.HashMap;
 
 public class GradleTracingContext extends HashMap<String, String> {
 
+  public static final @NotNull String REQUESTED_FORMAT_KEY = "REQUESTED_FORMAT";
+
   public static final TextMapGetter<GradleTracingContext> GETTER = new TextMapGetter<GradleTracingContext>() {
     @Override
     public Iterable<String> keys(@NotNull GradleTracingContext carrier) {

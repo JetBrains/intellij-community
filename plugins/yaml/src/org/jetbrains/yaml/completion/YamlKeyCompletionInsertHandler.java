@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
@@ -18,10 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.YAMLBundle;
-import org.jetbrains.yaml.YAMLElementGenerator;
-import org.jetbrains.yaml.YAMLTokenTypes;
-import org.jetbrains.yaml.YAMLUtil;
+import org.jetbrains.yaml.*;
 import org.jetbrains.yaml.psi.*;
 
 import java.util.List;
@@ -116,29 +114,51 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     context.setTailOffset(keyValue.getTextRange().getEndOffset());
     WriteCommandAction.runWriteCommandAction(context.getProject(),
                                              YAMLBundle.message("YamlKeyCompletionInsertHandler.remove.key"),
-                                             null,
-                                             () -> {
-                                               PsiElement parent = keyValue.getParent();
-                                               PsiElement substitute = null;
-                                               boolean delete = parent.getNode().getChildren(null).length == 1;
-                                               if (parent instanceof YAMLMapping parentMapping) {
-                                                 parentMapping.deleteKeyValue(keyValue);
-                                                 ASTNode[] children = parent.getNode().getChildren(null);
-                                                 if (children.length == 1 && children[0] instanceof LeafPsiElement) {
-                                                   substitute = children[0].getPsi();
-                                                 }
-                                               }
-                                               else {
-                                                 YAMLUtil.deleteSurroundingWhitespace(keyValue);
-                                                 keyValue.delete();
-                                               }
-                                               if (delete) {
-                                                 parent.delete();
-                                               }
-                                               else if (substitute != null) {
-                                                 parent.replace(substitute);
-                                               }
-                                             });
+                                             null, () -> {
+        PsiElement parent = keyValue.getParent();
+        PsiElement substitute = null;
+        if (parent instanceof YAMLMapping parentMapping) {
+          parentMapping.deleteKeyValue(keyValue);
+          ASTNode[] children = parent.getNode().getChildren(null);
+          if (children.length == 1 && children[0] instanceof LeafPsiElement) {
+            substitute = children[0].getPsi();
+          }
+          else if (children.length != 0 &&
+                   ContainerUtil.find(children, node -> node.getElementType() == YAMLElementTypes.KEY_VALUE_PAIR) == null) {
+            List<ASTNode> notSpaces =
+              ContainerUtil.filter(children, child -> !YAMLElementTypes.SPACE_ELEMENTS.contains(child.getElementType()));
+            if (notSpaces.size() == 1) {
+              substitute = notSpaces.get(0).getPsi();
+            }
+            else {
+              String rootKey = "root";
+              String valueText = parent.getText();
+              YAMLFile file = YAMLElementGenerator.getInstance(parent.getProject())
+                .createDummyYamlWithText(rootKey + ":\n  " + valueText);
+              YAMLValue value = file.getDocuments().get(0).getTopLevelValue();
+              if (value instanceof YAMLMapping mapping) {
+                YAMLKeyValue root = mapping.getKeyValueByKey(rootKey);
+                if (root != null) {
+                  substitute = root.getValue();
+                }
+              }
+              if (substitute == null) {
+                Logger.getInstance(YamlKeyCompletionInsertHandler.class).error("Could not substitute: " + valueText);
+              }
+            }
+          }
+        }
+        else {
+          YAMLUtil.deleteSurroundingWhitespace(keyValue);
+          keyValue.delete();
+        }
+        if (parent.getNode().getChildren(null).length == 0) {
+          parent.delete();
+        }
+        else if (substitute != null) {
+          parent.replace(substitute);
+        }
+      });
     return oldValue;
   }
 

@@ -374,6 +374,8 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     for (PsiElement element : refsToInline) {
       PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)element;
+      // Erroneous method call which is resolved to a local variable: simply skip it, otherwise we may create incorrect PSI 
+      if (refElement.getParent() instanceof PsiMethodCallExpression) continue;
       pointers.add(pointerManager.createSmartPsiElementPointer(InlineUtil.inlineVariable(local, defToInline, refElement)));
     }
     return pointers;

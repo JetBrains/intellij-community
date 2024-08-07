@@ -1249,21 +1249,6 @@ a:com.intellij.ide.ui.search.BooleanOptionDescription
 - a:isOptionEnabled():Z
 - a:setOptionState(Z):V
 com.intellij.ide.ui.search.BooleanOptionDescription$RequiresRebuild
-f:com.intellij.ide.ui.search.ConfigurableHit
-- <init>(java.util.Set,java.util.Set,java.util.Set,java.lang.String):V
-- f:component1():java.util.Set
-- f:component2():java.util.Set
-- f:component3():java.util.Set
-- f:component4():java.lang.String
-- f:copy(java.util.Set,java.util.Set,java.util.Set,java.lang.String):com.intellij.ide.ui.search.ConfigurableHit
-- bs:copy$default(com.intellij.ide.ui.search.ConfigurableHit,java.util.Set,java.util.Set,java.util.Set,java.lang.String,I,java.lang.Object):com.intellij.ide.ui.search.ConfigurableHit
-- equals(java.lang.Object):Z
-- f:getAll():java.util.Set
-- f:getContentHits():java.util.Set
-- f:getNameFullHits():java.util.Set
-- f:getNameHits():java.util.Set
-- f:getSpotlightFilter():java.lang.String
-- hashCode():I
 c:com.intellij.ide.ui.search.OptionDescription
 - java.lang.Comparable
 - <init>(java.lang.String):V
@@ -1284,7 +1269,8 @@ c:com.intellij.ide.ui.search.OptionDescription
 - invokeInternalEditor():V
 a:com.intellij.ide.ui.search.SearchableOptionContributor
 - <init>():V
-- a:processOptions(com.intellij.ide.ui.search.SearchableOptionProcessor):V
+- contribute(com.intellij.ide.ui.search.SearchableOptionProcessor,kotlin.coroutines.Continuation):java.lang.Object
+- processOptions(com.intellij.ide.ui.search.SearchableOptionProcessor):V
 a:com.intellij.ide.ui.search.SearchableOptionProcessor
 - <init>():V
 - a:addOptions(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
@@ -1293,7 +1279,6 @@ a:com.intellij.ide.ui.search.SearchableOptionsRegistrar
 - sf:SETTINGS_GROUP_SEPARATOR:java.lang.String
 - <init>():V
 - addOption(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
-- a:getConfigurables(java.util.List,javax.swing.event.DocumentEvent$EventType,java.util.Set,java.lang.String,com.intellij.openapi.project.Project):com.intellij.ide.ui.search.ConfigurableHit
 - a:getInnerPaths(com.intellij.openapi.options.SearchableConfigurable,java.lang.String):java.util.Set
 - s:getInstance():com.intellij.ide.ui.search.SearchableOptionsRegistrar
 - a:getProcessedWords(java.lang.String):java.util.Set
@@ -1505,24 +1490,6 @@ com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 - s:registerTracker(com.intellij.openapi.project.Project,java.lang.String):com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
 com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
 - a:activityFinished():V
-f:com.intellij.internal.statistic.eventLog.EmptyFeatureUsageUiEvents
-- com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
-- sf:INSTANCE:com.intellij.internal.statistic.eventLog.EmptyFeatureUsageUiEvents
-- logApplyConfigurable(com.intellij.openapi.options.Configurable):V
-- logClickOnHelpDialog(java.lang.Class):V
-- logCloseDialog(java.lang.Class,I):V
-- logResetConfigurable(com.intellij.openapi.options.Configurable):V
-- logSelectConfigurable(com.intellij.openapi.options.Configurable,Z,J):V
-- logShowDialog(java.lang.Class):V
-com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
-- a:logApplyConfigurable(com.intellij.openapi.options.Configurable):V
-- a:logClickOnHelpDialog(java.lang.Class):V
-- a:logCloseDialog(java.lang.Class,I):V
-- a:logResetConfigurable(com.intellij.openapi.options.Configurable):V
-- a:logSelectConfigurable(com.intellij.openapi.options.Configurable,Z,J):V
-- a:logShowDialog(java.lang.Class):V
-f:com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt
-- sf:getUiEventLogger():com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
 f:com.intellij.lang.StdLanguages
 - sf:JAVA:com.intellij.lang.Language
 - sf:XML:com.intellij.lang.Language
@@ -1930,8 +1897,8 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:ALLOW_PlAIN_LETTER_SHORTCUTS:com.intellij.openapi.util.Key
 - sf:ALWAYS_VISIBLE_GROUP:com.intellij.openapi.util.Key
 - sf:ALWAYS_VISIBLE_INLINE_ACTION:com.intellij.openapi.util.Key
+- sf:HIDE_DISABLED_CHILDREN:com.intellij.openapi.util.Key
 - sf:HIDE_DROPDOWN_ICON:com.intellij.openapi.util.Key
-- sf:HIDE_INVISIBLE_CHILDREN:com.intellij.openapi.util.Key
 - sf:INLINE_ACTIONS:com.intellij.openapi.util.Key
 - sf:INSTANCE:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:KEYBOARD_SHORTCUT_SUFFIX:com.intellij.openapi.util.Key
@@ -4636,16 +4603,16 @@ com.intellij.openapi.ui.Painter$Listener
 a:com.intellij.openapi.ui.PanelWithActionsAndCloseButton
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - pf:myContentManager:com.intellij.ui.content.ContentManager
 - <init>(com.intellij.ui.content.ContentManager,java.lang.String):V
 - <init>(com.intellij.ui.content.ContentManager,java.lang.String,Z):V
 - p:addActionsTo(com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - pa:createCenterPanel():javax.swing.JComponent
 - p:disableClose():V
-- getData(java.lang.String):java.lang.Object
 - getHelpId():java.lang.String
 - p:init():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.openapi.ui.PanelWithText
 - javax.swing.JPanel
 - <init>():V
@@ -8382,7 +8349,6 @@ c:com.intellij.ui.components.JBScrollPane
 - p:createViewport():javax.swing.JViewport
 - getBackground():java.awt.Color
 - getStatusComponent():javax.swing.JComponent
-- *s:getThumbPainter(java.util.function.Supplier):com.intellij.util.ui.RegionPainter
 - isOptimizedDrawingEnabled():Z
 - isOverlappingScrollBar():Z
 - s:isScrollEvent(java.awt.event.MouseWheelEvent):Z
@@ -8480,6 +8446,7 @@ c:com.intellij.ui.components.JBTextField
 - <init>(I):V
 - <init>(java.lang.String):V
 - <init>(java.lang.String,I):V
+- p:createDefaultModel():javax.swing.text.Document
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getEmptyText():com.intellij.util.ui.StatusText
@@ -8819,20 +8786,20 @@ com.intellij.ui.components.fields.valueEditors.ValueEditor$Listener
 - a:valueChanged(java.lang.Object):V
 c:com.intellij.ui.components.labels.ActionLink
 - com.intellij.ui.components.labels.LinkLabel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.AnAction):V
 - <init>(java.lang.String,javax.swing.Icon,com.intellij.openapi.actionSystem.AnAction):V
 - <init>(java.lang.String,javax.swing.Icon,com.intellij.openapi.actionSystem.AnAction,java.lang.Runnable,java.lang.String):V
 - doClick(java.awt.event.InputEvent):V
 - getAction():com.intellij.openapi.actionSystem.AnAction
 - getActiveColor():java.awt.Color
-- getData(java.lang.String):java.lang.Object
 - p:getNormal():java.awt.Color
 - p:getTextColor():java.awt.Color
 - p:getVisited():java.awt.Color
 - setActiveColor(java.awt.Color):V
 - setNormalColor(java.awt.Color):V
 - setVisitedColor(java.awt.Color):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.ui.components.labels.BoldLabel
 - javax.swing.JLabel
 - <init>():V
@@ -9659,6 +9626,12 @@ com.intellij.ui.jcef.JBCefApp$JBCefCustomSchemeHandlerFactory
 - a:getDomainName():java.lang.String
 - a:getSchemeName():java.lang.String
 - a:registerCustomScheme(org.cef.callback.CefSchemeRegistrar):V
+*f:com.intellij.ui.jcef.JBCefAppArmorUtils
+- <init>():V
+- s:areUnprivilegedUserNamespacesRestricted():Z
+- s:createUnprivilegedUserNamespacesRestrictedBanner():com.intellij.ui.InlineBanner
+- s:getUnprivilegedUserNamespacesRestrictedStubPanel():javax.swing.JPanel
+- s:showUnprivilegedUserNamespacesRestrictedDialog(java.awt.Component):V
 com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider
 - sf:Companion:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
 - a:getOptions():java.util.List
@@ -10261,8 +10234,7 @@ c:com.intellij.ui.speedSearch.FilteringTableModel
 - setValueAt(java.lang.Object,I,I):V
 f:com.intellij.ui.speedSearch.ListWithFilter
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
-- getData(java.lang.String):java.lang.Object
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - getInputMethodRequests():java.awt.im.InputMethodRequests
 - getList():javax.swing.JList
 - getScrollPane():javax.swing.JScrollPane
@@ -10271,6 +10243,7 @@ f:com.intellij.ui.speedSearch.ListWithFilter
 - requestFocus():V
 - resetFilter():Z
 - setAutoPackHeight(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - s:wrap(javax.swing.JList,javax.swing.JScrollPane,com.intellij.util.Function):javax.swing.JComponent
 - s:wrap(javax.swing.JList,javax.swing.JScrollPane,com.intellij.util.Function,Z):javax.swing.JComponent
 - s:wrap(javax.swing.JList,javax.swing.JScrollPane,com.intellij.util.Function,Z,Z,Z):javax.swing.JComponent
@@ -11532,10 +11505,10 @@ c:com.intellij.ui.treeStructure.treetable.TreeTableTree
 - updateUI():V
 *:com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:FILE_VISIBLE_FOR_GUEST:com.intellij.openapi.util.Key
-- sf:SYNC_TAB_TO_GUEST:com.intellij.openapi.util.Key
-- a:isApplicable(com.intellij.ui.content.Content):Z
-- a:syncContentToGuests(com.intellij.ui.content.Content):Z
+- sf:FILE_VISIBLE_FOR_REMOTE_CLIENTS:com.intellij.openapi.util.Key
+- sf:SYNC_TAB_TO_REMOTE_CLIENTS:com.intellij.openapi.util.Key
+- a:isApplicable(com.intellij.ui.content.Content,com.intellij.openapi.client.ClientProjectSession):Z
+- a:syncContentToRemoteClient(com.intellij.ui.content.Content):Z
 *c:com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - id:java.lang.String
@@ -11729,7 +11702,7 @@ f:com.intellij.util.OpenSourceUtil
 - com.intellij.openapi.Disposable
 - <init>():V
 - <init>(com.intellij.openapi.Disposable):V
-- <init>(com.intellij.util.animation.JBAnimator$Thread,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.Disposable):V
 - animate(java.util.Collection):J
 - animate(com.intellij.util.animation.Animation[]):J
 - dispose():V
@@ -11745,12 +11718,6 @@ f:com.intellij.util.OpenSourceUtil
 - setPeriod(I):com.intellij.util.animation.JBAnimator
 - setType(com.intellij.util.animation.JBAnimator$Type):com.intellij.util.animation.JBAnimator
 - stop():V
-*e:com.intellij.util.animation.JBAnimator$Thread
-- java.lang.Enum
-- sf:POOLED_THREAD:com.intellij.util.animation.JBAnimator$Thread
-- sf:SWING_THREAD:com.intellij.util.animation.JBAnimator$Thread
-- s:valueOf(java.lang.String):com.intellij.util.animation.JBAnimator$Thread
-- s:values():com.intellij.util.animation.JBAnimator$Thread[]
 *e:com.intellij.util.animation.JBAnimator$Type
 - java.lang.Enum
 - sf:EACH_FRAME:com.intellij.util.animation.JBAnimator$Type
@@ -12161,11 +12128,11 @@ f:com.intellij.util.net.ssl.CertificateUtil
 c:com.intellij.util.net.ssl.CertificateWarningDialog
 - com.intellij.openapi.ui.DialogWrapper
 - b:$$$getRootComponent$$$():javax.swing.JComponent
-- <init>(java.security.cert.X509Certificate,java.lang.String,java.lang.String):V
+- <init>(java.security.cert.X509Certificate,java.lang.String,java.lang.String,java.lang.String):V
 - p:createCenterPanel():javax.swing.JComponent
 - s:createExpiredCertificateWarning(java.security.cert.X509Certificate):com.intellij.util.net.ssl.CertificateWarningDialog
 - s:createUntrustedCertificateWarning(java.security.cert.X509Certificate):com.intellij.util.net.ssl.CertificateWarningDialog
-- s:createUntrustedCertificateWarning(java.security.cert.X509Certificate,java.lang.String):com.intellij.util.net.ssl.CertificateWarningDialog
+- s:createUntrustedCertificateWarning(java.security.cert.X509Certificate,java.lang.String,java.lang.String):com.intellij.util.net.ssl.CertificateWarningDialog
 f:com.intellij.util.net.ssl.CertificateWrapper
 - sf:NOT_AVAILABLE:java.lang.String
 - <init>(java.security.cert.X509Certificate):V
@@ -12201,14 +12168,20 @@ e:com.intellij.util.net.ssl.CertificateWrapper$CommonField
 - s:valueOf(java.lang.String):com.intellij.util.net.ssl.CertificateWrapper$CommonField
 - s:values():com.intellij.util.net.ssl.CertificateWrapper$CommonField[]
 a:com.intellij.util.net.ssl.ClientOnlyTrustManager
-- javax.net.ssl.X509TrustManager
+- javax.net.ssl.X509ExtendedTrustManager
 - <init>():V
 - checkClientTrusted(java.security.cert.X509Certificate[],java.lang.String):V
+- checkClientTrusted(java.security.cert.X509Certificate[],java.lang.String,java.net.Socket):V
+- checkClientTrusted(java.security.cert.X509Certificate[],java.lang.String,javax.net.ssl.SSLEngine):V
+- checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String,java.net.Socket):V
+- checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String,javax.net.ssl.SSLEngine):V
 f:com.intellij.util.net.ssl.ConfirmingTrustManager
 - com.intellij.util.net.ssl.ClientOnlyTrustManager
 - f:myUntrustedCertificateStrategy:java.lang.ThreadLocal
 - checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String):V
 - checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String,com.intellij.util.net.ssl.ConfirmingTrustManager$CertificateConfirmationParameters):V
+- checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String,java.net.Socket):V
+- checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String,javax.net.ssl.SSLEngine):V
 - checkServerTrusted(java.security.cert.X509Certificate[],java.lang.String,Z,Z):V
 - s:createForStorage(java.lang.String,java.lang.String):com.intellij.util.net.ssl.ConfirmingTrustManager
 - getAcceptedIssuers():java.security.cert.X509Certificate[]
@@ -12334,7 +12307,6 @@ c:com.intellij.util.ui.AnimatedIcon
 - suspend():V
 - updateUI():V
 a:com.intellij.util.ui.Animator
-- com.intellij.openapi.Disposable
 - pf:isForward:Z
 - <init>(java.lang.String,I,I,Z):V
 - <init>(java.lang.String,I,I,Z,Z):V

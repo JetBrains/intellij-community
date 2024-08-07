@@ -75,16 +75,6 @@ object CondaInstallManager {
     Product.Anaconda to listOf(WindowsInstaller("%UserProfile%\\anaconda3"), shellScriptInstaller, applePkgInstaller),
   )
 
-  fun getAvailableCondaInstallations(): Map<LanguageLevel, List<BinaryInstallation>> {
-    val installations = SdksKeeper.condaReleases().flatMap { release ->
-      release.selectInstallations(productInstallers.getOrElse(release.product) { emptyList() })
-    }
-
-    return LanguageLevel.SUPPORTED_LEVELS.associateWith { languageLevel ->
-      installations.filter { it.binary.tags?.contains(languageLevel.name) ?: false }
-    }.filterValues { it.isNotEmpty() }
-  }
-
   @RequiresEdt
   fun installLatest(project: Project?, product: Product = Product.Miniconda) {
     val latestRelease = SdksKeeper.condaReleases(product).firstOrNull()

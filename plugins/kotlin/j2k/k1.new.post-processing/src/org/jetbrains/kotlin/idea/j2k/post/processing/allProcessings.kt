@@ -51,7 +51,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.EXPOSED_TYPE_PARAMETER_BOUND
     ),
     diagnosticBasedProcessing(
-        ConvertToIsArrayOfCallFix,
+        ConvertToIsArrayOfCallFixFactory,
         Errors.CANNOT_CHECK_FOR_ERASED,
     ),
     fixTypeMismatchDiagnosticBasedProcessing
@@ -86,7 +86,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     RemoveRedundantSamAdaptersProcessing(),
     RemoveRedundantCastToNullableProcessing(),
     inspectionBasedProcessing(ReplacePutWithAssignmentInspection()),
-    ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody(),
     RemoveExplicitPropertyTypeProcessing(),
     RemoveRedundantNullabilityProcessing(),
     inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
@@ -142,7 +141,6 @@ private val cleaningUpCodePostProcessingGroup = NamedPostProcessingGroup(
             diagnosticBasedProcessing(RemoveModifierFixBase.createRemoveProjectionFactory(isRedundant = true), Errors.REDUNDANT_PROJECTION),
         ),
         ConvertGettersAndSettersToPropertyProcessing(),
-        InspectionLikeProcessingGroup(RemoveExplicitAccessorInspectionBasedProcessing()),
         MergePropertyWithConstructorParameterProcessing(),
         errorsFixingDiagnosticBasedPostProcessingGroup,
         addOrRemoveModifiersProcessingGroup,

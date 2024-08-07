@@ -1,6 +1,8 @@
 // BIND_TO test.B.minus
 package test
 
+import test.B.minus
+
 class B {
     operator fun plus(b: B) { }
 

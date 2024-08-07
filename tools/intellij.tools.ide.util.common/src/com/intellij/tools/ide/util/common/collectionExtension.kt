@@ -1,5 +1,11 @@
 package com.intellij.tools.ide.util.common
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+
 /**
  * [a, b, c] | [a, c, d] => [b, d]
  */
@@ -66,3 +72,26 @@ fun <T> Iterable<T>.partition(numberOfChunks: Int): List<List<T>> {
 
   return chunked
 }
+
+/**
+ * Maps the inputs using [transform] at most [maxConcurrency] at a time until all Jobs are done.
+ */
+suspend fun <TInput, TOutput> Iterable<TInput>.mapConcurrently(
+  maxConcurrency: Int,
+  transform: suspend (TInput) -> TOutput,
+) = coroutineScope {
+  val gate = Semaphore(maxConcurrency)
+  this@mapConcurrently.map {
+    async {
+      gate.withPermit {
+        transform(it)
+      }
+    }
+  }.awaitAll()
+}
+
+/** @see [mapConcurrently]] */
+suspend fun <TInput, TOutput> Sequence<TInput>.mapConcurrently(
+  maxConcurrency: Int,
+  transform: suspend (TInput) -> TOutput,
+) = this.asIterable().mapConcurrently(maxConcurrency, transform)

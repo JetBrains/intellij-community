@@ -279,7 +279,7 @@ object LessonUtil {
   ) {
     task {
       triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
-        if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
+        if (ui.editor != editor) return@l null
         val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
         val range = xRange(ui.width)
         return@l Rectangle(range.first, y, range.last - range.first + 1, editor.lineHeight)

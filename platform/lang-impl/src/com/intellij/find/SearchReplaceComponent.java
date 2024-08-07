@@ -34,7 +34,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.SwingUndoUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +52,7 @@ import static java.awt.FlowLayout.CENTER;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.META_DOWN_MASK;
 
-public final class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
+public final class SearchReplaceComponent extends EditorHeaderComponent implements UiDataProvider {
   public static final int RIGHT_PANEL_WEST_OFFSET = 13;
   private static final float MAX_LEFT_PANEL_PROP = 0.9F;
   private static final float DEFAULT_PROP = 0.33F;
@@ -83,6 +82,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   private final Project myProject;
   private final JComponent myTargetComponent;
+  private final SearchSession mySearchSession;
   @Nullable private OnePixelSplitter mySplitter;
 
   private final Runnable myCloseRunnable;
@@ -106,12 +106,22 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final CloseAction myCloseAction = new CloseAction();
 
   @NotNull
+  public static Builder buildFor(@Nullable Project project,
+                                 @NotNull JComponent component,
+                                 @Nullable SearchSession session) {
+    return new Builder(project, component, session);
+  }
+
+  /** @deprecated Use {@link #buildFor(Project, JComponent, SearchSession)} instead */
+  @Deprecated(forRemoval = true)
+  @NotNull
   public static Builder buildFor(@Nullable Project project, @NotNull JComponent component) {
-    return new Builder(project, component);
+    return new Builder(project, component, null);
   }
 
   private SearchReplaceComponent(@Nullable Project project,
                                  @NotNull JComponent targetComponent,
+                                 @Nullable SearchSession searchSession,
                                  @NotNull DefaultActionGroup searchToolbar1Actions,
                                  @NotNull DefaultActionGroup searchToolbar2Actions,
                                  @NotNull DefaultActionGroup searchFieldActions,
@@ -130,6 +140,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                  boolean showSeparator) {
     myProject = project;
     myTargetComponent = targetComponent;
+    mySearchSession = searchSession;
     mySearchFieldActions = searchFieldActions;
     myReplaceFieldActions = replaceFieldActions;
     myReplaceRunnable = replaceRunnable;
@@ -392,17 +403,20 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myStatusColor = NamedColorUtil.getErrorForeground();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId)) {
-      return mySearchTextComponent.getText();
-    }
-    return myDataProviderDelegate != null ? myDataProviderDelegate.getData(dataId) : null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.SPEED_SEARCH_TEXT, mySearchTextComponent.getText());
+    sink.set(SearchSession.KEY, mySearchSession);
+    DataSink.uiDataSnapshot(sink, mySearchSession);
+    DataSink.uiDataSnapshot(sink, myDataProviderDelegate);
   }
 
   public Project getProject() {
     return myProject;
+  }
+
+  public SearchSession getSearchSession() {
+    return mySearchSession;
   }
 
   public void addListener(@NotNull Listener listener) {
@@ -749,6 +763,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   public static final class Builder {
     private final Project myProject;
     private final JComponent myTargetComponent;
+    private final SearchSession mySearchSession;
 
     private DataProvider myDataProvider;
 
@@ -772,12 +787,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
     private SearchComponentMode myMode;
 
-    private Builder(@Nullable Project project, @NotNull JComponent component) {
+    private Builder(@Nullable Project project, @NotNull JComponent component, @Nullable SearchSession searchSession) {
       myProject = project;
       myTargetComponent = component;
+      mySearchSession = searchSession;
       myMode = new TextAreaMode();
     }
 
+    /** @deprecated Use searchSession and {@link SearchReplaceComponent#buildFor(Project, JComponent, SearchSession)} */
+    @Deprecated(forRemoval = true)
     @NotNull
     public Builder withDataProvider(@NotNull DataProvider provider) {
       myDataProvider = provider;
@@ -856,6 +874,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     public SearchReplaceComponent build() {
       return new SearchReplaceComponent(myProject,
                                         myTargetComponent,
+                                        mySearchSession,
                                         mySearchActions,
                                         myExtraSearchActions,
                                         mySearchFieldActions,

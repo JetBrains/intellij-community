@@ -62,8 +62,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       final String prefix = getCanonicalText();
       XmlTag tag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
       while (tag != null) {
@@ -106,8 +105,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @NotNull
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       //The format substitution is performed at the call site
       //noinspection UnresolvedPropertyKey
       return RelaxngBundle.message("relaxng.annotator.unresolved-namespace-prefix");

@@ -1,0 +1,13 @@
+// "Initialize with constructor parameter" "true"
+open class RGrandAccessor(x: Int) {}
+
+open class RAccessor : RGrandAccessor {
+    <caret>val f: Int
+    constructor(p: Boolean, f: Int) : super(1) {
+        this.f = f
+    }
+
+    constructor(p: String, f: Int) : this(true, f)
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InitializePropertyQuickFixFactories$InitializeWithConstructorParameterFix

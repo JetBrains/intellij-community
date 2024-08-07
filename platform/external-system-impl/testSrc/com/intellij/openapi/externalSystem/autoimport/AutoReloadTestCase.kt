@@ -6,27 +6,18 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
-import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
-import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
-import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.getResolvedPath
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
-import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.editor.saveToDisk
@@ -215,10 +206,6 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected fun markDirty(projectId: ExternalSystemProjectId) = projectTracker.markDirty(projectId)
 
-  protected fun enableAsyncExecution() {
-    AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
-  }
-
   @Suppress("SameParameterValue")
   protected fun setDispatcherMergingSpan(delay: Int) {
     projectTracker.setDispatcherMergingSpan(delay)
@@ -252,7 +239,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     if (numUnsubscribing != null) assertCountEvent(numUnsubscribing, projectAware.unsubscribeCounter.get(), "unsubscribe", event)
   }
 
-  private fun assertCountEvent(expected: Int, actual: Int, countEvent: String, event: String) {
+  protected fun assertCountEvent(expected: Int, actual: Int, countEvent: String, event: String) {
     val message = when {
       actual > expected -> "Unexpected $countEvent event"
       actual < expected -> "Expected $countEvent event"
@@ -316,39 +303,6 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     }
     finally {
       super.tearDown()
-    }
-  }
-
-  protected fun testWithDummyExternalSystem(
-    autoImportAwareCondition: Ref<Boolean>? = null,
-    test: DummyExternalSystemTestBench.(VirtualFile) -> Unit,
-  ) {
-    val externalSystemManagers = ExternalSystemManager.EP_NAME.extensionList + TestExternalSystemManager(myProject)
-    ExtensionTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, externalSystemManagers, testRootDisposable)
-    withProjectTracker {
-      val projectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)
-      val autoImportAware = object : ExternalSystemAutoImportAware {
-        override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String {
-          return projectNioPath.getResolvedPath(SETTINGS_FILE).toCanonicalPath()
-        }
-
-        override fun isApplicable(resolverPolicy: ProjectResolverPolicy?): Boolean {
-          return autoImportAwareCondition == null || autoImportAwareCondition.get()
-        }
-      }
-      val file = findOrCreateFile(SETTINGS_FILE)
-      val projectAware = ProjectAwareWrapper(ProjectAware(myProject, projectId, autoImportAware), it)
-      register(projectAware, parentDisposable = it)
-      DummyExternalSystemTestBench(projectAware).apply {
-        assertStateAndReset(
-          numReload = 1,
-          numReloadStarted = 1,
-          numReloadFinished = 1,
-          event = "register project without cache"
-        )
-
-        test(file)
-      }
     }
   }
 
@@ -502,41 +456,6 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
     fun waitForAllProjectActivities(action: () -> Unit) {
       projectAware.waitForAllProjectActivities(action)
-    }
-  }
-
-  inner class DummyExternalSystemTestBench(val projectAware: ProjectAwareWrapper) {
-
-    fun resetAssertionCounters() = projectAware.resetAssertionCounters()
-
-    fun assertStateAndReset(
-      numReload: Int? = null,
-      numReloadStarted: Int? = null,
-      numReloadFinished: Int? = null,
-      numSubscribing: Int? = null,
-      numUnsubscribing: Int? = null,
-      autoReloadType: AutoReloadType = SELECTIVE,
-      event: String,
-    ) {
-      assertState(numReload, numReloadStarted, numReloadFinished, numSubscribing, numUnsubscribing, autoReloadType, event)
-      resetAssertionCounters()
-    }
-
-    fun assertState(
-      numReload: Int? = null,
-      numReloadStarted: Int? = null,
-      numReloadFinished: Int? = null,
-      numSubscribing: Int? = null,
-      numUnsubscribing: Int? = null,
-      autoReloadType: AutoReloadType = SELECTIVE,
-      event: String,
-    ) {
-      if (numReload != null) assertCountEvent(numReload, projectAware.reloadCounter.get(), "project reload", event)
-      if (numReloadStarted != null) assertCountEvent(numReloadStarted, projectAware.startReloadCounter.get(), "project before reload", event)
-      if (numReloadFinished != null) assertCountEvent(numReloadFinished, projectAware.finishReloadCounter.get(), "project after reload", event)
-      if (numSubscribing != null) assertCountEvent(numSubscribing, projectAware.subscribeCounter.get(), "subscribe", event)
-      if (numUnsubscribing != null) assertCountEvent(numUnsubscribing, projectAware.unsubscribeCounter.get(), "unsubscribe", event)
-      assertProjectTrackerSettings(autoReloadType, event = event)
     }
   }
 

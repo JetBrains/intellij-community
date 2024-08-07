@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object VcsStatisticsCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("vcs", 15)
+  val GROUP = EventLogGroup("vcs", 16)
 
   @JvmField
   val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -33,7 +33,9 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
   private val CHANGES_VIEW_REFRESH = GROUP.registerVarargEvent("changes.view.refresh", WAS_UPDATING_BEFORE, CHANGES_DELTA,
                                                                UNVERSIONED_DELTA)
 
-  val NON_MODAL_COMMIT_STATE_CHANGED = GROUP.registerEvent("non.modal.commit.state.changed", EventFields.Enabled)
+  private val NON_MODAL_COMMIT_STATE_CHANGED = GROUP.registerEvent("non.modal.commit.state.changed", EventFields.Enabled)
+
+  val NON_MODAL_COMMIT_SLOW_CHECKS_CHANGED = GROUP.registerEvent("non.modal.commit.slow.checks.changed", EventFields.Enabled)
 
   val CLONE = GROUP.registerEvent("clone.invoked", EventFields.Class("clone_dialog_extension"))
 

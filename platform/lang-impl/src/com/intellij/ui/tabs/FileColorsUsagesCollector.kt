@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.ui.FileColorManager
 
-class FileColorsUsagesCollector : ProjectUsagesCollector() {
+internal class FileColorsUsagesCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("appearance.file.colors", 2)
 
   private val FILE_COLORS: EventId1<Boolean> = GROUP.registerEvent("file.colors", EventFields.Enabled)

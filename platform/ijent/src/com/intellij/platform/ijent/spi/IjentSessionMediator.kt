@@ -1,10 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
-import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ijent.IjentApplicationScope
 import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.awaitExit
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
@@ -13,11 +17,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.takeWhile
-import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
+import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
@@ -25,8 +31,11 @@ import kotlin.time.toKotlinDuration
 /**
  * A wrapper for a [Process] that runs IJent. The wrapper logs stderr lines, waits for the exit code, terminates the process in case
  * of problems in the IDE.
+ *
+ * [processExit] never throws. When it completes, it either means that the process has finished, or that the whole scope of IJent processes
+ * is canceled.
  */
-class IjentSessionMediator private constructor(val scope: CoroutineScope, val process: Process) {
+class IjentSessionMediator private constructor(val scope: CoroutineScope, val process: Process, val processExit: Deferred<Unit>) {
   enum class ExpectedErrorCode {
     /** During initialization, even a sudden successful exit is an error. */
     NO,
@@ -42,16 +51,25 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
   var expectedErrorCode = ExpectedErrorCode.NO
 
   companion object {
-    /** See the docs of [IjentSessionMediator] */
+    /**
+     * See the docs of [IjentSessionMediator].
+     *
+     * [ijentId] is used only for logging.
+     */
     @OptIn(DelicateCoroutinesApi::class)
     fun create(process: Process, ijentId: IjentId): IjentSessionMediator {
       val lastStderrMessages = MutableSharedFlow<String?>(
-        replay = 0,
-        extraBufferCapacity = 30,
+        replay = 30,
+        extraBufferCapacity = 0,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
       )
 
-      val connectionScope = IjentApplicationScope.instance().childScope("ijent $ijentId > connection scope", supervisor = false)
+      val exceptionHandler = IjentSessionCoroutineExceptionHandler(ijentId)
+      val connectionScope = IjentApplicationScope.instance().childScope(
+        "ijent $ijentId > connection scope",
+        supervisor = false,
+        context = exceptionHandler,
+      )
 
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
@@ -60,9 +78,11 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
         ijentProcessStderrLogger(process, ijentId, lastStderrMessages)
       }
 
-      val mediator = IjentSessionMediator(connectionScope, process)
+      val processExit = CompletableDeferred<Unit>()
 
-      val awaiterScope = IjentApplicationScope.instance().launch(CoroutineName("ijent $ijentId > exit awaiter scope")) {
+      val mediator = IjentSessionMediator(connectionScope, process, processExit)
+
+      val awaiterScope = IjentApplicationScope.instance().launch(CoroutineName("ijent $ijentId > exit awaiter scope") + exceptionHandler) {
         ijentProcessExitAwaiter(ijentId, mediator, lastStderrMessages)
       }
 
@@ -70,19 +90,43 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
         ijentProcessFinalizer(ijentId, mediator)
       }
 
-      awaiterScope.invokeOnCompletion {
-        finalizerScope.cancel()
-      }
-
-      finalizerScope.invokeOnCompletion {
-        connectionScope.cancel()
+      awaiterScope.invokeOnCompletion { err ->
+        processExit.complete(Unit)
+        finalizerScope.cancel(if (err != null) CancellationException(err.message, err) else null)
       }
 
       return mediator
     }
+  }
+}
 
-    @VisibleForTesting
-    val lastStderrMessagesTimeout = 5.seconds // A random timeout.
+private class IjentSessionCoroutineExceptionHandler(
+  private val ijentId: IjentId,
+) : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
+  private val loggedErrors = Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap<Throwable, Boolean>())
+
+  override fun toString(): String = javaClass.simpleName
+
+  override fun handleException(context: CoroutineContext, exception: Throwable) {
+    when (exception) {
+      is IjentUnavailableException -> when (exception) {
+        is IjentUnavailableException.ClosedByApplication -> Unit
+
+        is IjentUnavailableException.CommunicationFailure -> {
+          if (!exception.exitedExpectedly && loggedErrors.add(exception)) {
+            LOG.error("Exception in connection with IJent $ijentId: ${exception.message}", exception)
+          }
+        }
+      }
+
+      is CancellationException -> Unit
+
+      else -> {
+        if (loggedErrors.add(exception)) {
+          LOG.error("Unexpected error during communnication with IJent $ijentId", exception)
+        }
+      }
+    }
   }
 }
 
@@ -156,12 +200,11 @@ private fun logIjentStderr(ijentId: IjentId, line: String) {
   })
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 private suspend fun ijentProcessExitAwaiter(
   ijentId: IjentId,
   mediator: IjentSessionMediator,
   lastStderrMessages: MutableSharedFlow<String?>,
-) {
+): Nothing {
   val exitCode = mediator.process.awaitExit()
   LOG.debug { "IJent process $ijentId exited with code $exitCode" }
 
@@ -171,24 +214,24 @@ private suspend fun ijentProcessExitAwaiter(
     IjentSessionMediator.ExpectedErrorCode.ANY -> true
   }
 
-  if (!isExitExpected) {
-    // This coroutine must be bound to something that outlives `coroutineScope`, in order to not block its cancellation and
-    // to not truncate the last lines of the logs, which are usually the most important.
-    GlobalScope.launch {
-      val stderr = StringBuilder()
-      try {
-        withTimeout(IjentSessionMediator.lastStderrMessagesTimeout) {
-          collectLines(lastStderrMessages, stderr)
-        }
+  throw if (isExitExpected) {
+    IjentUnavailableException.CommunicationFailure("IJent process exited successfully").apply { exitedExpectedly = true }
+  }
+  else {
+    val stderr = StringBuilder()
+    // This code blocks the whole coroutine scope, so it should
+    withContext(NonCancellable) {
+      val timeoutResult: Unit? = withTimeoutOrNull(1.seconds) {
+        collectLines(lastStderrMessages, stderr)
       }
-      finally {
-        // There's `LOG.error(message, Attachment)`, but it doesn't work well with `LoggedErrorProcessor.executeAndReturnLoggedError`.
-        LOG.error(RuntimeExceptionWithAttachments(
-          "The process $ijentId suddenly exited with the code $exitCode",
-          Attachment("stderr", stderr.toString()),
-        ))
+      if (timeoutResult == null) {
+        stderr.append("\n<didn't collect the whole stderr>")
       }
     }
+    IjentUnavailableException.CommunicationFailure(
+      "The process $ijentId suddenly exited with the code $exitCode",
+      Attachment("stderr", stderr.toString()),
+    )
   }
 }
 
@@ -203,13 +246,19 @@ private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private suspend fun ijentProcessFinalizer(ijentId: IjentId, mediator: IjentSessionMediator) {
+private suspend fun ijentProcessFinalizer(ijentId: IjentId, mediator: IjentSessionMediator): Nothing {
   try {
     awaitCancellation()
   }
   catch (err: Exception) {
-    LOG.debug(err) { "$ijentId is going to be terminated due to receiving an error" }
-    throw err
+    throw when (val cause = generateSequence(err, Throwable::cause).firstOrNull { it !is CancellationException }) {
+      null -> err
+      is IjentUnavailableException -> cause
+      else -> {
+        LOG.debug(err) { "$ijentId is going to be terminated due to receiving an error" }
+        IjentUnavailableException.CommunicationFailure("IJent communication terminated due to an error", err)
+      }
+    }
   }
   finally {
     mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ANY

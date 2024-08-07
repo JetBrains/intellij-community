@@ -3,23 +3,29 @@ package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.concurrency.AsyncPromise
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.function.Executable
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
 
 class Parallel private constructor() {
-  private val promises = ArrayList<AsyncPromise<Any?>>()
+
+  private val futures = ArrayList<Future<Nothing?>>()
   private val start = CountDownLatch(1)
 
   fun thread(block: () -> Unit) {
-    val promise = AsyncPromise<Any?>()
-    promises.add(promise)
+    val future = CompletableFuture<Nothing?>()
+    futures.add(future)
     kotlin.concurrent.thread {
       start.await()
       try {
         block()
+        future.complete(null)
       }
-      finally {
-        promise.setResult(null)
+      catch (throwable: Throwable) {
+        val exception = AssertionError(throwable)
+        future.completeExceptionally(exception)
       }
     }
   }
@@ -32,10 +38,13 @@ class Parallel private constructor() {
       val pool = Parallel()
       pool.configure()
       pool.start.countDown()
-      for (promise in pool.promises) {
-        invokeAndWaitIfNeeded {
-          PlatformTestUtil.waitForPromise(promise)
-        }
+
+      invokeAndWaitIfNeeded {
+        Assertions.assertAll("Execute tasks in parallel", pool.futures.map { future ->
+          Executable {
+            PlatformTestUtil.waitForFuture(future)
+          }
+        })
       }
     }
   }

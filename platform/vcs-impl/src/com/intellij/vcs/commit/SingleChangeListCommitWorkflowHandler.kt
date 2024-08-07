@@ -2,6 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -49,7 +50,7 @@ class SingleChangeListCommitWorkflowHandler(
 
     ui.addStateListener(this, this)
     ui.addExecutorListener(this, this)
-    ui.addDataProvider(createDataProvider())
+    ui.addDataProvider(EdtNoGetDataProvider { sink -> uiDataSnapshot(sink) })
     ui.addChangeListListener(this, this)
   }
 

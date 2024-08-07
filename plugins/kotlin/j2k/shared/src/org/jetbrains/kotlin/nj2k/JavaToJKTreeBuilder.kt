@@ -194,8 +194,12 @@ class JavaToJKTreeBuilder(
         }
 
         private fun PsiConditionalExpression.toJK(): JKIfElseExpression {
+            val condition = this.condition.toJK().let {
+                // Unwrap parentheses to avoid double-wrapping in Kotlin: `if ((condition))`
+                if (it is JKParenthesizedExpression) it::expression.detached() else it
+            }
             val expression = JKIfElseExpression(
-                condition.toJK(),
+                condition,
                 thenExpression.toJK(),
                 elseExpression.toJK(),
                 type.toJK()

@@ -1,14 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.impl.source.xml.XmlFileImpl
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.Test
 import java.io.File
 
@@ -48,10 +45,8 @@ $relativePathUnixSeparator<caret></relativePath>
     val resolved = readAction { fixture.getElementAtCaret() }
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
-    val parentPsi = readAction { findPsiFile(f) }
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, parentPsi)
-    }
+    val parentPsi = findPsiFile(f)
+    assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)
   }
 
@@ -81,14 +76,10 @@ $relativePathUnixSeparator<caret></relativePath>
     fixture.configureFromExistingVirtualFile(pom)
 
     val resolved = readAction { fixture.getElementAtCaret() }
-    val parentPsi = readAction {
-      assertTrue(resolved is XmlFileImpl)
-      val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
-      findPsiFile(f)
-    }
-    withContext(Dispatchers.EDT) {
-      assertResolved(projectPom, parentPsi)
-    }
+    assertTrue(resolved is XmlFileImpl)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
+    val parentPsi = findPsiFile(f)
+    assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)
   }
 }

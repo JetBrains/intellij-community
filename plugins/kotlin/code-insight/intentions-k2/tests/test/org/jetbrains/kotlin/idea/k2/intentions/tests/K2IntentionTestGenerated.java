@@ -3417,6 +3417,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/fqNameForReceiver.kt");
         }
 
+        @TestMetadata("functionWithDefaultParam.kt")
+        public void testFunctionWithDefaultParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/functionWithDefaultParam.kt");
+        }
+
         @TestMetadata("if1.kt")
         public void testIf1() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/if1.kt");
@@ -3470,6 +3475,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("member.kt")
         public void testMember() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/member.kt");
+        }
+
+        @TestMetadata("missingTypeArgument.kt")
+        public void testMissingTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/missingTypeArgument.kt");
         }
 
         @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")

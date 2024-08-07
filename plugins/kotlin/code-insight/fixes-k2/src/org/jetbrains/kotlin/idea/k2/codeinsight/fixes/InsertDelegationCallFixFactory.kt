@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -56,12 +56,11 @@ internal object InsertDelegationCallFixFactory {
     private class InsertDelegationCallFix(
         element: KtSecondaryConstructor,
         private val isThis: Boolean,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtSecondaryConstructor, Unit>(element, Unit) {
+    ) : PsiUpdateModCommandAction<KtSecondaryConstructor>(element) {
 
         override fun invoke(
             actionContext: ActionContext,
             element: KtSecondaryConstructor,
-            elementContext: Unit,
             updater: ModPsiUpdater,
         ) {
             val newDelegationCall = element.replaceImplicitDelegationCallWithExplicit(isThis)

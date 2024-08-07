@@ -2,10 +2,8 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.EDT
-import kotlinx.coroutines.Dispatchers
+import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenPropertyFindUsagesTest : MavenDomTestCase() {
@@ -30,11 +28,9 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{project.version}</description>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertSearchResults(projectPom,
-                          findTag("project.name"),
-                          findTag("project.description"))
-    }
+    assertSearchResults(projectPom,
+                        findTag("project.name"),
+                        findTag("project.description"))
   }
 
   @Test
@@ -47,11 +43,9 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{pom.version}</description>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertSearchResults(projectPom,
-                          findTag("project.name"),
-                          findTag("project.description"))
-    }
+    assertSearchResults(projectPom,
+                        findTag("project.name"),
+                        findTag("project.description"))
   }
 
   @Test
@@ -64,11 +58,9 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{version}</description>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertSearchResults(projectPom,
-                          findTag("project.name"),
-                          findTag("project.description"))
-    }
+    assertSearchResults(projectPom,
+                        findTag("project.name"),
+                        findTag("project.description"))
   }
 
   @Test
@@ -80,9 +72,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <name>${'$'}{project.version}</name>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertSearchResults(projectPom, findTag("project.name"))
-    }
+    assertSearchResults(projectPom, findTag("project.name"))
   }
 
   @Test
@@ -97,9 +87,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertSearchResultsInclude(projectPom, findTag("project.name"))
-    }
+    assertSearchResultsInclude(projectPom, findTag("project.name"))
   }
 
   @Test
@@ -112,9 +100,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   <description>${"$"}{env.${envVar}}</description>
   """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
-    }
+    assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
   }
 
   @Test
@@ -127,9 +113,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{user.home}</description>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
-    }
+    assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
   }
 
   @Test
@@ -155,10 +139,9 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${user<caret>.home}abc")
 
-    withContext(Dispatchers.EDT) {
-      val result = search(f)
-      assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(project, f, "foo"))
-    }
+    val result = search(f)
+    val expected = readAction { MavenDomUtil.findPropertyValue(project, f, "foo") }
+    assertContain(result, findTag("project.name"), expected)
   }
 
   @Test
@@ -171,10 +154,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{version}</description>
                        """.trimIndent())
 
-    withContext(Dispatchers.EDT) {
-      assertHighlighted(projectPom,
-                        HighlightPointer(findTag("project.name"), "project.version"),
-                        HighlightPointer(findTag("project.description"), "version"))
-    }
+    assertHighlighted(projectPom,
+                      HighlightPointer(findTag("project.name"), "project.version"),
+                      HighlightPointer(findTag("project.description"), "version"))
   }
 }

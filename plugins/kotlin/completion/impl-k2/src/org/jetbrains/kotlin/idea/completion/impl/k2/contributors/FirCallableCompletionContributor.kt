@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.completion.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
@@ -10,10 +9,10 @@ import com.intellij.util.applyIf
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
+import org.jetbrains.kotlin.analysis.api.components.KaExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
@@ -34,9 +33,9 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -54,8 +53,9 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
-    priority: Int,
+    priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
+
     context(KaSession)
     protected open fun getImportStrategy(signature: KaCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy =
         if (isImportDefinitelyNotRequired) {
@@ -224,7 +224,7 @@ internal open class FirCallableCompletionContributor(
                 .forEach { yield(createCallableWithMetadata(it.asSignature(), CompletionSymbolOrigin.Index)) }
         }
 
-        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
+        collectExtensionsFromIndexAndResolveExtensionScope(
             implicitReceiversTypes,
             extensionChecker,
             visibilityChecker,
@@ -383,7 +383,7 @@ internal open class FirCallableCompletionContributor(
             )
         }
 
-        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
+        collectExtensionsFromIndexAndResolveExtensionScope(
             typesOfPossibleReceiver,
             extensionChecker,
             visibilityChecker,
@@ -425,7 +425,7 @@ internal open class FirCallableCompletionContributor(
     }
 
     context(KaSession)
-    private fun collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
+    private fun collectExtensionsFromIndexAndResolveExtensionScope(
         receiverTypes: List<KaType>,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
@@ -433,12 +433,12 @@ internal open class FirCallableCompletionContributor(
     ): Collection<ApplicableExtension> {
         if (receiverTypes.isEmpty()) return emptyList()
 
-        val topLevelExtensionsFromIndex = symbolFromIndexProvider.getTopLevelExtensionCallableSymbolsByNameFilter(
+        val extensionsFromIndex = symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(
             scopeNameFilter,
             receiverTypes,
         ) { !it.canDefinitelyNotBeSeenFromOtherFile() && it.canBeAnalysed() }
 
-        return topLevelExtensionsFromIndex
+        return extensionsFromIndex
             .filter { filter(it, sessionParameters) }
             .filter { visibilityChecker.isVisible(it) }
             .mapNotNull { checkApplicabilityAndSubstitute(it, extensionChecker) }
@@ -715,8 +715,9 @@ internal class FirCallableReferenceCompletionContributor(
 
 internal class FirInfixCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
-    priority: Int
+    priority: Int = 0,
 ) : FirCallableCompletionContributor(basicContext, priority) {
+
     context(KaSession)
     override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
         infixCallableInsertionStrategy
@@ -750,8 +751,9 @@ internal class FirInfixCallableCompletionContributor(
 
 internal class FirKDocCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
-    priority: Int
+    priority: Int = 0,
 ) : FirCallableCompletionContributor(basicContext, priority) {
+
     context(KaSession)
     override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
         CallableInsertionStrategy.AsIdentifier

@@ -126,16 +126,6 @@ c:com.intellij.tasks.impl.RequestFailedException
 - s:forServerMessage(java.lang.String):com.intellij.tasks.impl.RequestFailedException
 - s:forStatusCode(I,java.lang.String):com.intellij.tasks.impl.RequestFailedException
 - getRepository():com.intellij.tasks.TaskRepository
-f:com.intellij.tasks.impl.TaskManagementConfigurationCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-f:com.intellij.tasks.impl.TaskManagementUsageCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- s:logCollectRemoteTasks(com.intellij.openapi.project.Project,com.intellij.tasks.TaskRepository):V
-- s:logCreateLocalTaskManually(com.intellij.openapi.project.Project):V
-- s:logExplicitlyActivatedTask(com.intellij.openapi.project.Project):V
-- s:logOpenRemoteTask(com.intellij.openapi.project.Project,com.intellij.tasks.Task):V
 f:com.intellij.tasks.impl.TaskManagerImpl
 - com.intellij.tasks.TaskManager
 - com.intellij.openapi.Disposable

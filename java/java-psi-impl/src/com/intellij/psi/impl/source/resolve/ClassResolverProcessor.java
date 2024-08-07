@@ -107,6 +107,7 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
 
     PsiFile file = myPlace == null ? null : FileContextUtil.getContextFile(myContainingFile);
 
+    //other implicit imports processed as PsiImportStatements
     String[] defaultPackages = file instanceof PsiJavaFile ? ((PsiJavaFile)file).getImplicitlyImportedPackages() : DEFAULT_PACKAGES;
     String packageName = StringUtil.getPackageName(fqn);
     if (ArrayUtil.contains(packageName, defaultPackages)) {

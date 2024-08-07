@@ -59,9 +59,8 @@ class K2MoveDeclarationsRefactoringProcessor(
         }
         val toContinue = showConflicts(conflicts, usages)
         if (!toContinue) return false
-        val movedElements = operationDescriptor.sourceElements.flatMap { it.withChildDeclarations() }
-        unMarkNonUpdatableUsages(movedElements)
-        refUsages.set(usages.toList().filterUpdatable(movedElements).toTypedArray())
+        unMarkNonUpdatableUsages(operationDescriptor.sourceElements)
+        refUsages.set(K2MoveRenameUsageInfo.filterUpdatable(operationDescriptor.sourceElements, usages).toTypedArray())
         return true
     }
 

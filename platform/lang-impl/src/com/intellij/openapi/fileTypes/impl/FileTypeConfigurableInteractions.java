@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.fileTypes.FileType;
 
-public final class FileTypeConfigurableInteractions extends CounterUsagesCollector {
+final class FileTypeConfigurableInteractions extends CounterUsagesCollector {
   private static final EventLogGroup group = new EventLogGroup("file.type.configurable.interactions", 1);
   public static final EventId1<FileType> patternAdded = group.registerEvent("pattern.added", EventFields.FileType);
   public static final EventId1<FileType> patternEdited = group.registerEvent("pattern.edited", EventFields.FileType);

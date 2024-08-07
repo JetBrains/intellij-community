@@ -28,6 +28,9 @@ sealed interface IjentTunnelsApi {
    * The connection exists as a pair of channels [Connection.channelToServer] and [Connection.channelFromServer],
    * which allow communicating to a remote server from the IDE side.
    *
+   * Packets sent to the channel and received from the channel may be split and/or concatenated.
+   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+   *
    * If the connection gets closed from the server, then the channels also get closed in the sense of [SendChannel.close].
    *
    * If an exception happens during sending, then [Connection.channelFromServer] gets closed exceptionally with [RemoteNetworkException].
@@ -37,6 +40,7 @@ sealed interface IjentTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun getConnectionToRemotePort(address: HostAddress): IjentNetworkResult<Connection, IjentConnectionError>
 
   /**
@@ -117,41 +121,48 @@ sealed interface IjentTunnelsApi {
      * Sets the size of send buffer of the socket
      * @see java.net.SocketOptions.SO_SNDBUF
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setSendBufferSize(size: UInt)
 
     /**
      * Sets the receive buffer size of the socket
      * @see java.net.SocketOptions.SO_RCVBUF
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setReceiveBufferSize(size: UInt)
 
     /**
      * Sets the keep alive option for the socket
      * @see java.net.SocketOptions.SO_KEEPALIVE
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setKeepAlive(keepAlive: Boolean)
 
     /**
      * Sets the possibility to reuse address of the socket
      * @see java.net.SocketOptions.SO_REUSEADDR
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setReuseAddr(reuseAddr: Boolean)
 
     /**
      * Sets linger timeout for the socket
      * @see java.net.SocketOptions.SO_LINGER
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setLinger(lingerInterval: Duration)
 
     /**
      * Disables pending data until acknowledgement
      * @see java.net.SocketOptions.TCP_NODELAY
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun setNoDelay(noDelay: Boolean)
 
     /**
      * Closes the connection to the socket.
      */
+    @Throws(IjentUnavailableException::class)
     suspend fun close()
   }
 
@@ -178,8 +189,11 @@ operator fun Connection.component2(): ReceiveChannel<ByteBuffer> = channelFromSe
 
 interface IjentTunnelsPosixApi : IjentTunnelsApi {
   /**
-   * Creates a remote UNIX socket forwarding, i.e. IJent listens waits for a connection on the remote machine, and when the connection
+   * Creates a remote UNIX socket forwarding. IJent listens for a connection on the remote machine, and when the connection
    * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
+   *
+   * Packets sent to the channel and received from the channel may be split and/or concatenated.
+   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
    *
    * The call accepts only one connection. If multiple connections should be accepted, the function is supposed to be called in a loop:
    * ```kotlin
@@ -198,13 +212,13 @@ interface IjentTunnelsPosixApi : IjentTunnelsApi {
    * }
    * ```
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
 
   data class ListenOnUnixSocketResult(
     val unixSocketPath: String,
-    // TODO Avoid excessive byte arrays copying.
-    val tx: SendChannel<ByteArray>,
-    val rx: ReceiveChannel<ByteArray>,
+    val tx: SendChannel<ByteBuffer>,
+    val rx: ReceiveChannel<ByteBuffer>,
   )
 
   sealed interface CreateFilePath {
@@ -238,10 +252,12 @@ interface IjentTunnelsWindowsApi : IjentTunnelsApi
  *
  * @see com.intellij.platform.ijent.IjentTunnelsApi.getConnectionToRemotePort for more details on the behavior of [Connection]
  */
+@Throws(IjentUnavailableException::class)
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   hostAddress: IjentTunnelsApi.HostAddress,
   errorHandler: suspend (IjentConnectionError) -> T,
-  action: suspend CoroutineScope.(Connection) -> T): T =
+  action: suspend CoroutineScope.(Connection) -> T,
+): T =
   when (val connectionResult = getConnectionToRemotePort(hostAddress)) {
     is IjentNetworkResult.Error -> errorHandler(connectionResult.error)
     is Ok -> try {
@@ -252,15 +268,19 @@ suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
     }
   }
 
+@Throws(IjentUnavailableException::class)
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   host: String, port: UShort,
   errorHandler: suspend (IjentConnectionError) -> T,
-  action: suspend CoroutineScope.(Connection) -> T): T = withConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build(), errorHandler, action)
+  action: suspend CoroutineScope.(Connection) -> T,
+): T = withConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build(), errorHandler, action)
 
+@Throws(IjentUnavailableException::class)
 suspend fun <T> IjentTunnelsApi.withConnectionToRemotePort(
   remotePort: UShort,
   errorHandler: suspend (IjentConnectionError) -> T,
-  action: suspend CoroutineScope.(Connection) -> T): T = withConnectionToRemotePort("localhost", remotePort, errorHandler, action)
+  action: suspend CoroutineScope.(Connection) -> T,
+): T = withConnectionToRemotePort("localhost", remotePort, errorHandler, action)
 
 /**
  * Represents a common class for all network-related errors appearing during the interaction with IJent

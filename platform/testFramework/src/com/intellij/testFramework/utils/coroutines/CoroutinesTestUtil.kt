@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.yield
 
@@ -19,6 +20,7 @@ fun waitCoroutinesBlocking(cs: CoroutineScope) {
     while (true) {
       UIUtil.dispatchAllInvocationEvents()
       yield()
+      delay(1) //prevent too frequent pooling, otherwise may load cpu with billions of context switches
 
       val jobs = job.children.toList()
       if (jobs.isEmpty()) break

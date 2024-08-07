@@ -4,7 +4,6 @@ package com.intellij.util.gist.storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,12 +13,14 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
@@ -33,13 +34,11 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import static com.intellij.util.SystemProperties.getIntProperty;
-import static com.intellij.util.io.IOUtil.KiB;
-import static java.nio.file.StandardOpenOption.*;
-import static java.util.concurrent.TimeUnit.MINUTES;
+import java.util.function.Supplier;
 
 /**
  * Implementation stores small gists (<= {@link #MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES} in VFS file attributes,
@@ -54,12 +53,12 @@ public final class GistStorageImpl extends GistStorage {
    * Value should be < {@link VFSAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
    */
   @VisibleForTesting
-  public static final int MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES = getIntProperty("idea.gist.max-size-to-store-in-attributes", 50 * KiB);
+  public static final int MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES = SystemProperties.getIntProperty("idea.gist.max-size-to-store-in-attributes", 50 * IOUtil.KiB);
 
   private static final String HUGE_GISTS_DIR_NAME = "huge-gists";
 
   /** `{caches}/huge-gists/{FSRecords.createdTimestamp}/' */
-  private static final NotNullLazyValue<Path> DIR_FOR_HUGE_GISTS = NotNullLazyValue.atomicLazy(() -> {
+  private static final Supplier<Path> DIR_FOR_HUGE_GISTS = new SynchronizedClearableLazy<>(() -> {
     final String vfsStamp = Long.toString(FSRecords.getCreationTimestamp());
     Path gistsDir = FSRecords.getCacheDir().resolve(HUGE_GISTS_DIR_NAME + "/" + vfsStamp);
     try {
@@ -95,7 +94,7 @@ public final class GistStorageImpl extends GistStorage {
     // remove {caches}/huge-gists/{fsrecords-timestamp} dirs there {fsrecords-timestamp} != FSRecords.getCreatedTimestamp()
     AppExecutorUtil.getAppScheduledExecutorService().schedule(
       GistStorageImpl::cleanupAncientGistsDirs,
-      1, MINUTES
+      1, TimeUnit.MINUTES
     );
   }
 
@@ -247,7 +246,7 @@ public final class GistStorageImpl extends GistStorage {
                 //looks like data corruption: if gist value was indeed null, we would have stored it as VALUE_KIND_NULL
                 throw new IOException("Gist file [" + gistPath + "] doesn't exist -> looks like data corruption?");
               }
-              try (DataInputStream gistStream = new DataInputStream(Files.newInputStream(gistPath, READ))) {
+              try (DataInputStream gistStream = new DataInputStream(Files.newInputStream(gistPath, StandardOpenOption.READ))) {
                 return GistData.valid(
                   externalizer.read(gistStream),
                   gistRecord.gistStamp
@@ -468,7 +467,7 @@ public final class GistStorageImpl extends GistStorage {
         IOUtil.writeUTF(attributeStream, gistFileSuffix);
 
         Path gistPath = dedicatedGistFilePath(file, gistFileSuffix);
-        try (DataOutputStream gistFileStream = new DataOutputStream(Files.newOutputStream(gistPath, WRITE, CREATE))) {
+        try (DataOutputStream gistFileStream = new DataOutputStream(Files.newOutputStream(gistPath, StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
           gistFileStream.write(outputStream.getInternalBuffer(), 0, outputStream.size());
         }
       }

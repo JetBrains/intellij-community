@@ -642,6 +642,9 @@
                  description="Max amount of entry to process from Git reflog to parse recently checkout branches"/>
     <registryKey key="git.show.recent.checkout.branches" defaultValue="5"
                  description="Max count of recently checkout branches to show (e.g. in branches tree popup)"/>
+    <registryKey key="git.commit.gpg.signing.enable.embedded.pinentry" defaultValue="false"
+                 restartRequired="true"
+                 description="Enable embedded pinentry application for unlock GPG private key while Git perform commit signing. For remote dev (unix backend) and WSL."/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -753,7 +756,7 @@
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
 
     <registryKey key="git.commit.completion.fixup.squash" defaultValue="true"
-                 description="Provide completion for fixup and squash prefixes in commit message field" restartRequired="false"/>
+                 description="Provide completion for fixup, squash and amend prefixes in commit message field" restartRequired="false"/>
 
     <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
                  description="Use Log to collect Rebase Entries"/>
@@ -821,6 +824,7 @@
                         isInCommitToolWindow="true"/>
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
+    <postStartupActivity implementation="git4idea.commit.signing.GpgAgentConfiguratorStartupActivity"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

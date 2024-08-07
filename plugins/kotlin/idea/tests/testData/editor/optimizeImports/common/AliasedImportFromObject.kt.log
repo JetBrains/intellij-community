@@ -1,0 +1,9 @@
+Additional checking of reference Getter: aliasedFunction
+Additional checking of reference KtSimpleNameReference: aliasedFunction
+Changed resolve of KtSimpleNameReference: aliasedFunction
+Additional checking of reference KtInvokeFunctionReference: aliasedFunction()
+Trying to build import list again with import rules: +test.MyObject.originalFunction as aliasedFunction
+Additional checking of reference Getter: aliasedFunction
+Additional checking of reference KtSimpleNameReference: aliasedFunction
+Changed resolve of KtSimpleNameReference: aliasedFunction
+Additional checking of reference KtInvokeFunctionReference: aliasedFunction()

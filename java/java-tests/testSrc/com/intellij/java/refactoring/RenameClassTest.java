@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -46,6 +46,22 @@ public class RenameClassTest extends LightMultiFileTestCase {
   }
 
   public void testCollision() {
+    doTest("pack1.MyList", "List");
+  }
+
+  public void testCollisionOnCurrentPackage() {
+    doTest("pack1.MyList", "List2");
+  }
+
+  public void testCollisionOnJavaLang() {
+    doTest("pack1.String2", "String");
+  }
+
+  public void testCollisionWithModuleImport() {
+    doTest("pack1.MyList", "List");
+  }
+
+  public void testCollisionWithImplicitClass() {
     doTest("pack1.MyList", "List");
   }
 
@@ -204,6 +220,6 @@ public class RenameClassTest extends LightMultiFileTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_23;
   }
 }

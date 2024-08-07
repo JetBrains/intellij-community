@@ -4,6 +4,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -85,7 +86,8 @@ public final class EqualsWithItselfInspection extends BaseInspection {
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("ignoreNonFinalClassesInTest", InspectionGadgetsBundle.message(
-        "equals.with.itself.option")).description(InspectionGadgetsBundle.message("equals.with.itself.option.description")));
+        "equals.with.itself.option"))
+        .description(HtmlChunk.raw(InspectionGadgetsBundle.message("equals.with.itself.option.description"))));
   }
 
   @NotNull

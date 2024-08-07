@@ -699,6 +699,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/dslMarker/noDslCompletionForNonDslReciever.kt");
         }
 
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../completion/testData/basic/common/dslMarker/property.kt");
+        }
+
         @TestMetadata("root.kt")
         public void testRoot() throws Exception {
             runTest("../../completion/testData/basic/common/dslMarker/root.kt");
@@ -2417,6 +2422,26 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/primitiveCompletion/smartCast.kt");
         }
 
+        @TestMetadata("smartCastAssignedLaterVariable.kt")
+        public void testSmartCastAssignedLaterVariable() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastAssignedLaterVariable.kt");
+        }
+
+        @TestMetadata("smartCastBySafeCastAndEarlyReturn.kt")
+        public void testSmartCastBySafeCastAndEarlyReturn() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastBySafeCastAndEarlyReturn.kt");
+        }
+
+        @TestMetadata("smartCastReassignedVariable.kt")
+        public void testSmartCastReassignedVariable() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastReassignedVariable.kt");
+        }
+
+        @TestMetadata("smartCastReassignedVariable2.kt")
+        public void testSmartCastReassignedVariable2() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastReassignedVariable2.kt");
+        }
+
         @TestMetadata("stringCompletion.kt")
         public void testStringCompletion() throws Exception {
             runTest("../../completion/testData/basic/common/primitiveCompletion/stringCompletion.kt");
@@ -3767,6 +3792,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
         @TestMetadata("TypeArgOfOwnerClass.kt")
         public void testTypeArgOfOwnerClass() throws Exception {
             runTest("../../completion/testData/basic/common/TypeArgOfOwnerClass.kt");
+        }
+
+        @TestMetadata("TypeParamAsTypeArg.kt")
+        public void testTypeParamAsTypeArg() throws Exception {
+            runTest("../../completion/testData/basic/common/TypeParamAsTypeArg.kt");
         }
 
         @TestMetadata("TypeParameterFromOuterClass.kt")

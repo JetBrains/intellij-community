@@ -3,21 +3,18 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.KtParameter
 
-class RemoveDefaultParameterValueFix(
-    element: KtParameter,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtParameter, Unit>(element, Unit) {
+class RemoveDefaultParameterValueFix(element: KtParameter) : PsiUpdateModCommandAction<KtParameter>(element) {
 
     override fun getFamilyName() = KotlinBundle.message("remove.default.parameter.value")
 
     override fun invoke(
         actionContext: ActionContext,
         element: KtParameter,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         val typeReference = element.typeReference ?: return

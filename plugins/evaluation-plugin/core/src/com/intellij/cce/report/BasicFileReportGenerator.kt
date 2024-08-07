@@ -31,12 +31,15 @@ open class BasicFileReportGenerator(
         onChange = "changeLookupOrder()"
       }
       codeBlocks(text, sessions, maxLookupOrder)
-      script { src = "../res/diff.js" }
-      script { src = "../res/script.js" }
+      for (resource in scripts){
+        script { src = resource.destinationPath }
+      }
     }
   }
 
   protected open fun textToInsert(session: Session): String = session.expectedText
+
+  override val scripts: List<Resource> = listOf(Resource("/script.js", "../res/script.js"))
 
   private fun BODY.codeBlocks(text: String, sessions: List<List<Session>>, maxLookupOrder: Int) {
     div {

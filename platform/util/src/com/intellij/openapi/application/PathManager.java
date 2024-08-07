@@ -128,7 +128,12 @@ public final class PathManager {
       else {
         Path root = Paths.get(result);
         if (Boolean.getBoolean("idea.use.dev.build.server")) {
-          root = root.resolve("../../../..").normalize();
+          while (root.getParent() != null) {
+            if (Files.exists(root.resolve(ULTIMATE_MARKER)) || Files.exists(root.resolve(COMMUNITY_MARKER))) {
+              break;
+            }
+            root = root.getParent();
+          }
         }
         ourBinDirectories = getBinDirectories(root);
       }

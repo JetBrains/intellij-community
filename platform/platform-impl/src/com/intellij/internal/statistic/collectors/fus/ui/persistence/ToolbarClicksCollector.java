@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
@@ -17,6 +18,7 @@ import java.awt.event.InputEvent;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class ToolbarClicksCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("toolbar", 63);
   private static final VarargEventId CLICKED = ActionsEventLogGroup.registerActionEvent(GROUP, "clicked");

@@ -140,5 +140,10 @@
     <orderEntry type="module" module-name="intellij.platform.navbar.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Launcher" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
   </component>
 </module>

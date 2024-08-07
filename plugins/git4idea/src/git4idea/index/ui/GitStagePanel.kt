@@ -67,7 +67,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
                              private val isEditorDiffPreview: () -> Boolean,
                              disposableParent: Disposable,
                              private val activate: () -> Unit) :
-  JPanel(BorderLayout()), DataProvider, Disposable {
+  JPanel(BorderLayout()), UiDataProvider, Disposable {
   private val project = tracker.project
   private val disposableFlag = Disposer.newCheckedDisposable()
 
@@ -193,13 +193,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     commitWorkflowHandler.state = state
   }
 
-  override fun getData(dataId: String): Any? {
-    if (QuickActionProvider.KEY.`is`(dataId)) return toolbar
-    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
-    if (PlatformDataKeys.HELP_ID.`is`(dataId)) return HELP_ID
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[QuickActionProvider.KEY] = toolbar as? QuickActionProvider
+    sink[EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW] = editorTabPreview
+    sink[PlatformDataKeys.HELP_ID] = HELP_ID
 
     // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
-    return commitPanel.getDataFromProviders(dataId)
+    commitPanel.uiDataSnapshotFromProviders(sink)
   }
 
   fun updateLayout() {

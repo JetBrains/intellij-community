@@ -86,10 +86,6 @@ interface NotebookCellInlayController {
 
   fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval, cellView: EditorCellView) {}
 
-  /**
-   * This method will be called in folding batch operation
-   */
-  fun updateCellFolding() = Unit
 
   val shouldUpdateInlay: Boolean
     get() = false

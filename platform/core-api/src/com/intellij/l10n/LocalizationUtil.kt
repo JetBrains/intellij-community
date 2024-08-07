@@ -5,27 +5,29 @@ import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.PathUtilRt
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
 import java.io.InputStream
-import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.Path
-import kotlin.io.path.extension
-import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.pathString
 
 object LocalizationUtil {
   private const val LOCALIZATION_FOLDER_NAME: String = "localization"
+
   @Internal
   const val LOCALIZATION_KEY: String = "i18n.locale"
+  @Internal
+  val defaultLocale: Locale = Locale.ENGLISH
 
   @JvmOverloads
   fun getLocale(ignoreRestartRequired: Boolean = false): Locale {
     val localizationStateService = LocalizationStateService.getInstance()
     val languageTag = if (localizationStateService == null) {
-      return Locale.ENGLISH
+      return defaultLocale
     }
     else if (!ignoreRestartRequired && localizationStateService.isRestartRequired) {
       localizationStateService.lastSelectedLocale
@@ -35,40 +37,43 @@ object LocalizationUtil {
     }
     
     val locale = Locale.forLanguageTag(languageTag)
-    if (locale.language != Locale.ENGLISH.language && findLanguageBundle(locale) == null) {
-      return Locale.ENGLISH
+    if (locale.language != defaultLocale.language && findLanguageBundle(locale) == null) {
+      return defaultLocale
     }
 
     return locale
   }
 
-  fun getLocaleOrNullForDefault(): Locale? {
-    val locale = getLocale()
-    return if (locale.language == Locale.ENGLISH.language) null else locale
-  }
+  fun getLocaleOrNullForDefault(): Locale? = getLocale().takeIf { it.language != defaultLocale.language }
 
   @Internal
   @JvmOverloads
   fun getPluginClassLoader(defaultLoader: ClassLoader? = null, locale: Locale = getLocale()): ClassLoader? {
-    if (locale == Locale.ENGLISH || locale == Locale.ROOT) return null
+    if (locale == defaultLocale || locale == Locale.ROOT) {
+      return null
+    }
+
     val langBundle = findLanguageBundle(locale) ?: return null
     return langBundle.pluginDescriptor?.classLoader ?: defaultLoader
   }
 
-  private fun Path.convertToLocalizationFolderUsage(locale: Locale, withRegion: Boolean): Path {
-    var result = Path(LOCALIZATION_FOLDER_NAME).resolve(locale.language)
+  private fun convertToLocalizationFolderUsage(p: String, locale: Locale, withRegion: Boolean): String {
+    val result = StringBuilder().append(LOCALIZATION_FOLDER_NAME).append('/').append(locale.language)
     if (withRegion && locale.country.isNotEmpty()) {
-      result = result.resolve(locale.country)
+      result.append('/').append(locale.country)
     }
-    result = result.resolve(this)
-    return result
+    result.append('/').append(p)
+    return result.toString()
   }
 
-  private fun Path.convertPathToLocaleSuffixUsage(locale: Locale?, withRegion: Boolean): Path {
-    if (locale == null) return this
-    val fileName = StringBuilder(this.nameWithoutExtension)
-    val extension = this.extension
-    val foldersPath = this.parent ?: Path("")
+  private fun convertPathToLocaleSuffixUsage(file: String, locale: Locale?, withRegion: Boolean): String {
+    if (locale == null) {
+      return file
+    }
+
+    val pathFileName = PathUtilRt.getFileName(file)
+    val fileName = StringBuilder().append(PathUtilRt.getParentPath(file)).append('/').append(FileUtilRt.getNameWithoutExtension(pathFileName))
+    val extension = FileUtilRt.getExtension(pathFileName)
     val language = locale.language
     if (!language.isEmpty()) {
       fileName.append('_').append(language)
@@ -78,51 +83,54 @@ object LocalizationUtil {
       }
     }
     if (extension.isNotEmpty()) {
-      fileName.append(".").append(extension)
+      fileName.append('.').append(extension)
     }
-    val result = foldersPath.resolve(fileName.toString())
-    return result
+    return fileName.toString()
   }
 
   @Internal
-  @JvmOverloads
-  fun getResourceAsStream(defaultLoader: ClassLoader?, path: Path, specialLocale: Locale? = null): InputStream? {
-    val locale = specialLocale ?: getLocale()
-    val localizedPaths = getLocalizedPaths(path, locale)
-    for (localizedPath in localizedPaths) {
-      val pathString = FileUtil.toSystemIndependentName(localizedPath.pathString)
-      defaultLoader?.getResourceAsStream(pathString)?.let { return it }
+  fun getResourceAsStream(classLoader: ClassLoader?, path: String, specialLocale: Locale? = null): InputStream? {
+    val locale = specialLocale ?: getLocaleOrNullForDefault()
+    if (classLoader != null && locale != null) {
+      try {
+        for (localizedPath in getLocalizedPaths(path, locale)) {
+          classLoader.getResourceAsStream(localizedPath)?.let { return it }
+        }
+      }
+      catch (e: IOException) {
+        thisLogger().error("Cannot find localized resource: $path", e)
+      }
     }
-    val pureResourcePath = FileUtil.toSystemIndependentName(path.pathString)
-    return getPluginClassLoader()?.getResourceAsStream(pureResourcePath)
-           ?: defaultLoader?.getResourceAsStream(pureResourcePath)
+    return locale?.let { getPluginClassLoader(defaultLoader = null, locale = it)?.getResourceAsStream(path) }
+           ?: classLoader?.getResourceAsStream(path)
   }
 
   @Internal
   @JvmOverloads
-  fun getLocalizedPathsWithDefault(path: Path, specialLocale: Locale? = null): List<Path> {
-    val locale = specialLocale ?: getLocale()
-    return getLocalizedPaths(path, locale).toMutableList().plusElement(path).distinct()
+  fun getLocalizedPathsWithDefault(path: String, specialLocale: Locale? = null): List<String> {
+    return getLocalizedPaths(path, specialLocale).toMutableList().plusElement(path).distinct()
   }
 
   @Internal
-  @JvmOverloads
-  fun getLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
-    val locale = specialLocale ?: getLocale()
-    if (locale == Locale.ROOT) return emptyList()
-    return listOf(
+  fun getLocalizedPaths(path: String, specialLocale: Locale? = null): Collection<String> {
+    val locale = specialLocale ?: getLocaleOrNullForDefault()
+    if (locale == null || locale == Locale.ROOT) {
+      return emptyList()
+    }
+
+    return linkedSetOf(
       //localizations/zh/CN/inspectionDescriptions/name.html
-      path.convertToLocalizationFolderUsage(locale, true),
+      convertToLocalizationFolderUsage(p = path, locale = locale, withRegion = true),
 
       //inspectionDescriptions/name_zh_CN.html
-      path.convertPathToLocaleSuffixUsage(locale, true),
+      convertPathToLocaleSuffixUsage(file = path, locale = locale, withRegion = true),
 
       //localizations/zh/inspectionDescriptions/name.html
-      path.convertToLocalizationFolderUsage(locale, false),
+      convertToLocalizationFolderUsage(p = path, locale = locale, withRegion = false),
 
       //inspectionDescriptions/name_zh.html
-      path.convertPathToLocaleSuffixUsage(locale, false),
-    ).distinct()
+      convertPathToLocaleSuffixUsage(file = path, locale = locale, withRegion = false),
+    )
   }
 
   @Internal
@@ -140,26 +148,27 @@ object LocalizationUtil {
 
   @Internal
   @JvmOverloads
-  fun getFolderLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
+  fun getFolderLocalizedPaths(path: String, specialLocale: Locale? = null): List<String> {
     val locale = specialLocale ?: getLocaleOrNullForDefault() ?: return emptyList()
     return listOf(
       //localizations/zh/CN/inspectionDescriptions/name.html
-      path.convertToLocalizationFolderUsage(locale, true),
+      convertToLocalizationFolderUsage(path, locale, true),
 
       //localizations/zh/inspectionDescriptions/name.html
-      path.convertToLocalizationFolderUsage(locale, false)).distinct()
+      convertToLocalizationFolderUsage(path, locale, false)).distinct()
   }
 
   @Internal
   @JvmOverloads
-  fun getSuffixLocalizedPaths(path: Path, specialLocale: Locale? = null): List<String> {
-    val locale = specialLocale ?: getLocale()
+  fun getSuffixLocalizedPaths(path: String, specialLocale: Locale? = null): List<String> {
+    val locale = specialLocale ?: getLocaleOrNullForDefault()
     return setOf(
       //inspectionDescriptions/name_zh_CN.html
-      path.convertPathToLocaleSuffixUsage(locale, true),
+      convertPathToLocaleSuffixUsage(file = path, locale, true),
 
       //inspectionDescriptions/name_zh.html
-      path.convertPathToLocaleSuffixUsage(locale, false))
+      convertPathToLocaleSuffixUsage(file = path, locale, false),
+    )
       .map { FileUtil.toSystemIndependentName(it.toString()) }
   }
 
@@ -173,7 +182,6 @@ object LocalizationUtil {
     }
   }
 
-  @Internal
   private fun getAllLanguageBundleExtensions(): List<DynamicBundle.LanguageBundleEP> {
     try {
       if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
@@ -210,9 +218,9 @@ object LocalizationUtil {
       }
     }
 
-    return buildList<Locale> {
-      add(Locale.ENGLISH)
-      addAll(list.sortedBy { map[it] ?: it.getDisplayLanguage(Locale.ENGLISH) })
+    return buildList {
+      add(defaultLocale)
+      addAll(list.sortedBy { map[it] ?: it.getDisplayLanguage(defaultLocale) })
     } to map
   }
 }

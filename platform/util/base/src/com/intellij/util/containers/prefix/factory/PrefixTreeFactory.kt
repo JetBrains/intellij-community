@@ -3,7 +3,9 @@ package com.intellij.util.containers.prefix.factory
 
 import com.intellij.util.containers.prefix.map.MutablePrefixTreeMap
 import com.intellij.util.containers.prefix.set.MutablePrefixTreeSet
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface PrefixTreeFactory<Key, KeyElement> {
 
   fun convertToList(element: Key): List<KeyElement>

@@ -11,7 +11,9 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.util.Predicates;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -317,6 +320,25 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
       return true;
     });
     return result[0];
+  }
+
+  /**
+   * Optimized method making {@link EditorView#getPreferredSize()} faster.
+   * Unlike {@link #getElementsInRange}, this method does not allocate and sort an array
+   */
+  @ApiStatus.Internal
+  public @Nullable Inlay<?> getWidestVisibleBlockInlay() {
+    AtomicInteger maxWidth = new AtomicInteger(-1);
+    Ref<Inlay<?>> inlayRef = new Ref<>(null);
+    myBlockElementsTree.processAll(inlay -> {
+      int width = inlay.getWidthInPixels();
+      if (width > maxWidth.get() && !EditorUtil.isInlayFolded(inlay)) {
+        maxWidth.set(width);
+        inlayRef.set(inlay);
+      }
+      return true;
+    });
+    return inlayRef.get();
   }
 
   @Override

@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
-import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import git4idea.annotate.GitAnnotationProvider.GitRawAnnotationProvider
 import git4idea.telemetry.GitTelemetrySpan
 import kotlinx.coroutines.*
@@ -36,7 +36,7 @@ class GitAnnotationService(private val project: Project, private val cs: Corouti
                revision: VcsRevisionNumber?,
                file: VirtualFile): GitFileAnnotation {
     return runBlockingCancellable {
-      computeWithSpan(getInstance().getTracer(VcsScope), GitTelemetrySpan.Annotations.OpenAnnotation.getName()) {
+      getInstance().getTracer(VcsScope).spanBuilder(GitTelemetrySpan.Annotations.OpenAnnotation.getName()).use { span ->
         val providers = GitRawAnnotationProvider.EP_NAME.getExtensions(project)
         val default = providers.single { GitRawAnnotationProvider.isDefault(it.id) }
 

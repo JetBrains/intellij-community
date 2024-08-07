@@ -564,7 +564,7 @@ def dump_threads(stream=None):
 
 
 def take_first_n_coll_elements(coll, n):
-    if coll.__class__ in (list, tuple, array):
+    if coll.__class__ in (list, tuple, array, str):
         return coll[:n]
     elif coll.__class__ in (set, frozenset, deque):
         buf = []

@@ -262,6 +262,42 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     assertEquals("my.source.moduleB.SourceTestB", psiClass.getQualifiedName());
   }
 
+  public void testResolveTransitiveRecursion() {
+    Module m2 = ModuleManager.getInstance(getProject()).findModuleByName(M2.getModuleName$intellij_java_tests());
+    Module m3 = ModuleManager.getInstance(getProject()).findModuleByName(M3.getModuleName$intellij_java_tests());
+    ModuleRootModificationUtil.addDependency(m2, m3, DependencyScope.COMPILE, true);
+    addCode("module-info.java", """
+      module my.source.moduleB {
+        requires transitive my.source.moduleC;
+      }
+      """, M2);
+    addCode("my/source/moduleB/SourceTestB.java", """
+      package my.source.moduleB;
+      class SourceTestB {}
+      """, M2);
+
+    addCode("module-info.java", """
+      module my.source.moduleC {
+        exports my.source.moduleC;
+        requires transitive my.source.moduleB;
+      }
+      """, M3);
+    addCode("my/source/moduleC/SourceTestC.java", """
+      package my.source.moduleC;
+      class SourceTestC {}
+      """, M3);
+
+    addCode("Test.java", """
+      import module my.source.moduleB;
+      class Test {
+        SourceTestC <caret>module;
+      }
+      """);
+    PsiClass psiClass = getPsiClass();
+    assertNotNull(psiClass);
+    assertEquals("my.source.moduleC.SourceTestC", psiClass.getQualifiedName());
+  }
+
   @Nullable
   private PsiClass getPsiClass() {
     PsiField field = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiField.class);

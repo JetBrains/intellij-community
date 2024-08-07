@@ -106,17 +106,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()), shouldInitTabDefaults);
 
     setSession(session, environment, icon);
-    myUi.getContentManager().addDataProvider(new EdtNoGetDataProvider() {
-      @Override
-      public void dataSnapshot(@NotNull DataSink sink) {
-        sink.set(XWatchesView.DATA_KEY, myWatchesView);
-        sink.set(TAB_KEY, XDebugSessionTab.this);
-        sink.set(XDebugSessionData.DATA_KEY, mySessionData);
+    myUi.getContentManager().addDataProvider((EdtNoGetDataProvider)sink -> {
+      sink.set(XWatchesView.DATA_KEY, myWatchesView);
+      sink.set(TAB_KEY, XDebugSessionTab.this);
+      sink.set(XDebugSessionData.DATA_KEY, mySessionData);
 
-        if (mySession != null) {
-          sink.set(XDebugSession.DATA_KEY, mySession);
-          sink.set(LangDataKeys.CONSOLE_VIEW, mySession.getConsoleView());
-        }
+      if (mySession != null) {
+        sink.set(XDebugSession.DATA_KEY, mySession);
+        sink.set(LangDataKeys.CONSOLE_VIEW, mySession.getConsoleView());
       }
     });
   }

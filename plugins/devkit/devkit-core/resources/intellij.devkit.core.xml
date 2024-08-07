@@ -2,6 +2,7 @@
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.java"/>
+    <plugin id="com.intellij.modules.json"/>
   </dependencies>
   <resource-bundle>messages.DevKitBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
@@ -395,7 +396,7 @@
                      groupPathKey="inspections.group.path"
                      key="inspections.action.update.thread.display.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.MissingActionUpdateThread"/>
-    <localInspection language="JVM"
+    <localInspection language="UAST"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path"
                      key="inspections.jcomponent.data.provider.display.name" groupKey="inspections.group.code" enabledByDefault="true"
@@ -674,7 +675,7 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass"
-            implements=" org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"/>
+            implements="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.extensionClassShouldNotBePublicProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"

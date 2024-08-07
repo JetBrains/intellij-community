@@ -20,13 +20,13 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,13 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 300);
     myLoadingPanel.add(myContentPanel, BorderLayout.CENTER);
 
-    myPanel = new SimpleDiffPanel(myLoadingPanel, this, context);
+    myPanel = new SimpleDiffPanel(myLoadingPanel, context) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
+        DataSink.uiDataSnapshot(sink, ThreesideDiffViewer.this);
+      }
+    };
   }
 
   @Override
@@ -145,19 +151,12 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     return getCurrentSide().select(getEditorHolders());
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
-      return getCurrentSide().select(myRequest.getContents());
-    }
-    else if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
-      return this;
-    }
-    else if (DiffDataKeys.DIFF_CONTEXT.is(dataId)) {
-      return myContext;
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_CONTENT, getCurrentSide().select(myRequest.getContents()));
+    sink.set(DiffDataKeys.DIFF_VIEWER, this);
+    sink.set(DiffDataKeys.DIFF_CONTEXT, myContext);
   }
 
   //
@@ -166,7 +165,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public Navigatable getNavigatable() {
     return getCurrentSide().select(getRequest().getContents()).getNavigatable();
   }
 

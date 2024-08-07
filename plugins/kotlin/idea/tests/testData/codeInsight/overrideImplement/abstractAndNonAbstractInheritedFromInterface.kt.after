@@ -12,3 +12,5 @@ class C1 : T, U {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "getFoo(): String"

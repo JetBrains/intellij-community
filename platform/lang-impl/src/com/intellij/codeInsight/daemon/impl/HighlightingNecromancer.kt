@@ -59,7 +59,13 @@ open class HighlightingNecromancer(
   GRAVED_HIGHLIGHTING,
   HighlightingNecromancy,
 ) {
-  private val spawnedZombies: ConcurrentIntObjectMap<Boolean> = ConcurrentCollectionFactory.createConcurrentIntObjectMap()
+  private val zombieStatusMap: ConcurrentIntObjectMap<Status> = ConcurrentCollectionFactory.createConcurrentIntObjectMap()
+
+  private enum class Status {
+    SPAWNED,
+    DISPOSED,
+    NO_ZOMBIE,
+  }
 
   override fun turnIntoZombie(recipe: TurningRecipe): HighlightingZombie? {
     if (isEnabled()) {
@@ -77,17 +83,16 @@ open class HighlightingNecromancer(
     return null
   }
 
-  override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: FingerprintedZombie<HighlightingZombie>): Boolean {
-    val oldZombie = exhumeZombie(recipe.fileId)
-    val zombieDisposed = spawnedZombies[recipe.fileId]
+  override suspend fun shouldBuryZombie(recipe: TurningRecipe, zombie: HighlightingZombie): Boolean {
+    val zombieStatus = zombieStatusMap[recipe.fileId]
     val graveDecision = getGraveDecision(
       newZombie = zombie,
-      oldZombie = oldZombie,
-      isNewMoreRelevant = zombieDisposed,
+      oldZombie = zombieStatus,
+      file = recipe.file,
     )
     return when (graveDecision) {
       GraveDecision.BURY_NEW -> {
-        LOG.debug { "put in grave zombie with ${zombie.zombie().limbs().size} libs for ${fileName(recipe.file)}" }
+        LOG.debug { "put in grave zombie with ${zombie.limbs().size} libs for ${fileName(recipe.file)}" }
         true
       }
       GraveDecision.REMOVE_OLD -> {
@@ -103,12 +108,12 @@ open class HighlightingNecromancer(
   }
 
   override suspend fun shouldSpawnZombie(recipe: SpawnRecipe): Boolean {
-    return isEnabled() && !spawnedZombies.containsKey(recipe.fileId)
+    return isEnabled() && !zombieStatusMap.containsKey(recipe.fileId)
   }
 
   override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: HighlightingZombie?) {
-    if (zombie == null) {
-      spawnedZombies.put(recipe.fileId, true)
+    if (zombie == null || zombie.limbs().isEmpty()) {
+      zombieStatusMap.put(recipe.fileId, Status.NO_ZOMBIE)
       logFusStatistic(recipe.file, MarkupGraveEvent.NOT_RESTORED_CACHE_MISS)
       LOG.debug { "no zombie to spawn for ${fileName(recipe.file)}" }
     } else {
@@ -122,7 +127,7 @@ open class HighlightingNecromancer(
       recipe.highlighterReady()
 
       val spawned = spawnZombie(markupModel, recipe, zombie)
-      spawnedZombies.put(recipe.fileId, spawned == 0)
+      zombieStatusMap.put(recipe.fileId, if (spawned == 0) Status.NO_ZOMBIE else Status.SPAWNED)
       logFusStatistic(recipe.file, MarkupGraveEvent.RESTORED, spawned)
       if (spawned != 0) {
         FUSProjectHotStartUpMeasurer.markupRestored(recipe.file as VirtualFileWithId)
@@ -183,7 +188,7 @@ open class HighlightingNecromancer(
   }
 
   protected fun putDownActiveZombiesInFile(file: VirtualFileWithId, document: Document) {
-    val replaced = spawnedZombies.replace(file.id, false, true)
+    val replaced = zombieStatusMap.replace(file.id, Status.SPAWNED, Status.DISPOSED)
     if (!replaced) {
       // no zombie or zombie already disposed
       return
@@ -274,7 +279,7 @@ open class HighlightingNecromancer(
 
   @TestOnly
   private fun clearSpawnedZombies() {
-    spawnedZombies.clear()
+    zombieStatusMap.clear()
   }
 
   private fun fileName(file: VirtualFileWithId): String {
@@ -298,31 +303,27 @@ open class HighlightingNecromancer(
   }
 
   private fun getGraveDecision(
-    newZombie: FingerprintedZombie<HighlightingZombie>,
-    oldZombie: FingerprintedZombie<HighlightingZombie>?,
-    isNewMoreRelevant: Boolean?,
+    newZombie: HighlightingZombie,
+    oldZombie: Status?,
+    file: VirtualFile,
   ): GraveDecision {
-    return when {
-      // put zombie's limbs
-      oldZombie == null && !newZombie.isEmpty() -> GraveDecision.BURY_NEW
-      // no a limb to put in grave
-      oldZombie == null -> GraveDecision.KEEP_OLD
-      // fresh limbs
-      oldZombie.fingerprint() != newZombie.fingerprint() && !newZombie.isEmpty() -> GraveDecision.BURY_NEW
-      // graved zombie is rotten and there is no a limb to bury
-      oldZombie.fingerprint() != newZombie.fingerprint() -> GraveDecision.REMOVE_OLD
-      // graved zombie is still fresh
-      newZombie.isEmpty() -> GraveDecision.KEEP_OLD
-      // should never happen. the file is closed without being opened before
-      isNewMoreRelevant == null -> GraveDecision.BURY_NEW
-      // limbs form complete zombie
-      isNewMoreRelevant -> GraveDecision.BURY_NEW
-      else -> GraveDecision.KEEP_OLD
+    val decision = when (oldZombie) {
+      null -> GraveDecision.KEEP_OLD
+      Status.SPAWNED -> GraveDecision.KEEP_OLD
+      Status.DISPOSED -> GraveDecision.BURY_NEW
+      Status.NO_ZOMBIE -> {
+        if (newZombie.limbs().isNotEmpty()) {
+          GraveDecision.BURY_NEW
+        } else {
+          GraveDecision.REMOVE_OLD
+        }
+      }
     }
-  }
-
-  private fun FingerprintedZombie<HighlightingZombie>.isEmpty(): Boolean {
-    return zombie().limbs().isEmpty()
+    LOG.debug {
+      "grave decision $decision based on old zombie $oldZombie and " +
+      "new zombie with ${newZombie.limbs().size} limbs for ${fileName(file)}"
+    }
+    return decision
   }
 
   private class ZombieIcon(private val icon: Icon) : GutterIconRenderer() {

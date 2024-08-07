@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.ui.models
 
+import com.intellij.history.core.HistoryPathFilter
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.RevisionsCollector
 import com.intellij.history.core.processContents
@@ -28,7 +29,7 @@ internal fun collectRevisionData(project: Project,
                                  before: Boolean = true): RevisionData {
   gateway.registerUnsavedDocuments(facade)
   val path = gateway.getPathOrUrl(file)
-  val revisionItems = mergeLabelsWithRevisions(RevisionsCollector.collect(facade, root, path, project.getLocationHash(), filter, before))
+  val revisionItems = mergeLabelsWithRevisions(RevisionsCollector.collect(facade, root, path, project.getLocationHash(), HistoryPathFilter.create(filter, project), before))
   return RevisionData(CurrentRevision(root, path), revisionItems)
 }
 

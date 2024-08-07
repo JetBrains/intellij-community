@@ -43,4 +43,4 @@ UFile (package = test.pkg) [package test.pkg...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [HashMap()]
                     UIdentifier (Identifier (HashMap)) [UIdentifier (Identifier (HashMap))]
-                    USimpleNameReferenceExpression (identifier = HashMap, resolvesTo = PsiClass: HashMap) [HashMap] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                    USimpleNameReferenceExpression (identifier = HashMap, resolvesTo = PsiClass: HashMap) [HashMap]

@@ -634,6 +634,7 @@ public final class ExternalSystemUtil {
         }
         project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
         project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
+        project.putUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES, null);
         eventDispatcher.onEvent(taskId, getSyncFinishEvent(taskId, finishSyncEventSupplier));
       }
     }

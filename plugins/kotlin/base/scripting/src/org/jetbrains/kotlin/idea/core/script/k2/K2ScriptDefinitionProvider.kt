@@ -17,13 +17,28 @@ import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
  * Returns default definition if update did not happen.
  */
 class K2ScriptDefinitionProvider(val project: Project) : LazyScriptDefinitionProvider() {
-    private val _definitions: AtomicReference<List<ScriptDefinition>> = AtomicReference()
+    private val allDefinitions: AtomicReference<List<ScriptDefinition>?> = AtomicReference()
+
+    fun getAllDefinitions(): List<ScriptDefinition> = allDefinitions.get() ?: emptyList()
 
     public override val currentDefinitions: Sequence<ScriptDefinition>
-        get() = _definitions.get()?.takeIf { it.isNotEmpty() }?.asSequence() ?: sequenceOf(getDefaultDefinition())
+        get() {
+            val settingsByDefinitionId =
+                ScriptDefinitionPersistentSettings.getInstance(project).getIndexedSettingsPerDefinition()
 
-    fun reloadDefinitions() {
-        _definitions.set(SCRIPT_DEFINITIONS_SOURCES.getExtensions(project).flatMap { it.definitions })
+            val definitions = allDefinitions.get() ?: return emptySequence()
+
+            return definitions
+                .filter { settingsByDefinitionId[it.definitionId]?.setting?.enabled != false }
+                .sortedBy { settingsByDefinitionId[it.definitionId]?.index }
+                .asSequence()
+        }
+
+    fun reloadDefinitionsFromSources() {
+        val scriptDefinitions = SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
+            .flatMap { it.definitions }
+
+        allDefinitions.set(scriptDefinitions)
         clearCache()
     }
 

@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.EventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.ACTION_FINISHED_EVENT_ID;
 
+@ApiStatus.Internal
 public final class DragEditorTabsFusEventFields implements FeatureUsageCollectorExtension {
   public static final BooleanEventField SAME_WINDOW = EventFields.Boolean("same_window");
 

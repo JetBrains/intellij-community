@@ -3,18 +3,18 @@
 
 package com.intellij.ide.ui.search
 
+import com.intellij.DynamicBundle
 import com.intellij.IntelliJResourceBundle
 import com.intellij._doResolveBundle
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar.AdditionalLocationProvider
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ResourceUtil
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -37,7 +37,7 @@ private val LOG = logger<MySearchableOptionProcessor>()
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache = HashSet<String>()
-  val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap(20, 0.9f, true)
+  @JvmField val storage: MutableMap<String, LongArray> = HashMap()
   @JvmField val identifierTable: IndexedCharsInterner = IndexedCharsInterner()
 
   override fun addOptions(
@@ -50,10 +50,10 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
   ) {
     cache.clear()
     if (applyStemming) {
-      SearchableOptionsRegistrarImpl.collectProcessedWords(text, cache, stopWords)
+      collectProcessedWords(text, cache, stopWords)
     }
     else {
-      SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemming(text, cache, stopWords)
+      collectProcessedWordsWithoutStemming(text, cache, stopWords)
     }
     putOptionWithHelpId(words = cache, id = configurableId, groupName = configurableDisplayName, hit = hit, path = path)
   }
@@ -65,7 +65,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
 
   private fun loadSynonyms(): Map<Pair<String, String>, MutableSet<String>> {
     val result = HashMap<Pair<String, String>, MutableSet<String>>()
-    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java.classLoader, "/search/", "synonyms.xml"))
+    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java.classLoader, "search", "synonyms.xml"))
     val cache = HashSet<String>()
     for (configurable in root.getChildren("configurable")) {
       val id = configurable.getAttributeValue("id") ?: continue
@@ -74,7 +74,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
       for (synonymElement in synonyms) {
         val synonym = synonymElement.textNormalize ?: continue
         cache.clear()
-        SearchableOptionsRegistrarImpl.collectProcessedWords(synonym, cache, stopWords)
+        collectProcessedWords(synonym, cache, stopWords)
         putOptionWithHelpId(words = cache, id = id, groupName = groupName, hit = synonym, path = null)
       }
 
@@ -84,7 +84,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
         for (synonymElement in list) {
           val synonym = synonymElement.textNormalize ?: continue
           cache.clear()
-          SearchableOptionsRegistrarImpl.collectProcessedWords(synonym, cache, stopWords)
+          collectProcessedWords(synonym, cache, stopWords)
           putOptionWithHelpId(words = cache, id = id, groupName = groupName, hit = synonym, path = null)
           result.computeIfAbsent(Pair(option, id)) { HashSet() }.add(synonym)
         }
@@ -109,8 +109,8 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
       if (configs == null) {
         storage.put(word, longArrayOf(packed))
       }
-      else if (configs.indexOf(packed) == -1) {
-        storage.put(word, ArrayUtil.append(configs, packed))
+      else if (!configs.contains(packed)) {
+        storage.put(word, configs + packed)
       }
     }
   }
@@ -125,7 +125,7 @@ data class ConfigurableEntry(
 )
 
 @Internal
-val INDEX_ENTRY_REGEXP = Regex("""\|b\|([^|]+)\|k\|([^|]+)\|""")
+val INDEX_ENTRY_REGEXP: Regex = Regex("""\|b\|([^|]+)\|k\|([^|]+)\|""")
 
 private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("com.intellij.search.additionalOptionsLocation")
 
@@ -138,25 +138,48 @@ private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: 
   val result = StringBuilder()
   for (match in matches) {
     val groups = match.groups
-    val bundlePath = groups[1]!!.value
-    val messageKey = groups[2]!!.value
-    val bundle = try {
-      _doResolveBundle(loader = classLoader, locale = locale, pathToBundle = bundlePath)
-    }
-    catch (_: MissingResourceException) {
-      continue
-    }
-
+    val bundle = findBundle(classLoader = classLoader, locale = locale, bundlePath = groups[1]!!.value) ?: continue
     if (bundle !is IntelliJResourceBundle) {
       // todo we should fix resolveResourceBundleWithFallback and do not try to load bundle if we cannot find it in localization plugin
       LOG.debug { "Unexpected bundle type due to fallback: ${bundle.javaClass.name}" }
       continue
     }
 
+    val messageKey = groups[2]!!.value
     val resolvedMessage = bundle.getMessageOrNull(messageKey) ?: continue
     result.append(resolvedMessage)
   }
   return result.toString()
+}
+
+private fun findBundle(classLoader: ClassLoader, locale: Locale, bundlePath: String): ResourceBundle? {
+  try {
+    return _doResolveBundle(loader = classLoader, locale = locale, pathToBundle = bundlePath)
+  }
+  catch (_: MissingResourceException) {
+    if (classLoader is PluginAwareClassLoader) {
+      return null
+    }
+
+    val visited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
+    visited.add(classLoader)
+    for (extension in DynamicBundle.LanguageBundleEP.EP_NAME.filterableLazySequence()) {
+      visited.add(extension.pluginDescriptor.classLoader)
+    }
+    for (descriptor in getPluginSet().getEnabledModules()) {
+      if (!visited.add(descriptor.classLoader)) {
+        continue
+      }
+
+      try {
+        val b = _doResolveBundle(loader = descriptor.classLoader, locale = locale, pathToBundle = bundlePath)
+        return b
+      }
+      catch (_: MissingResourceException) {
+      }
+    }
+    return null
+  }
 }
 
 private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
@@ -242,24 +265,28 @@ private fun doRegisterIndex(
   processor: MySearchableOptionProcessor,
   localeSpecificLoader: ClassLoader?,
 ) {
+  val groupName = getMessageByCoordinate(s = item.name, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT)
+  val id = getMessageByCoordinate(s = item.id, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT)
   for (entry in item.entries) {
     processor.putOptionWithHelpId(
       words = Iterable {
         val h1 = getMessageByCoordinate(entry.hit, classLoader, Locale.ROOT).lowercase(Locale.ROOT)
-        val s1 = SearchableOptionsRegistrarImpl.splitToWordsWithoutStemmingAndStopWords(h1)
+        val s1 = splitToWordsWithoutStemmingAndStopWords(h1)
         if (locale == null) {
           s1.iterator()
         }
         else {
           val h2 = getMessageByCoordinate(entry.hit, localeSpecificLoader!!, locale).lowercase(locale)
-          val s2 = SearchableOptionsRegistrarImpl.splitToWordsWithoutStemmingAndStopWords(h2)
+          val s2 = splitToWordsWithoutStemmingAndStopWords(h2)
           Stream.concat(s2, s1).iterator()
         }
       },
-      id = getMessageByCoordinate(item.id, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT),
-      groupName = getMessageByCoordinate(item.name, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT),
-      hit = getMessageByCoordinate(entry.hit, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT),
-      path = entry.path?.let { getMessageByCoordinate(it, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT) },
+      id = id,
+      groupName = groupName,
+      hit = getMessageByCoordinate(s = entry.hit, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT),
+      path = entry.path?.let {
+        getMessageByCoordinate(s = it, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT)
+      },
     )
   }
 }

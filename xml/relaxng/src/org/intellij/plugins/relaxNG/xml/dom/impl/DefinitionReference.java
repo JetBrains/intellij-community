@@ -76,8 +76,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     return ContainerUtil.map2Array(set, ResolveResult.class, this);
   }
 
-  @Nullable
-  public RngGrammar getScope() {
+  public @Nullable RngGrammar getScope() {
     RngGrammar scope = myValue.getParentOfType(RngGrammar.class, true);
     if (scope == null) {
       return null;
@@ -137,8 +136,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     //noinspection UnresolvedPropertyKey
     return RelaxngBundle.message("relaxng.annotator.unresolved-pattern-reference");
   }

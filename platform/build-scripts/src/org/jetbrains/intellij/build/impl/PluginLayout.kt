@@ -9,6 +9,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -37,6 +38,17 @@ class PluginLayout private constructor(
   )
 
   private var mainJarName = "$mainJarNameWithoutExtension.jar"
+
+  /** module name to name of the library */
+  @JvmField
+  internal val excludedLibraries: MutableMap<String?, MutableList<String>> = HashMap()
+
+  internal fun excludeProjectLibrary(libraryName: String) {
+    excludedLibraries.computeIfAbsent(null) { ArrayList() }.add(libraryName)
+  }
+
+  @TestOnly
+  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) ?: false
 
   var directoryName: String = mainJarNameWithoutExtension
     private set
@@ -180,6 +192,14 @@ class PluginLayout private constructor(
      * Returns [PluginBundlingRestrictions] instance which can be used to exclude the plugin from some distributions.
      */
     val bundlingRestrictions: PluginBundlingRestrictions.Builder = PluginBundlingRestrictions.Builder()
+
+    fun excludeModuleLibrary(libraryName: String, moduleName: String) {
+      layout.excludedLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
+    }
+
+    fun excludeProjectLibrary(libraryName: String) {
+      layout.excludeProjectLibrary(libraryName)
+    }
 
     /**
      * @param resourcePath path to resource file or directory relative to the plugin's main module content root

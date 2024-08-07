@@ -809,28 +809,6 @@ fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture,
 }
 
 private fun checkOutputOfPluginModules(mainPluginModule: String, includedModules: Collection<ModuleItem>, moduleExcludes: Map<String, List<String>>, context: BuildContext) {
-  // don't check modules which are not direct children of lib/ directory
-  val modulesWithPluginXml = mutableListOf<String>()
-  for (item in includedModules) {
-    if (!item.relativeOutputFile.contains('/')) {
-      val moduleName = item.moduleName
-      if (containsFileInOutput(moduleName = moduleName,
-                               filePath = "META-INF/plugin.xml",
-                               excludes = moduleExcludes[moduleName] ?: emptyList(),
-                               context = context)) {
-        modulesWithPluginXml.add(moduleName)
-      }
-    }
-  }
-
-  check(!modulesWithPluginXml.isEmpty()) {
-    "No module from \'$mainPluginModule\' plugin contains plugin.xml"
-  }
-  check(modulesWithPluginXml.size == 1) {
-    "Multiple modules (${modulesWithPluginXml.joinToString()}) from \'$mainPluginModule\' plugin " +
-    "contain plugin.xml files so the plugin won\'t work properly"
-  }
-
   for (module in includedModules.asSequence().map { it.moduleName }.distinct()) {
     if (module == "intellij.java.guiForms.rt" ||
         !containsFileInOutput(moduleName = module,

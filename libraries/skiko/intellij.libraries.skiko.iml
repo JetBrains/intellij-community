@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="jetbrains.skiko.awt.runtime.all" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.skiko:skiko-awt-runtime-all:0.8.9">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.8.9/skiko-awt-runtime-all-0.8.9.jar">
+              <sha256sum>8d1825a1ab736c5eb8fe7b9d4966f82525f1f55dbb8c8a9750da96a7caceb430</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.8.9/skiko-awt-runtime-all-0.8.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.8.9/skiko-awt-runtime-all-0.8.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.skiko.awt.compose" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.skiko:skiko-awt:0.8.9">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.8.9/skiko-awt-0.8.9.jar">
+              <sha256sum>c7f5c1253a1f7ea5876aa122309b517cce1b4d1522eb65eedd8579ec83e5a083</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.8.9/skiko-awt-0.8.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt/0.8.9/skiko-awt-0.8.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

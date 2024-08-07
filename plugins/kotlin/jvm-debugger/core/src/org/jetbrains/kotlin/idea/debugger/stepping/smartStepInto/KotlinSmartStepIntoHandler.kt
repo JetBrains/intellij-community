@@ -174,7 +174,7 @@ private fun SourcePosition.getContainingExpression(): KtElement? {
     // Firstly, try to locate an element that starts at the current line
     val topmostElement = getTopmostElementAtOffset(element, element.textRange.startOffset) as? KtElement
 
-    val containingBlock = element.getContainingBlockOrMethod() ?: return topmostElement
+    val containingBlock = element.getContainingBlockOrMethod() ?: return null
     // Secondly, try to expand to an expression. It is essential when source position
     // is in the middle of the expression, e.g.
     // A()<line break>

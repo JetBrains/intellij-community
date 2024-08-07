@@ -4,18 +4,13 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 
-sealed class UnresolvedInvocationQuickFix(
-    expression: KtCallExpression,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtCallExpression, Unit>(
-    expression,
-    Unit,
-) {
+sealed class UnresolvedInvocationQuickFix(element: KtCallExpression) : PsiUpdateModCommandAction<KtCallExpression>(element) {
 
     companion object {
 
@@ -42,7 +37,6 @@ sealed class UnresolvedInvocationQuickFix(
     final override fun invoke(
         actionContext: ActionContext,
         element: KtCallExpression,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         element.replace(element.calleeExpression as KtExpression)

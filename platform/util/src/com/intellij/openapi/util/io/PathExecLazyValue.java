@@ -6,11 +6,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class PathExecLazyValue {
   private PathExecLazyValue() { }
 

@@ -1,16 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.ProximityLocation;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,12 +16,37 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public final class ExplicitlyImportedWeigher extends ProximityWeigher {
   private static final NullableLazyKey<PsiPackage, ProximityLocation> PLACE_PACKAGE = NullableLazyKey.create("placePackage", location -> {
     PsiElement position = location.getPosition();
     return position == null ? null : getContextPackage(position);
   });
+  private static final NullableLazyKey<List<PsiJavaModule>, ProximityLocation> PLACE_IMPORTED_MODULES =
+    NullableLazyKey.create("importedModuleNames", location -> {
+      final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(location.getPosition(), PsiJavaFile.class, false);
+      final PsiImportList importList = psiJavaFile == null ? null : psiJavaFile.getImportList();
+      if (importList == null) return Collections.emptyList();
+
+      BiConsumer<List<PsiJavaModule>, PsiJavaModule> append = (list, module) -> {
+        if (module != null) {
+          list.add(module);
+          list.addAll(JavaModuleGraphUtil.getAllTransitiveDependencies(module));
+        }
+      };
+
+      List<PsiJavaModule> importedModules = new ArrayList<>();
+      for (PsiImportModuleStatement statement : importList.getImportModuleStatements()) {
+        append.accept(importedModules, statement.resolveTargetModule());
+      }
+      for (PsiImportStatementBase statement : ImportsUtil.getAllImplicitImports(psiJavaFile)) {
+        if (statement instanceof PsiImportModuleStatement moduleStatement) {
+          append.accept(importedModules, moduleStatement.resolveTargetModule());
+        }
+      }
+      return importedModules;
+    });
   private static final NotNullLazyKey<List<String>, ProximityLocation> PLACE_IMPORTED_NAMES =
     NotNullLazyKey.createLazyKey("importedNames", location -> {
       final PsiJavaFile psiJavaFile = PsiTreeUtil.getContextOfType(location.getPosition(), PsiJavaFile.class, false);
@@ -95,6 +118,12 @@ public final class ExplicitlyImportedWeigher extends ProximityWeigher {
           return ImportWeight.CLASS_ON_DEMAND_NESTED;
         }
 
+        List<PsiJavaModule> importedModules = PLACE_IMPORTED_MODULES.getValue(location);
+        if (importedModules != null && !importedModules.isEmpty()) {
+          PsiJavaModule suggestedModule = JavaModuleGraphHelper.getInstance().findDescriptorByElement(element);
+          if (suggestedModule != null && importedModules.contains(suggestedModule)) return ImportWeight.MODULE_IMPORTED;
+        }
+
         final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
         if (placePackage != null) {
           Module elementModule = ModuleUtilCore.findModuleForPsiElement(element);
@@ -134,6 +163,7 @@ public final class ExplicitlyImportedWeigher extends ProximityWeigher {
     CLASS_HAS_SAME_PACKAGE_IMPORT,
     CLASS_DECLARED_IN_SAME_PACKAGE_NESTED,
     CLASS_ON_DEMAND_NESTED,
+    MODULE_IMPORTED,
     CLASS_ON_DEMAND_TOP_LEVEL,
     CLASS_JAVA_LANG,
     MEMBER_SAME_PACKAGE,

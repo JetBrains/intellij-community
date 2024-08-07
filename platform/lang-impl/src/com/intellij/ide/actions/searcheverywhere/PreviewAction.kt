@@ -6,22 +6,22 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.SEHeaderActionListener.Companion.SE_HEADER_ACTION_TOPIC
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.isPreviewEnabled
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*
-import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.usages.impl.UsagePreviewPanel.Companion.PREVIEW_EDITOR_FLAG
 import com.intellij.util.containers.DisposableWrapperList
-import java.util.function.Supplier
 
-const val PREVIEW_ACTION_ID = "Search.Everywhere.Preview"
+internal const val PREVIEW_ACTION_ID = "Search.Everywhere.Preview"
 
-class PreviewAction : DumbAwareToggleAction(Supplier { IdeBundle.message("search.everywhere.preview.action.text") },
-                                            Supplier { IdeBundle.message("search.everywhere.preview.action.description") },
+class PreviewAction : DumbAwareToggleAction(IdeBundle.messagePointer("search.everywhere.preview.action.text"),
+                                            IdeBundle.messagePointer("search.everywhere.preview.action.description"),
                                             AllIcons.General.PreviewHorizontally) {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -30,29 +30,29 @@ class PreviewAction : DumbAwareToggleAction(Supplier { IdeBundle.message("search
     super.update(e)
   }
 
-  override fun isSelected(e: AnActionEvent) =
-    PropertiesComponent.getInstance().isTrueValue(SearchEverywhereUI.PREVIEW_PROPERTY_KEY)
-
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
-    PREVIEW_SWITCHED.log(e.project, PREVIEW_STATE.with(state))
-    togglePreview(state)
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return UISettings.getInstance().showPreviewInSearchEverywhere
   }
 
-  companion object {
-    fun togglePreview(state: Boolean) {
-      PropertiesComponent.getInstance().updateValue(SearchEverywhereUI.PREVIEW_PROPERTY_KEY, state)
-      ApplicationManager.getApplication().messageBus.syncPublisher<SEHeaderActionListener>(SE_HEADER_ACTION_TOPIC)
-        .performed(SEHeaderActionListener.SearchEverywhereActionEvent(PREVIEW_ACTION_ID))
-    }
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    PREVIEW_SWITCHED.log(e.project, state)
+    toggleSearchPreview(state)
   }
 }
 
-class CloseSearchEverywherePreview : AnAction() {
+private fun toggleSearchPreview(state: Boolean) {
+  UISettings.getInstance().showPreviewInSearchEverywhere = state
+
+  ApplicationManager.getApplication().messageBus.syncPublisher<SEHeaderActionListener>(SE_HEADER_ACTION_TOPIC)
+    .performed(SEHeaderActionListener.SearchEverywhereActionEvent(PREVIEW_ACTION_ID))
+}
+
+internal class CloseSearchEverywherePreview : DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    PREVIEW_CLOSED.log(e.project, PREVIEW_CLOSED_STATE.with(true))
-    PreviewAction.togglePreview(false)
+    PREVIEW_CLOSED.log(e.project, true)
+    toggleSearchPreview(false)
   }
 
   override fun update(e: AnActionEvent) {
@@ -60,7 +60,7 @@ class CloseSearchEverywherePreview : AnAction() {
   }
 }
 
-class CloseSearchEverywherePreviewToolbar : AbstractFloatingToolbarProvider("Search.Everywhere.Preview.Close") {
+internal class CloseSearchEverywherePreviewToolbar : AbstractFloatingToolbarProvider("Search.Everywhere.Preview.Close") {
   override val autoHideable = false
   private val toolbarComponents = DisposableWrapperList<Pair<Project, FloatingToolbarComponent>>()
 

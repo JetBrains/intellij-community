@@ -1,4 +1,3 @@
-// "Convert into implicitly declared class" "false"
 public class beforeWithConstructo<caret>r  {
 
   public beforeWithConstructor(String t) {

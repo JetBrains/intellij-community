@@ -7,9 +7,6 @@
   <xi:include href="/META-INF/SpellCheckerPlugin.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/intellij.json.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/structuralsearch.xml">
     <xi:fallback/>
   </xi:include>

@@ -83,7 +83,7 @@ class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
   private val localRoot: VirtualFile
-) : JPanel(BorderLayout()), DataProvider, Disposable {
+) : JPanel(BorderLayout()), UiDataProvider, Disposable {
   companion object {
     val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
   }
@@ -125,17 +125,13 @@ class RepositoryBrowserPanel(
     add(scrollPane, BorderLayout.CENTER)
   }
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> fileSystemTree.selectedFiles
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) ->
-        fileSystemTree.selectedFiles
-          .filter { !it.isDirectory }
-          .map { OpenFileDescriptor(project, it) }
-          .toTypedArray()
-      REPOSITORY_BROWSER_DATA_KEY.`is`(dataId) -> this
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = fileSystemTree.selectedFiles
+    sink[CommonDataKeys.NAVIGATABLE_ARRAY] = fileSystemTree.selectedFiles
+      .filter { !it.isDirectory }
+      .map { OpenFileDescriptor(project, it) }
+      .toTypedArray()
+    sink[REPOSITORY_BROWSER_DATA_KEY] = this
   }
 
   override fun dispose() {

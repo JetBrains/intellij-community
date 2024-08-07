@@ -205,7 +205,7 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       };
       if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
-        impl.runWithInvalidPsiRecycler(getHighlightingSession(), toolId -> !HighlightInfoUpdaterImpl.isInspectionToolId(toolId), recyclerConsumer);
+        impl.runWithInvalidPsiRecycler(getHighlightingSession(), false, recyclerConsumer);
       }
       else {
         recyclerConsumer.accept(HighlighterRecyclerPickup.EMPTY);

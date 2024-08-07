@@ -44,6 +44,7 @@ private val PLATFORM_API_MODULES = java.util.List.of(
   "intellij.xml",
   "intellij.xml.psi",
   "intellij.xml.structureView",
+  "intellij.platform.kernel",
 )
 
 /**
@@ -79,15 +80,11 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.bootstrap",
 
   "intellij.relaxng",
-  "intellij.json",
   "intellij.spellchecker",
   "intellij.platform.webSymbols",
   "intellij.xml.dom.impl",
 
   "intellij.platform.vcs.log",
-
-  "intellij.platform.compose",
-  "intellij.platform.compose.skikoRuntime",
 
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
@@ -148,12 +145,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.util.troveCompileOnly",
   ), productLayout = productLayout, layout = layout)
   layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_8_JAR)
-
-  layout.withModuleLibrary(
-    libraryName = "jetbrains.skiko.awt.runtime.all",
-    moduleName = "intellij.platform.compose.skikoRuntime",
-    relativeOutputPath = "skiko-runtime.jar"
-  )
 
   // maven uses JDOM in an external process
   addModule(UTIL_8_JAR, listOf(
@@ -406,7 +397,7 @@ private suspend fun computeImplicitRequiredModules(
   validateImplicitPlatformModule: Boolean,
 ): List<Pair<String, PersistentList<String>>> {
   val rootChain = persistentListOf<String>()
-  val rootList = layout.filteredIncludedModuleNames(TEST_FRAMEWORK_JAR, includeFromSubdirectories = false)
+  val rootList = layout.filteredIncludedModuleNames(excludedRelativeJarPath = TEST_FRAMEWORK_JAR, includeFromSubdirectories = false)
     .plus(explicit)
     .filter {
       !productLayout.excludedModuleNames.contains(it) &&

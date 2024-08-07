@@ -23,9 +23,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
+import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.core.overrideImplement.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -122,7 +123,10 @@ internal class OverrideKeywordHandler(
         val baseClassName = containingSymbol?.name?.asString()
         val baseClassIcon = member.memberInfo.containingSymbolIcon
 
-        val baseLookupElement = basicContext.lookupElementFactory.createLookupElement(memberSymbol, basicContext.importStrategyDetector)
+        val baseLookupElement = KotlinFirLookupElementFactory.createLookupElement(
+            symbol = memberSymbol,
+            importStrategyDetector = basicContext.importStrategyDetector,
+        )
 
         val classOrObjectPointer = classOrObject.createSmartPointer()
         return OverridesCompletionLookupElementDecorator(

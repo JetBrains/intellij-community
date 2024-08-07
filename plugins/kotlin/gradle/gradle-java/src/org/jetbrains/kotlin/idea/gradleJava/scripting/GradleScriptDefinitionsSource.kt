@@ -38,7 +38,7 @@ class GradleScriptDefinitionsSource(val project: Project) : ScriptDefinitionsSou
             )
         }
         _definitions.set(definitionsFromConfigurations)
-        K2ScriptDefinitionProvider.getInstance(project).reloadDefinitions()
+        K2ScriptDefinitionProvider.getInstance(project).reloadDefinitionsFromSources()
     }
 
     companion object {

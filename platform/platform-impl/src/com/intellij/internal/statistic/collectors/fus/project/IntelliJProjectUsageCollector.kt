@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * @author Konstantin Bulenkov
  */
-class IntelliJProjectUsageCollector : ProjectUsagesCollector() {
+internal class IntelliJProjectUsageCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("project.intellij.monorepo", 1)
   private val INTELLIJ_PROJECT: EventId1<Boolean> = GROUP.registerEvent("is.intellij", EventFields.Enabled)
 

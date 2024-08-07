@@ -84,6 +84,22 @@ object LocalEventBusServer : EventBusServer {
         }
       }
 
+      server.createContext("/unsubscribe") { exchange ->
+        exchange.use {
+          try {
+            val json = exchange.requestBody.bufferedReader().use(BufferedReader::readText)
+            val subscriberDto = objectMapper.readValue(json, SubscriberDto::class.java)
+            eventsFlowService.unsubscribe(subscriberDto)
+            val response = "Unsubscribed"
+            exchange.sendResponseHeaders(200, response.toByteArray().size.toLong())
+            exchange.responseBody.bufferedWriter().use { it.write(response) }
+          }
+          catch (t: Throwable) {
+            handleException(t, exchange)
+          }
+        }
+      }
+
       server.createContext("/getEvents") { exchange ->
         exchange.use {
           try {

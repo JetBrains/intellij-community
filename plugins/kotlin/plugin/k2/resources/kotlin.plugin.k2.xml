@@ -223,6 +223,8 @@
     <module name="kotlin.project-wizard.maven"/>
     <module name="kotlin.project-wizard.compose"/>
 
+    <module name="kotlin.features-trainer"/>
+
     <module name="kotlin.jvm-decompiler"/>
 
     <module name="kotlin.code-insight.intentions.shared"/>
@@ -235,6 +237,8 @@
     <module name="kotlin.code-insight.live-templates.k2"/>
     <module name="kotlin.code-insight.postfix-templates.k2"/>
     <module name="kotlin.code-insight.structural-search.k2"/>
+
+    <module name="kotlin.jvm-debugger.evaluation.k2"/>
 
     <module name="kotlin.searching.k2"/>
     <module name="kotlin.refactorings.k2"/>
@@ -255,6 +259,7 @@
     <module name="kotlin.compiler-plugins.noarg.maven"/>
     <module name="kotlin.compiler-plugins.sam-with-receiver.maven"/>
     <module name="kotlin.compiler-plugins.kapt"/>
+    <module name="kotlin.compiler-plugins.kotlinx-serialization.k2"/>
     <module name="kotlin.compiler-plugins.kotlinx-serialization.maven"/>
     <module name="kotlin.compiler-plugins.lombok.maven"/>
     <module name="kotlin.compiler-plugins.assignment.maven"/>

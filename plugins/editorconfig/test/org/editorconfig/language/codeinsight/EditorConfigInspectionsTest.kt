@@ -100,6 +100,11 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     EditorConfigValueUniquenessInspection::class
   )
 
+  fun testFantomasOptions() = doTest(
+    EditorConfigKeyCorrectnessInspection::class,
+    EditorConfigValueCorrectnessInspection::class
+  )
+
   fun testHeaderProcessingPerformance() {
     doTestPerf(EditorConfigNoMatchingFilesInspection::class)
   }
@@ -126,7 +131,7 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     vararg inspections: KClass<out LocalInspectionTool>,
     checkWarnings: Boolean = true,
     checkWeakWarnings: Boolean = false,
-    checkInfos: Boolean = false
+    checkInfos: Boolean = false,
   ) {
     myFixture.enableInspections(inspections.map(KClass<out LocalInspectionTool>::java))
     myFixture.testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, "${getTestName(true)}/.editorconfig")

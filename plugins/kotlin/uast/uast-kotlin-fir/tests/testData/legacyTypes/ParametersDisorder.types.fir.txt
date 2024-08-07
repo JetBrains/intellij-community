@@ -145,7 +145,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                             UBlockExpression [{...}]
                                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [Parent(1, "foo")]
                                     UIdentifier (Identifier (Parent)) [UIdentifier (Identifier (Parent))]
-                                    USimpleNameReferenceExpression (identifier = Parent, resolvesTo = PsiClass: Parent) [Parent] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                                    USimpleNameReferenceExpression (identifier = Parent, resolvesTo = PsiClass: Parent) [Parent]
                                     ULiteralExpression (value = 1) [1] : int
                                     UPolyadicExpression (operator = +) ["foo"] : java.lang.String
                                         ULiteralExpression (value = "foo") ["foo"] : java.lang.String

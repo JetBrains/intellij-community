@@ -22,15 +22,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsMo
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.danglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -167,7 +159,7 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
         val config = ModuleInfoProvider.Configuration(
             createSourceLibraryInfoForLibraryBinaries = false,
             preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) &&
-                    (!RootKindFilter.projectSources.matches(psiElement) || this.isInSpecialSrcDir(psiElement)),
+                    (!RootKindFilter.projectSources.matches(psiElement) || isInSpecialSrcDir(psiElement)),
             contextualModuleInfo = contextualModule?.ideaModuleInfo,
         )
 

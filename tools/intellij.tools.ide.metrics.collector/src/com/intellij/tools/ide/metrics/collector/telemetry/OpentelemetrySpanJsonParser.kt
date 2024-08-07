@@ -21,7 +21,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.TimeUnit
-import java.util.function.Predicate
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
@@ -69,51 +68,9 @@ private val jsonSerializerNanoseconds = Json {
   isLenient = true
 }
 
-object DurationMicrosecondsSerializer : KSerializer<Duration> {
-  override val descriptor = PrimitiveSerialDescriptor("DurationMicrosecondsSerializer", PrimitiveKind.LONG)
-
-  override fun serialize(encoder: Encoder, value: Duration) {
-    encoder.encodeLong(value.inWholeMicroseconds)
-  }
-
-  override fun deserialize(decoder: Decoder): Duration {
-    return decoder.decodeLong().microseconds
-  }
-}
-
-object InstantMicrosecondsSerializer : KSerializer<Instant> {
-  override val descriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.LONG)
-
-  override fun serialize(encoder: Encoder, value: Instant) {
-    encoder.encodeLong(value.epochSecond * 1_000_000 + value.nano)
-  }
-
-  override fun deserialize(decoder: Decoder): Instant {
-    val timeStamp = decoder.decodeLong()
-
-    return Instant.ofEpochSecond(
-      TimeUnit.MICROSECONDS.toSeconds(timeStamp),
-      TimeUnit.MICROSECONDS.toNanos(timeStamp) % nanoPrecision
-    )
-  }
-}
-
-// JaegerJsonSpanExporter.exporterVersion < 1
-private val jsonSerializerMicroseconds = Json {
-  serializersModule = SerializersModule {
-    contextual(InstantMicrosecondsSerializer)
-    contextual(DurationMicrosecondsSerializer)
-  }
-
-  ignoreUnknownKeys = true
-  // parse tag value as string
-  isLenient = true
-}
-
 
 @Serializable
 private data class OpentelemetryJson(
-  @JvmField val exporterVersion: Int = -1,
   @JvmField val data: List<OpentelemetryJsonData> = emptyList(),
 )
 
@@ -124,19 +81,14 @@ private data class OpentelemetryJsonData(
 )
 
 open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
-  fun getSpanElements(file: Path, spanElementFilter: Predicate<SpanElement> = Predicate { true }): Set<SpanElement> {
+  fun getSpanElements(file: Path, spanElementFilter: (SpanElement) -> Boolean = { true }): Set<SpanElement> {
     var jsonData = getSpans(file, jsonSerializerNanoseconds)
-    val exporterVersion = jsonData.exporterVersion
-
-    if (exporterVersion < 1) {
-      jsonData = getSpans(file, jsonSerializerMicroseconds)
-    }
 
     val spans = jsonData.data.single().spans
     val index = getParentToSpanMap(spans)
     val result = ObjectLinkedOpenHashSet<SpanElement>()
 
-    for (span in spans.asSequence().filter(spanFilter.rawFilter::test).map { toSpanElement(it) }.filter { spanElementFilter.test(it) }) {
+    for (span in spans.filter(spanFilter.rawFilter::test).map { toSpanElement(it) }.filter { spanElementFilter(it) }) {
       result.add(span)
       processChild(result, span, index)
     }
@@ -155,7 +107,7 @@ open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
 
   private fun getSpans(file: Path, jsonSerializer: Json): OpentelemetryJson {
     val jsonData = withRetryBlocking(
-      messageOnFailure = "Failure during spans extraction from OpenTelemetry json file",
+      messageOnFailure = "Failure during spans extraction from OpenTelemetry json file $file",
       retries = 5,
       printFailuresMode = PrintFailuresMode.ONLY_LAST_FAILURE,
       delay = 300.milliseconds,

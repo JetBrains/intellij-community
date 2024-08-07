@@ -6,3 +6,8 @@ open class A {
 class C : A() {
     <caret>
 }
+
+// MEMBER: "foo(`object`: Any): Int"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

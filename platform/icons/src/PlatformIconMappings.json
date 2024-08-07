@@ -101,7 +101,6 @@
       "build.svg": "actions/compile.svg",
       "dependencyAnalyzer.svg": "actions/dependencyAnalyzer.svg",
       "rebuild.svg": "actions/rebuild.svg",
-      "task.svg": "icons/task.svg",
       "taskGroup.svg": "nodes/configFolder.svg",
       "toggleOfflineMode.svg": "actions/offlineMode.svg"
     },
@@ -142,7 +141,7 @@
       "selfReference.svg": "debugger/selfreference.svg",
       "threads.svg": "debugger/threads.svg",
       "value.svg": "debugger/value.svg",
-      "watch.svg": "debugger/watch.svg"
+      "watch.svg": ["debugger/watch.svg", "debugger/db_watch.svg"]
     },
     "diff": {
       "applyNotConflicts.svg": "diff/applyNotConflicts.svg",
@@ -217,13 +216,13 @@
       "contexts.svg": "fileTypes/contexts.svg",
       "contextsModifier.svg": "fileTypes/contextsModifier.svg",
       "css.svg": "fileTypes/css.svg",
-      "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
       "eclipse.svg": "providers/eclipse.svg",
       "editorConfig.svg": "nodes/editorconfig.svg",
       "diagram.svg": "fileTypes/diagram.svg",
       "html.svg": "fileTypes/html.svg",
       "ideaModule.svg": "nodes/ideaModule.svg",
       "idl.svg": "fileTypes/idl.svg",
+      "i18n.svg": "fileTypes/i18n.svg",
       "ignored.svg": "vcs/ignore_file.svg",
       "java.svg": [
         "fileTypes/java.svg",
@@ -255,7 +254,6 @@
       "uiForm.svg": "fileTypes/uiForm.svg",
       "image.svg": "fileTypes/image.svg",
       "unknown.svg": "fileTypes/unknown.svg",
-      "vueJs.svg": "icons/vue.svg",
       "wsdl.svg": "fileTypes/wsdlFile.svg",
       "xhtml.svg": "fileTypes/xhtml.svg",
       "xml.svg": [
@@ -263,8 +261,7 @@
         "fileTypes/xml.svg"
       ],
       "xsd.svg": "fileTypes/xsdFile.svg",
-      "yaml.svg": "fileTypes/yaml.svg",
-      "yarn.svg": "icons/nodejs/yarn.svg"
+      "yaml.svg": "fileTypes/yaml.svg"
     },
     "general": {
       "inspections": {
@@ -628,6 +625,7 @@
         "nodes/Module.svg",
         "actions/moduleDirectory.svg"
       ],
+      "moduleJava.svg": "nodes/javaModule.svg",
       "moduleGroup.svg": "nodes/moduleGroup.svg",
       "package.svg": "nodes/package.svg",
       "parameter.svg": [
@@ -638,6 +636,8 @@
         "nodes/plugin.svg",
         "nodes/pluginobsolete.svg"
       ],
+      "pluginLogo.svg": "plugins/pluginLogo.svg",
+      "pluginLogoDisabled.svg": "plugins/pluginLogoDisabled.svg",
       "ppWeb.svg": "nodes/ppWeb.svg",
       "property.svg": [
         "nodes/property.svg",
@@ -727,10 +727,10 @@
       "attachToProcess.svg": "debugger/attachToProcess.svg",
       "debug.svg": "actions/startDebugger.svg",
       "dumpThreads.svg": "actions/dump.svg",
-      "evaluateExpression.svg": "debugger/evaluateExpression.svg",
-      "forceRunToCursor.svg": "icons/actions/force_run_to_cursor.svg",
-      "forceStepInto.svg": "icons/actions/force_step_into.svg",
-      "forceStepOver.svg": "icons/actions/force_step_over.svg",
+      "evaluateExpression.svg": ["debugger/evaluateExpression.svg", "debugger/db_evaluateNode.svg"],
+      "forceRunToCursor.svg": "debugger/forceRunToCursor.svg",
+      "forceStepInto.svg": "debugger/forceStepInto.svg",
+      "forceStepOver.svg": "debugger/forceStepOver.svg",
       "killProcess.svg": "debugger/killProcess.svg",
       "muteBreakpoints.svg": "debugger/muteBreakpoints.svg",
       "pause.svg": "actions/pause.svg",
@@ -834,10 +834,6 @@
       "commit.svg": "toolwindows/toolWindowCommit.svg",
       "coverage.svg": "toolwindows/toolWindowCoverage.svg",
       "debug.svg": "toolwindows/toolWindowDebugger.svg",
-      "dependencies.svg": [
-        "icons/artifact.svg",
-        "icons/artifactSmall.svg"
-      ],
       "documentation.svg": "toolwindows/documentation.svg",
       "find.svg": "toolwindows/toolWindowFind.svg",
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",

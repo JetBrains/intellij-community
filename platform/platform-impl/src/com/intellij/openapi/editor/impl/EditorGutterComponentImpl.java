@@ -100,7 +100,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -156,8 +155,10 @@ import static com.intellij.openapi.ui.ex.lineNumber.LineNumberConvertersKt.getSt
  * </ul>
  */
 @DirtyUI
-final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider,
-                                                                                 Accessible, UiInspectorPreciseContextProvider {
+final class EditorGutterComponentImpl extends EditorGutterComponentEx
+  implements MouseListener, MouseMotionListener, UiCompatibleDataProvider,
+             Accessible, UiInspectorPreciseContextProvider {
+
   static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
   private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
 
@@ -251,8 +252,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Disposer.register(editor.getDisposable(), myAlphaContext.getDisposable());
   }
 
-  @NotNull
-  EditorImpl getEditor() {
+  public @NotNull EditorImpl getEditor() {
     return myEditor;
   }
 
@@ -844,24 +844,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (myEditor.isDisposed()) return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myEditor.isDisposed()) return;
 
-    if (KEY.is(dataId)) {
-      return this;
-    }
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      return myEditor;
-    }
-    if (LOGICAL_LINE_AT_CURSOR.is(dataId)) {
-      if (myLastActionableClick == null) return null;
-      return myLastActionableClick.myLogicalLineAtCursor;
-    }
-    if (ICON_CENTER_POSITION.is(dataId)) {
-      if (myLastActionableClick == null) return null;
-      return myLastActionableClick.myIconCenterPosition;
-    }
-    return null;
+    sink.set(KEY, this);
+    sink.set(CommonDataKeys.EDITOR, myEditor);
+    sink.set(LOGICAL_LINE_AT_CURSOR, myLastActionableClick == null ? null : myLastActionableClick.myLogicalLineAtCursor);
+    sink.set(ICON_CENTER_POSITION, myLastActionableClick == null ? null : myLastActionableClick.myIconCenterPosition);
   }
 
   boolean isShowGapAfterAnnotations() {

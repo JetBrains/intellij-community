@@ -24,7 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class JavaResolveUtil {
   public static PsiClass getContextClass(@NotNull PsiElement element) {
@@ -372,19 +374,38 @@ public final class JavaResolveUtil {
     return results;
   }
 
+  /**
+   * Retrieves all transitive modules required by the given module, including the module itself.
+   *
+   * @param module the module for which transitive dependencies are being collected; must not be null
+   * @return a set of transitive modules required by the given module, including the module itself
+   */
+  public static Set<PsiJavaModule> getAllTransitiveModulesIncludeCurrent(@NotNull PsiJavaModule module){
+    return CachedValuesManager.getCachedValue(module, ()->{
+      Project project = module.getProject();
+      Set<PsiJavaModule> collected = new HashSet<>();
+      collectAllTransitiveModulesIncludeCurrent(module, collected);
+      return CachedValueProvider.Result.create(collected,
+                                               PsiJavaModuleModificationTracker.getInstance(project),
+                                               ProjectRootModificationTracker.getInstance(project));
+    });
+  }
+
+  private static void collectAllTransitiveModulesIncludeCurrent(@NotNull PsiJavaModule module, @NotNull Set<PsiJavaModule> collected) {
+    JavaModuleGraphHelper helper = JavaModuleGraphHelper.getInstance();
+    Set<PsiJavaModule> dependencies = helper.getAllTransitiveDependencies(module);
+    collected.addAll(dependencies);
+    collected.add(module);
+  }
+
   private static List<PsiPackageAccessibilityStatement> getAllDeclaredExports(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
-
     return CachedValuesManager.getCachedValue(module, () -> {
       List<PsiPackageAccessibilityStatement> exports = new ArrayList<>();
-      for (PsiPackageAccessibilityStatement export : module.getExports()) {
-        exports.add(export);
-      }
-      for (PsiRequiresStatement require : module.getRequires()) {
-        if (!require.hasModifierProperty(PsiModifier.TRANSITIVE)) continue;
-        PsiJavaModule resolved = require.resolve();
-        if (resolved == null) continue;
-        exports.addAll(getAllDeclaredExports(resolved));
+      for (PsiJavaModule javaModule : getAllTransitiveModulesIncludeCurrent(module)) {
+        for (PsiPackageAccessibilityStatement export : javaModule.getExports()) {
+          exports.add(export);
+        }
       }
       return CachedValueProvider.Result.create(exports,
                                         PsiJavaModuleModificationTracker.getInstance(project),

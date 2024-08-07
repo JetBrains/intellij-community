@@ -24,7 +24,13 @@ public class SwitchStatementsWithPatternsInspectionTest extends LightJavaInspect
     myInspection.m_ignoreFullyCoveredEnums = false;
     doTest();
   }
-  
+
+  public void testTrueFalsePatterns() {
+    String name = getTestName(false);
+    myFixture.configureByFile(name + ".java");
+    myFixture.testHighlighting(true, true, true);
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
@@ -33,6 +39,6 @@ public class SwitchStatementsWithPatternsInspectionTest extends LightJavaInspect
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+    return JAVA_23;
   }
 }

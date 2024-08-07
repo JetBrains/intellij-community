@@ -1670,7 +1670,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (receiver is KaReceiverParameterSymbol) {
             val psi = receiver.psi
             if (psi is KtFunctionLiteral) {
-                val varDescriptor = KtLambdaThisVariableDescriptor(psi, receiver.type.toDfType())
+                val varDescriptor = KtLambdaThisVariableDescriptor(psi, receiver.returnType.toDfType())
                 addInstruction(PushInstruction(factory.varFactory.createVariableValue(varDescriptor), null))
                 return true
             }
@@ -1796,21 +1796,28 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processThisExpression(expr: KtThisExpression) {
         val exprType = expr.getKotlinType()
         val symbol = ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol()
-        val varDesc: VariableDescriptor
+        var varDesc: VariableDescriptor? = null
+        var declType: KaType? = null
         if (symbol is KaReceiverParameterSymbol && exprType != null) {
             val function = symbol.psi as? KtFunctionLiteral
-            val declType = symbol.type
-            varDesc = if (function != null) {
-                KtLambdaThisVariableDescriptor(function, declType.toDfType())
+            declType = symbol.returnType
+            if (function != null) {
+                varDesc = KtLambdaThisVariableDescriptor(function, declType.toDfType())
             } else {
-                KtThisDescriptor(declType.toDfType())
+                if (declType is KaClassType) {
+                    val classDef = declType.expandedSymbol?.classDef()
+                    if (classDef != null) {
+                        varDesc = KtThisDescriptor(classDef, symbol.owningCallableSymbol.name?.asString())
+                    }
+                }
             }
-            addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
-            addImplicitConversion(declType, exprType)
         } 
         else if (symbol is KaClassSymbol && exprType != null) {
-            varDesc = KtThisDescriptor(TypeConstraints.exactClass(symbol.classDef()).asDfType())
+            varDesc = KtThisDescriptor(symbol.classDef())
+        }
+        if (varDesc != null) {
             addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
+            addImplicitConversion(declType, exprType)
         }
         else {
             addInstruction(PushValueInstruction(exprType.toDfType(), KotlinExpressionAnchor(expr)))

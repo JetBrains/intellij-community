@@ -45,7 +45,8 @@ private fun checkExperimentGroups(experimentInfo: ExperimentConfig) {
     { "Groups count must be less than the total number of buckets (${language.id})" }
     assert(language.includeGroups.all { number ->
       experimentInfo.groups.any { it.number == number }
-    }) { "Group included for language (${language.id}) should be among general list of groups" }
+      || experimentInfo.version == number  // experiment version defines number of NoExperiment group
+    }) { "Group included for language (${language.id}) should be among general list of groups or equal to NoExperiment group number" }
   }
 }
 

@@ -6,6 +6,7 @@ class ExampleClassWithNoTypos:
     """A group of *members*.
 
     This class has no useful logic; it's just a documentation example.
+    This class is useful for mocking requests.Response (the class that comes back from requests.get and friends).
 
     Args:
         name (str): the name of this group. And another sentence.

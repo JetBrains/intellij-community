@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages;
 
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.NotNull;
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * Analog of {@link DataExternalizer}, but with {@link ByteBuffer} instead of
@@ -78,7 +80,10 @@ public interface DataExternalizerEx<T> {
           oldSchoolDescriptor.save(os, key);
         }
 
-        return new ByteArrayWriter(stream.toByteArray());
+        ByteArraySequence byteArraySequence = stream.toByteArraySequence();
+        return new ByteArrayWriter(byteArraySequence.getInternalBuffer(),
+                                   byteArraySequence.getOffset(),
+                                   byteArraySequence.getLength());
       }
 
       @Override
@@ -109,7 +114,21 @@ public interface DataExternalizerEx<T> {
   }
 
   static KnownSizeRecordWriter fromBytes(byte @NotNull [] bytes) {
-    return new ByteArrayWriter(bytes);
+    return new ByteArrayWriter(bytes, 0, bytes.length);
+  }
+
+  static KnownSizeRecordWriter fromBytes(@NotNull ByteArraySequence bytes) {
+    return new ByteArrayWriter(
+      bytes.getInternalBuffer(),
+      bytes.getOffset(),
+      bytes.getLength()
+    );
+  }
+
+  static KnownSizeRecordWriter fromBytes(byte @NotNull [] bytes,
+                                         int offset,
+                                         int length) {
+    return new ByteArrayWriter(bytes, offset, length);
   }
 
   /**
@@ -118,36 +137,39 @@ public interface DataExternalizerEx<T> {
    * writers that are just wrappers around byte[]
    */
   interface ByteArrayExposingWriter extends KnownSizeRecordWriter {
-    /** returns underlying array -- do not modify! */
-    byte[] rawBytes();
   }
 
   /** Simplest implementation: writer over the record already serialized into a byte[] */
   class ByteArrayWriter implements ByteArrayExposingWriter {
     private final byte[] bytes;
+    private final int startingOffset;
+    private final int length;
 
     public ByteArrayWriter(byte @NotNull [] bytes) {
+      this(bytes, 0, bytes.length);
+    }
+
+    public ByteArrayWriter(byte @NotNull [] bytes,
+                           int startingOffset,
+                           int length) {
       this.bytes = bytes;
+      this.startingOffset = startingOffset;
+      this.length = length;
     }
 
     @Override
     public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
-      return data.put(bytes);
+      return data.put(bytes, startingOffset, length);
     }
 
     @Override
     public int recordSize() {
-      return bytes.length;
-    }
-
-    @Override
-    public byte[] rawBytes() {
-      return bytes;
+      return length;
     }
 
     @Override
     public String toString() {
-      return "ByteArrayWriter[" + IOUtil.toHexString(bytes) + "]";
+      return "ByteArrayWriter[" + IOUtil.toHexString(Arrays.copyOfRange(bytes, startingOffset, startingOffset + length)) + "]";
     }
   }
 }

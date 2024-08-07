@@ -8,7 +8,6 @@ c:com.intellij.AbstractBundle
 - getLazyMessage(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 - getMessage(java.lang.String,java.lang.Object[]):java.lang.String
 - f:getPartialMessage(java.lang.String,I,java.lang.Object[]):java.lang.String
-- f:getResourceBundle():java.util.ResourceBundle
 - sf:message(java.util.ResourceBundle,java.lang.String,java.lang.Object[]):java.lang.String
 - messageOrDefault(java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
 - sf:messageOrDefault(java.util.ResourceBundle,java.lang.String,java.lang.String,java.lang.Object[]):java.lang.String
@@ -39,57 +38,11 @@ f:com.intellij.Patches
 - sf:SUN_BUG_ID_6322854:Z
 - sf:TEXT_LAYOUT_IS_SLOW:Z
 - <init>():V
-f:com.intellij.UtilBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
 *f:com.intellij.concurrency.ThreadContext
-- sf:captureThreadContext(java.lang.Runnable):java.lang.Runnable
-- sf:captureThreadContext(java.util.concurrent.Callable):java.util.concurrent.Callable
-- sf:captureThreadContext(java.util.function.Consumer):java.util.function.Consumer
-- sf:captureThreadContext(java.util.function.Function):java.util.function.Function
-- sf:captureThreadContext(java.util.function.Supplier):java.util.function.Supplier
 - sf:currentThreadContext():kotlin.coroutines.CoroutineContext
-- sf:currentThreadContextOrNull():kotlin.coroutines.CoroutineContext
-- *sf:escapeCancellation(kotlinx.coroutines.Job,kotlin.jvm.functions.Function0):java.lang.Object
-- sf:getContextSkeleton(kotlin.coroutines.CoroutineContext):java.util.Set
 - sf:installThreadContext(kotlin.coroutines.CoroutineContext,Z):com.intellij.openapi.application.AccessToken
 - bs:installThreadContext$default(kotlin.coroutines.CoroutineContext,Z,I,java.lang.Object):com.intellij.openapi.application.AccessToken
 - sf:resetThreadContext():com.intellij.openapi.application.AccessToken
-f:com.intellij.concurrency.client.ClientIdPropagation
-- sf:captureClientId(kotlin.jvm.functions.Function0):kotlin.jvm.functions.Function0
-- sf:captureClientIdInBiConsumer(java.util.function.BiConsumer):java.util.function.BiConsumer
-- sf:captureClientIdInCallable(java.util.concurrent.Callable):java.util.concurrent.Callable
-- sf:captureClientIdInFunction(java.util.function.Function):java.util.function.Function
-- sf:captureClientIdInProcessor(com.intellij.util.Processor):com.intellij.util.Processor
-- sf:captureClientIdInRunnable(java.lang.Runnable):java.lang.Runnable
-c:com.intellij.diagnostic.tracing.MethodTracer
-- s:clearAll():V
-- s:getAllData():java.util.List
-- getCurrentData():com.intellij.diagnostic.tracing.MethodTracerData
-- s:getInstance(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):com.intellij.diagnostic.tracing.MethodTracer
-- s:isEnabled():Z
-- onMethodEnter():V
-- onMethodExit():V
-- s:setEnabled(Z):V
-f:com.intellij.diagnostic.tracing.MethodTracer$TracerId
-- sf:EMPTY:com.intellij.diagnostic.tracing.MethodTracer$TracerId
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
-- equals(java.lang.Object):Z
-- hashCode():I
-f:com.intellij.diagnostic.tracing.MethodTracerData
-- f:className:java.lang.String
-- f:countOnEdt:J
-- f:id:com.intellij.diagnostic.tracing.MethodTracer$TracerId
-- f:invocationCount:J
-- f:maxRecursionDepth:I
-- f:maxTime:J
-- f:maxTimeOnEdt:J
-- f:methodName:java.lang.String
-- f:nonRecursiveCount:J
-- f:timeOnEdt:J
-- f:totalTime:J
-- <init>(com.intellij.diagnostic.tracing.MethodTracer$TracerId,java.lang.String,java.lang.String,J,J,J,J,J,J,J,I):V
-- getAvgTime():D
-- getAvgTimeEdt():D
 f:com.intellij.execution.CommandLineUtil
 - <init>():V
 - s:escapeParameterOnWindows(java.lang.String,Z):java.lang.String
@@ -101,17 +54,6 @@ f:com.intellij.execution.CommandLineUtil
 - s:toCommandLine(java.lang.String,java.util.List):java.util.List
 - s:toCommandLine(java.lang.String,java.util.List,com.intellij.execution.Platform):java.util.List
 - s:toCommandLine(java.util.List):java.util.List
-f:com.intellij.execution.CommandLineWrapperUtil
-- sf:CLASSPATH_JAR_FILE_NAME_PREFIX:java.lang.String
-- <init>():V
-- s:createArgumentFile(java.util.List,java.nio.charset.Charset):java.io.File
-- s:createClasspathJarFile(java.util.jar.Manifest,java.util.List):java.io.File
-- s:createWrapperFile(java.util.List,java.nio.charset.Charset):java.io.File
-- s:fillClasspathJarFile(java.util.jar.Manifest,java.lang.String,java.io.File):V
-- s:fillClasspathJarFile(java.util.jar.Manifest,java.util.List,Z,java.io.File):V
-- s:writeArgumentsFile(java.io.File,java.util.List,java.lang.String,java.nio.charset.Charset):V
-- s:writeArgumentsFile(java.io.File,java.util.List,java.nio.charset.Charset):V
-- s:writeWrapperFile(java.io.File,java.util.List,java.lang.String,java.nio.charset.Charset):V
 e:com.intellij.execution.Platform
 - java.lang.Enum
 - sf:UNIX:com.intellij.execution.Platform
@@ -274,14 +216,6 @@ f:com.intellij.execution.process.WinProcessManager
 - s:getProcessId(java.lang.Process):I
 - s:kill(I,Z):Z
 - s:kill(java.lang.Process,Z):Z
-f:com.intellij.execution.rmi.RemoteUtil
-- s:castToLocal(java.lang.Object,java.lang.Class):java.lang.Object
-- s:castToRemote(java.lang.Object,java.lang.Class):java.lang.Object
-- s:castToRemoteNotNull(java.lang.Object,java.lang.Class):java.lang.Object
-- s:executeWithClassLoader(com.intellij.openapi.util.ThrowableComputable,java.lang.ClassLoader):java.lang.Object
-- s:handleRemoteResult(java.lang.Object,java.lang.Class,java.lang.Object):java.lang.Object
-- s:substituteClassLoader(java.lang.Object,java.lang.ClassLoader):java.lang.Object
-- s:unwrap(java.lang.Throwable):java.lang.Throwable
 f:com.intellij.jna.JnaLoader
 - <init>():V
 - s:isLoaded():Z
@@ -304,14 +238,9 @@ com.intellij.openapi.Disposable$Parent
 com.intellij.openapi.Forceable
 - a:force():V
 - a:isDirty():Z
-a:com.intellij.openapi.WeakReferenceDisposable
-- java.lang.ref.WeakReference
-- com.intellij.openapi.Disposable
-- <init>(java.lang.Object):V
-- f:dispose():V
-- pa:disposeReferent(java.lang.Object):V
 f:com.intellij.openapi.WeakReferenceDisposableWrapper
-- com.intellij.openapi.WeakReferenceDisposable
+- com.intellij.openapi.Disposable
+- java.lang.ref.WeakReference
 - <init>(com.intellij.openapi.Disposable):V
 a:com.intellij.openapi.application.AccessToken
 - java.lang.AutoCloseable
@@ -319,9 +248,6 @@ a:com.intellij.openapi.application.AccessToken
 - <init>():V
 - f:close():V
 - a:finish():V
-f:com.intellij.openapi.application.JetBrainsProtocolHandler
-- sf:REQUIRED_PLUGINS_KEY:java.lang.String
-- <init>():V
 f:com.intellij.openapi.application.PathManager
 - sf:DEFAULT_EXT:java.lang.String
 - sf:OPTIONS_DIRECTORY:java.lang.String
@@ -422,19 +348,6 @@ a:com.intellij.openapi.diagnostic.DelegatingLogger
 - warn(java.lang.String,java.lang.Throwable):V
 com.intellij.openapi.diagnostic.ExceptionWithAttachments
 - a:getAttachments():com.intellij.openapi.diagnostic.Attachment[]
-f:com.intellij.openapi.diagnostic.FrequentEventDetector
-- <init>(I,I):V
-- <init>(I,I,com.intellij.openapi.diagnostic.FrequentEventDetector$Level):V
-- s:disableUntil(com.intellij.openapi.Disposable):V
-- eventHappened(java.lang.Object):V
-- logMessage(java.lang.String):V
-e:com.intellij.openapi.diagnostic.FrequentEventDetector$Level
-- java.lang.Enum
-- sf:ERROR:com.intellij.openapi.diagnostic.FrequentEventDetector$Level
-- sf:INFO:com.intellij.openapi.diagnostic.FrequentEventDetector$Level
-- sf:WARN:com.intellij.openapi.diagnostic.FrequentEventDetector$Level
-- s:valueOf(java.lang.String):com.intellij.openapi.diagnostic.FrequentEventDetector$Level
-- s:values():com.intellij.openapi.diagnostic.FrequentEventDetector$Level[]
 c:com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 - java.util.logging.Formatter
 - <init>():V
@@ -443,22 +356,6 @@ c:com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 - format(java.util.logging.LogRecord):java.lang.String
 - s:formatThrowable(java.lang.Throwable):java.lang.String
 - p:getStartedMillis():J
-c:com.intellij.openapi.diagnostic.JulLogger
-- com.intellij.openapi.diagnostic.Logger
-- pf:myLogger:java.util.logging.Logger
-- <init>(java.util.logging.Logger):V
-- s:clearHandlers():V
-- s:clearHandlers(java.util.logging.Logger):V
-- debug(java.lang.String,java.lang.Throwable):V
-- error(java.lang.String,java.lang.Throwable,java.lang.String[]):V
-- info(java.lang.String,java.lang.Throwable):V
-- isDebugEnabled():Z
-- s:isJulLoggerCleanerDelayed():Z
-- isTraceEnabled():Z
-- setLevel(com.intellij.openapi.diagnostic.LogLevel):V
-- trace(java.lang.String):V
-- trace(java.lang.Throwable):V
-- warn(java.lang.String,java.lang.Throwable):V
 e:com.intellij.openapi.diagnostic.LogLevel
 - java.lang.Enum
 - sf:ALL:com.intellij.openapi.diagnostic.LogLevel
@@ -517,28 +414,13 @@ a:com.intellij.openapi.diagnostic.Logger
 com.intellij.openapi.diagnostic.Logger$Factory
 - a:getLoggerInstance(java.lang.String):com.intellij.openapi.diagnostic.Logger
 f:com.intellij.openapi.diagnostic.LoggerKt
-- sf:currentClassLogger():com.intellij.openapi.diagnostic.Logger
 - sf:debug(com.intellij.openapi.diagnostic.Logger,java.lang.Exception,kotlin.jvm.functions.Function0):V
 - bs:debug$default(com.intellij.openapi.diagnostic.Logger,java.lang.Exception,kotlin.jvm.functions.Function0,I,java.lang.Object):V
-- sf:fileLogger():com.intellij.openapi.diagnostic.Logger
-- sf:getOrLogException(java.lang.Object,com.intellij.openapi.diagnostic.Logger):java.lang.Object
-- sf:ifTraceEnabled(com.intellij.openapi.diagnostic.Logger,kotlin.jvm.functions.Function0):java.lang.Object
-- sf:runAndLogException(com.intellij.openapi.diagnostic.Logger,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:trace(com.intellij.openapi.diagnostic.Logger,kotlin.jvm.functions.Function0):V
 - sf:traceThrowable(com.intellij.openapi.diagnostic.Logger,kotlin.jvm.functions.Function0):V
 *:com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 - s:getClassToReport(java.lang.Object):java.lang.Class
 - a:getSubstitutedClass():java.lang.Class
-f:com.intellij.openapi.diagnostic.RollingFileHandler
-- java.util.logging.StreamHandler
-- <init>(java.nio.file.Path,J,I,Z):V
-- <init>(java.nio.file.Path,J,I,Z,java.lang.Runnable):V
-- b:<init>(java.nio.file.Path,J,I,Z,java.lang.Runnable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:getAppend():Z
-- f:getCount():I
-- f:getLimit():J
-- f:getLogPath():java.nio.file.Path
-- publish(java.util.logging.LogRecord):V
 c:com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 - java.lang.RuntimeException
 - com.intellij.openapi.diagnostic.ExceptionWithAttachments
@@ -548,21 +430,6 @@ c:com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 - <init>(java.lang.Throwable,com.intellij.openapi.diagnostic.Attachment[]):V
 - getAttachments():com.intellij.openapi.diagnostic.Attachment[]
 - getUserMessage():java.lang.String
-f:com.intellij.openapi.diagnostic.ThrottledLogger
-- <init>(com.intellij.openapi.diagnostic.Logger,J):V
-- debug(java.lang.String):V
-- debug(java.lang.String,java.lang.Throwable):V
-- debug(java.util.function.Supplier):V
-- error(java.lang.String):V
-- error(java.lang.String,java.lang.Throwable):V
-- error(java.util.function.Supplier):V
-- info(java.lang.String):V
-- info(java.lang.String,java.lang.Throwable):V
-- info(java.util.function.Supplier):V
-- warn(java.lang.String):V
-- warn(java.lang.String,java.lang.Throwable):V
-- warn(java.util.function.Supplier):V
-- wrappedLogger():com.intellij.openapi.diagnostic.Logger
 com.intellij.openapi.diagnostic.UntraceableException
 a:com.intellij.openapi.util.AtomicClearableLazyValue
 - com.intellij.openapi.util.ClearableLazyValue
@@ -694,19 +561,8 @@ com.intellij.openapi.util.Factory
 - java.util.function.Supplier
 - a:create():java.lang.Object
 - get():java.lang.Object
-a:com.intellij.openapi.util.FieldCache
-- p:<init>():V
-- clear(java.lang.Object,java.lang.Object):V
-- pa:compute(java.lang.Object,java.lang.Object):java.lang.Object
-- get(java.lang.Object,java.lang.Object,java.lang.Object):java.lang.Object
-- f:getCached(java.lang.Object,java.lang.Object):java.lang.Object
-- pa:getValue(java.lang.Object,java.lang.Object):java.lang.Object
-- pa:putValue(java.lang.Object,java.lang.Object,java.lang.Object):V
 com.intellij.openapi.util.Getter
 - java.util.function.Supplier
-f:com.intellij.openapi.util.GlobUtilKt
-- sf:getPathMatcher(java.lang.String,Z):java.nio.file.PathMatcher
-- bs:getPathMatcher$default(java.lang.String,Z,I,java.lang.Object):java.nio.file.PathMatcher
 a:com.intellij.openapi.util.IconPathPatcher
 - <init>():V
 - getContextClass(java.lang.String):java.lang.Class
@@ -891,10 +747,6 @@ e:com.intellij.openapi.util.LowMemoryWatcher$LowMemoryWatcherType
 - sf:ONLY_AFTER_GC:com.intellij.openapi.util.LowMemoryWatcher$LowMemoryWatcherType
 - s:valueOf(java.lang.String):com.intellij.openapi.util.LowMemoryWatcher$LowMemoryWatcherType
 - s:values():com.intellij.openapi.util.LowMemoryWatcher$LowMemoryWatcherType[]
-f:com.intellij.openapi.util.LowMemoryWatcherManager
-- <init>(java.util.concurrent.ExecutorService):V
-- shutdown():V
-- waitForInitComplete(I,java.util.concurrent.TimeUnit):V
 com.intellij.openapi.util.ModificationTracker
 - sf:EVER_CHANGED:com.intellij.openapi.util.ModificationTracker
 - sf:NEVER_CHANGED:com.intellij.openapi.util.ModificationTracker
@@ -1010,7 +862,6 @@ Fa:com.intellij.openapi.util.NotNullLazyValue
 - s:softLazy(java.util.function.Supplier):java.util.function.Supplier
 - s:volatileLazy(java.util.function.Supplier):com.intellij.openapi.util.NotNullLazyValue
 f:com.intellij.openapi.util.NullUtils
-- s:hasNotNull(java.lang.Object[]):Z
 - s:hasNull(java.lang.Object[]):Z
 - s:notNull(java.lang.Object[]):Z
 com.intellij.openapi.util.NullableComputable
@@ -1064,7 +915,6 @@ f:com.intellij.openapi.util.PropertiesUtil
 - <init>():V
 - s:loadProperties(java.io.Reader):java.util.Map
 a:com.intellij.openapi.util.RecursionGuard
-- <init>():V
 - a:computePreventingRecursion(java.lang.Object,Z,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - a:currentStack():java.util.List
 - doPreventingRecursion(java.lang.Object,Z,com.intellij.openapi.util.Computable):java.lang.Object
@@ -1088,7 +938,6 @@ com.intellij.openapi.util.ScalableIcon
 - a:getScale():F
 - a:scale(F):javax.swing.Icon
 a:com.intellij.openapi.util.SimpleFieldCache
-- com.intellij.openapi.util.FieldCache
 - <init>():V
 - pa:compute(java.lang.Object):java.lang.Object
 - pf:compute(java.lang.Object,java.lang.Object):java.lang.Object
@@ -1160,30 +1009,6 @@ f:com.intellij.openapi.util.SystemInfo
 - s:isJavaVersionAtLeast(I,I,I):Z
 - s:isJavaVersionAtLeast(java.lang.String):Z
 - s:isOsVersionAtLeast(java.lang.String):Z
-f:com.intellij.openapi.util.TextRangeScalarUtil
-- <init>():V
-- s:contains(J,J):Z
-- s:containsOffset(J,I):Z
-- s:containsRange(J,I,I):Z
-- s:create(J):com.intellij.openapi.util.TextRange
-- s:endOffset(J):I
-- s:intersects(com.intellij.openapi.util.TextRange,J):Z
-- s:shift(J,I,I):J
-- s:startOffset(J):I
-- s:toScalarRange(I,I):J
-- s:toScalarRange(com.intellij.openapi.util.Segment):J
-- s:union(J,J):J
-f:com.intellij.openapi.util.ThreadLocalCachedByteArray
-- <init>():V
-- getBuffer(I):B[]
-f:com.intellij.openapi.util.ThreadLocalCachedIntArray
-- <init>():V
-- getBuffer(I):I[]
-a:com.intellij.openapi.util.ThreadLocalCachedValue
-- <init>():V
-- pa:create():java.lang.Object
-- getValue():java.lang.Object
-- p:init(java.lang.Object):V
 com.intellij.openapi.util.Throwable2Computable
 - a:compute():java.lang.Object
 com.intellij.openapi.util.ThrowableNotNullFunction
@@ -1229,16 +1054,7 @@ c:com.intellij.openapi.util.UnprotectedUserDataHolder
 - getUserDataUnprotected(com.intellij.openapi.util.Key):java.lang.Object
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - putUserDataUnprotected(com.intellij.openapi.util.Key,java.lang.Object):V
-f:com.intellij.openapi.util.UpdatedReference
-- <init>(java.lang.Object):V
-- <init>(java.lang.Object,J):V
-- getT():java.lang.Object
-- getTime():J
-- isTimeToUpdate(J):Z
-- updateT(java.lang.Object):V
-- updateTs():V
 a:com.intellij.openapi.util.UserDataCache
-- com.intellij.openapi.util.FieldCache
 - p:<init>():V
 - <init>(java.lang.String):V
 - clear(com.intellij.openapi.util.Key,com.intellij.openapi.util.UserDataHolder):V
@@ -1358,10 +1174,9 @@ com.intellij.openapi.util.io.ByteSequence
 - a:length():I
 - a:subSequence(I,I):com.intellij.openapi.util.io.ByteSequence
 - a:toBytes():B[]
-f:com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
-- com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
-- sf:INSTANCE:com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
-- convertToList(java.lang.String):java.util.List
+com.intellij.openapi.util.io.CaseSensitivityAttribute
+- java.nio.file.attribute.BasicFileAttributes
+- a:getCaseSensitivity():com.intellij.openapi.util.io.FileAttributes$CaseSensitivity
 f:com.intellij.openapi.util.io.FileAttributes
 - sf:BROKEN_SYMLINK:com.intellij.openapi.util.io.FileAttributes
 - f:lastModified:J
@@ -1593,19 +1408,9 @@ a:com.intellij.openapi.util.io.NioFiles$StatsCollectingVisitor
 - preVisitDirectory(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
 - visitFile(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
 - visitFileFailed(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
-f:com.intellij.openapi.util.io.NioPathPrefixTreeFactory
-- com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
-- sf:INSTANCE:com.intellij.openapi.util.io.NioPathPrefixTreeFactory
-- convertToList(java.nio.file.Path):java.util.List
 f:com.intellij.openapi.util.io.NioPathUtil
-- sf:findOrCreateDirectory(java.nio.file.Path):java.nio.file.Path
-- sf:findOrCreateDirectory(java.nio.file.Path,java.lang.String):java.nio.file.Path
-- sf:findOrCreateFile(java.nio.file.Path):java.nio.file.Path
-- sf:findOrCreateFile(java.nio.file.Path,java.lang.String):java.nio.file.Path
 - sf:getResolvedPath(java.nio.file.Path,java.lang.String):java.nio.file.Path
-- sf:relativizeToClosestAncestor(java.nio.file.Path,java.lang.String):kotlin.Pair
 - sf:toCanonicalPath(java.nio.file.Path):java.lang.String
-- sf:toNioPath(java.lang.String):java.nio.file.Path
 - sf:toNioPathOrNull(java.lang.String):java.nio.file.Path
 f:com.intellij.openapi.util.io.OSAgnosticPathUtil
 - sf:COMPARATOR:java.util.Comparator
@@ -1616,8 +1421,6 @@ f:com.intellij.openapi.util.io.OSAgnosticPathUtil
 - s:isUncPath(java.lang.String):Z
 - s:startsWith(java.lang.String,java.lang.String):Z
 - s:startsWithWindowsDrive(java.lang.String):Z
-f:com.intellij.openapi.util.io.PathExecLazyValue
-- s:create(java.lang.String):java.util.function.Supplier
 f:com.intellij.openapi.util.io.StreamUtil
 - sf:BUFFER_SIZE:I
 - s:closeStream(java.io.Closeable):V
@@ -1633,10 +1436,6 @@ f:com.intellij.openapi.util.io.StreamUtil
 - s:readText(java.io.Reader):java.lang.String
 - s:readTextAndConvertSeparators(java.io.Reader):C[]
 - s:readTextFrom(java.io.Reader):java.lang.String
-f:com.intellij.openapi.util.io.WindowsRegistryUtil
-- s:readRegistryBranch(java.lang.String):java.util.List
-- s:readRegistryDefault(java.lang.String):java.lang.String
-- s:readRegistryValue(java.lang.String,java.lang.String):java.lang.String
 f:com.intellij.openapi.util.registry.Registry
 - sf:Companion:com.intellij.openapi.util.registry.Registry$Companion
 - sf:REGISTRY_BUNDLE:java.lang.String
@@ -1793,18 +1592,12 @@ f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - *sf:buildHtml(kotlin.jvm.functions.Function1):java.lang.String
 - *sf:buildHtmlChunk(kotlin.jvm.functions.Function1):com.intellij.openapi.util.text.HtmlChunk
 - *sf:plus(com.intellij.openapi.util.text.HtmlChunk,com.intellij.openapi.util.text.HtmlChunk):com.intellij.openapi.util.text.HtmlChunk
-f:com.intellij.openapi.util.text.InjectorMatchingEndFinder
-- <init>():V
-- s:findMatchingEnd(java.lang.String,java.lang.String,java.lang.String,I):I
 f:com.intellij.openapi.util.text.LineColumn
 - f:column:I
 - f:line:I
 - equals(java.lang.Object):Z
 - hashCode():I
 - s:of(I,I):com.intellij.openapi.util.text.LineColumn
-f:com.intellij.openapi.util.text.PastParticiple
-- <init>():V
-- s:pastParticiple(java.lang.String):java.lang.String
 Fc:com.intellij.openapi.util.text.StringUtil
 - sf:ELLIPSIS:java.lang.String
 - sf:NON_BREAK_SPACE:java.lang.String
@@ -2127,93 +1920,6 @@ a:com.intellij.openapi.util.text.TrigramBuilder$TrigramProcessor
 - java.util.function.IntPredicate
 - <init>():V
 - consumeTrigramsCount(I):Z
-f:com.intellij.openapi.vfs.CharsetToolkit
-- sf:FILE_ENCODING_PROPERTY:java.lang.String
-- sf:UTF16BE_BOM:B[]
-- sf:UTF16LE_BOM:B[]
-- sf:UTF8:java.lang.String
-- sf:UTF8_BOM:B[]
-- sf:UTF8_CHARSET:java.nio.charset.Charset
-- sf:UTF_32BE_CHARSET:java.nio.charset.Charset
-- sf:UTF_32LE_CHARSET:java.nio.charset.Charset
-- sf:WIN_1251_CHARSET:java.nio.charset.Charset
-- <init>(B[],java.nio.charset.Charset,Z):V
-- s:bytesToString(B[],java.nio.charset.Charset):java.lang.String
-- s:canHaveBom(java.nio.charset.Charset,B[]):Z
-- s:decodeString(B[],java.nio.charset.Charset):java.lang.String
-- s:detectBOMFromStream(java.io.InputStream):B[]
-- s:forName(java.lang.String):java.nio.charset.Charset
-- s:getAvailableCharsets():java.nio.charset.Charset[]
-- s:getBOMLength(B[],java.nio.charset.Charset):I
-- getDefaultCharset():java.nio.charset.Charset
-- s:getDefaultSystemCharset():java.nio.charset.Charset
-- s:getMandatoryBom(java.nio.charset.Charset):B[]
-- s:getPlatformCharset():java.nio.charset.Charset
-- s:getPossibleBom(java.nio.charset.Charset):B[]
-- guessEncoding(I):java.nio.charset.Charset
-- guessEncoding(I,I,java.nio.charset.Charset):java.nio.charset.Charset
-- s:guessEncoding(java.io.File,I,java.nio.charset.Charset):java.nio.charset.Charset
-- guessFromBOM():java.nio.charset.Charset
-- s:guessFromBOM(B[]):java.nio.charset.Charset
-- guessFromContent(I):com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- guessFromContent(I,I):com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- s:hasUTF16BEBom(B[]):Z
-- s:hasUTF16LEBom(B[]):Z
-- s:hasUTF32BEBom(B[]):Z
-- s:hasUTF32LEBom(B[]):Z
-- s:hasUTF8Bom(B[]):Z
-- s:inputStreamSkippingBOM(java.io.InputStream):java.io.InputStream
-- s:tryDecodeString(B[],java.nio.charset.Charset):java.lang.String
-e:com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- java.lang.Enum
-- sf:BINARY:com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- sf:INVALID_UTF8:com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- sf:SEVEN_BIT:com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- sf:VALID_UTF8:com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- s:valueOf(java.lang.String):com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- s:values():com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding[]
-f:com.intellij.platform.util.ArgsParser
-- <init>(java.util.List):V
-- f:arg(java.lang.String,java.lang.String):com.intellij.platform.util.ArgsParser$ArgInfo
-- f:tryReadAll():V
-- f:usage(Z,I):java.lang.String
-- bs:usage$default(com.intellij.platform.util.ArgsParser,Z,I,I,java.lang.Object):java.lang.String
-f:com.intellij.platform.util.ArgsParser$ArgInfo
-- <init>(com.intellij.platform.util.ArgsParser,java.lang.String,java.lang.String):V
-- f:boolean(kotlin.jvm.functions.Function0):com.intellij.platform.util.ArgsParser$TypedArg
-- bs:boolean$default(com.intellij.platform.util.ArgsParser$ArgInfo,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.platform.util.ArgsParser$TypedArg
-- f:booleanOrNull():com.intellij.platform.util.ArgsParser$TypedArg
-- f:deprecated(java.lang.String):com.intellij.platform.util.ArgsParser$ArgInfo
-- f:file(kotlin.jvm.functions.Function0):com.intellij.platform.util.ArgsParser$TypedArg
-- bs:file$default(com.intellij.platform.util.ArgsParser$ArgInfo,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.platform.util.ArgsParser$TypedArg
-- f:fileOrNull():com.intellij.platform.util.ArgsParser$TypedArg
-- f:files():com.intellij.platform.util.ArgsParser$TypedArg
-- f:flag():com.intellij.platform.util.ArgsParser$TypedArg
-- f:getDeprecated():java.lang.String
-- f:getDescription():java.lang.String
-- f:getHidden():Z
-- f:getName():java.lang.String
-- f:getOptional():Z
-- f:hidden():com.intellij.platform.util.ArgsParser$ArgInfo
-- f:int(kotlin.jvm.functions.Function0):com.intellij.platform.util.ArgsParser$TypedArg
-- f:notEmptyFiles():com.intellij.platform.util.ArgsParser$TypedArg
-- f:notEmptyStrings():com.intellij.platform.util.ArgsParser$TypedArg
-- f:optional():com.intellij.platform.util.ArgsParser$ArgInfo
-- f:setDeprecated(java.lang.String):V
-- f:setHidden(Z):V
-- f:setOptional(Z):V
-- f:string(kotlin.jvm.functions.Function0):com.intellij.platform.util.ArgsParser$TypedArg
-- bs:string$default(com.intellij.platform.util.ArgsParser$ArgInfo,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.platform.util.ArgsParser$TypedArg
-- f:stringOrNull():com.intellij.platform.util.ArgsParser$TypedArg
-- f:strings():com.intellij.platform.util.ArgsParser$TypedArg
-- f:toIntOrNull():com.intellij.platform.util.ArgsParser$TypedArg
-f:com.intellij.platform.util.ArgsParser$TypedArg
-- <init>(com.intellij.platform.util.ArgsParser$ArgInfo,kotlin.jvm.functions.Function0):V
-- f:andApply(kotlin.jvm.functions.Function1):com.intellij.platform.util.ArgsParser$TypedArg
-- f:andMap(kotlin.jvm.functions.Function1):com.intellij.platform.util.ArgsParser$TypedArg
-- f:getInfo():com.intellij.platform.util.ArgsParser$ArgInfo
-- f:getValue():java.lang.Object
-- f:getValue(java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
 f:com.intellij.serialization.ClassUtil
 - s:getRawType(java.lang.reflect.Type):java.lang.Class
 - s:isMutableCollection(java.lang.Object):Z
@@ -3003,11 +2709,6 @@ f:com.intellij.util.concurrency.BoundedTaskExecutor
 - isTerminated():Z
 - shutdown():V
 - shutdownNow():java.util.List
-a:com.intellij.util.concurrency.CountingThreadFactory
-- java.util.concurrent.ThreadFactory
-- pf:counter:java.util.concurrent.atomic.AtomicInteger
-- <init>():V
-- getCount():I
 c:com.intellij.util.concurrency.FixedFuture
 - java.util.concurrent.Future
 - <init>(java.lang.Object):V
@@ -3100,27 +2801,6 @@ f:com.intellij.util.containers.BooleanStack
 - peek():Z
 - pop():Z
 - push(Z):V
-- size():I
-f:com.intellij.util.containers.CacheOneStepIterator
-- java.util.Iterator
-- <init>(java.util.Iterator):V
-- hasNext():Z
-- next():java.lang.Object
-- remove():V
-f:com.intellij.util.containers.CharTrie
-- <init>():V
-- clear():V
-- findSubNode(I,C):I
-- getChars(I):C[]
-- getHashCode(java.lang.CharSequence):I
-- getHashCode(C[]):I
-- getHashCode(C[],I,I):I
-- getHashCodeForReversedChars(C[]):I
-- getHashCodeForReversedChars(C[],I,I):I
-- getMaximumMatch(java.lang.CharSequence,I,I):J
-- getReversedChars(I):C[]
-- getReversedString(I):java.lang.String
-- getString(I):java.lang.String
 - size():I
 c:com.intellij.util.containers.ClassMap
 - pf:myMap:java.util.Map
@@ -4382,26 +4062,6 @@ c:com.intellij.util.containers.hash.LinkedHashMap
 - p:removeEldestEntry(java.util.Map$Entry,java.lang.Object,java.lang.Object):Z
 - size():I
 - values():java.util.Collection
-c:com.intellij.util.containers.hash.LongLinkedHashMap
-- <init>(I,F,Z):V
-- clear():V
-- containsKey(J):Z
-- doRemoveEldestEntry():V
-- entrySet():java.util.Set
-- get(J):java.lang.Object
-- getFirstKey():J
-- getLastKey():J
-- getLastValue():java.lang.Object
-- isEmpty():Z
-- put(J,java.lang.Object):java.lang.Object
-- remove(J):java.lang.Object
-- p:removeEldestEntry(com.intellij.util.containers.hash.LongLinkedHashMap$Entry):Z
-- size():I
-- values():java.util.Collection
-f:com.intellij.util.containers.hash.LongLinkedHashMap$Entry
-- getKey():J
-- getValue():java.lang.Object
-- setValue(java.lang.Object):java.lang.Object
 f:com.intellij.util.diff.DiffTree
 - s:diff(com.intellij.util.diff.FlyweightCapableTreeStructure,com.intellij.util.diff.FlyweightCapableTreeStructure,com.intellij.util.diff.ShallowNodeComparator,com.intellij.util.diff.DiffTreeChangeBuilder,java.lang.CharSequence):V
 com.intellij.util.diff.DiffTreeChangeBuilder
@@ -4625,41 +4285,6 @@ com.intellij.util.indexing.ValueContainer$ValueIterator
 - java.util.Iterator
 - a:getInputIdsIterator():com.intellij.util.indexing.ValueContainer$IntIterator
 - a:getValueAssociationPredicate():java.util.function.IntPredicate
-f:com.intellij.util.indexing.containers.BitSetAsRAIntContainer
-- com.intellij.util.indexing.containers.RandomAccessIntContainer
-- <init>():V
-- <init>(I):V
-- add(I):Z
-- clone():java.lang.Object
-- compact():V
-- contains(I):Z
-- ensureContainerCapacity(I):com.intellij.util.indexing.containers.RandomAccessIntContainer
-- intIterator():com.intellij.util.indexing.containers.IntIdsIterator
-- remove(I):Z
-- size():I
-f:com.intellij.util.indexing.containers.ChangeBufferingList
-- java.lang.Cloneable
-- <init>():V
-- <init>(I):V
-- add(I):V
-- clone():java.lang.Object
-- ensureCapacity(I):V
-- intIterator():com.intellij.util.indexing.containers.IntIdsIterator
-- intPredicate():java.util.function.IntPredicate
-- isEmpty():Z
-- remove(I):V
-- sortedIntIterator():com.intellij.util.indexing.containers.IntIdsIterator
-f:com.intellij.util.indexing.containers.IntHashSetAsRAIntContainer
-- com.intellij.util.indexing.containers.RandomAccessIntContainer
-- <init>(I,F):V
-- add(I):Z
-- clone():java.lang.Object
-- compact():V
-- contains(I):Z
-- ensureContainerCapacity(I):com.intellij.util.indexing.containers.RandomAccessIntContainer
-- intIterator():com.intellij.util.indexing.containers.IntIdsIterator
-- remove(I):Z
-- size():I
 com.intellij.util.indexing.containers.IntIdsIterator
 - com.intellij.util.indexing.ValueContainer$IntIterator
 - a:createCopyInInitialState():com.intellij.util.indexing.containers.IntIdsIterator
@@ -4673,45 +4298,6 @@ com.intellij.util.indexing.containers.RandomAccessIntContainer
 - a:intIterator():com.intellij.util.indexing.containers.IntIdsIterator
 - a:remove(I):Z
 - a:size():I
-f:com.intellij.util.indexing.containers.SortedFileIdSetIterator
-- com.intellij.util.indexing.containers.IntIdsIterator
-- createCopyInInitialState():com.intellij.util.indexing.containers.IntIdsIterator
-- s:getTransientIterator(com.intellij.util.indexing.containers.IntIdsIterator):com.intellij.util.indexing.containers.IntIdsIterator
-- hasAscendingOrder():Z
-- hasNext():Z
-- next():I
-- size():I
-f:com.intellij.util.indexing.containers.SortedIdSet
-- com.intellij.util.indexing.containers.RandomAccessIntContainer
-- java.lang.Cloneable
-- <init>(I):V
-- <init>(I[],I):V
-- add(I):Z
-- clone():java.lang.Object
-- compact():V
-- contains(I):Z
-- ensureContainerCapacity(I):com.intellij.util.indexing.containers.RandomAccessIntContainer
-- findNext(I):I
-- forEach(java.util.function.IntPredicate):V
-- get(I):I
-- intIterator():com.intellij.util.indexing.containers.IntIdsIterator
-- isEmpty():Z
-- remove(I):Z
-- size():I
-f:com.intellij.util.indexing.containers.UpgradableRandomAccessIntContainer
-- com.intellij.util.indexing.containers.RandomAccessIntContainer
-- <init>(I,java.util.function.Supplier,com.intellij.util.indexing.containers.UpgradableRandomAccessIntContainer$InstanceUpgrader):V
-- add(I):Z
-- clone():java.lang.Object
-- compact():V
-- contains(I):Z
-- ensureContainerCapacity(I):com.intellij.util.indexing.containers.RandomAccessIntContainer
-- intIterator():com.intellij.util.indexing.containers.IntIdsIterator
-- remove(I):Z
-- size():I
-- upgrade():V
-com.intellij.util.indexing.containers.UpgradableRandomAccessIntContainer$InstanceUpgrader
-- a:createFrom(com.intellij.util.indexing.containers.RandomAccessIntContainer):com.intellij.util.indexing.containers.RandomAccessIntContainer
 a:com.intellij.util.indexing.impl.AbstractUpdateData
 - p:<init>(I):V
 - getInputId():I
@@ -5280,7 +4866,6 @@ f:com.intellij.util.io.IoKt
 - *bs:copyToAsync$default(java.io.InputStream,java.io.OutputStream,I,J,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:decodeBase64(java.lang.String):B[]
 - sf:encodeUrlQueryParameter(java.lang.String):java.lang.String
-- sf:readCharSequence(java.io.Reader):java.lang.CharSequence
 - sf:readCharSequence(java.io.Reader,I):java.lang.CharSequence
 - sf:toByteArray(java.nio.ByteBuffer,Z):B[]
 - bs:toByteArray$default(java.nio.ByteBuffer,Z,I,java.lang.Object):B[]
@@ -5959,23 +5544,6 @@ f:com.intellij.util.lang.JavaVersion
 - toFeatureMinorUpdateString():java.lang.String
 - toFeatureString():java.lang.String
 - s:tryParse(java.lang.String):com.intellij.util.lang.JavaVersion
-f:com.intellij.util.ref.GCUtil
-- <init>():V
-- s:clearBeanInfoCache():V
-- s:tryGcSoftlyReachableObjects():V
-- s:tryGcSoftlyReachableObjects(java.util.function.BooleanSupplier):V
-f:com.intellij.util.ref.GCWatcher
-- ensureCollected():V
-- ensureCollected(java.lang.Runnable):V
-- s:fromClearedRef(com.intellij.openapi.util.Ref):com.intellij.util.ref.GCWatcher
-- s:tracking(java.lang.Object):com.intellij.util.ref.GCWatcher
-- s:tracking(java.lang.Object,java.lang.Object):com.intellij.util.ref.GCWatcher
-- s:tracking(java.lang.Object,java.lang.Object,java.lang.Object):com.intellij.util.ref.GCWatcher
-- s:tracking(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):com.intellij.util.ref.GCWatcher
-- s:tracking(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):com.intellij.util.ref.GCWatcher
-- s:tracking(java.util.Collection):com.intellij.util.ref.GCWatcher
-- s:tracking(java.lang.Object[]):com.intellij.util.ref.GCWatcher
-- tryCollect(I):Z
 e:com.intellij.util.system.CpuArch
 - java.lang.Enum
 - sf:ARM32:com.intellij.util.system.CpuArch

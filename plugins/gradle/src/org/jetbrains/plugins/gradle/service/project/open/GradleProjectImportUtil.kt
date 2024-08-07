@@ -2,11 +2,12 @@
 @file:JvmName("GradleProjectImportUtil")
 package org.jetbrains.plugins.gradle.service.project.open
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
@@ -14,16 +15,17 @@ import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.intellij.platform.backend.observation.launchTracked
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleEnvironment
+import org.jetbrains.plugins.gradle.util.GradleUtil
+import org.jetbrains.plugins.gradle.util.setupGradleJvm
 import java.nio.file.Path
 
 fun canOpenGradleProject(file: VirtualFile): Boolean = GradleOpenProjectProvider().canOpenProject(file)
@@ -48,19 +50,11 @@ fun canLinkAndRefreshGradleProject(projectFilePath: String, project: Project, sh
   return false
 }
 
-@Obsolete
+@Deprecated("Use linkAndSyncGradleProject instead", ReplaceWith("linkAndSyncGradleProject(project, projectFilePath)"))
 fun linkAndRefreshGradleProject(projectFilePath: String, project: Project) {
-  if (ApplicationManager.getApplication().isDispatchThread) {
-    runWithModalProgressBlocking(project, GradleBundle.message("gradle.linking.project")) {
-      withContext(Dispatchers.Default) {
-        GradleOpenProjectProvider().linkToExistingProjectAsync(projectFilePath, project)
-      }
-    }
-  }
-  else {
-    runBlockingCancellable {
-      GradleOpenProjectProvider().linkToExistingProjectAsync(projectFilePath, project)
-    }
+  LOG.warn("Use linkAndSyncGradleProject instead")
+  CoroutineScopeService.getCoroutineScope(project).launchTracked {
+    GradleOpenProjectProvider().linkToExistingProjectAsync(projectFilePath, project)
   }
 }
 
@@ -117,3 +111,14 @@ private fun validateGradleProject(projectFilePath: String, project: Project): Va
   if (projectSettings != null) return ValidationInfo(ExternalSystemBundle.message("error.project.already.registered"))
   return null
 }
+
+@Service(Service.Level.PROJECT)
+private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
+  companion object {
+    fun getCoroutineScope(project: Project): CoroutineScope {
+      return project.service<CoroutineScopeService>().coroutineScope
+    }
+  }
+}
+
+private val LOG = Logger.getInstance("#org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil")

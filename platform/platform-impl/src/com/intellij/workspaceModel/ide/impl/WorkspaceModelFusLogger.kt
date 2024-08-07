@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.DurationMs
 import com.intellij.internal.statistic.eventLog.events.EventFields.Long
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-object WorkspaceModelFusLogger : CounterUsagesCollector() {
+internal object WorkspaceModelFusLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   val GROUP = EventLogGroup("workspace.model", 3)

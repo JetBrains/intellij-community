@@ -595,13 +595,19 @@
             class="org.intellij.plugins.markdown.extensions.CleanupExtensionsExternalFilesAction"
             icon="AllIcons.Actions.GC"/>
 
-    <group id="Markdown.Preview.FontSize" popup="true" compact="true">
-      <action id="Markdown.Preview.IncreaseFontSize"
-              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Increase"/>
-      <action id="Markdown.Preview.DecreaseFontSize"
-              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Decrease"/>
-      <action id="Markdown.Preview.ResetFontSize"
-              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Reset"/>
+    <action id="Markdown.Preview.IncreaseFontSize"
+            class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Increase"
+            use-shortcut-of="ExpandAll"/>
+    <action id="Markdown.Preview.DecreaseFontSize"
+            class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Decrease"
+            use-shortcut-of="CollapseAll"/>
+
+    <action id="Markdown.Preview.ResetFontSize"
+            class="org.intellij.plugins.markdown.ui.actions.ResetFontSizeAction"/>
+
+    <group id="Markdown.PreviewGroup">
+      <action id="Markdown.Preview.AdjustFontSize"
+              class="org.intellij.plugins.markdown.ui.actions.AdjustFontSizeAction"/>
     </group>
   </actions>
 </idea-plugin>

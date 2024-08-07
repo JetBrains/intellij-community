@@ -192,15 +192,15 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       previewPanel.add(previewTitle, BorderLayout.NORTH);
       previewPanel.add(usagePreviewPanel, BorderLayout.CENTER);
 
-      class MySplitter extends OnePixelSplitter implements DataProvider {
+      class MySplitter extends OnePixelSplitter implements UiDataProvider {
 
         MySplitter() {
           super(true, "conflicts.dialog.splitter", 0.4f);
         }
 
         @Override
-        public @Nullable Object getData(@NotNull String dataId) {
-          return UsageView.USAGE_VIEW_SETTINGS_KEY.is(dataId) ? usageView.getUsageViewSettings() : null;
+        public void uiDataSnapshot(@NotNull DataSink sink) {
+          sink.set(UsageView.USAGE_VIEW_SETTINGS_KEY, usageView.getUsageViewSettings());
         }
       }
       Splitter splitter = new MySplitter();

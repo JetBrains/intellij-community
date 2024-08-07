@@ -315,6 +315,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
                 runTest("testData/copyPaste/imports/Local.kt");
             }
 
+            @TestMetadata("MissingClass.kt")
+            public void testMissingClass() throws Exception {
+                runTest("testData/copyPaste/imports/MissingClass.kt");
+            }
+
             @TestMetadata("MultiCaretSelection.kt")
             public void testMultiCaretSelection() throws Exception {
                 runTest("testData/copyPaste/imports/MultiCaretSelection.kt");
@@ -880,6 +885,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             @TestMetadata("Local.kt")
             public void testLocal() throws Exception {
                 runTest("testData/copyPaste/imports/Local.kt");
+            }
+
+            @TestMetadata("MissingClass.kt")
+            public void testMissingClass() throws Exception {
+                runTest("testData/copyPaste/imports/MissingClass.kt");
             }
 
             @TestMetadata("MultiCaretSelection.kt")

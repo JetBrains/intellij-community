@@ -18,13 +18,6 @@ fun <T> UserDataHolder.putUserData(configuration: TargetEnvironmentConfiguration
   targetStorage.putUserData(configuration, key, value)
 }
 
-fun <T> UserDataHolder.updateUserData(configuration: TargetEnvironmentConfiguration?, key: Key<T>, updater: (T?) -> T?): T? {
-  val oldValue = getUserData(configuration, key)
-  val newValue = updater(oldValue)
-  putUserData(configuration, key, newValue)
-  return newValue
-}
-
 /**
  * This class stores information for a specific target.
  */
@@ -35,13 +28,6 @@ class TargetStorage {
 
   fun <T> putUserData(configuration: TargetEnvironmentConfiguration?, key: Key<T>, value: T?): Unit =
     context.computeIfAbsent(configuration.getId()) { UserDataHolderBase() }.putUserData(key, value)
-
-  fun <T> updateUserData(configuration: TargetEnvironmentConfiguration?, key: Key<T>, updater: (T?) -> T?): T? {
-    val oldValue = getUserData(configuration, key)
-    val newValue = updater(oldValue)
-    putUserData(configuration, key, newValue)
-    return newValue
-  }
 
   private sealed class Id
 

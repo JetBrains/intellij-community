@@ -57,7 +57,7 @@ class PipEnvNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel)
     //}
   }
 
-  override fun getOrCreateSdk(): Sdk? {
+  override fun getOrCreateSdk(): Sdk {
     if (model is PythonLocalAddInterpreterModel) {
       PropertiesComponent.getInstance().pipEnvPath = model.state.pipenvExecutable.get().nullize()
     }

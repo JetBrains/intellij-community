@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.ConcurrencyUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
@@ -96,7 +96,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       numberOfPermits = 0; //we wait till one operation is finished
     }
     Semaphore typingSemaphore = new Semaphore(numberOfPermits);
-    TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere", globalSpan -> {
+    TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere"), globalSpan -> {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
         try {
           TypingTarget target = findTarget(context);
@@ -110,7 +110,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
           }
           DataContext dataContext = DataManager.getInstance().getDataContext(component);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-          TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere_dialog_shown", dialogSpan -> {
+          TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_dialog_shown"), dialogSpan -> {
             var manager = SearchEverywhereManager.getInstance(project);
             manager.show(tabId.get(), "",
                          new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(),
@@ -121,6 +121,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
                            }
                          });
             attachSearchListeners(manager.getCurrentlyShownUI());
+            return null;
           });
           if (!insertText.isEmpty()) {
             insertText(context.getProject(), insertText, typingSemaphore, warmup);
@@ -151,6 +152,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       finally {
         actionCallback.setDone();
       }
+      return null;
     });
 
     return Promises.toPromise(actionCallback);

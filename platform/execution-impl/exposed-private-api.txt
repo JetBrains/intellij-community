@@ -1,11 +1,4 @@
 com/intellij/configurationStore/StreamProvider
 com/intellij/execution/RunProfileStarter
 com/intellij/internal/statistic/StructuredIdeActivity
-com/intellij/internal/statistic/eventLog/events/BooleanEventField
-com/intellij/internal/statistic/eventLog/events/EnumEventField
-com/intellij/internal/statistic/eventLog/events/IntEventField
-com/intellij/internal/statistic/eventLog/events/ObjectEventData
-com/intellij/internal/statistic/eventLog/events/ObjectListEventField
-com/intellij/internal/statistic/eventLog/events/StringEventField
-com/intellij/internal/statistic/eventLog/events/VarargEventId
 com/intellij/openapi/actionSystem/remoting/ActionRemoteBehavior

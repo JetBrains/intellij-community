@@ -30,6 +30,11 @@ public class K2MoveDirectoryTestGenerated extends AbstractK2MoveDirectoryTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("forLoop/forLoop.test")
+    public void testForLoop_ForLoop() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveDirectory/forLoop/forLoop.test");
+    }
+
     @TestMetadata("mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test")
     public void testMixedJavaKotlinWithQuotation_MixedJavaKotlinWithQuotation() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveDirectory/mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test");
@@ -38,5 +43,10 @@ public class K2MoveDirectoryTestGenerated extends AbstractK2MoveDirectoryTest {
     @TestMetadata("mixedJavaKotlin/mixedJavaKotlin.test")
     public void testMixedJavaKotlin_MixedJavaKotlin() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveDirectory/mixedJavaKotlin/mixedJavaKotlin.test");
+    }
+
+    @TestMetadata("withTypeAliases/withTypeAliases.test")
+    public void testWithTypeAliases_WithTypeAliases() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveDirectory/withTypeAliases/withTypeAliases.test");
     }
 }

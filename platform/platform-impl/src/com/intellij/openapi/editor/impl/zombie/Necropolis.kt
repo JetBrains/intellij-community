@@ -143,9 +143,8 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
           val fingerprint = FingerprintedZombieImpl.captureFingerprint(documentContent)
           for ((necromancer, zombie) in zombies) {
             launch(CoroutineName(necromancer.name())) {
-              val fingerprinted = FingerprintedZombieImpl(fingerprint, zombie)
-              if (recipe.isValid() && necromancer.shouldBuryZombie(recipe, fingerprinted)) {
-                necromancer.buryZombie(recipe.fileId, fingerprinted)
+              if (recipe.isValid() && necromancer.shouldBuryZombie(recipe, zombie)) {
+                necromancer.buryZombie(recipe.fileId, FingerprintedZombieImpl(fingerprint, zombie))
               }
             }
           }

@@ -40,10 +40,6 @@ sealed class BaseLayout {
   internal val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
   val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
 
-  /** module name to name of the library */
-  @JvmField
-  internal val excludedLibraries: MutableMap<String?, MutableList<String>> = HashMap()
-
   @JvmField
   internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
 
@@ -61,9 +57,6 @@ sealed class BaseLayout {
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
 
   fun findProjectLibrary(name: String): ProjectLibraryData? = includedProjectLibraries.firstOrNull { it.libraryName == name }
-
-  @TestOnly
-  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) ?: false
 
   @TestOnly
   fun includedProjectLibraryNames(): Sequence<String> = includedProjectLibraries.asSequence().map { it.libraryName }

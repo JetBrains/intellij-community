@@ -35,6 +35,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
     private var notificationCooldownEnd: Long? = null
 
     fun shouldShowNotConfiguredDialog(module: Module): Boolean {
+        if (!findApplicableConfigurator(module).shouldShowNotConfiguredDialog()) return false
         if (isSyncPending(module)) return false
         if (checkingAndPerformingAutoConfig) return false
         // If notificationCooldownEnd wasn't set, then the autoconfiguration didn't take place

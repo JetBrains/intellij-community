@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.CacheSwitcher;
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
+import com.intellij.idea.IJIgnore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -978,6 +979,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     events.clear();
   }
 
+  @IJIgnore(issue = "IJPL-149673")
   @Test
   public void testChildMove() throws IOException {
     final File firstDirIoFile = tempDirectory.newDirectory("dir1");

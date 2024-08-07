@@ -1,6 +1,3 @@
-com/intellij/internal/statistic/eventLog/validator/rules/FUSRule
-com/intellij/internal/statistic/eventLog/validator/rules/PerformanceCareRule
-com/intellij/internal/statistic/eventLog/validator/rules/impl/UtilValidationRule
 com/jediterm/core/Color
 com/jediterm/core/util/TermSize
 com/jediterm/terminal/CursorShape

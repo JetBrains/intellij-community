@@ -16,6 +16,7 @@ class SingleEdtTaskScheduler private constructor() {
     fun createSingleEdtTaskScheduler(): SingleEdtTaskScheduler = SingleEdtTaskScheduler()
   }
 
+  @Suppress("UsagesOfObsoleteApi")
   private val impl = SingleAlarm(
     task = {},
     delay = 0,
@@ -34,7 +35,8 @@ class SingleEdtTaskScheduler private constructor() {
    * The same as for [SingleAlarm], if you call [request] several times, we throttle but not debounce.
    */
   fun request(delay: Long, task: Runnable) {
-    impl.scheduleTask(delay = delay, customModality = null, cancelCurrent = false, task = { task.run() })
+    val modalityState = ModalityState.defaultModalityState().takeIf { it !== ModalityState.nonModal() }?.asContextElement()
+    impl.scheduleTask(delay = delay, customModality = modalityState, cancelCurrent = false, task = { task.run() })
   }
 
   fun request(delay: Long, modality: ModalityState, task: Runnable) {
@@ -45,9 +47,9 @@ class SingleEdtTaskScheduler private constructor() {
    * Use it if you want `debounce` behavior instead of `throttle` (see [request]).
    */
   fun cancelAndRequest(delay: Long, task: Runnable) {
-    impl.scheduleTask(delay = delay, customModality = null, task = { task.run() })
+    val modalityState = ModalityState.defaultModalityState().takeIf { it !== ModalityState.nonModal() }?.asContextElement()
+    impl.scheduleTask(delay = delay, customModality = modalityState, task = { task.run() })
   }
-
 
   fun cancelAndRequest(delay: Long, modality: ModalityState, task: Runnable) {
     impl.scheduleTask(delay = delay, customModality = modality.asContextElement(), task = { task.run() })

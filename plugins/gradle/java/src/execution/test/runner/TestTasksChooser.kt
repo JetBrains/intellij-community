@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
@@ -150,16 +151,13 @@ open class TestTasksChooser {
     private const val TEST_TASK_NAME = "test"
 
     @JvmField
-    val LOCATION = DataKey.create<String?>("org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser.LOCATION")
+    val LOCATION = DataKey.create<String>("org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser.LOCATION")
 
     @JvmStatic
     fun contextWithLocationName(context: DataContext, locationName: String?): DataContext {
       if (locationName == null) return context
-      return DataContext {
-        when {
-          LOCATION.`is`(it) -> locationName
-          else -> context.getData(it)
-        }
+      return CustomizedDataContext.withSnapshot(context) { sink ->
+        sink[LOCATION] = locationName
       }
     }
 

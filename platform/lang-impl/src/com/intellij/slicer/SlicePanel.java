@@ -47,7 +47,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-public abstract class SlicePanel extends JPanel implements DataProvider, Disposable {
+public abstract class SlicePanel extends JPanel implements UiDataProvider, Disposable {
   private final SliceTreeBuilder myBuilder;
   private final JTree myTree;
 
@@ -303,17 +303,12 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     return result;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      List<Navigatable> navigatables = getNavigatables();
-      return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return new DefaultTreeExpander(myTree);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    List<Navigatable> navigatables = getNavigatables();
+    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY,
+             navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
+    sink.set(PlatformDataKeys.TREE_EXPANDER, new DefaultTreeExpander(myTree));
   }
 
   @NotNull

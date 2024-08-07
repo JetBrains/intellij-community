@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-object TrustedProjectsStatistics : CounterUsagesCollector() {
+internal object TrustedProjectsStatistics : CounterUsagesCollector() {
 
   val GROUP: EventLogGroup = EventLogGroup("trusted_projects", 3)
   val NEW_PROJECT_OPEN_OR_IMPORT_CHOICE: EventId1<OpenUntrustedProjectChoice> = GROUP.registerEvent("open_new_project",

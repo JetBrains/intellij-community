@@ -236,7 +236,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   }
 
   @NonNls
-  private @Nullable String createCoverageFile() {
+  protected @Nullable String createCoverageFile() {
     CoverageRunner runner = getCoverageRunner();
     if (runner == null) {
       return null;

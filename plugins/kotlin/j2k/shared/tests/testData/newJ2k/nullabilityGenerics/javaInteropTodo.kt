@@ -1,3 +1,5 @@
+// ERROR: Type mismatch: inferred type is kotlin.collections.ArrayList<String?>? /* = java.util.ArrayList<String?>? */ but java.util.ArrayList<String>? was expected
+// ERROR: Type mismatch: inferred type is kotlin.collections.ArrayList<String?> /* = java.util.ArrayList<String?> */ but java.util.ArrayList<String> was expected
 class Foo {
     fun testAssignment(j: J) {
         val l1 = j.return1()
@@ -24,7 +26,7 @@ class Foo {
         j.argument4(l4)
     }
 
-    fun testReturn1(j: J): ArrayList<String>? {
+    fun testReturn1(j: J): ArrayList<String?>? {
         return j.return1()
     }
 
@@ -32,7 +34,7 @@ class Foo {
         return j.return2()
     }
 
-    fun testReturn3(j: J): ArrayList<String> {
+    fun testReturn3(j: J): ArrayList<String?> {
         return j.return3()
     }
 

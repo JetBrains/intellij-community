@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.tools.util.base.DiffPanelBase;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -31,10 +30,8 @@ public class SimpleDiffPanel extends DiffPanelBase {
   private static final @NonNls String GOOD_CONTENT = "GoodContent";
   private static final @NonNls String ERROR_CONTENT = "ErrorContent";
 
-  public SimpleDiffPanel(@NotNull JComponent editorPanel,
-                         @NotNull DataProvider dataProvider,
-                         @NotNull DiffContext context) {
-    super(context.getProject(), dataProvider, context);
+  public SimpleDiffPanel(@NotNull JComponent editorPanel, @NotNull DiffContext context) {
+    super(context.getProject(), context);
     JPanel centerPanel = JBUI.Panels.simplePanel(editorPanel).addToTop(myNotificationsPanel);
 
     myContentPanel.add(centerPanel, GOOD_CONTENT);

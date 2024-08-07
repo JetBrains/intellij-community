@@ -240,8 +240,7 @@
     "DisclosureButton": {
       "defaultBackground": "#FFFFFF12",
       "hoverOverlay": "#FFFFFF0D",
-      "pressedOverlay": "#FFFFFF1A",
-      "successBackground": "#375239"
+      "pressedOverlay": "#FFFFFF1A"
     },
 
     "Editor": {

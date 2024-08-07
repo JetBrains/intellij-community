@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -44,4 +44,14 @@ public class ImplicitToExplicitClassBackwardMigrationInspectionTest extends Ligh
   public void testAdjustComments() { doTest(); }
 
   public void testWithPrint() { doTest(); }
+
+  public void testSimpleModuleImport() { doTest(); }
+
+  public void testConflictModuleImport() {
+    myFixture.addClass("""
+                         package test;
+                         public class List {}
+                         """);
+    doTest();
+  }
 }

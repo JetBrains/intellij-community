@@ -15,6 +15,9 @@ final class ContextRunnable implements Runnable {
 
   @Async.Schedule
   ContextRunnable(boolean root, @NotNull CoroutineContext context, @NotNull Runnable runnable) {
+    if (runnable instanceof ContextRunnable) {
+      throw new IllegalArgumentException("Can not wrap ContextRunnable into ContextRunnable");
+    }
     myRoot = root;
     myParentContext = context;
     myRunnable = runnable;

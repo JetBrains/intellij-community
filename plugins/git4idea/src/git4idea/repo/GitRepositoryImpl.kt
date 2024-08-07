@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
-import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ObjectUtils
 import com.intellij.vcs.log.Hash
@@ -29,7 +29,6 @@ import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
-import kotlin.concurrent.Volatile
 
 class GitRepositoryImpl private constructor(
   project: Project,
@@ -167,8 +166,7 @@ class GitRepositoryImpl private constructor(
   }
 
   private fun readRepoInfo(): GitRepoInfo {
-    return computeWithSpan(getInstance().getTracer(VcsScope),
-                           GitTelemetrySpan.Repository.ReadGitRepositoryInfo.getName()) { span: Span ->
+    return getInstance().getTracer(VcsScope).spanBuilder(GitTelemetrySpan.Repository.ReadGitRepositoryInfo.getName()).use { span ->
       span.setAttribute("repository", DvcsUtil.getShortRepositoryName(this))
 
       val configFile = repositoryFiles.configFile

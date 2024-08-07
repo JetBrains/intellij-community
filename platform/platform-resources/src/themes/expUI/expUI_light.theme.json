@@ -286,8 +286,7 @@
     "DisclosureButton": {
       "defaultBackground": "#0000000D",
       "hoverOverlay": "#0000000D",
-      "pressedOverlay": "#00000017",
-      "successBackground": "Green9"
+      "pressedOverlay": "#00000017"
     },
 
     "EditorTabs": {
@@ -920,9 +919,11 @@
 
     "LicenseDialog": {
       "termsAndConditionsForeground": "Gray8",
+      "waitingLabelForeground": "Gray8",
       "separatorColor": "Gray12",
       "LicenseList": {
         "licenseDetailsForeground": "Gray6",
+        "licenseIdForeground": "Gray8",
         "separatorColor": "Gray10"
       },
       "LicenseServer": {

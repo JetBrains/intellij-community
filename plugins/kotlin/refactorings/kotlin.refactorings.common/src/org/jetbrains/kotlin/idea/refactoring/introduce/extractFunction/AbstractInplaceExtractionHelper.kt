@@ -74,11 +74,6 @@ interface AbstractInplaceExtractionHelper<KotlinType,
         val elements = descriptor.extractionData.physicalElements
         val file = descriptor.extractionData.originalFile
 
-        val activeTemplateState = TemplateManagerImpl.getTemplateState(editor)
-        if (activeTemplateState != null) {
-            restart(activeTemplateState, file, false)
-        }
-
         val first = elements.first()
         val callTextRange =
             editor.document.createRangeMarker(

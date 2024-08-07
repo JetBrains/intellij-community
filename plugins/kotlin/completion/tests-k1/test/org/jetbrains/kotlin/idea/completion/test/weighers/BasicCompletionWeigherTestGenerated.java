@@ -580,6 +580,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/LambdaSignature.kt");
         }
 
+        @TestMetadata("LocalCallableForLoop.kt")
+        public void testLocalCallableForLoop() throws Exception {
+            runTest("../testData/weighers/basic/LocalCallableForLoop.kt");
+        }
+
         @TestMetadata("LocalClass.kt")
         public void testLocalClass() throws Exception {
             runTest("../testData/weighers/basic/LocalClass.kt");

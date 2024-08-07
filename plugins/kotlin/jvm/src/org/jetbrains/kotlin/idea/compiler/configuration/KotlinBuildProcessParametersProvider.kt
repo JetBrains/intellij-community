@@ -24,6 +24,7 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
                 val configuredKotlinVersion = IdeKotlinVersion.opt(KotlinJpsPluginSettings.jpsVersion(project))
                 if (configuredKotlinVersion != null && configuredKotlinVersion.compareTo(MIN_DEP_GRAPH_SUPPORTING_VERSION) >= 0) {
                     arguments += "-Dkotlin.jps.dumb.mode=true"
+                    arguments += "-Dkotlin.jps.enable.lookups.in.dumb.mode=true"
                 }
             }
         }

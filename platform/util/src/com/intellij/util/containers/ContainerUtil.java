@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -2419,12 +2419,14 @@ public final class ContainerUtil {
     for (Collection<? extends E> list : collections) {
       totalSize += list.size();
     }
+    if (totalSize == 0) return emptyList();
+
     List<E> result = new ArrayList<>(totalSize);
     for (Collection<? extends E> list : collections) {
       result.addAll(list);
     }
 
-    return result.isEmpty() ? emptyList() : result;
+    return result;
   }
 
   /**

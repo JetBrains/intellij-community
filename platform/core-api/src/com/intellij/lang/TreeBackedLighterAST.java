@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
@@ -23,13 +23,14 @@ public class TreeBackedLighterAST extends LighterAST {
 
   @Override
   public LighterASTNode getParent(final @NotNull LighterASTNode node) {
-    ASTNode parent = ((NodeWrapper)node).myNode.getTreeParent();
+    ASTNode astNode = unwrap(node);
+    ASTNode parent = astNode.getTreeParent();
     return parent == null ? null : wrap(parent);
   }
 
   @Override
   public @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent) {
-    final ASTNode[] children = ((NodeWrapper)parent).myNode.getChildren(null);
+    final ASTNode[] children = unwrap(parent).getChildren(null);
     if (children.length == 0) return ContainerUtil.emptyList();
 
     List<LighterASTNode> result = new ArrayList<>(children.length);
@@ -40,10 +41,12 @@ public class TreeBackedLighterAST extends LighterAST {
   }
 
   public static @NotNull LighterASTNode wrap(@NotNull ASTNode node) {
+    if (node instanceof LighterASTNode) return (LighterASTNode)node;
     return node.getFirstChildNode() == null && node.getTextLength() > 0 ? new TokenNodeWrapper(node) : new NodeWrapper(node);
   }
 
   public @NotNull ASTNode unwrap(@NotNull LighterASTNode node) {
+    if (node instanceof ASTNode) return (ASTNode)node;
     return ((NodeWrapper)node).myNode;
   }
 

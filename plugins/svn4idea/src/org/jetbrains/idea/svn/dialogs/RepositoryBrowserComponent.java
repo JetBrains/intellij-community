@@ -3,7 +3,8 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -18,7 +19,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.StatusText;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -42,7 +42,7 @@ import java.util.List;
 /**
  * @author alex
  */
-public class RepositoryBrowserComponent extends JPanel implements Disposable, DataProvider {
+public class RepositoryBrowserComponent extends JPanel implements Disposable, UiDataProvider {
 
   private Tree myRepositoryTree;
   private final SvnVcs myVCS;
@@ -251,31 +251,24 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final Project project = myVCS.getProject();
-      if (project.isDefault()) {
-        return null;
-      }
-      final VirtualFile vcsFile = getSelectedVcsFile();
-
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    Project project = myVCS.getProject();
+    if (project.isDefault()) return;
+    sink.set(CommonDataKeys.PROJECT, project);
+    VirtualFile vcsFile = getSelectedVcsFile();
+    if (vcsFile != null) {
       // do not return OpenFileDescriptor instance here as in that case SelectInAction will be enabled and its invocation (using keyboard)
       // will raise error - see IDEA-104113 - because of the following operations inside SelectInAction.actionPerformed():
       // - at first VcsVirtualFile content will be loaded which for svn results in showing progress dialog
       // - then DataContext from SelectInAction will still be accessed which results in error as current event count has already changed
       // (because of progress dialog)
-      return vcsFile != null ? new NavigatableAdapter() {
+      sink.set(CommonDataKeys.NAVIGATABLE, new NavigatableAdapter() {
         @Override
         public void navigate(boolean requestFocus) {
           navigate(project, vcsFile, requestFocus);
         }
-      } : null;
+      });
     }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myVCS.getProject();
-    }
-    return null;
   }
 
   @Override

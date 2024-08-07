@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
@@ -128,6 +128,105 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testImplicitModulesWithImplicitClass() {
+    doTest();
+  }
+
+  public void testConflictJavaLang(){
+    myFixture.addClass("package p1; public class String {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictCurrentPackage(){
+    myFixture.addClass("package p2; public class Conflict {}");
+    myFixture.addClass("package p1; public class Conflict {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictModuleImport(){
+    myFixture.addClass("package p1; public class List {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictModuleImportImplicitClass(){
+    myFixture.addClass("package p1; public class List {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictModuleImportImplicitClass2(){
+    myFixture.addClass("package p1; public class List {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictStaticImport(){
+    myFixture.addClass(
+      """
+        package p1;
+        public class A1 {
+          public static void print(Object obj) {}
+          public static void foo() {}
+          public static void foo1() {}
+          public static void foo2() {}
+          public static void foo3() {}
+          public static void foo4() {}
+          public static void foo5() {}
+        }
+        """);
+    myFixture.addClass("""
+        package java.io;
+        
+        public final class IO {
+          public static void print(Object obj) {}
+        }
+        """);
+    doTest();
+  }
+
+  public void testConflictStaticImportWithImplicitClass(){
+    myFixture.addClass(
+      """
+        package p1;
+        public class A1 {
+          public static void print(Object obj) {}
+          public static void foo() {}
+          public static void foo1() {}
+          public static void foo2() {}
+          public static void foo3() {}
+          public static void foo4() {}
+          public static void foo5() {}
+        }
+        """);
+    myFixture.addClass("""
+        package java.io;
+        
+        public final class IO {
+          public static void print(Object obj) {}
+        }
+        """);
     doTest();
   }
 

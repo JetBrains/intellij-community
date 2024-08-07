@@ -132,7 +132,7 @@ class GradleIdeaModelHolder(
     val rootBuild = state.rootBuild
     val nestedBuilds = state.nestedBuilds
     val buildEnvironment = state.buildEnvironment
-    val openTelemetryTraces = state.openTelemetryTraces
+    val telemetry = state.openTelemetry
     val models = state.models
 
     if (rootBuild != null) {
@@ -149,7 +149,7 @@ class GradleIdeaModelHolder(
     }
     this.models.putAll(models)
 
-    GradleOpenTelemetryTraceService.exportOpenTelemetryTraces(openTelemetryTraces)
+    GradleOpenTelemetryTraceService.exportOpenTelemetry(telemetry)
   }
 
   private fun convertModelPathsInPlace(model: Any) {

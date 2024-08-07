@@ -1,17 +1,21 @@
 package com.intellij.settingsSync.plugins
 
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.settingsSync.*
-import com.intellij.settingsSync.NOTIFICATION_GROUP
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Boolean) : SettingsSyncPluginInstaller {
   companion object {
@@ -21,37 +25,51 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
   override suspend fun installPlugins(pluginsToInstall: List<PluginId>) {
     if (pluginsToInstall.isEmpty())
       return
-    val pluginInstallation = object : Task.Backgroundable(null, SettingsSyncBundle.message("installing.plugins.indicator"), true) {
-      override fun run(indicator: ProgressIndicator) {
-        val prepareRunnable = PrepareInstallationRunnable(pluginsToInstall, indicator) { pluginId, indicator -> createDownloader(pluginId, indicator) }
-        prepareRunnable.run()
-        installCollected(prepareRunnable.getInstallers())
-      }
+
+    val project: Project? = ProjectManager.getInstanceIfCreated()?.openProjects?.firstOrNull()
+    val downloaders = withBackgroundProgress(currentOrDefaultProject(project), SettingsSyncBundle.message("installing.plugins.indicator")) {
+      createDownloaders(pluginsToInstall)
     }
-    ProgressManager.getInstance().run(pluginInstallation)
+    val remainingPluginIds = mutableSetOf(*pluginsToInstall.toTypedArray())
+    downloaders.forEach {
+      remainingPluginIds.remove(it.id)
+    }
+    var settingsChanged = false
+    remainingPluginIds.forEach {
+      LOG.info("Cannot find compatible updates for $it. Will not try to install it again.")
+      disablePluginSync(it)
+      settingsChanged = true
+    }
+    installCollected(downloaders, settingsChanged)
   }
 
-  private fun installCollected(installers: List<PluginDownloader>) {
+  internal open suspend fun installCollected(installers: List<PluginDownloader>, settingsAlreadyChanged: Boolean) {
+    withModalProgress(ModalTaskOwner.guess(), SettingsSyncBundle.message("installing.plugins.indicator"), TaskCancellation.nonCancellable()) {
+      doInstallCollected(installers, settingsAlreadyChanged)
+    }
+  }
+
+  internal suspend fun doInstallCollected(installers: List<PluginDownloader>, settingsAlreadyChanged: Boolean) {
     val pluginsRequiredRestart = mutableListOf<String>()
-    var settingsChanged = false
-    val settings = SettingsSyncSettings.getInstance()
+    var settingsChanged = settingsAlreadyChanged
     for (installer in installers) {
       try {
         if (!install(installer)) {
           pluginsRequiredRestart.add(installer.pluginName)
         }
         LOG.info("Setting sync installed plugin ID: ${installer.id.idString}")
-      } catch (ex: Exception) {
+      }
+      catch (ex: Exception) {
 
         // currently, we don't install plugins that have missing dependencies.
         // TODO: toposort plugin with dependencies.
         // TODO: Skip installation dependent plugins, if any dependency fails to install.
-        LOG.warn("An exception occurred while installing plugin ${installer.id.idString}. Will disable syncing this plugin")
-        settings.setSubcategoryEnabled(SettingsCategory.PLUGINS, installer.id.idString, false)
+        LOG.warn("An exception occurred while installing plugin ${installer.id.idString}. Will disable syncing this plugin", ex)
+        disablePluginSync(installer.id)
         settingsChanged = true
       }
     }
-    if (settingsChanged){
+    if (settingsChanged) {
       SettingsSyncEvents.getInstance().fireCategoriesChanged()
     }
     if (pluginsRequiredRestart.size > 0) {
@@ -59,49 +77,26 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
     }
   }
 
-  open internal fun install(installer: PluginDownloader): Boolean = installer.installDynamically(null)
-
-  open internal fun createDownloader(pluginId: PluginId, indicator: ProgressIndicator): PluginDownloader? {
-    val descriptor = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(pluginId, indicator = indicator)
-    if (descriptor != null) {
-      val downloader = PluginDownloader.createDownloader(descriptor)
-      if (downloader.prepareToInstall(indicator)) {
-        return downloader
-      }
-    }
-    else {
-      val message = SettingsSyncBundle.message("install.plugin.failed.no.compatible.notification.error.message", pluginId )
-      LOG.info(message)
-      if (notifyErrors) {
-        NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
-          .createNotification("", message, NotificationType.ERROR)
-          .notify(null)
-      }
-    }
-    return null
+  private fun disablePluginSync(pluginId: PluginId) {
+    SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.PLUGINS, pluginId.idString, false)
   }
 
-  internal class PrepareInstallationRunnable(
-    private val pluginIds: List<PluginId>,
-    private val indicator: ProgressIndicator,
-    val dwnldPreparer: (pluginId: PluginId, indicator: ProgressIndicator) -> PluginDownloader?
-  ) : Runnable {
+  internal open suspend fun install(installer: PluginDownloader): Boolean {
+    return withContext(Dispatchers.EDT) {
+      installer.installDynamically(null)
+    }
+  }
 
-    private val collectedInstallers = ArrayList<PluginDownloader>()
-
-    override fun run() {
-      pluginIds.forEach {
-        prepareToInstall(it, indicator)
-        indicator.checkCanceled()
+  open internal fun createDownloaders(pluginIds: Collection<PluginId>): List<PluginDownloader> {
+    val compatibleUpdates = MarketplaceRequests.getLastCompatiblePluginUpdate(pluginIds.toSet())
+    val retval = arrayListOf<PluginDownloader>()
+    for (update in compatibleUpdates) {
+      val pluginDescriptor = MarketplaceRequests.loadPluginDescriptor(update.pluginId, update)
+      val downloader = PluginDownloader.createDownloader(pluginDescriptor)
+      if (downloader.prepareToInstall(null)) {
+        retval.add(downloader)
       }
     }
-
-    private fun prepareToInstall(pluginId: PluginId, indicator: ProgressIndicator) {
-      dwnldPreparer(pluginId, indicator) ?.also {
-          collectedInstallers.add(it)
-      }
-    }
-
-    fun getInstallers() = collectedInstallers
+    return retval
   }
 }

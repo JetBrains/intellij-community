@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.quickfix.RemoveIsFix
-import org.jetbrains.kotlin.idea.quickfix.ReplaceWithComparisonFix
+import org.jetbrains.kotlin.idea.quickfix.RemoveIsFromIsEnumEntryFix
+import org.jetbrains.kotlin.idea.quickfix.ReplaceIsEnumEntryWithComparisonFix
 import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtWhenConditionIsPattern
@@ -17,8 +17,8 @@ internal object IsEnumEntryFixFactory {
 
         listOfNotNull(
             when (element) {
-                is KtIsExpression -> if (element.typeReference == null) null else ReplaceWithComparisonFix(element)
-                is KtWhenConditionIsPattern -> if (element.typeReference == null || element.isNegated) null else RemoveIsFix(element)
+                is KtIsExpression -> if (element.typeReference == null) null else ReplaceIsEnumEntryWithComparisonFix(element)
+                is KtWhenConditionIsPattern -> if (element.typeReference == null || element.isNegated) null else RemoveIsFromIsEnumEntryFix(element)
                 else -> null
             }
         )

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.util.Ref;
@@ -76,7 +76,7 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
 
     final String namespacePrefix = getDeclaration().getNamespacePrefix();
     XmlTag type = getDeclaration().findFirstSubTag(
-      ((namespacePrefix.length() > 0) ? namespacePrefix + ":" : "") + "simpleType"
+      ((!namespacePrefix.isEmpty()) ? namespacePrefix + ":" : "") + "simpleType"
     );
 
     if (type != null) {

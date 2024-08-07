@@ -32,7 +32,7 @@ interface IjentChildProcess {
    *
    * Notice that every data chunk is flushed into the process separately. There's no buffering.
    */
-  @Throws(SendStdinError::class)
+  @Throws(SendStdinError::class, IjentUnavailableException::class)
   suspend fun sendStdinWithConfirmation(data: ByteArray)
 
   sealed class SendStdinError(msg: String) : Exception(msg) {
@@ -47,14 +47,31 @@ interface IjentChildProcess {
   }
 
   /**
-   * Send `SIGINT` on Unix.
+   * Sends `SIGINT` on Unix.
+   *
+   * Does nothing yet on Windows.
    */
+  @Throws(IjentUnavailableException::class)
   suspend fun interrupt()
 
+  /**
+   * Sends `SIGTERM` on Unix.
+   *
+   * Calls [`ExitProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-exitprocess) on Windows.
+   */
+  @Throws(IjentUnavailableException::class)
   suspend fun terminate()
+
+  /**
+   * Sends `SIGKILL` on Unix.
+   *
+   * Calls [`TerminateProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
+   * on Windows.
+   */
+  @Throws(IjentUnavailableException::class)
   suspend fun kill()
 
-  @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
+  @Throws(ResizePtyError::class, IjentUnavailableException::class)  // Can't use @CheckReturnValue: KTIJ-7061
   suspend fun resizePty(columns: Int, rows: Int)
 
   sealed class ResizePtyError(msg: String) : Exception(msg) {

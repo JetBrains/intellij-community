@@ -40,9 +40,7 @@ object EventsBus {
   /**
    * Can have only one subscription by pair subscriber + event
    * Subscriber might be invoked multiple times on different events since unsubscription happens only after end of test.
-   *
-   * Be very careful providing a string as a subscriber since we don't unsubscribe until the test is finished and subscription with the same
-   * string will be ignored.
+   * If you need to unsubscribe earlier call [unsubscribe]
    */
   inline fun <reified EventType : Event> subscribe(
     subscriber: Any,
@@ -59,6 +57,16 @@ object EventsBus {
         EVENTS_FLOW.subscribe(eventClass = EventType::class.java, subscriber = subscriber, timeout, callback)
     }
     return this
+  }
+
+  inline fun <reified EventType : Event> unsubscribe(subscriber: Any, ignoreExceptions: Boolean = true) {
+    executeWithExceptionHandling(ignoreExceptions) {
+      if (SharedEvent::class.java.isAssignableFrom(EventType::class.java)) {
+        SHARED_EVENTS_FLOW.unsubscribe(eventClass = EventType::class.java, subscriber = subscriber)
+      }
+      else
+        EVENTS_FLOW.unsubscribe(eventClass = EventType::class.java, subscriber = subscriber)
+    }
   }
 
   fun unsubscribeAll() {

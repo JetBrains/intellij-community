@@ -4,6 +4,7 @@ package test
 
 // There should be 2 imports here, import optimizer incorrectly removes the second import see KTIJ-28933
 import test.bar.fooBar
+import test.foo.fooBar
 
 fun foo() {
     0.<caret>fooBar()

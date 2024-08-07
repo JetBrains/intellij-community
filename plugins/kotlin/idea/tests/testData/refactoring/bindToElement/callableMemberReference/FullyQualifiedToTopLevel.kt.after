@@ -1,6 +1,8 @@
 // BIND_TO test.C
 package test
 
+import test.C
+
 class A {
     class B { }
 }

@@ -129,6 +129,9 @@ if sys.version_info >= (3, 11):
 if sys.version_info >= (3, 12):
     __all__ += ["TypeAliasType", "override"]
 
+if sys.version_info >= (3, 13):
+    __all__ += ["get_protocol_members", "is_protocol", "NoDefault", "TypeIs", "ReadOnly"]
+
 ContextManager = AbstractContextManager
 AsyncContextManager = AbstractAsyncContextManager
 

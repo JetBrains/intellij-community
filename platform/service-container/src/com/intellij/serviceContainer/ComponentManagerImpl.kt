@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Internal
 
 package com.intellij.serviceContainer
 
@@ -799,7 +800,7 @@ abstract class ComponentManagerImpl(
 
   protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String, handler: Any, duration: Long) {
     val loader = handler.javaClass.classLoader
-    val pluginId = if (loader is PluginAwareClassLoader) loader.pluginId.idString else PluginManagerCore.CORE_ID.idString
+    val pluginId = PluginUtil.getPluginId(loader).idString
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration)
   }
 

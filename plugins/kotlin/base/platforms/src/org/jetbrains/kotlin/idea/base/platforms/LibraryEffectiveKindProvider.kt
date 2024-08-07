@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.platforms
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -25,6 +27,7 @@ import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.io.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider.LibraryKindScanner
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION
@@ -33,42 +36,6 @@ import java.io.DataOutput
 
 @Service(Service.Level.PROJECT)
 class LibraryEffectiveKindProvider(private val project: Project) {
-    private companion object {
-        val LIBRARY_KIND_KEY: Key<PersistentLibraryKind<*>> = Key.create("LibraryEffectiveKind")
-        val CLASS_ROOTS_KEY: Key<Array<VirtualFile>> = Key.create("LibraryClassRoots")
-        val NEEDS_TO_BE_CLARIFIED_KIND: UnknownLibraryKind = UnknownLibraryKind.getOrCreate("Needs to be clarified")
-
-        @JvmStatic
-        private val KOTLIN_LIBRARY_KIND_GIST: VirtualFileGist<PersistentLibraryKind<*>> = GistManager.getInstance().newVirtualFileGist(
-            "kotlin-library-kind",
-            1,
-            object : DataExternalizer<PersistentLibraryKind<*>> {
-                override fun save(out: DataOutput, value: PersistentLibraryKind<*>) {
-                    val kindId = value.kindId
-                    IOUtil.writeString(kindId, out)
-                }
-
-                override fun read(`in`: DataInput): PersistentLibraryKind<*>? =
-                    when (val kindId = IOUtil.readString(`in`)) {
-                        // as KotlinJvmEffectiveLibraryKind is a fake library kind
-                        KotlinJvmEffectiveLibraryKind.kindId -> KotlinJvmEffectiveLibraryKind
-                        else -> LibraryKindRegistry.getInstance().findKindById(kindId) as? PersistentLibraryKind<*>
-                    }
-            }
-        ) { _, file ->
-            val classRoots = file.getUserData(CLASS_ROOTS_KEY) ?: arrayOf(file)
-            LibraryKindScanner.runScannerOutsideScanningSession(classRoots)
-            var platformKind: PersistentLibraryKind<*>? = file.getUserData(LIBRARY_KIND_KEY)
-            if (platformKind == NEEDS_TO_BE_CLARIFIED_KIND) {
-                val matchingPlatformKind = IdePlatformKindProjectStructure.getLibraryPlatformKind(file)
-                    ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind
-                platformKind = IdePlatformKindProjectStructure.getLibraryKind(matchingPlatformKind)
-            }
-            platformKind
-        }
-
-    }
-
     private enum class KnownLibraryKindForIndex {
         COMMON, JS, UNKNOWN
     }
@@ -77,7 +44,9 @@ class LibraryEffectiveKindProvider(private val project: Project) {
         val virtualFile = classRoots.firstOrNull() ?: return null
         virtualFile.putUserData(CLASS_ROOTS_KEY, classRoots)
         try {
-            return runReadAction { KOTLIN_LIBRARY_KIND_GIST.getFileData(project, virtualFile) }
+            return runReadAction {
+                KotlinLibraryKindGistProvider.getInstance().kotlinLibraryKindGist.getFileData(project, virtualFile)
+            }
         } finally {
             virtualFile.removeUserData(CLASS_ROOTS_KEY)
         }
@@ -97,8 +66,7 @@ class LibraryEffectiveKindProvider(private val project: Project) {
                 val classRoot = classRoots.firstOrNull() ?: return null
 
                 val platformKind: PersistentLibraryKind<*>? =
-                    classRoot.getUserData(LIBRARY_KIND_KEY)?.takeIf { it != NEEDS_TO_BE_CLARIFIED_KIND } ?:
-                    findKind(classRoots)?.let {
+                    classRoot.getUserData(LIBRARY_KIND_KEY)?.takeIf { it != NEEDS_TO_BE_CLARIFIED_KIND } ?: findKind(classRoots)?.let {
                         classRoot.putUserData(LIBRARY_KIND_KEY, it)
                         it
                     }
@@ -122,7 +90,7 @@ class LibraryEffectiveKindProvider(private val project: Project) {
                     scannerVisitor.result = null
                     VfsUtil.visitChildrenRecursively(classRoot, object : VirtualFileVisitor<Any?>() {
                         override fun visitFileEx(file: VirtualFile): Result =
-                          if (visitFile(file)) CONTINUE else skipTo(classRoot)
+                            if (visitFile(file)) CONTINUE else skipTo(classRoot)
 
                         override fun visitFile(file: VirtualFile): Boolean {
                             ProgressManager.checkCanceled()
@@ -210,3 +178,47 @@ class LibraryEffectiveKindProvider(private val project: Project) {
     }
 
 }
+
+@Service(Service.Level.APP)
+private class KotlinLibraryKindGistProvider {
+    val kotlinLibraryKindGist: VirtualFileGist<PersistentLibraryKind<*>> by lazy {
+        createGist()
+    }
+
+    private fun createGist(): VirtualFileGist<PersistentLibraryKind<*>> = GistManager.getInstance().newVirtualFileGist(
+        "kotlin-library-kind",
+        1,
+        object : DataExternalizer<PersistentLibraryKind<*>> {
+            override fun save(out: DataOutput, value: PersistentLibraryKind<*>) {
+                val kindId = value.kindId
+                IOUtil.writeString(kindId, out)
+            }
+
+            override fun read(`in`: DataInput): PersistentLibraryKind<*>? =
+                when (val kindId = IOUtil.readString(`in`)) {
+                    // as KotlinJvmEffectiveLibraryKind is a fake library kind
+                    KotlinJvmEffectiveLibraryKind.kindId -> KotlinJvmEffectiveLibraryKind
+                    else -> LibraryKindRegistry.getInstance().findKindById(kindId) as? PersistentLibraryKind<*>
+                }
+        }
+    ) { _, file ->
+        val classRoots = file.getUserData(CLASS_ROOTS_KEY) ?: arrayOf(file)
+        LibraryKindScanner.runScannerOutsideScanningSession(classRoots)
+        var platformKind: PersistentLibraryKind<*>? = file.getUserData(LIBRARY_KIND_KEY)
+        if (platformKind == NEEDS_TO_BE_CLARIFIED_KIND) {
+            val matchingPlatformKind = IdePlatformKindProjectStructure.getLibraryPlatformKind(file)
+                ?: JvmPlatforms.defaultJvmPlatform.idePlatformKind
+            platformKind = IdePlatformKindProjectStructure.getLibraryKind(matchingPlatformKind)
+        }
+        platformKind
+    }
+
+    companion object {
+        fun getInstance(): KotlinLibraryKindGistProvider = ApplicationManager.getApplication().service()
+    }
+}
+
+private val LIBRARY_KIND_KEY: Key<PersistentLibraryKind<*>> = Key.create("LibraryEffectiveKind")
+private val CLASS_ROOTS_KEY: Key<Array<VirtualFile>> = Key.create("LibraryClassRoots")
+private val NEEDS_TO_BE_CLARIFIED_KIND: UnknownLibraryKind
+    get() = UnknownLibraryKind.getOrCreate("Needs to be clarified")

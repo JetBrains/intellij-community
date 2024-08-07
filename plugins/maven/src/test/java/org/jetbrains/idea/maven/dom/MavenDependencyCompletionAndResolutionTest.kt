@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
@@ -193,7 +194,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
     importProjectAsync()
     assertModules("project", mn("project", "module1"), "module2")
 
-    createModulePom("m2", """
+    updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>module2</artifactId>
       <version>1</version>
@@ -208,7 +209,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
     assertCompletionVariants(m, "1")
 
-    createModulePom("m2", """
+    updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>module2</artifactId>
       <version>1</version>
@@ -400,9 +401,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
@@ -425,9 +424,7 @@ $relativePathUnixSeparator<caret></relativePath>
     )
 
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
@@ -456,9 +453,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
@@ -497,9 +492,7 @@ $relativePathUnixSeparator<caret></relativePath>
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
@@ -521,9 +514,7 @@ $relativePathUnixSeparator<caret></relativePath>
     val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(f))
-    }
+    assertResolved(projectPom, findPsiFile(f))
   }
 
   @Test
@@ -558,9 +549,7 @@ $relativePathUnixSeparator<caret></relativePath>
                       </dependencies>
                       """.trimIndent())
 
-    withContext(Dispatchers.EDT){
-      assertResolved(m1, findPsiFile(m2))
-    }
+    assertResolved(m1, findPsiFile(m2))
   }
 
   @Test
@@ -582,9 +571,7 @@ $libPath</systemPath>
 </dependencies>
 """)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
-    }
+    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
     checkHighlighting()
   }
 
@@ -650,9 +637,7 @@ $libPath</depPath>
 </dependencies>
 """)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
-    }
+    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
     checkHighlighting()
   }
 
@@ -700,9 +685,7 @@ $libPath<caret></systemPath>
 </dependencies>
 """)
 
-    withContext(Dispatchers.EDT){
-      assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
-    }
+    assertResolved(projectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)))
     checkHighlighting()
   }
 
@@ -744,12 +727,12 @@ $libPath<caret></systemPath>
       intentionAction.setFileChooser(null)
     }
 
-    withContext(Dispatchers.EDT) {
+    val expectedValue = readAction {
       val model = MavenDomUtil.getMavenDomProjectModel(project, projectPom)
       val dep = model!!.getDependencies().getDependencies()[0]
-
-      assertEquals(findPsiFile(libFile), dep.getSystemPath().getValue())
+      dep.getSystemPath().getValue()
     }
+    assertEquals(findPsiFile(libFile), expectedValue)
   }
 
   @Test

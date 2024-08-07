@@ -343,17 +343,17 @@ com.intellij.dvcs.push.ui.EditableTreeNode
 f:com.intellij.dvcs.push.ui.PushLog
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.ui.CheckedTreeNode,com.intellij.openapi.application.ModalityState,Z):V
 - dispose():V
 - fireEditorUpdated(java.lang.String):V
-- getData(java.lang.String):java.lang.Object
 - getPreferredFocusedComponent():javax.swing.JComponent
 - getTree():com.intellij.ui.CheckboxTree
 - highlightNodeOrFirst(com.intellij.dvcs.push.ui.RepositoryNode,Z):V
 - selectIfNothingSelected(javax.swing.tree.TreeNode):V
 - setBusyLoading(Z):V
 - setChildren(javax.swing.tree.DefaultMutableTreeNode,java.util.Collection):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.dvcs.push.ui.PushLogTreeUtil
 - sf:EDIT_MODE_PROP:java.lang.String
 - <init>():V
@@ -608,30 +608,30 @@ f:com.intellij.dvcs.ui.CloneDvcsValidationUtils
 - s:isRepositoryUrlValid(java.lang.String):Z
 c:com.intellij.dvcs.ui.CommitListPanel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(java.util.List,java.lang.String):V
 - addListMultipleSelectionListener(com.intellij.util.Consumer):V
 - addListSelectionListener(com.intellij.util.Consumer):V
 - clearSelection():V
-- getData(java.lang.String):java.lang.Object
 - getPreferredFocusComponent():javax.swing.JComponent
 - registerDiffAction(com.intellij.openapi.actionSystem.AnAction):V
 - setCommits(java.util.List):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.dvcs.ui.CompareBranchesDialog
 - <init>(com.intellij.dvcs.ui.CompareBranchesHelper,java.lang.String,java.lang.String,com.intellij.dvcs.util.CommitCompareInfo,com.intellij.dvcs.repo.Repository,Z):V
 - show():V
 c:com.intellij.dvcs.ui.CompareBranchesDiffPanel
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,com.intellij.dvcs.branch.DvcsCompareSettings,java.lang.String,java.lang.String):V
 - disableControls():V
 - enableControls():V
 - getChangesBrowser():com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
-- getData(java.lang.String):java.lang.Object
 - getPreferredFocusComponent():javax.swing.JComponent
 - setCompareInfo(com.intellij.dvcs.util.CommitCompareInfo):V
 - setEmptyText(java.lang.String):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider
 - com.intellij.openapi.actionSystem.AnActionExtensionProvider
 - <init>():V

@@ -33,6 +33,8 @@ a:com.intellij.usages.impl.UsageContextPanelBase
 - p:onEditorCreated(com.intellij.openapi.editor.Editor):V
 - f:updateLayout(com.intellij.openapi.project.Project,java.util.List):V
 - f:updateLayout(com.intellij.openapi.project.Project,java.util.List,com.intellij.usages.UsageView):V
+- f:updateLayout(java.util.List):V
+- f:updateLayout(java.util.List,com.intellij.usages.UsageView):V
 - pa:updateLayoutLater(java.util.List):V
 - p:updateLayoutLater(java.util.List,com.intellij.usages.UsageView):V
 c:com.intellij.usages.impl.UsageGroupingRuleProviderImpl
@@ -63,7 +65,7 @@ c:com.intellij.usages.impl.UsageNode
 - p:updateNotify():V
 c:com.intellij.usages.impl.UsagePreviewPanel
 - com.intellij.usages.impl.UsageContextPanelBase
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:LINE_HEIGHT_PROPERTY:java.lang.String
 - <init>(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewPresentation):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewPresentation,Z):V
@@ -73,7 +75,6 @@ c:com.intellij.usages.impl.UsagePreviewPanel
 - sf:createPreviewHtml(java.lang.String):java.lang.String
 - dispose():V
 - f:getCannotPreviewMessage(java.util.List):java.lang.String
-- getData(java.lang.String):java.lang.Object
 - f:getLineHeight():I
 - sf:getNameElementTextRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 - sf:highlight(java.util.List,com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,Z,I):V
@@ -81,6 +82,7 @@ c:com.intellij.usages.impl.UsagePreviewPanel
 - f:releaseEditor():V
 - removePropertyChangeListener(java.beans.PropertyChangeListener):V
 - f:setShowTooltipBalloon(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateLayoutLater(java.util.List):V
 - updateLayoutLater(java.util.List,com.intellij.usages.UsageView):V
 com.intellij.usages.impl.UsageViewElementsListener

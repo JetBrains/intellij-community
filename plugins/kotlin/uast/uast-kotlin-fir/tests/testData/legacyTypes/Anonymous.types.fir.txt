@@ -52,7 +52,7 @@ UFile (package = ) [import java.io.Closeable...]
                                     UBlockExpression [{...}]
                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [InputStream()]
                                             UIdentifier (Identifier (InputStream)) [UIdentifier (Identifier (InputStream))]
-                                            USimpleNameReferenceExpression (identifier = InputStream, resolvesTo = PsiClass: InputStream) [InputStream] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                                            USimpleNameReferenceExpression (identifier = InputStream, resolvesTo = PsiClass: InputStream) [InputStream]
         UMethod (name = withErr) [public static final fun withErr() : void {...}]
             UBlockExpression [{...}] : void
                 UDeclarationsExpression [var runnable: java.lang.Object = anonymous null]

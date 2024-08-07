@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -19,6 +20,7 @@ internal object PreviewLAFThemeStyles {
   @Suppress("ConstPropertyName", "CssInvalidHtmlTagReference")
   object Variables {
     const val FontSize = "--default-font-size"
+    const val Scale = "--scale"
   }
 
   val defaultFontSize: Int
@@ -43,15 +45,19 @@ internal object PreviewLAFThemeStyles {
     val markdownFenceBackground = JBColor(Color(212, 222, 231, 255 / 4), Color(212, 222, 231, 25))
     val fontSize = JBCefApp.normalizeScaledSize(defaultFontSize)
     val backgroundColor = scheme.defaultBackground.webRgba()
+    val scale = service<UISettings>().currentIdeScale
     // language=CSS
     return """
     :root {
       ${Variables.FontSize}: ${fontSize}px;
+      ${Variables.Scale}: ${scale};
     }
 
     body {
         background-color: ${backgroundColor};
         font-size: var(${Variables.FontSize}) !important;
+        transform: scale(var(${Variables.Scale})) !important;
+        transform-origin: 0 0;
     }
     
     body, p, blockquote, ul, ol, dl, table, pre, code, tr  {

@@ -7,6 +7,7 @@ import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.SUSPEND_IMPL_NAME_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
+import org.jetbrains.kotlin.idea.debugger.core.stepping.isSyntheticMethodForDefaultParameters
 import org.jetbrains.kotlin.idea.debugger.isGeneratedErasedLambdaMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -61,6 +62,8 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
             } else if (name.endsWith(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX)) {
                 val originalName = name.dropLast(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX.length)
                 return typeComponent.declaringType().methodsByName(originalName).isNotEmpty()
+            } else if (typeComponent.isSyntheticMethodForDefaultParameters()) {
+                return true
             }
         }
 

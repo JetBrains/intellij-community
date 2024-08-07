@@ -1,3 +1,6 @@
+/* IGNORE_K2 */
+// Remove this ignoring after KT-69829 is fixed
+
 // "Create label foo@" "true"
 
 fun test() {

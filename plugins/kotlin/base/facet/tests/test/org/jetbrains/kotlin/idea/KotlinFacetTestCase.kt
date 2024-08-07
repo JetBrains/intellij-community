@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea
 
+import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.*
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.junit.Assume
 import java.io.File
@@ -39,6 +41,20 @@ abstract class KotlinFacetTestCase : UsefulTestCase() {
 
         myProject = myTestFixture.project
         Assume.assumeTrue("Execute only if kotlin facet bridge enabled", KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled)
+    }
+
+    fun getKotlinFacet(): KotlinFacet {
+        val facetManager = FacetManager.getInstance(myModule)
+        assertSize(1, facetManager.allFacets)
+        return facetManager.allFacets[0] as KotlinFacet
+    }
+
+    fun fireFacetChangedEvent(mainFacet: KotlinFacet) {
+        val allFacets = FacetManager.getInstance(myModule).allFacets
+        assertSize(1, allFacets)
+        assertSame(mainFacet, allFacets[0])
+
+        allFacets.forEach { facet -> FacetManager.getInstance(myModule).facetConfigurationChanged(facet) }
     }
 
     protected open fun configureProjectBuilder(projectBuilder: TestFixtureBuilder<IdeaProjectTestFixture?>) {

@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +48,21 @@ public final class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 
   static HighlightInfo.Builder checkNameValuePair(@NotNull PsiNameValuePair pair) {
+    if (pair.getFirstChild() instanceof PsiErrorElement) return null;
+    PsiIdentifier identifier = pair.getNameIdentifier();
+    if (identifier == null && pair.getParent() instanceof PsiAnnotationParameterList list) {
+      PsiNameValuePair[] attributes = list.getAttributes();
+      if (attributes.length > 1) {
+        String message = JavaPsiBundle.message("annotation.name.is.missing");
+        HighlightInfo.Builder highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(pair)
+          .descriptionAndTooltip(message);
+        for (IntentionAction action : QuickFixFactory.getInstance().createAddAnnotationAttributeNameFixes(pair)) {
+          highlightInfo.registerFix(action, null, null, null, null);
+        }
+        return highlightInfo;
+      }
+    }
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
     if (annotation == null) return null;
     PsiClass annotationClass = annotation.resolveAnnotationType();
@@ -55,25 +71,18 @@ public final class AnnotationsHighlightUtil {
     if (ref == null) return null;
     PsiMethod method = (PsiMethod)ref.resolve();
     if (method == null) {
-      if (pair.getName() != null) {
-        String description = JavaErrorBundle.message("annotation.unknown.method", ref.getCanonicalText());
-        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
-          .range(ref.getElement(), ref.getRangeInElement())
-          .descriptionAndTooltip(description);
-        IntentionAction action = QuickFixFactory.getInstance().createCreateAnnotationMethodFromUsageFix(pair);
-        builder.registerFix(action, null, null, null, null);
-        return builder;
-      }
-      else {
-        String description = JavaErrorBundle.message("annotation.missing.method", ref.getCanonicalText());
-        PsiElement element = ref.getElement();
-        HighlightInfo.Builder highlightInfo =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
+      boolean noName = pair.getName() == null;
+      String description = JavaErrorBundle.message("annotation.unknown.method", ref.getCanonicalText());
+      HighlightInfo.Builder highlightInfo = HighlightInfo.newHighlightInfo(noName ? HighlightInfoType.ERROR : HighlightInfoType.WRONG_REF)
+        .range(ref.getElement())
+        .descriptionAndTooltip(description);
+      if (noName) {
         for (IntentionAction action : QuickFixFactory.getInstance().createAddAnnotationAttributeNameFixes(pair)) {
           highlightInfo.registerFix(action, null, null, null, null);
         }
-        return highlightInfo;
       }
+      highlightInfo.registerFix(QuickFixFactory.getInstance().createCreateAnnotationMethodFromUsageFix(pair), null, null, null, null);
+      return highlightInfo;
     }
     else {
       PsiType returnType = method.getReturnType();

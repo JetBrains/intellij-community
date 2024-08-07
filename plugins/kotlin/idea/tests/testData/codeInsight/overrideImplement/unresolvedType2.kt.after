@@ -9,3 +9,8 @@ class X : A {
         TODO("Not yet implemented")
     }
 }
+
+// MEMBER: "f(x: Iterable<IADW>.() -> PPPP): XXX<Int, YYY>"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

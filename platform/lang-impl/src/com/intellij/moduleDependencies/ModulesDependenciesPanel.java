@@ -403,7 +403,7 @@ public final class ModulesDependenciesPanel extends JPanel implements Disposable
     }
   }
 
-  private static final class MyTreePanel extends JPanel implements DataProvider {
+  private static final class MyTreePanel extends JPanel implements UiDataProvider {
     private final Tree myTree;
     private final Project myProject;
 
@@ -415,30 +415,15 @@ public final class ModulesDependenciesPanel extends JPanel implements Disposable
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      TreePath path = myTree.getLeadSelectionPath();
+      Object obj = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
+      sink.set(CommonDataKeys.PROJECT, myProject);
+      if (obj instanceof MyUserObject o) {
+        sink.set(LangDataKeys.MODULE_CONTEXT, o.myModule);
+        sink.set(CommonDataKeys.NAVIGATABLE, o);
       }
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
-          if (node.getUserObject() instanceof MyUserObject) {
-            return ((MyUserObject)node.getUserObject()).myModule;
-          }
-        }
-      }
-      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        return HELP_ID;
-      }
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
-          if (node.getUserObject() instanceof MyUserObject) {
-            return node.getUserObject();
-          }
-        }
-      }
-      return null;
+      sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
     }
   }
 

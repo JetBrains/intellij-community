@@ -167,8 +167,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   }
 
   @Override
-  @NotNull
-  public SchemaType getOutputType() {
+  public @NotNull SchemaType getOutputType() {
     if (myOutputRng.isSelected()) {
       return SchemaType.RNG;
     } else if (myOutputRnc.isSelected()) {

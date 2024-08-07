@@ -136,6 +136,8 @@ public class DataManagerImpl extends DataManager {
     }
   }
 
+  /** @deprecated Most components now implement {@link UiDataProvider} */
+  @Deprecated
   public static @Nullable DataProvider getDataProviderEx(@Nullable Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {

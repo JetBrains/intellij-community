@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class SearchEverywhereContributorValidationRule extends CustomValidationRule {
+final class SearchEverywhereContributorValidationRule extends CustomValidationRule {
 
   private static final Map<String, Boolean> ourContributorsMap = new HashMap<>();
 

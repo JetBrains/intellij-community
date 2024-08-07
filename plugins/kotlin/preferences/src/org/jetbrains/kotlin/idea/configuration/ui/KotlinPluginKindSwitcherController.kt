@@ -158,15 +158,11 @@ class KotlinPluginKindSwitcherController {
 
 const val USE_K2_PLUGIN_VM_OPTION_PREFIX: @NonNls String = "-D$USE_K2_PLUGIN_PROPERTY_NAME="
 
-private var useK2Plugin: Boolean
-    get() = VMOptions.readOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, /*effective=*/ false)?.toBoolean() ?: false
+private var useK2Plugin: Boolean?
+    get() = VMOptions.readOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, /*effective=*/ false)?.toBoolean()
     set(value) {
-        if (value) {
-            VMOptions.setOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, "true")
-        } else {
-            VMOptions.setOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, null/*null means remove the value*/)
-        }
+        VMOptions.setOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, value?.toString())
     }
 
 private fun getPluginKindByVmOptions(): KotlinPluginMode =
-    KotlinPluginMode.of(useK2Plugin = useK2Plugin)
+    KotlinPluginMode.of(useK2Plugin = useK2Plugin == true)

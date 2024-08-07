@@ -290,6 +290,10 @@ data class AnonymizedListEventField @JvmOverloads constructor(@NonNls @EventFiel
 
   override val validationRule: List<String>
     get() = listOf("{regexp#hash}")
+
+  override fun addData(fuData: FeatureUsageData, value: List<String>) {
+    fuData.addAnonymizedValue(name, value)
+  }
 }
 
 internal data class ShortAnonymizedEventField(@NonNls @EventFieldName override val name: String,

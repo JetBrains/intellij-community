@@ -15,7 +15,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.containers.ArrayListSet
@@ -456,17 +455,6 @@ class MavenProjectsTree(val project: Project) {
       if (FileUtil.pathsEqual(each, path)) return@withReadLock true
     }
     return@withReadLock false
-  }
-
-
-  fun isPotentialProject(path: String): Boolean {
-    if (isManagedFile(path)) return true
-
-    for (each in projects) {
-      if (VfsUtilCore.pathEqualsTo(each.file, path)) return true
-      if (each.modulePaths.contains(path)) return true
-    }
-    return false
   }
 
   @ApiStatus.Internal

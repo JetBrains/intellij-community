@@ -4,7 +4,8 @@ package org.intellij.images.editor.impl.jcef
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.Messages
@@ -34,11 +35,14 @@ import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 class JCefImageViewerUI(private val myContentComponent: Component,
-                        private val myViewer: JCefImageViewer) : JPanel(), DataProvider, Disposable {
+                        private val myViewer: JCefImageViewer
+) : JPanel(), UiDataProvider, Disposable {
   private val myInfoLabel: JLabel
   private val myViewPort: JPanel
 
-  override fun getData(dataId: String): Any? = if (ImageComponentDecorator.DATA_KEY.`is`(dataId)) myViewer else null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[ImageComponentDecorator.DATA_KEY] = myViewer
+  }
 
   override fun dispose() {
     myViewer.preferredFocusedComponent.removeMouseWheelListener(MOUSE_WHEEL_LISTENER)

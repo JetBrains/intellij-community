@@ -3,16 +3,12 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.Placeholder
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.removeMnemonic
@@ -25,7 +21,8 @@ import javax.swing.border.EmptyBorder
 
 class CommitOptionsPanel(private val project: Project,
                          private val actionNameSupplier: () -> @Nls String,
-                         private val nonFocusable: Boolean) : CommitOptionsUi {
+                         private val nonFocusable: Boolean,
+                         private val nonModalCommit: Boolean) : CommitOptionsUi {
   val component: JComponent
   private lateinit var placeholder: Placeholder
 
@@ -60,7 +57,11 @@ class CommitOptionsPanel(private val project: Project,
 
       val beforeOptions = options.beforeOptions
       if (beforeOptions.isNotEmpty()) {
-        group(commitChecksGroupTitle(project, actionName)) {
+        group(commitChecksGroupTitle(actionName)) {
+          if (nonModalCommit) {
+            appendNonModalCommitSettingsRow()
+            separator()
+          }
           for (option in beforeOptions) {
             appendOptionRow(option)
           }
@@ -88,6 +89,16 @@ class CommitOptionsPanel(private val project: Project,
       UIUtil.forEachComponentInHierarchy(component) {
         if (it is JCheckBox) it.isFocusable = false
       }
+    }
+  }
+
+  private fun Panel.appendNonModalCommitSettingsRow() {
+    val settings = VcsConfiguration.getInstance(project)
+    row {
+      checkBox(message("settings.commit.slow.checks"))
+        .comment(message("settings.commit.slow.checks.description.short"))
+        .selected(settings.NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS)
+        .onChanged { setRunSlowCommitChecksAfterCommit(project, it.isSelected) }
     }
   }
 
@@ -130,15 +141,6 @@ class CommitOptionsPanel(private val project: Project,
   }
 
   companion object {
-    fun commitChecksGroupTitle(project: Project, actionName: @Nls String): @Nls String {
-      if (Registry.`is`("vcs.non.modal.post.commit.checks")) {
-        if (ProjectLevelVcsManager.getInstance(project).allActiveVcss
-            .any { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter != null }) {
-          return message("border.standard.checkin.options.group.with.post.commit", actionName)
-        }
-      }
-
-      return message("border.standard.checkin.options.group", actionName)
-    }
+    fun commitChecksGroupTitle(actionName: @Nls String): @Nls String = message("commit.checks.group", actionName)
   }
 }

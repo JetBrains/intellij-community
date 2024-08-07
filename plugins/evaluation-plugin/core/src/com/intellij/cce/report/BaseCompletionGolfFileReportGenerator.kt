@@ -19,6 +19,8 @@ abstract class BaseCompletionGolfFileReportGenerator(
   dirs: GeneratorDirectories
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
 
+  override val scripts: List<Resource> = listOf(Resource("/script.js", "../res/script.js"))
+
   override fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) {
     super.createHead(head, reportTitle, resourcePath)
     with(head) {
@@ -128,7 +130,9 @@ abstract class BaseCompletionGolfFileReportGenerator(
           }
         }
       }
-      script { src = "../res/script.js" }
+      for (resource in scripts){
+        script { src = resource.destinationPath }
+      }
       script { +"isCompletionGolf = true" }
       script {
         +"""

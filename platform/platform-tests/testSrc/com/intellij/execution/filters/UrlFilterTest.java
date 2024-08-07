@@ -62,6 +62,15 @@ public class UrlFilterTest extends BasePlatformTestCase {
                         6, 90, "//wsl$/Ubuntu-20.04/path-test-gradle 6/src/main/kotlin/base/Starter.kt", 4, 10);
   }
 
+  public void testUrlAndFileInOneString() {
+    assertHyperlinks(applyFilter(
+                       "w: file:///Users/kmp-app-march/shared/build.gradle.kts:9:13: 'kotlinOptions(KotlinJvmOptions.() -> Unit): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln\n\n"),
+                     List.of(
+                       new FileLinkInfo(3, 59, "/Users/kmp-app-march/shared/build.gradle.kts", 9, 13),
+                       new LinkInfo(193, 215)
+                     ));
+  }
+
   private Filter.Result applyFilter(@NotNull String line) {
     return myFilter.applyFilter(line, line.length());
   }

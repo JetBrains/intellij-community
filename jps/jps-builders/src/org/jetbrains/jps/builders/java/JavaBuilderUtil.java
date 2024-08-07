@@ -530,6 +530,7 @@ public final class JavaBuilderUtil {
     }
 
     if (performIntegrate) {
+      context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.updating.dependency.information.0", chunk.getPresentableShortName())));
       dependencyGraph.integrate(diffResult);
     }
 

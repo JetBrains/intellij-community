@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModification
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
 
 // Test for the mock auto-sync test infrastructure
-class MockProjectAwareTest : AutoReloadTestCase() {
+class MockProjectAwareTest : AutoReloadParallelTestCase() {
 
   fun `test wait for single mock reload function (parallel)`() {
     test {

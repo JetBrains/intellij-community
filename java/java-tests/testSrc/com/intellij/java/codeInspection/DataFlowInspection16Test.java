@@ -2,6 +2,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,5 +45,12 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
   public void testAccessorNullityUnderDefaultQualifier() {
     addCheckerAnnotations(myFixture);
     doTest();
+  }
+  
+  public void testRecordComponentAnnotate() {
+    doTest();
+    IntentionAction intention = myFixture.findSingleIntention("Annotate record component 'member' as '@Nullable'");
+    myFixture.checkPreviewAndLaunchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 }

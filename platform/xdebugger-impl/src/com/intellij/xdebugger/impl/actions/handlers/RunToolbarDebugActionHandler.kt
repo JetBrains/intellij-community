@@ -78,9 +78,7 @@ open class RunToolbarPauseActionHandler : RunToolbarDebugActionHandler() {
 }
 
 internal class InlineXDebuggerResumeHandler(private val conf: RunnerAndConfigurationSettings) : XDebuggerResumeHandler() {
-  override fun getConfiguration(project: Project): RunnerAndConfigurationSettings {
-    return conf
-  }
+  override fun getConfiguration(project: Project): RunnerAndConfigurationSettings = conf
 }
 
 internal open class XDebuggerResumeHandler : CurrentSessionXDebuggerResumeHandler() {
@@ -94,7 +92,7 @@ internal open class XDebuggerResumeHandler : CurrentSessionXDebuggerResumeHandle
   }
 
   open fun getConfiguration(project: Project): RunnerAndConfigurationSettings? {
-    return RunManager.getInstance(project).selectedConfiguration
+    return RunManager.getInstanceIfCreated(project)?.selectedConfiguration
   }
 }
 

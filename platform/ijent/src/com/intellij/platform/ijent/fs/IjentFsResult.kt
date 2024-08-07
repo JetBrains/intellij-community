@@ -32,11 +32,14 @@ sealed interface IjentFsError {
 
   sealed interface DoesNotExist : IjentFsError
   sealed interface AlreadyExists : IjentFsError
-  sealed interface AlreadyDeleted : IjentFsError
   sealed interface PermissionDenied : IjentFsError
   sealed interface NotDirectory : IjentFsError
   sealed interface NotFile : IjentFsError
   sealed interface UnknownFile: IjentFsError
+  sealed interface ReadOnlyFileSystem: IjentFsError
+  sealed interface NameTooLong: IjentFsError
+  sealed interface NotEnoughSpace: IjentFsError
+  sealed interface DirNotEmpty: IjentFsError
 }
 
 /**
@@ -53,14 +56,16 @@ sealed class IjentFsIOException(
       is IjentFsError.NotDirectory -> "Not a directory"
       is IjentFsError.NotFile -> "Not a file"
       is IjentFsError.PermissionDenied -> "Permission denied"
-      is IjentFsError.AlreadyDeleted -> "Already deleted"
       is IjentFsError.AlreadyExists -> "File with this name already exists"
+      is IjentFsError.ReadOnlyFileSystem -> "File system is read-only"
       is IjentFsError.Other -> "Unexpected rare error"
-      is IjentFileSystemApi.DeleteException.DirNotEmpty -> "Directory is not empty"
+      is IjentFsError.DirNotEmpty -> "Directory is not empty"
+      is IjentFsError.NameTooLong -> "Name is too long"
+      is IjentFsError.NotEnoughSpace -> "Not enough space"
       is IjentOpenedFile.Writer.TruncateException.NegativeOffset -> "Offset is negative"
       is IjentOpenedFile.Writer.TruncateException.OffsetTooBig -> "Offset is too big"
-      is IjentOpenedFile.Writer.TruncateException.ReadOnlyFs -> "File system is read-only"
       is IjentOpenedFile.Writer.TruncateException.UnknownFile -> "File is not opened"
+      is IjentFileSystemApi.DeleteException.UnresolvedLink -> "Unresolved link"
     }
     return if (additionalMessage.isEmpty()) "$prefix: $where" else "$prefix: $where ($additionalMessage)"
   }

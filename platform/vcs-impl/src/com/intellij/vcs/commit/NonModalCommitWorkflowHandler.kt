@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil.capitalize
@@ -366,7 +365,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       if (!skipPostCommitChecks) {
         if (postCommitChecks.isNotEmpty()) {
-          if (Registry.`is`("vcs.non.modal.post.commit.checks") &&
+          if (VcsConfiguration.getInstance(project).NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS &&
               commitInfo.executor?.requiresSyncCommitChecks() != true &&
               postCommitChecksHandler.canHandle(commitInfo)) {
             pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)

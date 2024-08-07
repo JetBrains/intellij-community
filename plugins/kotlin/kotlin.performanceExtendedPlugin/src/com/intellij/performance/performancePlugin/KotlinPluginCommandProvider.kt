@@ -10,7 +10,6 @@ internal class KotlinPluginCommandProvider : CommandProvider {
     override fun getCommands(): Map<String, CreateCommand> = mapOf(
         ClearSourceCaches.PREFIX to CreateCommand(::ClearSourceCaches),
         ClearLibraryCaches.PREFIX to CreateCommand(::ClearLibraryCaches),
-        GCCommand.PREFIX to CreateCommand(::GCCommand),
         AssertKotlinFileInSpecificRootCommand.PREFIX to CreateCommand(::AssertKotlinFileInSpecificRootCommand),
         KotlinEditorOptionsChangeCommand.PREFIX to CreateCommand(::KotlinEditorOptionsChangeCommand),
         CreateKotlinFileCommand.PREFIX to CreateCommand(::CreateKotlinFileCommand),

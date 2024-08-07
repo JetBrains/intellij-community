@@ -404,8 +404,7 @@ internal class LoadedGitLabMergeRequest(
 
   private suspend fun runMerge(commitMessage: String, withSquash: Boolean) {
     var attempts = 0
-    val commits = changes.first().commits.await()
-    val sha = commits.first().sha // First from the list -- last commit from review
+    val sha = mergeRequestDetailsState.value.diffRefs?.headSha ?: return
     api.graphQL.mergeRequestAccept(glProject, iid, commitMessage, sha, withSquash).getResultOrThrow()
     do {
       val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, iid).body()!!

@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -66,11 +65,6 @@ public final class WSLUtil {
           result.add(new WSLDistribution(descriptor, executablePath));
         }
       }
-    }
-
-    // add legacy WSL if it's available and enabled
-    if (Experiments.getInstance().isFeatureEnabled("wsl.legacy.distribution")) {
-      ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
     }
 
     return result;

@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.psi.*;
@@ -80,7 +79,6 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
   @Override
   public @Nullable PsiPackageAccessibilityStatement findImportedPackage(@NotNull String packageName) {
     PsiImportModuleStatementImpl moduleStatement = this;
-    if (DumbService.isDumb(moduleStatement.getProject())) return null;
     return CachedValuesManager.getCachedValue(moduleStatement, () -> {
       Project project = moduleStatement.getProject();
       Map<String, PsiPackageAccessibilityStatement> packagesByName = new HashMap<>();

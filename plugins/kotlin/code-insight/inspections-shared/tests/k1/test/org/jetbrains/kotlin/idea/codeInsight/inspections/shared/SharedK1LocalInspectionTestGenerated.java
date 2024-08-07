@@ -1152,6 +1152,16 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantGetter/annotation.kt");
         }
 
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/comment.kt");
+        }
+
+        @TestMetadata("comment2.kt")
+        public void testComment2() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantGetter/comment2.kt");
+        }
+
         @TestMetadata("default.kt")
         public void testDefault() throws Exception {
             runTest("../testData/inspectionsLocal/redundantGetter/default.kt");
@@ -1481,6 +1491,16 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("blankBody.kt")
         public void testBlankBody() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSetter/blankBody.kt");
+        }
+
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/comment.kt");
+        }
+
+        @TestMetadata("comment2.kt")
+        public void testComment2() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/comment2.kt");
         }
 
         @TestMetadata("default.kt")

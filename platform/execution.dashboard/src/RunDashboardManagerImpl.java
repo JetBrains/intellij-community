@@ -39,6 +39,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -843,7 +844,12 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   @Override
   public void noStateLoaded() {
     myTypes.clear();
-    myTypes.addAll(getEnableByDefaultTypes());
+    if (myProject.isDefault()) {
+      myTypes.addAll(getEnableByDefaultTypes());
+    }
+    else {
+      myTypes.addAll(RunDashboardManager.getInstance(ProjectManager.getInstance().getDefaultProject()).getTypes());
+    }
     if (!myTypes.isEmpty()) {
       initTypes();
     }

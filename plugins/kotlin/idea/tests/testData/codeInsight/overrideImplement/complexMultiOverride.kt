@@ -8,3 +8,10 @@ open class Base<A, B, C>() {
 class C : Base<String, C, Unit>() {
     <caret>
 }
+
+// MEMBER: "method: (String?) -> String"
+// MEMBER: "foo(value: C): C"
+// MEMBER: "bar(value: () -> Unit): (String) -> Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

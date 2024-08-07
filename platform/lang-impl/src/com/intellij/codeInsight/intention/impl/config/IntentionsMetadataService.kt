@@ -10,8 +10,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.containers.Interner
 
-private typealias MetaDataKey = Pair<String, String>
-
 @Service(Service.Level.APP)
 internal class IntentionsMetadataService {
   companion object {
@@ -19,10 +17,6 @@ internal class IntentionsMetadataService {
     fun getInstance(): IntentionsMetadataService = service()
 
     private val interner = Interner.createWeakInterner<String>()
-  }
-
-  private fun metaDataKey(categoryNames: Array<String>, familyName: String): MetaDataKey {
-    return Pair(categoryNames.joinToString(separator = ":"), interner.intern(familyName))
   }
 
   // guarded by this
@@ -85,24 +79,30 @@ internal class IntentionsMetadataService {
 
   @Synchronized
   fun getMetaData(): List<IntentionActionMetaData> {
-    if (dynamicRegistrationMeta.isEmpty()) return java.util.List.copyOf(extensionMetaMap.values)
-
-    return java.util.List.copyOf(extensionMetaMap.values + dynamicRegistrationMeta)
+    if (dynamicRegistrationMeta.isEmpty()) {
+      return java.util.List.copyOf(extensionMetaMap.values)
+    }
+    else {
+      return java.util.List.copyOf(extensionMetaMap.values + dynamicRegistrationMeta)
+    }
   }
 
   fun getUniqueMetadata(): List<IntentionActionMetaData> {
     val allIntentions = getMetaData()
-    val unique = LinkedHashMap<MetaDataKey, IntentionActionMetaData>(allIntentions.size)
+    val unique = HashSet<Pair<List<String>, String>>(allIntentions.size)
+    val result = ArrayList<IntentionActionMetaData>(allIntentions.size)
     for (metadata in allIntentions) {
       val key = try {
-        metaDataKey(metadata.myCategory, metadata.family)
+        metadata.myCategory.asList() to metadata.family
       }
-      catch (ignore: ExtensionNotApplicableException) {
+      catch (_: ExtensionNotApplicableException) {
         continue
       }
-      unique[key] = metadata
+      if (unique.add(key)) {
+        result.add(metadata)
+      }
     }
-    return unique.values.toList()
+    return result
   }
 
   @Synchronized

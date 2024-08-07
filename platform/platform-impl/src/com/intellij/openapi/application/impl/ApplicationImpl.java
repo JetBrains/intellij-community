@@ -38,8 +38,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
-import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.ui.ComponentUtil;
@@ -586,8 +586,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       stopServicePreloading();
 
       if (BitUtil.isSet(flags, SAVE)) {
-        TraceUtil.runWithSpanThrows(tracer, "saveSettingsOnExit",
-                                    (span) -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
+        TraceKt.use(tracer.spanBuilder("saveSettingsOnExit"),
+                    __ -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
       }
 
       if (isInstantShutdownPossible()) {
@@ -609,7 +609,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
       if (manager != null) {
         try {
-          boolean projectsClosedSuccessfully = TraceUtil.computeWithSpanThrows(tracer, "disposeProjects", (span) -> {
+          boolean projectsClosedSuccessfully = TraceKt.use(tracer.spanBuilder("disposeProjects"), __ -> {
             return manager.closeAndDisposeAllProjects(!force);
           });
           if (!projectsClosedSuccessfully) {
@@ -644,16 +644,20 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       }
 
       IdeaLogger.dropFrequentExceptionsCaches();
-      if (restart && Restarter.isSupported()) {
-        try {
-          Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
-        }
-        catch (Throwable t) {
-          logErrorDuringExit("Failed to restart the application", t);
-          StartupErrorReporter.showError(BootstrapBundle.message("restart.failed.title"), t);
-          if (exitCode == 0) {
-            exitCode = AppExitCodes.RESTART_FAILED;
+      if (restart) {
+        if (Restarter.isSupported()) {
+          try {
+            Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
           }
+          catch (Throwable t) {
+            logErrorDuringExit("Failed to restart the application", t);
+          }
+        }
+        else {
+          getLogger().warn("Restart not supported; exiting");
+        }
+        if (exitCode == 0) {
+          exitCode = AppExitCodes.RESTART_FAILED;
         }
       }
       return exitCode;
@@ -671,14 +675,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         super(cause);
       }
     }
-
-    if (err != null) {
-      try {
-        getLogger().error(message, new ApplicationExitException(err));
-      }
-      catch (Throwable ignored) {
-        // Do nothing.
-      }
+    try {
+      getLogger().error(message, new ApplicationExitException(err));
+    }
+    catch (Throwable ignored) {
+      // Do nothing.
     }
   }
 

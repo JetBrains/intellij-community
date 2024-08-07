@@ -221,10 +221,6 @@ f:com.intellij.icons.AllIcons$Breakpoints
 - sf:MultipleBreakpointsDisabled:javax.swing.Icon
 - sf:MultipleBreakpointsMuted:javax.swing.Icon
 - <init>():V
-f:com.intellij.icons.AllIcons$Build
-- sf:Task:javax.swing.Icon
-- sf:ToggleSkipTestsMode:javax.swing.Icon
-- <init>():V
 f:com.intellij.icons.AllIcons$Chooser
 - sf:Bottom:javax.swing.Icon
 - sf:Left:javax.swing.Icon
@@ -322,6 +318,9 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:Db_watch:javax.swing.Icon
 - sf:EvaluateExpression:javax.swing.Icon
 - sf:EvaluationResult:javax.swing.Icon
+- sf:ForceRunToCursor:javax.swing.Icon
+- sf:ForceStepInto:javax.swing.Icon
+- sf:ForceStepOver:javax.swing.Icon
 - sf:Frame:javax.swing.Icon
 - sf:KillProcess:javax.swing.Icon
 - sf:LambdaBreakpoint:javax.swing.Icon
@@ -422,7 +421,6 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:ContextsModifier:javax.swing.Icon
 - sf:Css:javax.swing.Icon
 - sf:Csv:javax.swing.Icon
-- sf:Cucumber:javax.swing.Icon
 - sf:Custom:javax.swing.Icon
 - sf:Diagram:javax.swing.Icon
 - sf:Dtd:javax.swing.Icon
@@ -431,6 +429,7 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Hprof:javax.swing.Icon
 - sf:Htaccess:javax.swing.Icon
 - sf:Html:javax.swing.Icon
+- sf:I18n:javax.swing.Icon
 - sf:Idl:javax.swing.Icon
 - sf:Image:javax.swing.Icon
 - sf:Java:javax.swing.Icon
@@ -451,13 +450,11 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Text:javax.swing.Icon
 - sf:UiForm:javax.swing.Icon
 - sf:Unknown:javax.swing.Icon
-- sf:VueJs:javax.swing.Icon
 - sf:WsdlFile:javax.swing.Icon
 - sf:Xhtml:javax.swing.Icon
 - sf:Xml:javax.swing.Icon
 - sf:XsdFile:javax.swing.Icon
 - sf:Yaml:javax.swing.Icon
-- sf:Yarn:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$General
 - sf:ActualZoom:javax.swing.Icon
@@ -925,7 +922,6 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:Module:javax.swing.Icon
 - sf:Module8x8:javax.swing.Icon
 - sf:ModuleGroup:javax.swing.Icon
-- sf:ModuleJava:javax.swing.Icon
 - sf:MultipleTypeDefinitions:javax.swing.Icon
 - sf:NativeLibrariesFolder:javax.swing.Icon
 - sf:NewParameter:javax.swing.Icon
@@ -1152,9 +1148,6 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:Yugabyte:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Run
-- sf:ForceRunToCursor:javax.swing.Icon
-- sf:ForceStepInto:javax.swing.Icon
-- sf:ForceStepOver:javax.swing.Icon
 - sf:Restart:javax.swing.Icon
 - sf:ShowIgnored:javax.swing.Icon
 - sf:Stop:javax.swing.Icon

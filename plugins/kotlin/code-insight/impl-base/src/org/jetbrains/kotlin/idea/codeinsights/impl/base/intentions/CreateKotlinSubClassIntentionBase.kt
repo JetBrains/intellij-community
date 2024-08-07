@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -35,7 +36,6 @@ abstract class CreateKotlinSubClassIntentionBase : SelfTargetingRangeIntention<K
 
     abstract fun chooseAndImplementMethods(project: Project, targetClass: KtClass, editor: Editor)
     abstract fun getOrCreateKtFile(fileName: String, targetDir: PsiDirectory): KtFile
-    abstract fun shortenReferences(klass: KtClass)
 
     override fun applicabilityRange(element: KtClass): TextRange? {
         if (element.name == null || element.getParentOfType<KtFunction>(true) != null) {
@@ -140,7 +140,7 @@ abstract class CreateKotlinSubClassIntentionBase : SelfTargetingRangeIntention<K
               val builder = buildClassHeader(targetName, baseClass, baseClass.fqName!!.asString())
               file.add(factory.createClass(builder.asString()))
               val klass = file.getChildOfType<KtClass>()!!
-              shortenReferences(klass)
+              ShortenReferencesFacility.getInstance().shorten(klass)
               file to klass
             }
             chooseAndImplementMethods(project, klass, CodeInsightUtil.positionCursor(project, file, klass) ?: editor)

@@ -6,9 +6,6 @@ com/google/gson/TypeAdapter
 com/google/gson/TypeAdapterFactory
 com/google/gson/reflect/TypeToken
 com/google/gson/stream/JsonToken
-com/intellij/internal/statistic/eventLog/validator/rules/FUSRule
-com/intellij/internal/statistic/eventLog/validator/rules/PerformanceCareRule
-com/intellij/internal/statistic/eventLog/validator/rules/impl/UtilValidationRule
 com/intellij/util/ui/MenuItemLayoutHelper
 com/intellij/util/ui/MenuItemLayoutHelper$LayoutResult
 com/jetbrains/WindowDecorations$CustomTitleBar

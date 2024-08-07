@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -154,7 +153,7 @@ private fun isSourceFile(path: String): Boolean {
 private fun downloadMissingLibrarySources(librariesWithMissingSources: List<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>>, context: BuildContext) {
   TraceManager.spanBuilder("download missing sources")
     .setAttribute(AttributeKey.stringArrayKey("librariesWithMissingSources"), librariesWithMissingSources.map { it.name })
-    .useWithoutActiveScope { span ->
+    .use { span ->
       val configuration = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(context.project)
       val repositories = configuration?.repositories?.map { ArtifactRepositoryManager.createRemoteRepository(it.id, it.url) } ?: emptyList()
       val repositoryManager = ArtifactRepositoryManager(

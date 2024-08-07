@@ -120,6 +120,9 @@ private class KtScriptDependencyModuleByModuleInfo(
                 .getScriptDependenciesClassFiles(moduleInfo.scriptFile).map { it.toNioPath() }
         }
 
+    @KaExperimentalApi
+    override val binaryVirtualFiles: Collection<VirtualFile> = emptyList()
+
     override val file: KtFile?
         get() = optScriptFile((moduleInfo as? ScriptDependenciesInfo.ForFile)?.scriptFile)
 

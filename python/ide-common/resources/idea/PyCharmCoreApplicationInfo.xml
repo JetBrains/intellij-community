@@ -13,4 +13,5 @@
 
   <!-- Required for PythonCore plugin -->
   <essential-plugin>org.toml.lang</essential-plugin>
+  <essential-plugin>com.intellij.modules.json</essential-plugin>
 </component>

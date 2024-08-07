@@ -10,6 +10,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
@@ -36,7 +37,7 @@ internal class ReaderModeActionProvider : InspectionWidgetActionProvider {
   override fun createAction(editor: Editor): AnAction? {
     val project: Project? = editor.project
     return if (project == null || project.isDefault) null
-    else object : DefaultActionGroup(ReaderModeAction(editor), Separator.create()) {
+    else object : DefaultActionGroup(ReaderModeAction(editor), Separator.create()), ActionRemoteBehaviorSpecification.Frontend {
 
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

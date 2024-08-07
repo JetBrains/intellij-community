@@ -3,7 +3,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DefaultHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -253,7 +256,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private boolean add(@Nullable HighlightInfo.Builder builder) {
     if (builder != null) {
-      HighlightInfo info = builder/*.toolId(getClass())*/.create();
+      HighlightInfo info = builder.create();
       if (info != null && info.getSeverity().compareTo(HighlightSeverity.ERROR) >= 0) {
         myHasError = true;
       }
@@ -1017,7 +1020,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     else if (parent instanceof PsiClass aClass) {
       try {
         if (!hasErrorResults()) add(HighlightClassUtil.checkDuplicateNestedClass(aClass));
-        if (!hasErrorResults()) {
+        if (!hasErrorResults() && !(aClass instanceof PsiAnonymousClass)/* anonymous class is highlighted in HighlightClassUtil.checkAbstractInstantiation()*/) {
           TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
           add(HighlightClassUtil.checkClassMustBeAbstract(aClass, textRange));
         }
@@ -1039,13 +1042,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
     add(AnnotationsHighlightUtil.checkNameValuePair(pair));
-    if (!hasErrorResults()) {
-      PsiIdentifier nameId = pair.getNameIdentifier();
-      if (nameId != null) {
-        HighlightInfo.Builder result = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId);
-        add(result);
-      }
-    }
   }
 
   @Override
@@ -1138,7 +1134,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result = doVisitReferenceElement(ref);
+    JavaResolveResult result = ref instanceof PsiExpression ? resolveOptimised(ref, myFile) : doVisitReferenceElement(ref);
     if (result != null) {
       PsiElement resolved = result.getElement();
       if (!hasErrorResults()) add(GenericsHighlightUtil.checkRawOnParameterizedType(ref, resolved));
@@ -1163,22 +1159,22 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     add(HighlightUtil.checkReference(ref, result, myFile, myLanguageLevel));
 
-    if (parent instanceof PsiJavaCodeReferenceElement || ref.isQualified()) {
-      if (!hasErrorResults() && resolved instanceof PsiTypeParameter) {
-        boolean canSelectFromTypeParameter = myJavaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7);
-        if (canSelectFromTypeParameter) {
-          PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-          if (containingClass != null) {
-            if (PsiTreeUtil.isAncestor(containingClass.getExtendsList(), ref, false) ||
-                PsiTreeUtil.isAncestor(containingClass.getImplementsList(), ref, false)) {
-              canSelectFromTypeParameter = false;
-            }
+    if ((parent instanceof PsiJavaCodeReferenceElement || ref.isQualified()) &&
+        !hasErrorResults() &&
+        resolved instanceof PsiTypeParameter) {
+      boolean canSelectFromTypeParameter = myJavaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7);
+      if (canSelectFromTypeParameter) {
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+        if (containingClass != null) {
+          if (PsiTreeUtil.isAncestor(containingClass.getExtendsList(), ref, false) ||
+              PsiTreeUtil.isAncestor(containingClass.getImplementsList(), ref, false)) {
+            canSelectFromTypeParameter = false;
           }
         }
-        if (!canSelectFromTypeParameter) {
-          add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(
-            JavaErrorBundle.message("cannot.select.from.a.type.parameter")).range(ref));
-        }
+      }
+      if (!canSelectFromTypeParameter) {
+        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(
+          JavaErrorBundle.message("cannot.select.from.a.type.parameter")).range(ref));
       }
     }
 

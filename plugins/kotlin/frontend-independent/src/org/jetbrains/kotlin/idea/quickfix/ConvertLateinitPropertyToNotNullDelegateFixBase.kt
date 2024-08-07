@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -12,14 +12,13 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 abstract class ConvertLateinitPropertyToNotNullDelegateFixBase(
     element: KtProperty,
     private val type: String
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtProperty, Unit>(element, Unit) {
+) : PsiUpdateModCommandAction<KtProperty>(element) {
 
     override fun getFamilyName() = KotlinBundle.message("convert.to.notnull.delegate")
 
     override fun invoke(
         actionContext: ActionContext,
         element: KtProperty,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         val typeReference = element.typeReference ?: return

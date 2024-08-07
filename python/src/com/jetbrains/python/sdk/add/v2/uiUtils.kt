@@ -10,17 +10,13 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.equalsTo
 import com.intellij.openapi.observable.util.notEqualsTo
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.getUserData
-import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -32,9 +28,6 @@ import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.util.preferredHeight
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
-import com.jetbrains.python.sdk.PyDetectedSdk
-import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
@@ -294,24 +287,7 @@ class PythonInterpreterComboBox(val backingProperty: ObservableMutableProperty<P
   }
 }
 
-private fun findPrioritySdk(sdkList: List<Sdk>): Sdk? {
-  val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
-  return sdkList.firstOrNull { it.homePath == preferredSdkPath }
-         ?: sdkList.firstOrNull { it !is PyDetectedSdk && it !is PySdkToInstall }
-         ?: sdkList.firstOrNull { it is PyDetectedSdk }
-         ?: sdkList.firstOrNull { it is PySdkToInstall }
-}
-
 private val KEY_PATH_TO_SELECT_AFTER_MODEL_UPDATED: Key<String> by lazy { Key.create("PATH_TO_SELECT_AFTER_MODEL_UPDATED") }
-
-internal fun <T> ComboBox<T>.tryGetAndRemovePathToSelectAfterModelUpdate(): @NlsSafe Any? =
-  getUserData(KEY_PATH_TO_SELECT_AFTER_MODEL_UPDATED)?.also {
-    putUserData(KEY_PATH_TO_SELECT_AFTER_MODEL_UPDATED, null)
-  }
-
-internal fun ComboBox<*>.setPathToSelectAfterModelUpdate(targetPath: @NlsSafe String) {
-  putUserData(KEY_PATH_TO_SELECT_AFTER_MODEL_UPDATED, targetPath)
-}
 
 /**
  * Note. Here [ExtendableTextComponent.Extension] is used to display animated loader icon. This approach requires [ExtendableTextComponent]

@@ -13,7 +13,7 @@ import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.impl.NotificationCollector.*
 import java.util.stream.Collectors
 
-object NotificationsEventLogGroup : CounterUsagesCollector() {
+internal object NotificationsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   @JvmField

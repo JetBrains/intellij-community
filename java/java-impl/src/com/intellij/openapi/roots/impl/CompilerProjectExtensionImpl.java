@@ -15,12 +15,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.platform.backend.workspace.VirtualFileUrls;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -30,13 +26,8 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
   private static final String OUTPUT_TAG = "output";
   private static final String URL = "url";
 
-  private VirtualFileUrl myCompilerOutput;
+  private VirtualFilePointer myCompilerOutput;
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
-  private final Project myProject;
-
-  CompilerProjectExtensionImpl(@NotNull Project project) {
-    myProject = project;
-  }
 
   /**
    * Returns true if the compiler output was changed after read
@@ -45,8 +36,8 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     Element pathElement = element.getChild(OUTPUT_TAG);
     if (pathElement != null) {
       String outputPath = pathElement.getAttributeValue(URL);
-      VirtualFileUrl oldValue = myCompilerOutput;
-      myCompilerOutput = outputPath != null ? WorkspaceModel.getInstance(myProject).getVirtualFileUrlManager().getOrCreateFromUrl(outputPath) : null;
+      VirtualFilePointer oldValue = myCompilerOutput;
+      myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, this, null) : null;
 
       return !Objects.equals(
         oldValue != null ? oldValue.getUrl() : null,
@@ -71,7 +62,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
 
   @Override
   public VirtualFile getCompilerOutput() {
-    return myCompilerOutput != null ? VirtualFileUrls.getVirtualFile(myCompilerOutput) : null;
+    return myCompilerOutput != null ? myCompilerOutput.getFile() : null;
   }
 
   @Override
@@ -81,17 +72,17 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
 
   @Override
   public VirtualFilePointer getCompilerOutputPointer() {
-    return myCompilerOutput == null ? null : VirtualFilePointerManager.getInstance().create(myCompilerOutput.getUrl(), this, null);
+    return myCompilerOutput;
   }
 
   @Override
-  public void setCompilerOutputPointer(@Nullable VirtualFilePointer pointer) {
-    myCompilerOutput = pointer == null ? null : WorkspaceModel.getInstance(myProject).getVirtualFileUrlManager().getOrCreateFromUrl(pointer.getUrl());
+  public void setCompilerOutputPointer(VirtualFilePointer pointer) {
+    myCompilerOutput = pointer;
   }
 
   @Override
   public void setCompilerOutputUrl(String compilerOutputUrl) {
-    VirtualFilePointer pointer = compilerOutputUrl == null ? null : VirtualFilePointerManager.getInstance().create(compilerOutputUrl, this, null);
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, this, null);
     setCompilerOutputPointer(pointer);
     String path = VfsUtilCore.urlToPath(compilerOutputUrl);
     myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);

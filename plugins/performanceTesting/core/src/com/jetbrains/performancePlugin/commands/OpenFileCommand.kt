@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -23,6 +24,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
+import java.util.concurrent.TimeoutException
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Command opens file.
@@ -57,17 +60,24 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     val options = getOptions(arguments)
     val filePath = (options?.file ?: text.split(' ', limit = 4)[1]).replace("SPACE_SYMBOL", " ")
     val timeout = options?.timeout ?: 0
-    val suppressErrors = options?.suppressErrors ?: false
+    val suppressErrors = options?.suppressErrors == true
 
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
     val connection = project.messageBus.simpleConnect()
     val spanRef = Ref<Span>()
     val projectPath = project.basePath
-    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, timeout)
-    if (suppressErrors) {
-      job.suppressErrors()
+    val job = if (useWaitForCodeAnalysisCode(options)) {
+      null
     }
+    else {
+      val listenJob = DaemonCodeAnalyzerListener.listen(connection, spanRef, timeout)
+      if (suppressErrors) {
+        listenJob.suppressErrors()
+      }
+      listenJob
+    }
+
     spanRef.set(startSpan(SPAN_NAME))
     setFilePath(projectPath = projectPath, span = spanRef.get(), file = file)
 
@@ -78,11 +88,17 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
     val fileEditor = (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
       .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
+
+    if (useWaitForCodeAnalysisCode(options)) {
+      waitForAnalysisWithNewApproach(project, spanRef, timeout, suppressErrors)
+      return
+    }
+
     if (options != null && !options.disableCodeAnalysis) {
       waitForFullyCompleted(fileEditor)
     }
 
-    job.onError {
+    job!!.onError {
       spanRef.get()?.setAttribute("timeout", "true")
     }
     job.withErrorMessage("Timeout on open file ${file.path} more than $timeout seconds")
@@ -92,12 +108,27 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     }
   }
 
+  private fun useWaitForCodeAnalysisCode(options: OpenFileCommandOptions?): Boolean = options != null
+                                                                                      && !options.disableCodeAnalysis
+                                                                                      && options.useNewWaitForCodeAnalysisCode
+
   private fun setFilePath(projectPath: @SystemIndependent @NonNls String?, span: Span, file: VirtualFile) {
     if (projectPath != null) {
       span.setAttribute("filePath", file.path.replaceFirst(projectPath, ""))
     }
     else {
       span.setAttribute("filePath", file.path)
+    }
+  }
+
+  private suspend fun waitForAnalysisWithNewApproach(project: Project, spanRef: Ref<Span>, timeout: Long, suppressErrors: Boolean) {
+    val timeoutDuration = if (timeout == 0L) null else timeout.seconds
+    runCatching {
+      project.service<CodeAnalysisStateListener>().waitAnalysisToFinish(timeoutDuration, !suppressErrors)
+    }.onFailure { throwable ->
+      if (throwable is TimeoutException) {
+        spanRef.get()?.setAttribute("timeout", "true")
+      }
     }
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
-import com.intellij.ide.impl.DataValidators;
 import com.intellij.lang.Language;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
@@ -1900,7 +1899,7 @@ public class UsageViewImpl implements UsageViewEx {
     return myModel.areTargetsValid();
   }
 
-  private final class MyPanel extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
+  private final class MyPanel extends JPanel implements UiDataProvider, OccurenceNavigator, Disposable {
     private @Nullable OccurenceNavigatorSupport mySupport;
     private final CopyProvider myCopyProvider;
 
@@ -1987,77 +1986,50 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
-      }
-      else if (USAGE_VIEW_KEY.is(dataId)) {
-        return UsageViewImpl.this;
-      }
-      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        return HELP_ID;
-      }
-      else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return myCopyProvider;
-      }
-      else if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
-        return myExclusionHandler;
-      }
-      else if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
-        return myTextFileExporter;
-      }
-      else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        return ContainerUtil.mapNotNull(selectedNodes(), n-> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class))
-          .toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-      }
-      else if (USAGE_TARGETS_KEY.is(dataId)) {
-        var targets = ContainerUtil.mapNotNull(
-          selectedNodes(),
-          o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null
-        );
-        return targets.isEmpty() ? null : targets.toArray(UsageTarget.EMPTY_ARRAY);
-      }
-      else {
-        DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
-        if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-          List<TreeNode> selectedNodes = allSelectedNodes();
-          DataProvider selectedBgtProvider = selectedProvider == null ? null : PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(selectedProvider);
-          return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selectedNodes), selectedBgtProvider);
-        }
-        Object nodeData = selectedProvider != null ? selectedProvider.getData(dataId) : null;
-        if (nodeData != null) {
-          return DataValidators.validOrNull(nodeData, dataId, selectedProvider);
-        }
-      }
-      return null;
-    }
-  }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      List<TreeNode> selection = selectedNodes();
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<@NotNull TreeNode> selectedNodes) {
-    if (USAGES_KEY.is(dataId)) {
-      return selectedUsages(selectedNodes)
-        .toArray(n -> n == 0 ? Usage.EMPTY_ARRAY : new Usage[n]);
+      sink.set(CommonDataKeys.PROJECT, myProject);
+      sink.set(USAGE_VIEW_KEY, UsageViewImpl.this);
+      sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
+      sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+      sink.set(ExclusionHandler.EXCLUSION_HANDLER, myExclusionHandler);
+      sink.set(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myTextFileExporter);
+      sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, ContainerUtil.mapNotNull(
+        selection, n -> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class))
+        .toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
+      var targets = ContainerUtil.mapNotNull(
+        selection, o -> o instanceof UsageTargetNode oo ? oo.getTarget() : null);
+      sink.set(USAGE_TARGETS_KEY, targets.isEmpty() ? null : targets.toArray(UsageTarget.EMPTY_ARRAY));
+
+      List<TreeNode> selectedNodes = allSelectedNodes();
+      DataSink.uiDataSnapshot(sink, TreeUtil.getUserObject(getSelectedNode()));
+
+      sink.lazy(USAGES_KEY, () -> {
+        return selectedUsages(selectedNodes)
+          .toArray(n -> n == 0 ? Usage.EMPTY_ARRAY : new Usage[n]);
+      });
+      sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+        return selectedUsages(selectedNodes)
+          .filter(usage -> usage instanceof PsiElementUsage)
+          .map(usage -> ((PsiElementUsage)usage).getElement())
+          .filter(element -> element != null)
+          .toArray(PsiElement.ARRAY_FACTORY::create);
+      });
+      sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
+        return JBIterable.from(selectedNodes)
+          .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
+                          o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
+          .flatMap(o -> o instanceof UsageInFile oo ? ContainerUtil.createMaybeSingletonList(oo.getFile()) :
+                        o instanceof UsageInFiles oo ? Arrays.asList(oo.getFiles()) :
+                        o instanceof UsageTarget oo
+                        ? Arrays.asList(ObjectUtils.notNull(oo.getFiles(), VirtualFile.EMPTY_ARRAY))
+                        : Collections.emptyList())
+          .filter(VirtualFile::isValid)
+          .unique()
+          .toArray(VirtualFile.EMPTY_ARRAY);
+      });
     }
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return selectedUsages(selectedNodes)
-        .filter(usage -> usage instanceof PsiElementUsage)
-        .map(usage -> ((PsiElementUsage)usage).getElement())
-        .filter(element -> element != null)
-        .toArray(PsiElement.ARRAY_FACTORY::create);
-    }
-    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return JBIterable.from(selectedNodes)
-        .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
-                        o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
-        .flatMap(o -> o instanceof UsageInFile ? ContainerUtil.createMaybeSingletonList(((UsageInFile)o).getFile()) :
-                      o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
-                      o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
-                      Collections.emptyList())
-        .filter(VirtualFile::isValid)
-        .unique()
-        .toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    return null;
   }
 
   private static @NotNull Stream<@NotNull Usage> selectedUsages(@NotNull List<@NotNull TreeNode> selectedNodes) {

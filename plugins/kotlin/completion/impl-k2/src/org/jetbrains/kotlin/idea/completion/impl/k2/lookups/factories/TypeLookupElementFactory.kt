@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenRe
 import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
 import org.jetbrains.kotlin.types.Variance
 
-class TypeLookupElementFactory {
+internal object TypeLookupElementFactory {
+
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createLookup(type: KaType): LookupElement? {

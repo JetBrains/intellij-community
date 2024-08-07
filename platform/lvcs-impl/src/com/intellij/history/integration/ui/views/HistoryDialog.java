@@ -505,7 +505,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       super(project, true);
       myPanel = centralPanel;
       init();
-      initValidation();
     }
 
     @Override
@@ -516,11 +515,6 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     @Override
     public @Nullable JComponent getPreferredFocusedComponent() {
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myPanel.getPanel());
-    }
-
-    @Override
-    protected @Nullable ValidationInfo doValidate() {
-      return myPanel.validateFields();
     }
   }
 }

@@ -36,6 +36,7 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
   public void consume(@Nullable ProjectSettingsStepBase<T> step, @NotNull ProjectGeneratorPeer<T> projectGeneratorPeer) {
     if (!(step instanceof ProjectSpecificSettingsStep settingsStep)) return;
 
+    // FIXME: pass welcome script creation via settings
     if (step instanceof PythonProjectSpecificSettingsStep) {
       // has to be set before project generation
       boolean welcomeScript = PropertiesComponent.getInstance().getBoolean("PyCharm.NewProject.Welcome", false);
@@ -44,17 +45,6 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
 
     final DirectoryProjectGenerator generator = settingsStep.getProjectGenerator();
     Sdk sdk = settingsStep.getSdk();
-
-    if (generator instanceof PythonProjectGenerator) {
-      final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator<?>)generator).beforeProjectGenerated(sdk);
-      if (beforeProjectGenerated != null) {
-        final boolean result = beforeProjectGenerated.fun((PythonProjectGenerator)generator);
-        if (!result) {
-          Messages.showWarningDialog(PyBundle.message("project.cannot.be.generated"), PyBundle.message("error.in.project.generation"));
-          return;
-        }
-      }
-    }
 
     final Object settings = computeProjectSettings(generator, settingsStep, projectGeneratorPeer);
     final Project newProject = generateProject(settingsStep, settings);

@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-import com.intellij.platform.ijent.IjentId
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -43,9 +42,9 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   }
 
   @TestOnly
-  fun switchToIjentFs(distro: WSLDistribution, ijentId: IjentId) {
+  suspend fun switchToIjentFs(distro: WSLDistribution) {
     strategy ?: error("Not available")
-    strategy.switchToIjentFs(distro, ijentId)
+    strategy.switchToIjentFs(distro)
   }
 
   @TestOnly

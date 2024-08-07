@@ -6,8 +6,8 @@ import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
@@ -23,7 +23,6 @@ import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,7 +212,7 @@ public final class GridCellImpl implements GridCell {
     return myTabs.getComponent().isAncestorOf(c);
   }
 
-  private static final class ProviderWrapper extends NonOpaquePanel implements DataProvider {
+  private static final class ProviderWrapper extends NonOpaquePanel implements UiDataProvider {
     Content myContent;
     ViewContext myContext;
 
@@ -225,14 +224,9 @@ public final class GridCellImpl implements GridCell {
     }
 
     @Override
-    public @Nullable Object getData(final @NotNull @NonNls String dataId) {
-      if (ViewContext.CONTENT_KEY.is(dataId)) {
-        return new Content[]{myContent};
-      }
-      else if (ViewContext.CONTEXT_KEY.is(dataId)) {
-        return myContext;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(ViewContext.CONTENT_KEY, new Content[]{myContent});
+      sink.set(ViewContext.CONTEXT_KEY, myContext);
     }
   }
 

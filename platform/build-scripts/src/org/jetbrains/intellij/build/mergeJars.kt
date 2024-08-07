@@ -4,7 +4,6 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.util.io.toByteArray
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -288,7 +287,9 @@ private suspend fun handleZipSource(
       }
     }
 
-    if (checkCoverageAgentManifest(name, sourceFile, targetFile, dataSupplier, ::writeZipData)) return@suspendAwareReadZipFile
+    if (checkCoverageAgentManifest(name = name, sourceFile = sourceFile, targetFile = targetFile, dataSupplier = dataSupplier, writeData = ::writeZipData)) {
+      return@suspendAwareReadZipFile
+    }
 
     val filter = source.filter
     val isIncluded = if (filter == null) {
@@ -337,20 +338,25 @@ private fun checkCoverageAgentManifest(
   name: String, sourceFile: Path, targetFile: Path,
   dataSupplier: () -> ByteBuffer, writeData: (ByteBuffer) -> Unit,
 ): Boolean {
-  if (name != "META-INF/MANIFEST.MF") return false
+  if (name != "META-INF/MANIFEST.MF") {
+    return false
+  }
 
   val coveragePlatformAgentModuleName = "intellij.platform.coverage.agent"
-  if (!targetFile.name.contains(coveragePlatformAgentModuleName)) return false
+  if (!targetFile.name.contains(coveragePlatformAgentModuleName)) {
+    return false
+  }
 
   val agentPrefix = "intellij-coverage-agent"
-  if (!sourceFile.name.startsWith(agentPrefix)) return false
-
-  val manifestContent = String(dataSupplier().toByteArray()).run {
-    val bootAttribute = "Boot-Class-Path:"
-    replace("$bootAttribute $agentPrefix-\\d+(\\.\\d+)*\\.jar".toRegex(), "$bootAttribute $coveragePlatformAgentModuleName.jar")
+  if (!sourceFile.name.startsWith(agentPrefix)) {
+    return false
   }
-  val data = ByteBuffer.wrap(manifestContent.toByteArray())
-  writeData(data)
+
+  val manifestContent = Charsets.UTF_8.decode(dataSupplier()).let {
+    val bootAttribute = "Boot-Class-Path:"
+    it.replace("$bootAttribute $agentPrefix-\\d+(\\.\\d+)*\\.jar".toRegex(), "$bootAttribute $coveragePlatformAgentModuleName.jar")
+  }
+  writeData(ByteBuffer.wrap(manifestContent.toByteArray()))
   return true
 }
 

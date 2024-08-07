@@ -60,17 +60,25 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
   override fun isRestartRequired(): Boolean = restartRequired
 
   override fun setSelectedLocale(locale: String) {
+    setSelectedLocale(locale, false)
+  }
+  
+  override fun setSelectedLocale(locale: String, ignoreRestart: Boolean) {
     if (!restartRequired) {
       localizationState.lastSelectedLocale = localizationState.selectedLocale
     }
     localizationState.selectedLocale = locale
-    restartRequired = selectedLocale != lastSelectedLocale
+    restartRequired = if (ignoreRestart) false else selectedLocale != lastSelectedLocale
     ApplicationManager.getApplication().messageBus.syncPublisher(LocalizationListener.Companion.UPDATE_TOPIC).localeChanged()
   }
 
   override fun resetLocaleIfNeeded() {
-    if (selectedLocale != DEFAULT_LOCALE && LoadingState.COMPONENTS_LOADED.isOccurred && PluginManager.getLoadedPlugins().none { LocalizationPluginHelper.isActiveLocalizationPlugin(it, selectedLocale) }) {
-      logger<ConfigImportHelper>().info("[i18n] Language setting was reset to default value: $DEFAULT_LOCALE; Previous value: $selectedLocale")
+    if (
+      selectedLocale != DEFAULT_LOCALE
+      && LoadingState.COMPONENTS_LOADED.isOccurred
+      && PluginManager.getLoadedPlugins().none { LocalizationPluginHelper.isActiveLocalizationPlugin(it, selectedLocale) }
+    ) {
+      logger<ConfigImportHelper>().info("[i18n] Language setting was reset to default value: $DEFAULT_LOCALE; Previous value: ${selectedLocale}")
       localizationState.selectedLocale = DEFAULT_LOCALE
     }
   }

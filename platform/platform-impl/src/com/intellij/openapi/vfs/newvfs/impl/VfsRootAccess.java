@@ -116,6 +116,8 @@ public final class VfsRootAccess {
       }
 
       if (!isUnder) {
+        // one of the possible problems https://youtrack.jetbrains.com/issue/IJPL-156861/smartReadAction-should-wait-for-queued-scannings#focus=Comments-27-10189819.0-0
+        // and see the comment above
         throw new VfsRootAccessNotAllowedError(child, new ArrayList<>(allowed));
       }
     }

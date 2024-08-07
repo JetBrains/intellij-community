@@ -10,19 +10,19 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module-library">
       <library name="debugger-memory-agent" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:debugger-memory-agent:1.0.45">
+        <properties maven-id="org.jetbrains.intellij.deps:debugger-memory-agent:1.0.51">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.45/debugger-memory-agent-1.0.45.jar">
-              <sha256sum>1519c7ab286dfa82797d0a8ce9d726fb083682a2126e9e167d0d60315ef8f38f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.51/debugger-memory-agent-1.0.51.jar">
+              <sha256sum>1408ae6528102c098971bde601f99c791cd1c57cc2485516f75f4ccbb45202ef</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.45/debugger-memory-agent-1.0.45.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.51/debugger-memory-agent-1.0.51.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.45/debugger-memory-agent-1.0.45-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.51/debugger-memory-agent-1.0.51-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -1,9 +1,4 @@
 // ERROR: Modifier 'protected' is not applicable inside 'standalone object'.
-import Outer.Nested1
-import Outer.Nested2
-import Outer.Nested3
-import Outer.Nested4
-
 internal object Outer {
     fun foo() {
         val nested1 = Nested1(1)

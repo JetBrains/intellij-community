@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.treeAssertion
 
-import org.junit.jupiter.api.AssertionFailureBuilder
+import org.assertj.core.api.Assertions.assertThat
 
 internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAssertion.Node<T> {
-
   private val expectedChildren = ArrayList<SimpleTree.Node<NodeAssertionOptions<T>>>()
 
   private var valueAssertions = ArrayList<(T) -> Unit>()
@@ -99,11 +98,11 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
       while (queue.isNotEmpty()) {
         val (expectedNodes, actualNodes) = queue.removeFirst()
         if (expectedNodes.size != actualNodes.size) {
-          throwTreeAssertionError(expectedTree, actualTree)
+          assertThat(actualTree.getTreeString()).isEqualTo(expectedTree.getTreeString())
         }
         for ((expectedNode, actualNode) in expectedNodes.zip(actualNodes)) {
           if (!expectedNode.value.matcher.matches(actualNode)) {
-            throwTreeAssertionError(expectedTree, actualTree)
+            assertThat(actualTree.getTreeString()).isEqualTo(expectedTree.getTreeString())
           }
           for (valueAssertion in expectedNode.value.valueAssertions) {
             valueAssertion.invoke(actualNode.value)
@@ -111,13 +110,6 @@ internal class SimpleTreeAssertionImpl<T> private constructor() : SimpleTreeAsse
           queue.add(expectedNode.children to actualNode.children)
         }
       }
-    }
-
-    private fun <T> throwTreeAssertionError(expectedTree: SimpleTree<NodeAssertionOptions<T>>, actualTree: SimpleTree<T>): Nothing {
-      throw AssertionFailureBuilder.assertionFailure()
-        .expected(expectedTree.getTreeString())
-        .actual(actualTree.getTreeString())
-        .build()
     }
 
     private fun <T> sortTree(

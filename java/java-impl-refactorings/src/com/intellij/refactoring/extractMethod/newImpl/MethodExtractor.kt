@@ -4,20 +4,16 @@ package com.intellij.refactoring.extractMethod.newImpl
 import com.intellij.codeInsight.Nullability
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -30,10 +26,7 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replac
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.findAllOptionsToExtract
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
-import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
-import com.intellij.refactoring.extractMethod.newImpl.inplace.extractInDialog
+import com.intellij.refactoring.extractMethod.newImpl.inplace.*
 import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ResultObjectExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -41,6 +34,10 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.containers.MultiMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector as IEMC
 
@@ -49,34 +46,64 @@ data class ExtractedElements(val callElements: List<PsiElement>, val method: Psi
 class MethodExtractor {
 
   fun doExtract(file: PsiFile, range: TextRange) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return
+    val coroutineScope = ExtractMethodService.getInstance(file.project).scope
+
     val editor = PsiEditorUtil.findEditor(file) ?: return
     val activeExtractor = InplaceMethodExtractor.getActiveExtractor(editor)
     if (activeExtractor != null) {
       activeExtractor.restartInDialog()
       return
     }
-    val prepareStart = System.currentTimeMillis()
-    val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(editor, file, range)
-    if (descriptorsForAllTargetPlaces.isEmpty()) return
-    val preparePlacesTime = System.currentTimeMillis() - prepareStart
-    val selectedDescriptorFuture = selectOptionWithTargetClass(editor, file.project, descriptorsForAllTargetPlaces)
-    if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-      selectedDescriptorFuture
-        .thenApply { options ->
-          val templateStart = System.currentTimeMillis()
-          runInplaceExtract(editor, range, options)
-          val prepareTemplateTime = System.currentTimeMillis() - templateStart
-          reportPerformanceStatistics(preparePlacesTime, prepareTemplateTime, descriptorsForAllTargetPlaces.size)
-        }
-        .exceptionally { e -> LOG.error(e) }
+
+    coroutineScope.launch {
+      extract(editor, file, range)
     }
-    else {
-      selectedDescriptorFuture
-        .thenApply { options ->
-          extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
+  }
+
+  suspend fun extract(editor: Editor, file: PsiFile, range: TextRange) {
+      val elements = readAction { ExtractSelector().suggestElementsToExtract(file, range) }
+      if (elements.isEmpty()) {
+        InplaceExtractUtils.showExtractErrorHint(editor, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"))
+        return
+      }
+
+      val analyzer = readAction { CodeFragmentAnalyzer.createAnalyzer(elements) }
+      if (analyzer == null) {
+        InplaceExtractUtils.showExtractErrorHint(editor, JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"))
+        return
+      }
+
+      val outputVariables = readAction { analyzer.findOutputVariables().sortedBy { variable -> variable.textRange.startOffset } }
+      if (outputVariables.size > 1) {
+        ResultObjectExtractor.run(editor, outputVariables, elements)
+        return
+      }
+
+      val prepareStart = System.currentTimeMillis()
+      val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elements)
+      if (descriptorsForAllTargetPlaces.isEmpty()) return
+      val preparePlacesTime = System.currentTimeMillis() - prepareStart
+
+      val options = withContext(Dispatchers.EDT) {
+        selectOptionWithTargetClass(editor, file.project, descriptorsForAllTargetPlaces).await()
+      }
+      val guessedNames = readAction { suggestSafeMethodNames(options) }
+      val methodName = guessedNames.first()
+      val extractor = readAction {
+        DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic)
+      }
+      if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
+        val templateStart = System.currentTimeMillis()
+        runInplaceExtract(editor, range, extractor, guessedNames)
+        val prepareTemplateTime = System.currentTimeMillis() - templateStart
+        reportPerformanceStatistics(preparePlacesTime, prepareTemplateTime, descriptorsForAllTargetPlaces.size)
+      }
+      else {
+        withContext(Dispatchers.EDT) {
+          extractor.extractInDialog()
         }
-        .exceptionally { e -> LOG.error(e) }
-    }
+      }
   }
 
   private fun reportPerformanceStatistics(preparePlacesMs: Long, prepareTemplateMs: Long, numberOfTargetPlaces: Int){
@@ -88,65 +115,40 @@ class MethodExtractor {
     )
   }
 
-  fun prepareDescriptorsForAllTargetPlaces(editor: Editor, file: PsiFile, range: TextRange): List<ExtractOptions> {
-    try {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return emptyList()
-      val elements = ExtractSelector().suggestElementsToExtract(file, range)
-      if (elements.isEmpty()) {
-        throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
-      }
-      return computeWithAnalyzeProgress<List<ExtractOptions>, ExtractException>(file.project) {
-        findAllOptionsToExtract(elements)
-      }
-    }
-    catch (exception: ExtractException) {
-      if (exception is ExtractMultipleVariablesException && Registry.`is`("refactorings.extract.method.introduce.object")){
-        val variables = exception.variables.sortedBy { variable -> variable.textRange.startOffset }
-        invokeLater { ResultObjectExtractor.run(editor, variables, exception.scope) }
-      }
-      else {
+  suspend fun prepareDescriptorsForAllTargetPlaces(project: Project, editor: Editor, elements: List<PsiElement>): List<ExtractOptions> {
+    val message = JavaRefactoringBundle.message("dialog.title.analyze.code.fragment.to.extract")
+    return withBackgroundProgress(project, message, true) {
+      try {
+        readAction { findAllOptionsToExtract(elements) }
+      } catch (exception: ExtractException) {
         InplaceExtractUtils.showExtractErrorHint(editor, exception)
+        emptyList()
       }
-      return emptyList()
     }
   }
 
-  private fun <T, E: Exception> computeWithAnalyzeProgress(project: Project, throwableComputable: ThrowableComputable<T, E>): T {
-    return ProgressManager.getInstance().run(object : Task.WithResult<T, E>(project,
-      JavaRefactoringBundle.message("dialog.title.analyze.code.fragment.to.extract"), true) {
-      override fun compute(indicator: ProgressIndicator): T {
-        return ReadAction.compute(throwableComputable)
-      }
-    })
-  }
-
-  private fun runInplaceExtract(editor: Editor, range: TextRange, options: ExtractOptions){
-    val project = options.project
-    val popupSettings = createInplaceSettingsPopup(options)
-    val guessedNames = suggestSafeMethodNames(options)
-    val methodName = guessedNames.first()
-    val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
-    executeRefactoringCommand(project) {
-      val inplaceExtractor = InplaceMethodExtractor(editor, range, options.targetClass, popupSettings, methodName)
-      inplaceExtractor.extractAndRunTemplate(LinkedHashSet(suggestedNames))
-    }
+  private suspend fun runInplaceExtract(editor: Editor, range: TextRange, extractor: DuplicatesMethodExtractor, methodNames: List<String>){
+    val popupSettings = readAction { createInplaceSettingsPopup(extractor.extractOptions) }
+    val suggestedNames = methodNames.takeIf { it.size > 1 }.orEmpty()
+    val inplaceExtractor = readAction { InplaceMethodExtractor(editor, range, popupSettings, extractor) }
+    inplaceExtractor.extractAndRunTemplate(suggestedNames)
   }
 
   private fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
     val unsafeNames = guessMethodName(options)
-    val safeNames = unsafeNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }
+    val method = createMethodSignature(options)
+    fun hasConflicts(name: String): Boolean {
+      method.name = name
+      val conflicts = MultiMap<PsiElement, String>()
+      ConflictsUtil.checkMethodConflicts(options.targetClass, null, method, conflicts)
+      return ! conflicts.isEmpty
+    }
+    val safeNames = unsafeNames.filterNot { name -> hasConflicts(name) }
     if (safeNames.isNotEmpty()) return safeNames
 
     val baseName = unsafeNames.firstOrNull() ?: "extracted"
     val generatedNames = sequenceOf(baseName) + generateSequence(1) { seed -> seed + 1 }.map { number -> "$baseName$number" }
-    return generatedNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }.take(1).toList()
-  }
-
-  private fun hasConflicts(options: ExtractOptions): Boolean {
-    val (_, method) = prepareRefactoringElements(options)
-    val conflicts = MultiMap<PsiElement, String>()
-    ConflictsUtil.checkMethodConflicts(options.targetClass, null, method, conflicts)
-    return ! conflicts.isEmpty
+    return generatedNames.filterNot { name -> hasConflicts(name) }.take(1).toList()
   }
 
   private fun createInplaceSettingsPopup(options: ExtractOptions): ExtractMethodPopupProvider {
@@ -237,19 +239,7 @@ class MethodExtractor {
         dependencies.disabledParameters,
         dependencies.requiredVariablesInside
       )
-    val method = SignatureBuilder(dependencies.project)
-      .build(
-        dependencies.targetClass,
-        dependencies.elements,
-        dependencies.isStatic,
-        dependencies.visibility,
-        dependencies.typeParameters,
-        dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
-        dependencies.methodName,
-        dependencies.inputParameters,
-        dependencies.dataOutput.annotations,
-        dependencies.thrownExceptions
-      )
+    val method = createMethodSignature(dependencies)
     method.body?.replace(codeBlock)
 
     if (needsNullabilityAnnotations(dependencies.project) && ExtractMethodHelper.isNullabilityAvailable(dependencies)) {
@@ -263,6 +253,22 @@ class MethodExtractor {
       emptyList()
     }
     return ExtractedElements(callElements, method)
+  }
+
+  private fun createMethodSignature(dependencies: ExtractOptions): PsiMethod {
+    return SignatureBuilder(dependencies.project)
+      .build(
+        dependencies.targetClass,
+        dependencies.elements,
+        dependencies.isStatic,
+        dependencies.visibility,
+        dependencies.typeParameters,
+        dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
+        dependencies.methodName,
+        dependencies.inputParameters,
+        dependencies.dataOutput.annotations,
+        dependencies.thrownExceptions
+      )
   }
 
   private fun needsNullabilityAnnotations(project: Project): Boolean {

@@ -260,10 +260,10 @@ c:com.intellij.coverage.view.CoverageListRootNode
 c:com.intellij.coverage.view.CoverageView
 - com.intellij.util.ui.components.BorderLayoutPanel
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle):V
 - dispose():V
-- getData(java.lang.String):java.lang.Object
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 a:com.intellij.coverage.view.CoverageViewExtension
 - pf:myCoverageDataManager:com.intellij.coverage.CoverageDataManager
 - pf:myProject:com.intellij.openapi.project.Project
@@ -337,6 +337,7 @@ a:com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 - <init>(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.coverage.CoverageRunner):V
 - canHavePerTestCoverage():Z
 - p:coverageFileNameSeparator():java.lang.String
+- p:createCoverageFile():java.lang.String
 - createFileProvider():com.intellij.coverage.CoverageFileProvider
 - createSuiteName():java.lang.String
 - createTimestamp():J

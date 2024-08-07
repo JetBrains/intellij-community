@@ -31,11 +31,16 @@ sealed class Feature {
   sealed class TypedFeature<T>(
     val name: String,
     override val value: T,
+    private val descriptionProvider: () -> String
   ) : Feature() {
+
+    @Deprecated("Use the primary constructor instead")
+    constructor(name: String, value: T) : this(name, value, { "" })
+
     abstract val valueType: FeatureValueType<T>
 
     override val declaration: FeatureDeclaration<*>
-      get() = FeatureDeclaration(name, valueType)
+      get() = FeatureDeclaration(name, valueType, descriptionProvider)
   }
 
   override fun hashCode(): kotlin.Int {
@@ -46,36 +51,36 @@ sealed class Feature {
     return "Feature{declaration=$declaration, value=$value}"
   }
 
-  class Enum<T : kotlin.Enum<*>>(name: String, value: T) : TypedFeature<T>(name, value) {
+  class Enum<T : kotlin.Enum<*>>(name: String, value: T, descriptionProvider: () -> String) : TypedFeature<T>(name, value, descriptionProvider) {
     override val valueType = FeatureValueType.Enum(value.javaClass)
   }
 
-  class Int(name: String, value: kotlin.Int) : TypedFeature<kotlin.Int>(name, value) {
+  class Int(name: String, value: kotlin.Int, descriptionProvider: () -> String) : TypedFeature<kotlin.Int>(name, value, descriptionProvider) {
     override val valueType = FeatureValueType.Int
   }
 
-  class Boolean(name: String, value: kotlin.Boolean) : TypedFeature<kotlin.Boolean>(name, value) {
+  class Boolean(name: String, value: kotlin.Boolean, descriptionProvider: () -> String) : TypedFeature<kotlin.Boolean>(name, value, descriptionProvider) {
     override val valueType = FeatureValueType.Boolean
   }
 
-  class Float(name: String, value: kotlin.Float) : TypedFeature<kotlin.Float>(name, value) {
+  class Float(name: String, value: kotlin.Float, descriptionProvider: () -> String) : TypedFeature<kotlin.Float>(name, value, descriptionProvider) {
     override val valueType = FeatureValueType.Float
   }
 
-  class Double(name: String, value: kotlin.Double) : TypedFeature<kotlin.Double>(name, value) {
+  class Double(name: String, value: kotlin.Double, descriptionProvider: () -> String) : TypedFeature<kotlin.Double>(name, value, descriptionProvider) {
     override val valueType = FeatureValueType.Double
   }
 
-  class Long(name: String, value: kotlin.Long) : TypedFeature<kotlin.Long>(name, value) {
+  class Long(name: String, value: kotlin.Long, descriptionProvider: () -> String) : TypedFeature<kotlin.Long>(name, value, descriptionProvider) {
     override val valueType = FeatureValueType.Long
   }
 
-  class Class(name: String, value: java.lang.Class<*>) : TypedFeature<java.lang.Class<*>>(name, value) {
+  class Class(name: String, value: java.lang.Class<*>, descriptionProvider: () -> String) : TypedFeature<java.lang.Class<*>>(name, value, descriptionProvider) {
     override val valueType = FeatureValueType.Class
   }
 
-  class Nullable<T>(name: String, value: T?, val baseType: FeatureValueType<T>)
-    : TypedFeature<T?>(name, value) {
+  class Nullable<T>(name: String, value: T?, val baseType: FeatureValueType<T>, descriptionProvider: () -> String)
+    : TypedFeature<T?>(name, value, descriptionProvider) {
     override val valueType = FeatureValueType.Nullable(baseType)
   }
 
@@ -84,14 +89,14 @@ sealed class Feature {
     override val valueType = FeatureValueType.Categorical(possibleValues)
   }
 
-  abstract class Custom<T>(val name: String, override val value: T) : Feature() {
+  abstract class Custom<T>(val name: String, override val value: T, val descriptionProvider: () -> String) : Feature() {
     abstract val valueType: FeatureValueType.Custom<T>
 
     override val declaration: FeatureDeclaration<*>
-      get() = FeatureDeclaration(name, valueType)
+      get() = FeatureDeclaration(name, valueType, descriptionProvider)
 
     val eventPair: EventPair<T>
-      get() = valueType.eventFieldBuilder(name) with value
+      get() = valueType.eventFieldBuilder(name, descriptionProvider) with value
   }
 
   companion object {

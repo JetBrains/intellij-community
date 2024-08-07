@@ -17,9 +17,6 @@ internal class Foo {
 
         val ch = Char(1.toByte().toUShort())
 
-        val x: List<String> = ArrayList()
-        x.filter { o: String -> o == "a" }
-
         if (0 == 1 && a > b) return
         if (0 == 1 &&  /*comment 1*/ /*comment 2*/a != b) return
 

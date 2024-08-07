@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public final class Benchmark {
   /**
    * Init a performance test.<br/>
-   * E.g: {@code newPerformanceTest("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).start();}
+   * E.g: {@code newBenchmark("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).start();}
    *
    * @see BenchmarkTestInfo#start()
    */

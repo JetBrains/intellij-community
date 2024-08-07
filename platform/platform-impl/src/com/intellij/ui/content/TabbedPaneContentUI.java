@@ -267,21 +267,18 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
       }
     }
 
-    private final class MyTabbedPaneHolder extends TabbedPaneHolder implements DataProvider {
+    private final class MyTabbedPaneHolder extends TabbedPaneHolder implements UiDataProvider {
 
       private MyTabbedPaneHolder(TabbedPaneWrapper wrapper) {
         super(wrapper);
       }
 
       @Override
-      public Object getData(@NotNull String dataId) {
-        if (PlatformDataKeys.CONTENT_MANAGER.is(dataId)) {
-          return myManager;
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        sink.set(PlatformDataKeys.CONTENT_MANAGER, myManager);
+        if (myManager.getContentCount() > 1) {
+          sink.set(PlatformDataKeys.NONEMPTY_CONTENT_MANAGER, myManager);
         }
-        if (PlatformDataKeys.NONEMPTY_CONTENT_MANAGER.is(dataId) && myManager.getContentCount() > 1) {
-          return myManager;
-        }
-        return null;
       }
     }
   }

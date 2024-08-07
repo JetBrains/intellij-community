@@ -161,7 +161,9 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
 
   @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    doVisitReferenceElement(ref);
+    if (!(ref instanceof PsiReferenceExpression)) {
+      doVisitReferenceElement(ref);
+    }
   }
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
@@ -180,7 +182,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
           if (containingClass instanceof PsiLambdaExpression ||
               !PsiTreeUtil.isAncestor(((PsiAnonymousClass)containingClass).getArgumentList(), ref, false)) {
             myHolder.add(HighlightNamesUtil.highlightImplicitAnonymousClassParameter(ref));
-            break;
+            return;
           }
           containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, PsiLambdaExpression.class);
         }

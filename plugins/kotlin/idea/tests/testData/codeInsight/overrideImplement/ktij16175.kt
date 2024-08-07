@@ -8,3 +8,5 @@ interface Foo {
 class <caret>Bar(override val text: String, val number: Int) : Foo {
 
 }
+
+// MEMBER: "name: String"

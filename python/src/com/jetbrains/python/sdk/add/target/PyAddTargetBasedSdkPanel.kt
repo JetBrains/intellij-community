@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add.target
 
 import com.intellij.CommonBundle
@@ -36,7 +36,7 @@ import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelModel
 import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelView
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
-import com.jetbrains.python.sdk.poetry.createPoetryPanel
+import com.jetbrains.python.sdk.poetry.ui.createPoetryPanel
 import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.CardLayout

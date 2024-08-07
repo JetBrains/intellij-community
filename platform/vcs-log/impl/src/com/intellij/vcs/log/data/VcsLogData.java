@@ -263,7 +263,6 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
         listener.onDataPackChange(dataPack);
       }
     }, o -> myDisposableFlag.isDisposed());
-    myIndexDiagnosticRunner.onDataPackChange();
   }
 
   public void addDataPackChangeListener(final @NotNull DataPackChangeListener listener) {

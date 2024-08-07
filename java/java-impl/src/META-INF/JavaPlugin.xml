@@ -49,6 +49,8 @@
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.debugger.ui.HotSwapUIImpl$HotSwapDebuggerManagerListener"
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+    <listener class="com.intellij.debugger.impl.hotswap.HotSwapDebugSessionListener"
+              topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.packaging.impl.artifacts.ArtifactVirtualFileListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="com.intellij.compiler.server.impl.BuildProcessPreloadedStateClearer"
@@ -658,7 +660,7 @@
                      bundle="messages.JavaBundle"/>
     <advancedSetting id="compiler.lower.process.priority" groupKey="advanced.settings.group.compiler" default="true"
                      bundle="messages.JavaBundle"/>
-    <advancedSetting id="compiler.unified.ic.implementation" groupKey="advanced.settings.group.compiler" default="false"
+    <advancedSetting id="compiler.unified.ic.implementation" groupKey="advanced.settings.group.compiler" default="true"
                      bundle="messages.JavaBundle"/>
     <advancedSetting id="code.vision.java.minimal.usages" groupKey="advanced.settings.group.java" default="0" bundle="messages.JavaBundle"/>
     <advancedSetting id="java.completion.qualifier.as.argument" groupKey="advanced.settings.group.java" default="true"
@@ -927,6 +929,7 @@
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaFieldBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType"/>
+    <xdebugger.hotSwapUiExtension implementation="com.intellij.debugger.impl.hotswap.JvmHotSwapUiExtension"/>
     <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler" order="last"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.ui.breakpoints.JavaBreakpointsUsageCollector"/>
     <debugger.simplePropertyGetterProvider implementation="com.intellij.debugger.engine.JavaSimpleGetterProvider"/>
@@ -2808,6 +2811,7 @@
     <postStartupActivity implementation="com.intellij.ide.FileNotInSourceRootChecker"/>
 
     <virtualFileCustomDataProvider implementation="com.intellij.openapi.roots.impl.JavaLangLevelVirtualFileCustomDataProvider"/>
+    <virtualFileCustomDataProvider implementation="com.intellij.openapi.roots.impl.JavaClassVirtualFileCustomDataProvider"/>
 
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
 

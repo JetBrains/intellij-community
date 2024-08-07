@@ -11,19 +11,17 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.utils.checkMayBeConstantByFields
 import org.jetbrains.kotlin.idea.codeinsight.utils.replaceReferencesToGetterByReferenceToField
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.matchStatus
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
-
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -38,7 +36,7 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
 
         val initializer = initializer
         analyze(this) {
-            if (!hasPrimitiveOrStringType()) return Status.NONE
+            if (!hasNonNullablePrimitiveOrStringType()) return Status.NONE
         }
 
         val withJvmField = findAnnotation(ClassId.fromString(JVM_FIELD_CLASS_ID)) != null
@@ -60,8 +58,9 @@ class MayBeConstantInspection : MayBeConstantInspectionBase() {
     }
 
     context(KaSession)
-    private fun KtProperty.hasPrimitiveOrStringType(): Boolean {
+    private fun KtProperty.hasNonNullablePrimitiveOrStringType(): Boolean {
         val type = this.returnType
+        if (type.isMarkedNullable) return false
         return type.isPrimitive || type.isStringType
     }
 

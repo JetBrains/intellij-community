@@ -18,9 +18,7 @@ package org.intellij.lang.xpath.xslt.run;
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
@@ -29,14 +27,13 @@ import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.intellij.plugins.xpathView.XPathBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class HighlightingOutputConsole extends AdditionalTabComponent implements DataProvider {
+public class HighlightingOutputConsole extends AdditionalTabComponent implements UiDataProvider {
 
     private final ConsoleView myConsole;
     private final JComponent myConsoleComponent;
@@ -98,14 +95,10 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         return myConsoleComponent;
     }
 
-    @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
-        if (LangDataKeys.EDITOR.is(dataId)) {
-            return getEditor();
-        }
-        return null;
-    }
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.EDITOR, getEditor());
+  }
 
     void selectOutputTab() {
         final Container parent = getParent();

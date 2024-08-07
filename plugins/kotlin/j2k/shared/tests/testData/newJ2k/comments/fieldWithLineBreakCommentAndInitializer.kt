@@ -1,4 +1,3 @@
-// KTIJ-29640
 package some
 
 object Foo {

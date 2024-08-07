@@ -64,7 +64,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
@@ -72,7 +71,6 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.AWTEventListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import javax.swing.*
 
@@ -571,6 +569,7 @@ private class EditorTabs(
 
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
     source.templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
+    source.templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
     _entryPointActionGroup = DefaultActionGroup(java.util.List.of(source))
   }
 

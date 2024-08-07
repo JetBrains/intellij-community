@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
 internal class LocalizationActionsStatistics: CounterUsagesCollector() {
-  private val localizationActionsGroup = EventLogGroup("localization.actions.info", 4)
+  private val localizationActionsGroup = EventLogGroup("localization.actions.info", 5)
   private val eventSource: EnumEventField<EventSource> = EventFields.Enum<EventSource>("event_source")
   private val availableLanguages = listOf(Locale.CHINA, Locale.JAPANESE, Locale.KOREAN, Locale.ENGLISH).map { it.toLanguageTag() }
   private val availableRegions = Region.entries.map { it.externalName() }
@@ -25,6 +25,7 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
   private val hyperLinkActivatedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("documentation_link_activated", eventSource, eventTimestamp)
   private val languageExpandEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("language_expanded", eventSource, eventTimestamp)
   private val languageSelectedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("language_selected", selectedLang, selectedLangPrev, eventSource, eventTimestamp)
+  private val moreLanguagesEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("more_languages_selected", eventSource, eventTimestamp)
   private val regionExpandEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("region_expanded", eventSource, eventTimestamp)
   private val regionSelectedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("region_selected", selectedRegion, selectedRegionPrev, eventSource, eventTimestamp)
 
@@ -116,6 +117,13 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
       eventTimestamp.with(System.currentTimeMillis())
     )
     )
+  }
+
+  fun moreLanguagesSelected() {
+    logEvent(moreLanguagesEvent, listOf(
+      eventSource.with(source),
+      eventTimestamp.with(System.currentTimeMillis())
+    ))
   }
 
   fun regionExpanded() {

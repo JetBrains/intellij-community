@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -46,7 +47,12 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
   abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor)
   open fun onShown() {}
-  abstract fun getOrCreateSdk(): Sdk?
+
+  /**
+   * Returns created SDK ready to use
+   */
+  @RequiresEdt
+  abstract fun getOrCreateSdk(): Sdk
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
@@ -74,7 +80,6 @@ enum class PythonInterpreterSelectionMode(val nameKey: String) {
 enum class PythonInterpreterCreationTargets(val nameKey: String, val icon: Icon) {
   LOCAL_MACHINE("sdk.create.targets.local", AllIcons.Nodes.HomeFolder),
   SSH("", AllIcons.Nodes.HomeFolder),
-  DOCKER("", AllIcons.Nodes.HomeFolder)
 }
 
 fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
@@ -109,16 +114,6 @@ internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
   }
   return installed
 }
-
-internal fun setupSdkIfDetected(sdk: Sdk, existingSdks: List<Sdk>): Sdk = when (sdk) {
-  is PyDetectedSdk -> {
-    val newSdk = sdk.setup(existingSdks)!!
-    SdkConfigurationUtil.addSdk(newSdk)
-    newSdk
-  }
-  else -> sdk
-}
-
 
 
 internal fun setupSdkIfDetected(interpreter: PythonSelectableInterpreter, existingSdks: List<Sdk>, targetConfig: TargetEnvironmentConfiguration? = null): Sdk? {

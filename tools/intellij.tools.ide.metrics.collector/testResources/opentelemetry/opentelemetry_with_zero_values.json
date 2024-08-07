@@ -31,8 +31,8 @@
           "spanID": "b8330434aaa2f6c0",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554031876,
-          "durationNano": 232000,
+          "startTime": 1669323554031876,
+          "duration": 232,
           "tags": [
             {
               "key": "class",
@@ -58,8 +58,8 @@
           "spanID": "63a0912de8e8c692",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554034270,
-          "durationNano": 7527000,
+          "startTime": 1669323554034270,
+          "duration": 7527,
           "tags": [
             {
               "key": "class",
@@ -85,8 +85,8 @@
           "spanID": "6eaa46dfc676262d",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554042146,
-          "durationNano": 3835000,
+          "startTime": 1669323554042146,
+          "duration": 3835,
           "tags": [
             {
               "key": "class",
@@ -112,8 +112,8 @@
           "spanID": "9e02a21158762843",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554047419,
-          "durationNano": 19567000,
+          "startTime": 1669323554047419,
+          "duration": 19567,
           "tags": [
             {
               "key": "class",
@@ -139,8 +139,8 @@
           "spanID": "ce2a9da71cb845b9",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554067184,
-          "durationNano": 29000,
+          "startTime": 1669323554067184,
+          "duration": 29,
           "tags": [
             {
               "key": "class",
@@ -166,8 +166,8 @@
           "spanID": "1b31fb3c42972f04",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554067813,
-          "durationNano": 27633000,
+          "startTime": 1669323554067813,
+          "duration": 27633,
           "tags": [
             {
               "key": "class",
@@ -193,24 +193,24 @@
           "spanID": "8f58f45a7eed960e",
           "operationName": "run init project activities",
           "processID": "p1",
-          "startTimeNano": 1669323554030000,
-          "durationNano": 65471000
+          "startTime": 1669323554030000,
+          "duration": 65471000
         },
         {
           "traceID": "abd416dac1988f4323ec2d9a85badee3",
           "spanID": "cd8791904b79ddf2",
           "operationName": "projectOpened event executing",
           "processID": "p1",
-          "startTimeNano": 1669323554219000,
-          "durationNano": 25339000
+          "startTime": 1669323554219000,
+          "duration": 25339000
         },
         {
           "traceID": "e9b202638db31674e15bab8ec0f959ac",
           "spanID": "3a0f340ae2b36550",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554938000,
-          "durationNano": 12706000,
+          "startTime": 1669323554938000,
+          "duration": 12706,
           "tags": [
             {
               "key": "class",
@@ -229,8 +229,8 @@
           "spanID": "631286d69ec4ac6a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554959000,
-          "durationNano": 3751000,
+          "startTime": 1669323554959000,
+          "duration": 3751,
           "tags": [
             {
               "key": "class",
@@ -249,8 +249,8 @@
           "spanID": "21fd856d76ff277c",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554965000,
-          "durationNano": 3611000,
+          "startTime": 1669323554965000,
+          "duration": 3611,
           "tags": [
             {
               "key": "class",
@@ -269,8 +269,8 @@
           "spanID": "6717cf1b1f0ca466",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323554981000,
-          "durationNano": 9011000,
+          "startTime": 1669323554981000,
+          "duration": 9011,
           "tags": [
             {
               "key": "class",
@@ -289,8 +289,8 @@
           "spanID": "1054183611198d3e",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555003000,
-          "durationNano": 3842000,
+          "startTime": 1669323555003000,
+          "duration": 3842,
           "tags": [
             {
               "key": "class",
@@ -309,8 +309,8 @@
           "spanID": "3af1fbd0c28a454e",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555009000,
-          "durationNano": 27871000,
+          "startTime": 1669323555009000,
+          "duration": 27871,
           "tags": [
             {
               "key": "class",
@@ -329,8 +329,8 @@
           "spanID": "5d36e34ad32f32a7",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555039000,
-          "durationNano": 1074000,
+          "startTime": 1669323555039000,
+          "duration": 1074,
           "tags": [
             {
               "key": "class",
@@ -349,8 +349,8 @@
           "spanID": "78c949b8d1f2f9e7",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555046000,
-          "durationNano": 19583000,
+          "startTime": 1669323555046000,
+          "duration": 19583,
           "tags": [
             {
               "key": "class",
@@ -369,8 +369,8 @@
           "spanID": "a1e7a86ff82fa443",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555068000,
-          "durationNano": 42002000,
+          "startTime": 1669323555068000,
+          "duration": 42002,
           "tags": [
             {
               "key": "class",
@@ -389,8 +389,8 @@
           "spanID": "fd3dd0a317700a62",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555117000,
-          "durationNano": 113000,
+          "startTime": 1669323555117000,
+          "duration": 113,
           "tags": [
             {
               "key": "class",
@@ -409,8 +409,8 @@
           "spanID": "37037aeac6c854ff",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555118000,
-          "durationNano": 5690000,
+          "startTime": 1669323555118000,
+          "duration": 5690,
           "tags": [
             {
               "key": "class",
@@ -429,8 +429,8 @@
           "spanID": "d50f4e9dee69ffa6",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555125000,
-          "durationNano": 3371000,
+          "startTime": 1669323555125000,
+          "duration": 3371,
           "tags": [
             {
               "key": "class",
@@ -449,8 +449,8 @@
           "spanID": "d8802a6fcebeb28b",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555136000,
-          "durationNano": 29618000,
+          "startTime": 1669323555136000,
+          "duration": 29618,
           "tags": [
             {
               "key": "class",
@@ -469,8 +469,8 @@
           "spanID": "861088e6ff2c9d17",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555167000,
-          "durationNano": 6847000,
+          "startTime": 1669323555167000,
+          "duration": 6847,
           "tags": [
             {
               "key": "class",
@@ -489,8 +489,8 @@
           "spanID": "e08055087de1e0ae",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555181000,
-          "durationNano": 2658000,
+          "startTime": 1669323555181000,
+          "duration": 2658,
           "tags": [
             {
               "key": "class",
@@ -509,8 +509,8 @@
           "spanID": "63361c98850c4eb6",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555185000,
-          "durationNano": 126000,
+          "startTime": 1669323555185000,
+          "duration": 126,
           "tags": [
             {
               "key": "class",
@@ -529,8 +529,8 @@
           "spanID": "7c6e9f37e60cf35f",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555187000,
-          "durationNano": 23017000,
+          "startTime": 1669323555187000,
+          "duration": 23017,
           "tags": [
             {
               "key": "class",
@@ -549,8 +549,8 @@
           "spanID": "41309bab3ba0a537",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555214000,
-          "durationNano": 4308000,
+          "startTime": 1669323555214000,
+          "duration": 4308,
           "tags": [
             {
               "key": "class",
@@ -569,8 +569,8 @@
           "spanID": "651d5b4c57eec488",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555221000,
-          "durationNano": 852000,
+          "startTime": 1669323555221000,
+          "duration": 852,
           "tags": [
             {
               "key": "class",
@@ -589,8 +589,8 @@
           "spanID": "2ed09275afb87836",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555223000,
-          "durationNano": 3447000,
+          "startTime": 1669323555223000,
+          "duration": 3447,
           "tags": [
             {
               "key": "class",
@@ -609,8 +609,8 @@
           "spanID": "840deb444f9c55d8",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555230000,
-          "durationNano": 68000,
+          "startTime": 1669323555230000,
+          "duration": 68,
           "tags": [
             {
               "key": "class",
@@ -629,8 +629,8 @@
           "spanID": "ff02d3a3efec6c99",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555238000,
-          "durationNano": 3161000,
+          "startTime": 1669323555238000,
+          "duration": 3161,
           "tags": [
             {
               "key": "class",
@@ -649,8 +649,8 @@
           "spanID": "aa30fc47ab6b0fb6",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555246000,
-          "durationNano": 16000,
+          "startTime": 1669323555246000,
+          "duration": 16,
           "tags": [
             {
               "key": "class",
@@ -669,8 +669,8 @@
           "spanID": "e7aae20711d16ffc",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555248000,
-          "durationNano": 43112000,
+          "startTime": 1669323555248000,
+          "duration": 43112,
           "tags": [
             {
               "key": "class",
@@ -689,8 +689,8 @@
           "spanID": "6ddcd876035fe560",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555292000,
-          "durationNano": 7995000,
+          "startTime": 1669323555292000,
+          "duration": 7995,
           "tags": [
             {
               "key": "class",
@@ -709,8 +709,8 @@
           "spanID": "68b7eb2039284881",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555301000,
-          "durationNano": 3124000,
+          "startTime": 1669323555301000,
+          "duration": 3124,
           "tags": [
             {
               "key": "class",
@@ -729,8 +729,8 @@
           "spanID": "408ae5de79a6d18a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555306000,
-          "durationNano": 1676000,
+          "startTime": 1669323555306000,
+          "duration": 1676,
           "tags": [
             {
               "key": "class",
@@ -749,8 +749,8 @@
           "spanID": "55af1033b8467735",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555307000,
-          "durationNano": 2390000,
+          "startTime": 1669323555307000,
+          "duration": 2390,
           "tags": [
             {
               "key": "class",
@@ -769,8 +769,8 @@
           "spanID": "44e7f7084f7bbcf9",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555321000,
-          "durationNano": 3796000,
+          "startTime": 1669323555321000,
+          "duration": 3796,
           "tags": [
             {
               "key": "class",
@@ -789,8 +789,8 @@
           "spanID": "00ce4e09b9183584",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555327000,
-          "durationNano": 698000,
+          "startTime": 1669323555327000,
+          "duration": 698,
           "tags": [
             {
               "key": "class",
@@ -809,8 +809,8 @@
           "spanID": "a6e02c36fefe4db5",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555328057,
-          "durationNano": 392000,
+          "startTime": 1669323555328057,
+          "duration": 392,
           "tags": [
             {
               "key": "class",
@@ -836,8 +836,8 @@
           "spanID": "42f0204518e96a2a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555328473,
-          "durationNano": 1415000,
+          "startTime": 1669323555328473,
+          "duration": 1415,
           "tags": [
             {
               "key": "class",
@@ -863,8 +863,8 @@
           "spanID": "be694e5caa5d397d",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555329921,
-          "durationNano": 27000,
+          "startTime": 1669323555329921,
+          "duration": 27,
           "tags": [
             {
               "key": "class",
@@ -890,8 +890,8 @@
           "spanID": "9727c94b938d4fb4",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555329961,
-          "durationNano": 1667000,
+          "startTime": 1669323555329961,
+          "duration": 1667,
           "tags": [
             {
               "key": "class",
@@ -917,8 +917,8 @@
           "spanID": "e33a10c5f760b292",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555331734,
-          "durationNano": 34000,
+          "startTime": 1669323555331734,
+          "duration": 34,
           "tags": [
             {
               "key": "class",
@@ -944,8 +944,8 @@
           "spanID": "3bcdb67786d00a80",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555331893,
-          "durationNano": 15000,
+          "startTime": 1669323555331893,
+          "duration": 15,
           "tags": [
             {
               "key": "class",
@@ -971,8 +971,8 @@
           "spanID": "a777b6e7fcfd80c6",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555331920,
-          "durationNano": 28000,
+          "startTime": 1669323555331920,
+          "duration": 28,
           "tags": [
             {
               "key": "class",
@@ -998,8 +998,8 @@
           "spanID": "fb220f4b70a2c503",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555332027,
-          "durationNano": 64000,
+          "startTime": 1669323555332027,
+          "duration": 64,
           "tags": [
             {
               "key": "class",
@@ -1025,8 +1025,8 @@
           "spanID": "a5ab8ed5d80ef825",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555332153,
-          "durationNano": 22000,
+          "startTime": 1669323555332153,
+          "duration": 22,
           "tags": [
             {
               "key": "class",
@@ -1052,8 +1052,8 @@
           "spanID": "140f7f71b84deb34",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555332207,
-          "durationNano": 36000,
+          "startTime": 1669323555332207,
+          "duration": 36,
           "tags": [
             {
               "key": "class",
@@ -1079,8 +1079,8 @@
           "spanID": "eb80ac7437c66a09",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555332276,
-          "durationNano": 19000,
+          "startTime": 1669323555332276,
+          "duration": 19,
           "tags": [
             {
               "key": "class",
@@ -1106,8 +1106,8 @@
           "spanID": "ce18b14ff5553c00",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555332317,
-          "durationNano": 53000,
+          "startTime": 1669323555332317,
+          "duration": 53,
           "tags": [
             {
               "key": "class",
@@ -1133,8 +1133,8 @@
           "spanID": "20178f7b19706461",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555332392,
-          "durationNano": 14000,
+          "startTime": 1669323555332392,
+          "duration": 14,
           "tags": [
             {
               "key": "class",
@@ -1160,8 +1160,8 @@
           "spanID": "b5d0ab74f2363ada",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323555332417,
-          "durationNano": 8000,
+          "startTime": 1669323555332417,
+          "duration": 8,
           "tags": [
             {
               "key": "class",
@@ -1187,16 +1187,16 @@
           "spanID": "82858c1cd0cae568",
           "operationName": "run post-startup dynamically registered activities",
           "processID": "p1",
-          "startTimeNano": 1669323555328000,
-          "durationNano": 4481000
+          "startTime": 1669323555328000,
+          "duration": 4481000
         },
         {
           "traceID": "04b443aef7b090d2fe8598ffc3e70a00",
           "spanID": "c5fe86bae51b8ef0",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577441000,
-          "durationNano": 3380000,
+          "startTime": 1669323577441000,
+          "duration": 3380,
           "tags": [
             {
               "key": "class",
@@ -1215,8 +1215,8 @@
           "spanID": "4d6c260407d0afd1",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577445000,
-          "durationNano": 152000,
+          "startTime": 1669323577445000,
+          "duration": 152,
           "tags": [
             {
               "key": "class",
@@ -1235,8 +1235,8 @@
           "spanID": "fffc084f2dd6dcaf",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577445000,
-          "durationNano": 1099000,
+          "startTime": 1669323577445000,
+          "duration": 1099,
           "tags": [
             {
               "key": "class",
@@ -1255,8 +1255,8 @@
           "spanID": "290096b9ad775d6f",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577446000,
-          "durationNano": 248000,
+          "startTime": 1669323577446000,
+          "duration": 248,
           "tags": [
             {
               "key": "class",
@@ -1275,8 +1275,8 @@
           "spanID": "d2d1b8da790e04f8",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577446000,
-          "durationNano": 238000,
+          "startTime": 1669323577446000,
+          "duration": 238,
           "tags": [
             {
               "key": "class",
@@ -1295,8 +1295,8 @@
           "spanID": "ae94fde57bd6c68f",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577446000,
-          "durationNano": 11282000,
+          "startTime": 1669323577446000,
+          "duration": 11282,
           "tags": [
             {
               "key": "class",
@@ -1315,8 +1315,8 @@
           "spanID": "af692e3d5259d87d",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577458000,
-          "durationNano": 2180000,
+          "startTime": 1669323577458000,
+          "duration": 2180,
           "tags": [
             {
               "key": "class",
@@ -1335,8 +1335,8 @@
           "spanID": "3523bf59a0d03350",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577460000,
-          "durationNano": 560000,
+          "startTime": 1669323577460000,
+          "duration": 560,
           "tags": [
             {
               "key": "class",
@@ -1355,8 +1355,8 @@
           "spanID": "b314e754481ea6cf",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577461000,
-          "durationNano": 611000,
+          "startTime": 1669323577461000,
+          "duration": 611,
           "tags": [
             {
               "key": "class",
@@ -1375,8 +1375,8 @@
           "spanID": "ad8e962543291757",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577461000,
-          "durationNano": 3305000,
+          "startTime": 1669323577461000,
+          "duration": 3305,
           "tags": [
             {
               "key": "class",
@@ -1395,8 +1395,8 @@
           "spanID": "111de7387b83962c",
           "operationName": "run activity",
           "processID": "p1",
-          "startTimeNano": 1669323577465000,
-          "durationNano": 1258000,
+          "startTime": 1669323577465000,
+          "duration": 1258,
           "tags": [
             {
               "key": "class",
@@ -1415,8 +1415,8 @@
           "spanID": "549f89ba29424c8a",
           "operationName": "firstCodeAnalysis",
           "processID": "p1",
-          "startTimeNano": 1669323578029842,
-          "durationNano": 1725670000,
+          "startTime": 1669323578029842,
+          "duration": 1725670,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -1430,8 +1430,8 @@
           "spanID": "af7348a00982db45",
           "operationName": "typing",
           "processID": "p1",
-          "startTimeNano": 1669323579767857,
-          "durationNano": 157840000,
+          "startTime": 1669323579767857,
+          "duration": 157840,
           "logs": [
             {
               "timestamp": 1669323579767873,
@@ -1477,8 +1477,8 @@
           "spanID": "6fcf885c44ece231",
           "operationName": "invokeCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323580418000,
-          "durationNano": 209252000,
+          "startTime": 1669323580418000,
+          "duration": 209252,
           "tags": [
             {
               "key": "project",
@@ -1497,8 +1497,8 @@
           "spanID": "aa366cb91322ee1a",
           "operationName": "ComboEditorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580664506,
-          "durationNano": 2676000,
+          "startTime": 1669323580664506,
+          "duration": 2676,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1519,8 +1519,8 @@
           "spanID": "68916802d09515e5",
           "operationName": "CompletionContributorForInplaceRename",
           "processID": "p1",
-          "startTimeNano": 1669323580667219,
-          "durationNano": 12000,
+          "startTime": 1669323580667219,
+          "duration": 12,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1541,8 +1541,8 @@
           "spanID": "3b6877cf1a4b6469",
           "operationName": "XmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580667241,
-          "durationNano": 67000,
+          "startTime": 1669323580667241,
+          "duration": 67,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1563,8 +1563,8 @@
           "spanID": "984696cd60e01d9e",
           "operationName": "ContextFeaturesContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580667317,
-          "durationNano": 16907000,
+          "startTime": 1669323580667317,
+          "duration": 16907,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1585,8 +1585,8 @@
           "spanID": "9393a4a08b54ddc3",
           "operationName": "PhpLanguagesAttributeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580712467,
-          "durationNano": 32000,
+          "startTime": 1669323580712467,
+          "duration": 32,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1607,8 +1607,8 @@
           "spanID": "23671e6a85b18a18",
           "operationName": "RectorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580712515,
-          "durationNano": 13000,
+          "startTime": 1669323580712515,
+          "duration": 13,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1629,8 +1629,8 @@
           "spanID": "13936807403722bd",
           "operationName": "FilePathCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580712536,
-          "durationNano": 739000,
+          "startTime": 1669323580712536,
+          "duration": 739,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1651,8 +1651,8 @@
           "spanID": "0ca2b861a93be37d",
           "operationName": "CustomFileTypeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580713288,
-          "durationNano": 16000,
+          "startTime": 1669323580713288,
+          "duration": 16,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1673,8 +1673,8 @@
           "spanID": "c745034fdfe4c630",
           "operationName": "HtmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580713311,
-          "durationNano": 20000,
+          "startTime": 1669323580713311,
+          "duration": 20,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1695,8 +1695,8 @@
           "spanID": "796d06926c0f1e01",
           "operationName": "StructuralSearchTemplatesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580713338,
-          "durationNano": 12000,
+          "startTime": 1669323580713338,
+          "duration": 12,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1717,8 +1717,8 @@
           "spanID": "2ce5c2c922fa02a1",
           "operationName": "UrlPathReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580713356,
-          "durationNano": 3164000,
+          "startTime": 1669323580713356,
+          "duration": 3164,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1739,8 +1739,8 @@
           "spanID": "0e20021571cedf25",
           "operationName": "MQReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580716551,
-          "durationNano": 436000,
+          "startTime": 1669323580716551,
+          "duration": 436,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1761,8 +1761,8 @@
           "spanID": "f82cc38b10108bb9",
           "operationName": "LanguageWordInCommentCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580717003,
-          "durationNano": 7000,
+          "startTime": 1669323580717003,
+          "duration": 7,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1783,8 +1783,8 @@
           "spanID": "024a73c80915c7b0",
           "operationName": "DockerImageCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580717019,
-          "durationNano": 129000,
+          "startTime": 1669323580717019,
+          "duration": 129,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1805,8 +1805,8 @@
           "spanID": "24ba490b24c1ed80",
           "operationName": "LspCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580717156,
-          "durationNano": 198000,
+          "startTime": 1669323580717156,
+          "duration": 198,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1827,8 +1827,8 @@
           "spanID": "2ea42cd8d66e58a5",
           "operationName": "VueCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580717365,
-          "durationNano": 44000,
+          "startTime": 1669323580717365,
+          "duration": 44,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1849,8 +1849,8 @@
           "spanID": "ad68314597098d00",
           "operationName": "SpaceChatCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580717429,
-          "durationNano": 45000,
+          "startTime": 1669323580717429,
+          "duration": 45,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1871,8 +1871,8 @@
           "spanID": "b79b7ed4049650a9",
           "operationName": "WebComponentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580717484,
-          "durationNano": 14000,
+          "startTime": 1669323580717484,
+          "duration": 14,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1893,8 +1893,8 @@
           "spanID": "ef2b3f6589e69cf8",
           "operationName": "PhpNamedArgumentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580717509,
-          "durationNano": 9328000,
+          "startTime": 1669323580717509,
+          "duration": 9328,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1915,8 +1915,8 @@
           "spanID": "75ae46f64e8a0b23",
           "operationName": "PhpKeywordsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580726878,
-          "durationNano": 5358000,
+          "startTime": 1669323580726878,
+          "duration": 5358,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1937,8 +1937,8 @@
           "spanID": "64f4c0e59bf55b77",
           "operationName": "PhpCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580732264,
-          "durationNano": 194375000,
+          "startTime": 1669323580732264,
+          "duration": 194375,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1959,8 +1959,8 @@
           "spanID": "a44c4c6d20b93b04",
           "operationName": "PhpInjectionCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926682,
-          "durationNano": 71000,
+          "startTime": 1669323580926682,
+          "duration": 71,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -1981,8 +1981,8 @@
           "spanID": "334d57537ee4162d",
           "operationName": "PhpOverriddenMembersCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926763,
-          "durationNano": 5000,
+          "startTime": 1669323580926763,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2003,8 +2003,8 @@
           "spanID": "1a69b3d59fd18d80",
           "operationName": "PhpAccessorsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926774,
-          "durationNano": 3000,
+          "startTime": 1669323580926774,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2025,8 +2025,8 @@
           "spanID": "4f2222babc119cfb",
           "operationName": "PhpUnitTestMethodsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926783,
-          "durationNano": 2000,
+          "startTime": 1669323580926783,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2047,8 +2047,8 @@
           "spanID": "899b394989dd7341",
           "operationName": "PhpUnitDependsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926791,
-          "durationNano": 3000,
+          "startTime": 1669323580926791,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2069,8 +2069,8 @@
           "spanID": "fb3b69be2947b0ef",
           "operationName": "PhpArrayShapeTypesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926799,
-          "durationNano": 15000,
+          "startTime": 1669323580926799,
+          "duration": 15,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2091,8 +2091,8 @@
           "spanID": "4b07e10a845535f0",
           "operationName": "PhpDeprecatedTemplateVariablesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926822,
-          "durationNano": 76000,
+          "startTime": 1669323580926822,
+          "duration": 76,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2113,8 +2113,8 @@
           "spanID": "56c12edf7d0fc057",
           "operationName": "MyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926910,
-          "durationNano": 53000,
+          "startTime": 1669323580926910,
+          "duration": 53,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2135,8 +2135,8 @@
           "spanID": "e6b6476044186cfa",
           "operationName": "PhpHeredocIdentifierCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926971,
-          "durationNano": 3000,
+          "startTime": 1669323580926971,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2157,8 +2157,8 @@
           "spanID": "d5e34020a4930a0d",
           "operationName": "DqlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926980,
-          "durationNano": 4000,
+          "startTime": 1669323580926980,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2179,8 +2179,8 @@
           "spanID": "81c73e1a0168297a",
           "operationName": "DrupalHooksCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580926990,
-          "durationNano": 6000,
+          "startTime": 1669323580926990,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2201,8 +2201,8 @@
           "spanID": "6fd8d228da474696",
           "operationName": "WPHookCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580927003,
-          "durationNano": 3000,
+          "startTime": 1669323580927003,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2223,8 +2223,8 @@
           "spanID": "74c75bea107020f2",
           "operationName": "PsalmCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580927012,
-          "durationNano": 4000,
+          "startTime": 1669323580927012,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2245,8 +2245,8 @@
           "spanID": "5e6cd20d82692f7a",
           "operationName": "PhpTCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580927021,
-          "durationNano": 349000,
+          "startTime": 1669323580927021,
+          "duration": 349,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2267,8 +2267,8 @@
           "spanID": "656e746a7b26e95b",
           "operationName": "PhpSqlSelectedFieldsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580927381,
-          "durationNano": 5000,
+          "startTime": 1669323580927381,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2289,8 +2289,8 @@
           "spanID": "8ed82529376a5863",
           "operationName": "BladeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580927392,
-          "durationNano": 49000,
+          "startTime": 1669323580927392,
+          "duration": 49,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2311,8 +2311,8 @@
           "spanID": "316e1410d69c912d",
           "operationName": "Angular2CompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580927448,
-          "durationNano": 37000,
+          "startTime": 1669323580927448,
+          "duration": 37,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2333,8 +2333,8 @@
           "spanID": "8690c9039c65d8a8",
           "operationName": "XmlNonFirstCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580927491,
-          "durationNano": 27000,
+          "startTime": 1669323580927491,
+          "duration": 27,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2355,8 +2355,8 @@
           "spanID": "5085b19decdd1f18",
           "operationName": "CssClassOrIdReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580927524,
-          "durationNano": 1605000,
+          "startTime": 1669323580927524,
+          "duration": 1605,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2377,8 +2377,8 @@
           "spanID": "83d28ea8a7b25b70",
           "operationName": "LegacyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580929156,
-          "durationNano": 543000,
+          "startTime": 1669323580929156,
+          "duration": 543,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2399,8 +2399,8 @@
           "spanID": "f9c8a8c83adf5399",
           "operationName": "DefaultCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580929905,
-          "durationNano": 6000,
+          "startTime": 1669323580929905,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2421,8 +2421,8 @@
           "spanID": "e841c1706bfbeae6",
           "operationName": "WordCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580929921,
-          "durationNano": 49000,
+          "startTime": 1669323580929921,
+          "duration": 49,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2443,8 +2443,8 @@
           "spanID": "27b66a13c359e294",
           "operationName": "ReferenceBasedCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580929978,
-          "durationNano": 110000,
+          "startTime": 1669323580929978,
+          "duration": 110,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2465,8 +2465,8 @@
           "spanID": "a5367c528262af73",
           "operationName": "PostfixTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580930098,
-          "durationNano": 9000,
+          "startTime": 1669323580930098,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2487,8 +2487,8 @@
           "spanID": "b987335cac366c44",
           "operationName": "LiveTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323580684259,
-          "durationNano": 273554000,
+          "startTime": 1669323580684259,
+          "duration": 273554,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2509,8 +2509,8 @@
           "spanID": "836aaf100dd3f3e3",
           "operationName": "performCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323580655062,
-          "durationNano": 302775000,
+          "startTime": 1669323580655062,
+          "duration": 302775,
           "tags": [
             {
               "key": "lookupsFound",
@@ -2531,8 +2531,8 @@
           "spanID": "2c0cbd1436b3ec3e",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323580960661,
-          "durationNano": 70070000,
+          "startTime": 1669323580960661,
+          "duration": 70070,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -2546,8 +2546,8 @@
           "spanID": "fe37c2d9badbb94c",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581040893,
-          "durationNano": 43025000,
+          "startTime": 1669323581040893,
+          "duration": 43025,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -2561,8 +2561,8 @@
           "spanID": "8b70ee003bb3698d",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581143883,
-          "durationNano": 20637000,
+          "startTime": 1669323581143883,
+          "duration": 20637,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -2576,8 +2576,8 @@
           "spanID": "2320ac2f6710b9f5",
           "operationName": "completion",
           "processID": "p1",
-          "startTimeNano": 1669323580628422,
-          "durationNano": 539448000,
+          "startTime": 1669323580628422,
+          "duration": 539448,
           "tags": [
             {
               "key": "number",
@@ -2598,8 +2598,8 @@
           "spanID": "2c44dccb5cbaf8b4",
           "operationName": "invokeCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323580628658,
-          "durationNano": 542802000,
+          "startTime": 1669323580628658,
+          "duration": 542802,
           "tags": [
             {
               "key": "project",
@@ -2625,16 +2625,16 @@
           "spanID": "4904e595a50e926d",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581227000,
-          "durationNano": 16333000
+          "startTime": 1669323581227000,
+          "duration": 16333000
         },
         {
           "traceID": "9a32cf88ac01ab267a468abd1bba6913",
           "spanID": "6cae46fb0e0aa82e",
           "operationName": "typing",
           "processID": "p1",
-          "startTimeNano": 1669323581287420,
-          "durationNano": 43681000,
+          "startTime": 1669323581287420,
+          "duration": 43681,
           "logs": [
             {
               "timestamp": 1669323581331098,
@@ -2660,8 +2660,8 @@
           "spanID": "6e8289e5f67d467c",
           "operationName": "ComboEditorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581344072,
-          "durationNano": 9000,
+          "startTime": 1669323581344072,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2682,8 +2682,8 @@
           "spanID": "6e52dfebe14da3c4",
           "operationName": "CompletionContributorForInplaceRename",
           "processID": "p1",
-          "startTimeNano": 1669323581344095,
-          "durationNano": 3000,
+          "startTime": 1669323581344095,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2704,8 +2704,8 @@
           "spanID": "63dd573280ffa5b8",
           "operationName": "XmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581344104,
-          "durationNano": 19000,
+          "startTime": 1669323581344104,
+          "duration": 19,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2726,8 +2726,8 @@
           "spanID": "7141c4c163ad9370",
           "operationName": "ContextFeaturesContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581344129,
-          "durationNano": 1041000,
+          "startTime": 1669323581344129,
+          "duration": 1041,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2748,8 +2748,8 @@
           "spanID": "981eb1c5c28c61cf",
           "operationName": "PhpLanguagesAttributeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346254,
-          "durationNano": 11000,
+          "startTime": 1669323581346254,
+          "duration": 11,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2770,8 +2770,8 @@
           "spanID": "0dfc1a7211c108c7",
           "operationName": "RectorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346275,
-          "durationNano": 7000,
+          "startTime": 1669323581346275,
+          "duration": 7,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2792,8 +2792,8 @@
           "spanID": "3255b94bda69cf1a",
           "operationName": "FilePathCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346288,
-          "durationNano": 25000,
+          "startTime": 1669323581346288,
+          "duration": 25,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2814,8 +2814,8 @@
           "spanID": "bb5f2a4af5659ebf",
           "operationName": "CustomFileTypeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346321,
-          "durationNano": 5000,
+          "startTime": 1669323581346321,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2836,8 +2836,8 @@
           "spanID": "c1f38aa66620b2f6",
           "operationName": "HtmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346331,
-          "durationNano": 6000,
+          "startTime": 1669323581346331,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2858,8 +2858,8 @@
           "spanID": "5edcf6cc20f0ce1d",
           "operationName": "StructuralSearchTemplatesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346342,
-          "durationNano": 3000,
+          "startTime": 1669323581346342,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2880,8 +2880,8 @@
           "spanID": "6b27f163dd990c0c",
           "operationName": "UrlPathReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346349,
-          "durationNano": 14000,
+          "startTime": 1669323581346349,
+          "duration": 14,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2902,8 +2902,8 @@
           "spanID": "f82842d07f7be257",
           "operationName": "MQReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346368,
-          "durationNano": 9000,
+          "startTime": 1669323581346368,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2924,8 +2924,8 @@
           "spanID": "4d5962292670650d",
           "operationName": "LanguageWordInCommentCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346383,
-          "durationNano": 2000,
+          "startTime": 1669323581346383,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2946,8 +2946,8 @@
           "spanID": "412a38c06e85174b",
           "operationName": "DockerImageCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346390,
-          "durationNano": 3000,
+          "startTime": 1669323581346390,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2968,8 +2968,8 @@
           "spanID": "c8f6623b1c54da27",
           "operationName": "LspCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346398,
-          "durationNano": 10000,
+          "startTime": 1669323581346398,
+          "duration": 10,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -2990,8 +2990,8 @@
           "spanID": "8f7ae961c524c49f",
           "operationName": "VueCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346413,
-          "durationNano": 7000,
+          "startTime": 1669323581346413,
+          "duration": 7,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3012,8 +3012,8 @@
           "spanID": "041b2a927d36b51d",
           "operationName": "SpaceChatCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346425,
-          "durationNano": 5000,
+          "startTime": 1669323581346425,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3034,8 +3034,8 @@
           "spanID": "ce54ed47ccb9597f",
           "operationName": "WebComponentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346435,
-          "durationNano": 4000,
+          "startTime": 1669323581346435,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3056,8 +3056,8 @@
           "spanID": "b0602eddb06ef71f",
           "operationName": "PhpNamedArgumentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346443,
-          "durationNano": 75000,
+          "startTime": 1669323581346443,
+          "duration": 75,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3078,8 +3078,8 @@
           "spanID": "3818e510f53f6abe",
           "operationName": "PhpKeywordsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346526,
-          "durationNano": 281000,
+          "startTime": 1669323581346526,
+          "duration": 281,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3100,8 +3100,8 @@
           "spanID": "2ecb06088c84c8be",
           "operationName": "PhpCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581346817,
-          "durationNano": 55830000,
+          "startTime": 1669323581346817,
+          "duration": 55830,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3122,8 +3122,8 @@
           "spanID": "79335ac9de8dbe86",
           "operationName": "PhpInjectionCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402687,
-          "durationNano": 12000,
+          "startTime": 1669323581402687,
+          "duration": 12,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3144,8 +3144,8 @@
           "spanID": "8a1a5e6430d78dc5",
           "operationName": "PhpOverriddenMembersCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402707,
-          "durationNano": 5000,
+          "startTime": 1669323581402707,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3166,8 +3166,8 @@
           "spanID": "9adc56509b91bbb0",
           "operationName": "PhpAccessorsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402718,
-          "durationNano": 4000,
+          "startTime": 1669323581402718,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3188,8 +3188,8 @@
           "spanID": "af1f04fb8a32fe3a",
           "operationName": "PhpUnitTestMethodsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402727,
-          "durationNano": 3000,
+          "startTime": 1669323581402727,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3210,8 +3210,8 @@
           "spanID": "da9f7c1c18939171",
           "operationName": "PhpUnitDependsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402735,
-          "durationNano": 4000,
+          "startTime": 1669323581402735,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3232,8 +3232,8 @@
           "spanID": "efddb88c6102a2a1",
           "operationName": "PhpArrayShapeTypesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402744,
-          "durationNano": 4000,
+          "startTime": 1669323581402744,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3254,8 +3254,8 @@
           "spanID": "a4a9a7ed4fadfd9f",
           "operationName": "PhpDeprecatedTemplateVariablesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402753,
-          "durationNano": 71000,
+          "startTime": 1669323581402753,
+          "duration": 71,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3276,8 +3276,8 @@
           "spanID": "afbd98e4b2dbf2c5",
           "operationName": "MyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402831,
-          "durationNano": 12000,
+          "startTime": 1669323581402831,
+          "duration": 12,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3298,8 +3298,8 @@
           "spanID": "c148ed5a08dca97e",
           "operationName": "PhpHeredocIdentifierCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402849,
-          "durationNano": 3000,
+          "startTime": 1669323581402849,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3320,8 +3320,8 @@
           "spanID": "d457b7c0344ef987",
           "operationName": "DqlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402857,
-          "durationNano": 4000,
+          "startTime": 1669323581402857,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3342,8 +3342,8 @@
           "spanID": "4a0b6c1464569041",
           "operationName": "DrupalHooksCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402866,
-          "durationNano": 6000,
+          "startTime": 1669323581402866,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3364,8 +3364,8 @@
           "spanID": "1038bb2f76b3439a",
           "operationName": "WPHookCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402877,
-          "durationNano": 3000,
+          "startTime": 1669323581402877,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3386,8 +3386,8 @@
           "spanID": "187c76bd3b9aabd8",
           "operationName": "PsalmCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402885,
-          "durationNano": 3000,
+          "startTime": 1669323581402885,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3408,8 +3408,8 @@
           "spanID": "f906a9ce27d9a686",
           "operationName": "PhpTCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402893,
-          "durationNano": 13000,
+          "startTime": 1669323581402893,
+          "duration": 13,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3430,8 +3430,8 @@
           "spanID": "eba412bb3108bd74",
           "operationName": "PhpSqlSelectedFieldsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402911,
-          "durationNano": 3000,
+          "startTime": 1669323581402911,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3452,8 +3452,8 @@
           "spanID": "7a44fb21a619007e",
           "operationName": "BladeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402920,
-          "durationNano": 44000,
+          "startTime": 1669323581402920,
+          "duration": 44,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3474,8 +3474,8 @@
           "spanID": "90d4180ff8252b16",
           "operationName": "Angular2CompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402970,
-          "durationNano": 5000,
+          "startTime": 1669323581402970,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3496,8 +3496,8 @@
           "spanID": "3a2e62d348bdc460",
           "operationName": "XmlNonFirstCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402980,
-          "durationNano": 9000,
+          "startTime": 1669323581402980,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3518,8 +3518,8 @@
           "spanID": "2e5fe55eeeedd339",
           "operationName": "CssClassOrIdReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581402994,
-          "durationNano": 36000,
+          "startTime": 1669323581402994,
+          "duration": 36,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3540,8 +3540,8 @@
           "spanID": "7cb5ee14707a01f0",
           "operationName": "LegacyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581403036,
-          "durationNano": 70000,
+          "startTime": 1669323581403036,
+          "duration": 70,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3562,8 +3562,8 @@
           "spanID": "e7a403b24dedad86",
           "operationName": "DefaultCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581403115,
-          "durationNano": 3000,
+          "startTime": 1669323581403115,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3584,8 +3584,8 @@
           "spanID": "e227d9c7f779997b",
           "operationName": "WordCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581403126,
-          "durationNano": 18000,
+          "startTime": 1669323581403126,
+          "duration": 18,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3606,8 +3606,8 @@
           "spanID": "5e31a181ffe2cbb3",
           "operationName": "ReferenceBasedCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581403152,
-          "durationNano": 97000,
+          "startTime": 1669323581403152,
+          "duration": 97,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3628,8 +3628,8 @@
           "spanID": "33b10f7c50c528d4",
           "operationName": "PostfixTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581403257,
-          "durationNano": 11000,
+          "startTime": 1669323581403257,
+          "duration": 11,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3650,8 +3650,8 @@
           "spanID": "e66b2c83a4bd5c45",
           "operationName": "LiveTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581345193,
-          "durationNano": 58162000,
+          "startTime": 1669323581345193,
+          "duration": 58162,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3672,8 +3672,8 @@
           "spanID": "8d5676538209c3c5",
           "operationName": "performCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323581343986,
-          "durationNano": 59374000,
+          "startTime": 1669323581343986,
+          "duration": 59374,
           "tags": [
             {
               "key": "lookupsFound",
@@ -3694,8 +3694,8 @@
           "spanID": "701a9d24fe0e539b",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581435318,
-          "durationNano": 14535000,
+          "startTime": 1669323581435318,
+          "duration": 14535,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -3709,8 +3709,8 @@
           "spanID": "058b29bf16a0c5ae",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581450950,
-          "durationNano": 12692000,
+          "startTime": 1669323581450950,
+          "duration": 12692,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -3724,8 +3724,8 @@
           "spanID": "ab59953c7c437100",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581476366,
-          "durationNano": 12240000,
+          "startTime": 1669323581476366,
+          "duration": 12240,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -3739,8 +3739,8 @@
           "spanID": "1ffa1f169e155c90",
           "operationName": "completion",
           "processID": "p1",
-          "startTimeNano": 1669323581340851,
-          "durationNano": 148969000,
+          "startTime": 1669323581340851,
+          "duration": 148969,
           "tags": [
             {
               "key": "number",
@@ -3761,8 +3761,8 @@
           "spanID": "6b3586e43c7fdf8a",
           "operationName": "invokeCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323581340938,
-          "durationNano": 149575000,
+          "startTime": 1669323581340938,
+          "duration": 149575,
           "tags": [
             {
               "key": "project",
@@ -3788,16 +3788,16 @@
           "spanID": "352be73a4f44ce57",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581491000,
-          "durationNano": 13517000
+          "startTime": 1669323581491000,
+          "duration": 13517000
         },
         {
           "traceID": "9a32cf88ac01ab267a468abd1bba6913",
           "spanID": "37e58225017fcf84",
           "operationName": "typing",
           "processID": "p1",
-          "startTimeNano": 1669323581531166,
-          "durationNano": 5237000,
+          "startTime": 1669323581531166,
+          "duration": 5237,
           "logs": [
             {
               "timestamp": 1669323581536400,
@@ -3823,8 +3823,8 @@
           "spanID": "c7f8e079b767b44a",
           "operationName": "ComboEditorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581551282,
-          "durationNano": 9000,
+          "startTime": 1669323581551282,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3845,8 +3845,8 @@
           "spanID": "c7e53e7e4e7a608f",
           "operationName": "CompletionContributorForInplaceRename",
           "processID": "p1",
-          "startTimeNano": 1669323581551303,
-          "durationNano": 3000,
+          "startTime": 1669323581551303,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3867,8 +3867,8 @@
           "spanID": "fe311d4155a9d356",
           "operationName": "XmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581551311,
-          "durationNano": 17000,
+          "startTime": 1669323581551311,
+          "duration": 17,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3889,8 +3889,8 @@
           "spanID": "47b12d87767e7de7",
           "operationName": "ContextFeaturesContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581551334,
-          "durationNano": 968000,
+          "startTime": 1669323581551334,
+          "duration": 968,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3911,8 +3911,8 @@
           "spanID": "79b61beee1f6c5e6",
           "operationName": "PhpLanguagesAttributeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553390,
-          "durationNano": 19000,
+          "startTime": 1669323581553390,
+          "duration": 19,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3933,8 +3933,8 @@
           "spanID": "ac2240f0dc8713a7",
           "operationName": "RectorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553417,
-          "durationNano": 9000,
+          "startTime": 1669323581553417,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3955,8 +3955,8 @@
           "spanID": "fc251fcd0a50387c",
           "operationName": "FilePathCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553430,
-          "durationNano": 17000,
+          "startTime": 1669323581553430,
+          "duration": 17,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3977,8 +3977,8 @@
           "spanID": "6d6791723b4f8326",
           "operationName": "CustomFileTypeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553465,
-          "durationNano": 4000,
+          "startTime": 1669323581553465,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -3999,8 +3999,8 @@
           "spanID": "c003c9a1cd58d817",
           "operationName": "HtmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553474,
-          "durationNano": 5000,
+          "startTime": 1669323581553474,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4021,8 +4021,8 @@
           "spanID": "923025a66ea423bb",
           "operationName": "StructuralSearchTemplatesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553483,
-          "durationNano": 2000,
+          "startTime": 1669323581553483,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4043,8 +4043,8 @@
           "spanID": "18b7ce182804f812",
           "operationName": "UrlPathReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553489,
-          "durationNano": 13000,
+          "startTime": 1669323581553489,
+          "duration": 13,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4065,8 +4065,8 @@
           "spanID": "5f9f76b986ff23cc",
           "operationName": "MQReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553507,
-          "durationNano": 9000,
+          "startTime": 1669323581553507,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4087,8 +4087,8 @@
           "spanID": "dbeac8c557443c92",
           "operationName": "LanguageWordInCommentCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553520,
-          "durationNano": 2000,
+          "startTime": 1669323581553520,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4109,8 +4109,8 @@
           "spanID": "b148a67bd5383034",
           "operationName": "DockerImageCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553526,
-          "durationNano": 3000,
+          "startTime": 1669323581553526,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4131,8 +4131,8 @@
           "spanID": "4e39f1147607be06",
           "operationName": "LspCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553533,
-          "durationNano": 8000,
+          "startTime": 1669323581553533,
+          "duration": 8,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4153,8 +4153,8 @@
           "spanID": "d2a32301a6c7f783",
           "operationName": "VueCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553545,
-          "durationNano": 6000,
+          "startTime": 1669323581553545,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4175,8 +4175,8 @@
           "spanID": "18ebf5a607360bc0",
           "operationName": "SpaceChatCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553557,
-          "durationNano": 4000,
+          "startTime": 1669323581553557,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4197,8 +4197,8 @@
           "spanID": "59eb349ddb75ca79",
           "operationName": "WebComponentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553565,
-          "durationNano": 6000,
+          "startTime": 1669323581553565,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4219,8 +4219,8 @@
           "spanID": "87a02d13443fe742",
           "operationName": "PhpNamedArgumentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553575,
-          "durationNano": 68000,
+          "startTime": 1669323581553575,
+          "duration": 68,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4241,8 +4241,8 @@
           "spanID": "0f802a3c3fcd472f",
           "operationName": "PhpKeywordsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553649,
-          "durationNano": 276000,
+          "startTime": 1669323581553649,
+          "duration": 276,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4263,8 +4263,8 @@
           "spanID": "903231ec336e89de",
           "operationName": "PhpCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581553935,
-          "durationNano": 60013000,
+          "startTime": 1669323581553935,
+          "duration": 60013,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4285,8 +4285,8 @@
           "spanID": "fa7a59ea8ea8ccc4",
           "operationName": "PhpInjectionCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581613984,
-          "durationNano": 11000,
+          "startTime": 1669323581613984,
+          "duration": 11,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4307,8 +4307,8 @@
           "spanID": "e9f8e9bf8d0c1494",
           "operationName": "PhpOverriddenMembersCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614002,
-          "durationNano": 4000,
+          "startTime": 1669323581614002,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4329,8 +4329,8 @@
           "spanID": "082cd86760750d80",
           "operationName": "PhpAccessorsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614012,
-          "durationNano": 3000,
+          "startTime": 1669323581614012,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4351,8 +4351,8 @@
           "spanID": "fc992f909e8eb680",
           "operationName": "PhpUnitTestMethodsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614020,
-          "durationNano": 2000,
+          "startTime": 1669323581614020,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4373,8 +4373,8 @@
           "spanID": "13dcc0feb66a602c",
           "operationName": "PhpUnitDependsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614027,
-          "durationNano": 3000,
+          "startTime": 1669323581614027,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4395,8 +4395,8 @@
           "spanID": "4c084091fc9b52d5",
           "operationName": "PhpArrayShapeTypesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614034,
-          "durationNano": 5000,
+          "startTime": 1669323581614034,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4417,8 +4417,8 @@
           "spanID": "1de8509533e0c320",
           "operationName": "PhpDeprecatedTemplateVariablesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614044,
-          "durationNano": 73000,
+          "startTime": 1669323581614044,
+          "duration": 73,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4439,8 +4439,8 @@
           "spanID": "41a7b2e8b4351d8a",
           "operationName": "MyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614126,
-          "durationNano": 9000,
+          "startTime": 1669323581614126,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4461,8 +4461,8 @@
           "spanID": "0e7d7476d52e8dcc",
           "operationName": "PhpHeredocIdentifierCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614139,
-          "durationNano": 3000,
+          "startTime": 1669323581614139,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4483,8 +4483,8 @@
           "spanID": "80b465f52acdc6f3",
           "operationName": "DqlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614147,
-          "durationNano": 3000,
+          "startTime": 1669323581614147,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4505,8 +4505,8 @@
           "spanID": "f9e4b2686b00b46e",
           "operationName": "DrupalHooksCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614155,
-          "durationNano": 6000,
+          "startTime": 1669323581614155,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4527,8 +4527,8 @@
           "spanID": "c5e194b46df9c417",
           "operationName": "WPHookCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614165,
-          "durationNano": 2000,
+          "startTime": 1669323581614165,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4549,8 +4549,8 @@
           "spanID": "841625c94273c9e3",
           "operationName": "PsalmCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614172,
-          "durationNano": 2000,
+          "startTime": 1669323581614172,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4571,8 +4571,8 @@
           "spanID": "807c103c5e64e1b9",
           "operationName": "PhpTCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614180,
-          "durationNano": 16000,
+          "startTime": 1669323581614180,
+          "duration": 16,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4593,8 +4593,8 @@
           "spanID": "55d28d00a1db7ae2",
           "operationName": "PhpSqlSelectedFieldsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614202,
-          "durationNano": 3000,
+          "startTime": 1669323581614202,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4615,8 +4615,8 @@
           "spanID": "9ca12eace824f4d1",
           "operationName": "BladeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614210,
-          "durationNano": 27000,
+          "startTime": 1669323581614210,
+          "duration": 27,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4637,8 +4637,8 @@
           "spanID": "285b763c01bb1463",
           "operationName": "Angular2CompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614245,
-          "durationNano": 5000,
+          "startTime": 1669323581614245,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4659,8 +4659,8 @@
           "spanID": "84b77465e704200a",
           "operationName": "XmlNonFirstCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614256,
-          "durationNano": 9000,
+          "startTime": 1669323581614256,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4681,8 +4681,8 @@
           "spanID": "4ac987e7be128eb5",
           "operationName": "CssClassOrIdReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614272,
-          "durationNano": 29000,
+          "startTime": 1669323581614272,
+          "duration": 29,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4703,8 +4703,8 @@
           "spanID": "584fee08f8f8335a",
           "operationName": "LegacyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614306,
-          "durationNano": 68000,
+          "startTime": 1669323581614306,
+          "duration": 68,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4725,8 +4725,8 @@
           "spanID": "2d53773488de5d16",
           "operationName": "DefaultCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614382,
-          "durationNano": 3000,
+          "startTime": 1669323581614382,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4747,8 +4747,8 @@
           "spanID": "875837c350f790e6",
           "operationName": "WordCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614390,
-          "durationNano": 18000,
+          "startTime": 1669323581614390,
+          "duration": 18,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4769,8 +4769,8 @@
           "spanID": "72df8da3695b77be",
           "operationName": "ReferenceBasedCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614414,
-          "durationNano": 107000,
+          "startTime": 1669323581614414,
+          "duration": 107,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4791,8 +4791,8 @@
           "spanID": "bfb441899bf039de",
           "operationName": "PostfixTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581614529,
-          "durationNano": 5000,
+          "startTime": 1669323581614529,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4813,8 +4813,8 @@
           "spanID": "0e7861d44c52ae21",
           "operationName": "LiveTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581552328,
-          "durationNano": 62284000,
+          "startTime": 1669323581552328,
+          "duration": 62284,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -4835,8 +4835,8 @@
           "spanID": "80aa46a895600554",
           "operationName": "performCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323581551200,
-          "durationNano": 63415000,
+          "startTime": 1669323581551200,
+          "duration": 63415,
           "tags": [
             {
               "key": "lookupsFound",
@@ -4857,8 +4857,8 @@
           "spanID": "14b5c07adaf87e45",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581633053,
-          "durationNano": 11901000,
+          "startTime": 1669323581633053,
+          "duration": 11901,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -4872,8 +4872,8 @@
           "spanID": "42bba1e5d4e674c2",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581646506,
-          "durationNano": 10143000,
+          "startTime": 1669323581646506,
+          "duration": 10143,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -4887,8 +4887,8 @@
           "spanID": "e91b63987144026e",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581666326,
-          "durationNano": 10694000,
+          "startTime": 1669323581666326,
+          "duration": 10694,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -4902,8 +4902,8 @@
           "spanID": "ef62506cbc441da6",
           "operationName": "completion",
           "processID": "p1",
-          "startTimeNano": 1669323581547724,
-          "durationNano": 130586000,
+          "startTime": 1669323581547724,
+          "duration": 130586,
           "tags": [
             {
               "key": "number",
@@ -4924,8 +4924,8 @@
           "spanID": "a8e305fa6dd2443b",
           "operationName": "invokeCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323581547923,
-          "durationNano": 131048000,
+          "startTime": 1669323581547923,
+          "duration": 131048,
           "tags": [
             {
               "key": "project",
@@ -4951,16 +4951,16 @@
           "spanID": "1b0b2ebde59e3f60",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581680000,
-          "durationNano": 9945000
+          "startTime": 1669323581680000,
+          "duration": 9945000
         },
         {
           "traceID": "9a32cf88ac01ab267a468abd1bba6913",
           "spanID": "33df56752bb48b2b",
           "operationName": "typing",
           "processID": "p1",
-          "startTimeNano": 1669323581702222,
-          "durationNano": 2980000,
+          "startTime": 1669323581702222,
+          "duration": 2980,
           "logs": [
             {
               "timestamp": 1669323581705201,
@@ -4986,8 +4986,8 @@
           "spanID": "fa6a8bd0040d4c3e",
           "operationName": "ComboEditorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581712678,
-          "durationNano": 9000,
+          "startTime": 1669323581712678,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5008,8 +5008,8 @@
           "spanID": "522475a94bae329d",
           "operationName": "CompletionContributorForInplaceRename",
           "processID": "p1",
-          "startTimeNano": 1669323581712699,
-          "durationNano": 3000,
+          "startTime": 1669323581712699,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5030,8 +5030,8 @@
           "spanID": "a76a6a670a72dfb0",
           "operationName": "XmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581712707,
-          "durationNano": 19000,
+          "startTime": 1669323581712707,
+          "duration": 19,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5052,8 +5052,8 @@
           "spanID": "36e2671014b47ad0",
           "operationName": "ContextFeaturesContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581712731,
-          "durationNano": 804000,
+          "startTime": 1669323581712731,
+          "duration": 804,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5074,8 +5074,8 @@
           "spanID": "42bdf2291397244c",
           "operationName": "PhpLanguagesAttributeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714513,
-          "durationNano": 8000,
+          "startTime": 1669323581714513,
+          "duration": 8,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5096,8 +5096,8 @@
           "spanID": "d8d5d1228e87e084",
           "operationName": "RectorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714529,
-          "durationNano": 5000,
+          "startTime": 1669323581714529,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5118,8 +5118,8 @@
           "spanID": "0ddc62942f76eaf2",
           "operationName": "FilePathCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714538,
-          "durationNano": 36000,
+          "startTime": 1669323581714538,
+          "duration": 36,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5140,8 +5140,8 @@
           "spanID": "904355696b43862e",
           "operationName": "CustomFileTypeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714579,
-          "durationNano": 6000,
+          "startTime": 1669323581714579,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5162,8 +5162,8 @@
           "spanID": "20a559034be1cd90",
           "operationName": "HtmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714590,
-          "durationNano": 5000,
+          "startTime": 1669323581714590,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5184,8 +5184,8 @@
           "spanID": "3bcfbc184ce7ada3",
           "operationName": "StructuralSearchTemplatesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714599,
-          "durationNano": 2000,
+          "startTime": 1669323581714599,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5206,8 +5206,8 @@
           "spanID": "762e8fb96367d2a0",
           "operationName": "UrlPathReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714605,
-          "durationNano": 14000,
+          "startTime": 1669323581714605,
+          "duration": 14,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5228,8 +5228,8 @@
           "spanID": "3b18601d0e3f5334",
           "operationName": "MQReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714624,
-          "durationNano": 8000,
+          "startTime": 1669323581714624,
+          "duration": 8,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5250,8 +5250,8 @@
           "spanID": "88a08dfdcbeae072",
           "operationName": "LanguageWordInCommentCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714637,
-          "durationNano": 2000,
+          "startTime": 1669323581714637,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5272,8 +5272,8 @@
           "spanID": "a88c5b76bd612a41",
           "operationName": "DockerImageCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714643,
-          "durationNano": 2000,
+          "startTime": 1669323581714643,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5294,8 +5294,8 @@
           "spanID": "fc111d4c55ec224d",
           "operationName": "LspCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714649,
-          "durationNano": 8000,
+          "startTime": 1669323581714649,
+          "duration": 8,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5316,8 +5316,8 @@
           "spanID": "ed805f6b390e62e3",
           "operationName": "VueCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714661,
-          "durationNano": 6000,
+          "startTime": 1669323581714661,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5338,8 +5338,8 @@
           "spanID": "fff048e0439c0e7b",
           "operationName": "SpaceChatCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714672,
-          "durationNano": 4000,
+          "startTime": 1669323581714672,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5360,8 +5360,8 @@
           "spanID": "909554bbb9b6acdc",
           "operationName": "WebComponentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714680,
-          "durationNano": 3000,
+          "startTime": 1669323581714680,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5382,8 +5382,8 @@
           "spanID": "0e1d54b337f195ba",
           "operationName": "PhpNamedArgumentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714687,
-          "durationNano": 64000,
+          "startTime": 1669323581714687,
+          "duration": 64,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5404,8 +5404,8 @@
           "spanID": "853234391fe39f7b",
           "operationName": "PhpKeywordsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581714755,
-          "durationNano": 265000,
+          "startTime": 1669323581714755,
+          "duration": 265,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5426,8 +5426,8 @@
           "spanID": "bb543ecf34936ea5",
           "operationName": "PhpCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581715030,
-          "durationNano": 46616000,
+          "startTime": 1669323581715030,
+          "duration": 46616,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5448,8 +5448,8 @@
           "spanID": "4df5c82465498ba8",
           "operationName": "PhpInjectionCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761682,
-          "durationNano": 11000,
+          "startTime": 1669323581761682,
+          "duration": 11,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5470,8 +5470,8 @@
           "spanID": "35177caa432ad4c6",
           "operationName": "PhpOverriddenMembersCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761700,
-          "durationNano": 4000,
+          "startTime": 1669323581761700,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5492,8 +5492,8 @@
           "spanID": "2a8f541489648e28",
           "operationName": "PhpAccessorsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761708,
-          "durationNano": 2000,
+          "startTime": 1669323581761708,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5514,8 +5514,8 @@
           "spanID": "b7acc11631c3bff9",
           "operationName": "PhpUnitTestMethodsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761714,
-          "durationNano": 2000,
+          "startTime": 1669323581761714,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5536,8 +5536,8 @@
           "spanID": "4ab656997dc01104",
           "operationName": "PhpUnitDependsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761727,
-          "durationNano": 3000,
+          "startTime": 1669323581761727,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5558,8 +5558,8 @@
           "spanID": "476088fb1ecd53c3",
           "operationName": "PhpArrayShapeTypesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761735,
-          "durationNano": 5000,
+          "startTime": 1669323581761735,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5580,8 +5580,8 @@
           "spanID": "83a8a8b86cfbc48c",
           "operationName": "PhpDeprecatedTemplateVariablesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761744,
-          "durationNano": 72000,
+          "startTime": 1669323581761744,
+          "duration": 72,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5602,8 +5602,8 @@
           "spanID": "fcd992874bf69ede",
           "operationName": "MyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761822,
-          "durationNano": 9000,
+          "startTime": 1669323581761822,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5624,8 +5624,8 @@
           "spanID": "756de46ea869bf39",
           "operationName": "PhpHeredocIdentifierCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761836,
-          "durationNano": 3000,
+          "startTime": 1669323581761836,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5646,8 +5646,8 @@
           "spanID": "281a189bc4f6d379",
           "operationName": "DqlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761843,
-          "durationNano": 3000,
+          "startTime": 1669323581761843,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5668,8 +5668,8 @@
           "spanID": "dbeda6ae944ca4d1",
           "operationName": "DrupalHooksCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761854,
-          "durationNano": 6000,
+          "startTime": 1669323581761854,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5690,8 +5690,8 @@
           "spanID": "ac61331de571ff10",
           "operationName": "WPHookCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761864,
-          "durationNano": 3000,
+          "startTime": 1669323581761864,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5712,8 +5712,8 @@
           "spanID": "e3532711fdfdf44b",
           "operationName": "PsalmCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761870,
-          "durationNano": 2000,
+          "startTime": 1669323581761870,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5734,8 +5734,8 @@
           "spanID": "b12b43c001a806ea",
           "operationName": "PhpTCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761876,
-          "durationNano": 16000,
+          "startTime": 1669323581761876,
+          "duration": 16,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5756,8 +5756,8 @@
           "spanID": "6eed819ec7dab26d",
           "operationName": "PhpSqlSelectedFieldsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761896,
-          "durationNano": 2000,
+          "startTime": 1669323581761896,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5778,8 +5778,8 @@
           "spanID": "0593d653059ed725",
           "operationName": "BladeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761903,
-          "durationNano": 31000,
+          "startTime": 1669323581761903,
+          "duration": 31,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5800,8 +5800,8 @@
           "spanID": "6adbed724dde18ce",
           "operationName": "Angular2CompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761939,
-          "durationNano": 5000,
+          "startTime": 1669323581761939,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5822,8 +5822,8 @@
           "spanID": "0bb9886ec6ffb586",
           "operationName": "XmlNonFirstCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761949,
-          "durationNano": 9000,
+          "startTime": 1669323581761949,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5844,8 +5844,8 @@
           "spanID": "0935fcd8f0d45121",
           "operationName": "CssClassOrIdReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581761962,
-          "durationNano": 34000,
+          "startTime": 1669323581761962,
+          "duration": 34,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5866,8 +5866,8 @@
           "spanID": "20c4cf68b021eccd",
           "operationName": "LegacyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581762001,
-          "durationNano": 93000,
+          "startTime": 1669323581762001,
+          "duration": 93,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5888,8 +5888,8 @@
           "spanID": "3043ab3f446efc6c",
           "operationName": "DefaultCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581762101,
-          "durationNano": 3000,
+          "startTime": 1669323581762101,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5910,8 +5910,8 @@
           "spanID": "e4d651a572cf9999",
           "operationName": "WordCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581762108,
-          "durationNano": 77000,
+          "startTime": 1669323581762108,
+          "duration": 77,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5932,8 +5932,8 @@
           "spanID": "41a035b2e744839c",
           "operationName": "ReferenceBasedCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581762212,
-          "durationNano": 102000,
+          "startTime": 1669323581762212,
+          "duration": 102,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5954,8 +5954,8 @@
           "spanID": "1a4571d4138ea2d3",
           "operationName": "PostfixTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581762323,
-          "durationNano": 6000,
+          "startTime": 1669323581762323,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5976,8 +5976,8 @@
           "spanID": "94e1ba2355c78257",
           "operationName": "LiveTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581713551,
-          "durationNano": 48860000,
+          "startTime": 1669323581713551,
+          "duration": 48860,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -5998,8 +5998,8 @@
           "spanID": "7adddf76ad4d2104",
           "operationName": "performCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323581712587,
-          "durationNano": 49828000,
+          "startTime": 1669323581712587,
+          "duration": 49828,
           "tags": [
             {
               "key": "lookupsFound",
@@ -6020,8 +6020,8 @@
           "spanID": "c508082c65003bd1",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581777140,
-          "durationNano": 11679000,
+          "startTime": 1669323581777140,
+          "duration": 11679,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -6035,8 +6035,8 @@
           "spanID": "64a883dfeffcf770",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581789907,
-          "durationNano": 11171000,
+          "startTime": 1669323581789907,
+          "duration": 11171,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -6050,8 +6050,8 @@
           "spanID": "a2f60bffd9539479",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581811252,
-          "durationNano": 12159000,
+          "startTime": 1669323581811252,
+          "duration": 12159,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -6065,8 +6065,8 @@
           "spanID": "52300eb37c36b629",
           "operationName": "completion",
           "processID": "p1",
-          "startTimeNano": 1669323581708629,
-          "durationNano": 116054000,
+          "startTime": 1669323581708629,
+          "duration": 116054,
           "tags": [
             {
               "key": "number",
@@ -6087,8 +6087,8 @@
           "spanID": "821015170437bf3d",
           "operationName": "invokeCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323581708784,
-          "durationNano": 116521000,
+          "startTime": 1669323581708784,
+          "duration": 116521,
           "tags": [
             {
               "key": "project",
@@ -6114,16 +6114,16 @@
           "spanID": "ac808be851c96483",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581826000,
-          "durationNano": 11609000
+          "startTime": 1669323581826000,
+          "duration": 11609000
         },
         {
           "traceID": "9a32cf88ac01ab267a468abd1bba6913",
           "spanID": "d76ea653c227ca6c",
           "operationName": "typing",
           "processID": "p1",
-          "startTimeNano": 1669323581851765,
-          "durationNano": 3046000,
+          "startTime": 1669323581851765,
+          "duration": 3046,
           "logs": [
             {
               "timestamp": 1669323581854808,
@@ -6149,8 +6149,8 @@
           "spanID": "cf681f23e1d079d9",
           "operationName": "ComboEditorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581862493,
-          "durationNano": 8000,
+          "startTime": 1669323581862493,
+          "duration": 8,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6171,8 +6171,8 @@
           "spanID": "ce51863b7a310237",
           "operationName": "CompletionContributorForInplaceRename",
           "processID": "p1",
-          "startTimeNano": 1669323581862511,
-          "durationNano": 3000,
+          "startTime": 1669323581862511,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6193,8 +6193,8 @@
           "spanID": "a7daba594454d287",
           "operationName": "XmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581862519,
-          "durationNano": 17000,
+          "startTime": 1669323581862519,
+          "duration": 17,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6215,8 +6215,8 @@
           "spanID": "39ace2ec1a9facec",
           "operationName": "ContextFeaturesContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581862541,
-          "durationNano": 651000,
+          "startTime": 1669323581862541,
+          "duration": 651,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6237,8 +6237,8 @@
           "spanID": "5b75bfd7f01e184e",
           "operationName": "PhpLanguagesAttributeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581863964,
-          "durationNano": 8000,
+          "startTime": 1669323581863964,
+          "duration": 8,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6259,8 +6259,8 @@
           "spanID": "24952e0986fb63d4",
           "operationName": "RectorCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581863979,
-          "durationNano": 6000,
+          "startTime": 1669323581863979,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6281,8 +6281,8 @@
           "spanID": "a799ceefda3c39f4",
           "operationName": "FilePathCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581863989,
-          "durationNano": 67000,
+          "startTime": 1669323581863989,
+          "duration": 67,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6303,8 +6303,8 @@
           "spanID": "8c7a690a611791e0",
           "operationName": "CustomFileTypeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864061,
-          "durationNano": 4000,
+          "startTime": 1669323581864061,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6325,8 +6325,8 @@
           "spanID": "79a96d1778c7c949",
           "operationName": "HtmlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864069,
-          "durationNano": 5000,
+          "startTime": 1669323581864069,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6347,8 +6347,8 @@
           "spanID": "d7d2d8da53ca6bdb",
           "operationName": "StructuralSearchTemplatesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864078,
-          "durationNano": 2000,
+          "startTime": 1669323581864078,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6369,8 +6369,8 @@
           "spanID": "f8e46b9018122faf",
           "operationName": "UrlPathReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864084,
-          "durationNano": 11000,
+          "startTime": 1669323581864084,
+          "duration": 11,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6391,8 +6391,8 @@
           "spanID": "0b8a03c0b8c70b33",
           "operationName": "MQReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864099,
-          "durationNano": 14000,
+          "startTime": 1669323581864099,
+          "duration": 14,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6413,8 +6413,8 @@
           "spanID": "14e443dd21e08d7f",
           "operationName": "LanguageWordInCommentCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864117,
-          "durationNano": 2000,
+          "startTime": 1669323581864117,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6435,8 +6435,8 @@
           "spanID": "f5bf775332e368c1",
           "operationName": "DockerImageCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864123,
-          "durationNano": 2000,
+          "startTime": 1669323581864123,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6457,8 +6457,8 @@
           "spanID": "a9f0ae90394b7b1f",
           "operationName": "LspCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864129,
-          "durationNano": 9000,
+          "startTime": 1669323581864129,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6479,8 +6479,8 @@
           "spanID": "c639d63706515ff4",
           "operationName": "VueCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864142,
-          "durationNano": 5000,
+          "startTime": 1669323581864142,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6501,8 +6501,8 @@
           "spanID": "2ff11d103d4b1123",
           "operationName": "SpaceChatCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864151,
-          "durationNano": 3000,
+          "startTime": 1669323581864151,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6523,8 +6523,8 @@
           "spanID": "d121ed4fb9e05b7f",
           "operationName": "WebComponentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864158,
-          "durationNano": 3000,
+          "startTime": 1669323581864158,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6545,8 +6545,8 @@
           "spanID": "d03a6a51524ff95d",
           "operationName": "PhpNamedArgumentsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864164,
-          "durationNano": 60000,
+          "startTime": 1669323581864164,
+          "duration": 60,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6567,8 +6567,8 @@
           "spanID": "1ce02f0976d015e3",
           "operationName": "PhpKeywordsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864231,
-          "durationNano": 261000,
+          "startTime": 1669323581864231,
+          "duration": 261,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6589,8 +6589,8 @@
           "spanID": "24d66bea8d56231a",
           "operationName": "PhpCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581864503,
-          "durationNano": 47147000,
+          "startTime": 1669323581864503,
+          "duration": 47147,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6611,8 +6611,8 @@
           "spanID": "a03179e9fc445004",
           "operationName": "PhpInjectionCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911682,
-          "durationNano": 10000,
+          "startTime": 1669323581911682,
+          "duration": 10,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6633,8 +6633,8 @@
           "spanID": "7161e1f57144c7f4",
           "operationName": "PhpOverriddenMembersCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911698,
-          "durationNano": 4000,
+          "startTime": 1669323581911698,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6655,8 +6655,8 @@
           "spanID": "2a03c356a5b44b07",
           "operationName": "PhpAccessorsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911706,
-          "durationNano": 2000,
+          "startTime": 1669323581911706,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6677,8 +6677,8 @@
           "spanID": "3a1553856a0ae440",
           "operationName": "PhpUnitTestMethodsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911712,
-          "durationNano": 2000,
+          "startTime": 1669323581911712,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6699,8 +6699,8 @@
           "spanID": "559f04cc80f5e493",
           "operationName": "PhpUnitDependsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911718,
-          "durationNano": 3000,
+          "startTime": 1669323581911718,
+          "duration": 3,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6721,8 +6721,8 @@
           "spanID": "f6ad6bb60b378f7b",
           "operationName": "PhpArrayShapeTypesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911725,
-          "durationNano": 5000,
+          "startTime": 1669323581911725,
+          "duration": 5,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6743,8 +6743,8 @@
           "spanID": "68b176490961916a",
           "operationName": "PhpDeprecatedTemplateVariablesCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911758,
-          "durationNano": 59000,
+          "startTime": 1669323581911758,
+          "duration": 59,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6765,8 +6765,8 @@
           "spanID": "549f82462c570cac",
           "operationName": "MyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911824,
-          "durationNano": 10000,
+          "startTime": 1669323581911824,
+          "duration": 10,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6787,8 +6787,8 @@
           "spanID": "2ff428eca47d762e",
           "operationName": "PhpHeredocIdentifierCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911838,
-          "durationNano": 2000,
+          "startTime": 1669323581911838,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6809,8 +6809,8 @@
           "spanID": "988679d5ba20906d",
           "operationName": "DqlCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911844,
-          "durationNano": 4000,
+          "startTime": 1669323581911844,
+          "duration": 4,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6831,8 +6831,8 @@
           "spanID": "5e383ed7237ea012",
           "operationName": "DrupalHooksCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911852,
-          "durationNano": 6000,
+          "startTime": 1669323581911852,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6853,8 +6853,8 @@
           "spanID": "b753bf6f9830f8ca",
           "operationName": "WPHookCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911862,
-          "durationNano": 2000,
+          "startTime": 1669323581911862,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6875,8 +6875,8 @@
           "spanID": "005180c736a1f864",
           "operationName": "PsalmCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911869,
-          "durationNano": 2000,
+          "startTime": 1669323581911869,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6897,8 +6897,8 @@
           "spanID": "12defaba240ee1a3",
           "operationName": "PhpTCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911875,
-          "durationNano": 15000,
+          "startTime": 1669323581911875,
+          "duration": 15,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6919,8 +6919,8 @@
           "spanID": "19e926843b724578",
           "operationName": "PhpSqlSelectedFieldsCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911894,
-          "durationNano": 2000,
+          "startTime": 1669323581911894,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6941,8 +6941,8 @@
           "spanID": "96566686948e5b69",
           "operationName": "BladeCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581911901,
-          "durationNano": 133000,
+          "startTime": 1669323581911901,
+          "duration": 133,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6963,8 +6963,8 @@
           "spanID": "2c1e0a14bdf9f798",
           "operationName": "Angular2CompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581912040,
-          "durationNano": 6000,
+          "startTime": 1669323581912040,
+          "duration": 6,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -6985,8 +6985,8 @@
           "spanID": "fe29164cea2d5f88",
           "operationName": "XmlNonFirstCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581912050,
-          "durationNano": 9000,
+          "startTime": 1669323581912050,
+          "duration": 9,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -7007,8 +7007,8 @@
           "spanID": "22bddb2f4dbcb291",
           "operationName": "CssClassOrIdReferenceCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581912066,
-          "durationNano": 33000,
+          "startTime": 1669323581912066,
+          "duration": 33,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -7029,8 +7029,8 @@
           "spanID": "adc025a5f161bdec",
           "operationName": "LegacyCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581912104,
-          "durationNano": 71000,
+          "startTime": 1669323581912104,
+          "duration": 71,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -7051,8 +7051,8 @@
           "spanID": "b0f65c4c7e065d5f",
           "operationName": "DefaultCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581912182,
-          "durationNano": 2000,
+          "startTime": 1669323581912182,
+          "duration": 2,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -7073,8 +7073,8 @@
           "spanID": "bbf093ead8c66570",
           "operationName": "WordCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581912188,
-          "durationNano": 21000,
+          "startTime": 1669323581912188,
+          "duration": 21,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -7095,8 +7095,8 @@
           "spanID": "abccd3d027e5c2ed",
           "operationName": "ReferenceBasedCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581912214,
-          "durationNano": 131000,
+          "startTime": 1669323581912214,
+          "duration": 131,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -7117,8 +7117,8 @@
           "spanID": "d1a6ca1b76d38a70",
           "operationName": "PostfixTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581912372,
-          "durationNano": 10000,
+          "startTime": 1669323581912372,
+          "duration": 10,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -7139,8 +7139,8 @@
           "spanID": "9353ed4526c0191b",
           "operationName": "LiveTemplateCompletionContributor",
           "processID": "p1",
-          "startTimeNano": 1669323581863202,
-          "durationNano": 49278000,
+          "startTime": 1669323581863202,
+          "duration": 49278,
           "tags": [
             {
               "key": "avoid_null_value",
@@ -7161,8 +7161,8 @@
           "spanID": "b12eeb9dafe7f495",
           "operationName": "performCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323581862412,
-          "durationNano": 50071000,
+          "startTime": 1669323581862412,
+          "duration": 50071,
           "tags": [
             {
               "key": "lookupsFound",
@@ -7183,8 +7183,8 @@
           "spanID": "75370930d8630bee",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581925882,
-          "durationNano": 10301000,
+          "startTime": 1669323581925882,
+          "duration": 10301,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -7198,8 +7198,8 @@
           "spanID": "d30c6aaa7c87443f",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581937120,
-          "durationNano": 9479000,
+          "startTime": 1669323581937120,
+          "duration": 9479,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -7213,8 +7213,8 @@
           "spanID": "4ac5adee1d5fadec",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581957466,
-          "durationNano": 9995000,
+          "startTime": 1669323581957466,
+          "duration": 9995,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -7228,8 +7228,8 @@
           "spanID": "d958f163fc342e6a",
           "operationName": "completion",
           "processID": "p1",
-          "startTimeNano": 1669323581859396,
-          "durationNano": 109275000,
+          "startTime": 1669323581859396,
+          "duration": 109275,
           "tags": [
             {
               "key": "number",
@@ -7250,8 +7250,8 @@
           "spanID": "4a4c57fb27a2682a",
           "operationName": "invokeCompletion",
           "processID": "p1",
-          "startTimeNano": 1669323581859566,
-          "durationNano": 109769000,
+          "startTime": 1669323581859566,
+          "duration": 109769,
           "tags": [
             {
               "key": "project",
@@ -7277,16 +7277,16 @@
           "spanID": "c5a2e53eefb4f2f1",
           "operationName": "arrangeItems",
           "processID": "p1",
-          "startTimeNano": 1669323581970000,
-          "durationNano": 8914000
+          "startTime": 1669323581970000,
+          "duration": 8914000
         },
         {
           "traceID": "9a32cf88ac01ab267a468abd1bba6913",
           "spanID": "7aa5695bc2b9470b",
           "operationName": "typing",
           "processID": "p1",
-          "startTimeNano": 1669323582008234,
-          "durationNano": 3097000,
+          "startTime": 1669323582008234,
+          "duration": 3097,
           "logs": [
             {
               "timestamp": 1669323582011328,
@@ -7312,16 +7312,16 @@
           "spanID": "4c9e185a1a733795",
           "operationName": "performance_test",
           "processID": "p1",
-          "startTimeNano": 1669323554054000,
-          "durationNano": 27989982000
+          "startTime": 1669323554054000,
+          "duration": 27989982
         },
         {
           "traceID": "9a32cf88ac01ab267a468abd1bba6913",
           "spanID": "be1ebe9c720fe3cd",
           "operationName": "test",
           "processID": "p1",
-          "startTimeNano": 1669323555165626,
-          "durationNano": 27039937000,
+          "startTime": 1669323555165626,
+          "duration": 27039937,
           "tags": [
             {
               "key": "max_awt_delay",

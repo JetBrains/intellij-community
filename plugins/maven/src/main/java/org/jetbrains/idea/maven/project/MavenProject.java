@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,7 +36,6 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -713,8 +711,8 @@ public class MavenProject {
 
   public void setConfigFileError(@Nullable String message) {
     if (message != null) {
-      myState.myReadingProblems.add(new MavenProjectProblem(myFile.getPath() + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, message, SYNTAX,
-                                                            true));
+      String mavenConfigPath = myFile.getPath() + "/" + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH;
+      myState.myReadingProblems.add(new MavenProjectProblem(mavenConfigPath, message, SYNTAX, true));
     }
   }
 
@@ -1161,7 +1159,7 @@ public class MavenProject {
   }
 
   public static @NotNull Map<String, String> readConfigFile(final File baseDir, ConfigFileKind kind) {
-    File configFile = new File(baseDir + FileUtil.toSystemDependentName(kind.myRelativeFilePath));
+    File configFile = new File(baseDir, FileUtil.toSystemDependentName(kind.myRelativeFilePath));
 
     ParametersList parametersList = new ParametersList();
     if (configFile.isFile()) {

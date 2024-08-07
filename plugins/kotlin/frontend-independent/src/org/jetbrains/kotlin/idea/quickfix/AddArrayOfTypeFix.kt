@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 class AddArrayOfTypeFix(
     element: KtExpression,
     private val prefix: String,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, Unit>(element, Unit) {
+) : PsiUpdateModCommandAction<KtExpression>(element) {
 
     override fun getPresentation(
         context: ActionContext,
@@ -29,7 +29,6 @@ class AddArrayOfTypeFix(
     override fun invoke(
         actionContext: ActionContext,
         element: KtExpression,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         val arrayOfExpression = KtPsiFactory(actionContext.project).createExpressionByPattern("$0($1)", prefix, element)

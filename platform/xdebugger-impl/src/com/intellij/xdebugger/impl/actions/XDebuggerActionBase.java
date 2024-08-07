@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,12 @@ public abstract class XDebuggerActionBase extends AnAction {
   protected boolean isEnabled(final AnActionEvent e) {
     Project project = e.getProject();
     if (project != null && !project.isDisposed()) {
-      return ContainerUtil.exists(DebuggerSupport.getDebuggerSupports(), support -> isEnabled(project, e, support));
+      for (DebuggerSupport t : DebuggerSupport.getDebuggerSupports()) {
+        if (isEnabled(project, e, t)) {
+          return true;
+        }
+      }
+      return false;
     }
     return false;
   }
@@ -81,7 +85,12 @@ public abstract class XDebuggerActionBase extends AnAction {
   protected boolean isHidden(AnActionEvent event) {
     Project project = event.getProject();
     if (project != null && !project.isDisposed()) {
-      return ContainerUtil.and(DebuggerSupport.getDebuggerSupports(), support -> getHandler(support).isHidden(project, event));
+      for (DebuggerSupport t : DebuggerSupport.getDebuggerSupports()) {
+        if (!getHandler(t).isHidden(project, event)) {
+          return false;
+        }
+      }
+      return true;
     }
     return true;
   }

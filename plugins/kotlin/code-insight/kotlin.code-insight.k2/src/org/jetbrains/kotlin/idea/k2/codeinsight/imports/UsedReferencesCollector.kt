@@ -5,18 +5,10 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.ContributedReferenceHost
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.idea.references.KDocReference
-import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.withClassId
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
-import kotlin.collections.isNotEmpty
 import kotlin.collections.orEmpty
 import kotlin.collections.plusAssign
 
@@ -61,24 +53,15 @@ internal class UsedReferencesCollector(private val file: KtFile) {
         if (element is KtLabelReferenceExpression) return
 
         val references = element.references
+            .filterIsInstance<KtReference>()
+            .mapNotNull { UsedReference.run { createFrom(it) } }
+
         if (references.isEmpty()) return
 
-        if (hasEmptyInvokeReference(element)) {
-            return
-        }
-
-        val resolvedSymbols = element.mainReference?.resolveToSymbols().orEmpty()
-        val isResolved = resolvedSymbols.isNotEmpty()
-
-        val dispatchReceiver = resolveDispatchReceiver(element)
-        if (dispatchReceiver != null && isDispatchedCall(element, dispatchReceiver, file)) {
-            return
-        }
-
         for (reference in references) {
-            if (reference !is KtReference) continue
-
             ProgressIndicatorProvider.checkCanceled()
+
+            val isResolved = reference.run { isResolved() }
 
             val names = reference.resolvesByNames
             if (!isResolved) {
@@ -86,12 +69,12 @@ internal class UsedReferencesCollector(private val file: KtFile) {
                 continue
             }
 
-            val importableSymbols = resolvedSymbols.mapNotNull { toImportableSymbol(it, reference) }
+            val symbols = reference.run { resolveToImportableSymbols() }
 
-            for (symbol in importableSymbols) {
-                if (!canBeResolvedViaImport(reference, symbol)) continue
+            for (symbol in symbols) {
+                if (!symbol.run { isResolvedWithImport() }) continue
 
-                val importableName = computeImportableName(symbol, dispatchReceiver as? KaImplicitReceiverValue) ?: continue
+                val importableName = symbol.run { computeImportableFqName() } ?: continue
 
                 ProgressIndicatorProvider.checkCanceled()
 
@@ -99,64 +82,6 @@ internal class UsedReferencesCollector(private val file: KtFile) {
                 usedDeclarations.getOrPut(importableName) { hashSetOf() } += newNames
             }
         }
-    }
-
-    /**
-     * In K2, every call in the form of `foo()` has `KtInvokeFunctionReference` on it.
-     *
-     * In the cases when `foo()` call is not actually an `invoke` call, we do not want to process such references,
-     * since they are not supposed to resolve anywhere.
-     */
-    private fun KaSession.hasEmptyInvokeReference(element: KtElement): Boolean {
-        if (element.mainReference !is KtInvokeFunctionReference) return false
-
-        val callInfo = element.resolveToCall()
-        val isImplicitInvoke = callInfo?.calls?.any { it is KaSimpleFunctionCall && it.isImplicitInvoke } == true
-
-        return !isImplicitInvoke
-    }
-
-    private fun KaSession.toImportableSymbol(target: KaSymbol, reference: KtReference): KaSymbol? = when {
-        target is KaReceiverParameterSymbol -> null
-
-        reference.isImplicitReferenceToCompanion() -> {
-            (target as? KaNamedClassSymbol)?.containingSymbol
-        }
-
-        reference is KaConstructorSymbol -> target.containingSymbol
-
-        else -> target
-    }
-
-    /**
-     * We want to skipp the calls which require implicit receiver to be dispatched.
-     */
-    private fun KaSession.isDispatchedCall(
-        element: KtElement,
-        dispatchReceiver: KaReceiverValue,
-        containingFile: KtFile = element.containingKtFile
-    ): Boolean {
-        return when (dispatchReceiver) {
-            is KaExplicitReceiverValue -> true
-
-            is KaSmartCastedReceiverValue -> isDispatchedCall(element, dispatchReceiver.original, containingFile)
-
-            is KaImplicitReceiverValue -> {
-                val regularImplicitReceivers = containingFile.scopeContext(element).implicitReceivers
-
-                // for imports from companion objects, or static java declarations
-                val isStaticImportDispatchReceiver = regularImplicitReceivers.none { it.type.semanticallyEquals(dispatchReceiver.type) }
-
-                !isStaticImportDispatchReceiver
-            }
-        }
-    }
-
-    private fun KaSession.resolveDispatchReceiver(element: KtElement): KaReceiverValue? {
-        val adjustedElement = element.callableReferenceExpressionForCallableReference() ?: element
-        val dispatchReceiver = adjustedElement.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.dispatchReceiver
-
-        return dispatchReceiver
     }
 }
 
@@ -169,78 +94,3 @@ private fun collectImportAliases(file: KtFile): Map<FqName, List<Name>> = if (fi
 } else {
     emptyMap()
 }
-
-private fun KaSession.computeImportableName(
-    target: KaSymbol,
-    implicitDispatchReceiver: KaImplicitReceiverValue? // TODO: support other types of dispatcher values
-): FqName? {
-    if (implicitDispatchReceiver == null) {
-        return target.importableFqName
-    }
-
-    if (target !is KaCallableSymbol) return null
-
-    val callableId = target.callableId ?: return null
-    if (callableId.classId == null) return null
-
-    val implicitReceiver = implicitDispatchReceiver.symbol as? KaClassLikeSymbol ?: return null
-    val implicitReceiverClassId = implicitReceiver.classId ?: return null
-
-    val substitutedCallableId = callableId.withClassId(implicitReceiverClassId)
-
-    return substitutedCallableId.asSingleFqName()
-}
-
-private fun KaSession.canBeResolvedViaImport(reference: KtReference, target: KaSymbol): Boolean {
-    if (reference is KDocReference) {
-        return canBeResolvedViaImport(reference, target)
-    }
-
-    if (target is KaCallableSymbol && target.isExtension) {
-        return true
-    }
-
-    val referenceExpression = reference.element as? KtNameReferenceExpression
-
-    val explicitReceiver = referenceExpression?.getReceiverExpression()
-        ?: referenceExpression?.callableReferenceExpressionForCallableReference()?.receiverExpression
-
-    if (explicitReceiver != null) {
-        val extensionReceiver = resolveExtensionReceiverForFunctionalTypeVariable(referenceExpression, target)
-        return extensionReceiver?.expression == explicitReceiver
-    }
-
-    return true
-}
-
-private fun KaSession.resolveExtensionReceiverForFunctionalTypeVariable(
-    referenceExpression: KtNameReferenceExpression?,
-    target: KaSymbol,
-): KaExplicitReceiverValue? {
-    val parentCall = referenceExpression?.parent as? KtCallExpression
-    val isFunctionalTypeVariable = target is KaPropertySymbol && target.returnType.let { it.isFunctionType || it.isSuspendFunctionType }
-
-    if (parentCall == null || !isFunctionalTypeVariable) {
-        return null
-    }
-
-    val parentCallInfo = parentCall.resolveToCall()?.singleCallOrNull<KaSimpleFunctionCall>() ?: return null
-    if (!parentCallInfo.isImplicitInvoke) return null
-
-    return parentCallInfo.partiallyAppliedSymbol.extensionReceiver as? KaExplicitReceiverValue
-}
-
-private fun KaSession.canBeResolvedViaImport(reference: KDocReference, target: KaSymbol): Boolean {
-    val qualifier = reference.element.getQualifier() ?: return true
-
-    return if (target is KaCallableSymbol && target.isExtension) {
-        val elementHasFunctionDescriptor = reference.element.mainReference.resolveToSymbols().any { it is KaFunctionSymbol }
-        val qualifierHasClassDescriptor = qualifier.mainReference.resolveToSymbols().any { it is KaClassLikeSymbol }
-        elementHasFunctionDescriptor && qualifierHasClassDescriptor
-    } else {
-        false
-    }
-}
-
-private fun KtElement.callableReferenceExpressionForCallableReference(): KtCallableReferenceExpression? =
-    (parent as? KtCallableReferenceExpression)?.takeIf { it.callableReference == this }

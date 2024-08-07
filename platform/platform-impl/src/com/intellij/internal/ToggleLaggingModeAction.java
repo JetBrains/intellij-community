@@ -10,22 +10,25 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.EdtScheduler;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 
 final class ToggleLaggingModeAction extends AnAction implements DumbAware {
-
-  private volatile boolean myLagging = false;
-  private final Alarm myAlarm = new Alarm();
+  private volatile boolean isLagging = false;
+  private Job job;
 
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
-    if (myLagging) {
-      myLagging = false;
-      myAlarm.cancelAllRequests();
+    if (isLagging) {
+      isLagging = false;
+      if (job != null) {
+        job.cancel(null);
+        job = null;
+      }
     }
     else {
-      myLagging = true;
+      isLagging = true;
       for (int i = 0; i < 100; i++) {
         new Runnable() {
           @Override
@@ -37,8 +40,8 @@ final class ToggleLaggingModeAction extends AnAction implements DumbAware {
                 DebugUtil.sleep(1);
               }
             }, new EmptyProgressIndicator());
-            if (myLagging) {
-              myAlarm.addRequest(this, 1);
+            if (isLagging) {
+              job = EdtScheduler.getInstance().schedule(1, this);
             }
           }
         }.run();
@@ -53,7 +56,7 @@ final class ToggleLaggingModeAction extends AnAction implements DumbAware {
 
   @Override
   public void update(final @NotNull AnActionEvent e) {
-    e.getPresentation().setText(myLagging ?
+    e.getPresentation().setText(isLagging ?
                                 InternalActionsBundle.messagePointer("action.presentation.ToggleLaggingModeAction.text.exit.lagging.mode") :
                                 InternalActionsBundle.messagePointer(
                                   "action.presentation.ToggleLaggingModeAction.text.enter.lagging.mode"));

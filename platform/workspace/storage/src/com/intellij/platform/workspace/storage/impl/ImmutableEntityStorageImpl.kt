@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.impl
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
@@ -23,6 +24,7 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.CollectionFactory
@@ -956,6 +958,9 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   internal var brokenConsistency: Boolean = false
 
+  internal var isEventHandling: Boolean = false
+  private val reporterExecutor = ConcurrencyUtil.newSingleThreadExecutor("Workspace Model Reporter Pool")
+
   internal var storageIsAlreadyApplied = false
   internal var applyInfo: String? = null
 
@@ -1011,6 +1016,10 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getExternalMapping(identifier: ExternalMappingKey<T>): ExternalEntityMapping<T> {
+    if (Registry.`is`("ide.workspace.model.assertions.bridges.usage", false) && isEventHandling) {
+      // https://stackoverflow.com/a/26122232
+      reporterExecutor.execute(BridgeAccessThreadAnalyzer(Exception(), identifier as ExternalMappingKey<Any>))
+    }
     val index = indexes.externalMappings[identifier] as? ExternalEntityMappingImpl<T>
     if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)
@@ -1111,6 +1120,30 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
         return refs.getOneToAbstractOneParent(connectionId, childEntityId.asChild())
           ?.let { entityDataByIdOrDie(it.id) }
       }
+    }
+  }
+
+  private class BridgeAccessThreadAnalyzer(private val exception: Exception, private val identifier: ExternalMappingKey<Any>) : Runnable {
+    override fun run() {
+      if (!predefinedBridges.any { identifier.toString().contains(it) }) return
+      val stackTrace = exception.stackTrace
+      //val stackTraceAsString = StringBuilder()
+      for (stackTraceElement in stackTrace) {
+        val elementAsString = stackTraceElement.toString()
+        // Skipping access from GlobalWorkspaceModel
+        if (elementAsString.contains("GlobalWorkspaceModel.onChanged")
+            || elementAsString.contains("GlobalWorkspaceModel.onBeforeChanged")
+            // Skip WorkspaceFileIndex contributors
+            || elementAsString.contains("WorkspaceFileIndexDataImpl.onEntitiesChanged")) {
+          return
+        }
+        //stackTraceAsString.append(stackTrace).append("\n")
+      }
+      LOG.error("Access to the bridge is prohibited during the event handling ", exception)
+    }
+
+    companion object {
+      private val predefinedBridges = listOf("intellij.modules.bridge", "intellij.artifacts.bridge", "intellij.facets.bridge", "intellij.libraries.bridge")
     }
   }
 

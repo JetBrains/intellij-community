@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.equalsTo
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
@@ -12,11 +11,7 @@ import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindItem
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets.LOCAL_MACHINE
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.awt.Component
 
 class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel) {
 
@@ -26,8 +21,6 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
   private val _selectExisting = propertyGraph.booleanProperty(selectionMethod, PythonInterpreterSelectionMethod.SELECT_EXISTING)
   private val newInterpreterManager = propertyGraph.property(VIRTUALENV)
   private val existingInterpreterManager = propertyGraph.property(PYTHON)
-
-  private lateinit var component: Component
 
   private val newInterpreterCreators = mapOf(
     VIRTUALENV to PythonNewVirtualenvCreator(model),
@@ -41,7 +34,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     CONDA to CondaExistingEnvironmentSelector(model),
   )
 
-  private val currentSdkManager: PythonAddEnvironment
+  val currentSdkManager: PythonAddEnvironment
     get() {
       return if (_selectExisting.get()) existingInterpreterSelectors[existingInterpreterManager.get()]!!
       else newInterpreterCreators[newInterpreterManager.get()]!!
@@ -119,8 +112,6 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     newInterpreterCreators.values.forEach(PythonAddEnvironment::onShown)
     existingInterpreterSelectors.values.forEach(PythonAddEnvironment::onShown)
   }
-
-  fun getSdk(): Sdk? = currentSdkManager.getOrCreateSdk()
 
   fun createStatisticsInfo(): InterpreterStatisticsInfo {
     return currentSdkManager.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE)

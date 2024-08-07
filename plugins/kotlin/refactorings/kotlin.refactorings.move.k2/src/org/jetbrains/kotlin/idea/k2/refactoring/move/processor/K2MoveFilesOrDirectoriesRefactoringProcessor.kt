@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationD
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOperationDescriptor.Files) : MoveFilesOrDirectoriesProcessor(
     descriptor.project,
@@ -39,18 +38,14 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOperationDe
         else -> emptyList()
     }
 
-    override fun preprocessUsages(refUsages: Ref<Array<out UsageInfo?>?>): Boolean {
+    override fun preprocessUsages(refUsages: Ref<Array<out UsageInfo>>): Boolean {
         val toContinue = super.preprocessUsages(refUsages)
         if (!toContinue) return false
+
         // after conflict checking, we don't need non-updatable usages anymore
-        val declarationsToMove = myElementsToMove
-            .flatMap { elem -> elem.allFiles() }
-            .flatMap { file -> file.declarations }
-            .flatMap { declaration -> (declaration as? KtNamedDeclaration)?.withChildDeclarations() ?: emptyList() }
-        unMarkNonUpdatableUsages(declarationsToMove)
-        val updatableUsages = refUsages.get()
-            ?.filter { (it as? K2MoveRenameUsageInfo)?.isUpdatable(declarationsToMove) == true }
-            ?: return false
+        val elementsToMove = myElementsToMove.toList()
+        unMarkNonUpdatableUsages(elementsToMove)
+        val updatableUsages = K2MoveRenameUsageInfo.filterUpdatable(elementsToMove, refUsages.get())
         refUsages.set(updatableUsages.toTypedArray())
         val usagesByFile = updatableUsages.groupBy { (it as? K2MoveRenameUsageInfo)?.referencedElement?.containingFile }
         usagesByFile.forEach { file, usages -> myFoundUsages.replace(file, usages) }
@@ -114,6 +109,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
             file.updatePackageDirective(moveDestination)
         }
         file.packageNeedsUpdate = null
+        oldToNewMap[file] = file
         val declarations = file.allDeclarationsToUpdate
         declarations.forEach { oldToNewMap[it] = it } // to pass files that are moved through MoveFileHandler API
     }

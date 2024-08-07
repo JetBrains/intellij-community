@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ public class MockProject extends MockComponentManager implements Project, Compon
   private static final Logger LOG = Logger.getInstance(MockProject.class);
   private VirtualFile myBaseDir;
 
+  @Internal
   public MockProject(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     super(parent, parentDisposable);
   }

@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 
 
-object PluginManagerSearchResultMarketplaceFeatureProvider {
+internal object PluginManagerSearchResultMarketplaceFeatureProvider {
   private val MARKETPLACE_RATING_DATA_KEY = EventFields.Float("marketplaceRating")
   private val MARKETPLACE_PAID_DATA_KEY = EventFields.Boolean("isPaid")
   private val MARKETPLACE_DOWNLOADS_DATA_KEY = EventFields.Int("downloads")

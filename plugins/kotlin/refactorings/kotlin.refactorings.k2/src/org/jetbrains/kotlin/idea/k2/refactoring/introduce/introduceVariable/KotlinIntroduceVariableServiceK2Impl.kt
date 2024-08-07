@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtDoubleColonExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -37,15 +38,8 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
             ?: findStringTemplateOrStringTemplateEntryExpression(file, startOffset, endOffset, elementKind)
             ?: findStringTemplateFragment(file, startOffset, endOffset, elementKind)
 
-        if (element is KtExpression) {
-            val qualifiedExpression = element.parent as? KtDotQualifiedExpression
-            if (qualifiedExpression != null && qualifiedExpression.receiverExpression == element) {
-                val resolved = ((element as? KtDotQualifiedExpression)?.selectorExpression ?: element).mainReference?.resolve()
-                if (resolved is PsiPackage || resolved is PsiClass ||
-                    resolved is KtTypeAlias || resolved is KtClassOrObject && resolved.getDeclarationKeyword()?.elementType != KtTokens.OBJECT_KEYWORD) {
-                    element = null
-                }
-            }
+        if (element is KtElement && isNonExtractableQualifier(element)) {
+            element = null
         }
 
         if (element == null) {
@@ -88,6 +82,22 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
         return analyzeInModalWindow(element, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             val expressionType = element.expressionType
             expressionType == null || expressionType.isUnitType
+        } || isNonExtractableQualifier(element)
+    }
+
+    private fun isNonExtractableQualifier(element: KtElement): Boolean {
+        val isQualifier = when (val parent = element.parent) {
+            is KtDotQualifiedExpression -> parent.receiverExpression == element
+            is KtDoubleColonExpression -> parent.receiverExpression == element
+            else -> false
         }
+        if (!isQualifier) return false
+
+        val resolved = ((element as? KtDotQualifiedExpression)?.selectorExpression ?: element).mainReference?.resolve()
+
+        return resolved is PsiPackage ||
+                resolved is PsiClass ||
+                resolved is KtTypeAlias ||
+                resolved is KtClassOrObject && resolved.getDeclarationKeyword()?.elementType != KtTokens.OBJECT_KEYWORD
     }
 }

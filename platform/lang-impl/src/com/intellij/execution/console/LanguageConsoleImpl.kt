@@ -5,12 +5,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.ide.DataManager
 import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.Language
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyRegisteredShortcuts
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.undo.UndoUtil
@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx.Companion.getInstanceEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
@@ -70,7 +69,7 @@ import kotlin.math.min
  * In case of REPL consider to use [LanguageConsoleBuilder]
  */
 open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
-  myHelper.project, GlobalSearchScope.allScope(myHelper.project), true, true), LanguageConsoleView, DataProvider {
+  myHelper.project, GlobalSearchScope.allScope(myHelper.project), true, true), LanguageConsoleView {
   private val consoleExecutionEditor = ConsoleExecutionEditor(myHelper)
   override val historyViewer: EditorEx
   private val myPanel: JPanel = ConsoleEditorsPanel(this)
@@ -197,7 +196,6 @@ open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
     myPanel.add(consoleExecutionEditor.component)
     myPanel.add(myScrollBar)
     myPanel.background = JBColor.lazy { consoleExecutionEditor.editor.backgroundColor }
-    DataManager.registerDataProvider(myPanel, this)
   }
 
   private fun setupComponents() {
@@ -428,24 +426,16 @@ open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
 
       editor.setHorizontalScrollbarVisible(true)
       editor.setVerticalScrollbarVisible(true)
-
-      DataManager.registerDataProvider(editor.component) { dataId -> getEditorData(editor, dataId) }
     }
 
     val fileSafe: PsiFile
       get() = if (file == null || !file!!.isValid) getFile().also { file = it } else file!!
-
-    protected fun getEditorData(editor: EditorEx, dataId: String): Any? {
-      if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.`is`(dataId)) {
-        return editor
-      }
-      else if (project.isInitialized) {
-        val caret = editor.caretModel.currentCaret
-        return getInstanceEx(project).getData(dataId, editor, caret)
-      }
-      return null
-    }
   }
 
-  class ConsoleEditorsPanel(val console: LanguageConsoleImpl) : JPanel()
+  class ConsoleEditorsPanel(val console: LanguageConsoleImpl) : JPanel(), UiDataProvider {
+    override fun uiDataSnapshot(sink: DataSink) {
+      DataSink.uiDataSnapshot(sink, console)
+      sink[OpenFileDescriptor.NAVIGATE_IN_EDITOR] = console.consoleExecutionEditor.editor
+    }
+  }
 }

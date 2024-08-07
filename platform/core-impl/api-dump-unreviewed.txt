@@ -231,7 +231,6 @@ c:com.intellij.core.CoreProjectEnvironment
 - <init>(com.intellij.openapi.Disposable,com.intellij.core.CoreApplicationEnvironment):V
 - addProjectExtension(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Object):V
 - p:createFileIndexFacade():com.intellij.openapi.roots.FileIndexFacade
-- p:createProject(org.picocontainer.PicoContainer,com.intellij.openapi.Disposable):com.intellij.mock.MockProject
 - p:createProjectScopeBuilder():com.intellij.psi.search.ProjectScopeBuilder
 - p:createResolveScopeManager(com.intellij.psi.PsiManager):com.intellij.psi.impl.ResolveScopeManager
 - getEnvironment():com.intellij.core.CoreApplicationEnvironment
@@ -964,7 +963,6 @@ c:com.intellij.mock.MockApplication
 c:com.intellij.mock.MockComponentManager
 - com.intellij.openapi.components.ComponentManager
 - com.intellij.openapi.util.UserDataHolderBase
-- <init>(org.picocontainer.PicoContainer,com.intellij.openapi.Disposable):V
 - addComponent(java.lang.Class,java.lang.Object):V
 - createError(java.lang.String,com.intellij.openapi.extensions.PluginId):java.lang.RuntimeException
 - createError(java.lang.String,java.lang.Throwable,com.intellij.openapi.extensions.PluginId,java.util.Map):java.lang.RuntimeException
@@ -1058,7 +1056,6 @@ c:com.intellij.mock.MockFileIndexFacade
 c:com.intellij.mock.MockProject
 - com.intellij.mock.MockComponentManager
 - com.intellij.openapi.project.Project
-- <init>(org.picocontainer.PicoContainer,com.intellij.openapi.Disposable):V
 - f:getActivityCategory(Z):com.intellij.diagnostic.ActivityCategory
 - getActualComponentManager():com.intellij.openapi.components.ComponentManager
 - getBaseDir():com.intellij.openapi.vfs.VirtualFile
@@ -1697,7 +1694,6 @@ f:com.intellij.openapi.fileEditor.impl.LoadTextUtil
 - s:getTextByBinaryPresentation(B[],com.intellij.openapi.vfs.VirtualFile):java.lang.CharSequence
 - s:getTextByBinaryPresentation(B[],com.intellij.openapi.vfs.VirtualFile,Z,Z):java.lang.CharSequence
 - s:getTextByBinaryPresentation(B[],java.nio.charset.Charset):java.lang.CharSequence
-- s:guessFromContent(com.intellij.openapi.vfs.VirtualFile,B[]):com.intellij.openapi.fileEditor.impl.LoadTextUtil$DetectResult
 - s:loadText(com.intellij.openapi.vfs.VirtualFile):java.lang.CharSequence
 - s:loadText(com.intellij.openapi.vfs.VirtualFile,I):java.lang.CharSequence
 - s:processTextFromBinaryPresentationOrNull(com.intellij.openapi.util.io.ByteSequence,com.intellij.openapi.vfs.VirtualFile,Z,Z,com.intellij.openapi.fileTypes.FileType,com.intellij.util.NotNullFunction):com.intellij.openapi.fileTypes.FileType
@@ -1708,10 +1704,6 @@ e:com.intellij.openapi.fileEditor.impl.LoadTextUtil$AutoDetectionReason
 - sf:FROM_BYTES:com.intellij.openapi.fileEditor.impl.LoadTextUtil$AutoDetectionReason
 - s:valueOf(java.lang.String):com.intellij.openapi.fileEditor.impl.LoadTextUtil$AutoDetectionReason
 - s:values():com.intellij.openapi.fileEditor.impl.LoadTextUtil$AutoDetectionReason[]
-c:com.intellij.openapi.fileEditor.impl.LoadTextUtil$DetectResult
-- f:BOM:B[]
-- f:guessed:com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
-- f:hardCodedCharset:java.nio.charset.Charset
 f:com.intellij.openapi.fileTypes.PlainTextFileType
 - com.intellij.openapi.fileTypes.LanguageFileType
 - com.intellij.openapi.fileTypes.OSFileIdeAssociation
@@ -3855,6 +3847,7 @@ c:com.intellij.psi.impl.source.tree.LazyParseablePsiElement
 - replace(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 a:com.intellij.psi.impl.source.tree.LeafElement
 - com.intellij.psi.impl.source.tree.TreeElement
+- com.intellij.lang.LighterASTTokenNode
 - p:<init>(com.intellij.psi.tree.IElementType,java.lang.CharSequence):V
 - acceptTree(com.intellij.psi.impl.source.tree.TreeElementVisitor):V
 - addChild(com.intellij.lang.ASTNode):V
@@ -4076,6 +4069,7 @@ com.intellij.psi.impl.source.tree.TreeCopyHandler
 - a:encodeInformation(com.intellij.psi.impl.source.tree.TreeElement,com.intellij.lang.ASTNode,java.util.Map):V
 a:com.intellij.psi.impl.source.tree.TreeElement
 - com.intellij.lang.ASTNode
+- com.intellij.lang.LighterASTNode
 - com.intellij.psi.impl.ElementBase
 - java.lang.Cloneable
 - sf:EMPTY_ARRAY:com.intellij.psi.impl.source.tree.TreeElement[]
@@ -4089,13 +4083,16 @@ a:com.intellij.psi.impl.source.tree.TreeElement
 - a:findLeafElementAt(I):com.intellij.psi.impl.source.tree.LeafElement
 - a:getCachedLength():I
 - getElementType():com.intellij.psi.tree.IElementType
+- getEndOffset():I
 - a:getFirstChildNode():com.intellij.psi.impl.source.tree.TreeElement
 - a:getLastChildNode():com.intellij.psi.impl.source.tree.TreeElement
 - getManager():com.intellij.psi.impl.PsiManagerEx
 - getStartOffset():I
 - f:getStartOffsetInParent():I
+- a:getTextLength():I
 - getTextOffset():I
 - getTextRange():com.intellij.openapi.util.TextRange
+- getTokenType():com.intellij.psi.tree.IElementType
 - f:getTreeNext():com.intellij.psi.impl.source.tree.TreeElement
 - f:getTreeParent():com.intellij.psi.impl.source.tree.CompositeElement
 - f:getTreePrev():com.intellij.psi.impl.source.tree.TreeElement
@@ -4629,7 +4626,6 @@ f:org.jetbrains.ide.PooledThreadExecutor
 - sf:INSTANCE:java.util.concurrent.ExecutorService
 - <init>():V
 org.picocontainer.MutablePicoContainer
-- org.picocontainer.PicoContainer
 - a:getComponentAdapter(java.lang.Object):org.picocontainer.ComponentAdapter
 - registerComponentImplementation(java.lang.Class):org.picocontainer.ComponentAdapter
 - a:registerComponentImplementation(java.lang.Object,java.lang.Class):org.picocontainer.ComponentAdapter

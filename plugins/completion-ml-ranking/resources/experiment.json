@@ -271,13 +271,13 @@
     {
       "id": "swift",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 8, 12, 13],
+      "includeGroups": [7, 8, 12, 13],
       "shouldLogElementFeatures": true
     },
     {
       "id": "mysql",
-      "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 12 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [7, 8, 12, 2],
       "shouldLogElementFeatures": false
     },
     {
@@ -289,7 +289,7 @@
     {
       "id": "objectivec",
       "experimentBucketsCount": 4,
-      "includeGroups": [7, 8, 12],
+      "includeGroups": [7, 8, 12, 2],
       "shouldLogElementFeatures": false
     },
     {
@@ -301,7 +301,7 @@
     {
       "id": "html",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 7, 12, 12, 13, 13 ],
+      "includeGroups": [7, 7, 12, 12, 13, 13, 2, 2],
       "shouldLogElementFeatures": false
     },
     {
@@ -313,7 +313,7 @@
     {
       "id": "shell script",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 12, 13 ],
+      "includeGroups": [7, 12, 13, 2],
       "shouldLogElementFeatures": true
     }
   ]

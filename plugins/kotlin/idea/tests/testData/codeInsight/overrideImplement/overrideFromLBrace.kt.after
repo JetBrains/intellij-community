@@ -24,3 +24,5 @@ class Other {
     }
 }
 
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "toString(): String"

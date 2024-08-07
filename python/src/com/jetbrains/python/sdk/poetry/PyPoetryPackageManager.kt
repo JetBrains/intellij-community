@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.poetry
 
+import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
@@ -12,11 +13,17 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
+import java.util.regex.Pattern
 
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
+
+data class PoetryOutdatedVersion(
+  @SerializedName("currentVersion") var currentVersion: String,
+  @SerializedName("latestVersion") var latestVersion: String)
+
 
 class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
   private val installedLines = listOf("Already installed", "Skipping", "Updating")
@@ -173,5 +180,17 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
         }
       }
     return Pair(pyPackages.distinct().toList(), pyRequirements.distinct().toList())
+  }
+
+  /**
+   * Parses the output of `poetry show --outdated` into a list of packages.
+   */
+  private fun parsePoetryShowOutdated(input: String): Map<String, PoetryOutdatedVersion> {
+    return input
+      .lines()
+      .mapNotNull { line ->
+        line.split(Pattern.compile(" +"))
+          .takeIf { it.size > 3 }?.let { it[0] to PoetryOutdatedVersion(it[1], it[2]) }
+      }.toMap()
   }
 }

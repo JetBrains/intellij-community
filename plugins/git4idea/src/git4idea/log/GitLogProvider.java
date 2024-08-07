@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
@@ -53,8 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 import static git4idea.history.GitCommitRequirements.DiffRenames;
@@ -151,8 +150,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       }
     }
 
-    List<VcsCommitMetadata> sortedCommits = computeWithSpan(myTracer, SortingCommits.getName(), span -> {
-      span.setAttribute("rootName", root.getName());
+    List<VcsCommitMetadata> sortedCommits = TraceKt.use(myTracer.spanBuilder(SortingCommits.getName()).setAttribute("rootName", root.getName()), span -> {
       List<VcsCommitMetadata> commits = VcsLogSorter.sortByDateTopoOrder(allDetails);
       return ContainerUtil.getFirstItems(commits, requirements.getCommitCount());
     });
@@ -171,9 +169,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
                                           @NotNull Set<? extends VcsRef> manuallyReadBranches,
                                           @Nullable Set<String> currentTagNames,
                                           @Nullable DetailedLogData commitsFromTags) {
-    runWithSpan(myTracer, ValidatingData.getName(), span -> {
-      span.setAttribute("rootName", root.getName());
-
+    TraceKt.use(myTracer.spanBuilder(ValidatingData.getName()).setAttribute("rootName", root.getName()), __ -> {
       Set<Hash> refs = ContainerUtil.map2Set(allRefs, VcsRef::getCommitHash);
 
       PermanentGraphImpl.newInstance(sortedCommits, new GraphColorGetterByNodeFactory<>((hash, integer) -> 0), (head1, head2) -> {
@@ -185,6 +181,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
         }
         return 0;
       }, refs);
+      return null;
     });
   }
 
@@ -256,10 +253,8 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   }
 
   private @NotNull Set<String> readCurrentTagNames(@NotNull VirtualFile root) throws VcsException {
-    return computeWithSpanThrows(myTracer, ReadingTags.getName(), span -> {
-      span.setAttribute("rootName", root.getName());
-      return new HashSet<>(GitBranchUtil.getAllTags(myProject, root));
-    });
+    return computeWithSpanThrows(myTracer.spanBuilder(ReadingTags.getName()).setAttribute("rootName", root.getName()),
+                                 __ -> new HashSet<>(GitBranchUtil.getAllTags(myProject, root)));
   }
 
   private static @NotNull <T> Set<T> remove(@NotNull Set<? extends T> original, Set<T> @NotNull ... toRemove) {
@@ -281,9 +276,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   private @NotNull DetailedLogData loadSomeCommitsOnTaggedBranches(@NotNull VirtualFile root,
                                                                    int commitCount,
                                                                    @NotNull Collection<String> unmatchedTags) throws VcsException {
-    return computeWithSpanThrows(myTracer, LoadingCommitsOnTaggedBranch.getName(), span -> {
-      span.setAttribute("rootName", root.getName());
-
+    return computeWithSpanThrows(myTracer.spanBuilder(LoadingCommitsOnTaggedBranch.getName()).setAttribute("rootName", root.getName()), __ -> {
       List<String> params = new ArrayList<>();
       params.add("--max-count=" + commitCount);
 
@@ -344,8 +337,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
   }
 
   private @NotNull Set<VcsRef> readBranches(@NotNull GitRepository repository) {
-    return computeWithSpan(myTracer, ReadingBranches.getName(), span -> {
-      span.setAttribute("rootName", repository.getRoot().getName());
+    return TraceKt.use(myTracer.spanBuilder( ReadingBranches.getName()).setAttribute("rootName", repository.getRoot().getName()), span -> {
       VirtualFile root = repository.getRoot();
       repository.update();
       GitBranchesCollection branches = repository.getBranches();

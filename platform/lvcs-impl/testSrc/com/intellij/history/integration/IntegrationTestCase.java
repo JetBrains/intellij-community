@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
-import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.LocalHistoryFacadeKt;
-import com.intellij.history.core.LocalHistoryTestCase;
-import com.intellij.history.core.Paths;
+import com.intellij.history.core.*;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
@@ -174,7 +171,7 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
   }
 
   protected @NotNull List<ChangeSet> getChangesFor(@NotNull VirtualFile f, @Nullable String pattern) {
-    return LocalHistoryTestCase.collectChanges(getVcs(), f.getPath(), myProject.getLocationHash(), pattern);
+    return LocalHistoryTestCase.collectChanges(getVcs(), f.getPath(), myProject.getLocationHash(), HistoryPathFilter.create(pattern, myProject));
   }
 
   protected @Nullable Entry getEntryFor(@NotNull ChangeSet changeSet, @NotNull VirtualFile f) {

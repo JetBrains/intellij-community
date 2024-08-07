@@ -1738,6 +1738,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/smartStepIntoInlinedFunctionalExpression.kt");
         }
 
+        @TestMetadata("smartStepIntoInsideConstructor.kt")
+        public void testSmartStepIntoInsideConstructor() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoInsideConstructor.kt");
+        }
+
         @TestMetadata("smartStepIntoInsideLambda.kt")
         public void testSmartStepIntoInsideLambda() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoInsideLambda.kt");
@@ -1966,6 +1971,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
         @TestMetadata("stepThroughDefaultArgs.kt")
         public void testStepThroughDefaultArgs() throws Exception {
             runTest("../testData/stepping/custom/stepThroughDefaultArgs.kt");
+        }
+
+        @TestMetadata("stepThroughDefaultArgsConstructor.kt")
+        public void testStepThroughDefaultArgsConstructor() throws Exception {
+            runTest("../testData/stepping/custom/stepThroughDefaultArgsConstructor.kt");
         }
 
         @TestMetadata("syntheticProvider.kt")

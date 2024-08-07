@@ -402,7 +402,7 @@ public final class SearchEverywhereHeader {
       return name;
     }
 
-    public String getReportableID() {
+    String getReportableID() {
       if (!isSingleContributor()) return getID();
 
       return getReportableContributorID(contributors.get(0));

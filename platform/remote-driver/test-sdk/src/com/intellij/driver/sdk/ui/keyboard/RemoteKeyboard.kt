@@ -51,13 +51,16 @@ class RemoteKeyboard(private val robot: Robot) {
   fun hotKey(vararg keyCodes: Int) {
     LOG.info("Pressing hotkeys ${keyCodes.joinToString(",") {"'$it'"}}.")
 
-    keyCodes.forEach {
+    val lastKey = keyCodes.last()
+    val others = keyCodes.dropLast(1)
+    others.forEach {
       robot.pressKey(it)
       Thread.sleep(100)
     }
-    keyCodes.reversed().forEach {
+    robot.pressAndReleaseKey(lastKey)
+
+    others.reversed().forEach {
       robot.releaseKey(it)
-      Thread.sleep(100)
     }
   }
 

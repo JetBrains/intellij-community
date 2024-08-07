@@ -1,0 +1,5 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.k2">
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.k2.quickfixes.SerializationK2QuickFixContributor"/>
+  </extensions>
+</idea-plugin>

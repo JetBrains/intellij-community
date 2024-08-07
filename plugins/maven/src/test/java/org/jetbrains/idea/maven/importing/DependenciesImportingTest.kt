@@ -120,26 +120,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     assertProjectLibraryCoordinates("Maven: junit:junit:bar:4.0", "junit", "junit", "bar", "jar", "4.0")
   }
 
-  @Test
-  fun testSystemDependencyWithoutPath() = runBlocking {
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <dependencies>
-                         <dependency>
-                           <groupId>junit</groupId>
-                           <artifactId>junit</artifactId>
-                           <version>4.0</version>
-                           <scope>system</scope>
-                         </dependency>
-                       </dependencies>
-                       """.trimIndent())
-    doImportProjectsAsync(listOf(projectPom), false)
-
-    assertModules("project")
-    assertModuleLibDeps("project") // dependency was not added due to reported pom model problem.
-  }
 
   @Test
   @InstantImportCompatible
@@ -1721,7 +1701,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     doImportProjectsAsync(listOf(projectPom), false)
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://$projectPath/foo/bar.jar!/"),
+                       listOf("jar://$projectPath/foo/bar.jar!/"),
                        emptyList(),
                        emptyList())
 
@@ -1741,10 +1721,10 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    doImportProjectsAsync(listOf(projectPom), false)
+    updateAllProjects()
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://$projectPath/foo/xxx.jar!/"),
+                       listOf("jar://$projectPath/foo/xxx.jar!/"),
                        emptyList(),
                        emptyList())
   }

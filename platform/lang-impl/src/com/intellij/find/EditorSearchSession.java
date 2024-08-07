@@ -36,12 +36,10 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +55,7 @@ import java.util.regex.PatternSyntaxException;
  * @author max, andrey.zaytsev
  */
 public class EditorSearchSession implements SearchSession,
-                                            DataProvider,
+                                            UiCompatibleDataProvider,
                                             SelectionListener,
                                             SearchResults.SearchResultsListener,
                                             SearchReplaceComponent.Listener {
@@ -99,7 +97,7 @@ public class EditorSearchSession implements SearchSession,
     myLivePreviewController = new LivePreviewController(mySearchResults, this, myDisposable);
 
     myComponent = SearchReplaceComponent
-      .buildFor(project, myEditor.getContentComponent())
+      .buildFor(project, myEditor.getContentComponent(), this)
       .addPrimarySearchActions(createPrimarySearchActions())
       .addExtraSearchActions(new ToggleMatchCase(),
                              new ToggleWholeWordsOnlyAction(),
@@ -112,7 +110,6 @@ public class EditorSearchSession implements SearchSession,
       .addExtraReplaceAction(new TogglePreserveCaseAction())
       .addReplaceFieldActions(new PrevOccurrenceAction(false),
                               new NextOccurrenceAction(false))
-      .withDataProvider(this)
       .withCloseAction(this::close)
       .withReplaceAction(this::replaceCurrent)
       .build();
@@ -270,8 +267,8 @@ public class EditorSearchSession implements SearchSession,
   @Nullable
   public static EditorSearchSession get(@Nullable Editor editor) {
     JComponent headerComponent = editor != null ? editor.getHeaderComponent() : null;
-    SearchReplaceComponent searchReplaceComponent = ObjectUtils.tryCast(headerComponent, SearchReplaceComponent.class);
-    return searchReplaceComponent != null ? SESSION_KEY.getData(searchReplaceComponent) : null;
+    SearchSession session = headerComponent instanceof SearchReplaceComponent o ? o.getSearchSession() : null;
+    return session instanceof EditorSearchSession o ? o : null;
   }
 
   @NotNull
@@ -314,21 +311,11 @@ public class EditorSearchSession implements SearchSession,
 
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls final String dataId) {
-    if (SearchSession.KEY.is(dataId)) {
-      return this;
-    }
-    if (SESSION_KEY.is(dataId)) {
-      return this;
-    }
-    if (CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.is(dataId)) {
-      return myEditor;
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return myFindModel.isReplaceState() ? HelpID.REPLACE_IN_EDITOR : HelpID.FIND_IN_EDITOR;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(SearchSession.KEY, this);
+    sink.set(SESSION_KEY, this);
+    sink.set(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE, myEditor);
+    sink.set(PlatformCoreDataKeys.HELP_ID, myFindModel.isReplaceState() ? HelpID.REPLACE_IN_EDITOR : HelpID.FIND_IN_EDITOR);
   }
 
   @Override

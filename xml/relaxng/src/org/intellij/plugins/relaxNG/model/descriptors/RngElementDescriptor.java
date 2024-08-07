@@ -145,7 +145,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   @Override
-  public final XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable final XmlTag context) {
+  public final XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context) {
     if (context != null) {
       return getCachedValue(context, this, ATTRS_KEY, p -> {
         final XmlAttributeDescriptor[] value = p.collectAttributeDescriptors(context);
@@ -281,8 +281,40 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return AstLoadingFilter.forceAllowTreeLoading(file, () -> getDeclarationImpl(project, decl, location, file));
   }
 
-  @Nullable
-  private static PsiElement getDeclarationImpl(@NotNull Project project, PsiElement decl, Locator location, PsiFile file) {
+  @Override
+  public @NonNls String getName(PsiElement context) {
+    final QName qName = getQName();
+    if (qName == null) {
+      return "#unknown";
+    }
+    final XmlTag xmlTag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
+    final String prefix = xmlTag != null ? xmlTag.getPrefixByNamespace(qName.getNamespaceURI()) : null;
+    return format(qName, prefix != null ? prefix : qName.getPrefix());
+  }
+
+  @Override
+  public @NonNls String getName() {
+    final QName qName = getQName();
+    if (qName == null) {
+      return "#unknown";
+    }
+    return qName.getLocalPart();
+  }
+
+  private @Nullable QName getQName() {
+    final Iterator<QName> iterator = myElementPattern.getName().listNames().iterator();
+    if (!iterator.hasNext()) {
+      return null;
+    }
+    return iterator.next();
+  }
+
+  private static String format(QName qName, String p) {
+    final String localPart = qName.getLocalPart();
+    return p.length() > 0 ? p + ":" + localPart : localPart;
+  }
+
+  private static @Nullable PsiElement getDeclarationImpl(@NotNull Project project, PsiElement decl, Locator location, PsiFile file) {
     final int column = location.getColumnNumber();
     final int line = location.getLineNumber();
 
@@ -306,42 +338,6 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     }
 
     return PsiTreeUtil.getParentOfType(at, XmlTag.class);
-  }
-
-  @Override
-  @NonNls
-  public String getName(PsiElement context) {
-    final QName qName = getQName();
-    if (qName == null) {
-      return "#unknown";
-    }
-    final XmlTag xmlTag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
-    final String prefix = xmlTag != null ? xmlTag.getPrefixByNamespace(qName.getNamespaceURI()) : null;
-    return format(qName, prefix != null ? prefix : qName.getPrefix());
-  }
-
-  @Override
-  @NonNls
-  public String getName() {
-    final QName qName = getQName();
-    if (qName == null) {
-      return "#unknown";
-    }
-    return qName.getLocalPart();
-  }
-
-  private static String format(QName qName, String p) {
-    final String localPart = qName.getLocalPart();
-    return p.length() > 0 ? p + ":" + localPart : localPart;
-  }
-
-  @Nullable
-  private QName getQName() {
-    final Iterator<QName> iterator = myElementPattern.getName().listNames().iterator();
-    if (!iterator.hasNext()) {
-      return null;
-    }
-    return iterator.next();
   }
 
   @Override
@@ -437,15 +433,13 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       return myName;
     }
 
-    @NotNull
     @Override
-    public HtmlSymbolDeclaration.Kind getKind() {
+    public @NotNull HtmlSymbolDeclaration.Kind getKind() {
       return myKind;
     }
 
-    @NotNull
     @Override
-    public PsiElement getNavigationElement() {
+    public @NotNull PsiElement getNavigationElement() {
       final PsiElement rncElement = myFile.findElementAt(myStartOffset + myColumn);
       final ASTNode pattern = rncElement != null ? TreeUtil.findParent(rncElement.getNode(), RncElementTypes.PATTERN) : null;
       final ASTNode nameClass = pattern != null ? pattern.findChildByType(RncElementTypes.NAME_CLASS) : null;

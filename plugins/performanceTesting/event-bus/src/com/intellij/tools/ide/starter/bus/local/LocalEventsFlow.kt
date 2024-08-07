@@ -27,15 +27,28 @@ class LocalEventsFlow : EventsFlow {
   private val subscribers = HashMap<String, CopyOnWriteArrayList<Subscriber<out Event>>>()
   private val subscribersLock = ReentrantReadWriteLock()
 
-  override fun <EventType : Event> subscribe(eventClass: Class<EventType>,
-                                             subscriber: Any,
-                                             timeout: Duration,
-                                             callback: suspend (event: EventType) -> Unit): Boolean {
+  // In case using class as subscriber. eg MyClass::class
+  override fun getSubscriberObject(subscriber: Any) = if (subscriber is CallableReference) subscriber::class.toString() else subscriber
+
+  override fun <EventType : Event> unsubscribe(eventClass: Class<EventType>, subscriber: Any) {
+    subscribersLock.writeLock().withLock {
+      val eventClassName = eventClass.simpleName
+      val subscriberName = getSubscriberObject(subscriber)
+      subscribers[eventClassName]?.removeIf { it.subscriberName == subscriberName }
+      LOG.debug("Unsubscribing $subscriberName for $eventClassName")
+    }
+  }
+
+  override fun <EventType : Event> subscribe(
+    eventClass: Class<EventType>,
+    subscriber: Any,
+    timeout: Duration,
+    callback: suspend (event: EventType) -> Unit,
+  ): Boolean {
     subscribersLock.writeLock().withLock {
       // simpleName because of in the case of SharedEvent, events can be located in different packages
       val eventClassName = eventClass.simpleName
-      // In case using class as subscriber. eg MyClass::class
-      val subscriberObject = if (subscriber is CallableReference) subscriber::class.toString() else subscriber
+      val subscriberObject = getSubscriberObject(subscriber)
       // To avoid double subscriptions
       if (subscribers[eventClassName]?.any { it.subscriberName == subscriberObject } == true) return false
       val newSubscriber = Subscriber(subscriberObject, timeout, callback)

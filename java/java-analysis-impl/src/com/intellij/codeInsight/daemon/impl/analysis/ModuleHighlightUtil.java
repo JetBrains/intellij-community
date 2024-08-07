@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.JavaModuleSystemEx;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -220,8 +221,18 @@ final class ModuleHighlightUtil {
     PsiJavaModuleReference ref = refElement.getReference();
     assert ref != null : refElement.getParent();
     PsiJavaModule target = ref.resolve();
-    if (target != null) return null;
-    return getUnresolvedJavaModuleReason(statement, refElement);
+    if (target == null) return getUnresolvedJavaModuleReason(statement, refElement);
+    for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensionList()) {
+      if (!(moduleSystem instanceof JavaModuleSystemEx javaModuleSystemEx)) continue;
+      JavaModuleSystemEx.ErrorWithFixes fixes = javaModuleSystemEx.checkAccess(target, statement);
+      if (fixes == null) continue;
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(statement)
+        .descriptionAndTooltip(fixes.message);
+      fixes.fixes.forEach(fix -> info.registerFix(fix, null, null, null, null));
+      return info;
+    }
+    return null;
   }
 
   static HighlightInfo.Builder checkModuleReference(@NotNull PsiRequiresStatement statement) {

@@ -77,8 +77,7 @@ object XBreakpointUtil {
       offset = textLength
     }
 
-    val debuggerSupports = DebuggerSupport.getDebuggerSupports()
-    for (debuggerSupport in debuggerSupports) {
+    for (debuggerSupport in DebuggerSupport.getDebuggerSupports()) {
       val provider = debuggerSupport.breakpointPanelProvider
       val breakpoint = provider.findBreakpoint(project, editorDocument, offset)
       if (breakpoint != null) {
@@ -105,10 +104,11 @@ object XBreakpointUtil {
   }
 
   @JvmStatic
-  fun collectPanelProviders(): List<BreakpointPanelProvider<*>> =
-    DebuggerSupport.getDebuggerSupports()
+  fun collectPanelProviders(): List<BreakpointPanelProvider<*>> {
+    return DebuggerSupport.getDebuggerSupports()
       .map { it.breakpointPanelProvider }
       .sortedByDescending { it.priority }
+  }
 
   @JvmStatic
   fun getDebuggerSupport(project: Project, breakpointItem: BreakpointItem): DebuggerSupport? {

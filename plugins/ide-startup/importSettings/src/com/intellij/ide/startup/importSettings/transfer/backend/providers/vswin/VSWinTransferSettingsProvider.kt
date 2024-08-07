@@ -8,12 +8,12 @@ import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
-import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
-import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSParser
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSPossibleVersionsEnumerator
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSProfileDetectorUtils
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSParser
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
@@ -35,7 +35,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
   override val name: String = "Visual Studio"
 
   private val defaultAdvice: @Nls String = IdeBundle.message("transfersettings.vs.quit.advise")
-  val failureReason: @Nls String = IdeBundle.message("transfersettings.vs.failureReason", defaultAdvice)
+  private val failureReason: @Nls String = IdeBundle.message("transfersettings.vs.failureReason", defaultAdvice)
   private val noSettings: @Nls String = IdeBundle.message("transfersettings.vs.noSettings")
 
   private val vsEnumerator = VSPossibleVersionsEnumerator()
@@ -49,12 +49,6 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       logger.info("Started processing ${hive.hiveString}")
 
       val instanceIdForIdeVersion = "VisualStudio${hive.hiveString}"
-
-      /*customizer.reloadIds?.let {
-        if (!it.contains(instanceIdForIdeVersion)) {
-          return@mapNotNull null
-        }
-      }*/
 
       val customRt = System.getProperty("trl.oneHs")
       if (customRt != null && hive.hiveString != customRt) {

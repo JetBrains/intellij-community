@@ -38,12 +38,14 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner, AbstractBas
 
   /**
    * Returns the array of classes or packages which have been
-   * imported on demand (for example, javax.swing.*)
+   * imported on non-static demand (for example, javax.swing.*)
    *
    * @param includeImplicit if true, implicitly imported packages (like java.lang) are included.
    * @param checkIncludes   deprecated, no longer used
    * @return the array of PsiClass or PsiPackage elements for the imports.
+   * @deprecated please use other methods to check imports, the method doesn't support module imports
    */
+  @Deprecated
   PsiElement @NotNull [] getOnDemandImports(boolean includeImplicit, @Deprecated boolean checkIncludes);
 
   /**

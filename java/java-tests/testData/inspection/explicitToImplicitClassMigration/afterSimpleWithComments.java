@@ -1,4 +1,3 @@
-// "Convert into implicitly declared class" "true-preview"
 
 /**
  * comments

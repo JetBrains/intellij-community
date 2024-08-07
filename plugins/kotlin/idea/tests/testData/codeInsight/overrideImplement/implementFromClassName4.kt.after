@@ -40,3 +40,9 @@ class Test : A {
         TODO("Not yet implemented")
     }
 }
+
+// MEMBER: "a1(): Unit"
+// MEMBER: "a3(): Unit"
+// MEMBER: "a5(): Unit"
+// MEMBER: "a7(): Unit"
+// MEMBER: "a8(): Unit"

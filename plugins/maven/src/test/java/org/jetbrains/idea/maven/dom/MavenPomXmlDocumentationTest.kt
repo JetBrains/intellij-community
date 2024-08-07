@@ -35,7 +35,7 @@ class MavenPomXmlDocumentationTest : MavenDomTestCase() {
 
     val originalElement = getElementAtCaret(projectPom)
     val documentationManager = DocumentationManager.getInstance(project)
-    val targetElement = documentationManager.findTargetElement(editor, testPsiFile, originalElement)
+    val targetElement = documentationManager.findTargetElement(getEditor(), getTestPsiFile(), originalElement)
 
     val provider = DocumentationManager.getProviderFromElement(targetElement)
 

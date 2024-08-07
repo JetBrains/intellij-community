@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ui.util.CompositeAppearance
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -54,6 +55,7 @@ class KotlinOverrideHierarchyNodeDescriptor(
     private fun resolveToSymbol(psiElement: PsiElement): KaSymbol? {
         return when (psiElement) {
             is KtNamedDeclaration -> psiElement.symbol
+            is PsiClass -> psiElement.namedClassSymbol
             is PsiMember -> psiElement.callableSymbol
             else -> null
         }
@@ -87,7 +89,7 @@ class KotlinOverrideHierarchyNodeDescriptor(
             val classSymbol = getCurrentClassSymbol() ?: return@analyze null
             val callableSymbol = getCurrentSymbol() ?: return@analyze AllIcons.Hierarchy.MethodNotDefined
 
-            if (callableSymbol.origin.isJavaSourceOrLibrary() ||
+            if (callableSymbol.origin.isJavaSourceOrLibrary() || callableSymbol.origin == KaSymbolOrigin.JAVA_SYNTHETIC_PROPERTY ||
                 callableSymbol.origin == KaSymbolOrigin.LIBRARY || callableSymbol.origin == KaSymbolOrigin.SOURCE
             ) {
                 if (callableSymbol.modality == KaSymbolModality.ABSTRACT) return@analyze null

@@ -18,12 +18,10 @@ package com.jetbrains.python.sdk.add
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
@@ -39,10 +37,8 @@ import javax.swing.Icon
 
 open class PyAddExistingCondaEnvPanel(
   private val project: Project?,
-  private val module: Module?,
   private val existingSdks: List<Sdk>,
   override var newProjectPath: String?,
-  context: UserDataHolder,
 ) : PyAddSdkPanel() {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda

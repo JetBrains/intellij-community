@@ -21,7 +21,10 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ui.IoErrorText
 import java.io.IOException
 
-class CollectZippedLogsAction : AnAction(), DumbAware {
+private const val CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog"
+const val COLLECT_LOGS_NOTIFICATION_GROUP: String = "Collect Zipped Logs"
+
+internal class CollectZippedLogsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
 
@@ -55,7 +58,7 @@ class CollectZippedLogsAction : AnAction(), DumbAware {
         RevealFileAction.openFile(logs)
       }
       else {
-        Notification(NOTIFICATION_GROUP, IdeBundle.message(
+        Notification(COLLECT_LOGS_NOTIFICATION_GROUP, IdeBundle.message(
           "collect.logs.notification.success", logs),
                      NotificationType.INFORMATION).notify(project)
       }
@@ -64,17 +67,12 @@ class CollectZippedLogsAction : AnAction(), DumbAware {
       Logger.getInstance(javaClass).warn(x)
       val message = IdeBundle.message("collect.logs.notification.error",
                                       IoErrorText.message(x))
-      Notification(NOTIFICATION_GROUP, message,
+      Notification(COLLECT_LOGS_NOTIFICATION_GROUP, message,
                    NotificationType.ERROR).notify(project)
     }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
-  }
-
-  companion object {
-    private const val CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog"
-    const val NOTIFICATION_GROUP: String = "Collect Zipped Logs"
   }
 }

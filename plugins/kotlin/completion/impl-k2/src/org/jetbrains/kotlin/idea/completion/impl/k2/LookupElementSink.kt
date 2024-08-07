@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion
+package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -11,8 +12,11 @@ import com.intellij.openapi.editor.Document
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
-import org.jetbrains.kotlin.idea.completion.implCommon.handlers.HandleCompletionCharLookupElementDecorator
-import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
+import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
+import org.jetbrains.kotlin.idea.completion.suppressItemSelectionByCharsOnTyping
 import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
@@ -25,56 +29,50 @@ internal class LookupElementSink(
     private val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
 ) {
-    private val wrappers: List<LookupElementWrapper> by lazy {
-        WrappersProvider.getWrappersForLookupElement(parameters)
-    }
 
     fun withPriority(priority: Int): LookupElementSink =
         LookupElementSink(resultSet, parameters, priority)
 
     fun addElement(element: LookupElement) {
-        element.groupPriority = groupPriority
-        resultSet.addElement(applyWrappersToLookupElement(element))
+        resultSet.addElement(decorateLookupElement(element))
     }
 
     fun addAllElements(elements: Iterable<LookupElement>) {
-        elements.forEach {
-            it.groupPriority = groupPriority
-        }
-        resultSet.addAllElements(elements.map(::applyWrappersToLookupElement))
+        resultSet.addAllElements(elements.map(::decorateLookupElement))
     }
 
     fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>) {
         resultSet.restartCompletionOnPrefixChange(prefixCondition)
     }
 
-    private fun applyWrappersToLookupElement(lookupElement: LookupElement): LookupElement {
-        return wrappers.wrap(lookupElement)
+    private fun decorateLookupElement(
+        element: LookupElement,
+    ): LookupElementDecorator<LookupElement> {
+        element.groupPriority = groupPriority
+
+        val actualParameters = parameters.ijParameters
+        if (isAtFunctionLiteralStart(actualParameters.position)) {
+            element.suppressItemSelectionByCharsOnTyping = true
+        }
+
+        val bracesInsertHandler = when (parameters.type) {
+            KotlinFirCompletionParameters.CorrectionType.BRACES_FOR_STRING_TEMPLATE -> InsertStringTemplateBracesInsertHandler
+            else -> WrapSingleStringTemplateEntryWithBracesInsertHandler
+        }
+
+        return LookupElementDecorator.withDelegateInsertHandler(
+            LookupElementDecorator.withDelegateInsertHandler(element, bracesInsertHandler),
+            CompletionCharInsertHandler(actualParameters),
+        )
     }
 }
 
+private object WrapSingleStringTemplateEntryWithBracesInsertHandler : InsertHandler<LookupElement> {
 
-private object WrappersProvider {
-    fun getWrappersForLookupElement(parameters: KotlinFirCompletionParameters): List<LookupElementWrapper> {
-        val stringTemplateWrapper = when (parameters.type) {
-            KotlinFirCompletionParameters.CorrectionType.BRACES_FOR_STRING_TEMPLATE -> {
-                LookupElementWrapper(::wrapLookupElementForStringTemplateAfterDotCompletion)
-            }
-
-            else -> LookupElementWrapper(::WrapSingleStringTemplateEntryWithBraces)
-        }
-        val isPositionAtFunctionLiteralStart = isAtFunctionLiteralStart(parameters.ijParameters.position)
-
-        return buildList {
-            add(stringTemplateWrapper)
-            add(LookupElementWrapper { HandleCompletionCharLookupElementDecorator(it, parameters.ijParameters) })
-            if (isPositionAtFunctionLiteralStart) add(SuppressItemSelectionByCharsOnTypingWrapper)
-        }
-    }
-}
-
-private class WrapSingleStringTemplateEntryWithBraces(lookupElement: LookupElement) : LookupElementDecorator<LookupElement>(lookupElement) {
-    override fun handleInsert(context: InsertionContext) {
+    override fun handleInsert(
+        context: InsertionContext,
+        item: LookupElement,
+    ) {
         val document = context.document
         context.commitDocument()
 
@@ -82,12 +80,12 @@ private class WrapSingleStringTemplateEntryWithBraces(lookupElement: LookupEleme
             insertBraces(context, document)
             context.commitDocument()
 
-            super.handleInsert(context)
+            item.handleInsert(context)
 
             removeUnneededBraces(context)
             context.commitDocument()
         } else {
-            super.handleInsert(context)
+            item.handleInsert(context)
         }
     }
 
@@ -116,9 +114,4 @@ private class WrapSingleStringTemplateEntryWithBraces(lookupElement: LookupEleme
         val identifier = element.parent as? KtNameReferenceExpression ?: return null
         return identifier.parent as? KtStringTemplateEntryWithExpression
     }
-}
-
-private object SuppressItemSelectionByCharsOnTypingWrapper : LookupElementWrapper {
-    override fun wrap(element: LookupElement): LookupElement =
-        element.apply { suppressItemSelectionByCharsOnTyping = true }
 }

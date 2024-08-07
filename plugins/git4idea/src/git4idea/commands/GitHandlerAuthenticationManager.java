@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.externalProcessAuthHelper.*;
@@ -17,7 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import externalApp.nativessh.NativeSshAskPassAppHandler;
 import git4idea.GitUtil;
+import git4idea.commit.signing.GpgAgentConfigurator;
+import git4idea.commit.signing.PinentryService;
 import git4idea.config.*;
+import git4idea.config.gpg.GitGpgConfigUtilsKt;
 import git4idea.http.GitAskPassAppHandler;
 import git4idea.repo.GitProjectConfigurationCache;
 import git4idea.repo.GitRepository;
@@ -65,6 +68,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     GitUtil.tryRunOrClose(manager, () -> {
       manager.prepareHttpAuth();
       manager.prepareNativeSshAuth();
+      manager.prepareGpgAgentAuth();
       boolean useCredentialHelper = GitVcsApplicationSettings.getInstance().isUseCredentialHelper();
 
       boolean isConfigCommand = handler.getCommand() == GitCommand.CONFIG;
@@ -174,6 +178,35 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     if (Registry.is("git.use.setsid.for.native.ssh")) {
       // if SSH_ASKPASS_REQUIRE is not supported, openssh will prioritize tty used to spawn IDE to SSH_ASKPASS. Detach it with setsid.
       myHandler.withNoTty();
+    }
+  }
+
+  private void prepareGpgAgentAuth() throws IOException {
+    if (!GpgAgentConfigurator.isEnabled(myHandler.myExecutable)) {
+      return;
+    }
+    Project project = myHandler.project();
+    VirtualFile root = myHandler.getExecutableContext().getRoot();
+    if (project == null || root == null) {
+      return;
+    }
+
+    GitCommand command = myHandler.getCommand();
+    boolean needGpgSigning =
+      (command == GitCommand.COMMIT || command == GitCommand.TAG || command == GitCommand.MERGE) &&
+      GitGpgConfigUtilsKt.isGpgSignEnabled(project, root);
+
+    if (needGpgSigning) {
+      PinentryService.PinentryData pinentryData = PinentryService.getInstance(project).startSession();
+      if (pinentryData != null) {
+        myHandler.addCustomEnvironmentVariable(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toString());
+        myHandler.addListener(new GitHandlerListener() {
+          @Override
+          public void processTerminated(int exitCode) {
+            PinentryService.getInstance(project).stopSession();
+          }
+        });
+      }
     }
   }
 

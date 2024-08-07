@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.util.use
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.COLLECTED_RESULTS_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.FEATURES_DATA_KEY
@@ -31,12 +32,13 @@ import org.junit.runners.JUnit4
 internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCase() {
   @Test
   fun `checks with single element that only changed data is recorded`() {
-    val events = underMaskedExtensionPoints {
-      SearchEverywhereMlService.EP_NAME maskedWith listOf(MockSearchEverywhereMlService())
-      SearchEverywhereElementKeyProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
+    val events = SearchEverywhereMlService.EP_NAME.maskedWith(listOf(MockSearchEverywhereMlService())).use {
+      SearchEverywhereElementKeyProvider.EP_NAME.maskedWith(listOf(MockElementKeyForIdProvider())).use {
 
-      MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
-        type("regist")
+        MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
+          type("regist")
+        }
+
       }
     }
 
@@ -52,18 +54,16 @@ internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCa
   @Test
   fun `check that no diff logging applies between two search everywhere runs`() {
     // This test addresses IDEA-345677
-    val firstSERunEvents = underMaskedExtensionPoints {
-      SearchEverywhereMlService.EP_NAME maskedWith listOf(MockSearchEverywhereMlService())
-      SearchEverywhereElementKeyProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
-
-      MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents { type("reg") }
+    val firstSERunEvents = SearchEverywhereMlService.EP_NAME.maskedWith(listOf(MockSearchEverywhereMlService())).use {
+      SearchEverywhereElementKeyProvider.EP_NAME.maskedWith(listOf(MockElementKeyForIdProvider())).use {
+        MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents { type("reg") }
+      }
     }
 
-    val secondSERunEvents = underMaskedExtensionPoints {
-      SearchEverywhereMlService.EP_NAME maskedWith listOf(MockSearchEverywhereMlService())
-      SearchEverywhereElementKeyProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
-
-      MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents { type("reg") }
+    val secondSERunEvents = SearchEverywhereMlService.EP_NAME.maskedWith(listOf(MockSearchEverywhereMlService())).use {
+      SearchEverywhereElementKeyProvider.EP_NAME.maskedWith(listOf(MockElementKeyForIdProvider())).use {
+        MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents { type("reg") }
+      }
     }
 
     // We expect both first reports to have the same features

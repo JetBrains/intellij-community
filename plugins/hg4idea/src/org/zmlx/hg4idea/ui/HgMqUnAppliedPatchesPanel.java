@@ -25,7 +25,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -52,7 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, HgUpdater, Disposable {
+public class HgMqUnAppliedPatchesPanel extends JPanel implements UiDataProvider, HgUpdater, Disposable {
 
   public static final DataKey<HgMqUnAppliedPatchesPanel> MQ_PATCHES = DataKey.create("Mq.Patches");
   private static final String POPUP_ACTION_GROUP = "Mq.Patches.ContextMenu";
@@ -184,12 +183,6 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     return myRepository.hashCode();
   }
 
-  private @Nullable VirtualFile getSelectedPatchFile() {
-    if (myMqPatchDir == null || myPatchTable.getSelectedRowCount() != 1) return null;
-    String patchName = getPatchName(myPatchTable.getSelectedRow());
-    return VfsUtil.findFileByIoFile(new File(myMqPatchDir.getPath(), patchName), true);
-  }
-
   @RequiresEdt
   public @NotNull List<String> getSelectedPatchNames() {
     return getPatchNames(myPatchTable.getSelectedRows());
@@ -209,15 +202,14 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (MQ_PATCHES.is(dataId)) {
-      return this;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(MQ_PATCHES, this);
+    String patchName = getPatchName(myPatchTable.getSelectedRow());
+    if (myMqPatchDir != null && myPatchTable.getSelectedRowCount() == 1) {
+      sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
+        return VfsUtil.findFileByIoFile(new File(myMqPatchDir.getPath(), patchName), true);
+      });
     }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      VirtualFile patchVFile = getSelectedPatchFile();
-      if (patchVFile != null) return patchVFile;
-    }
-    return null;
   }
 
   @Override

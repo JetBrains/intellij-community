@@ -1586,10 +1586,10 @@ a:com.intellij.codeInspection.ex.InspectionToolWrapper
 - a:createCopy():com.intellij.codeInspection.ex.InspectionToolWrapper
 - getDefaultEditorAttributes():java.lang.String
 - getDefaultLevel():com.intellij.codeHighlighting.HighlightDisplayLevel
-- getDescriptionContextClass():java.lang.Class
+- f:getDescriptionContextClass():java.lang.Class
 - getDisplayKey():com.intellij.codeInsight.daemon.HighlightDisplayKey
 - getDisplayName():java.lang.String
-- getExtension():com.intellij.codeInspection.InspectionEP
+- f:getExtension():com.intellij.codeInspection.InspectionEP
 - f:getFolderName():java.lang.String
 - getGroupDisplayName():java.lang.String
 - getGroupPath():java.lang.String[]
@@ -2363,7 +2363,6 @@ Fc:com.intellij.lang.annotation.AnnotationSession
 - com.intellij.openapi.util.UserDataHolder
 - <init>(com.intellij.psi.PsiFile):V
 - getFile():com.intellij.psi.PsiFile
-- getHighlightRange():com.intellij.openapi.util.TextRange
 - getMinimumSeverity():com.intellij.lang.annotation.HighlightSeverity
 - getPriorityRange():com.intellij.openapi.util.TextRange
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
@@ -3286,6 +3285,7 @@ a:com.intellij.openapi.roots.GeneratedSourcesFilter
 - a:isGeneratedSource(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 - sf:isGeneratedSourceByAnyFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 f:com.intellij.openapi.roots.GeneratedSourcesFilter$Companion
+- f:findFirstMatchingFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.roots.GeneratedSourcesFilter
 - f:isGeneratedSourceByAnyFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 com.intellij.openapi.ui.InputValidatorEx
 - com.intellij.openapi.ui.InputValidator

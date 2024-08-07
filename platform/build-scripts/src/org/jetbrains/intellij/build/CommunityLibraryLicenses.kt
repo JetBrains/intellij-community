@@ -312,6 +312,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(url = "https://github.com/oshi/oshi", libraryName = "github.oshi.core").mit(
       "https://github.com/oshi/oshi/blob/master/LICENSE")
       .suppliedByOrganizations("The OSHI Project Contributors"),
+    LibraryLicense(name = "googlecode.plist.dd", libraryName = "googlecode.plist.dd", url = "https://github.com/3breadt/dd-plist/")
+      .mit("https://github.com/3breadt/dd-plist/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "Gradle", url = "https://gradle.org/", licenseUrl = "https://gradle.org/license")
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE")
       .suppliedByOrganizations("Gradle Inc."),
@@ -563,9 +565,15 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JetBrains Annotations for Java 5", libraryName = "jetbrains-annotations-java5",
                    url = "https://github.com/JetBrains/java-annotations")
       .apache("https://github.com/JetBrains/java-annotations/blob/master/LICENSE.txt"),
+    LibraryLicense(name = "JetBrains Jewel IDE LaF Bridge",
+                   url = "https://github.com/JetBrains/jewel",
+                   libraryName = "jetbrains.jewel.ide.laf.bridge.241"
+    )
+      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "Jetbrains Jewel IDE LaF Bridge",
                    url = "https://github.com/JetBrains/jewel",
-                   libraryName= "jetbrains-jewel-ide-laf-bridge",
+                   libraryName= "jetbrains-jewel-ide-laf-bridge"
     )
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -589,9 +597,6 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/JetBrains/JetBrainsRuntime").apache(),
     LibraryLicense(name = "jetCheck", libraryName = "jetCheck", url = "https://github.com/JetBrains/jetCheck")
       .apache("https://github.com/JetBrains/jetCheck/blob/master/LICENSE")
-      .suppliedByOrganizations(Suppliers.JETBRAINS),
-    LibraryLicense(name = "Jewel", libraryName = "jetbrains.jewel", url = "https://github.com/JetBrains/jewel")
-      .apache("https://github.com/JetBrains/jewel/blob/main/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "JGit (Settings Sync and SettingsRepo)", libraryName = "jetbrains.intellij.deps.eclipse.jgit",
                    license = "Eclipse Distribution License 1.0",
@@ -992,6 +997,9 @@ object CommunityLibraryLicenses {
                    url = "https://six.readthedocs.io/",
                    licenseUrl = "https://github.com/benjaminp/six/blob/master/LICENSE")
       .mit("https://github.com/benjaminp/six/blob/master/LICENSE"),
+    LibraryLicense(name = "Skiko", libraryName = "jetbrains.skiko.awt.compose",
+                   url = "https://github.com/JetBrains/skiko/")
+      .apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
     LibraryLicense(name = "Skiko Runtime", libraryName = "jetbrains.skiko.awt.runtime.all",
                    url = "https://github.com/JetBrains/skiko/")
       .apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),

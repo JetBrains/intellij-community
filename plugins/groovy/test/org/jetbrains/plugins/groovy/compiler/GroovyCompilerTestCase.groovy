@@ -277,4 +277,8 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     assert messages.find { it.category == CompilerMessageCategory.ERROR }
   }
 
+  protected static void shouldSucceed(Closure<List<CompilerMessage>> action) {
+    def messages = action()
+    assert !messages.find { it.category == CompilerMessageCategory.ERROR }
+  }
 }

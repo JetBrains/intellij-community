@@ -36,8 +36,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsagesForCopyFile
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkAllUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.checkModuleDependencyConflictsForInternalUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.checkVisibilityConflictsForInternalUsages
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkModuleDependencyConflictsForInternalUsages
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictsForInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createCopyTarget
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
@@ -173,8 +173,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
                 collectConflicts(sourceData, targetData)
             }
 
-        val topLevelDeclarationsToMove = elementsToCopy.flatMap { it.getDeclarationsToCopy() }.filterIsInstance<KtNamedDeclaration>()
-        unMarkNonUpdatableUsages(topLevelDeclarationsToMove)
+        unMarkNonUpdatableUsages(elementsToCopy)
 
         project.checkConflictsInteractively(conflicts) {
             try {

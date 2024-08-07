@@ -74,7 +74,7 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 
-public final class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
+public final class AntExplorer extends SimpleToolWindowPanel implements Disposable {
   private Project myProject;
   private Tree myTree;
   private final AntBuildFilePropertiesAction myAntBuildFilePropertiesAction;

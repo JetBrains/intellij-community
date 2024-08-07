@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.editor" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

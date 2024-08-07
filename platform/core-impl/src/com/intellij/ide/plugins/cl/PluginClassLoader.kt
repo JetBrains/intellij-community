@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Implements filtering for a plugin class loader.
- * This is needed to distinguish classes from different modules when they are packed to a single JAR file.
+ * This is necessary to distinguish classes from different modules when they are packed to a single JAR file.
  */
 @ApiStatus.Internal
 interface ResolveScopeManager {
@@ -194,9 +194,7 @@ class PluginClassLoader(
         if (classloader is PluginClassLoader) {
           try {
             val consistencyError = classloader.packagePrefix?.let {
-              classloader._resolveScopeManager.isDefinitelyAlienClass(name = name,
-                                                                      packagePrefix = it,
-                                                                      force = forceLoadFromSubPluginClassloader)
+              classloader._resolveScopeManager.isDefinitelyAlienClass(name = name, packagePrefix = it, force = forceLoadFromSubPluginClassloader)
             }
             if (consistencyError != null) {
               if (!consistencyError.isEmpty() && error == null) {
@@ -205,10 +203,7 @@ class PluginClassLoader(
               }
               continue
             }
-            c = classloader.loadClassInsideSelf(name = name,
-                                                fileName = fileName,
-                                                packageNameHash = packageNameHash,
-                                                forceLoadFromSubPluginClassloader = false)
+            c = classloader.loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash, forceLoadFromSubPluginClassloader = false)
           }
           catch (e: IOException) {
             throw ClassNotFoundException(name, e)
@@ -228,7 +223,7 @@ class PluginClassLoader(
               }
               continue
             }
-            c = classloader.loadClassInsideSelf(name, fileName, packageNameHash, false)
+            c = classloader.loadClassWithPrecomputedMeta(name, fileName, fileNameWithoutExtension, packageNameHash)
           }
           catch (e: IOException) {
             throw ClassNotFoundException(name, e)
@@ -244,7 +239,7 @@ class PluginClassLoader(
               break
             }
           }
-          catch (ignoreAndContinue: ClassNotFoundException) {
+          catch (_: ClassNotFoundException) {
             // ignore and continue
           }
         }
@@ -319,7 +314,7 @@ class PluginClassLoader(
     return loadClassInsideSelf(name, fileName, packageNameHash, false)
   }
 
-  override fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long, forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
+  private fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long, forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
     synchronized(getClassLoadingLock(name)) {
       var c = findLoadedClass(name)
       if (c?.classLoader === this) {
@@ -352,7 +347,7 @@ class PluginClassLoader(
       logStream.write("""$name [$specifier] ${pluginId.idString}${if (packagePrefix == null) "" else ":$packagePrefix"}
 ${if (exception == null) "" else exception.message}""")
     }
-    catch (ignored: IOException) {
+    catch (_: IOException) {
     }
   }
 
@@ -445,7 +440,7 @@ ${if (exception == null) "" else exception.message}""")
         try {
           resources.add(classloader.getResources(name))
         }
-        catch (ignore: IOException) {
+        catch (_: IOException) {
         }
       }
     }
@@ -588,6 +583,6 @@ private fun flushDebugLog() {
   try {
     logStream.flush()
   }
-  catch (ignore: IOException) {
+  catch (_: IOException) {
   }
 }

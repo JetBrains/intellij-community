@@ -82,12 +82,17 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest")
         }
 
+        testClass<AbstractK2IntroduceFunctionWithExtractFunctionModifierTest> {
+            model("refactoring/extractFunctionModifier", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest")
+        }
+
         testClass<AbstractK2InplaceIntroduceFunctionTest> {
             model("refactoring/extractFunctionInplace")
         }
 
         testClass<AbstractK2IntroduceParameterTest> {
             model("refactoring/introduceParameter", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceParameterTest")
+            model("refactoring/introduceLambdaParameter", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceFunctionalParameterTest")
         }
 
         testClass<AbstractK2IntroducePropertyTest> {

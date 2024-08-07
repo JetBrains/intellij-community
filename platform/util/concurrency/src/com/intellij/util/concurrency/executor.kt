@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Executor
@@ -20,9 +21,21 @@ import java.util.concurrent.TimeUnit
  * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
  */
 @Internal
+@ApiStatus.Obsolete
 fun executeOnPooledIoThread(task: Runnable) {
   (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) {
-    blockingContext(task::run)
+    task.run()
+  }
+}
+
+/**
+ * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
+ */
+@Internal
+@ApiStatus.Obsolete
+fun executeOnPooledIoThread(coroutineScope: CoroutineScope, task: Runnable) {
+  coroutineScope.launch(Dispatchers.IO) {
+    task.run()
   }
 }
 

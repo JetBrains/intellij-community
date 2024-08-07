@@ -31,6 +31,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     val message = "Before \u001B[30;47mescaped\u001B[0m after"
     commit(message)
 
+    markEverythingDirtyAndSync()
     val history = GitFileHistory.collectHistory(project, VcsUtil.getFilePath(projectRoot, "a.txt"), "-1")
     assertEquals("Commit message is incorrect", message, history[0].commitMessage)
   }
@@ -102,6 +103,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     commits.reverse()
 
     val history = ArrayList<GitFileRevision>()
+    markEverythingDirtyAndSync()
     GitFileHistory.loadHistory(myProject, VcsUtil.getFilePath(commits.first().file, false), null, CollectConsumer(history),
                                { exception: VcsException ->
                                  TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
@@ -383,8 +385,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   private fun collectFileHistory(file: File, startingRevisions: List<String>, full: Boolean): List<VcsFileRevision> {
-    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
-    ChangeListManagerImpl.getInstanceImpl(project).waitEverythingDoneInTestMode()
+    markEverythingDirtyAndSync()
 
     val path = VcsUtil.getFilePath(file, false)
     val gitFileHistory = GitFileHistory(myProject, repo.root, path, startingRevisions, full)
@@ -392,6 +393,11 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     return buildList {
       gitFileHistory.load(::add)
     }
+  }
+
+  private fun markEverythingDirtyAndSync() {
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    ChangeListManagerImpl.getInstanceImpl(project).waitEverythingDoneInTestMode()
   }
 
   private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>, file: File? = null) {

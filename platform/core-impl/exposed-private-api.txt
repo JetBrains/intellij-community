@@ -14,7 +14,6 @@ com/intellij/lang/impl/PsiBuilderImpl$StartMarker
 com/intellij/openapi/application/TransactionGuardImpl$TransactionIdImpl
 com/intellij/openapi/command/impl/CoreCommandProcessor$CommandDescriptor
 com/intellij/openapi/editor/impl/PersistentRangeMarker$LinesCols
-com/intellij/openapi/extensions/ExtensionsArea
 com/intellij/openapi/extensions/impl/ExtensionsAreaImpl
 com/intellij/psi/impl/DiffLog
 com/intellij/psi/search/ProjectScopeBuilder

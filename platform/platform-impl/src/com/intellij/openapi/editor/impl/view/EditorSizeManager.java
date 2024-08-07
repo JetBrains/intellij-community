@@ -541,12 +541,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
   private int getMaximumVisibleBlockInlayWidth() {
     if (!myWidestBlockInlayValid) {
       myWidestBlockInlayValid = true;
-      myWidestBlockInlay = null;
-      myEditor.getInlayModel().getBlockElementsInRange(0, myDocument.getTextLength()).forEach(inlay -> {
-        if (inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth() && !EditorUtil.isInlayFolded(inlay)) {
-          myWidestBlockInlay = inlay;
-        }
-      });
+      myWidestBlockInlay = myEditor.getInlayModel().getWidestVisibleBlockInlay();
     }
     return getCachedWidestBlockInlayWidth();
   }

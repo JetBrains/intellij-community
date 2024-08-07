@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mouse
 
 import com.intellij.ide.IdeBundle
@@ -19,6 +19,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
+import com.intellij.util.Alarm
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.JBAnimatorHelper
 import com.intellij.util.animation.animation
@@ -130,7 +131,7 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction(), ActionRe
 
   private class BezierPainterWithAnimation(x1: Double, y1: Double, x2: Double, y2: Double) : BezierPainter(x1, y1, x2, y2), Disposable {
 
-    val animator = JBAnimator(JBAnimator.Thread.POOLED_THREAD, this).apply {
+    val animator = JBAnimator(Alarm.ThreadToUse.POOLED_THREAD, this).apply {
       period = 1
       isCyclic = true
       name = "Bezier Painter Animation Test"

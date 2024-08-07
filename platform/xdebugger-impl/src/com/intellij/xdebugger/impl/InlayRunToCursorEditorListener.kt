@@ -10,11 +10,13 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -198,22 +200,18 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int) {
     val runToCursorService = project.service<RunToCursorService>()
     val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
-
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
-
+    val actionManager = serviceAsync<ActionManager>()
     if (runToCursorService.isAtExecution(editor.virtualFile ?: return, lineNumber)) {
-      showHint(editor, lineNumber, firstNonSpacePos, listOf(ActionManager.getInstance().getAction(XDebuggerActions.RESUME)), lineY)
+      showHint(editor, lineNumber, firstNonSpacePos, listOf(actionManager.getAction(XDebuggerActions.RESUME)), lineY)
     }
     else {
       val actions = mutableListOf<AnAction>()
-
       if (runToCursorService.canRunToCursor(editor, lineNumber)) {
-        actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
+        actions.add(actionManager.getAction(IdeActions.ACTION_RUN_TO_CURSOR))
       }
-
-      val extraActions = (ActionManager.getInstance().getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup).getChildren(null)
+      val extraActions = (actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup).getChildren(actionManager)
       actions.addAll(extraActions)
-
       showHint(editor, lineNumber, firstNonSpacePos, actions, lineY)
     }
   }
@@ -269,7 +267,10 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (isOutOfVisibleEditor(rootPane, position.x, position.y, JBUI.scale(ACTION_BUTTON_SIZE), editorGutterComponentEx)) return
 
     val initIsCompleted = Mutex(true)
-    val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true) {
+    val targetComponent = ToolbarUtils.createTargetComponent(editor) { sink ->
+      sink[XDebuggerUtilImpl.LINE_NUMBER] = lineNumber
+    }
+    val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, targetComponent, true) {
       initIsCompleted.unlock()
     } as ActionToolbarImpl
     toolbarImpl.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
@@ -282,12 +283,6 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
         calculateEffectiveHoverColorAndStroke(needShowOnGutter, editor, lineNumber)
       })
     })
-    toolbarImpl.setAdditionalDataProvider { dataId: String? ->
-      if (XDebuggerUtilImpl.LINE_NUMBER.`is`(dataId)) {
-        return@setAdditionalDataProvider lineNumber
-      }
-      null
-    }
     val justPanel: JPanel = NonOpaquePanel()
     justPanel.preferredSize = JBDimension((2 * ACTION_BUTTON_GAP + ACTION_BUTTON_SIZE) * group.childrenCount, ACTION_BUTTON_SIZE)
     justPanel.add(toolbarImpl.component)

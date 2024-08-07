@@ -118,7 +118,7 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 @ApiStatus.Internal
-public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, DataProvider {
+public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, UiDataProvider {
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
   private static final KeyStroke REPLACE_ALL = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke RESET_FILTERS = KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
@@ -848,26 +848,15 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      Map<Integer, Usage> usages = getSelectedUsages();
-      if (usages == null) return null;
-      return (DataProvider)slowId -> getSlowData(slowId, usages);
-    }
-
-    return null;
-  }
-
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Map<Integer, Usage> usages) {
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return usages.values().stream()
-        .filter(usage -> usage instanceof UsageInfoAdapter)
-        .flatMap(usage -> Arrays.stream(((UsageInfoAdapter)usage).getMergedInfos()))
-        .map(info -> info.getElement())
-        .filter(Objects::nonNull)
-        .toArray(PsiElement[]::new);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    Map<Integer, Usage> usages = getSelectedUsages();
+    if (usages == null) return;
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> usages.values().stream()
+      .filter(usage -> usage instanceof UsageInfoAdapter)
+      .flatMap(usage -> Arrays.stream(((UsageInfoAdapter)usage).getMergedInfos()))
+      .map(info -> info.getElement())
+      .filter(Objects::nonNull)
+      .toArray(PsiElement[]::new));
   }
 
   @Contract("_,!null,_->!null")
@@ -1477,7 +1466,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   @Nullable
   public String getFileTypeMask() {
     String mask = null;
-    if (header.cbFileFilter != null && header.cbFileFilter.isSelected()) {
+    if (header.cbFileFilter.isSelected()) {
       mask = (String)header.fileMaskField.getSelectedItem();
     }
     return mask;

@@ -163,7 +163,10 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
-  <item name='javax.swing.ImageIcon ImageIcon(java.lang.String) 0'>
+    <item name='javax.swing.ComboBoxModel java.lang.Object getSelectedItem()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='javax.swing.ImageIcon ImageIcon(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.ImageIcon ImageIcon(java.lang.String, java.lang.String) 0'>

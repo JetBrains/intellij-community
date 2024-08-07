@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -80,43 +79,6 @@ public final class PyPsiUtilsCore {
     return null;
   }
 
-  @ApiStatus.Internal
-  @NotNull
-  public static <T extends PyAstElement> List<T> collectChildren(@NotNull PyAstFile pyFile, @NotNull Class<T> elementType) {
-    final List<T> result = new ArrayList<>();
-    pyFile.acceptChildren(new TopLevelVisitor() {
-      @Override
-      protected void checkAddElement(PsiElement node) {
-        if (elementType.isInstance(node)) {
-          result.add(elementType.cast(node));
-        }
-      }
-
-      @Override
-      public void visitPyStatement(@NotNull PyAstStatement node) {
-        if (PyAstStatement.class.isAssignableFrom(elementType) && !(node instanceof PyAstCompoundStatement)) {
-          checkAddElement(node);
-          return;
-        }
-        super.visitPyStatement(node);
-      }
-    });
-    return result;
-  }
-
-  @ApiStatus.Internal
-  @NotNull
-  public static List<PsiElement> collectAllChildren(PsiElement e) {
-    final List<PsiElement> result = new ArrayList<>();
-    e.acceptChildren(new TopLevelVisitor() {
-      @Override
-      protected void checkAddElement(PsiElement node) {
-        result.add(node);
-      }
-    });
-    return result;
-  }
-
   /**
    * Returns the first non-whitespace sibling following the given element but within its line boundaries.
    */
@@ -133,26 +95,6 @@ public final class PyPsiUtilsCore {
       cur = cur.getNextSibling();
     }
     return null;
-  }
-
-  private static abstract class TopLevelVisitor extends PyAstRecursiveElementVisitor {
-    @Override
-    public void visitPyElement(final @NotNull PyAstElement node) {
-      super.visitPyElement(node);
-      checkAddElement(node);
-    }
-
-    @Override
-    public void visitPyClass(final @NotNull PyAstClass node) {
-      checkAddElement(node);  // do not recurse into functions
-    }
-
-    @Override
-    public void visitPyFunction(final @NotNull PyAstFunction node) {
-      checkAddElement(node);  // do not recurse into classes
-    }
-
-    protected abstract void checkAddElement(PsiElement node);
   }
 
   @Nullable
@@ -197,5 +139,13 @@ public final class PyPsiUtilsCore {
       return;
     }
     PsiUtilCore.ensureValid(element);
+  }
+
+  @Nullable
+  public static PyAstExpression flattenParens(@Nullable PyAstExpression expr) {
+    while (expr instanceof PyAstParenthesizedExpression) {
+      expr = ((PyAstParenthesizedExpression)expr).getContainedExpression();
+    }
+    return expr;
   }
 }

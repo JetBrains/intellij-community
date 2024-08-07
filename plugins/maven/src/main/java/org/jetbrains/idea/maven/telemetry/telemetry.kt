@@ -55,6 +55,6 @@ internal fun scheduleExportTelemetryTrace(project: Project, binaryTrace: ByteArr
 
   val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
   cs.launch {
-    OpenTelemetryRawTraceExporter.export(URI.create(telemetryHost), binaryTrace, OpenTelemetryRawTraceExporter.Protocol.PROTOBUF)
+    OpenTelemetryRawTraceExporter.sendProtobuf(URI.create(telemetryHost), binaryTrace)
   }
 }

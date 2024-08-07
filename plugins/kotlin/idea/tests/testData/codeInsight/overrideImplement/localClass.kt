@@ -10,3 +10,5 @@ fun f() {
         <caret>
     }
 }
+
+// MEMBER: "f(a: R): Unit"

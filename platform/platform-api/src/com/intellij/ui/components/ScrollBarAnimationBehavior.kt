@@ -4,16 +4,21 @@
 package com.intellij.ui.components
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JScrollBar
 
-internal abstract class ScrollBarAnimationBehavior(@JvmField protected val trackAnimator: TwoWayAnimator,
-                                                   @JvmField protected val thumbAnimator: TwoWayAnimator) {
-
+@Internal
+abstract class ScrollBarAnimationBehavior(
+  @JvmField protected val trackAnimator: TwoWayAnimator,
+  @JvmField protected val thumbAnimator: TwoWayAnimator,
+) {
   val trackFrame: Float
     get() = trackAnimator.value
 
@@ -64,12 +69,13 @@ internal class MacScrollBarAnimationBehavior(
   private val hideThumbRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
+    val context = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()
     coroutineScope.launch {
       hideThumbRequests
         .debounce(700)
         .collectLatest { start ->
           if (start) {
-            withContext(Dispatchers.EDT) {
+            withContext(context) {
               thumbAnimator.start(forward = false)
             }
           }

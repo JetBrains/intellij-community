@@ -60,6 +60,12 @@ public final class NewCodeStyleSettingsPanel extends JPanel implements TabbedLan
   }
 
   public void dispose() {
+    if (isValid()) {
+      Container parent = getParent();
+      if (parent != null && parent.isValid()) {
+        parent.remove(this);
+      }
+    }
     myTab.disposeUIResources();
   }
 

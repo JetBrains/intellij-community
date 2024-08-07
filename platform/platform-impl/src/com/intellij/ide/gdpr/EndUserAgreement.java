@@ -99,7 +99,7 @@ public final class EndUserAgreement {
     String docName = getDocumentName();
     Document defaultDocument = loadDocument(docName);
     Locale locale = Locale.getDefault();
-    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(Path.of(docName), locale);
+    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(docName, locale);
 
     Document document;
     for (String localizedDocName : localizedDocsNames) {
@@ -120,7 +120,7 @@ public final class EndUserAgreement {
   public static void updateCachedContentToLatestBundledVersion() {
     String docName = getDocumentName();
     Locale locale = Locale.getDefault();
-    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(Path.of(docName), locale);
+    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(docName, locale);
     for (String localizedDocName : localizedDocsNames) {
       updateCachedContentToLatestBundledVersion(localizedDocName);
     }

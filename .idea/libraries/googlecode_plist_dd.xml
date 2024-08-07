@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="googlecode.plist.dd" type="repository">
+    <properties maven-id="com.googlecode.plist:dd-plist:1.28">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/googlecode/plist/dd-plist/1.28/dd-plist-1.28.jar">
+          <sha256sum>88ed8e730f7386297485176c4387146c6914a38c0e58fc296e8a01cdc3b621e1</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/plist/dd-plist/1.28/dd-plist-1.28.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/plist/dd-plist/1.28/dd-plist-1.28-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -201,9 +201,9 @@ function Global:__jetbrains_intellij_get_directory_files([string]$Path) {
 function Global:__jetbrains_intellij_get_environment() {
   $Global:__JetBrainsIntellijGeneratorRunning = $true
   $FunctionTypes = @("Function", "Filter", "ExternalScript", "Script")
-  $Functions = Get-Command -CommandType $FunctionTypes
-  $Cmdlets = Get-Command -CommandType Cmdlet
-  $Commands = Get-Command -CommandType Application
+  $Functions = Get-Command -ListImported -CommandType $FunctionTypes
+  $Cmdlets = Get-Command -ListImported -CommandType Cmdlet
+  $Commands = Get-Command -ListImported -CommandType Application
   $Aliases = Get-Alias | ForEach-Object { [PSCustomObject]@{ name = $_.Name; definition = $_.Definition } }
 
   $EnvObject = [PSCustomObject]@{

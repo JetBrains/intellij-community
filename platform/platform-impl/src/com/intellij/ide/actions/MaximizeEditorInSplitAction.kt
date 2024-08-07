@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -23,7 +23,7 @@ import com.intellij.util.animation.animation
 import java.awt.Component
 
 internal class MaximizeEditorInSplitAction : DumbAwareAction() {
-  private val myActiveAnimators = mutableListOf<JBAnimator>()
+  private val activeAnimators = mutableListOf<JBAnimator>()
 
   init {
     templatePresentation.text = IdeBundle.message("action.maximize.editor") + "/" +IdeBundle.message("action.normalize.splits")
@@ -32,8 +32,8 @@ internal class MaximizeEditorInSplitAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project == null) return
-    myActiveAnimators.forEach { Disposer.dispose(it) }
-    myActiveAnimators.clear()
+    activeAnimators.forEach { Disposer.dispose(it) }
+    activeAnimators.clear()
     val splittersToMaximize = getSplittersToMaximize(e)
     if (splittersToMaximize.isNotEmpty()) {
       splittersToMaximize.forEach {
@@ -53,13 +53,13 @@ internal class MaximizeEditorInSplitAction : DumbAwareAction() {
       splitter.proportion = value
       return
     }
-    val animator = JBAnimator(disposable).also { myActiveAnimators.add(it) }
+    val animator = JBAnimator(disposable).also { activeAnimators.add(it) }
     animator.animate(
       animation(splitter.proportion, value, splitter::setProportion).apply {
         duration = 350
         runWhenExpiredOrCancelled {
           Disposer.dispose(animator)
-          myActiveAnimators.remove(animator)
+          activeAnimators.remove(animator)
         }
       }
     )

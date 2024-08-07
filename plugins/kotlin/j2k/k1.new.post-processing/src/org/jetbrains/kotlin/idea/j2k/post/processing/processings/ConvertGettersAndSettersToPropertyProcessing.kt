@@ -23,11 +23,14 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.j2k.post.processing.JKInMemoryFilesSearcher
@@ -577,20 +580,23 @@ private class ClassConverter(
                     ktProperty.addModifier(ABSTRACT_KEYWORD)
                     ktGetter.removeModifier(ABSTRACT_KEYWORD)
                 }
-                if (ktGetter.isRedundantGetter()) {
+
+                if (ktGetter.isRedundant()) {
                     realGetter.function.deleteExplicitLabelComments()
                     val commentSaver = CommentSaver(realGetter.function)
                     commentSaver.restore(ktProperty)
                 }
+
                 realGetter.function.delete()
             }
 
             if (realSetter != null) {
-                if (ktSetter?.isRedundantSetter() == true) {
+                if (ktSetter?.isRedundant() == true) {
                     realSetter.function.deleteExplicitLabelComments()
                     val commentSaver = CommentSaver(realSetter.function)
                     commentSaver.restore(ktProperty)
                 }
+
                 realSetter.function.delete()
             }
         }
@@ -611,6 +617,15 @@ private class ClassConverter(
         }
 
         moveAccessorAnnotationsToProperty(ktProperty)
+        removeRedundantPropertyAccessors(ktProperty)
+        convertGetterToSingleExpressionBody(ktProperty.getter)
+    }
+
+    private fun removeRedundantPropertyAccessors(property: KtProperty) {
+        val getter = property.getter
+        val setter = property.setter
+        if (getter?.isRedundant() == true) removeRedundantGetter(getter)
+        if (setter?.isRedundant() == true) removeRedundantSetter(setter)
     }
 
     private fun addGetter(getter: Getter, ktProperty: KtProperty, isFakeProperty: Boolean): KtPropertyAccessor {
@@ -787,6 +802,10 @@ private class ClassConverter(
         setName(newName)
     }
 
+    private fun KtPropertyAccessor.isRedundant(): Boolean =
+        // We need to ignore comments because there may be explicit label comments that we must preserve
+        if (isGetter) isRedundantGetter(respectComments = false) else isRedundantSetter(respectComments = false)
+
     // Don't try to save the now useless explicit label comments,
     // they may hurt formatting later
     private fun KtNamedFunction.deleteExplicitLabelComments() {
@@ -804,6 +823,24 @@ private class ClassConverter(
             }
             accessor.annotationEntries.forEach { it.delete() }
         }
+    }
+
+    private fun convertGetterToSingleExpressionBody(getter: KtPropertyAccessor?) {
+        fun KtPropertyAccessor.singleBodyStatementExpression(): KtExpression? =
+            bodyBlockExpression?.statements
+                ?.singleOrNull()
+                ?.safeAs<KtReturnExpression>()
+                ?.takeIf { it.labeledExpression == null }
+                ?.returnedExpression
+
+        if (getter == null) return
+        val body = getter.bodyExpression ?: return
+        val returnedExpression = getter.singleBodyStatementExpression() ?: return
+
+        val commentSaver = CommentSaver(body)
+        getter.addBefore(KtPsiFactory(getter.project).createEQ(), body)
+        val newBody = body.replaced(returnedExpression)
+        commentSaver.restore(newBody)
     }
 }
 

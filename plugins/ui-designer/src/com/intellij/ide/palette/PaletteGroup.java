@@ -3,6 +3,7 @@
 package com.intellij.ide.palette;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
@@ -35,10 +36,8 @@ public interface PaletteGroup {
    * Returns the data for the specified data constant.
    *
    * @param project the project in the context of which data is requested.
-   * @param dataId  the data constant id (see {@link com.intellij.openapi.actionSystem.PlatformDataKeys}).
-   * @return the data item, or null if no data is available for this constant.
    */
-  @Nullable Object getData(Project project, @NotNull String dataId);
+  void uiDataSnapshot(@NotNull DataSink sink, @NotNull Project project);
 
   /**
    * Processes the drop of a palette item on the specified index in the palette group.

@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -100,7 +99,7 @@ fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: Com
   }
 
   createBufferPool().use { bufferPool ->
-    spanBuilder("upload packed classes").useWithoutActiveScope {
+    spanBuilder("upload packed classes").use {
       upload(config = config, zipDir = zipDir, messages = context.messages, items = items, bufferPool = bufferPool)
     }
   }
@@ -123,7 +122,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
   Files.createDirectories(zipDir)
 
   val items = ArrayList<PackAndUploadItem>(2048)
-  spanBuilder("compute module list to pack").useWithoutActiveScope { span ->
+  spanBuilder("compute module list to pack").use { span ->
     // production, test
     for (subRoot in Files.newDirectoryStream(context.classesOutputDirectory).use(DirectoryStream<Path>::toList)) {
       if (!Files.isDirectory(subRoot)) {
@@ -178,7 +177,7 @@ private fun packAndComputeHash(traceContext: Context,
                                name: String,
                                archive: Path,
                                directory: Path): String {
-  spanBuilder("pack").setParent(traceContext).setAttribute("name", name).useWithoutActiveScope {
+  spanBuilder("pack").setParent(traceContext).setAttribute("name", name).use {
     // we compress the whole file using ZSTD
     zip(
       targetFile = archive,
@@ -188,7 +187,7 @@ private fun packAndComputeHash(traceContext: Context,
       addDirEntriesMode = addDirEntriesMode
     )
   }
-  return spanBuilder("compute hash").setParent(traceContext).setAttribute("name", name).useWithoutActiveScope {
+  return spanBuilder("compute hash").setParent(traceContext).setAttribute("name", name).use {
     computeHash(archive)
   }
 }

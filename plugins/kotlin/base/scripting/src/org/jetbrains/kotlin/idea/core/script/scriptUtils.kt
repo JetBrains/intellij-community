@@ -71,7 +71,7 @@ fun logScriptingConfigurationErrors(file: VirtualFile, snapshot: ScriptConfigura
 
 fun getAllDefinitions(project: Project): List<ScriptDefinition> =
     if (KotlinPluginModeProvider.isK2Mode()) {
-        K2ScriptDefinitionProvider.getInstanceIfCreated(project)?.currentDefinitions?.toList() ?: emptyList()
+        K2ScriptDefinitionProvider.getInstanceIfCreated(project)?.getAllDefinitions()?.toList() ?: emptyList()
     } else {
         ScriptDefinitionsManager.getInstance(project).allDefinitions
     }

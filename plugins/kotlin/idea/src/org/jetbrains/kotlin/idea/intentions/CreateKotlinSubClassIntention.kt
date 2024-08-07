@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.CreateKotlinSubClassIntentionBase
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
 import org.jetbrains.kotlin.psi.KtClass
@@ -19,10 +18,6 @@ internal class CreateKotlinSubClassIntention : CreateKotlinSubClassIntentionBase
     ) {
         editor.caretModel.moveToOffset(targetClass.textRange.startOffset)
         ImplementMembersHandler().invoke(project, editor, targetClass.containingFile)
-    }
-
-    override fun shortenReferences(klass: KtClass) {
-        ShortenReferences.DEFAULT.process(klass)
     }
 
     override fun getOrCreateKtFile(fileName: String, targetDir: PsiDirectory): KtFile {

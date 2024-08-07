@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public final class TaskManagementConfigurationCollector extends ProjectUsagesCollector {
+final class TaskManagementConfigurationCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("task.management.configuration", 1);
   private static final ClassEventField REPOSITORY_TYPE = EventFields.Class("repository_type");
 

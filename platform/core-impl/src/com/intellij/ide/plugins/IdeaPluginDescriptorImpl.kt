@@ -327,6 +327,13 @@ class IdeaPluginDescriptorImpl(
         continue
       }
 
+      if (isKotlinPlugin(dependency.pluginId) && isIncompatibleWithKotlinPlugin(descriptor)) {
+        LOG.warn("Plugin ${descriptor} depends on Kotlin plugin via `${configFile}` " +
+                 "but the plugin is not compatible with the Kotlin plugin in the  ${if (isKotlinPluginK1Mode()) "K1" else "K2"} mode. " +
+                 "So, the `${configFile}` was not loaded")
+        continue
+      }
+
       var resolveError: Exception? = null
       val raw: RawPluginDescriptor? = try {
         pathResolver.resolvePath(readContext = context, dataLoader = dataLoader, relativePath = configFile, readInto = null)
@@ -386,12 +393,17 @@ class IdeaPluginDescriptorImpl(
     }
 
 
-    if (isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(this)) {
-      // disable plugins which are incompatible with the Kotlin Plugin K2 Mode KTIJ-24797
+    if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
+      // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
+      val mode = if (isKotlinPluginK1Mode()) {
+        CoreBundle.message("plugin.loading.error.k1.mode")
+      } else {
+        CoreBundle.message("plugin.loading.error.k2.mode")
+      }
       markAsIncompatible(PluginLoadingError(
         plugin = this,
-        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.k2.incompatible", getName()) },
-        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.k2.incompatible") },
+        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.incompatible", getName(), mode) },
+        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.incompatible", mode) },
         isNotifyUser = true,
       ))
       return

@@ -35,7 +35,7 @@ import java.util.Objects;
 import java.util.Set;
 
 
-public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable, DataProvider {
+public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable {
   protected final Project myProject;
   protected Content myContent;
 

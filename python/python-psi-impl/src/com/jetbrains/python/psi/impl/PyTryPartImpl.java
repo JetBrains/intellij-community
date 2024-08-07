@@ -18,7 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyTryPart;
 
-public class PyTryPartImpl extends PyStatementPartImpl implements PyTryPart {
+public class PyTryPartImpl extends PyElementImpl implements PyTryPart {
   public PyTryPartImpl(ASTNode astNode) {
     super(astNode);
   }

@@ -13,8 +13,6 @@ import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
  * Usually, [com.intellij.platform.ijent.deploy] creates instances of [IjentApi].
  */
 sealed interface IjentApi : AutoCloseable {
-  val id: IjentId
-
   val platform: IjentPlatform
 
   /**
@@ -36,8 +34,16 @@ sealed interface IjentApi : AutoCloseable {
    * Explicitly terminates the process on the remote machine.
    *
    * The method is not supposed to block the current thread.
+   *
+   * For awaiting, use [waitUntilExit].
    */
   override fun close()
+
+  /**
+   * Suspends until the IJent process on the remote side terminates.
+   * This method doesn't throw exceptions.
+   */
+  suspend fun waitUntilExit()
 
   /** Docs: [IjentExecApi] */
   val exec: IjentExecApi

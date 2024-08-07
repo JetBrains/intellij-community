@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddStarProjectionsFix
 import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils
@@ -38,12 +38,11 @@ internal object AddStarProjectionsFixFactory {
     private class AddStartProjectionsForInnerClass(
         element: KtTypeReference,
         val replaceString: String,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtTypeReference, Unit>(element, Unit) {
+    ) : PsiUpdateModCommandAction<KtTypeReference>(element) {
 
         override fun invoke(
             actionContext: ActionContext,
             element: KtTypeReference,
-            elementContext: Unit,
             updater: ModPsiUpdater,
         ) {
             val psiFactory = KtPsiFactory(actionContext.project)

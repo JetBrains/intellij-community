@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -54,8 +53,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
-@Service(Service.Level.PROJECT)
-public final class ReplaceInProjectManager {
+public class ReplaceInProjectManager {
   private static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;
 
   private final Project myProject;
@@ -119,13 +117,11 @@ public final class ReplaceInProjectManager {
       isOpenInNewTabEnabled = UsageViewContentManager.getInstance(myProject).getReusableContentsCount() > 0;
     }
     if (model == null) {
-
       findModel = findManager.getFindInProjectModel().clone();
       findModel.setReplaceState(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
-      FindInProjectUtil.setScope(myProject, findModel, dataContext);
-      FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
+      initModel(findModel, dataContext);
     }
     else {
       findModel = model;
@@ -139,6 +135,11 @@ public final class ReplaceInProjectManager {
         FindInProjectManager.getInstance(myProject).findInPath(findModel);
       }
     });
+  }
+
+  protected void initModel(@NotNull FindModel findModel, @NotNull DataContext dataContext) {
+    FindInProjectUtil.setScope(myProject, findModel, dataContext);
+    FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
   }
 
   public void replaceInPath(@NotNull FindModel findModel) {

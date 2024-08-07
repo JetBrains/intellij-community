@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.dd.plist.NSDictionary
+import com.dd.plist.PropertyListParser
 import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.LanguageAndRegionBundle
@@ -22,6 +24,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.SystemProperties
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.ui.*
 import com.sun.jna.platform.win32.Advapi32Util
@@ -31,6 +34,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Graphics
+import java.io.File
 import java.util.*
 import javax.swing.*
 import javax.swing.border.Border
@@ -172,7 +176,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
 
   override fun doOKAction() {
     localizationStatistics.nextButtonPressed(selectedLanguage, selectedRegion)
-    LocalizationStateService.getInstance()?.setSelectedLocale(selectedLanguage.toLanguageTag())
+    LocalizationStateService.getInstance()?.setSelectedLocale(selectedLanguage.toLanguageTag(), true)
     RegionSettings.setRegion(selectedRegion)
     clearCache()
     super.doOKAction()
@@ -197,8 +201,8 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
   val locale = Locale.getDefault()
   val matchingLocale = languageMapping.keys.find { language -> languageMapping[language]?.any { locale.toLanguageTag().contains(it) } == true }
                        ?: Locale.ENGLISH
-  var matchingRegion = regionMapping.keys.find { locale.country == regionMapping[it] } ?: Region.NOT_SET
-  if (matchingRegion == Region.NOT_SET && SystemInfo.isWindows) {
+  var matchingRegion = Region.NOT_SET
+  if (SystemInfo.isWindows) {
     try {
       val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
       matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
@@ -207,10 +211,39 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
       logger<LanguageAndRegionDialog>().warn("Unable to resolve region from registry", e)
     }
   }
+  else if (SystemInfo.isMac) {
+    matchingRegion = regionMapping.keys.find { locale.country == regionMapping[it] }
+                     ?: getLocaleFromGeneralPrefMacOs(SystemProperties.getUserHome())
+                     ?: getLocaleFromGeneralPrefMacOs("")
+                     ?: Region.NOT_SET
+  }
   if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) return null
   return suspend {
     withContext(RawSwingDispatcher) {
       LanguageAndRegionDialog(matchingLocale, matchingRegion, locale).showAndGet()
     }
+  }
+}
+
+/** @return Region from GlobalPreferences for selected rootPath if the setting was found, null otherwise **/
+private fun getLocaleFromGeneralPrefMacOs(rootPath: String): Region? {
+  val generalPath = "/Library/Preferences/.GlobalPreferences.plist"
+  val fullPath = rootPath + generalPath
+  try {
+    val file = File(fullPath)
+    val rootDict = PropertyListParser.parse(file) as? NSDictionary ?: return null
+    val localeText = rootDict.get("AppleLocale")?.toString() ?: return null
+    var regionText = localeText.substringAfter("@rg=", "")
+    if (regionText.isNotEmpty()) {
+      return regionMapping.keys.find { regionText.startsWith(regionMapping[it]!!, true) } ?: Region.NOT_SET
+    } else {
+      regionText = localeText.substringAfter("_", "")
+      return regionMapping.keys.find { regionText.startsWith(regionMapping[it]!!) } ?: Region.NOT_SET
+    }
+    return Region.NOT_SET
+  }
+  catch (e: Throwable) {
+    logger<LanguageAndRegionDialog>().warn("Unable to resolve region from $fullPath", e)
+    return null
   }
 }

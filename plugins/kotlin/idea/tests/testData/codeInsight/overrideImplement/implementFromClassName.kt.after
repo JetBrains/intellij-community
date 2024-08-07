@@ -11,3 +11,5 @@ class A : Runnable {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "run(): Unit"

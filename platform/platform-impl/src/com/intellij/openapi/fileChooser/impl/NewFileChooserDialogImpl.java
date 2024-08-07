@@ -2,7 +2,8 @@
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -118,15 +119,16 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     return "select.path.dialog";
   }
 
-  private final class ChooserDialogPanel extends JPanel implements DataProvider {
+  private final class ChooserDialogPanel extends JPanel implements UiDataProvider {
     private ChooserDialogPanel() {
       super(new BorderLayout());
       setDropTarget(new DropTarget(this, DnDConstants.ACTION_COPY, new ChooserDropTarget()));
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      return FileChooserPanel.DATA_KEY.is(dataId) ? myPanel : myDescriptor.getUserData(dataId);
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(FileChooserPanel.DATA_KEY, myPanel);
+      DataSink.uiDataSnapshot(sink, dataId -> myDescriptor.getUserData(dataId));
     }
   }
 

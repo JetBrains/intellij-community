@@ -47,7 +47,6 @@ f:com.intellij.openapi.actionSystem.CompositeDataProvider
 com.intellij.openapi.actionSystem.DataContext
 - sf:EMPTY_CONTEXT:com.intellij.openapi.actionSystem.DataContext
 - F:getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
-- a:getData(java.lang.String):java.lang.Object
 f:com.intellij.openapi.actionSystem.DataKey
 - com.intellij.openapi.util.ValueKey
 - sf:Companion:com.intellij.openapi.actionSystem.DataKey$Companion

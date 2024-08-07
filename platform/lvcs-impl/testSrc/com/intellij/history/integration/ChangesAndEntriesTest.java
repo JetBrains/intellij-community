@@ -340,6 +340,15 @@ public class ChangesAndEntriesTest extends IntegrationTestCase {
     assertEquals(0, getChangesFor(myRoot, "xxx").size());
   }
 
+  public void testFilteredChangesPartialMatch() throws Exception {
+    createFile("Hello");
+    createFile("src/main/MyClass.java");
+    assertEquals(3, getChangesFor(myRoot).size());
+    assertEquals(1, getChangesFor(myRoot, "ell").size());
+    assertEquals(1, getChangesFor(myRoot, "*ell").size());
+    assertEquals(1, getChangesFor(myRoot, "s/m/MC").size());
+  }
+
   public void testDoNotIncludeLabelsBeforeFirstChange() throws Exception {
     LocalHistory.getInstance().putSystemLabel(myProject, "1", -1);
     VirtualFile f = createFile("foo.txt");

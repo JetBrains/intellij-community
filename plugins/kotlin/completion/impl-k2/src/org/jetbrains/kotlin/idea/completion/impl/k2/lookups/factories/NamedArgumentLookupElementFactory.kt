@@ -14,10 +14,11 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
-internal class NamedArgumentLookupElementFactory {
+internal object NamedArgumentLookupElementFactory {
+
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    fun createNamedArgumentLookup(name: Name, types: List<KaType>): LookupElement {
+    fun createLookup(name: Name, types: List<KaType>): LookupElement {
         val typeText = types.singleOrNull()?.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT) ?: "..."
         val nameString = name.asString()
         return LookupElementBuilder.create(NamedArgumentLookupObject(name), "$nameString =")
@@ -26,7 +27,7 @@ internal class NamedArgumentLookupElementFactory {
             .withInsertHandler(NamedArgumentInsertHandler(name))
     }
 
-    fun createNamedArgumentWithValueLookup(name: Name, value: String): LookupElement {
+    fun createLookup(name: Name, value: String): LookupElement {
         return LookupElementBuilder.create(NamedArgumentLookupObject(name), "${name.asString()} = $value")
             .withIcon(KotlinIcons.PARAMETER)
             .withInsertHandler { context, _ ->

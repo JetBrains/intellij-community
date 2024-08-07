@@ -2,9 +2,9 @@ package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchAdapter
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlContributorReplacement
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.internal.statistic.FUCollectorTestCase
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -71,27 +71,8 @@ interface MockSearchEverywhereProvider {
   }
 }
 
-
-fun <T> underMaskedExtensionPoints(procedure: ExtensionPointMaskManager.() -> T): T {
-  val manager = ExtensionPointMaskManager()
-  manager.maskExtensionPoint(SearchEverywhereMlContributorReplacement.EP_NAME, emptyList())
-  val result = procedure.invoke(manager)
-  manager.dispose()
-  return result
-}
-
-class ExtensionPointMaskManager {
-  private val serviceMaskDisposable = Disposer.newDisposable()
-
-  infix fun <T : Any> ExtensionPointName<T>.maskedWith(extensions: List<T>) {
-    maskExtensionPoint(this, extensions)
-  }
-
-  fun <T : Any> maskExtensionPoint(epName: ExtensionPointName<T>, extensions: List<T>) {
-    (epName.point as ExtensionPointImpl<T>).maskAll(extensions, serviceMaskDisposable, false)
-  }
-
-  fun dispose() {
-    Disposer.dispose(serviceMaskDisposable)
-  }
+internal fun <T : Any> ExtensionPointName<T>.maskedWith(extensions: List<T>): Disposable {
+  val disposable = Disposer.newDisposable("ExtensionPointMaskMDisposable for $name")
+  (point as ExtensionPointImpl<T>).maskAll(extensions, disposable, false)
+  return disposable
 }

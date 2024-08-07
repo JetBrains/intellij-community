@@ -156,7 +156,7 @@ interface Driver : AutoCloseable {
 /**
  * Remote reference to a Project.
  */
-interface ProjectRef
+interface ProjectRef : PolymorphRef
 
 /**
  * @return new remote proxy for a [Remote] application service interface

@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
@@ -32,7 +32,8 @@ class KtSymbolFromIndexProvider private constructor(
     private val useSiteFile: KtFile,
     private val scope: GlobalSearchScope,
 ) {
-    private val project: Project = useSiteFile.project
+    private val project: Project
+        get() = useSiteFile.project
 
     context(KaSession)
     private fun useSiteFilter(element: PsiElement): Boolean {
@@ -170,7 +171,7 @@ class KtSymbolFromIndexProvider private constructor(
 
 
     /**
-     *  Returns top-level callables, excluding extensions. To obtain extensions use [getTopLevelExtensionCallableSymbolsByNameFilter].
+     *  Returns top-level callables, excluding extensions. To obtain extensions use [getExtensionCallableSymbolsByNameFilter].
      */
     context(KaSession)
     fun getTopLevelCallableSymbolsByNameFilter(
@@ -197,67 +198,67 @@ class KtSymbolFromIndexProvider private constructor(
     }
 
     context(KaSession)
-    fun getTopLevelExtensionCallableSymbolsByName(
-        name: Name,
-        receiverTypes: List<KaType>,
-        psiFilter: (KtCallableDeclaration) -> Boolean = { true }
-    ): Sequence<KaCallableSymbol> =
-        getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinTopLevelExtensionsByReceiverTypeIndex)
-
-    context(KaSession)
-    fun getDeclaredInObjectExtensionCallableSymbolsByName(
-        name: Name,
-        receiverTypes: List<KaType>,
-        psiFilter: (KtCallableDeclaration) -> Boolean = { true }
-    ): Sequence<KaCallableSymbol> =
-        getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinExtensionsInObjectsByReceiverTypeIndex)
-
-    context(KaSession)
-    private fun getExtensionCallableSymbolsByName(
+    fun getExtensionCallableSymbolsByName(
         name: Name,
         receiverTypes: List<KaType>,
         psiFilter: (KtCallableDeclaration) -> Boolean,
-        indexHelper: KotlinExtensionsByReceiverTypeStubIndexHelper,
     ): Sequence<KaCallableSymbol> {
         val receiverTypeNames = receiverTypes.flatMapTo(hashSetOf()) { findAllNamesForType(it) }
         if (receiverTypeNames.isEmpty()) return emptySequence()
 
-        val keys = receiverTypeNames.map { indexHelper.buildKey(receiverTypeName = it, name.asString()) }
-        val valueFilter: (KtCallableDeclaration) -> Boolean = { psiFilter(it) && useSiteFilter(it) && !it.isKotlinBuiltins() }
-        val values = keys.flatMap { key -> indexHelper.getAllElements(key, project, scope, valueFilter) }
+        val values = receiverTypeNames.asSequence()
+            .flatMap { receiverTypeName ->
+                sequenceOf(
+                    KotlinTopLevelExtensionsByReceiverTypeIndex,
+                    KotlinExtensionsInObjectsByReceiverTypeIndex,
+                ).flatMap { indexHelper ->
+                    val key = KotlinExtensionsByReceiverTypeStubIndexHelper.Companion.Key(receiverTypeName, name)
+
+                    indexHelper.getAllElements(key.key, project, scope) {
+                        psiFilter(it)
+                                && useSiteFilter(it)
+                                && !it.isKotlinBuiltins()
+                    }
+                }
+            }.map { it.symbol }
+            .filterIsInstance<KaCallableSymbol>()
 
         return sequence {
-            for (extension in values) {
-                yieldIfNotNull(extension.symbol as? KaCallableSymbol)
-            }
-            val resolveExtensionScope = resolveExtensionScopeWithTopLevelDeclarations
-            yieldAll(resolveExtensionScope.callables(name).filterExtensionsByReceiverTypes(receiverTypes))
+            yieldAll(values)
+            yieldAll(resolveExtensionScopeWithTopLevelDeclarations.callables(name).filterExtensionsByReceiverTypes(receiverTypes))
         }
     }
 
     context(KaSession)
-    fun getTopLevelExtensionCallableSymbolsByNameFilter(
+    fun getExtensionCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
         receiverTypes: List<KaType>,
-        psiFilter: (KtCallableDeclaration) -> Boolean = { true }
+        psiFilter: (KtCallableDeclaration) -> Boolean = { true },
     ): Sequence<KaCallableSymbol> {
         val receiverTypeNames = receiverTypes.flatMapTo(hashSetOf()) { findAllNamesForType(it) }
         if (receiverTypeNames.isEmpty()) return emptySequence()
 
         val keyFilter: (String) -> Boolean = { key ->
-            val receiverTypeName = KotlinTopLevelExtensionsByReceiverTypeIndex.receiverTypeNameFromKey(key)
-            val callableName = KotlinTopLevelExtensionsByReceiverTypeIndex.callableNameFromKey(key)
-            receiverTypeName in receiverTypeNames && nameFilter(Name.identifier(callableName))
+            val (receiverTypeName, callableName) = KotlinExtensionsByReceiverTypeStubIndexHelper.Companion.Key(key)
+            receiverTypeName in receiverTypeNames
+                    && nameFilter(callableName)
         }
-        val valueFilter: (KtCallableDeclaration) -> Boolean = { psiFilter(it) && useSiteFilter(it) && !it.isKotlinBuiltins() }
-        val values = KotlinTopLevelExtensionsByReceiverTypeIndex.getAllElements(project, scope, keyFilter, valueFilter)
+
+        val values = sequenceOf(
+            KotlinTopLevelExtensionsByReceiverTypeIndex,
+            KotlinExtensionsInObjectsByReceiverTypeIndex,
+        ).flatMap { index ->
+            index.getAllElements(project, scope, keyFilter) {
+                psiFilter(it)
+                        && useSiteFilter(it)
+                        && !it.isKotlinBuiltins()
+            }
+        }.map { it.symbol }
+            .filterIsInstance<KaCallableSymbol>()
 
         return sequence {
-            for (extension in values) {
-                yieldIfNotNull(extension.symbol as? KaCallableSymbol)
-            }
-            val resolveExtensionScope = resolveExtensionScopeWithTopLevelDeclarations
-            yieldAll(resolveExtensionScope.callables(nameFilter).filterExtensionsByReceiverTypes(receiverTypes))
+            yieldAll(values)
+            yieldAll(resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter).filterExtensionsByReceiverTypes(receiverTypes))
         }
     }
 
@@ -283,16 +284,16 @@ class KtSymbolFromIndexProvider private constructor(
     private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
 
     context(KaSession)
-    private fun findAllNamesForType(type: KaType): Set<String> = buildSet {
+    private fun findAllNamesForType(type: KaType): Set<Name> = buildSet {
         if (type is KaFlexibleType) {
             return findAllNamesForType(type.lowerBound)
         }
         if (type !is KaClassType) return@buildSet
 
-        val typeName = type.classId.shortClassName.let {
-            if (it.isSpecial) return@buildSet
-            it.identifier
-        }
+        val typeName = type.classId
+            .shortClassName
+            .takeUnless { it.isSpecial }
+            ?: return@buildSet
 
         add(typeName)
         addAll(getPossibleTypeAliasExpansionNames(typeName))
@@ -303,13 +304,13 @@ class KtSymbolFromIndexProvider private constructor(
         }
     }
 
-    private fun getPossibleTypeAliasExpansionNames(originalTypeName: String): Set<String> = buildSet {
-        fun searchRecursively(typeName: String) {
+    private fun getPossibleTypeAliasExpansionNames(originalTypeName: Name): Set<Name> = buildSet {
+        fun searchRecursively(typeName: Name) {
             ProgressManager.checkCanceled()
-            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope]
+            KotlinTypeAliasByExpansionShortNameIndex[typeName.identifier, project, scope]
                 .asSequence()
-                .mapNotNull { it.name }
-                .filter { add(it) }
+                .mapNotNull { it.nameAsName }
+                .filter(::add)
                 .forEach(::searchRecursively)
         }
 

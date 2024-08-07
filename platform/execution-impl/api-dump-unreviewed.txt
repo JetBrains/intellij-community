@@ -1359,71 +1359,16 @@ com.intellij.execution.impl.statistics.FusAwareRunConfiguration
 - a:getAdditionalUsageData():java.util.List
 com.intellij.execution.impl.statistics.FusCollectSettingChangesRunConfiguration
 - a:collectSettingChangesOnApply(com.intellij.execution.impl.statistics.FusCollectSettingChangesRunConfiguration):V
-f:com.intellij.execution.impl.statistics.MacroNameValidationRule
-- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
-- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
-- <init>():V
-f:com.intellij.execution.impl.statistics.MacroUsageCollector
-- sf:INSTANCE:com.intellij.execution.impl.statistics.MacroUsageCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logMacroExpanded(com.intellij.ide.macro.Macro,Z):V
 f:com.intellij.execution.impl.statistics.RunConfigurationTypeLanguageExtension
 - <init>():V
 - getEventId():java.lang.String
 - getExtensionFields():java.util.List
 - getGroupId():java.lang.String
-f:com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector
-- sf:CONFIGURED_IN_PROJECT:java.lang.String
-- sf:FACTORY_FIELD:com.intellij.internal.statistic.eventLog.events.StringEventField
-- sf:GROUP:com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:ID_FIELD:com.intellij.internal.statistic.eventLog.events.StringEventField
-- <init>():V
-- s:createFeatureUsageData(com.intellij.execution.configurations.ConfigurationType,com.intellij.execution.configurations.ConfigurationFactory):java.util.List
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- getMetrics(com.intellij.openapi.project.Project):java.util.Set
-f:com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator
-- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
-- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
-- <init>():V
-- acceptRuleId(java.lang.String):Z
-- getRuleId():java.lang.String
 f:com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension
 - <init>():V
 - getEventId():java.lang.String
 - getExtensionFields():java.util.List
 - getGroupId():java.lang.String
-f:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
-- sf:ALTERNATIVE_JRE_VERSION:com.intellij.internal.statistic.eventLog.events.IntEventField
-- sf:GROUP_NAME:java.lang.String
-- sf:UI_SHOWN_STAGE:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- s:logProcessFinished(com.intellij.internal.statistic.StructuredIdeActivity,com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationFinishType):V
-- s:trigger(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration,Z,Z,Z,Z):com.intellij.internal.statistic.StructuredIdeActivity
-- s:triggerWithParent(com.intellij.internal.statistic.StructuredIdeActivity,com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration,Z,Z,Z,Z):com.intellij.internal.statistic.StructuredIdeActivity
-f:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator
-- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
-- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
-- <init>():V
-- getRuleId():java.lang.String
-e:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationFinishType
-- java.lang.Enum
-- sf:FAILED_TO_START:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationFinishType
-- sf:TERMINATED_BY_STOP:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationFinishType
-- sf:TERMINATED_DUE_TO_RERUN:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationFinishType
-- sf:UNKNOWN:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationFinishType
-- s:valueOf(java.lang.String):com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationFinishType
-- s:values():com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationFinishType[]
-f:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunTargetValidator
-- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
-- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
-- sf:RULE_ID:java.lang.String
-- <init>():V
-- getRuleId():java.lang.String
 f:com.intellij.execution.lineMarker.ExecutorAction
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.actionSystem.ActionWithDelegate
@@ -2339,40 +2284,6 @@ f:com.intellij.execution.multilaunch.state.MultiLaunchConfigurationSnapshot
 - f:getActivateToolWindows():Z
 - f:getRows():java.util.List
 - f:setActivateToolWindows(Z):V
-f:com.intellij.execution.multilaunch.statistics.ConditionTypeIdValidationRule
-- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
-- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
-- <init>():V
-- acceptRuleId(java.lang.String):Z
-- getRuleId():java.lang.String
-f:com.intellij.execution.multilaunch.statistics.CreatedOrigin
-- sf:INSTANCE:com.intellij.execution.multilaunch.statistics.CreatedOrigin
-- f:getCREATED_FIELD():com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- f:getORIGIN_FIELD():com.intellij.internal.statistic.eventLog.events.EnumEventField
-f:com.intellij.execution.multilaunch.statistics.ExecutableTypeIdValidationRule
-- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
-- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
-- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
-- <init>():V
-- acceptRuleId(java.lang.String):Z
-- getRuleId():java.lang.String
-f:com.intellij.execution.multilaunch.statistics.FusCondition
-- sf:Companion:com.intellij.execution.multilaunch.statistics.FusCondition$Companion
-- <init>():V
-- f:getTypeId():java.lang.String
-- f:setTypeId(java.lang.String):V
-f:com.intellij.execution.multilaunch.statistics.FusCondition$Companion
-- f:createData(java.lang.String):com.intellij.internal.statistic.eventLog.events.ObjectEventData
-f:com.intellij.execution.multilaunch.statistics.FusExecutable
-- sf:Companion:com.intellij.execution.multilaunch.statistics.FusExecutable$Companion
-- <init>():V
-- f:getKind():com.intellij.execution.multilaunch.statistics.FusExecutableKind
-- f:getTypeId():java.lang.String
-- f:setKind(com.intellij.execution.multilaunch.statistics.FusExecutableKind):V
-- f:setTypeId(java.lang.String):V
-f:com.intellij.execution.multilaunch.statistics.FusExecutable$Companion
-- f:createData(com.intellij.execution.multilaunch.statistics.FusExecutableKind,java.lang.String):com.intellij.internal.statistic.eventLog.events.ObjectEventData
 e:com.intellij.execution.multilaunch.statistics.FusExecutableKind
 - java.lang.Enum
 - sf:RUN_CONFIGURATION:com.intellij.execution.multilaunch.statistics.FusExecutableKind
@@ -2381,25 +2292,6 @@ e:com.intellij.execution.multilaunch.statistics.FusExecutableKind
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.execution.multilaunch.statistics.FusExecutableKind
 - s:values():com.intellij.execution.multilaunch.statistics.FusExecutableKind[]
-f:com.intellij.execution.multilaunch.statistics.FusExecutableRows
-- sf:INSTANCE:com.intellij.execution.multilaunch.statistics.FusExecutableRows
-- f:getFIELD():com.intellij.internal.statistic.eventLog.events.ObjectListEventField
-f:com.intellij.execution.multilaunch.statistics.FusExecutionRow
-- sf:Companion:com.intellij.execution.multilaunch.statistics.FusExecutionRow$Companion
-- <init>():V
-- f:getCondition():com.intellij.internal.statistic.eventLog.events.ObjectEventData
-- f:getDisableDebugging():java.lang.Boolean
-- f:getExecutable():com.intellij.internal.statistic.eventLog.events.ObjectEventData
-- f:setCondition(com.intellij.internal.statistic.eventLog.events.ObjectEventData):V
-- f:setDisableDebugging(java.lang.Boolean):V
-- f:setExecutable(com.intellij.internal.statistic.eventLog.events.ObjectEventData):V
-f:com.intellij.execution.multilaunch.statistics.FusExecutionRow$Companion
-- f:createData(com.intellij.internal.statistic.eventLog.events.ObjectEventData,com.intellij.internal.statistic.eventLog.events.ObjectEventData,Z):com.intellij.internal.statistic.eventLog.events.ObjectEventData
-f:com.intellij.execution.multilaunch.statistics.MultiLaunchConfigurationTypeCollectorExtension
-- <init>():V
-- getEventId():java.lang.String
-- getExtensionFields():java.util.List
-- getGroupId():java.lang.String
 f:com.intellij.execution.multilaunch.statistics.MultiLaunchConfigurationUsageCollectorExtension
 - <init>():V
 - getEventId():java.lang.String
@@ -2419,14 +2311,6 @@ e:com.intellij.execution.multilaunch.statistics.MultiLaunchCreationOrigin
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.execution.multilaunch.statistics.MultiLaunchCreationOrigin
 - s:values():com.intellij.execution.multilaunch.statistics.MultiLaunchCreationOrigin[]
-f:com.intellij.execution.multilaunch.statistics.MultiLaunchEventFields
-- sf:INSTANCE:com.intellij.execution.multilaunch.statistics.MultiLaunchEventFields
-- f:getACTIVATE_TOOL_WINDOWS_FIELD():com.intellij.internal.statistic.eventLog.events.BooleanEventField
-f:com.intellij.execution.multilaunch.statistics.MultiLaunchUsageCollector
-- sf:INSTANCE:com.intellij.execution.multilaunch.statistics.MultiLaunchUsageCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- f:logActivated(com.intellij.execution.multilaunch.MultiLaunchConfiguration):V
-- f:logCreated(com.intellij.execution.multilaunch.MultiLaunchConfiguration):V
 a:com.intellij.execution.options.LifetimedSettingsEditor
 - com.intellij.openapi.options.SettingsEditor
 - <init>():V
@@ -2854,12 +2738,6 @@ f:com.intellij.execution.target.RunTargetsEnabled
 - <init>():V
 - s:forceEnable(com.intellij.openapi.Disposable):V
 - s:get():Z
-f:com.intellij.execution.target.TargetCounterUsagesCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- s:reportTargetCreationBegan(com.intellij.openapi.project.Project,java.lang.String):V
-- s:reportTargetCreationCancelled(com.intellij.openapi.project.Project,java.lang.String,I):V
-- s:reportTargetCreationSucceeded(com.intellij.openapi.project.Project,java.lang.String):V
 f:com.intellij.execution.target.TargetCustomToolPanel
 - <init>(com.intellij.openapi.project.Project,com.intellij.execution.target.TargetEnvironmentType,java.util.function.Supplier,com.intellij.execution.target.LanguageRuntimeConfiguration,com.intellij.execution.target.LanguageRuntimeType$Introspectable):V
 - f:applyAll():V
@@ -3889,7 +3767,7 @@ c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 c:com.intellij.terminal.JBTerminalWidget
 - com.jediterm.terminal.ui.JediTermWidget
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:SELECTED_TEXT_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:TERMINAL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,I,I,com.intellij.terminal.JBTerminalSystemSettingsProviderBase,com.intellij.terminal.TerminalExecutionConsole,com.intellij.openapi.Disposable):V
@@ -3904,7 +3782,6 @@ c:com.intellij.terminal.JBTerminalWidget
 - dispose():V
 - p:executeCommand(java.lang.String):V
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
-- getData(java.lang.String):java.lang.Object
 - getDefaultSessionName(com.jediterm.terminal.TtyConnector):java.lang.String
 - getFontSize():I
 - getFontSize2D():F
@@ -3925,6 +3802,7 @@ c:com.intellij.terminal.JBTerminalWidget
 - p:setShellCommand(java.util.List):V
 - setTtyConnector(com.jediterm.terminal.TtyConnector):V
 - start(com.jediterm.terminal.TtyConnector):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - writePlainMessage(java.lang.String):V
 com.intellij.terminal.JBTerminalWidgetListener
 - canMoveTabLeft():Z

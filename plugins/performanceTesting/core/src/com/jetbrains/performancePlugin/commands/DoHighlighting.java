@@ -7,7 +7,6 @@ import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -15,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -69,7 +69,7 @@ public final class DoHighlighting extends PerformanceCommand {
       getInstance(project).dropPsiCaches();
       ReadAction.nonBlocking(Context.current().wrap((Callable<Void>)() -> {
         long start = System.nanoTime();
-        TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
+        TraceKt.use(PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME), span -> {
           GlobalInspectionTool tool = new HighlightVisitorBasedInspection()
             .setHighlightErrorElements(true).setRunAnnotators(true).setRunVisitors(false);
           InspectionManager inspectionManager = InspectionManager.getInstance(project);
@@ -79,6 +79,7 @@ public final class DoHighlighting extends PerformanceCommand {
           span.setAttribute("lines", editor.getDocument().getLineCount());
           long stop = System.nanoTime();
           span.setAttribute("timeToLines", (double)(stop - start) / MILLIS_IN_NANO / (Math.max(1, editor.getDocument().getLineCount())));
+          return null;
         });
         actionCallback.setDone();
         return null;

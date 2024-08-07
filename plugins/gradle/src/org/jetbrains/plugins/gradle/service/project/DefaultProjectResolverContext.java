@@ -52,6 +52,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Nullable private GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
+  private final boolean myBuildSrcProject;
   @Nullable private String myBuildSrcGroup;
   @Nullable private BuildEnvironment myBuildEnvironment;
   @Nullable private final GradlePartialResolverPolicy myPolicy;
@@ -69,7 +70,8 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     @Nullable GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable GradlePartialResolverPolicy resolverPolicy,
-    @NotNull GradleProjectResolverIndicator projectResolverIndicator
+    @NotNull GradleProjectResolverIndicator projectResolverIndicator,
+    boolean isBuildSrcProject
   ) {
     myExternalSystemTaskId = externalSystemTaskId;
     myProjectPath = projectPath;
@@ -78,12 +80,14 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myListener = listener;
     myPolicy = resolverPolicy;
     myProjectResolverIndicator = projectResolverIndicator;
+    myBuildSrcProject = isBuildSrcProject;
   }
 
   public DefaultProjectResolverContext(
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings
+    @Nullable GradleExecutionSettings settings,
+    boolean isBuildSrcProject
   ) {
     this(
       resolverContext.myExternalSystemTaskId,
@@ -91,7 +95,8 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       settings,
       resolverContext.myListener,
       resolverContext.myPolicy,
-      resolverContext.myProjectResolverIndicator
+      resolverContext.myProjectResolverIndicator,
+      isBuildSrcProject
     );
     resolverContext.copyUserDataTo(this);
   }
@@ -311,6 +316,10 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       }
     }
     return myProjectGradleVersion;
+  }
+
+  public boolean isBuildSrcProject() {
+    return myBuildSrcProject;
   }
 
   public void setBuildSrcGroup(@Nullable String groupId) {

@@ -7,8 +7,8 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.ide.ui.IdeUiService;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -271,8 +271,8 @@ public class UsageViewTest extends BasePlatformTestCase {
     Node nodeToExclude = (Node)usageNode[0].getParent();
 
     JComponent component = usageView.getComponent();
-    DataProvider provider = DataManagerImpl.getDataProviderEx(component);
-    ExclusionHandler exclusionHandler = ExclusionHandler.EXCLUSION_HANDLER.getData(provider);
+    DataContext dataContext = IdeUiService.getInstance().createUiDataContext(component);
+    ExclusionHandler exclusionHandler = ExclusionHandler.EXCLUSION_HANDLER.getData(dataContext);
     exclusionHandler.excludeNode(nodeToExclude);
     UIUtil.dispatchAllInvocationEvents();
 

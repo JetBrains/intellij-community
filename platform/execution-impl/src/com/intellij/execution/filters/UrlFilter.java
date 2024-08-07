@@ -38,29 +38,49 @@ public class UrlFilter implements Filter, DumbAware {
     myProject = project;
   }
 
+  private List<ResultItem> findMatchingItems(String line, Pattern pattern, int textStartOffset) {
+    List<ResultItem> resultList = new ArrayList<>();
+    Matcher matcher = pattern.matcher(line);
+    while (matcher.find()) {
+      resultList.add(
+        new ResultItem(textStartOffset + matcher.start(), textStartOffset + matcher.end(), buildHyperlinkInfo(matcher.group())));
+    }
+    return resultList;
+  }
+
   @Override
   public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
     if (!URLUtil.canContainUrl(line)) return null;
 
     int textStartOffset = entireLength - line.length();
-    Pattern pattern = line.contains(LocalFileSystem.PROTOCOL_PREFIX) ? URLUtil.FILE_URL_PATTERN : URLUtil.URL_PATTERN;
-    Matcher m = pattern.matcher(line);
-    ResultItem item = null;
-    List<ResultItem> items = null;
-    while (m.find()) {
-      if (item == null) {
-        item = new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group()));
-      } else {
-        if (items == null) {
-          items = new ArrayList<>(2);
-          items.add(item);
-        }
-        items.add(new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group())));
-      }
+    List<ResultItem> resultList = new ArrayList<>();
+
+    if (line.contains(LocalFileSystem.PROTOCOL_PREFIX)) {
+      resultList.addAll(findMatchingItems(line, URLUtil.FILE_URL_PATTERN, textStartOffset));
     }
-    return items != null ? new Result(items)
-                         : item != null ? new Result(item.getHighlightStartOffset(), item.getHighlightEndOffset(), item.getHyperlinkInfo())
-                                        : null;
+
+    if (isPotentialUrl(line)) {
+      resultList.addAll(findMatchingItems(line, URLUtil.URL_PATTERN, textStartOffset));
+    }
+
+    if (resultList.isEmpty()) {
+      return null;
+    }
+
+    if (resultList.size() == 1) {
+      ResultItem singleItem = resultList.get(0);
+      return new Result(singleItem.getHighlightStartOffset(), singleItem.getHighlightEndOffset(), singleItem.getHyperlinkInfo());
+    }
+
+    return new Result(resultList);
+  }
+
+  private static boolean isPotentialUrl(String input) {
+    return input.contains("www") ||
+           input.contains("http") ||
+           input.contains("mailto") ||
+           input.contains("ftp") ||
+           input.contains("news");
   }
 
   protected @NotNull HyperlinkInfo buildHyperlinkInfo(@NotNull String url) {

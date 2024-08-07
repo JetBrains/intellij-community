@@ -122,7 +122,7 @@ public final class AnalyzeStacktraceUtil {
     return editorPanel;
   }
 
-  public static final class StacktraceEditorPanel extends JPanel implements DataProvider, Disposable {
+  public static final class StacktraceEditorPanel extends JPanel implements UiDataProvider, Disposable {
     private final Project myProject;
     private final Editor myEditor;
 
@@ -134,11 +134,8 @@ public final class AnalyzeStacktraceUtil {
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.EDITOR.is(dataId)) {
-        return myEditor;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.EDITOR, myEditor);
     }
 
     public Editor getEditor() {

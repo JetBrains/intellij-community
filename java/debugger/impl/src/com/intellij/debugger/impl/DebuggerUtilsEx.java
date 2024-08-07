@@ -345,7 +345,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
     content.setDescription(JavaDebuggerBundle.message("thread.dump"));
-    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
+    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_REMOTE_CLIENTS, true);
     ui.addContent(content);
     ui.selectAndFocus(content, true, true);
     myThreadDumpsCount++;

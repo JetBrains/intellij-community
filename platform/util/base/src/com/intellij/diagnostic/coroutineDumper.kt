@@ -48,16 +48,24 @@ fun enableCoroutineDump(): Result<Unit> {
  */
 //@JvmOverloads
 fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true, deduplicateTrees: Boolean = true): String? {
-  if (!isCoroutineDumpEnabled()) {
-    return null
+  try {
+    if (!isCoroutineDumpEnabled()) {
+      return null
+    }
+    val charset = StandardCharsets.UTF_8.name()
+    val outputStream = ByteArrayOutputStream()
+    PrintStream(BufferedOutputStream(outputStream), true, charset).use { out ->
+      val jobTree = jobTrees(scope).toList()
+      dumpCoroutines(jobTree, out, stripDump, deduplicateTrees)
+    }
+    return outputStream.toString(charset)
+  } catch (e: Throwable) {
+    // if there is an unexpected exception, we won't be able to provide meaningful information anyway,
+    // but the exception should not prevent other diagnostic tools from collecting data
+    return "Coroutine dump has failed: ${e.message}\n" +
+           "Please report this issue to the developers.\n" +
+           e.stackTraceToString()
   }
-  val charset = StandardCharsets.UTF_8.name()
-  val outputStream = ByteArrayOutputStream()
-  PrintStream(BufferedOutputStream(outputStream), true, charset).use { out ->
-    val jobTree = jobTrees(scope).toList()
-    dumpCoroutines(jobTree, out, stripDump, deduplicateTrees)
-  }
-  return outputStream.toString(charset)
 }
 
 /**
@@ -267,7 +275,7 @@ private fun JobTree.toRepresentation(stripTrace: Boolean): JobRepresentationTree
     job is CoroutineScope -> job.coroutineContext
     debugInfo !== null -> debugInfo.context
     else -> EmptyCoroutineContext
-  }
+  } ?: EmptyCoroutineContext // shouldn't be necessary but see IJPL-158517
   val name = if (job is AbstractCoroutine<*> && DEBUG) {
     // in DEBUG the name is displayed as part of `job.toString()` for AbstractCoroutine
     // see kotlinx.coroutines.AbstractCoroutine.nameString
@@ -303,10 +311,22 @@ private fun JobRepresentationTree.deduplicate(): DeduplicatedJobRepresentationTr
   )
 
 private fun JobRepresentation.withoutJobAddress(): JobRepresentation {
-  val ind = job.lastIndexOf("}@")
-  if (ind == -1) return this
-  assert(job.substring(ind + 2, job.length).all { it.isLetterOrDigit() })
-  return JobRepresentation(coroutineName, job.substring(0, ind + 1), state, context, trace)
+  val closingBracketPosition = job.lastIndexOf("}@")
+  if (closingBracketPosition == -1) {
+    return this
+  }
+  val openingBracketPosition = job.substring(0, closingBracketPosition).lastIndexOf('{')
+  if (openingBracketPosition == -1) {
+    return this
+  }
+  if (job.substring(0, openingBracketPosition).endsWith("BlockingCoroutine")) {
+    return this // the address of BlockingCoroutine is important to link it to the thread that awaits it
+  }
+  if (job.substring(closingBracketPosition + 2, job.length).any { !it.isLetterOrDigit() }) {
+    return this // suffix doesn't look like a job address
+  }
+  val jobWithoutAddress = job.substring(0, closingBracketPosition + 1)
+  return JobRepresentation(coroutineName, jobWithoutAddress, state, context, trace)
 }
 
 private fun traceToDump(info: DebugCoroutineInfo, stripTrace: Boolean): List<StackTraceElement> {

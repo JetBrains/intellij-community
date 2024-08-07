@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -75,11 +76,9 @@ public class SMTRunnerTestTreeView extends TestTreeView {
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
-    if (SM_TEST_RUNNER_VIEW.is(dataId)) {
-      return this;
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(SM_TEST_RUNNER_VIEW, this);
   }
 
   @Override

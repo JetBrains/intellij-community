@@ -12,6 +12,9 @@ import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
+import com.jetbrains.python.sdk.poetry.quickFixes.PoetryInstallQuickFix
+import com.jetbrains.python.sdk.poetry.quickFixes.PoetryAssociationQuickFix
+import com.jetbrains.python.sdk.poetry.ui.PyAddNewPoetryPanel
 import org.jdom.Element
 import javax.swing.Icon
 

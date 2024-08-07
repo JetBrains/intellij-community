@@ -107,6 +107,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k2" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="RUNTIME" />
@@ -121,5 +122,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jsr223" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.features-trainer" scope="RUNTIME" />
   </component>
 </module>

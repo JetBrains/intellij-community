@@ -12,4 +12,6 @@ interface EventsFlow {
                                                           callback: suspend (event: EventType) -> Unit): Boolean
 
   fun <T : Event> postAndWaitProcessing(event: T)
+  fun <EventType : Event> unsubscribe(eventClass: Class<EventType>, subscriber: Any)
+  fun getSubscriberObject(subscriber: Any): Any
 }

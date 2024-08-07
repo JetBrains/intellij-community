@@ -4,10 +4,10 @@ package com.intellij.refactoring.extractMethod.newImpl.parameterObject
 import com.intellij.codeInsight.hint.EditorCodePreview
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.FinishMarkAction
-import com.intellij.openapi.command.impl.StartMarkAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
@@ -16,13 +16,16 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMultipleVariablesException
+import com.intellij.refactoring.extractMethod.newImpl.ExtractException
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTemplateBuilder
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private data class IntroduceObjectResult(
   val introducedClass: PsiClass,
@@ -32,33 +35,36 @@ private data class IntroduceObjectResult(
 
 /**
  * Creates a class or record to wrap multiple variables inside a single instance.
- * Used as a first step before extracting method from code fragment with multiple results.
+ * Used as a first step before extracting a method from a code fragment with multiple results.
  */
-object ResultObjectExtractor {
-  fun run(editor: Editor, variables: List<PsiVariable>, scope: List<PsiElement>){
+internal object ResultObjectExtractor {
+  suspend fun run(editor: Editor, variables: List<PsiVariable>, scope: List<PsiElement>){
     require(variables.isNotEmpty())
     require(scope.isNotEmpty())
 
-    val affectedReferences = ParameterObjectUtils.findAffectedReferences(variables, scope)
+    val affectedReferences = readAction { ParameterObjectUtils.findAffectedReferences(variables, scope) }
     if (affectedReferences == null) {
-      InplaceExtractUtils.showExtractErrorHint(editor, ExtractMultipleVariablesException(variables, scope))
+      withContext(Dispatchers.EDT) {
+        InplaceExtractUtils.showExtractErrorHint(editor, ExtractException(JavaRefactoringBundle.message("extract.method.error.many.outputs"), variables))
+      }
       return
     }
-    val shouldInsertRecord = PsiUtil.isAvailable(JavaFeature.RECORDS, variables.first())
+    val shouldInsertRecord = readAction { PsiUtil.isAvailable(JavaFeature.RECORDS, variables.first()) }
     val objectBuilder = if (shouldInsertRecord) {
-      RecordResultObjectBuilder.create(variables)
+      readAction { RecordResultObjectBuilder.create(variables) }
     } else {
-      ClassResultObjectBuilder.create(variables)
+      readAction { ClassResultObjectBuilder.create(variables) }
     }
-    val file = scope.first().containingFile
+    val file = readAction { scope.first().containingFile }
     val project = file.project
-    val extractRange = createGreedyRangeMarker(file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
-    val editorState = EditorState(project, editor)
+    val extractRange = readAction {
+      createGreedyRangeMarker (file.viewProvider.document, scope.first().textRange.union(scope.last().textRange))
+    }
+    val editorState = readAction { EditorState(project, editor) }
     val disposable = Disposer.newDisposable()
-    WriteCommandAction.writeCommandAction(project).run<Throwable> {
+    ExtractMethodHelper.mergeWriteCommands(editor, disposable, ExtractMethodHandler.getRefactoringName())
+    writeCommandAction(project, ExtractMethodHandler.getRefactoringName()) {
       try {
-        val startMarkAction = StartMarkAction.start(editor, project, ExtractMethodHandler.getRefactoringName())
-        Disposer.register(disposable) { FinishMarkAction.finish(project, editor, startMarkAction) }
         val (introducedClass, declaration, replacements) = introduceObjectForVariables(objectBuilder, variables, affectedReferences, scope.last())
         val introducedVariableReferences = replacements.map { replacement ->
           objectBuilder.findVariableReferenceInReplacement(replacement) ?: throw IllegalStateException()

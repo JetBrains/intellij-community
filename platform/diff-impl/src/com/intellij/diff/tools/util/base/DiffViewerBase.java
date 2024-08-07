@@ -23,7 +23,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class DiffViewerBase implements DiffViewer, DataProvider {
+public abstract class DiffViewerBase implements DiffViewer, UiCompatibleDataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
 
   @NotNull private final List<DiffViewerListener> listeners = new SmartList<>();
@@ -242,7 +241,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   @Nullable
-  protected Navigatable getNavigatable() {
+  public Navigatable getNavigatable() {
     return null;
   }
 
@@ -283,18 +282,10 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.NAVIGATABLE.is(dataId)) {
-      return getNavigatable();
-    }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    else {
-      return null;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(DiffDataKeys.NAVIGATABLE, getNavigatable());
+    sink.set(CommonDataKeys.PROJECT, myProject);
   }
 
   private enum EventType {

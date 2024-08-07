@@ -65,8 +65,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private PsiManager myManager;
 
   @Override
-  @Nullable
-  public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     if (myPattern == null) {
       return null;
     }
@@ -188,8 +187,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   }
 
   @Override
-  @NotNull
-  public XmlFile getDescriptorFile() {
+  public @NotNull XmlFile getDescriptorFile() {
     return myFile;
   }
 
@@ -210,14 +208,12 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   }
 
   @Override
-  @NonNls
-  public String getName(PsiElement context) {
+  public @NonNls String getName(PsiElement context) {
     return getName();
   }
 
   @Override
-  @NonNls
-  public String getName() {
+  public @NonNls String getName() {
     return getDescriptorFile().getName();
   }
 
@@ -254,7 +250,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   }
 
   @Override
-  public void validate(@NotNull PsiElement context, @NotNull final ValidationHost host) {
+  public void validate(@NotNull PsiElement context, final @NotNull ValidationHost host) {
     final XmlDocument doc = PsiTreeUtil.getContextOfType(context, XmlDocument.class, false);
     if (doc == null) {
       return;

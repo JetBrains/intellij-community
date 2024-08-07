@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.IdeUiService
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
@@ -36,12 +37,9 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractException
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
@@ -67,10 +65,13 @@ object InplaceExtractUtils {
     return true
   }
 
+  fun showExtractErrorHint(editor: Editor, error: @Nls String) {
+    val message: @Nls String = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + error
+    IdeUiService.getInstance().showErrorHint(editor, message)
+  }
+
   fun showExtractErrorHint(editor: Editor, exception: ExtractException){
-    val file = exception.file
-    val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (exception.message ?: "")
-    CommonRefactoringUtil.showErrorHint(file.project, editor, message, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
+    showExtractErrorHint(editor, exception.message.orEmpty())
     highlightErrors(editor, exception.problems)
   }
 

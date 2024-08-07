@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio.toggle
 
+import com.intellij.CommonBundle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.icons.AllIcons
@@ -178,7 +179,7 @@ object IjentWslNioFsVmOptionsSetter {
               IdeBundle.message("ijent.wsl.fs.dialog.message"),
               IdeBundle.message("ijent.wsl.fs.dialog.title"),
               IdeBundle.message(if (ApplicationManager.getApplication().isRestartCapable) "ide.restart.action" else "ide.shutdown.action"),
-              IdeBundle.message("dialog.action.restart.cancel"),
+              CommonBundle.getCancelButtonText(),
               AllIcons.General.Warning,
             )
             if (doThat) {

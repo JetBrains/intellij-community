@@ -787,11 +787,21 @@ public final class MethodParameterInfoHandler
     return html.replaceAll("<a.*?>", "").replaceAll("</a>", "");
   }
 
-  private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
+  private static void appendModifierList(@NotNull StringBuilder buffer, @Nullable PsiType type, @NotNull PsiModifierListOwner owner) {
     if (DumbService.isDumb(owner.getProject())) return;
 
     int lastSize = buffer.length();
     Set<String> shownAnnotations = new HashSet<>();
+    if (type != null) {
+      PsiAnnotation[] annotations = type.getAnnotations();
+      for (PsiAnnotation annotation : annotations) {
+        final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
+        if (element != null) {
+          String referenceName = element.getReferenceName();
+          shownAnnotations.add(referenceName);
+        }
+      }
+    }
     for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null, true)) {
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {
@@ -897,7 +907,7 @@ public final class MethodParameterInfoHandler
       PsiType paramType = substitutor.substitute(param.getType());
       String type = paramType.getPresentableText(!DumbService.isDumb(param.getProject()));
       StringBuilder buffer = new StringBuilder();
-      appendModifierList(buffer, param);
+      appendModifierList(buffer, paramType, param);
       String modifiers = buffer.toString();
       String name = param.getName();
       String javaDoc = JavaDocInfoGeneratorFactory.create(param.getProject(), param).generateMethodParameterJavaDoc();
@@ -915,7 +925,7 @@ public final class MethodParameterInfoHandler
       PsiType returnType = substitutor.substitute(method.getReturnType());
       String type = returnType == null ? "" : returnType.getPresentableText(true);
       StringBuilder buffer = new StringBuilder();
-      appendModifierList(buffer, method);
+      appendModifierList(buffer, returnType, method);
       String modifiers = buffer.toString();
       List<ParameterPresentation> parameters =
         ContainerUtil.map(method.getParameterList().getParameters(), param -> ParameterPresentation.from(param, substitutor));

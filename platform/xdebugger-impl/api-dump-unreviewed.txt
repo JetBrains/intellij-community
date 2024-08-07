@@ -105,7 +105,6 @@ a:com.intellij.xdebugger.impl.DebuggerSupport
 - getAddToWatchesActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getBreakpointPanelProvider():com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
 - s:getDebuggerSupport(java.lang.Class):com.intellij.xdebugger.impl.DebuggerSupport
-- s:getDebuggerSupports():com.intellij.xdebugger.impl.DebuggerSupport[]
 - getEditBreakpointAction():com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
 - getEvaluateHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getEvaluateInConsoleActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
@@ -662,8 +661,6 @@ c:com.intellij.xdebugger.impl.actions.handlers.XToggleLineBreakpointActionHandle
 - <init>(Z):V
 - isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollectorKt
-- sf:getType(com.intellij.xdebugger.breakpoints.XBreakpointType):java.util.List
 c:com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 - <init>():V
 - getErrorMessage():java.lang.String
@@ -1226,15 +1223,15 @@ f:com.intellij.xdebugger.impl.frame.XDebugViewSessionListener
 - stackFrameChanged():V
 c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 - com.intellij.xdebugger.impl.frame.DebuggerFramesList
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - <init>(com.intellij.openapi.project.Project):V
 - p:createListRenderer():javax.swing.ListCellRenderer
-- getData(java.lang.String):java.lang.Object
 - p:getFrameNavigatable(com.intellij.xdebugger.frame.XStackFrame,Z):com.intellij.pom.Navigatable
 - getSelectedFrame():com.intellij.xdebugger.frame.XStackFrame
 - p:getSelectedFrameNavigatable():com.intellij.pom.Navigatable
 - selectFrame(I):Z
 - selectFrame(com.intellij.xdebugger.frame.XStackFrame):Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateUI():V
 c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction
 - com.intellij.openapi.project.DumbAwareAction
@@ -1250,6 +1247,7 @@ com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithSeparatorAbove
 - setWithSeparator(Z):V
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - com.intellij.ui.components.JBList
+- com.intellij.openapi.actionSystem.UiDataProvider
 - sf:Companion:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
 - <init>(javax.swing.ListCellRenderer):V
 - f:clear():V
@@ -1258,6 +1256,7 @@ f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - f:getStackUnderMouse():com.intellij.xdebugger.impl.frame.StackInfo
 - locationToIndex(java.awt.Point):I
 - setModel(javax.swing.ListModel):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
 - f:create(javax.swing.ListCellRenderer):com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - f:createDefault():com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
@@ -2335,7 +2334,7 @@ c:com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - com.intellij.ide.dnd.aware.DnDAwareTree
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:SELECTED_NODES:com.intellij.openapi.actionSystem.DataKey
 - sf:XDEBUGGER_TREE_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XSourcePosition,java.lang.String,com.intellij.xdebugger.impl.frame.XValueMarkers):V
@@ -2344,7 +2343,6 @@ c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - childrenLoaded(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,java.util.List,Z):V
 - dispose():V
 - expandNodesOnLoad(com.intellij.openapi.util.Condition):V
-- getData(java.lang.String):java.lang.Object
 - getEditorsProvider():com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - getProject():com.intellij.openapi.project.Project
 - getRoot():com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
@@ -2365,6 +2363,7 @@ c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - selectNodeOnLoad(com.intellij.openapi.util.Condition,com.intellij.openapi.util.Condition):V
 - setRoot(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,Z):V
 - setSourcePosition(com.intellij.xdebugger.XSourcePosition):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateEditor():V
 a:com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor
 - com.intellij.xdebugger.impl.ui.tree.TreeInplaceEditor
@@ -2862,6 +2861,7 @@ e:com.intellij.xdebugger.memory.tracking.TrackingType
 a:com.intellij.xdebugger.memory.ui.ClassesFilteredViewBase
 - com.intellij.util.ui.components.BorderLayoutPanel
 - com.intellij.openapi.Disposable
+- com.intellij.openapi.actionSystem.UiDataProvider
 - psf:DEFAULT_BATCH_SIZE:I
 - psf:DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT:D
 - psf:MAX_DELAY_MILLIS:D
@@ -2873,19 +2873,19 @@ a:com.intellij.xdebugger.memory.ui.ClassesFilteredViewBase
 - p:doActivate():V
 - p:doPause():V
 - p:getAdditionalSessionListener():com.intellij.xdebugger.XDebugSessionListener
-- getData(java.lang.String):java.lang.Object
 - getDefaultFocusedComponent():javax.swing.JComponent
 - pa:getInstancesWindow(com.intellij.xdebugger.memory.ui.TypeInfo,com.intellij.xdebugger.XDebugSession):com.intellij.xdebugger.memory.ui.InstancesWindowBase
 - p:getStrategy(com.intellij.xdebugger.memory.ui.TypeInfo):com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase
 - getTable():com.intellij.xdebugger.memory.ui.ClassesTable
 - p:handleClassSelection(com.intellij.xdebugger.memory.ui.TypeInfo):V
 - pa:scheduleUpdateClassesCommand(com.intellij.xdebugger.frame.XSuspendContext):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateClassesAndCounts(Z):V
 - p:viewUpdated():V
 c:com.intellij.xdebugger.memory.ui.ClassesTable
 - com.intellij.ui.table.JBTable
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - sf:REF_COUNT_PROVIDER_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:SELECTED_CLASS_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.memory.ui.ClassesFilteredViewBase,Z,Z,Z):V
@@ -2894,7 +2894,6 @@ c:com.intellij.xdebugger.memory.ui.ClassesTable
 - dispose():V
 - getClassByName(java.lang.String):com.intellij.xdebugger.memory.ui.TypeInfo
 - p:getColumnDescriptors():com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor[]
-- getData(java.lang.String):java.lang.Object
 - getSelectedClass():com.intellij.xdebugger.memory.ui.TypeInfo
 - p:getTableModel():com.intellij.xdebugger.memory.ui.ClassesTable$DiffViewTableModel
 - p:getTableSortingKeys():java.util.List
@@ -2902,6 +2901,7 @@ c:com.intellij.xdebugger.memory.ui.ClassesTable
 - isInClickableMode():Z
 - makeClickable(java.lang.Runnable):V
 - setBusy(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateClassesOnly(java.util.List):V
 - updateContent(java.util.Map):V
 c:com.intellij.xdebugger.memory.ui.ClassesTable$DiffViewTableModel

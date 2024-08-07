@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
-import com.intellij.DynamicBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,10 +21,12 @@ public abstract class SearchableOptionsRegistrar {
   public static final @NlsSafe String SETTINGS_GROUP_SEPARATOR = " | ";
   public static final String SEARCHABLE_OPTIONS_XML_NAME = "searchableOptions";
 
+  @RequiresBlockingContext
   public static SearchableOptionsRegistrar getInstance() {
     return ApplicationManager.getApplication().getService(SearchableOptionsRegistrar.class);
   }
 
+  @ApiStatus.Internal
   public abstract @NotNull ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                                             DocumentEvent.EventType type,
                                                             @Nullable Set<? extends Configurable> configurables,
@@ -48,12 +50,6 @@ public abstract class SearchableOptionsRegistrar {
   public abstract @NotNull Set<String> getProcessedWordsWithoutStemming(@NotNull String text);
 
   public abstract Set<String> getProcessedWords(@NotNull String text);
-
-  @ApiStatus.Internal
-  public static String getSearchableOptionsName() {
-    String langTag = DynamicBundle.getLocale().toLanguageTag();
-    return SEARCHABLE_OPTIONS_XML_NAME + (langTag.equals("en") ? "" : "_" + langTag);
-  }
 
   public interface AdditionalLocationProvider {
     /**

@@ -24,7 +24,9 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivity
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -203,9 +205,11 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   @Deprecated("Use {@link #scheduleForceUpdateMavenProjects(List)}}")
   override fun doForceUpdateProjects(projects: Collection<MavenProject>): AsyncPromise<Void> {
     val promise = AsyncPromise<Void>()
-    cs.launch {
-      updateMavenProjects(MavenSyncSpec.full("MavenProjectsManagerEx.doForceUpdateProjects"), projects.map { it.file }, emptyList())
-      promise.setResult(null)
+    project.trackActivityBlocking(MavenActivityKey) {
+      cs.launchTracked {
+        updateMavenProjects(MavenSyncSpec.full("MavenProjectsManagerEx.doForceUpdateProjects"), projects.map { it.file }, emptyList())
+        promise.setResult(null)
+      }
     }
     return promise
   }
@@ -213,7 +217,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   override fun scheduleUpdateMavenProjects(spec: MavenSyncSpec,
                                            filesToUpdate: List<VirtualFile>,
                                            filesToDelete: List<VirtualFile>) {
-    cs.launch { updateMavenProjects(spec, filesToUpdate, filesToDelete) }
+    project.trackActivityBlocking(MavenActivityKey) {
+      cs.launchTracked { updateMavenProjects(spec, filesToUpdate, filesToDelete) }
+    }
   }
 
   override suspend fun updateMavenProjects(spec: MavenSyncSpec,
@@ -272,8 +278,8 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   private val importMutex = Mutex()
 
   override fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec) {
-    cs.launch {
-      project.trackActivity(MavenActivityKey) {
+    project.trackActivityBlocking(MavenActivityKey) {
+      cs.launchTracked {
         updateAllMavenProjects(spec)
       }
     }

@@ -16,11 +16,15 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.RunCanceledByUserException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -46,6 +50,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.IndicatedProcessOutputListener
+import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
@@ -59,11 +65,13 @@ import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.ui.PyUiUtil
 import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.pathString
 
@@ -141,7 +149,7 @@ internal fun PythonSdkFlavor<*>.detectSdkPaths(module: Module?,
                                               existingPaths: HashSet<TargetAndPath>): List<String> =
   suggestLocalHomePaths(module, context)
     .mapNotNull {
-      // If module sits on target, this target maps its path.
+      // If a module sits on target, this target maps its path.
       if (targetModuleSitsOn == null) it.pathString else targetModuleSitsOn.getTargetPathIfLocalPathIsOnTarget(it)
     }
     .filter { TargetAndPath(targetModuleSitsOn?.asTargetConfig, it) !in existingPaths }
@@ -224,7 +232,7 @@ fun Sdk.setAssociationToPath(path: String?) {
   modificator.sdkAdditionalData = data
 
   runInEdt {
-    ApplicationManager.getApplication().runWriteAction() {
+    ApplicationManager.getApplication().runWriteAction {
       modificator.commitChanges()
     }
   }
@@ -447,9 +455,9 @@ private fun Sdk.containsModuleName(module: Module?): Boolean {
 
 /**
  * Each [Sdk] has [PythonSdkAdditionalData]. Use this method to get it.
- * Although each SDK should already have one, some old may lack of it.
+ * Although each SDK should already have one, some old may lack it.
  *
- * This method creates new in this case, but only if SDK flavor doesn't require special additional data.
+ * This method creates new in this case, but only if an SDK flavor doesn't require special additional data.
  */
 fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val existingData = sdkAdditionalData as? PythonSdkAdditionalData
@@ -514,7 +522,7 @@ val Sdk.targetEnvConfiguration
   get():TargetEnvironmentConfiguration? = (sdkAdditionalData as? TargetBasedSdkAdditionalData)?.targetEnvironmentConfiguration
 
 /**
- * Where "remote_sources" folder for certain SDK is stored
+ * Where a "remote_sources" folder for certain SDK is stored
  */
 val Sdk.remoteSourcesLocalPath: Path
   get() =
@@ -528,7 +536,7 @@ val Sdk.remoteSourcesLocalPath: Path
 
 
 /**
- * Configures [targetCommandLineBuilder] (sets binary path and other stuff) so it could run python on this target
+ * Configures [targetCommandLineBuilder] (sets a binary path and other stuff) so it could run python on this target
  */
 fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
   getOrCreateAdditionalData().flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
@@ -554,3 +562,56 @@ val Sdk.sdkSeemsValid: Boolean
     if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return true
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
+
+/**
+ * Used for CoroutineScope in com.jetbrains.python.sdk
+ */
+@Service(Service.Level.PROJECT)
+class PythonSdkRunCommandService(val cs: CoroutineScope)
+
+fun runCommand(executable: Path, projectPath: Path?,  @NlsContexts.DialogMessage errorMessage: String, vararg args: String): String {
+  val command = listOf(executable.absolutePathString()) + args
+  val commandLine = GeneralCommandLine(command).withWorkingDirectory(projectPath)
+  val handler = CapturingProcessHandler(commandLine)
+  val indicator = ProgressManager.getInstance().progressIndicator
+  val result = with(handler) {
+    when {
+      indicator != null -> {
+        addProcessListener(IndicatedProcessOutputListener(indicator))
+        runProcessWithProgressIndicator(indicator)
+      }
+      else ->
+        runProcess()
+    }
+  }
+  return with(result) {
+    when {
+      isCancelled ->
+        throw RunCanceledByUserException()
+      exitCode != 0 ->
+        throw PyExecutionException(errorMessage, executable.pathString,
+                                   args.asList(),
+                                   stdout, stderr, exitCode, emptyList())
+      else -> stdout.trim()
+    }
+  }
+}
+
+inline fun <reified T : PythonSdkAdditionalData> setCorrectTypeSdk(sdk: Sdk, additionalDataClass: Class<T>, value: Boolean) {
+  val oldData = sdk.sdkAdditionalData
+  val newData = if (value) {
+    when(oldData) {
+      is PythonSdkAdditionalData -> additionalDataClass.getDeclaredConstructors().first { it.parameterCount == 1 }.newInstance(oldData) as T
+      else -> additionalDataClass.getDeclaredConstructor().newInstance()
+    }
+  }
+  else {
+    when (oldData) {
+      is T -> PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk))
+      else -> oldData
+    }
+  }
+  val modificator = sdk.sdkModificator
+  modificator.sdkAdditionalData = newData
+  ApplicationManager.getApplication().runWriteAction { modificator.commitChanges() }
+}

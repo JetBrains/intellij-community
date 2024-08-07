@@ -833,7 +833,8 @@ public class VcsLogGraphTable extends TableWithProgress
       if ((row >= 0 && row < getRowCount()) && e.getClickCount() == 1) {
         VcsLogCellController controller = getController(column);
         if (controller != null) {
-          Cursor cursor = controller.performMouseClick(row, e);
+          Cursor cursor =
+            SwingUtilities.isLeftMouseButton(e) ? controller.performMouseClick(row, e) : null;
           handleCursor(cursor);
         }
       }

@@ -288,7 +288,7 @@ open class DirectoryBasedStorage(
       val dir = if (useVfs) {
         var dir = storage.getVirtualFile()
         if (dir == null || !dir.exists()) {
-          dir = createDir(storage.dir, this)
+          dir = createDir(storage.dir, requestor = this)
           storage.cachedVirtualFile = dir
         }
         dir

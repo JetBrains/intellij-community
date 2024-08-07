@@ -120,7 +120,9 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(WaitForProjectViewCommand.PREFIX, WaitForProjectViewCommand::new),
       Map.entry(ExpandProjectViewCommand.PREFIX, ExpandProjectViewCommand::new),
       Map.entry(DebugToggleBreakpointCommand.PREFIX, DebugToggleBreakpointCommand::new),
-      Map.entry(MoveFilesCommand.PREFIX, MoveFilesCommand::new)
+      Map.entry(MoveFilesCommand.PREFIX, MoveFilesCommand::new),
+      Map.entry(GCCommand.PREFIX, GCCommand::new),
+      Map.entry(HandleSpanCommand.PREFIX, HandleSpanCommand::new)
     );
   }
 }

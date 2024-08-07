@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.extensions
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.graph.CachingSemiGraph
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.GraphGenerator
 import com.intellij.util.graph.InboundSemiGraph
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.NonNls
  * to specify also id, to allow other plugin-writers to plug relatively into your extension.
  * If some anchor id can't be resolved, the constraint is ignored.
  */
-@ApiStatus.Internal
 class LoadingOrder {
   // for debug only
   private val name: @NonNls String
@@ -37,7 +37,7 @@ class LoadingOrder {
     after = emptySet()
   }
 
-  constructor(text: @NonNls String) {
+  private constructor(text: @NonNls String) {
     name = text
     var last = false
     var first = false
@@ -86,12 +86,19 @@ class LoadingOrder {
   }
 
   companion object {
+    @Internal
     const val FIRST_STR: @NonNls String = "first"
+    @Internal
     const val LAST_STR: @NonNls String = "last"
+    @Internal
     const val BEFORE_STR: @NonNls String = "before "
+    @Internal
     const val BEFORE_STR_OLD: @NonNls String = "before:"
+    @Internal
     const val AFTER_STR: @NonNls String = "after "
+    @Internal
     const val AFTER_STR_OLD: @NonNls String = "after:"
+    @Internal
     const val ORDER_RULE_SEPARATOR: Char = ','
 
     @JvmField
@@ -111,6 +118,7 @@ class LoadingOrder {
       return LoadingOrder(AFTER_STR + id)
     }
 
+    @Internal
     fun sortByLoadingOrder(orderable: MutableList<out Orderable>) {
       if (orderable.size < 2) {
         return
@@ -189,6 +197,8 @@ class LoadingOrder {
       orderable.sortWith(builder.comparator())
     }
 
+    // TODO keep single implementation of `String -> LoadingOrder`
+    @Internal
     @JvmStatic
     fun readOrder(orderAttr: String?): LoadingOrder {
       return when (orderAttr) {
@@ -196,6 +206,21 @@ class LoadingOrder {
         FIRST_STR -> FIRST
         LAST_STR -> LAST
         else -> LoadingOrder(orderAttr)
+      }
+    }
+
+    // TODO keep single implementation of `String -> LoadingOrder`
+    @Internal
+    fun anchorToOrder(anchor: String): LoadingOrder {
+      if (anchor.isEmpty() || anchor.equals("any", ignoreCase = true)) {
+        return ANY
+      }
+      try {
+        return LoadingOrder(anchor)
+      }
+      catch (e: Throwable) {
+        logger<LoadingOrder>().error("Cannot parse anchor '${anchor}'", e)
+        return ANY
       }
     }
   }
@@ -220,6 +245,7 @@ class LoadingOrder {
     return result
   }
 
+  @Internal
   interface Orderable {
     val orderId: String?
     val order: LoadingOrder

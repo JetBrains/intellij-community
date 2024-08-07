@@ -8,15 +8,12 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunCanceledByUserException
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -47,10 +44,10 @@ import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.TestOnly
 import java.io.File
+import java.nio.file.Path
 import javax.swing.Icon
 
 const val PIP_FILE: String = "Pipfile"
@@ -73,27 +70,10 @@ val Module.pipFile: VirtualFile?
  */
 var Sdk.isPipEnv: Boolean
   get() = sdkAdditionalData is PyPipEnvSdkAdditionalData
-  set(value) {
-    val oldData = sdkAdditionalData
-    val newData = if (value) {
-      when (oldData) {
-        is PythonSdkAdditionalData -> PyPipEnvSdkAdditionalData(oldData)
-        else -> PyPipEnvSdkAdditionalData()
-      }
-    }
-    else {
-      when (oldData) {
-        is PyPipEnvSdkAdditionalData -> PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(this))
-        else -> oldData
-      }
-    }
-    val modificator = sdkModificator
-    modificator.sdkAdditionalData = newData
-    ApplicationManager.getApplication().runWriteAction { modificator.commitChanges() }
-  }
+  set(value) = setCorrectTypeSdk(this, PyPipEnvSdkAdditionalData::class.java, value)
 
 /**
- * The user-set persisted path to the pipenv executable.
+ * The user-set persisted a path to the pipenv executable.
  */
 var PropertiesComponent.pipEnvPath: @SystemDependent String?
   get() = getValue(PIPENV_PATH_SETTING)
@@ -186,35 +166,11 @@ fun runPipEnv(sdk: Sdk, vararg args: String): String {
  * Runs the configured pipenv for the specified project path.
  */
 fun runPipEnv(projectPath: @SystemDependent String, vararg args: String): String {
-  val executable = getPipEnvExecutable()?.path ?: throw PyExecutionException(
+  val executable = getPipEnvExecutable()?.toPath() ?: throw PyExecutionException(
     PyBundle.message("python.sdk.pipenv.execution.exception.no.pipenv.message"),
     "pipenv", emptyList(), ProcessOutput())
-
-  val command = listOf(executable) + args
-  val commandLine = GeneralCommandLine(command).withWorkDirectory(projectPath)
-  val handler = CapturingProcessHandler(commandLine)
-  val indicator = ProgressManager.getInstance().progressIndicator
-  val result = with(handler) {
-    when {
-      indicator != null -> {
-        addProcessListener(IndicatedProcessOutputListener(indicator))
-        runProcessWithProgressIndicator(indicator)
-      }
-      else ->
-        runProcess()
-    }
-  }
-  return with(result) {
-    when {
-      isCancelled ->
-        throw RunCanceledByUserException()
-      exitCode != 0 ->
-        throw PyExecutionException(PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"),
-                                   executable, args.asList(),
-                                   stdout, stderr, exitCode, emptyList())
-      else -> stdout
-    }
-  }
+  @Suppress("DialogTitleCapitalization")
+  return runCommand(executable, Path.of(projectPath), PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"), *args)
 }
 
 /**
@@ -332,7 +288,7 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
         try {
           runPipEnv(sdk, *args.toTypedArray())
         }
-        catch (e: RunCanceledByUserException) {
+        catch (_: RunCanceledByUserException) {
         }
         catch (e: ExecutionException) {
           showSdkExecutionException(sdk, e, PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"))

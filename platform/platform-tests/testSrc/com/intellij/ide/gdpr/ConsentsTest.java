@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -286,6 +287,11 @@ public class ConsentsTest extends TestCase{
     @NotNull
     public String readBundledConsents() {
       return myBundled;
+    }
+
+    @Override
+    public @Nullable String readLocalizedBundledConsents() {
+      return null;
     }
 
     @Override

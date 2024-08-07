@@ -9,7 +9,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -206,7 +206,9 @@ internal class VerticalBarPresentation(
   }
 
   private fun showToolbar() {
-    val targetComponent = TableActionKeys.createDataContextComponent(editor, createDataProvider(row))
+    val targetComponent = ToolbarUtils.createTargetComponent(editor) { sink ->
+      uiDataSnapshot(sink, row)
+    }
     ToolbarUtils.createImmediatelyUpdatedToolbar(
       group = rowActionGroup,
       place = TableActionPlaces.TABLE_INLAY_TOOLBAR,
@@ -236,14 +238,9 @@ internal class VerticalBarPresentation(
 
     private val initialState = BoundsState(0, 0)
 
-    private fun createDataProvider(row: PsiElement): DataProvider {
+    private fun uiDataSnapshot(sink: DataSink, row: PsiElement) {
       val elementReference = WeakReference(row)
-      return DataProvider {
-        when {
-          TableActionKeys.ELEMENT.`is`(it) -> elementReference
-          else -> null
-        }
-      }
+      sink.lazy(TableActionKeys.ELEMENT) { elementReference }
     }
 
     private fun wrapPresentation(factory: PresentationFactory, editor: Editor, presentation: InlayPresentation): InlayPresentation {

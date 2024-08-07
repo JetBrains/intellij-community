@@ -87,7 +87,7 @@ object ActionUtil {
 
   /** Same as [CompactActionGroup] */
   @JvmField
-  val HIDE_INVISIBLE_CHILDREN: Key<Boolean> = Key.create("HIDE_INVISIBLE_CHILDREN")
+  val HIDE_DISABLED_CHILDREN: Key<Boolean> = Key.create("HIDE_DISABLED_CHILDREN")
 
   /** Same as [AlwaysVisibleActionGroup] */
   @JvmField

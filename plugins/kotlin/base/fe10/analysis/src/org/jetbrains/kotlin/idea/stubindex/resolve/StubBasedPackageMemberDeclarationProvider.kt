@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.resolve.lazy.data.KtScriptInfo
 import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 
-private val isShortNameFilteringEnabled: Boolean by lazy { Registry.`is`("kotlin.indices.short.names.filtering.enabled") }
+internal val isShortNameFilteringEnabled: Boolean by lazy { Registry.`is`("kotlin.indices.short.names.filtering.enabled") }
 
 class StubBasedPackageMemberDeclarationProvider(
   private val fqName: FqName,

@@ -484,6 +484,7 @@ f:com.intellij.openapi.vcs.VcsConfiguration
 - MARK_IGNORED_AS_EXCLUDED:Z
 - MAXIMUM_HISTORY_ROWS:I
 - MOVE_SHELVES:Z
+- NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS:Z
 - OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT:Z
 - sf:PATCH:java.lang.String
 - PRESELECT_EXISTING_CHANGELIST:Z
@@ -2301,7 +2302,7 @@ com.intellij.vcs.commit.CommitWorkflowHandler
 - f:isSkipCommitChecks():Z
 com.intellij.vcs.commit.CommitWorkflowUi
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - a:activate():Z
 - a:addDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - a:addExecutorListener(com.intellij.vcs.commit.CommitExecutorListener,com.intellij.openapi.Disposable):V

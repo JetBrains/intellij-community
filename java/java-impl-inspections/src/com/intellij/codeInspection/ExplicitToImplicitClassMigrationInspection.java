@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -19,9 +20,12 @@ import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ipp.imports.ReplaceOnDemandImportIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public final class ExplicitToImplicitClassMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -168,6 +172,26 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiFile containingFile = element.getContainingFile();
+      if (!(containingFile instanceof PsiJavaFile javaFile)) {
+        return;
+      }
+      PsiImportList list = javaFile.getImportList();
+      if (list != null) {
+        List<SmartPsiElementPointer<PsiImportStatementBase>> pointers = new ArrayList<>();
+        PsiImportStatementBase[] statements = list.getAllImportStatements();
+        for (PsiImportStatementBase statement : statements) {
+          SmartPsiElementPointer<PsiImportStatementBase> pointer = SmartPointerManager.createPointer(statement);
+          pointers.add(pointer);
+        }
+
+        for (SmartPsiElementPointer<PsiImportStatementBase> pointer : pointers) {
+          PsiImportStatementBase pointerElement = pointer.getElement();
+          if (pointerElement == null) continue;
+          if (!pointerElement.isOnDemand()) continue;
+          ReplaceOnDemandImportIntention.replaceOnDemand(pointerElement);
+        }
+      }
       PsiClass psiClass = ObjectUtils.tryCast(element, PsiClass.class);
       if (psiClass == null) {
         return;
@@ -177,11 +201,17 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       if (lBrace == null || rBrace == null || lBrace.getNextSibling() == null || rBrace.getPrevSibling() == null) {
         return;
       }
+
       CommentTracker tracker = new CommentTracker();
       String body = tracker.rangeText(lBrace.getNextSibling(), rBrace.getPrevSibling());
       PsiImplicitClass newClass = PsiElementFactory.getInstance(project).createImplicitClassFromText(body, psiClass);
       PsiElement replaced = tracker.replace(psiClass, newClass);
       tracker.insertCommentsBefore(replaced);
+
+      PsiFile replacedContainingFile = replaced.getContainingFile();
+      if (replacedContainingFile != null) {
+        JavaCodeStyleManager.getInstance(project).optimizeImports(replacedContainingFile);
+      }
     }
   }
 }

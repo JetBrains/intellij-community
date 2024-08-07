@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,21 +13,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
+
 public final class MemTester {
   private MemTester() { }
 
-  /**
-   * Checks if userspace memtester is supported on this platform and can be launched.
-   *
-   * @return  true if memtester can be launched, otherwise false
-   */
-  public static boolean isSupported() {
-    return ourMemTesterSupported.getValue();
-  }
-
-  private static Boolean isRunning = false;
-
-  private static final NotNullLazyValue<Boolean> ourMemTesterSupported = NotNullLazyValue.atomicLazy(() -> {
+  private static final Supplier<Boolean> ourMemTesterSupported = new SynchronizedClearableLazy<>(() -> {
     String problem;
 
     if (SystemInfo.isWindows) {
@@ -51,6 +42,17 @@ public final class MemTester {
       return false;
     }
   });
+
+  private static Boolean isRunning = false;
+
+  /**
+   * Checks if userspace memtester is supported on this platform and can be launched.
+   *
+   * @return  true if memtester can be launched, otherwise false
+   */
+  public static boolean isSupported() {
+    return ourMemTesterSupported.get();
+  }
 
   private static String checkMemTester(String memtesterName) {
     Path memtester = PathManager.findBinFile(memtesterName);

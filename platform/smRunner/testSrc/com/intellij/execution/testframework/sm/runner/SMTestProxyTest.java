@@ -1075,6 +1075,8 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     secondSubSuite.setStarted();
     secondSubSuiteChild.setStarted();
     root.setTerminated();
+    firstSubSuiteChild.setDuration(10L);
+    secondSubSuiteChild.setDuration(5L);
 
     assertDisplayTimeEqualsToSumOfChildren(firstSubSuite);
     assertDisplayTimeEqualsToSumOfChildren(secondSubSuite);
@@ -1089,6 +1091,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     root.setStarted();
     firstChild.setStarted();
     root.setTerminated();
+    firstChild.setDuration(5L);
 
     assertNotNull(secondChild.getDuration());
     assertEquals(0L, secondChild.getDuration().longValue());
@@ -1106,10 +1109,12 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
 
     passedChild.setStarted();
     passedChild.setFinished();
+    passedChild.setDuration(10L);
     Long passedChildDuration = passedChild.getDuration();
 
     failedChild.setStarted();
     failedChild.setTestFailed("message", "stacktrace", true);
+    failedChild.setDuration(5L);
     Long failedChildDuration = failedChild.getDuration();
 
     ignoredChild.setStarted();
@@ -1127,7 +1132,12 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
   }
 
   private static void assertDisplayTimeEqualsToSumOfChildren(@NotNull SMTestProxy node) {
-    List<? extends SMTestProxy> children = node.collectChildren();
+    List<? extends SMTestProxy> children = node.collectChildren(new Filter<>() {
+      @Override
+      public boolean shouldAccept(SMTestProxy test) {
+        return test.isLeaf();
+      }
+    });
     assertTrue(ContainerUtil.all(children, child -> !child.wasTerminated() || child.getDuration() != null));
     Long totalTime = ContainerUtil.reduce(ContainerUtil.map(children, child -> child.getDuration() == null ? 0 : child.getDuration()), 0L,
                                           (a, b) -> a + b);

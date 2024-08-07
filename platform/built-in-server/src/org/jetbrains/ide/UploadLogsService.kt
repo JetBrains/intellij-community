@@ -3,7 +3,7 @@ package org.jetbrains.ide
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.CollectZippedLogsAction
+import com.intellij.ide.actions.COLLECT_LOGS_NOTIFICATION_GROUP
 import com.intellij.ide.actions.ReportFeedbackService
 import com.intellij.ide.logsUploader.LogPacker
 import com.intellij.notification.Notification
@@ -74,7 +74,7 @@ class UploadLogsService : RestService() {
         }
         catch (x: IOException) {
           val message = IdeBundle.message("collect.logs.notification.error", IoErrorText.message(x))
-          Notification(CollectZippedLogsAction.NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(project)
+          Notification(COLLECT_LOGS_NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(project)
           sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, channel)
         }
       }

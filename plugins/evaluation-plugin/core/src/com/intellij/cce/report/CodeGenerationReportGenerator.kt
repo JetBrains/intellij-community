@@ -14,6 +14,8 @@ class CodeGenerationReportGenerator(
   dirs: GeneratorDirectories
 ) : BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs) {
 
+  override val scripts: List<Resource> = listOf(Resource("/diff.js", "../res/diff.js")) + super.scripts
+
   override fun textToInsert(session: Session) = session.expectedText.lines().first()
 
   override fun getSpan(session: Session?, text: String, lookupOrder: Int): String =

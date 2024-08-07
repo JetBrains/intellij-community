@@ -43,6 +43,7 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertNotNull
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
@@ -115,7 +116,7 @@ class CancellationPropagationTest {
   }
 
   @Test
-  fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking {
+  fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking(timeout = 60.seconds) {
     launch {
       blockingContextScope {
         ApplicationManager.getApplication().withModality {
@@ -132,7 +133,7 @@ class CancellationPropagationTest {
   }
 
   @Test
-  fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking {
+  fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking(60.seconds) {
     installThreadContext(coroutineContext).use {
       val expired = AtomicBoolean(false)
       ApplicationManager.getApplication().withModality {

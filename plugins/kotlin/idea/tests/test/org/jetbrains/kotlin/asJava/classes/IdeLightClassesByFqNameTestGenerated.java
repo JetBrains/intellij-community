@@ -260,6 +260,16 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/AllPrivate.kt"));
         }
 
+        @TestMetadata("DelegatedProperty.kt")
+        public void testDelegatedProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/DelegatedProperty.kt"));
+        }
+
+        @TestMetadata("Deprecated.kt")
+        public void testDeprecated() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/Deprecated.kt"));
+        }
+
         @TestMetadata("FunctionTypeParameterAnnotation.kt")
         public void testFunctionTypeParameterAnnotation() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/FunctionTypeParameterAnnotation.kt"));
@@ -623,6 +633,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("Delegation.kt")
         public void testDelegation() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/Delegation.kt"));
+        }
+
+        @TestMetadata("Deprecated.kt")
+        public void testDeprecated() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/Deprecated.kt"));
         }
 
         @TestMetadata("DeprecatedEnumEntry.kt")

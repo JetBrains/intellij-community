@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.workspace.SessionSerializer
@@ -25,8 +25,9 @@ abstract class FileReportGenerator(
 
   val reportReferences: MutableMap<String, ReferenceInfo> = mutableMapOf()
 
-  // For the diff algorithm implementation, see [script.js](../../resources/diff.js)
   abstract fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String
+
+  abstract val scripts: List<Resource>
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) {
     val fileInfo = sessions.first()

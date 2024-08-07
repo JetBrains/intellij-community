@@ -170,9 +170,9 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
       assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
     changeLanguageLevel(module, LanguageLevel.JDK_1_8)
+    val tag = findTag("project.build.plugins.plugin")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.build.plugins.plugin")
-      assertNotNull(tag)
       assertEquals("maven-compiler-plugin", tag.getSubTagText("artifactId"))
       val configuration = tag.findFirstSubTag("configuration")
       assertNotNull(configuration)
@@ -193,10 +193,10 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
       assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
     changeLanguageLevel(module, LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1])
+    val tag = findTag("project.build.plugins.plugin")
     readAction {
       assertEquals("--enable-preview",
-                   findTag("project.build.plugins.plugin")
-                     .findFirstSubTag("configuration")!!
+                   tag.findFirstSubTag("configuration")!!
                      .getSubTagText("compilerArgs"))
     }
   }

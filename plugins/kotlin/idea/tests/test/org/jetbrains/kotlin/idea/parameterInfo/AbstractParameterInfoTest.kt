@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.hint.ShowParameterInfoContext
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.parameterInfo.ParameterInfoHandler
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -57,15 +59,16 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
 
         myFixture.configureByFile(File(fileName).canonicalPath)
 
-        val file = myFixture.file as KtFile
+        val file = myFixture.file
 
         withCustomCompilerOptions(file.text, project, myFixture.module) {
             val lastChild = file.allChildren.filter { it !is PsiWhiteSpace }.last()
             val expectedResultText = run {
                 val lines = when (lastChild.node.elementType) {
                     KtTokens.BLOCK_COMMENT -> lastChild.text.substring(2, lastChild.text.length - 2).trim()
+                    JavaTokenType.C_STYLE_COMMENT -> lastChild.text.substring(2, lastChild.text.length - 2).trim()
                     KtTokens.EOL_COMMENT -> lastChild.text.substring(2).trim()
-                    else -> error("Unexpected last file child")
+                    else -> error("Unexpected last file child ${lastChild.node.elementType}")
                 }.lines()
                 lines.mapNotNull { line ->
                     when {
@@ -83,10 +86,19 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
             lateinit var mockCreateParameterInfoContext: MockCreateParameterInfoContext
             lateinit var parameterOwner: PsiElement
             executeOnPooledThreadInReadAction {
-                val handlers = ShowParameterInfoHandler.getHandlers(project, KotlinLanguage.INSTANCE)
-                @Suppress("UNCHECKED_CAST")
-                handler = handlers.firstOrNull { it.findElementForParameterInfo(context) != null } as? ParameterInfoHandler<PsiElement, Any>
-                    ?: error("Could not find parameter info handler")
+                if (file is KtFile) {
+                    val handlers =
+                        ShowParameterInfoHandler.getHandlers(project, KotlinLanguage.INSTANCE)
+                    @Suppress("UNCHECKED_CAST")
+                    handler =
+                        handlers.firstOrNull { it.findElementForParameterInfo(context) != null } as? ParameterInfoHandler<PsiElement, Any>
+                            ?: error("Could not find parameter info handler")
+                } else {
+                    val handlers =
+                        ShowParameterInfoHandler.getHandlers(project, JavaLanguage.INSTANCE)
+                    handler = handlers.firstOrNull { it.findElementForParameterInfo(context) != null } as? ParameterInfoHandler<PsiElement, Any>
+                        ?: error("Could not find parameter info handler")
+                }
 
                 mockCreateParameterInfoContext = MockCreateParameterInfoContext(file, myFixture)
                 parameterOwner = handler.findElementForParameterInfo(mockCreateParameterInfoContext) as PsiElement

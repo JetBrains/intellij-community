@@ -46,8 +46,8 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
     override suspend fun onModelFetchCompleted(context: ProjectResolverContext, storage: MutableEntityStorage) {
         val project = context.project()
         val taskId = context.externalSystemTaskId
-        val tasks = KotlinDslSyncListener.instance?.tasks
-        val sync = tasks?.let { synchronized(tasks) { tasks[taskId] } }
+        val tasks = kotlinDslSyncListenerInstance?.tasks ?: return
+        val sync = synchronized(tasks) { tasks[taskId] }
 
         blockingContext {
             for (buildModel in context.allBuilds) {

@@ -443,7 +443,7 @@ public final class PyInterpreterInspection extends PyInspection {
       final Module module = guessModule(element);
       if (module == null) return;
 
-      PySdkPopupFactory.Companion.createAndShow(project, module);
+      PySdkPopupFactory.Companion.createAndShow(module);
     }
   }
 

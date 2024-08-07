@@ -4,8 +4,8 @@ package com.intellij.java.compiler.charts.ui
 import com.intellij.icons.AllIcons
 import com.intellij.java.compiler.charts.CompilationChartsBundle
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.IconButton
@@ -104,10 +104,45 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
     })
 
     // legend
-    addToRight(JPanel().apply {
+    val actionGroup = DefaultActionGroup(listOf(CompilationChartsStatsActionHolder(vm), Separator(), ScrollToEndAction(vm)))
+    val toolbar = ActionManager.getInstance().createActionToolbar(COMPILATION_CHARTS_TOOLBAR_NAME, actionGroup, true).apply {
+      targetComponent = this@ActionPanel
+    }
+    addToRight(toolbar.component)
+
+    DumbAwareAction.create {
+      val focusManager = IdeFocusManager.getInstance(project)
+      if (focusManager.getFocusedDescendantFor(this@ActionPanel.component) != null) {
+        focusManager.requestFocus(searchField, true)
+      }
+    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).shortcutSet, this@ActionPanel.component)
+  }
+
+  fun updateLabel(set: Set<CompilationChartsViewModel.Modules.EventKey>?, filter: CompilationChartsViewModel.Filter?) {
+    if (set == null || filter == null) {
+      countLabel.text = ""
+    } else {
+      val count = set.count { filter.test(it) }
+      if (count == set.count()) {
+        countLabel.text = ""
+      } else {
+        countLabel.text = CompilationChartsBundle.message("charts.search.results", count)
+      }
+    }
+  }
+
+  private class ScrollToEndAction(private val vm : CompilationChartsViewModel): DumbAwareAction(
+    CompilationChartsBundle.message("charts.scroll.to.end.action.title"),
+    CompilationChartsBundle.message("charts.scroll.to.end.action.description"),
+    AllIcons.Actions.Forward) {
+    override fun actionPerformed(e: AnActionEvent) = vm.requestScrollToEnd()
+  }
+
+  private class CompilationChartsStatsActionHolder(private val vm: CompilationChartsViewModel) : DumbAwareAction(), CustomComponentAction {
+
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.LINE_AXIS)
       border = JBUI.Borders.empty(2)
-
       add(JBPanel<JBPanel<*>>(FlowLayout(FlowLayout.LEFT)).apply {
         val block = JBLabel().apply {
           preferredSize = Dimension(10, 10)
@@ -173,7 +208,6 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
           background = COLOR_MEMORY_BORDER
         }
         val label = JBLabel(CompilationChartsBundle.message("charts.memory.type"))
-
         add(block)
         add(label)
 
@@ -194,26 +228,11 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
           }
         })
       })
-    })
-
-    DumbAwareAction.create {
-      val focusManager = IdeFocusManager.getInstance(project)
-      if (focusManager.getFocusedDescendantFor(this@ActionPanel.component) != null) {
-        focusManager.requestFocus(searchField, true)
-      }
-    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).shortcutSet, this@ActionPanel.component)
+    }
+    override fun actionPerformed(e: AnActionEvent) = Unit
   }
 
-  fun updateLabel(set: Set<CompilationChartsViewModel.Modules.EventKey>?, filter: CompilationChartsViewModel.Filter?) {
-    if (set == null || filter == null) {
-      countLabel.text = ""
-    } else {
-      val count = set.count { filter.test(it) }
-      if (count == set.count()) {
-        countLabel.text = ""
-      } else {
-        countLabel.text = CompilationChartsBundle.message("charts.search.results", count)
-      }
-    }
+  companion object {
+    private const val COMPILATION_CHARTS_TOOLBAR_NAME = "Compilation charts toolbar"
   }
 }

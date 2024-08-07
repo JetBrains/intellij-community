@@ -55,7 +55,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val parametrizedEx
           if (expression in ignoredElements) return
           //skip cases when the whole expression will be detected as a change
           val duplicate = if (areNodesEquivalent(patternExpression, expression)) {
-            tryExtractDuplicate(listOf(patternExpression), listOf(expression))
+            createDuplicateIfPossible(listOf(patternExpression), listOf(expression))
           } else {
             null
           }
@@ -71,7 +71,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val parametrizedEx
         override fun visitStatement(statement: PsiStatement) {
           if (statement in ignoredElements) return
           val siblings = siblingsOf(statement).take(pattern.size).toList()
-          val duplicate = tryExtractDuplicate(pattern, siblings)
+          val duplicate = createDuplicateIfPossible(pattern, siblings)
           if (duplicate != null) {
             duplicates += duplicate
             ignoredElements += duplicate.candidate
@@ -100,7 +100,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val parametrizedEx
     return siblingsOf(element?.firstChild).toList()
   }
 
-  fun tryExtractDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
+  fun createDuplicateIfPossible(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
     val parametrizedExpressions = ArrayList<ParametrizedExpression>()
     if (!traverseAndCollectChanges(pattern, candidate, parametrizedExpressions)) return null
     return removeInternalReferences(Duplicate(pattern, candidate, parametrizedExpressions))

@@ -72,6 +72,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" exported="" />
@@ -123,6 +124,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.injection.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.base.injection" exported="" />

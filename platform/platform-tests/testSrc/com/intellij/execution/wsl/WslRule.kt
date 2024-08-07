@@ -47,9 +47,7 @@ class WslFixture private constructor(val vms: List<WSLDistribution>) {
       if (assume || WSLUtil.isSystemCompatible() && WSLDistribution.findWslExe() != null) {
         val candidates = WslDistributionManager.getInstance().installedDistributions
         vms = candidates.filter {
-          it !is WSLDistributionLegacy
-          && IoTestUtil.reanimateWslDistribution(it.id)
-          && fileSystemWorks(it)
+          IoTestUtil.reanimateWslDistribution(it.id) && fileSystemWorks(it)
         }
         if (assume) {
           assumeTrue("No alive WSL WMs among ${candidates.map(WSLDistribution::getId)}", vms.isNotEmpty())

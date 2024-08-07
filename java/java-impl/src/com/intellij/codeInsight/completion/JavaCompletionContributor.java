@@ -66,6 +66,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.JavaDeprecationUtils;
@@ -76,6 +77,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.codeInsight.completion.JavaQualifierAsArgumentContributor.JavaQualifierAsArgumentStaticMembersProcessor;
 import static com.intellij.patterns.PsiJavaPatterns.*;
@@ -96,7 +98,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
     or(psiElement(PsiIdentifier.class).withParent(NAME_VALUE_PAIR),
-       psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
+       psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)),
+       psiElement().afterLeaf(",").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
     psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
       psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
@@ -1386,8 +1389,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   private static void addModuleReferences(PsiElement moduleRef, PsiElement position, PsiFile originalFile, CompletionResultSet result) {
     PsiElement statement = moduleRef.getParent();
-    boolean withAutoModules;
-    if ((withAutoModules = statement instanceof PsiRequiresStatement || statement instanceof PsiImportModuleStatement) || statement instanceof PsiPackageAccessibilityStatement) {
+    boolean checkAccess = statement instanceof PsiImportModuleStatement;
+    boolean withAutoModules = checkAccess || statement instanceof PsiRequiresStatement;
+    if (withAutoModules || statement instanceof PsiPackageAccessibilityStatement) {
       PsiElement parent = statement.getParent();
       if (parent != null) {
         Project project = moduleRef.getProject();
@@ -1415,8 +1419,10 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
         for (String name : index.getAllKeys(project)) {
-          if (!index.getModules(name, project, scope).isEmpty() && filter.add(name)) {
+          Collection<PsiJavaModule> modules = index.getModules(name, project, scope);
+          if (!modules.isEmpty() && filter.add(name)) {
             LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
+            if (checkAccess && !ContainerUtil.and(modules, module -> JavaModuleGraphUtil.isModuleReadable(parent, module))) lookup = markAsInaccessible(lookup);
             if (withAutoModules) lookup = TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
             result.addElement(lookup);
           }
@@ -1437,7 +1443,16 @@ public final class JavaCompletionContributor extends CompletionContributor imple
                     shadowedNames.add(LightJavaModule.moduleName(jarRoot.getNameWithoutExtension()));
                   }
                 }
-                addAutoModuleReference(name, parent, filter, result);
+                LookupElement lookupElement = getAutoModuleReference(name, parent, filter);
+                if (lookupElement != null) {
+                  if (!checkAccess) {
+                    lookupElement = PrioritizedLookupElement.withPriority(lookupElement, -1);
+                  }
+                  else if (!ContainerUtil.and(manifests, manifest -> JavaModuleGraphUtil.isModuleReadable(parent, manifest))) {
+                    lookupElement = markAsInaccessible(lookupElement);
+                  }
+                  result.addElement(lookupElement);
+                }
               }
             }
             VirtualFile[] roots = ModuleRootManager.getInstance(module).orderEntries().withoutSdk().librariesOnly().getClassesRoots();
@@ -1446,14 +1461,41 @@ public final class JavaCompletionContributor extends CompletionContributor imple
               if (shadowedNames.contains(name)) {
                 continue;
               }
-              if (!JavaAutoModuleNameIndex.getFilesByKey(name, scope).isEmpty()) {
-                addAutoModuleReference(name, parent, filter, result);
+              Collection<VirtualFile> files = JavaAutoModuleNameIndex.getFilesByKey(name, scope);
+              if (!files.isEmpty()) {
+                LookupElement lookupElement = getAutoModuleReference(name, parent, filter);
+                if (lookupElement != null) {
+                  if (!checkAccess) {
+                    lookupElement = PrioritizedLookupElement.withPriority(lookupElement, -1);
+                  }
+                  else if (!ContainerUtil.and(files, file -> JavaModuleGraphUtil.isModuleReadable(parent, file))) {
+                    lookupElement = markAsInaccessible(lookupElement);
+                  }
+                  result.addElement(lookupElement);
+                }
               }
             }
           }
         }
       }
     }
+  }
+
+  /**
+   * Marks the given {@code LookupElement} as inaccessible.
+   *
+   * @param lookup the {@link LookupElement} to be marked as inaccessible
+   * @return the modified {@link LookupElement} marked as inaccessible
+   */
+  @NotNull
+  private static LookupElement markAsInaccessible(@NotNull LookupElement lookup) {
+    return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(lookup, new LookupElementRenderer<>() {
+      @Override
+      public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+        element.getDelegate().renderElement(presentation);
+        presentation.setItemTextForeground(JBColor.RED);
+      }
+    }), -1);
   }
 
 
@@ -1493,13 +1535,14 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return result;
   }
 
-  private static void addAutoModuleReference(String name, PsiElement parent, Set<? super String> filter, CompletionResultSet result) {
+  @Nullable
+  private static LookupElement getAutoModuleReference(@NotNull String name, @NotNull PsiElement parent,
+                                                      @NotNull Set<? super String> filter) {
     if (PsiNameHelper.isValidModuleName(name, parent) && filter.add(name)) {
       LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
-      lookup = TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
-      lookup = PrioritizedLookupElement.withPriority(lookup, -1);
-      result.addElement(lookup);
+      return TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
     }
+    return null;
   }
 
   static class IndentingDecorator extends LookupElementDecorator<LookupElement> {

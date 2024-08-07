@@ -26,10 +26,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.TimeoutUtil
 import it.unimi.dsi.fastutil.objects.Object2LongMaps
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.lang.ref.WeakReference
 import java.util.*
 
+@ApiStatus.Internal
 class ActionsCollectorImpl : ActionsCollector() {
   private data class ActionUpdateStatsKey(val actionId: String, val language: String)
 

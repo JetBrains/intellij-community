@@ -239,7 +239,17 @@ internal class KotlinInlineFilter(location: Location, method: Method) {
 }
 
 fun Method.isSyntheticMethodForDefaultParameters(): Boolean {
-    return isSynthetic && name().endsWith(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX)
+    if (!isSynthetic) return false
+    val name = name()
+    if (name.endsWith(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX)) return true
+    if (name != "<init>") return false
+    val arguments = argumentTypeNames()
+    val size = arguments.size
+    // at least 1 param, 1 int flag, and 1 marker
+    if (size < 3) return false
+    // We should check not only the marker parameter, as it is present also
+    // for object constructor and sealed class constructor
+    return arguments[size - 2] == "int" && arguments[size - 1] == "kotlin.jvm.internal.DefaultConstructorMarker"
 }
 
 private fun isInlineFunctionFromLibrary(positionManager: PositionManager, location: Location, token: LocationToken): Boolean {

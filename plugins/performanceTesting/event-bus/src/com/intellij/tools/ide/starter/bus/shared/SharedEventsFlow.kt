@@ -38,7 +38,7 @@ class SharedEventsFlow(
     callback: suspend (event: EventType) -> Unit,
   ): Boolean {
     return localEventsFlow.subscribe(eventClass, subscriber, timeout, callback).also {
-      if (it) client.newSubscriber(eventClass, timeout)
+      if (it) client.newSubscriber(eventClass, timeout, getSubscriberObject(subscriber).toString())
     }
   }
 
@@ -46,6 +46,15 @@ class SharedEventsFlow(
     LOG.debug("Post event $event")
     client.postAndWaitProcessing(
       SharedEventDto(event::class.java.simpleName, UUID.randomUUID().toString(), objectMapper.writeValueAsString(event)))
+  }
+
+  override fun <EventType : Event> unsubscribe(eventClass: Class<EventType>, subscriber: Any) {
+    localEventsFlow.unsubscribe(eventClass, subscriber)
+    client.unsubscribe(eventClass, getSubscriberObject(subscriber).toString())
+  }
+
+  override fun getSubscriberObject(subscriber: Any): Any {
+    return localEventsFlow.getSubscriberObject(subscriber)
   }
 
   fun startServerPolling() {

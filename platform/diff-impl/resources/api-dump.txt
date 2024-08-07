@@ -640,12 +640,6 @@ a:com.intellij.diff.lang.LangDiffIgnoredRangeProvider
 - pa:accepts(com.intellij.openapi.project.Project,com.intellij.lang.Language):Z
 - pa:computeIgnoredRanges(com.intellij.openapi.project.Project,java.lang.CharSequence,com.intellij.lang.Language):java.util.List
 - getIgnoredRanges(com.intellij.openapi.project.Project,java.lang.CharSequence,com.intellij.diff.contents.DiffContent):java.util.List
-f:com.intellij.diff.merge.ChangeReferenceProcessor
-- sf:Companion:com.intellij.diff.merge.ChangeReferenceProcessor$Companion
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.util.List,java.util.List):V
-- f:process(com.intellij.diff.util.ThreeSide,java.util.List,java.util.List):V
-f:com.intellij.diff.merge.ChangeReferenceProcessor$Companion
-- f:getLOG():com.intellij.openapi.diagnostic.Logger
 a:com.intellij.diff.merge.MergeContextEx
 - com.intellij.diff.merge.MergeContext
 - <init>():V
@@ -1089,7 +1083,7 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffModel$ChangedBlockData
 - getRanges():java.util.List
 c:com.intellij.diff.tools.fragmented.UnifiedDiffPanel
 - com.intellij.diff.tools.util.base.DiffPanelBase
-- <init>(com.intellij.openapi.project.Project,javax.swing.JComponent,com.intellij.openapi.actionSystem.DataProvider,com.intellij.diff.DiffContext):V
+- <init>(com.intellij.openapi.project.Project,javax.swing.JComponent,com.intellij.diff.DiffContext):V
 - isGoodContent():Z
 - p:setCurrentCard(java.lang.String):V
 - setErrorContent():V
@@ -1141,7 +1135,6 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - getContent2():com.intellij.diff.contents.DocumentContent
 - getContents():java.util.List
 - p:getCurrentChange():com.intellij.diff.tools.fragmented.UnifiedDiffChange
-- getData(java.lang.String):java.lang.Object
 - getDiffChanges():java.util.List
 - getDocument(com.intellij.diff.util.Side):com.intellij.openapi.editor.Document
 - getEditor():com.intellij.openapi.editor.ex.EditorEx
@@ -1149,7 +1142,7 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - getFoldingModel():com.intellij.diff.tools.util.FoldingModelSupport
 - getFoldingModelSettings():com.intellij.diff.tools.util.FoldingModelSupport$Settings
 - getMasterSide():com.intellij.diff.util.Side
-- p:getNavigatable():com.intellij.pom.Navigatable
+- getNavigatable():com.intellij.pom.Navigatable
 - p:getNavigatable(com.intellij.diff.util.LineCol):com.intellij.pom.Navigatable
 - getPreferredFocusedComponent():javax.swing.JComponent
 - p:getSelectedChanges():java.util.List
@@ -1176,6 +1169,7 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - transferLineFromOnesideStrict(com.intellij.diff.util.Side,I):I
 - transferLineToOneside(com.intellij.diff.util.Side,I):I
 - transferLineToOnesideStrict(com.intellij.diff.util.Side,I):I
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
 - p:updateEditorCanBeTyped():V
 c:com.intellij.diff.tools.fragmented.UnifiedEditorHighlighter
@@ -1342,7 +1336,6 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer
 - p:createUi(com.intellij.diff.tools.simple.SimpleDiffChange):com.intellij.diff.tools.simple.SimpleDiffChangeUi
 - p:doScrollToChange(com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy):Z
 - p:doScrollToContext(com.intellij.openapi.diff.DiffNavigationContext):Z
-- getData(java.lang.String):java.lang.Object
 - getDiffChanges():java.util.List
 - getFoldingModel():com.intellij.diff.tools.util.FoldingModelSupport
 - getFoldingModelSettings():com.intellij.diff.tools.util.FoldingModelSupport$Settings
@@ -1364,6 +1357,7 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer
 - p:performRediff(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
 - p:processContextHints():V
 - replaceChange(com.intellij.diff.tools.simple.SimpleDiffChange,com.intellij.diff.util.Side):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
 c:com.intellij.diff.tools.simple.SimpleDiffViewer$ModifierProvider
 - com.intellij.diff.tools.util.KeyboardModifierListener
@@ -1387,9 +1381,9 @@ c:com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 - p:createPopupActions():java.util.List
 - p:createToolbarActions():java.util.List
 - p:doScrollToContext(com.intellij.openapi.diff.DiffNavigationContext):Z
-- getData(java.lang.String):java.lang.Object
 - p:performRediff(com.intellij.openapi.progress.ProgressIndicator):java.lang.Runnable
 - p:processContextHints():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
 c:com.intellij.diff.tools.simple.SimpleThreesideDiffChange
 - com.intellij.diff.tools.simple.ThreesideDiffChangeBase
@@ -1477,7 +1471,6 @@ a:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx
 - pa:getChanges():java.util.List
 - getChangesCount():I
 - getConflictsCount():I
-- getData(java.lang.String):java.lang.Object
 - pa:getDividerPaintable(com.intellij.diff.util.Side):com.intellij.diff.util.DiffDividerDrawUtil$DividerPaintable
 - getFoldingModelSettings():com.intellij.diff.tools.util.FoldingModelSupport$Settings
 - p:getSelectedChange(com.intellij.diff.util.ThreeSide):com.intellij.diff.tools.simple.ThreesideDiffChangeBase
@@ -1489,6 +1482,7 @@ a:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx
 - p:onInit():V
 - p:processContextHints():V
 - p:resetChangeCounters():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
 pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyDividerPainter
 - com.intellij.diff.tools.util.DiffSplitter$Painter
@@ -1705,7 +1699,7 @@ a:com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
 - p:scrollToChangeUnderCommand(java.lang.Object):V
 c:com.intellij.diff.tools.util.SimpleDiffPanel
 - com.intellij.diff.tools.util.base.DiffPanelBase
-- <init>(javax.swing.JComponent,com.intellij.openapi.actionSystem.DataProvider,com.intellij.diff.DiffContext):V
+- <init>(javax.swing.JComponent,com.intellij.diff.DiffContext):V
 - isGoodContent():Z
 - setErrorContent():V
 - setErrorContent(java.lang.String):V
@@ -1780,25 +1774,25 @@ c:com.intellij.diff.tools.util.TransferableFileEditorStateSupport
 - updateContextHints(com.intellij.diff.requests.DiffRequest,com.intellij.diff.DiffContext):V
 a:com.intellij.diff.tools.util.base.DiffPanelBase
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - pf:myCardLayout:java.awt.CardLayout
 - pf:myContentPanel:javax.swing.JPanel
 - pf:myContext:com.intellij.diff.DiffContext
 - p:myCurrentCard:java.lang.String
 - pf:myNotificationsPanel:com.intellij.ui.components.panels.Wrapper
 - pf:myProject:com.intellij.openapi.project.Project
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataProvider,com.intellij.diff.DiffContext):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.diff.DiffContext):V
 - addNotification(javax.swing.JComponent):V
-- getData(java.lang.String):java.lang.Object
 - resetNotifications():V
 - setBottomPanel(javax.swing.JComponent):V
 - p:setCurrentCard(java.lang.String):V
 - p:setCurrentCard(java.lang.String,Z):V
 - setPersistentNotifications(java.util.List):V
 - setTopPanel(javax.swing.JComponent):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 a:com.intellij.diff.tools.util.base.DiffViewerBase
 - com.intellij.diff.FrameDiffTool$DiffViewer
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - pf:myContext:com.intellij.diff.DiffContext
 - pf:myProject:com.intellij.openapi.project.Project
@@ -1811,9 +1805,8 @@ a:com.intellij.diff.tools.util.base.DiffViewerBase
 - f:dispose():V
 - p:forceRediffSynchronously():Z
 - getContext():com.intellij.diff.DiffContext
-- getData(java.lang.String):java.lang.Object
 - p:getListeners():java.util.List
-- p:getNavigatable():com.intellij.pom.Navigatable
+- getNavigatable():com.intellij.pom.Navigatable
 - getProject():com.intellij.openapi.project.Project
 - getRequest():com.intellij.diff.requests.ContentDiffRequest
 - p:getStatusPanel():javax.swing.JComponent
@@ -1831,6 +1824,7 @@ a:com.intellij.diff.tools.util.base.DiffViewerBase
 - removeListener(com.intellij.diff.tools.util.base.DiffViewerListener):V
 - f:scheduleRediff():V
 - p:tryRediffSynchronously():Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
 c:com.intellij.diff.tools.util.base.DiffViewerListener
 - <init>():V
@@ -2224,13 +2218,13 @@ a:com.intellij.diff.tools.util.side.OnesideDiffViewer
 - p:createTitle():javax.swing.JComponent
 - getComponent():javax.swing.JComponent
 - p:getContent():com.intellij.diff.contents.DiffContent
-- getData(java.lang.String):java.lang.Object
 - p:getEditorHolder():com.intellij.diff.tools.holders.EditorHolder
-- p:getNavigatable():com.intellij.pom.Navigatable
+- getNavigatable():com.intellij.pom.Navigatable
 - getPreferredFocusedComponent():javax.swing.JComponent
 - getSide():com.intellij.diff.util.Side
 - p:onDispose():V
 - p:onInit():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 a:com.intellij.diff.tools.util.side.OnesideTextDiffViewer
 - com.intellij.diff.tools.util.side.OnesideDiffViewer
 - com.intellij.diff.EditorDiffViewer
@@ -2242,16 +2236,16 @@ a:com.intellij.diff.tools.util.side.OnesideTextDiffViewer
 - p:createTitle():javax.swing.JComponent
 - p:destroyEditorListeners():V
 - getContent():com.intellij.diff.contents.DocumentContent
-- getData(java.lang.String):java.lang.Object
 - p:getEditableEditors():java.util.List
 - getEditor():com.intellij.openapi.editor.ex.EditorEx
 - getEditors():java.util.List
-- p:getNavigatable():com.intellij.pom.Navigatable
+- getNavigatable():com.intellij.pom.Navigatable
 - getTextSettings():com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings
 - p:installEditorListeners():V
 - p:onDispose():V
 - p:onInit():V
 - p:scrollToLine(I):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pa:com.intellij.diff.tools.util.side.OnesideTextDiffViewer$MyInitialScrollPositionHelper
 - com.intellij.diff.tools.util.base.InitialScrollPositionSupport$TwosideInitialScrollHelper
 - p:<init>(com.intellij.diff.tools.util.side.OnesideTextDiffViewer):V
@@ -2283,14 +2277,14 @@ a:com.intellij.diff.tools.util.side.ThreesideDiffViewer
 - getComponent():javax.swing.JComponent
 - p:getCurrentEditorHolder():com.intellij.diff.tools.holders.EditorHolder
 - getCurrentSide():com.intellij.diff.util.ThreeSide
-- getData(java.lang.String):java.lang.Object
 - p:getEditorHolders():java.util.List
-- p:getNavigatable():com.intellij.pom.Navigatable
+- getNavigatable():com.intellij.pom.Navigatable
 - getPreferredFocusedComponent():javax.swing.JComponent
 - p:onDispose():V
 - p:onInit():V
 - p:processContextHints():V
 - p:setCurrentSide(com.intellij.diff.util.ThreeSide):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
 pe:com.intellij.diff.tools.util.side.ThreesideDiffViewer$PartialDiffMode
 - java.lang.Enum
@@ -2324,12 +2318,11 @@ a:com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 - getContents():java.util.List
 - getCurrentContent():com.intellij.diff.contents.DocumentContent
 - getCurrentEditor():com.intellij.openapi.editor.ex.EditorEx
-- getData(java.lang.String):java.lang.Object
 - p:getEditableEditors():java.util.List
 - getEditor(com.intellij.diff.util.ThreeSide):com.intellij.openapi.editor.ex.EditorEx
 - getEditorSide(com.intellij.openapi.editor.Editor):com.intellij.diff.util.ThreeSide
 - getEditors():java.util.List
-- p:getNavigatable():com.intellij.pom.Navigatable
+- getNavigatable():com.intellij.pom.Navigatable
 - pa:getSyncScrollable(com.intellij.diff.util.Side):com.intellij.diff.tools.util.SyncScrollSupport$SyncScrollable
 - getTextSettings():com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings
 - p:installEditorListeners():V
@@ -2338,6 +2331,7 @@ a:com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 - p:onInit():V
 - p:scrollToLine(com.intellij.diff.util.ThreeSide,I):V
 - p:transferPosition(com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide,com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pa:com.intellij.diff.tools.util.side.ThreesideTextDiffViewer$MyInitialScrollPositionHelper
 - com.intellij.diff.tools.util.base.InitialScrollPositionSupport$ThreesideInitialScrollHelper
 - p:<init>(com.intellij.diff.tools.util.side.ThreesideTextDiffViewer):V
@@ -2373,14 +2367,14 @@ a:com.intellij.diff.tools.util.side.TwosideDiffViewer
 - getComponent():javax.swing.JComponent
 - p:getCurrentEditorHolder():com.intellij.diff.tools.holders.EditorHolder
 - getCurrentSide():com.intellij.diff.util.Side
-- getData(java.lang.String):java.lang.Object
 - p:getEditorHolders():java.util.List
-- p:getNavigatable():com.intellij.pom.Navigatable
+- getNavigatable():com.intellij.pom.Navigatable
 - getPreferredFocusedComponent():javax.swing.JComponent
 - p:onDispose():V
 - p:onInit():V
 - p:processContextHints():V
 - setCurrentSide(com.intellij.diff.util.Side):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
 a:com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 - com.intellij.diff.tools.util.side.TwosideDiffViewer
@@ -2399,13 +2393,12 @@ a:com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 - getContents():java.util.List
 - getCurrentContent():com.intellij.diff.contents.DocumentContent
 - getCurrentEditor():com.intellij.openapi.editor.ex.EditorEx
-- getData(java.lang.String):java.lang.Object
 - p:getEditableEditors():java.util.List
 - getEditor(com.intellij.diff.util.Side):com.intellij.openapi.editor.ex.EditorEx
 - getEditor1():com.intellij.openapi.editor.ex.EditorEx
 - getEditor2():com.intellij.openapi.editor.ex.EditorEx
 - getEditors():java.util.List
-- p:getNavigatable():com.intellij.pom.Navigatable
+- getNavigatable():com.intellij.pom.Navigatable
 - getSyncScrollSupport():com.intellij.diff.tools.util.SyncScrollSupport$TwosideSyncScrollSupport
 - pa:getSyncScrollable():com.intellij.diff.tools.util.SyncScrollSupport$SyncScrollable
 - getTextSettings():com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings
@@ -2415,6 +2408,7 @@ a:com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 - p:onInit():V
 - p:scrollToLine(com.intellij.diff.util.Side,I):V
 - transferPosition(com.intellij.diff.util.Side,com.intellij.diff.util.LineCol):com.intellij.diff.util.LineCol
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pa:com.intellij.diff.tools.util.side.TwosideTextDiffViewer$MyInitialScrollPositionHelper
 - com.intellij.diff.tools.util.base.InitialScrollPositionSupport$TwosideInitialScrollHelper
 - p:<init>(com.intellij.diff.tools.util.side.TwosideTextDiffViewer):V

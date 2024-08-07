@@ -39,7 +39,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.text.StyleConstants
-import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<TipUtils>()
 
@@ -208,7 +207,7 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
 
 private fun getLocalizationTipRetrievers(loader: ClassLoader): List<TipRetriever> {
   val result = mutableListOf<TipRetriever>()
-  val folderPaths = LocalizationUtil.getFolderLocalizedPaths(Path.of(tipDirectory)).map { it.invariantSeparatorsPathString }
+  val folderPaths = LocalizationUtil.getFolderLocalizedPaths(tipDirectory)
   val suffixes = LocalizationUtil.getLocalizationSuffixes()
   //folder paths and suffix paths should have the same size, because their elements depend on locale (if it contains a region or not)
   for (i in folderPaths.indices) {

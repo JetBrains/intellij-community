@@ -4,6 +4,7 @@ package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
 import com.intellij.history.core.DataStreamUtil;
+import com.intellij.history.core.HistoryPathFilter;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +57,12 @@ public class PutLabelChange extends Change {
   }
 
   @Override
-  public boolean affectsMatching(Pattern pattern) {
+  public boolean affectsMatching(@NotNull Pattern pattern) {
+    return false;
+  }
+
+  @Override
+  public boolean affectsMatching(@NotNull HistoryPathFilter historyPathFilter) {
     return false;
   }
 

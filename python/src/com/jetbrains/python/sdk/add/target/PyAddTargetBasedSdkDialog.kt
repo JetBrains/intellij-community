@@ -75,4 +75,3 @@ class PyAddTargetBasedSdkDialog private constructor(private val project: Project
   }
 }
 
-class CreateSdkInterrupted : Exception()

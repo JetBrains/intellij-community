@@ -6,11 +6,8 @@ import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkBridge
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
@@ -19,7 +16,6 @@ import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.buildTargetedCommandLine
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.flavors.conda.*
@@ -27,7 +23,6 @@ import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
-import org.jdom.Element
 import org.junit.*
 import org.junit.rules.RuleChain
 import org.junit.rules.TemporaryFolder
@@ -131,31 +126,7 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  fun testConvertToConda() = runTest {
-    System.setProperty("NO_FS_ROOTS_ACCESS_CHECK", "true")
-
-    val env = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first()
-    val condaSdk = condaRule.condaCommand.createCondaSdkFromExistingEnv(env.envIdentity, emptyList(), projectRule.project)
-    val pythonPath = condaSdk.homePath
-
-    val legacyPythonSdk = ProjectJdkTable.getInstance().createSdk("my conda", PythonSdkType.getInstance())
-    legacyPythonSdk.sdkModificator.let {
-      it.homePath = pythonPath
-      writeAction {
-        it.commitChanges()
-      }
-    }
-    val element = Element("root")
-    (legacyPythonSdk as? SdkBridge)?.writeExternal(element)
-    (legacyPythonSdk as? SdkBridge)?.readExternal(element)
-    val fixedAdditionalData = legacyPythonSdk.getOrCreateAdditionalData()
-    Assert.assertEquals("Wrong flavor", CondaEnvSdkFlavor.getInstance(), fixedAdditionalData.flavor) // Ensure correct identity created
-    ((fixedAdditionalData.flavorAndData.data as PyCondaFlavorData).env.envIdentity as PyCondaEnvIdentity.UnnamedEnv)
-    Assert.assertEquals("", pythonPath, legacyPythonSdk.getPythonBinaryPath(projectRule.project).getOrThrow())
-  }
-
-  @Test
-  fun createSdkByFile() = runTest(timeout = 50.seconds) {
+  fun createSdkByFile() = runTest(timeout = 120.seconds) {
     val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)
     val sdk = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(newCondaInfo, coroutineContext, emptyList(),
                                                                    projectRule.project).getOrThrow()
@@ -178,8 +149,8 @@ internal class PyCondaSdkTest {
   }
 
   private suspend fun ensureHomePathCorrect(sdk: Sdk) {
-    val homePath = sdk.homePath!!
-    Assert.assertEquals("Wrong home path", homePath, sdk.getPythonBinaryPath(projectRule.project).getOrThrow())
+    val homePath = Path.of(sdk.homePath!!)
+    Assert.assertEquals("Wrong home path", homePath, Path.of(sdk.getPythonBinaryPath(projectRule.project).getOrThrow()))
   }
 
 }

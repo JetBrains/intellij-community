@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.template.impl.LiveTemplateRunLogger.registerLiveTemplateEvent;
 
+@ApiStatus.Internal
 public final class SurroundWithLogger extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("surround.with", 4);
   private static final VarargEventId LIVE_TEMPLATE_EXECUTED = registerLiveTemplateEvent(GROUP, "live.template.executed");

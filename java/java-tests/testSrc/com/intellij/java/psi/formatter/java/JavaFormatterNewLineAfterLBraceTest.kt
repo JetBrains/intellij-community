@@ -13,42 +13,63 @@ class JavaFormatterNewLineAfterLBraceTest : JavaFormatterTestCase() {
   override fun setUp() {
     super.setUp()
     commonSettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    commonSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    commonSettings.ALIGN_MULTILINE_PARAMETERS = false
+    commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false
     commonSettings.RIGHT_MARGIN = 100
   }
 
   fun testWrapAlways() {
-    commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+    setupWrapType(CommonCodeStyleSettings.WRAP_ALWAYS)
     doIdempotentTest()
   }
 
   fun testChopDownIfLongMultipleLines() {
-    commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+    setupWrapType(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM)
     doIdempotentTest()
   }
 
   fun testChopDownIfLongSingleLine() {
     commonSettings.RIGHT_MARGIN = 200
-    commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+    setupWrapType(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM)
     doIdempotentTest()
   }
 
   fun testDoNotWrap() {
-    commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    setupWrapType(CommonCodeStyleSettings.DO_NOT_WRAP)
     doTest()
   }
 
   fun testWrapAsNeedSingleLine() {
-    commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    setupWrapType(CommonCodeStyleSettings.WRAP_AS_NEEDED)
     doIdempotentTest()
   }
 
   fun testWrapAsNeedMultipleLines() {
-    commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+    setupWrapType(CommonCodeStyleSettings.WRAP_AS_NEEDED)
     doIdempotentTest()
   }
 
-  fun testMultipleCalls() {
-    commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+  fun testMultipleEntities() {
+    setupWrapType(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM)
+    doIdempotentTest()
+  }
+
+  fun testWrapAlwaysRespectAlignWhenMultiline() {
+    setupWrapType(CommonCodeStyleSettings.WRAP_ALWAYS)
+    setupAlignWhenMultiline()
+    doIdempotentTest()
+  }
+
+  fun testWrapAsNeededRespectAlignWhenMultiline() {
+    setupWrapType(CommonCodeStyleSettings.WRAP_AS_NEEDED)
+    setupAlignWhenMultiline()
+    doIdempotentTest()
+  }
+
+  fun testChopDownIfLongRespectAlignWhenMultiline() {
+    setupWrapType(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM)
+    setupAlignWhenMultiline()
     doIdempotentTest()
   }
 
@@ -56,5 +77,15 @@ class JavaFormatterNewLineAfterLBraceTest : JavaFormatterTestCase() {
     val testName = getTestName(false)
     doTest(testName, "${testName}_after")
     doTest("${testName}_after", "${testName}_after")
+  }
+
+  private fun setupAlignWhenMultiline() {
+    commonSettings.ALIGN_MULTILINE_PARAMETERS = true
+    commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+  }
+
+  private fun setupWrapType(wrapType: Int) {
+    commonSettings.CALL_PARAMETERS_WRAP = wrapType
+    commonSettings.METHOD_PARAMETERS_WRAP = wrapType
   }
 }

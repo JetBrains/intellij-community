@@ -49,7 +49,7 @@ class KotlinOverrideHierarchyBrowser(
         psiElement.isOverrideHierarchyElement()
 
     override fun createHierarchyTreeStructure(typeName: String, psiElement: PsiElement): HierarchyTreeStructure? =
-        if (typeName == getMethodType()) KotlinOverrideTreeStructure(myProject, psiElement as KtCallableDeclaration) else null
+        if (typeName == getMethodType()) KotlinOverrideTreeStructure(myProject, psiElement.originalElement as KtCallableDeclaration) else null
 
     override fun getComparator() = JavaHierarchyUtil.getComparator(myProject)
 

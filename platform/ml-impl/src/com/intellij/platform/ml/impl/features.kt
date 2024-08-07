@@ -10,26 +10,26 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class IJFeature {
-  class Version(name: String, value: com.intellij.openapi.util.Version) : Feature.Custom<com.intellij.openapi.util.Version>(name, value) {
+  class Version(name: String, value: com.intellij.openapi.util.Version, descriptionProvider: () -> String) : Feature.Custom<com.intellij.openapi.util.Version>(name, value, descriptionProvider) {
     override val valueType = IJFeatureValueType.Version
   }
 
-  class Language(name: String, value: com.intellij.lang.Language) : Feature.Custom<com.intellij.lang.Language>(name, value) {
+  class Language(name: String, value: com.intellij.lang.Language, descriptionProvider: () -> String) : Feature.Custom<com.intellij.lang.Language>(name, value, descriptionProvider) {
     override val valueType = IJFeatureValueType.Language
   }
 }
 
 @ApiStatus.Internal
 class IJFeatureValueType {
-  object Version : FeatureValueType.Custom<com.intellij.openapi.util.Version>({ VersionEventField(it, null) }) {
-    override fun instantiate(name: String, value: com.intellij.openapi.util.Version): Feature {
-      return IJFeature.Version(name, value)
+  object Version : FeatureValueType.Custom<com.intellij.openapi.util.Version>({ n, d -> VersionEventField(n, d) }) {
+    override fun instantiate(name: String, value: com.intellij.openapi.util.Version, descriptionProvider: () -> String): Feature {
+      return IJFeature.Version(name, value, descriptionProvider)
     }
   }
 
-  object Language : FeatureValueType.Custom<com.intellij.lang.Language>({ LanguageEventField(it, null) }) {
-    override fun instantiate(name: String, value: com.intellij.lang.Language): Feature {
-      return IJFeature.Language(name, value)
+  object Language : FeatureValueType.Custom<com.intellij.lang.Language>({ n, d -> LanguageEventField(n, d) }) {
+    override fun instantiate(name: String, value: com.intellij.lang.Language, descriptionProvider: () -> String): Feature {
+      return IJFeature.Language(name, value, descriptionProvider)
     }
   }
 }
@@ -37,8 +37,12 @@ class IJFeatureValueType {
 @ApiStatus.Internal
 class IJFeatureDeclaration {
   companion object {
+    @Deprecated("Use the declaration with the description")
     fun version(name: String) = FeatureDeclaration(name, IJFeatureValueType.Version)
+    fun version(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, IJFeatureValueType.Version, descriptionProvider)
 
+    @Deprecated("Use the declaration with the description")
     fun language(name: String) = FeatureDeclaration(name, IJFeatureValueType.Language)
+    fun language(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, IJFeatureValueType.Language, descriptionProvider)
   }
 }

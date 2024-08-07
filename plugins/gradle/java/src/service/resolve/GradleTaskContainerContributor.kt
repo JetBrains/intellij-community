@@ -1,9 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
+import com.intellij.openapi.externalSystem.model.task.TaskData
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -40,8 +44,11 @@ class GradleTaskContainerContributor : NonCodeMembersContributor() {
     }
     val tasks = if (name == null) data.tasksMap.values else listOfNotNull(data.tasksMap[name])
 
+    val declaredTasks = if (tasks.isNotEmpty()) findModuleTasks(place) else emptyList()
+
     for (task in tasks) {
-      if (!processTask(task.name, task.description, task.typeFqn, file, processProperties, processor, state, processMethods)) return
+      val description = declaredTasks.find { task.name == it.name && task.typeFqn == it.type }?.description
+      if (!processTask(task.name, description, task.typeFqn, file, processProperties, processor, state, processMethods)) return
     }
   }
 
@@ -68,6 +75,12 @@ class GradleTaskContainerContributor : NonCodeMembersContributor() {
       return processor.execute(method, state)
     }
     return true
+  }
+
+  private fun findModuleTasks(place: PsiElement): Collection<TaskData> {
+    val module = ModuleUtilCore.findModuleForPsiElement(place) ?: return emptyList()
+    val externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return emptyList()
+    return ExternalSystemApiUtil.findProjectTasks(place.project, GradleConstants.SYSTEM_ID, externalProjectPath)
   }
 
   companion object {

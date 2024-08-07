@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -96,7 +97,16 @@ public final class IdentifierHighlighterPass {
 
     if (runFindUsages) {
       collectCodeBlockMarkerRanges();
-      highlightReferencesAndDeclarations();
+
+      try {
+        DumbService.getInstance(hostSession.getProject()).withAlternativeResolveEnabled(() -> {
+          highlightReferencesAndDeclarations();
+        });
+      }
+      catch (IndexNotReadyException ignored) {
+        // Ignoring IndexNotReadyException.
+        // We can't show a warning because this usage search is triggered automatically and user does not control it.
+      }
     }
 
     if (!myEditor.isDisposed()) {
@@ -234,18 +244,23 @@ public final class IdentifierHighlighterPass {
   }
 
   private void highlightTargetUsages(@NotNull Symbol target) {
-    AstLoadingFilter.disallowTreeLoading(() -> {
-      UsageRanges ranges = getUsageRanges(myFile, target);
-      if (ranges == null) {
-        return;
-      }
-      myReadAccessRanges.addAll(ranges.getReadRanges());
-      myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
-      myWriteAccessRanges.addAll(ranges.getWriteRanges());
-      myWriteAccessRanges.addAll(ranges.getWriteDeclarationRanges());
-    }, () -> "Currently highlighted file: \n" +
-             "psi file: " + myFile + ";\n" +
-             "virtual file: " + myFile.getVirtualFile());
+    try {
+      AstLoadingFilter.disallowTreeLoading(() -> {
+        UsageRanges ranges = getUsageRanges(myFile, target);
+        if (ranges == null) {
+          return;
+        }
+        myReadAccessRanges.addAll(ranges.getReadRanges());
+        myReadAccessRanges.addAll(ranges.getReadDeclarationRanges());
+        myWriteAccessRanges.addAll(ranges.getWriteRanges());
+        myWriteAccessRanges.addAll(ranges.getWriteDeclarationRanges());
+      }, () -> "Currently highlighted file: \n" +
+               "psi file: " + myFile + ";\n" +
+               "virtual file: " + myFile.getVirtualFile());
+    }
+    catch (IndexNotReadyException ignored) {
+      // do nothing
+    }
   }
 
   private static volatile int id;

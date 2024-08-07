@@ -20,8 +20,8 @@ class KotlinAnnotations {
     public static void m4() {
     }
 
-    @k.Anno1(<error descr="Cannot resolve method 'x'">x</error> = 1)
-    @k.Anno2(<error descr="Cannot resolve method 'x'">x</error> = 2)
+    @k.Anno1(<error descr="Cannot find @interface method 'x()'">x = 1</error>)
+    @k.Anno2(<error descr="Cannot find @interface method 'x()'">x = 2</error>)
     public static void m5() {
     }
 }

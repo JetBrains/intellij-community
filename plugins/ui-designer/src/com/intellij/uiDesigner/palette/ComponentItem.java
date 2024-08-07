@@ -349,24 +349,12 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @Override
-  public @Nullable Object getData(@NotNull Project project, @NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    if (GroupItem.DATA_KEY.is(dataId)) {
-      return Palette.getInstance(project).findGroup(this);
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)slowId -> getSlowData(slowId, project);
-    }
-    return null;
-  }
-
-  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull Project project) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink, @NotNull Project project) {
+    sink.set(DATA_KEY, this);
+    sink.set(GroupItem.DATA_KEY, Palette.getInstance(project).findGroup(this));
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       return JavaPsiFacade.getInstance(project).findClass(myClassName, GlobalSearchScope.allScope(project));
-    }
-    return null;
+    });
   }
 
   public @Nullable PsiFile getBoundForm() {

@@ -5,9 +5,8 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
-import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
@@ -46,19 +45,14 @@ abstract class AbstractOpenProjectProvider {
   }
 
   suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
-    unlinkAllLinkedProjects(project, projectFile)
+    unlinkOtherLinkedProjects(project, projectFile)
     LOG.info("Linking $systemId project ${projectFile.path}")
     linkProject(projectFile, project)
   }
 
-  protected suspend fun unlinkAllLinkedProjects(project: Project, projectFile: VirtualFile) {
+  protected suspend fun unlinkOtherLinkedProjects(project: Project, projectFile: VirtualFile) {
     val externalProjectPath = if (projectFile.isDirectory) projectFile.path else projectFile.parent.path
-    EP_NAME.forEachExtensionSafeAsync { extension ->
-      if (extension.systemId != systemId && extension.isLinkedProject(project, externalProjectPath)) {
-        LOG.info("Unlinking $systemId project ${projectFile.path}")
-        extension.unlinkProject(project, externalProjectPath)
-      }
-    }
+    ExternalSystemUnlinkedProjectAware.unlinkOtherLinkedProjects(project, externalProjectPath, systemId)
   }
 
   open suspend fun unlinkProject(project: Project, externalProjectPath: String) {
