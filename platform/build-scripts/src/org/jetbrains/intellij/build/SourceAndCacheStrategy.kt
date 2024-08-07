@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build
 
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
-import org.jetbrains.intellij.build.impl.computeHashForModuleOutput
 import java.nio.file.*
 import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
@@ -14,7 +13,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 // This is important for the computation of distribution checksums,
 // as we take the last modified time of the file into account.
 private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
-const val UNMODIFIED_MARK_FILE_NAME: String = ".unmodified"
+private const val UNMODIFIED_MARK_FILE_NAME: String = ".unmodified"
 
 fun createMarkFile(file: Path): Boolean {
   try {
@@ -36,7 +35,7 @@ internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionC
         is DirSource -> {
           val dir = source.dir
           if (dir.startsWith(productionClassOutDir)) {
-            ModuleOutputSourceAndCacheStrategy(source = source, path = productionClassOutDir.relativize(dir).toString())
+            ModuleOutputSourceAndCacheStrategy(source = source, name = productionClassOutDir.relativize(dir).toString())
           }
           else {
             throw UnsupportedOperationException("$source is not supported")
@@ -52,14 +51,15 @@ internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionC
             MavenJarSourceAndCacheStrategy(source)
           }
         }
+        is LazySource -> LazySourceAndCacheStrategy(source)
       }
     }
-    .sortedBy { it.path }
+    .sortedBy { it.name }
 }
 
 internal sealed interface SourceAndCacheStrategy {
   val source: Source
-  val path: String
+  val name: String
 
   fun getHash(): Long
 
@@ -69,9 +69,9 @@ internal sealed interface SourceAndCacheStrategy {
 }
 
 private class MavenJarSourceAndCacheStrategy(override val source: ZipSource) : SourceAndCacheStrategy {
-  override val path = MAVEN_REPO.relativize(source.file).invariantSeparatorsPathString
+  override val name = MAVEN_REPO.relativize(source.file).invariantSeparatorsPathString
 
-  override fun getHash() = Hashing.komihash5_0().hashCharsToLong(path)
+  override fun getHash() = Hashing.komihash5_0().hashCharsToLong(name)
 
   override fun getSize(): Long = Files.size(source.file)
 
@@ -80,10 +80,23 @@ private class MavenJarSourceAndCacheStrategy(override val source: ZipSource) : S
   }
 }
 
+private class LazySourceAndCacheStrategy(override val source: LazySource) : SourceAndCacheStrategy {
+  override val name: String
+    get() = source.name
+
+  override fun getHash() = source.hash
+
+  override fun getSize(): Long = 0
+
+  override fun updateDigest(digest: HashStream64) {
+    digest.putLong(source.hash)
+  }
+}
+
 private class NonMavenJarSourceAndCacheStrategy(override val source: ZipSource) : SourceAndCacheStrategy {
   private var hash: Long = 0
 
-  override val path = source.file.toString()
+  override val name = source.file.toString()
 
   override fun getHash() = hash
 
@@ -96,7 +109,7 @@ private class NonMavenJarSourceAndCacheStrategy(override val source: ZipSource) 
   }
 }
 
-private class ModuleOutputSourceAndCacheStrategy(override val source: DirSource, override val path: String) : SourceAndCacheStrategy {
+private class ModuleOutputSourceAndCacheStrategy(override val source: DirSource, override val name: String) : SourceAndCacheStrategy {
   private var hash: Long = 0
 
   override fun getHash() = hash
@@ -112,7 +125,7 @@ private class ModuleOutputSourceAndCacheStrategy(override val source: DirSource,
 private class InMemorySourceAndCacheStrategy(override val source: InMemoryContentSource) : SourceAndCacheStrategy {
   private var hash: Long = 0
 
-  override val path: String
+  override val name: String
     get() = source.relativePath
 
   override fun getHash() = hash
@@ -128,7 +141,7 @@ private class InMemorySourceAndCacheStrategy(override val source: InMemoryConten
 private class FileSourceCacheStrategy(override val source: FileSource) : SourceAndCacheStrategy {
   private var hash: Long = source.hash
 
-  override val path: String
+  override val name: String
     get() = source.relativePath
 
   override fun getHash() = hash
@@ -137,5 +150,22 @@ private class FileSourceCacheStrategy(override val source: FileSource) : SourceA
 
   override fun updateDigest(digest: HashStream64) {
     digest.putLong(hash)
+  }
+}
+
+internal fun computeHashForModuleOutput(source: DirSource): Long {
+  val markFile = source.dir.resolve(UNMODIFIED_MARK_FILE_NAME)
+  try {
+    return Files.getLastModifiedTime(markFile).toMillis()
+  }
+  catch (e: NoSuchFileException) {
+    if (createMarkFile(markFile)) {
+      return Files.getLastModifiedTime(markFile).toMillis()
+    }
+    else {
+      source.exist = false
+      // module doesn't exist at all
+      return 0
+    }
   }
 }

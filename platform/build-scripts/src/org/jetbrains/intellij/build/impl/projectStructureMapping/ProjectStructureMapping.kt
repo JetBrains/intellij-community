@@ -174,6 +174,8 @@ internal fun writeProjectStructureReport(contentReport: ContentReport, file: Pat
             writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
             writer.writeNumberField("size", entry.size)
           }
+          is CustomAssetEntry -> {
+          }
         }
         writer.writeEndObject()
       }

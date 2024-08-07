@@ -1355,6 +1355,8 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
         }
       }
       is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
+      is CustomAssetEntry -> {
+      }
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
     }
   }

@@ -58,7 +58,7 @@ internal class LocalDiskJarCacheManager(
     val hash = Hashing.komihash5_0().hashStream()
     hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
     for (source in items) {
-      hash.putString(source.path)
+      hash.putString(source.name)
       source.updateDigest(hash)
     }
 
@@ -68,7 +68,7 @@ internal class LocalDiskJarCacheManager(
     hash.reset()
     producer.updateDigest(hash)
     for (source in items.asReversed()) {
-      hash.putString(source.path)
+      hash.putString(source.name)
     }
     hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
 
@@ -117,7 +117,7 @@ internal class LocalDiskJarCacheManager(
 
     val sourceCacheItems = items.map { source ->
       SourceCacheItem(
-        path = source.path,
+        path = source.name,
         size = source.getSize().toInt(),
         hash = source.getHash(),
         nativeFiles = (source.source as? ZipSource)?.let { nativeFiles?.get(it) } ?: emptyList(),
@@ -204,16 +204,18 @@ private fun checkSavedAndActualSources(metadata: JarCacheItem, sources: List<Sou
   }
 
   for ((index, metadataItem) in metadata.sources.withIndex()) {
-    if (items.get(index).path != metadataItem.path) {
+    if (items.get(index).name != metadataItem.path) {
       return false
     }
   }
   return true
 }
 
-private fun notifyAboutMetadata(sources: List<SourceCacheItem>,
-                                items: List<SourceAndCacheStrategy>,
-                                nativeFiles: MutableMap<ZipSource, List<String>>?) {
+private fun notifyAboutMetadata(
+  sources: List<SourceCacheItem>,
+  items: List<SourceAndCacheStrategy>,
+  nativeFiles: MutableMap<ZipSource, List<String>>?,
+) {
   for ((index, sourceCacheItem) in sources.withIndex()) {
     val source = items.get(index).source
     source.size = sourceCacheItem.size

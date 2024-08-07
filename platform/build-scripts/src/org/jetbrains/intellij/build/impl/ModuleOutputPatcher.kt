@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.impl
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.FileSource
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -19,8 +18,6 @@ enum class PatchOverwriteMode {
 }
 
 class ModuleOutputPatcher {
-  private val patchDirs = ConcurrentHashMap<String, List<FileSource>>()
-
   private val patches = ConcurrentHashMap<String, MutableMap<String, ByteArray>>()
 
   fun patchModuleOutput(moduleName: String, path: String, content: String, overwrite: PatchOverwriteMode = PatchOverwriteMode.FALSE) {
@@ -64,15 +61,6 @@ class ModuleOutputPatcher {
       ))
     }
   }
-
-  fun setModuleOutputExtraContent(moduleName: String, map: List<FileSource>) {
-    val old = patchDirs.putIfAbsent(moduleName, map)
-    require(old == null) {
-      "Extra content is already set for module $moduleName"
-    }
-  }
-
-  internal fun getPatchedExtraContent(moduleName: String): List<FileSource> = patchDirs.get(moduleName) ?: emptyList()
 
   private fun byteArrayToTraceStringValue(value: ByteArray): String {
     try {

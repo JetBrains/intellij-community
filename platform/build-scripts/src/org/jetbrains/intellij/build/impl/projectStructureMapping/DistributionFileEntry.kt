@@ -40,6 +40,17 @@ sealed interface LibraryFileEntry : DistributionFileEntry {
   val size: Int
 }
 
+internal data class CustomAssetEntry(
+  override val path: Path,
+  override val hash: Long,
+) : DistributionFileEntry {
+  override val type: String
+    get() = "custom-asset"
+
+  override val relativeOutputFile: String?
+    get() = null
+}
+
 /**
  * Represents a file in module-level library
  */

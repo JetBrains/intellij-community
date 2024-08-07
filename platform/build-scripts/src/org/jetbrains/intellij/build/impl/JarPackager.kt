@@ -29,7 +29,10 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.nio.ByteBuffer
-import java.nio.file.*
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.PathMatcher
 import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readLines
@@ -256,7 +259,6 @@ class JarPackager private constructor(
 
   internal suspend fun computeSourcesForModule(item: ModuleItem, layout: BaseLayout?, searchableOptionSet: SearchableOptionSetDescriptor?) {
     val moduleName = item.moduleName
-    val extraContent = moduleOutputPatcher.getPatchedExtraContent(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
 
     val module = context.findRequiredModule(moduleName)
@@ -266,7 +268,6 @@ class JarPackager private constructor(
     val packToDir = context.options.isUnpackedDist &&
                     !item.relativeOutputFile.contains('/') &&
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
-                    extraContent.isEmpty() &&
                     extraExcludes.isEmpty()
 
     val outFile = outDir.resolve(item.relativeOutputFile)
@@ -287,10 +288,7 @@ class JarPackager private constructor(
       moduleSources.add(InMemoryContentSource(entry.key, entry.value))
     }
 
-    // must be before module output to override
-    moduleSources.addAll(extraContent)
-
-    val jarAsset by lazy(LazyThreadSafetyMode.NONE) {
+    val jarAsset = lazy(LazyThreadSafetyMode.NONE) {
       if (packToDir) {
         getJarAsset(targetFile = outFile, relativeOutputFile = item.relativeOutputFile, metaInfDir = moduleOutDir.resolve("META-INF"))
       }
@@ -300,7 +298,7 @@ class JarPackager private constructor(
     }
 
     if (searchableOptionSet != null) {
-      addSearchableOptionSources(layout = layout, moduleName = moduleName, module = module, sources = jarAsset.sources, searchableOptionSet = searchableOptionSet)
+      addSearchableOptionSources(layout = layout, moduleName = moduleName, module = module, sources = jarAsset.value.sources, searchableOptionSet = searchableOptionSet)
     }
 
     val excludes = if (extraExcludes.isEmpty()) {
@@ -315,8 +313,37 @@ class JarPackager private constructor(
     }
     moduleSources.add(DirSource(dir = moduleOutDir, excludes = excludes))
 
+    if (layout is PluginLayout && layout.mainModule == moduleName) {
+      handleCustomAssets(layout, jarAsset)
+    }
+
     if (layout != null && (layout !is PluginLayout || !layout.modulesWithExcludedModuleLibraries.contains(moduleName))) {
       computeSourcesForModuleLibs(item = item, module = module, layout = layout, copiedFiles = copiedFiles, asset = jarAsset)
+    }
+  }
+
+  private suspend fun handleCustomAssets(layout: PluginLayout, jarAsset: Lazy<AssetDescriptor>) {
+    for (customAsset in layout.customAssets) {
+      val relativePath = customAsset.relativePath
+      if (relativePath == null) {
+        customAsset.getSources(context)?.let { jarAsset.value.sources.addAll(it) }
+      }
+      else {
+        val targetFile = outDir.resolveSibling(relativePath)
+        val assetDescriptor = AssetDescriptor(
+          isDir = false,
+          file = targetFile,
+          relativePath = relativePath,
+          pathInClassLog = "",
+          nativeFiles = null,
+          useCacheAsTargetFile = false,
+        )
+        customAsset.getSources(context)?.let { assetDescriptor.sources.addAll(it) }
+        val existing = assets.putIfAbsent(targetFile, assetDescriptor)
+        require(existing == null) {
+          "CustomAsset must be packed into separate target file (existing=$existing, new=$assetDescriptor)"
+        }
+      }
     }
   }
 
@@ -353,7 +380,7 @@ class JarPackager private constructor(
     layout: BaseLayout,
     module: JpsModule,
     copiedFiles: MutableMap<CopiedForKey, CopiedFor>,
-    asset: AssetDescriptor,
+    asset: Lazy<AssetDescriptor>,
   ) {
     val moduleName = module.name
     val includeProjectLib = if (layout is PluginLayout) layout.auto else item.reason == ModuleIncludeReasons.PRODUCT_MODULES
@@ -404,7 +431,7 @@ class JarPackager private constructor(
       for (i in (files.size - 1) downTo 0) {
         val file = files.get(i)
         val fileName = file.fileName.toString()
-        if (item.reason != ModuleIncludeReasons.PRODUCT_MODULES && isSeparateJar(fileName = fileName, file = file, jarPath = asset.relativePath)) {
+        if (item.reason != ModuleIncludeReasons.PRODUCT_MODULES && isSeparateJar(fileName = fileName, file = file, jarPath = asset.value.relativePath)) {
           files.removeAt(i)
           addLibrary(library = library, targetFile = outDir.resolve(removeVersionFromJar(fileName)), relativeOutputFile = item.relativeOutputFile, files = listOf(file))
         }
@@ -412,7 +439,7 @@ class JarPackager private constructor(
 
       for (file in files) {
         @Suppress("NAME_SHADOWING")
-        asset.sources.add(
+        asset.value.sources.add(
           ZipSource(
             file = file,
             distributionFileEntryProducer = { size, hash, targetFile ->
@@ -431,7 +458,7 @@ class JarPackager private constructor(
                 ProjectLibraryEntry(path = targetFile, libraryFile = file, size = size, hash = hash, data = projectLibraryData, relativeOutputFile = item.relativeOutputFile)
               }
             },
-            isPreSignedAndExtractedCandidate = asset.nativeFiles != null || isLibPreSigned(library),
+            isPreSignedAndExtractedCandidate = asset.value.nativeFiles != null || isLibPreSigned(library),
           )
         )
       }
@@ -668,6 +695,7 @@ private data class AssetDescriptor(
   @JvmField var effectiveFile: Path = file,
   @JvmField val pathInClassLog: String,
   @JvmField val nativeFiles: List<String>?,
+  @JvmField val useCacheAsTargetFile: Boolean = true,
 ) {
   @JvmField
   val sources: MutableList<Source> = mutableListOf()
@@ -785,7 +813,7 @@ private suspend fun buildJars(
               span = span,
               producer = object : SourceBuilder {
                 override val useCacheAsTargetFile: Boolean
-                  get() = useCacheAsTargetFile && !asset.relativePath.contains('/')
+                  get() = useCacheAsTargetFile && !asset.relativePath.contains('/') && asset.useCacheAsTargetFile
 
                 override fun updateDigest(digest: HashStream64) {
                   if (layout is PluginLayout) {
@@ -944,7 +972,12 @@ private fun computeDistributionFileEntries(asset: AssetDescriptor, hasher: HashS
   }
 
   for (source in asset.sources) {
-    (source as? ZipSource)?.distributionFileEntryProducer?.consume(size = source.size, hash = source.hash, targetFile = asset.effectiveFile)?.let(list::add)
+    if (source is ZipSource) {
+      source.distributionFileEntryProducer?.consume(size = source.size, hash = source.hash, targetFile = asset.effectiveFile)?.let(list::add)
+    }
+    else if (source is LazySource) {
+      list.add(CustomAssetEntry(path = asset.effectiveFile, hash = source.hash))
+    }
   }
 }
 
@@ -954,23 +987,6 @@ private fun updateModuleSourceHash(asset: AssetDescriptor) {
       if (source is DirSource && source.hash == 0L) {
         source.hash = computeHashForModuleOutput(source)
       }
-    }
-  }
-}
-
-internal fun computeHashForModuleOutput(source: DirSource): Long {
-  val markFile = source.dir.resolve(UNMODIFIED_MARK_FILE_NAME)
-  try {
-    return Files.getLastModifiedTime(markFile).toMillis()
-  }
-  catch (e: NoSuchFileException) {
-    if (createMarkFile(markFile)) {
-      return Files.getLastModifiedTime(markFile).toMillis()
-    }
-    else {
-      source.exist = false
-      // module doesn't exist at all
-      return 0
     }
   }
 }

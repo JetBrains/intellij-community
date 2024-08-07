@@ -10,10 +10,7 @@ import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.FileSystemException
@@ -91,6 +88,9 @@ class PluginLayout private constructor(
   internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
 
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
+    private set
+
+  internal var customAssets: PersistentList<CustomAssetDescriptor> = persistentListOf()
     private set
 
   internal var platformResourceGenerators: PersistentMap<SupportedDistribution, PersistentList<ResourceGenerator>> = persistentMapOf()
@@ -214,6 +214,14 @@ class PluginLayout private constructor(
 
     fun withGeneratedResources(generator: ResourceGenerator) {
       layout.resourceGenerators += generator
+    }
+
+    fun withCustomAsset(lazySourceSupplier: (context: BuildContext) -> LazySource?) {
+      layout.customAssets += object : CustomAssetDescriptor {
+        override suspend fun getSources(context: BuildContext): Sequence<Source>? {
+          return sequenceOf(lazySourceSupplier(context) ?: return null)
+        }
+      }
     }
 
     fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, generator: ResourceGenerator) {

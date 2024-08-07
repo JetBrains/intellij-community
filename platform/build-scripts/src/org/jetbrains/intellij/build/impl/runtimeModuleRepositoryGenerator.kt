@@ -133,7 +133,7 @@ private fun generateRepositoryForDistribution(
   val mainPathsForResources = computeMainPathsForResourcesCopiedToMultiplePlaces(entries, context)
   val resourcePathMapping = MultiMap.createOrderedSet<RuntimeModuleId, String>()
   for (entry in entries) {
-    val moduleId = entry.origin.runtimeModuleId
+    val moduleId = entry.origin.getRuntimeModuleId() ?: continue
     val mainPath = mainPathsForResources[moduleId]
     if (mainPath == null || mainPath == entry.relativePath) {
       resourcePathMapping.putValue(moduleId, entry.relativePath)
@@ -239,7 +239,7 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
     .filter { entry -> entry.origin is ProjectLibraryEntry && isPackedIntoSingleJar(entry.origin)
                        || entry.origin is ModuleLibraryFileEntry && entry.origin.isPackedIntoSingleJar()
                        || entry.origin is ModuleOutputEntry }
-    .groupBy({ it.origin.runtimeModuleId }, { it.relativePath })
+    .groupBy({ it.origin.getRuntimeModuleId()!! }, { it.relativePath })
 
   fun DistributionFileEntry.isIncludedInJetBrainsClient() = 
     this is ModuleOutputEntry && context.jetBrainsClientModuleFilter.isModuleIncluded(moduleName) 
@@ -309,13 +309,15 @@ private fun collectTransitiveDependencies(moduleIds: Collection<RuntimeModuleId>
   }
 }
 
-private val DistributionFileEntry.runtimeModuleId: RuntimeModuleId
-  get() = when (this) {
+private fun DistributionFileEntry.getRuntimeModuleId(): RuntimeModuleId? {
+  return when (this) {
     is ModuleOutputEntry -> RuntimeModuleId.module(moduleName)
     is ModuleTestOutputEntry -> RuntimeModuleId.moduleTests(moduleName)
     is ModuleLibraryFileEntry -> RuntimeModuleId.moduleLibrary(moduleName, libraryName)
     is ProjectLibraryEntry -> RuntimeModuleId.projectLibrary(data.libraryName)
+    is CustomAssetEntry -> null
   }
+}
 
 private const val MODULES_DIR_NAME = "modules"
 @VisibleForTesting
