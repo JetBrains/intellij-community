@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,11 +57,12 @@ public final class NanoXmlUtil {
   }
 
   public static void parse(StdXMLReader r, @NotNull IXMLBuilder builder, @Nullable IXMLValidator validator) {
-    StdXMLParser parser = new StdXMLParser();
-    parser.setReader(r);
-    parser.setBuilder(builder);
-    parser.setValidator(validator == null ? new EmptyValidator() : validator);
-    parser.setResolver(new EmptyEntityResolver());
+    StdXMLParser parser = new StdXMLParser(
+      r,
+      builder,
+      validator == null ? new EmptyValidator() : validator,
+      new EmptyEntityResolver()
+    );
     try {
       parser.parse();
     }

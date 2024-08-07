@@ -68,11 +68,7 @@ public final class FormsParsing {
   }
 
   public static void parse(final StdXMLReader r, final IXMLBuilder builder) {
-    StdXMLParser parser = new StdXMLParser();
-    parser.setReader(r);
-    parser.setBuilder(builder);
-    parser.setValidator(new EmptyValidator());
-    parser.setResolver(new EmptyEntityResolver());
+    StdXMLParser parser = new StdXMLParser(r, builder, new EmptyValidator(), new EmptyEntityResolver());
     try {
       parser.parse();
     }
