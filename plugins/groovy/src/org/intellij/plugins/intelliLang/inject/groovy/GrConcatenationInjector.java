@@ -78,16 +78,10 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     else if (parent instanceof GrVariable) {
       return getLanguageParams((PsiModifierListOwner)parent);
     }
-    else if (parent instanceof GrBinaryExpression binaryExpression && GroovyElementTypes.LEFT_SHIFT_SIGN == binaryExpression.getOperator()) {
-      GroovyCallReference reference = binaryExpression.getReference();
-      if (reference == null) return null;
-
-      PsiElement resolveResult = reference.resolve();
-      if (!(resolveResult instanceof PsiMethod method)) return null;
-
-      PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 1) return null;
-      return getLanguageParams(parameterList.getParameter(0));
+    else if (parent instanceof GrBinaryExpression expression) {
+      PsiMethod method = GrInjectionUtil.extractMethodFromShiftOperator(expression);
+      PsiParameter parameter = GrInjectionUtil.extractFirstParameterFromMethod(method);
+      return getLanguageParams(parameter);
     }
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();
