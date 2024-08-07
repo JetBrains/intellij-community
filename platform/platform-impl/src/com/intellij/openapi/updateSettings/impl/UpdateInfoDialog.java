@@ -58,7 +58,8 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     super(project, enableLink);
     myProject = project;
     myLoadedResult = loadedResult;
-    myUpdatedPlugins = updatedPlugins;
+    myUpdatedPlugins = updatedPlugins == null ? null :
+                       ContainerUtil.map(updatedPlugins, downloader -> downloader.withSilencedPluginDescriptorErrors());
     UpdateChain patches = myLoadedResult.getPatches();
     myWriteProtected = patches != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
     myLicenseInfo = getLicensingInfo(myLoadedResult);

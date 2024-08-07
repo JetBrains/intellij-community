@@ -58,6 +58,7 @@ public final class PluginDownloader {
   private final BuildNumber myBuildNumber;
 
   private final @NotNull Consumer<@NotNull @NlsContexts.NotificationContent String> myErrorsConsumer;
+  private final boolean mySilencePluginDescriptorErrors;
   private final @Nullable MarketplacePluginDownloadService myDownloadService;
 
   private @NlsSafe String myPluginVersion;
@@ -71,6 +72,7 @@ public final class PluginDownloader {
                            @NotNull String pluginUrl,
                            @Nullable BuildNumber buildNumber,
                            @NotNull Consumer<@NotNull @NlsContexts.NotificationContent String> errorsConsumer,
+                           boolean silencePluginDescriptorErrors,
                            @Nullable MarketplacePluginDownloadService service) {
     myPluginId = descriptor.getPluginId();
     myPluginName = descriptor.getName();
@@ -87,6 +89,7 @@ public final class PluginDownloader {
     myPluginVersion = descriptor.getVersion();
     myDescriptor = descriptor;
     myErrorsConsumer = errorsConsumer;
+    mySilencePluginDescriptorErrors = silencePluginDescriptorErrors;
     myDownloadService = service;
   }
 
@@ -95,6 +98,17 @@ public final class PluginDownloader {
                                 myPluginUrl,
                                 myBuildNumber,
                                 errorsConsumer,
+                                mySilencePluginDescriptorErrors,
+                                myDownloadService);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull PluginDownloader withSilencedPluginDescriptorErrors() {
+    return new PluginDownloader(myDescriptor,
+                                myPluginUrl,
+                                myBuildNumber,
+                                myErrorsConsumer,
+                                true,
                                 myDownloadService);
   }
 
@@ -103,6 +117,7 @@ public final class PluginDownloader {
                                 myPluginUrl,
                                 myBuildNumber,
                                 myErrorsConsumer,
+                                mySilencePluginDescriptorErrors,
                                 downloadService);
   }
 
@@ -181,7 +196,7 @@ public final class PluginDownloader {
     if (myFile != null) {
       IdeaPluginDescriptorImpl actualDescriptor = loadDescriptorFromArtifact();
       if (actualDescriptor == null) {
-        reportError(IdeBundle.message("error.descriptor.load.failed", myFile.getPath()));
+        reportError(IdeBundle.message("error.descriptor.load.failed", myFile.getPath()), true);
         return false;
       }
 
@@ -217,7 +232,7 @@ public final class PluginDownloader {
       LOG.info(e);
 
       String message = e.getMessage();
-      reportError(message != null ? message : IdeBundle.message("unknown.error"));
+      reportError(message != null ? message : IdeBundle.message("unknown.error"), false);
       return false;
     }
 
@@ -230,13 +245,13 @@ public final class PluginDownloader {
 
     IdeaPluginDescriptorImpl actualDescriptor = loadDescriptorFromArtifact();
     if (actualDescriptor == null) {
-      reportError(IdeBundle.message("error.downloaded.descriptor.load.failed"));
+      reportError(IdeBundle.message("error.downloaded.descriptor.load.failed"), true);
       return false;
     }
 
     if (loaded &&
         InstalledPluginsState.getInstance().wasUpdated(actualDescriptor.getPluginId())) {
-      reportError(IdeBundle.message("error.pending.update", getPluginName()));
+      reportError(IdeBundle.message("error.pending.update", getPluginName()), false);
       return false; //already updated
     }
 
@@ -248,7 +263,7 @@ public final class PluginDownloader {
       }
       else if (result <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
-        reportError(IdeBundle.message("error.older.update", myPluginVersion, descriptor.getVersion()));
+        reportError(IdeBundle.message("error.older.update", myPluginVersion, descriptor.getVersion()), false);
         return false; //was not updated
       }
     }
@@ -260,7 +275,7 @@ public final class PluginDownloader {
     if (incompatibleError != null) {
       LOG.info("Plugin " + myPluginId + " is incompatible with current installation " +
                "(since:" + actualDescriptor.getSinceBuild() + " until:" + actualDescriptor.getUntilBuild() + ")");
-      reportError(IdeBundle.message("error.incompatible.update", XmlStringUtil.escapeString(incompatibleError.getDetailedMessage())));
+      reportError(IdeBundle.message("error.incompatible.update", XmlStringUtil.escapeString(incompatibleError.getDetailedMessage())), false);
       return false; //host outdated plugins, no compatible plugin for new version
     }
 
@@ -276,10 +291,12 @@ public final class PluginDownloader {
     return PluginDescriptorLoader.loadDescriptorFromArtifact(getFilePath(), myBuildNumber);
   }
 
-  private void reportError(@NotNull @NlsContexts.NotificationContent String errorMessage) {
+  private void reportError(@NotNull @NlsContexts.NotificationContent String errorMessage, boolean isDescriptorError) {
     LOG.info("PluginDownloader error: " + errorMessage);
-    myShownErrors = true;
-    myErrorsConsumer.accept(IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage));
+    if (!(isDescriptorError && mySilencePluginDescriptorErrors)) {
+      myShownErrors = true;
+      myErrorsConsumer.accept(IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage));
+    }
   }
 
   public static void showErrorDialog(@NotNull @NlsContexts.NotificationContent String text) {
@@ -388,6 +405,7 @@ public final class PluginDownloader {
                                 url,
                                 buildNumber,
                                 PluginDownloader::showErrorDialog,
+                                false,
                                 null);
   }
 
