@@ -21,6 +21,14 @@ fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit) {
   this.ui.ideFrame(action)
 }
 
+fun Finder.secondIdeFrame(action: IdeaFrameUI.() -> Unit) {
+  x("//div[@class='IdeFrameImpl'][1]", IdeaFrameUI::class.java).action()
+}
+
+fun Driver.secondIdeFrame(action: IdeaFrameUI.() -> Unit) {
+  this.ui.secondIdeFrame(action)
+}
+
 open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
   private val projectViewTreeClass = if (isRemoteIdeMode) "ThinClientProjectViewTree" else "ProjectViewTree"
   val projectViewTree = tree("//div[@class='${projectViewTreeClass}']")
