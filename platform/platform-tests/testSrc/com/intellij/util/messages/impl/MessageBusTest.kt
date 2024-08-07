@@ -6,9 +6,12 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.use
+import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.LoggedErrorProcessorEnabler
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.createSimpleMessageBusOwner
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBus
@@ -17,9 +20,10 @@ import com.intellij.util.messages.Topic
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Fail
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
@@ -27,12 +31,15 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
+import kotlin.coroutines.cancellation.CancellationException
 
 private val TOPIC1 = Topic("T1", MessageBusTest.T1Listener::class.java, Topic.BroadcastDirection.TO_CHILDREN)
 private val TOPIC2 = Topic("T2", MessageBusTest.T2Listener::class.java, Topic.BroadcastDirection.TO_CHILDREN)
 private val RUNNABLE_TOPIC = Topic(Runnable::class.java, Topic.BroadcastDirection.TO_CHILDREN)
 private val TO_PARENT_TOPIC = Topic(Runnable::class.java, Topic.BroadcastDirection.TO_PARENT)
+private val IMMEDIATE_DELIVERY = Topic(MessageBusTest.T1Listener::class.java, Topic.BroadcastDirection.NONE, true)
 
+@ExtendWith(DoNoRethrowMessageBusErrors::class)
 class MessageBusTest : MessageBusOwner {
   private lateinit var bus: RootBus
   private val log: MutableList<String> = ArrayList()
@@ -74,13 +81,13 @@ class MessageBusTest : MessageBusOwner {
     }
   }
 
-  @Before
+  @BeforeEach
   fun setUp() {
     bus = MessageBusFactoryImpl.createRootBus(this)
     Disposer.register(parentDisposable!!, bus)
   }
 
-  @After
+  @AfterEach
   fun tearDown() {
     Disposer.dispose(parentDisposable!!)
   }
@@ -200,7 +207,7 @@ class MessageBusTest : MessageBusOwner {
   }
 
   @Test
-  fun messageDeliveredDespitePce() {
+  fun messageDeliveredDespitePce1() {
     val conn1 = bus.connect()
     conn1.subscribe(TOPIC1, object : T1Listener {
       override fun t11() {
@@ -212,6 +219,18 @@ class MessageBusTest : MessageBusOwner {
         throw UnsupportedOperationException()
       }
     })
+
+    conn1.subscribe(TOPIC1, object : T1Listener {
+      override fun t11() {
+        log.add("cce")
+        throw CancellationException()
+      }
+
+      override fun t12() {
+        throw UnsupportedOperationException()
+      }
+    })
+
     val conn2 = bus.connect()
     conn2.subscribe(TOPIC1, T1Handler("handler2"))
     try {
@@ -220,7 +239,165 @@ class MessageBusTest : MessageBusOwner {
     }
     catch (ignored: ProcessCanceledException) {
     }
-    assertEvents("pce", "handler2:t11")
+    assertEvents("pce", "cce", "handler2:t11")
+  }
+
+  @Test
+  fun runtimeErrorPropagationFromListener1() {
+    val conn3 = bus.connect()
+    conn3.subscribe(TOPIC1, T1Handler("handler3"))
+
+    val conn1 = bus.connect()
+    conn1.subscribe(TOPIC1, object : T1Listener {
+      override fun t11() {
+        log.add("pce")
+        throw ProcessCanceledException()
+      }
+
+      override fun t12() {
+        log.add("uoe")
+        throw IllegalStateException()
+      }
+    })
+
+    val conn2 = bus.connect()
+    conn2.subscribe(TOPIC1, T1Handler("handler2"))
+
+    try {
+      bus.syncPublisher(TOPIC1).t12()
+      Assertions.fail<Any>("ISE propagation expected")
+    }
+    catch (e: Throwable) {
+      val rootCause = ExceptionUtil.getRootCause(e)
+      assertThat(rootCause).isInstanceOf(IllegalStateException::class.java)
+    }
+
+    // event is delivered to all subscribers, then the error is rethrown
+    assertEvents("handler3:t12", "uoe", "handler2:t12")
+  }
+
+  @Test
+  fun abstractErrorPropagationFromListener1() {
+    val conn3 = bus.connect()
+    conn3.subscribe(TOPIC1, T1Handler("handler3"))
+
+    val conn1 = bus.connect()
+    conn1.subscribe(TOPIC1, object : T1Listener {
+      override fun t11() {
+        log.add("pce")
+        throw ProcessCanceledException()
+      }
+
+      override fun t12() {
+        log.add("uoe")
+        throw AbstractMethodError() // incompatible interface change
+      }
+    })
+
+    val conn2 = bus.connect()
+    conn2.subscribe(TOPIC1, T1Handler("handler2"))
+
+    bus.syncPublisher(TOPIC1).t12()
+
+    // event is delivered to all subscribers, the error is NOT rethrown
+    assertEvents("handler3:t12", "uoe", "handler2:t12")
+  }
+
+  @Test
+  fun messageDeliveredDespitePce2() {
+    val conn1 = bus.connect()
+    conn1.subscribe(IMMEDIATE_DELIVERY, object : T1Listener {
+      override fun t11() {
+        log.add("pce")
+        throw ProcessCanceledException()
+      }
+
+      override fun t12() {
+        throw UnsupportedOperationException()
+      }
+    })
+
+    conn1.subscribe(IMMEDIATE_DELIVERY, object : T1Listener {
+      override fun t11() {
+        log.add("cce")
+        throw CancellationException()
+      }
+
+      override fun t12() {
+        throw UnsupportedOperationException()
+      }
+    })
+
+    val conn2 = bus.connect()
+    conn2.subscribe(IMMEDIATE_DELIVERY, T1Handler("handler2"))
+    try {
+      bus.syncPublisher(IMMEDIATE_DELIVERY).t11()
+      Assertions.fail<Any>("PCE expected")
+    }
+    catch (ignored: ProcessCanceledException) {
+    }
+    assertEvents("pce", "cce", "handler2:t11")
+  }
+
+  @Test
+  fun runtimeErrorPropagationFromListener2() {
+    val conn3 = bus.connect()
+    conn3.subscribe(IMMEDIATE_DELIVERY, T1Handler("handler3"))
+
+    val conn1 = bus.connect()
+    conn1.subscribe(IMMEDIATE_DELIVERY, object : T1Listener {
+      override fun t11() {
+        log.add("pce")
+        throw ProcessCanceledException()
+      }
+
+      override fun t12() {
+        log.add("uoe")
+        throw IllegalStateException()
+      }
+    })
+
+    val conn2 = bus.connect()
+    conn2.subscribe(IMMEDIATE_DELIVERY, T1Handler("handler2"))
+
+    try {
+      bus.syncPublisher(IMMEDIATE_DELIVERY).t12()
+      Assertions.fail<Any>("ISE propagation expected")
+    }
+    catch (e: Throwable) {
+      val rootCause = ExceptionUtil.getRootCause(e)
+      assertThat(rootCause).isInstanceOf(IllegalStateException::class.java)
+    }
+
+    // event is delivered to all subscribers, then the error is rethrown
+    assertEvents("handler3:t12", "uoe", "handler2:t12")
+  }
+
+  @Test
+  fun abstractErrorPropagationFromListener2() {
+    val conn3 = bus.connect()
+    conn3.subscribe(IMMEDIATE_DELIVERY, T1Handler("handler3"))
+
+    val conn1 = bus.connect()
+    conn1.subscribe(IMMEDIATE_DELIVERY, object : T1Listener {
+      override fun t11() {
+        log.add("pce")
+        throw ProcessCanceledException()
+      }
+
+      override fun t12() {
+        log.add("uoe")
+        throw AbstractMethodError() // incompatible interface change
+      }
+    })
+
+    val conn2 = bus.connect()
+    conn2.subscribe(IMMEDIATE_DELIVERY, T1Handler("handler2"))
+
+    bus.syncPublisher(IMMEDIATE_DELIVERY).t12()
+
+    // event is delivered to all subscribers, the error is NOT rethrown
+    assertEvents("handler3:t12", "uoe", "handler2:t12")
   }
 
   @Test
@@ -552,5 +729,18 @@ class MessageBusTest : MessageBusOwner {
     bus.connect().subscribe(topic, Runnable { Disposer.dispose(disposable) })
     bus.connect(disposable).subscribe(topic, Runnable { Fail.fail<Any>("must be not called") })
     bus.syncPublisher(topic).run()
+  }
+}
+
+private class DoNoRethrowMessageBusErrors : LoggedErrorProcessorEnabler() {
+  override fun createErrorProcessor(): LoggedErrorProcessor {
+    return object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        if ("#com.intellij.util.messages.impl.MessageBusImpl" == category) {
+          return setOf(Action.LOG)
+        }
+        return super.processError(category, message, details, t)
+      }
+    }
   }
 }
