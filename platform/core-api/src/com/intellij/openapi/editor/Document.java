@@ -272,6 +272,10 @@ public interface Document extends UserDataHolder {
   /**
    * Marks a range of text in the document as read-only (attempts to modify text in the
    * range cause {@link ReadOnlyFragmentModificationException} to be thrown).
+   * This range marker, unlike the ones created via {@link #createRangeMarker},
+   * is not automatically removed from the document if there are no more references to it.
+   * Therefore, there is no need for the caller to keep a reference to the created marker.
+   * However, it is the caller's responsibility to remove created marker via {@link #removeGuardedBlock}.
    *
    * @param startOffset the start offset of the text range to mark as read-only.
    * @param endOffset   the end offset of the text range to mark as read-only.

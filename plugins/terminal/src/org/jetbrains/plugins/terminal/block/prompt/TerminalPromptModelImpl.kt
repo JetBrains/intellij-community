@@ -95,7 +95,7 @@ internal class TerminalPromptModelImpl(
   @RequiresEdt
   private fun doUpdatePrompt(renderingInfo: TerminalPromptRenderingInfo) {
     DocumentUtil.writeInRunUndoTransparentAction {
-      document.guardedBlocks.clear()
+      document.guardedBlocks.forEach { document.removeGuardedBlock(it) }
       document.replaceString(0, commandStartOffset, renderingInfo.text)
       document.createGuardedBlock(0, renderingInfo.text.length)
     }

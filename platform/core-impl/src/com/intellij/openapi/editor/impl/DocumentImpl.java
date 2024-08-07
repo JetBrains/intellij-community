@@ -40,20 +40,23 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.reference.SoftReference.dereference;
 
 public final class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance(DocumentImpl.class);
   private static final int STRIP_TRAILING_SPACES_BULK_MODE_LINES_LIMIT = 1000;
+  private static final List<RangeMarker> GUARDED_IN_PROGRESS = new ArrayList<>(0);
 
   private final LockFreeCOWSortedArray<DocumentListener> myDocumentListeners =
     new LockFreeCOWSortedArray<>(PrioritizedDocumentListener.COMPARATOR, DocumentListener.ARRAY_FACTORY);
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<>(this);
-  private final RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers = new RangeMarkerTree<>(this);
-  private final List<RangeMarker> myGuardedBlocks = new ArrayList<>();
+  private final RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers = new PersistentRangeMarkerTree(this);
+  private final AtomicReference<List<RangeMarker>> myGuardedBlocks = new AtomicReference<>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
 
   private final Object myLineSetLock = ObjectUtils.sentinel("line set lock");
@@ -438,48 +441,71 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   public @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     LOG.assertTrue(startOffset <= endOffset, "Should be startOffset <= endOffset");
-    RangeMarker block = createRangeMarker(startOffset, endOffset, true);
-    myGuardedBlocks.add(block);
+    GuardedBlock block = new GuardedBlock(this, startOffset, endOffset);
+    myGuardedBlocks.set(null);
     return block;
   }
 
   @Override
   public void removeGuardedBlock(@NotNull RangeMarker block) {
-    myGuardedBlocks.remove(block);
+    if (!GuardedBlock.isGuarded(block)) {
+      throw new IllegalArgumentException("range markers is not a guarded block");
+    }
+    block.dispose();
+    myGuardedBlocks.set(null);
   }
 
   @Override
   public @NotNull List<RangeMarker> getGuardedBlocks() {
-    return myGuardedBlocks;
+    List<RangeMarker> cachedBlocks = myGuardedBlocks.get();
+    if (cachedBlocks != null && cachedBlocks != GUARDED_IN_PROGRESS) {
+      return cachedBlocks;
+    }
+    if (myGuardedBlocks.compareAndSet(null, GUARDED_IN_PROGRESS)) {
+      List<RangeMarker> blocks = collectGuardedBlocks();
+      if (!myGuardedBlocks.compareAndSet(GUARDED_IN_PROGRESS, blocks)) {
+        // another thread created or removed a block, force recalculation
+        myGuardedBlocks.set(null);
+      }
+      return blocks;
+    }
+    // another thread is already collecting the result, return without commiting
+    return collectGuardedBlocks();
+  }
+
+  private @NotNull List<RangeMarker> collectGuardedBlocks() {
+    List<RangeMarker> blocks = new ArrayList<>();
+    myPersistentRangeMarkers.processAll(GuardedBlock.processor(block -> {
+      blocks.add(block);
+      return true;
+    }));
+    // prevent the users from being misled that modifying this list affects actual guarded blocks
+    return Collections.unmodifiableList(blocks);
   }
 
   @Override
   public RangeMarker getOffsetGuard(int offset) {
-    List<RangeMarker> guardedBlocks = myGuardedBlocks;
-    // Way too much garbage would be produced otherwise in AbstractList.iterator()
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < guardedBlocks.size(); i++) {
-      RangeMarker block = guardedBlocks.get(i);
-      if (offsetInRange(offset, block.getStartOffset(), block.getEndOffset())) return block;
-    }
-
-    return null;
+    Ref<RangeMarker> blockRef = new Ref<>();
+    myPersistentRangeMarkers.processContaining(offset, GuardedBlock.processor(block -> {
+      blockRef.set(block);
+      return false;
+    }));
+    return blockRef.get();
   }
 
   @Override
   public RangeMarker getRangeGuard(int start, int end) {
-    List<RangeMarker> guardedBlocks = myGuardedBlocks;
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < guardedBlocks.size(); i++) {
-      RangeMarker block = guardedBlocks.get(i);
+    Ref<RangeMarker> blockRef = new Ref<>();
+    myPersistentRangeMarkers.processOverlappingWith(start, end, GuardedBlock.processor(block -> {
       if (rangesIntersect(start, end, true, true,
                           block.getStartOffset(), block.getEndOffset(),
                           block.isGreedyToLeft(), block.isGreedyToRight())) {
-        return block;
+        blockRef.set(block);
+        return false;
       }
-    }
-
-    return null;
+      return true;
+    }));
+    return blockRef.get();
   }
 
   @Override
@@ -491,10 +517,6 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   public void stopGuardedBlockChecking() {
     LOG.assertTrue(myCheckGuardedBlocks > 0, "Unpaired start/stopGuardedBlockChecking");
     myCheckGuardedBlocks--;
-  }
-
-  private static boolean offsetInRange(int offset, int start, int end) {
-    return start <= offset && offset < end;
   }
 
   private static boolean rangesIntersect(int start0, int end0, boolean start0Inclusive, boolean end0Inclusive,
@@ -1224,6 +1246,23 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   public void assertNotInBulkUpdate() {
     if (myDoingBulkUpdate) throw new UnexpectedBulkUpdateStateException(myBulkUpdateEnteringTrace);
+  }
+
+  /**
+   * RangeMarkerTree that keeps all intervals on weak references except the guarded blocks.
+   * This class must be static because it should not capture 'this' reference to the document.
+   * Otherwise, there will be a chain of hard references {@code file -> tree -> document} and gc won't collect the document
+   */
+  private static final class PersistentRangeMarkerTree extends RangeMarkerTree<RangeMarkerEx> {
+    PersistentRangeMarkerTree(@NotNull Document document) {
+      super(document);
+    }
+
+    @Override
+    protected boolean keepIntervalOnWeakReference(@NotNull RangeMarkerEx interval) {
+      // prevent guarded blocks to be collected by gc
+      return !GuardedBlock.isGuarded(interval);
+    }
   }
 
   private static final class UnexpectedBulkUpdateStateException extends RuntimeException implements ExceptionWithAttachments {

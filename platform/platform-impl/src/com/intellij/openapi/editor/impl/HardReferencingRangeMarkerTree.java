@@ -13,7 +13,7 @@ class HardReferencingRangeMarkerTree<T extends RangeMarkerImpl> extends RangeMar
   }
 
   @Override
-  protected boolean keepIntervalsOnWeakReferences() {
+  protected boolean keepIntervalOnWeakReference(@NotNull T interval) {
     return false;
   }
 

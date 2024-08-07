@@ -353,7 +353,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   private @NotNull Supplier<? extends T> createGetter(@NotNull T interval) {
-    return keepIntervalsOnWeakReferences()
+    return keepIntervalOnWeakReference(interval)
            ? new WeakReferencedGetter<>(interval, myReferenceQueue)
            : new StaticSupplier<>(interval);
   }
@@ -405,7 +405,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
   }
 
-  protected boolean keepIntervalsOnWeakReferences() {
+  protected boolean keepIntervalOnWeakReference(@NotNull T interval) {
     return true;
   }
 

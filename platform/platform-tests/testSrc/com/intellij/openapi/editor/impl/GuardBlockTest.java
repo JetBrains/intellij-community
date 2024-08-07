@@ -4,7 +4,13 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.CommonProcessors;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class GuardBlockTest extends BasePlatformTestCase {
   private RangeMarker createGuard(final int start, final int end) {
@@ -156,5 +162,126 @@ public class GuardBlockTest extends BasePlatformTestCase {
       return;
     }
     fail("must be read only at " + 3);
+  }
+
+  public void testGuardedBlockListIsEmpty() {
+    myFixture.configureByText("x.txt", "0123456789");
+    assertEmpty("expected no guarded block in the document", getGuardedBlocks());
+  }
+
+  public void testCreateGuardedBlock() {
+    myFixture.configureByText("x.txt", "0123456789");
+    assertEmpty("expected no guarded block in the document", getGuardedBlocks());
+    createGuard(0, 1);
+    assertEquals("expected one guarded block in the document", 1, getGuardedBlocks().size());
+    createGuard(0, 1);
+    assertEquals("expected two guarded blocks in the document", 2, getGuardedBlocks().size());
+  }
+
+  public void testRemoveGuardedBlock() {
+    myFixture.configureByText("x.txt", "0123456789");
+    getDocument().removeGuardedBlock(createGuard(0, 1));
+    assertEmpty("expected the guarded block to be removed", getGuardedBlocks());
+  }
+
+  public void testCreateRemoveCreateGuardedBlock() {
+    myFixture.configureByText("x.txt", "0123456789");
+    getDocument().removeGuardedBlock(createGuard(0, 1));
+    createGuard(0, 1);
+    assertEquals(1, getGuardedBlocks().size());
+  }
+
+  public void testGetGuardedBlockByOffset() {
+    myFixture.configureByText("x.txt", "0123456789");
+    DocumentEx document = getDocument();
+    RangeMarker guard = createGuard(1, 2);
+    assertNull("no guarded block expected covering the offset", document.getOffsetGuard(0));
+    assertNull("no guarded block expected covering the offset", document.getOffsetGuard(2));
+    assertEquals("guarded block expected covering the offset", guard, document.getOffsetGuard(1));
+  }
+
+  public void testGetRangeGuardInRange() {
+    myFixture.configureByText("x.txt", "0123456789");
+    DocumentEx document = getDocument();
+    RangeMarker guard = createGuard(2, 5);
+    assertEquals("intersection expected ( [ ] )", guard, document.getRangeGuard(0, 6));
+    assertEquals("intersection expected ( [ ) ]", guard, document.getRangeGuard(0, 3));
+    assertEquals("intersection expected [ ( ] )", guard, document.getRangeGuard(4, 6));
+    assertEquals("intersection expected [ () ]", guard, document.getRangeGuard(3, 4));
+    assertEquals("intersection expected [()  ]", guard, document.getRangeGuard(2, 3));
+    assertEquals("intersection expected [  ()]", guard, document.getRangeGuard(4, 5));
+  }
+
+  public void testGetRangeGuardNotInRange() {
+    myFixture.configureByText("x.txt", "0123456789");
+    DocumentEx document = getDocument();
+    createGuard(2, 5);
+    assertNull("no intersection expected () [ ]", document.getRangeGuard(0, 1));
+    assertNull("no intersection expected [ ] ()", document.getRangeGuard(6, 7));
+  }
+
+  public void testGetRangeGuardInRangeGreedy() {
+    myFixture.configureByText("x.txt", "0123456789");
+    DocumentEx document = getDocument();
+    RangeMarker guard = createGuard(2, 5);
+    assertNull("no intersection expected ( | ]", document.getRangeGuard(0, 2));
+    assertNull("no intersection expected [ | )", document.getRangeGuard(5, 6));
+    guard.setGreedyToLeft(true);
+    guard.setGreedyToRight(true);
+    assertEquals("intersection expected ( | ]", guard, document.getRangeGuard(0, 2));
+    assertEquals("intersection expected [ | )", guard, document.getRangeGuard(5, 6));
+  }
+
+  public void testGuardIsAvailableViaDocumentRangeMarkerTree() {
+    myFixture.configureByText("x.txt", "0123456789");
+    createGuard(0, 1);
+    var collector = new CommonProcessors.CollectProcessor<>();
+    getDocument().processRangeMarkers(collector);
+    assertEquals("guarded block expected to be available via range marker tree", 1, collector.getResults().size());
+  }
+
+  public void testGuardedBlockApiIsNotBypassed() {
+    myFixture.configureByText("x.txt", "0123456789");
+    RangeMarker guard = createGuard(0, 1);
+    assertThrows(Exception.class, () -> getGuardedBlocks().add(guard));
+    assertThrows(Exception.class, () -> getGuardedBlocks().clear());
+    assertThrows(Exception.class, () -> getGuardedBlocks().remove(guard));
+    assertEquals("guarded block list must not be modified directly", 1, getGuardedBlocks().size());
+    assertNotEmpty(getGuardedBlocks());
+  }
+
+  @SuppressWarnings("CallToSystemGC")
+  public void testGuardIsNotCollectedByGC() throws InterruptedException {
+    myFixture.configureByText("x.txt", "0123456789");
+    createGuard(0, 1);
+    System.gc(); Thread.sleep(200);
+    System.gc(); Thread.sleep(200);
+    List<RangeMarker> blocks = getGuardedBlocks();
+    RangeMarker guard = blocks.get(0);
+
+    assertTrue("guarded block expected to be valid", guard.isValid());
+    assertEquals("guarded block bounds expected to be preserved", new TextRange(0, 1), guard.getTextRange());
+    assertEquals("expected only one guarded block in the document", 1, blocks.size());
+  }
+
+  public void testRemovedGuardIsDisposed() {
+    myFixture.configureByText("x.txt", "0123456789");
+    RangeMarker guard = createGuard(0, 1);
+    getDocument().removeGuardedBlock(guard);
+
+    assertEmpty("expected no guarded block in document", getDocument().getGuardedBlocks());
+    assertFalse("removed guard expected to be not valid", guard.isValid());
+
+    var collector = new CommonProcessors.CollectProcessor<>();
+    getDocument().processRangeMarkers(collector);
+    assertEmpty("removed guard expected to be unregistered from range tree", collector.getResults());
+  }
+
+  private @NotNull List<RangeMarker> getGuardedBlocks() {
+    return getDocument().getGuardedBlocks();
+  }
+
+  private @NotNull DocumentEx getDocument() {
+    return ((DocumentEx)myFixture.getEditor().getDocument());
   }
 }
