@@ -51,13 +51,16 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.jetbrains.WindowDecorations.CustomTitleBar
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.BorderLayout
 import java.awt.Rectangle
 import java.awt.Window
+import java.awt.event.MouseMotionAdapter
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
@@ -92,10 +95,11 @@ abstract class ProjectFrameHelper internal constructor(
   @Internal
   protected open val mainMenuActionGroup: ActionGroup? = null
 
-  @Internal
-  protected val rootPane: IdeRootPane
-
+  private val glassPane: IdeGlassPaneImpl
   private val frameHeaderHelper: ProjectFrameCustomHeaderHelper
+
+  @Internal
+  protected val contentPane: JPanel
 
   private var statusBar: IdeStatusBarImpl? = null
 
@@ -110,12 +114,14 @@ abstract class ProjectFrameHelper internal constructor(
     frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
     frame.addWindowListener(WindowCloseListener)
 
-    @Suppress("LeakingThis")
-    rootPane = createIdeRootPane()
-    frame.doSetRootPane(rootPane)
+    val rootPane = IdeRootPane()
+    contentPane = createContentPane()
+    rootPane.contentPane = contentPane
 
-    val glassPane = IdeGlassPaneImpl(rootPane, loadingState, cs.childScope())
+    glassPane = IdeGlassPaneImpl(rootPane, loadingState, cs.childScope())
     rootPane.overrideGlassPane(glassPane)
+
+    frame.doSetRootPane(rootPane)
 
     frameDecorator = IdeFrameDecorator.decorate(frame, glassPane, cs.childScope())
     // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane via
@@ -173,6 +179,22 @@ abstract class ProjectFrameHelper internal constructor(
     })
   }
 
+  private fun createContentPane(): JPanel {
+    val contentPane = JPanel(BorderLayout()).apply {
+      background = JBColor.PanelBackground
+
+      // listen to mouse motion events for a11y
+      addMouseMotionListener(object : MouseMotionAdapter() {})
+      putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
+    }
+
+    contentPane.add(createCenterComponent(), BorderLayout.CENTER)
+    return contentPane
+  }
+
+  @Internal
+  protected abstract fun createCenterComponent(): JComponent
+
   companion object {
     @JvmStatic
     fun getFrameHelper(window: Window?): ProjectFrameHelper? {
@@ -195,10 +217,6 @@ abstract class ProjectFrameHelper internal constructor(
     internal fun appendTitlePart(sb: StringBuilder, s: String?) {
       appendTitlePart(sb, s, " \u2013 ")
     }
-  }
-
-  internal open fun createIdeRootPane(): IdeRootPane {
-    return IdeRootPane(parentCs = cs, frame = frame)
   }
 
   private val isInitialized = AtomicBoolean()
@@ -243,7 +261,11 @@ abstract class ProjectFrameHelper internal constructor(
     }
     application.messageBus.connect(cs).subscribe(UISettingsListener.TOPIC, UISettingsListener(::updateStatusBarVisibility))
     updateStatusBarVisibility()
-    rootPane.installStatusBar(statusBar)
+    this.statusBar = statusBar
+    val component = statusBar.component
+    if (component != null) {
+      contentPane.add(component, BorderLayout.SOUTH)
+    }
   }
 
   @Internal
@@ -253,7 +275,7 @@ abstract class ProjectFrameHelper internal constructor(
   }
 
   fun postInit() {
-    (rootPane.glassPane as IdeGlassPaneImpl).installPainters()
+    glassPane.installPainters()
     if (SystemInfoRt.isMac) {
       MouseGestureManager.getInstance().add(this)
     }
@@ -274,8 +296,6 @@ abstract class ProjectFrameHelper internal constructor(
   }
 
   internal fun getCustomTitleBar(): CustomTitleBar? = frameHeaderHelper.getCustomTitleBar()
-
-  override fun getNorthExtension(key: String): JComponent? = project?.let { rootPane.findNorthUiComponentByKey(key = key) }
 
   protected open fun getTitleInfoProviders(): List<TitleInfoProvider> {
     return TitleInfoProvider.EP.extensionList
@@ -327,15 +347,17 @@ abstract class ProjectFrameHelper internal constructor(
   }
 
   fun updateView() {
-    val rootPane = rootPane
     frameHeaderHelper.launchToolbarUpdate()
-    frameHeaderHelper.launchMainMenuActionsUpdate()
-    rootPane.updateNorthComponents()
+    updateMainMenuActions()
+    updateContentComponents()
   }
 
   fun updateMainMenuActions() {
     frameHeaderHelper.launchMainMenuActionsUpdate()
   }
+
+  @Internal
+  protected open fun updateContentComponents() = Unit
 
   override fun getCurrentAccessibleContext(): AccessibleContext = frame.accessibleContext
 
@@ -368,8 +390,7 @@ abstract class ProjectFrameHelper internal constructor(
     frameDecorator?.setProject()
   }
 
-  internal suspend fun setProject(project: Project) {
-    rootPane.setProject(project)
+  internal open suspend fun setProject(project: Project) {
     frameHeaderHelper.setProject(project)
     statusBar?.let {
       project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
@@ -388,8 +409,8 @@ abstract class ProjectFrameHelper internal constructor(
 
   private fun applyInitBounds() {
     if (isInFullScreen) {
-      val bounds = rootPane.getClientProperty(INIT_BOUNDS_KEY)
-      rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
+      val bounds = frame.rootPane.getClientProperty(INIT_BOUNDS_KEY)
+      frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
       if (bounds is Rectangle) {
         ProjectFrameBounds.getInstance(project!!).markDirty(bounds)
         IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for full screen from client property: $bounds" }
@@ -421,7 +442,7 @@ abstract class ProjectFrameHelper internal constructor(
 
     // clear both our and swing hard refs
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      rootPane.removeNotify()
+      frame.rootPane.removeNotify()
     }
 
     if (!WindowManagerEx.getInstanceEx().isFrameReused(this)) {

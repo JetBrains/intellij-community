@@ -4,60 +4,29 @@ package com.intellij.openapi.wm.impl
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension
-import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.*
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.*
-import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.mac.MacWinTabsHandler
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
-import java.awt.event.MouseMotionAdapter
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 
-private val EXTENSION_KEY = Key.create<String>("extensionKey")
-
-@Suppress("LeakingThis")
+/**
+ * A custom root pane that supports a custom frame title, macOS tabs and an additional toolbar below the menu bar
+ */
 @ApiStatus.Internal
-open class IdeRootPane internal constructor(
-  parentCs: CoroutineScope,
-  frame: IdeFrameImpl,
-) : JRootPane() {
-  protected val coroutineScope = parentCs.childScope("IdeRootPane", Dispatchers.Default)
-
+class IdeRootPane internal constructor() : JRootPane() {
   private var customFrameTitle: JComponent? = null
   private val macTabsHandler: JComponent?
   private var toolbar: JComponent? = null
 
-  private var statusBar: StatusBar? = null
-
-  private val northPanel = JBBox.createVerticalBox()
-
-  private var toolWindowPane: ToolWindowPane? = null
   private var fixedGlassPane: Boolean = false
-
-  protected open val isLightEdit: Boolean
-    get() = false
 
   init {
     if (SystemInfoRt.isWindows) {
@@ -74,24 +43,6 @@ open class IdeRootPane internal constructor(
     else {
       null
     }
-
-    val contentPane = contentPane
-    // listen to mouse motion events for a11y
-    contentPane.addMouseMotionListener(object : MouseMotionAdapter() {})
-
-    putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
-
-    contentPane.add(northPanel, BorderLayout.NORTH)
-
-    @Suppress("LeakingThis")
-    contentPane.add(createCenterComponent(frame), BorderLayout.CENTER)
-  }
-
-  protected open fun createCenterComponent(frame: JFrame): Component {
-    val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
-    val pane = ToolWindowPane.create(frame, coroutineScope, paneId)
-    toolWindowPane = pane
-    return pane.buttonManager.wrapWithControls(pane)
   }
 
   override fun getAccessibleContext(): AccessibleContext {
@@ -109,11 +60,9 @@ open class IdeRootPane internal constructor(
     return accessibleContext
   }
 
-  open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
-
   override fun createRootLayout(): LayoutManager = CustomHeaderRootLayout()
 
-  final override fun setGlassPane(glass: Component?) {
+  override fun setGlassPane(glass: Component?) {
     check(!fixedGlassPane) { "Setting of glass pane for IdeFrame is prohibited" }
     super.setGlassPane(glass)
   }
@@ -128,8 +77,6 @@ open class IdeRootPane internal constructor(
    */
   override fun removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      coroutineScope.cancel()
-      statusBar = null
       jMenuBar = null
       if (customFrameTitle != null) {
         layeredPane.remove(customFrameTitle)
@@ -145,36 +92,6 @@ open class IdeRootPane internal constructor(
     return result
   }
 
-  override fun createContentPane(): Container {
-    val contentPane = JPanel(BorderLayout())
-    contentPane.background = JBColor.PanelBackground
-    return contentPane
-  }
-
-  fun updateNorthComponents() {
-    if (isLightEdit) {
-      return
-    }
-
-    for (i in 0 until componentCount) {
-      val component = northPanel.getComponent(i)
-      if (ClientProperty.isSet(component, EXTENSION_KEY)) {
-        component.revalidate()
-      }
-    }
-    contentPane!!.revalidate()
-  }
-
-  @RequiresEdt
-  internal fun installStatusBar(statusBar: StatusBar) {
-    check(this.statusBar == null) { "Updating a status bar is ot supported" }
-    this.statusBar = statusBar
-    val component = statusBar.component
-    if (component != null) {
-      contentPane!!.add(component, BorderLayout.SOUTH)
-    }
-  }
-
   @RequiresEdt
   internal fun installToolbar(component: JComponent) {
     check(toolbar == null) { "Toolbar update is not supported" }
@@ -188,59 +105,6 @@ open class IdeRootPane internal constructor(
     layeredPane.add(component, (JLayeredPane.DEFAULT_LAYER - 3) as Any)
     customFrameTitle = component
   }
-
-  suspend fun setProject(project: Project) {
-    installNorthComponents(project)
-  }
-
-  private suspend fun installNorthComponents(project: Project) {
-    if (isLightEdit) {
-      return
-    }
-
-    val northExtensions = IdeRootPaneNorthExtension.EP_NAME.extensionList
-    if (northExtensions.isEmpty()) {
-      return
-    }
-
-    for (extension in northExtensions) {
-      val flow = extension.component(project = project, isDocked = false, statusBar = statusBar!!)
-      val key = extension.key
-      if (flow != null) {
-        coroutineScope.launch(ModalityState.any().asContextElement()) {
-          flow.collect(FlowCollector { component ->
-            withContext(Dispatchers.EDT) {
-              if (component == null) {
-                val count = northPanel.componentCount
-                for (i in count - 1 downTo 0) {
-                  val c = northPanel.getComponent(i)
-                  if (ClientProperty.isSet(c, EXTENSION_KEY, key)) {
-                    northPanel.remove(i)
-                    break
-                  }
-                }
-              }
-              else {
-                ClientProperty.put(component, EXTENSION_KEY, key)
-                northPanel.add(component)
-              }
-            }
-          })
-        }
-        continue
-      }
-
-      withContext(Dispatchers.EDT) {
-        extension.createComponent(project, isDocked = false)?.let {
-          ClientProperty.put(it, EXTENSION_KEY, key)
-          northPanel.add(it)
-        }
-      }
-    }
-  }
-
-  fun findNorthUiComponentByKey(key: String): JComponent? =
-    northPanel.components.firstOrNull { ClientProperty.isSet(it, EXTENSION_KEY, key) } as? JComponent
 
   /**
    * A custom layout which supports a custom frame title [customFrameTitle], macOS tabs handler [macTabsHandler],

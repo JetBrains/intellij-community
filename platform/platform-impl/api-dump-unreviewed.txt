@@ -18275,7 +18275,6 @@ a:com.intellij.openapi.wm.impl.ProjectFrameHelper
 - getCurrentAccessibleContext():javax.accessibility.AccessibleContext
 - f:getFrame():com.intellij.openapi.wm.impl.IdeFrameImpl
 - sf:getFrameHelper(java.awt.Window):com.intellij.openapi.wm.impl.ProjectFrameHelper
-- getNorthExtension(java.lang.String):javax.swing.JComponent
 - getProject():com.intellij.openapi.project.Project
 - getStatusBar():com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - p:getTitleInfoProviders():java.util.List

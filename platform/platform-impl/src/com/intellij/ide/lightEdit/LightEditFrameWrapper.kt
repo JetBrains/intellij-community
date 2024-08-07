@@ -28,20 +28,17 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.MacMainFrameDecorator.FSAdapter
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.awt.Component
 import java.awt.Dimension
-import javax.swing.JFrame
+import javax.swing.JComponent
 
 @RequiresEdt
 internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): LightEditFrameWrapper {
@@ -71,7 +68,11 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(): IdeRootPane = LightEditRootPane(parentCs = cs, frame = frame)
+  override fun createCenterComponent(): JComponent {
+    val panel = LightEditPanel(LightEditUtil.requireProject())
+    editPanel = panel
+    return panel
+  }
 
   override fun createStatusBar(): IdeStatusBarImpl {
     return object : IdeStatusBarImpl(parentCs = cs, getProject = { project }, addToolWindowWidget = false) {
@@ -134,22 +135,6 @@ internal class LightEditFrameWrapper(
     super.dispose()
   }
 
-  private inner class LightEditRootPane(parentCs: CoroutineScope, frame: IdeFrameImpl)
-    : IdeRootPane(parentCs = parentCs, frame = frame), LightEditCompatible {
-    override val isLightEdit: Boolean
-      get() = true
-
-    override fun createCenterComponent(frame: JFrame): Component {
-      val panel = LightEditPanel(LightEditUtil.requireProject())
-      editPanel = panel
-      return panel
-    }
-
-    override fun getToolWindowPane(): ToolWindowPane {
-      throw IllegalStateException("Tool windows are unavailable in LightEdit")
-    }
-  }
-
   fun setFrameTitleUpdateEnabled(frameTitleUpdateEnabled: Boolean) {
     this.frameTitleUpdateEnabled = frameTitleUpdateEnabled
   }
@@ -159,6 +144,8 @@ internal class LightEditFrameWrapper(
       super.setFrameTitle(text)
     }
   }
+
+  override fun getNorthExtension(key: String): JComponent? = null
 }
 
 /**
