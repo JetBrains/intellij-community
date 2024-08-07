@@ -27,6 +27,7 @@ class ExternalJavaConfigurationActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
+    // Delay a little bit not to overload project opening
     delay(5.seconds)
 
     val configWatcherService = project.service<ExternalJavaConfigurationService>()
