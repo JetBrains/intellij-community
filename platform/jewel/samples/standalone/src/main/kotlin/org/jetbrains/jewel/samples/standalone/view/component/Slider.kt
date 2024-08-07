@@ -5,11 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.Slider
 
 @Composable
-@View(title = "Sliders", position = 12, icon = "icons/components/slider.svg")
 fun Sliders() {
     var value1 by remember { mutableStateOf(.45f) }
     Slider(

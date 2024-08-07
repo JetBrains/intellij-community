@@ -15,11 +15,9 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.view.markdown.JewelReadme
 import org.jetbrains.jewel.samples.standalone.view.markdown.MarkdownEditor
 import org.jetbrains.jewel.samples.standalone.view.markdown.MarkdownPreview
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 
-@View(title = "Markdown", position = 2, icon = "icons/markdown.svg")
 @Composable
 fun MarkdownDemo() {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {

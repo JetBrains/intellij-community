@@ -17,7 +17,6 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.RadioButtonChip
@@ -29,7 +28,6 @@ import org.jetbrains.jewel.ui.painter.hints.Selected
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-@View(title = "Welcome", position = 0, icon = "icons/meetNewUi.svg")
 fun WelcomeView() {
     Column(
         modifier =

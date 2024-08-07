@@ -10,12 +10,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.TriStateCheckboxRow
 
 @Composable
-@View(title = "Checkboxes", position = 1, icon = "icons/components/checkBox.svg")
 fun Checkboxes() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),

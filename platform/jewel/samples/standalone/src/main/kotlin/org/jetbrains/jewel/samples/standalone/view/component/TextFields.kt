@@ -25,7 +25,6 @@ import org.jetbrains.jewel.intui.standalone.styling.dark
 import org.jetbrains.jewel.intui.standalone.styling.defaults
 import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
@@ -38,7 +37,6 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 
 @Composable
-@View(title = "TextFields", position = 9, icon = "icons/components/textField.svg")
 fun TextFields() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),

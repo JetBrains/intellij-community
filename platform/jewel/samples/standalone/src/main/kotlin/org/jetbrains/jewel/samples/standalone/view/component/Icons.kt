@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.PlatformIcon
 import org.jetbrains.jewel.ui.component.Text
@@ -29,7 +28,6 @@ import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
-@View(title = "Icons", position = 6, icon = "icons/components/toolbar.svg")
 internal fun Icons() {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),

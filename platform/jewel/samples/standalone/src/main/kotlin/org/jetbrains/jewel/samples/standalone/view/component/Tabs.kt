@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.SimpleTabContent
@@ -39,7 +38,6 @@ import org.jetbrains.jewel.ui.util.thenIf
 import kotlin.math.max
 
 @Composable
-@View(title = "Tabs", position = 7, icon = "icons/components/tabs.svg")
 fun Tabs() {
     Column {
         Text("Default tabs", Modifier.fillMaxWidth())

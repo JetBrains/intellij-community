@@ -34,7 +34,6 @@ import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.Chip
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.GroupHeader
@@ -47,8 +46,7 @@ import org.jetbrains.jewel.ui.theme.colorPalette
 import kotlin.random.Random
 
 @Composable
-@View(title = "Chips and trees", position = 11, icon = "icons/components/tree.svg")
-fun ChipsAndTree() {
+fun ChipsAndTrees() {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             GroupHeader(text = "Chips", modifier = Modifier.fillMaxWidth())

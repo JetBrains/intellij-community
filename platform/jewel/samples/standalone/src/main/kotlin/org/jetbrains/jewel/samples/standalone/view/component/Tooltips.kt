@@ -6,12 +6,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
 
 @Composable
-@View(title = "Tooltips", position = 10, icon = "icons/components/tooltip.svg")
 fun Tooltips() {
     Tooltip(tooltip = {
         Text("This is a tooltip")

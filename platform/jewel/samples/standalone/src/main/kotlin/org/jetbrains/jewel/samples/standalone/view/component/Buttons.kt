@@ -13,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.ActionButton
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.IconActionButton
@@ -32,7 +31,6 @@ import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.hints.Stroke
 
 @Composable
-@View(title = "Buttons", position = 0, icon = "icons/components/button.svg")
 fun Buttons() {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),

@@ -8,23 +8,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.SegmentedControl
 import org.jetbrains.jewel.ui.component.SegmentedControlButtonData
 import org.jetbrains.jewel.ui.component.Text
 
 @Composable
-@View(title = "Segmented Controls", position = 14, icon = "icons/components/segmentedControl.svg")
 fun SegmentedControls() {
-    SegmentedControlShowcase()
-}
-
-@Composable
-private fun SegmentedControlShowcase() {
     var selectedButtonIndex by remember { mutableStateOf(0) }
-
     val buttonIds = listOf(0, 1, 2, 3)
-
     val buttons =
         remember(selectedButtonIndex) {
             buttonIds.map { index ->
@@ -37,7 +28,6 @@ private fun SegmentedControlShowcase() {
                 )
             }
         }
-
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SegmentedControl(
             buttons = buttons,

@@ -9,7 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.Text
@@ -19,7 +18,6 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import kotlin.random.Random
 
 @Composable
-@View(title = "Dropdowns", position = 3, icon = "icons/components/comboBox.svg")
 fun Dropdowns() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),

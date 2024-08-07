@@ -9,12 +9,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 
 @Composable
-@View(title = "Radio Buttons", position = 2, icon = "icons/components/radioButton.svg")
 fun RadioButtons() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),

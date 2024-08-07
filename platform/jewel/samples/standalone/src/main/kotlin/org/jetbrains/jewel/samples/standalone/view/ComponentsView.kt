@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.viewmodel.ComponentsViewModel
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.samples.standalone.viewmodel.ViewInfo
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
@@ -33,7 +32,6 @@ import org.jetbrains.jewel.ui.theme.tooltipStyle
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-@View(title = "Components", position = 1, icon = "icons/structure.svg")
 fun ComponentsView() {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
         ComponentsToolBar()
@@ -52,7 +50,7 @@ fun ComponentsToolBar() {
                 selected = ComponentsViewModel.currentView == it,
                 onClick = { ComponentsViewModel.currentView = it },
                 modifier = Modifier.size(40.dp).padding(5.dp),
-                tooltip = { Text("Show ${it.title}") },
+                tooltip = { Text(it.title) },
                 tooltipStyle =
                     TooltipStyle(
                         JewelTheme.tooltipStyle.colors,

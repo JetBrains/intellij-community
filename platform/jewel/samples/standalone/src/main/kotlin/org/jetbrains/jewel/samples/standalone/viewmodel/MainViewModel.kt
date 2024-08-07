@@ -1,12 +1,15 @@
 package org.jetbrains.jewel.samples.standalone.viewmodel
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
-import org.jetbrains.jewel.samples.standalone.reflection.findViews
+import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
+import org.jetbrains.jewel.samples.standalone.view.ComponentsView
+import org.jetbrains.jewel.samples.standalone.view.MarkdownDemo
+import org.jetbrains.jewel.samples.standalone.view.WelcomeView
 
 object MainViewModel {
     fun onNavigateTo(destination: String) {
@@ -25,7 +28,26 @@ object MainViewModel {
                 Color(0xFF654B40)
             }
 
-    val views = findViews("org.jetbrains.jewel.samples.standalone.view").toMutableStateList()
+    val views = mainMenuItems
 
     var currentView by mutableStateOf(views.first())
 }
+
+private val mainMenuItems =
+    mutableStateListOf(
+        ViewInfo(
+            title = "Welcome",
+            iconKey = StandaloneSampleIcons.welcome,
+            content = { WelcomeView() },
+        ),
+        ViewInfo(
+            title = "Components",
+            iconKey = StandaloneSampleIcons.componentsMenu,
+            content = { ComponentsView() },
+        ),
+        ViewInfo(
+            title = "Markdown",
+            iconKey = StandaloneSampleIcons.markdown,
+            content = { MarkdownDemo() },
+        ),
+    )

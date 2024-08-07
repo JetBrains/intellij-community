@@ -31,7 +31,6 @@ import org.jetbrains.jewel.intui.standalone.styling.macOsDark
 import org.jetbrains.jewel.intui.standalone.styling.macOsLight
 import org.jetbrains.jewel.intui.standalone.styling.winOsDark
 import org.jetbrains.jewel.intui.standalone.styling.winOsLight
-import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Divider
@@ -44,7 +43,6 @@ import org.jetbrains.skiko.hostOs
 import java.util.Locale
 
 @Composable
-@View(title = "Scrollbars", position = 14, icon = "icons/components/scrollbar.svg")
 fun Scrollbars() {
     Column {
         val isDark = JewelTheme.isDark
