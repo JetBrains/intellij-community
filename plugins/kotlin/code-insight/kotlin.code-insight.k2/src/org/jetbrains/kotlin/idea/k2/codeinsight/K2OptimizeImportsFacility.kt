@@ -13,13 +13,17 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
 import org.jetbrains.kotlin.idea.k2.codeinsight.imports.UsedReferencesCollector
+import org.jetbrains.kotlin.idea.k2.codeinsight.imports.buildOptimizedImports
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
-    private class K2ImportData(override val unusedImports: List<KtImportDirective>) : KotlinOptimizeImportsFacility.ImportData
+    private class K2ImportData(
+        override val unusedImports: List<KtImportDirective>,
+        val usedReferencesData: UsedReferencesCollector.Result,
+    ) : KotlinOptimizeImportsFacility.ImportData
 
     override fun analyzeImports(file: KtFile): KotlinOptimizeImportsFacility.ImportData? {
         if (!canOptimizeImports(file)) return null
@@ -38,7 +42,7 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
         }
 
         val unusedImports = computeUnusedImports(file, importAnalysis)
-        return K2ImportData(unusedImports.toList())
+        return K2ImportData(unusedImports.toList(), importAnalysis)
     }
 
     @OptIn(KaPlatformInterface::class)
@@ -106,14 +110,8 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
     ): List<ImportPath>? {
         require(data is K2ImportData)
 
-        val usedImports = (file.importDirectives - data.unusedImports).mapNotNull { it.importPath }
-        val sortedUsedImports = usedImports.sortedWith(KotlinImportPathComparator.create(file))
-
-        if (data.unusedImports.isEmpty() && usedImports == sortedUsedImports) {
-            // Imports did not change, do nothing
-            return null
+        analyze(file) {
+            return buildOptimizedImports(file, data.usedReferencesData)
         }
-
-        return sortedUsedImports
     }
 }

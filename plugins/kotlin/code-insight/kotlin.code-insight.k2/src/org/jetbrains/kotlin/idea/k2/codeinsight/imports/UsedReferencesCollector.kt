@@ -17,7 +17,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
     data class Result(
         val usedDeclarations: Map<FqName, Set<Name>>,
         val unresolvedNames: Set<Name>,
-        val importableSymbols: Set<ImportableKaSymbolPointer>,
+        val usedSymbols: Set<ImportableKaSymbolPointer>,
     )
 
     private val unresolvedNames: HashSet<Name> = hashSetOf()
