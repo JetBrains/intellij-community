@@ -19,7 +19,7 @@ class NotebookAboveCellDelimiterPanel(
   private val standardDelimiterHeight = editor.notebookAppearance.cellBorderHeight / 2
   private val delimiterPanelHeight = when (isFirstCell) {
     true -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
-    false ->  standardDelimiterHeight
+    false ->  editor.notebookAppearance.distanceBetweenCells
   }
 
   val project get() = editor.project ?: ProjectManager.getInstance().defaultProject

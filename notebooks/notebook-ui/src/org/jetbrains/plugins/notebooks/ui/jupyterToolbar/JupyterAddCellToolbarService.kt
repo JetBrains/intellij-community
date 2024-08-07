@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
 import java.awt.MouseInfo
 import java.awt.Point
@@ -125,7 +126,7 @@ class JupyterAddCellToolbarService: Disposable {
     fun getInstance(project: Project): JupyterAddCellToolbarService = project.getService(JupyterAddCellToolbarService::class.java)
     private const val ACTION_GROUP_ID = "Jupyter.AboveCellPanelNew"
     private const val TOOLBAR_HIDE_DELAY = 600
-    private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.cellBorderHeight / 2
+    private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.distanceBetweenCells
 
     fun calculateToolbarBounds(
       editor: Editor,
@@ -139,7 +140,7 @@ class JupyterAddCellToolbarService: Disposable {
       val toolbarWidth = toolbar.preferredSize.width
 
       val xOffset = (panelWidth - toolbarWidth) / 2
-      val yOffset = (panelHeight - (1.5 * DELIMITER_SIZE) - (toolbarHeight / 2)).toInt()
+      val yOffset = (panelHeight - DELIMITER_SIZE - (toolbarHeight / 2))
 
       val editorComponent = editor.contentComponent
       val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editorComponent)
