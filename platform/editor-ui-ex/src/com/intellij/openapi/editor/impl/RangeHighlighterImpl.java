@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -28,6 +29,7 @@ import java.util.Objects;
  * @author max
  */
 sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx permits PersistentRangeHighlighterImpl {
+  private static final Logger LOG = Logger.getInstance(RangeHighlighterImpl.class);
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
   private static final Color NULL_COLOR = new Color(0, 0, 0); // must be a new instance to work as a sentinel
   private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
@@ -79,6 +81,9 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
     myModel = model;
 
     registerInTree(start, end, greedyToLeft, greedyToRight, layer);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("RangeHighlighterImpl: create " + this +" ("+getTextRange().substring(getDocument().getText())+")");
+    }
   }
 
   private boolean isFlagSet(@Flag byte mask) {
@@ -438,13 +443,15 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
 
   @Override
   protected void unregisterInTree() {
-    if (!isValid()) return;
     // we store highlighters in MarkupModel
     getMarkupModel().removeHighlighter(this);
   }
 
   @Override
   public void dispose() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("RangeHighlighterImpl: dispose " + this);
+    }
     super.dispose();
     GutterIconRenderer renderer = getGutterIconRenderer();
     if (renderer instanceof Disposable disposableRenderer) {
