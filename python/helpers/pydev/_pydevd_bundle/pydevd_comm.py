@@ -64,19 +64,21 @@ each command has a format:
 '''
 
 import itertools
+import json
+import weakref
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, \
+    SO_REUSEADDR, SHUT_RDWR
 
 from _pydev_bundle.pydev_imports import _queue
+from _pydev_bundle.pydev_override import overrides
 from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import time
-from _pydev_imps._pydev_saved_modules import socket
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
-    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, GlobalDebuggerHolder, \
-    get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR
-from _pydev_bundle.pydev_override import overrides
-import json
-import weakref
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, \
+    IS_PY2, IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, \
+    IS_IRONPYTHON, \
+    GlobalDebuggerHolder, \
+    SINGLE_PORT_MODE
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
@@ -94,11 +96,9 @@ import pydevd_tracing
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_vm_type
 from _pydevd_bundle.smart_step_into import find_stepping_variants
-from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client, is_real_file
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, is_real_file
 import pydevd_file_utils
-import os
 import sys
-import inspect
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string, \
     get_non_pydevd_threads, is_pandas_container, is_numpy_container
@@ -126,25 +126,20 @@ get_file_type = DONT_TRACE.get
 
 # CMD_XXX constants imported for backward compatibility
 from _pydevd_bundle.pydevd_comm_constants import (
-    ID_TO_MEANING, CMD_RUN, CMD_LIST_THREADS, CMD_THREAD_CREATE, CMD_THREAD_KILL,
-    CMD_THREAD_SUSPEND, CMD_THREAD_RUN, CMD_STEP_INTO, CMD_STEP_OVER, CMD_STEP_RETURN, CMD_GET_VARIABLE,
-    CMD_SET_BREAK, CMD_REMOVE_BREAK, CMD_EVALUATE_EXPRESSION, CMD_GET_FRAME,
-    CMD_EXEC_EXPRESSION, CMD_WRITE_TO_CONSOLE, CMD_CHANGE_VARIABLE, CMD_RUN_TO_LINE,
-    CMD_RELOAD_CODE, CMD_GET_COMPLETIONS, CMD_CONSOLE_EXEC, CMD_ADD_EXCEPTION_BREAK,
-    CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK,
-    CMD_REMOVE_DJANGO_EXCEPTION_BREAK, CMD_SET_NEXT_STATEMENT, CMD_SMART_STEP_INTO,
-    CMD_EXIT, CMD_SIGNATURE_CALL_TRACE, CMD_SET_PY_EXCEPTION, CMD_GET_FILE_CONTENTS,
-    CMD_SET_PROPERTY_TRACE, CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION,
-    CMD_GET_BREAKPOINT_EXCEPTION, CMD_STEP_CAUGHT_EXCEPTION, CMD_SEND_CURR_EXCEPTION_TRACE,
-    CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE,
-    CMD_SHOW_CONSOLE, CMD_GET_ARRAY, CMD_STEP_INTO_MY_CODE, CMD_GET_CONCURRENCY_EVENT,
-    CMD_SHOW_RETURN_VALUES, CMD_SET_UNIT_TEST_DEBUGGING_MODE, CMD_INPUT_REQUESTED, CMD_GET_DESCRIPTION, CMD_PROCESS_CREATED,
-    CMD_SHOW_CYTHON_WARNING, CMD_LOAD_FULL_VALUE, CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR,
-    CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_PYDEVD_JSON_CONFIG,
-    CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, CMD_THREAD_RESUME_SINGLE_NOTIFICATION,
-    CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, CMD_SET_PROJECT_ROOTS, CMD_VERSION,
+    ID_TO_MEANING, CMD_THREAD_CREATE, CMD_THREAD_KILL,
+    CMD_THREAD_SUSPEND, CMD_THREAD_RUN, CMD_GET_VARIABLE,
+    CMD_EVALUATE_EXPRESSION, CMD_GET_FRAME,
+    CMD_WRITE_TO_CONSOLE, CMD_GET_COMPLETIONS, CMD_LOAD_SOURCE, CMD_SET_NEXT_STATEMENT,
+    CMD_EXIT, CMD_GET_FILE_CONTENTS,
+    CMD_EVALUATE_CONSOLE_EXPRESSION, CMD_RUN_CUSTOM_OPERATION,
+    CMD_GET_BREAKPOINT_EXCEPTION, CMD_SEND_CURR_EXCEPTION_TRACE,
+    CMD_SEND_CURR_EXCEPTION_TRACE_PROCEEDED, CMD_SHOW_CONSOLE, CMD_GET_ARRAY,
+    CMD_INPUT_REQUESTED, CMD_GET_DESCRIPTION, CMD_PROCESS_CREATED,
+    CMD_SHOW_CYTHON_WARNING, CMD_LOAD_FULL_VALUE, CMD_GET_THREAD_STACK,
+    CMD_GET_EXCEPTION_DETAILS, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, CMD_THREAD_RESUME_SINGLE_NOTIFICATION,
+    CMD_GET_NEXT_STATEMENT_TARGETS, CMD_VERSION,
     CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS, CMD_DATAVIEWER_ACTION,
-    CMD_TABLE_EXEC, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_SET_USER_TYPE_RENDERERS)
+    CMD_TABLE_EXEC)
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
 #this number can be changed if there's need to do so
 
@@ -1376,7 +1371,7 @@ class InternalDataViewerAction(InternalThreadCommand):
 #=======================================================================================================================
 class InternalTableCommand(InternalThreadCommand):
     def __init__(self, sequence, thread_id, frame_id, init_command, command_type,
-                 start_index, end_index):
+                 start_index, end_index, format):
         super().__init__(thread_id)
         self.sequence = sequence
         self.frame_id = frame_id
@@ -1384,6 +1379,7 @@ class InternalTableCommand(InternalThreadCommand):
         self.command_type = command_type
         self.start_index = start_index
         self.end_index = end_index
+        self.format = format
 
     def do_it(self, dbg):
         try:
@@ -1401,7 +1397,8 @@ class InternalTableCommand(InternalThreadCommand):
             dbg.writer.add_command(cmd)
 
     def exec_command(self, frame):
-        return exec_table_command(self.init_command, self.command_type, self.start_index, self.end_index,
+        return exec_table_command(self.init_command, self.command_type,
+                                  self.start_index, self.end_index, self.format,
                                   frame.f_globals, frame.f_locals)
 
 
