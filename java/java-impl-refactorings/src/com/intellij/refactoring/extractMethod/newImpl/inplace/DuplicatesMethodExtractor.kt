@@ -12,6 +12,7 @@ import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -29,7 +30,8 @@ import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replacePsiRange
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replaceWithMethod
-import com.intellij.refactoring.extractMethod.newImpl.JavaDuplicatesFinder.Companion.textRangeOf
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.textRangeOf
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.introduceField.ElementToWorkOn
@@ -39,7 +41,14 @@ import com.siyeh.ig.psiutils.SideEffectChecker.mayHaveSideEffects
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetClass: PsiClass, val elements: List<PsiElement>) {
+class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetClass: PsiClass, val rangeToReplace: RangeMarker) {
+
+  internal fun getElements(): List<PsiElement> {
+    val file = targetClass.containingFile
+    val range = rangeToReplace.textRange
+    require(rangeToReplace.isValid)
+    return ExtractSelector().suggestElementsToExtract(file, range)
+  }
 
   companion object {
     private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode
@@ -48,6 +57,8 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
 
     fun create(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): DuplicatesMethodExtractor {
       val file = targetClass.containingFile
+      val document = file.viewProvider.document ?: throw IllegalStateException()
+      val rangeToReplace  = createGreedyRangeMarker(document, textRangeOf(elements.first(), elements.last()))
       JavaDuplicatesFinder.linkCopiedClassMembersWithOrigin(file)
       val copiedFile = file.copy() as PsiFile
       val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
@@ -56,19 +67,18 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
       val range = virtualExpressionRange ?: TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
       val copiedElements = ExtractSelector().suggestElementsToExtract(copiedFile, range)
       val extractOptions = findExtractOptions(copiedClass, copiedElements, methodName, makeStatic)
-      return DuplicatesMethodExtractor(extractOptions, targetClass, elements)
+      return DuplicatesMethodExtractor(extractOptions, targetClass, rangeToReplace)
     }
   }
-
-  private var callsToReplace: List<SmartPsiElementPointer<PsiElement>>? = null
 
   suspend fun extract(): ExtractedElements {
     val file = readAction { targetClass.containingFile }
     val project = file.project
+    val elements = readAction { getElements() }
 
     val preparedElements = readAction { MethodExtractor().prepareRefactoringElements(extractOptions) }
     val (callsPointer, methodPointer) = writeCommandAction(project, ExtractMethodHandler.getRefactoringName()) {
-      val (calls, method) = replaceWithMethod(targetClass, this@DuplicatesMethodExtractor.elements, preparedElements)
+      val (calls, method) = replaceWithMethod(targetClass, elements, preparedElements)
       val methodPointer = SmartPointerManager.createPointer(method)
       val callsPointer = calls.map(SmartPointerManager::createPointer)
       Pair(callsPointer, methodPointer)
@@ -80,14 +90,13 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
       callsPointer.map { it.element ?: throw IllegalStateException() }
     }
 
-    this.callsToReplace = callsPointer
-
     return ExtractedElements(replacedCalls, replacedMethod)
   }
 
   suspend fun replaceDuplicates(editor: Editor, method: PsiMethod, beforeDuplicateReplaced: (candidate: List<PsiElement>) -> Unit = {}) {
     val project = readAction { editor.project } ?: return
-    val calls = readAction { callsToReplace?.map { it.element!! } }?: return
+    val calls = readAction { getElements() }
+    if (calls.isEmpty()) return
     val defaultExtraction = ExtractedElements(calls, method)
 
     val prepareTimeStart = System.currentTimeMillis()
@@ -262,7 +271,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     val initialPosition = editor.caretModel.logicalPosition
     val confirmedDuplicates = mutableListOf<Duplicate>()
     duplicates.forEach { duplicate ->
-      val highlighters = DuplicatesImpl.previewMatch(project, editor, textRangeOf(duplicate.candidate))
+      val highlighters = DuplicatesImpl.previewMatch(project, editor, textRangeOf(duplicate.candidate.first(), duplicate.candidate.last()))
       try {
         val prompt = ReplacePromptDialog(false, JavaRefactoringBundle.message("process.duplicates.title"), project)
         prompt.show()
@@ -343,8 +352,7 @@ fun DuplicatesMethodExtractor.extractInDialog() {
   if (!passFieldsAsParameters) {
     JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = dialogOptions.isStatic
   }
-  val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, targetClass, elements)
-  MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
+  val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, targetClass, rangeToReplace)
   //todo avoid blocking, suspend should be propagated further
   val (_, method) = runWithModalProgressBlocking(extractOptions.project, ExtractMethodHandler.getRefactoringName()) {
     mappedExtractor.extract()

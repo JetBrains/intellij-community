@@ -2,7 +2,6 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
@@ -34,7 +33,6 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val parametrizedEx
 
     private fun getElementInPhysicalFile(element: PsiElement): PsiElement? = element.getCopyableUserData(ELEMENT_IN_PHYSICAL_FILE)
 
-    fun textRangeOf(range: List<PsiElement>) = TextRange(range.first().textRange.startOffset, range.last().textRange.endOffset)
   }
 
   private val pattern: List<PsiElement> = pattern.filterNot(::isNoise)

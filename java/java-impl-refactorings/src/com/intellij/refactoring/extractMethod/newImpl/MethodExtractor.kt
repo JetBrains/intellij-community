@@ -80,6 +80,10 @@ class MethodExtractor {
         return
       }
 
+      readAction {
+        sendRefactoringStartedEvent(elements.toTypedArray())
+      }
+
       val prepareStart = System.currentTimeMillis()
       val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elements)
       if (descriptorsForAllTargetPlaces.isEmpty()) return
@@ -121,7 +125,7 @@ class MethodExtractor {
       try {
         readAction { findAllOptionsToExtract(elements) }
       } catch (exception: ExtractException) {
-        InplaceExtractUtils.showExtractErrorHint(editor, exception)
+        InplaceExtractUtils.showExtractErrorHint(editor, exception.message.orEmpty(), exception.problems)
         emptyList()
       }
     }

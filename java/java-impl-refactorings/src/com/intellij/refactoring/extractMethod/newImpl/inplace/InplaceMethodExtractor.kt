@@ -30,7 +30,6 @@ import com.intellij.refactoring.extractMethod.newImpl.CodeFragmentAnalyzer
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
-import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addInlaySettingsElement
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.checkReferenceIdentifier
@@ -78,20 +77,17 @@ internal class InplaceMethodExtractor(private val editor: Editor,
   private val project = file.project
 
   private fun createExtractor(): DuplicatesMethodExtractor {
-    val elements = ExtractSelector().suggestElementsToExtract(defaultExtractor.targetClass.containingFile, range)
     var options = defaultExtractor.extractOptions
     if (popupProvider.makeStatic == true) {
       val analyzer = CodeFragmentAnalyzer(options.elements)
       options = ExtractMethodPipeline.withForcedStatic(analyzer, options) ?: throw IllegalStateException()
     }
-    return DuplicatesMethodExtractor(options, defaultExtractor.targetClass, elements)
+    val rangeToReplace = createGreedyRangeMarker(editor.document, range)
+    return DuplicatesMethodExtractor(options, defaultExtractor.targetClass, rangeToReplace)
   }
 
   suspend fun extractAndRunTemplate(suggestedNames: List<String>) {
     try {
-      readAction {
-        MethodExtractor.sendRefactoringStartedEvent(extractor.elements.toTypedArray())
-      }
       ExtractMethodHelper.mergeWriteCommands(editor, disposable, ExtractMethodHandler.getRefactoringName())
       val (callElements, method) = extractor.extract()
 
@@ -208,9 +204,9 @@ internal class InplaceMethodExtractor(private val editor: Editor,
     val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
     InplaceExtractMethodCollector.openExtractDialog.log(project, isLinkUsed)
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
-    val elements = ExtractSelector().suggestElementsToExtract(extractor.targetClass.containingFile, range)
     val extractOptions = extractor.extractOptions.copy(methodName = methodName)
-    val extractor = DuplicatesMethodExtractor(extractOptions, extractor.targetClass, elements)
+    val rangeToReplace = createGreedyRangeMarker(editor.document, range)
+    val extractor = DuplicatesMethodExtractor(extractOptions, extractor.targetClass, rangeToReplace)
     extractor.extractInDialog()
   }
 
