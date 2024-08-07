@@ -1,4 +1,11 @@
 /**
+ * What is it?
+ * This build script repackages vanilla jackson-core library without JEP 238 Multi-Release JAR classes.
+ * The produced artifact is used in the Gradle Tooling Extension (Gradle runtime module).
+ *
+ * The re-packaging is required to avoid the bug on the Gradle side (https://github.com/gradle/gradle/issues/25434). Otherwise, there are
+ * no way to use Jackson (and 3rd party libraries that uses Jackson) on the daemon side.
+ *
  * How to run:
  * - `gradle tasks` - to show all the available publishing configurations and tasks
  * - `gradle publishRepackagedJarPublicationToMavenLocal` - to publish the repackaged Jar to the Maven Local repository
@@ -9,6 +16,7 @@ import java.nio.file.Files
 plugins {
   id "base"
   id "maven-publish"
+  id "java"
 }
 
 // ----------------------------------------- CONFIGURATION ----------------------------------------- //
@@ -18,10 +26,12 @@ def libraryArtifactId = "jackson-core"
 def libraryVersion = readProperty("jacksonCoreVersion")
 
 def repackagedGroup = readProperty("intelliJDepsGroupId")
-def repackagedVersionSuffix = "-idea"
+def repackagedVersionSuffix = "-gradle-rt"
 
-def repackagerDir = new File(projectDir, "/build/")
-def repackagerDirTarget = new File(repackagerDir, "/exp")
+def repackagerDirTarget = new File(project.buildDir, "/exp")
+
+def binaryRootDir = new File(repackagerDirTarget, "bin")
+def srcRootDir = new File(repackagerDirTarget, "src")
 
 repositories {
   mavenCentral()
@@ -74,59 +84,74 @@ static void appendNoticeFile(File root) {
   noticeFile.withWriter { writer ->
     writer << "Modifications to the original distribution:\n"
     writer << "The library files are untouched and left as is.\n"
-    writer << "The only change is that the files for JEP 238: Multi-Release JAR Support have been removed from the distribution."
+    writer << "The only change to the original library is that the files for JEP 238: " +
+    "Multi-Release JAR Support\n have been removed from the distribution.\n"
+    writer << "The class org.jetbrains.intellij.deps.jackson.jackson.core.TapiMarkerClass\n has been added to the " +
+    "library to be able to quickly distinguish the repackaged library\n from other versions of Jackson at " +
+    "runtime. \nYou can read the relevant documentation inside the class file."
   }
 }
 
 // ----------------------------------------- TASKS ----------------------------------------- //
 
+tasks.register('copyMarkerBinary', Copy) {
+  group "build"
+  dependsOn 'build'
+
+  from new File(project.buildDir, "classes/java/main") into binaryRootDir
+}
+
+tasks.register('copyMarkerSources', Copy) {
+  group "build"
+
+  from sourceSets.main.java into srcRootDir
+}
+
 tasks.register('disassembleJar', Copy) {
   group "build"
 
-  def target = new File(repackagerDirTarget, "bin")
   from resolveLibraryFiles(libraryGroup, libraryArtifactId, libraryVersion, null)
   exclude 'META-INF/versions/**'
-  into target
+  into binaryRootDir
 
   doLast {
-    appendNoticeFile(target)
+    appendNoticeFile(binaryRootDir)
   }
 }
 
 tasks.register('disassembleSourcesJar', Copy) {
   group "build"
 
-  def target = new File(repackagerDirTarget, "sources")
   from resolveLibraryFiles(libraryGroup, libraryArtifactId, libraryVersion, "sources")
   exclude 'META-INF/versions/**'
-  into target
+  into srcRootDir
 
   doLast {
-    appendNoticeFile(target)
+    appendNoticeFile(srcRootDir)
   }
 }
 
 tasks.register('buildJar', Zip) {
   group "build"
 
-  dependsOn 'disassembleJar'
+  dependsOn 'disassembleJar', 'copyMarkerBinary'
   extension 'jar'
   baseName libraryArtifactId
   version "$libraryVersion$repackagedVersionSuffix"
 
-  from new File(repackagerDirTarget, "bin")
+  from binaryRootDir
 }
 
 tasks.register('buildSourcesJar', Zip) {
   group "build"
 
-  dependsOn 'disassembleSourcesJar'
+  dependsOn 'disassembleSourcesJar', 'copyMarkerSources'
   extension 'jar'
   classifier 'sources'
   baseName libraryArtifactId
   version "$libraryVersion$repackagedVersionSuffix"
 
-  from new File(repackagerDirTarget, "sources")
+  from srcRootDir
 }
 
 // ----------------------------------------- PUBLISHING ----------------------------------------- //
@@ -146,7 +171,7 @@ publishing {
     mavenLocal()
     maven {
       name "JetBrains"
-      url "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies"
+      url = System.getenv('INTELLIJ_DEPENDENCIES_TARGET_REPO_URL')
       credentials {
         username = System.getenv('INTELLIJ_DEPENDENCIES_BOT')
         password = System.getenv('INTELLIJ_DEPENDENCIES_TOKEN')
