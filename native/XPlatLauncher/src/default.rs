@@ -236,17 +236,17 @@ impl DefaultLaunchConfiguration {
     /// the corresponding distribution option must be omitted.
     fn collect_vm_options_from_files(&self, vm_options: &mut Vec<String>) -> Result<()> {
         debug!("[1] Reading main VM options file: {:?}", self.vm_options_path);
-        let dist_vm_options = read_vm_options(&self.vm_options_path)?;
+        let (dist_vm_options, _) = read_vm_options(&self.vm_options_path)?;
 
         debug!("[2] Looking for user VM options file");
-        let (user_vm_options, vm_options_path) = match self.get_user_vm_options_file() {
+        let ((user_vm_options, corrupted), vm_options_path) = match self.get_user_vm_options_file() {
             Ok(path) => {
                 debug!("Reading user VM options file: {:?}", path);
                 (read_vm_options(&path)?, path)
             }
             Err(e) => {
                 debug!("Failed: {}", e.to_string());
-                (Vec::new(), self.vm_options_path.clone())
+                ((Vec::new(), false), self.vm_options_path.clone())
             }
         };
 
@@ -266,6 +266,9 @@ impl DefaultLaunchConfiguration {
         vm_options.extend(user_vm_options);
 
         vm_options.push(jvm_property!("jb.vmOptionsFile", vm_options_path.to_string_checked()?));
+        if corrupted {
+            vm_options.push(jvm_property!("jb.vmOptionsFile.corrupted", "true"))
+        }
 
         Ok(())
     }
@@ -304,7 +307,7 @@ impl DefaultLaunchConfiguration {
     }
 }
 
-fn read_vm_options(path: &Path) -> Result<Vec<String>> {
+fn read_vm_options(path: &Path) -> Result<(Vec<String>, bool)> {
     let file = File::open(path)?;
 
     let mut vm_options = Vec::with_capacity(50);
@@ -314,13 +317,13 @@ fn read_vm_options(path: &Path) -> Result<Vec<String>> {
             continue;
         }
         if line.contains('\0') {
-            bail!("Invalid character ('\\0') found in VM options file: {:?}", path);
+            return Ok((Vec::new(), true));
         }
         vm_options.push(line);
     }
     debug!("{} line(s)", vm_options.len());
 
-    Ok(vm_options)
+    Ok((vm_options, false))
 }
 
 pub fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
