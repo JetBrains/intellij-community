@@ -6,7 +6,12 @@ import com.intellij.ui.Gray;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
+import org.cef.OS;
 import org.cef.browser.CefBrowser;
+import org.cef.callback.CefDragData;
+import org.cef.handler.CefRenderHandler;
+import org.cef.handler.CefScreenInfo;
+import org.cef.misc.CefRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +23,7 @@ import java.awt.image.VolatileImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A render handler for an off-screen browser.
@@ -25,7 +31,7 @@ import java.nio.IntBuffer;
  * @author tav
  * @see JBCefOsrComponent
  */
-class JBCefOsrHandler extends JBCefOsrHandlerBase {
+class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
     RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
@@ -38,6 +44,13 @@ class JBCefOsrHandler extends JBCefOsrHandlerBase {
 
   private volatile @Nullable VolatileImage myVolatileImage;
   protected volatile boolean myContentOutdated = false;
+  private volatile @Nullable JBCefCaretListener myCaretListener;
+
+  // DIP (device independent pixel aka logic pixel) size in screen pixels. Expected to be != 1 only if JRE supports HDPI
+  private volatile double myPixelDensity = 1;
+  private volatile double myScaleFactor = 1;
+
+  private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
 
   @Override
   public void onPopupShow(CefBrowser browser, boolean show) {
@@ -134,6 +147,95 @@ class JBCefOsrHandler extends JBCefOsrHandlerBase {
     myFpsMeter.paintFrameFinished(g);
   }
 
+  public void setScreenInfo(double pixelDensity, double scaleFactor) {
+    myPixelDensity = pixelDensity;
+    myScaleFactor = scaleFactor;
+  }
+
+  protected double getPixelDensity() { return myPixelDensity; }
+
+  protected double getScaleFactor() { return myScaleFactor; }
+
+  @Override
+  public Rectangle getViewRect(CefBrowser browser) {
+    Component component = browser.getUIComponent();
+    double scale = getScaleFactor();
+    double value = component.getWidth() / scale;
+    double value1 = component.getHeight() / scale;
+    return new Rectangle(0, 0, (int)Math.ceil(value), (int)Math.ceil(value1));
+  }
+
+  @Override
+  public boolean getScreenInfo(CefBrowser browser, CefScreenInfo screenInfo) {
+    Rectangle rect = getScreenBoundaries(browser.getUIComponent());
+    double scale = myScaleFactor * myPixelDensity;
+    screenInfo.Set(scale, 32, 4, false, rect, rect);
+    return true;
+  }
+
+  @Override
+  public Point getScreenPoint(CefBrowser browser, Point viewPoint) {
+    Point pt = viewPoint.getLocation();
+    Point loc = myLocationOnScreenRef.get();
+    if (OS.isMacintosh()) {
+      Rectangle rect = getScreenBoundaries(browser.getUIComponent());
+      pt.setLocation(loc.x + pt.x, rect.height - loc.y - pt.y);
+    }
+    else {
+      pt.translate(loc.x, loc.y);
+    }
+    return OS.isMacintosh() ? pt : toRealCoordinates(pt);
+  }
+
+  @Override
+  public double getDeviceScaleFactor(CefBrowser browser) {
+    return myScaleFactor * myPixelDensity;
+  }
+
+  @Override
+  public boolean onCursorChange(CefBrowser browser, int cursorType) {
+    SwingUtilities.invokeLater(() -> browser.getUIComponent().setCursor(new Cursor(cursorType)));
+    return true;
+  }
+
+  @Override
+  public boolean startDragging(CefBrowser browser, CefDragData dragData, int mask, int x, int y) {
+    return false;
+  }
+
+  @Override
+  public void updateDragCursor(CefBrowser browser, int operation) {
+  }
+
+  @Override
+  public void OnImeCompositionRangeChanged(CefBrowser browser, CefRange selectionRange, Rectangle[] characterBounds) {
+    JBCefCaretListener listener = myCaretListener;
+    if (listener != null) {
+      listener.onImeCompositionRangeChanged(selectionRange, characterBounds);
+    }
+  }
+
+  @Override
+  public void OnTextSelectionChanged(CefBrowser browser, String selectedText, CefRange selectionRange) {
+    JBCefCaretListener listener = myCaretListener;
+    if (listener != null) {
+      listener.onTextSelectionChanged(selectedText, selectionRange);
+    }
+  }
+
+  public void setLocationOnScreen(Point location) {
+    myLocationOnScreenRef.set(location);
+  }
+
+  private @NotNull Point toRealCoordinates(@NotNull Point pt) {
+    double scale = getPixelDensity();
+    return new Point((int)Math.round(pt.x * scale), (int)Math.round(pt.y * scale));
+  }
+
+  void addCaretListener(JBCefCaretListener listener) {
+    myCaretListener = listener;
+  }
+
   private static @NotNull Dimension getRealImageSize(JBHiDPIScaledImage image) {
     if (image == null) return new Dimension(0, 0);
     BufferedImage bi = (BufferedImage)image.getDelegate();
@@ -193,5 +295,19 @@ class JBCefOsrHandler extends JBCefOsrHandlerBase {
     VolatileImage image = g.getDeviceConfiguration().createCompatibleVolatileImage(width, height, Transparency.TRANSLUCENT);
     drawVolatileImage(image);
     return image;
+  }
+
+  private static Rectangle getScreenBoundaries(Component component) {
+    if (component != null && !GraphicsEnvironment.isHeadless()) {
+      try {
+        return component.isShowing() ?
+               component.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds() :
+               GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+      }
+      catch (Exception ignored) {
+      }
+    }
+
+    return new Rectangle(0, 0, 0, 0);
   }
 }
