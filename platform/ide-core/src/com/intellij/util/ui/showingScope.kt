@@ -95,7 +95,7 @@ fun <T : Any> Component.showingScope(
   }
 
   // To avoid paying for dispatch and to clean up resources (e.g., remove the listener) faster:
-  val immediateDispatcher = (Dispatchers.EDT as MainCoroutineDispatcher).immediate
+  val immediateDispatcher = (Dispatchers.EDT as MainCoroutineDispatcher).immediate + ModalityState.any().asContextElement()
 
   @OptIn(DelicateCoroutinesApi::class)
   return GlobalScope.launch(immediateDispatcher + CoroutineName(debugName), start = CoroutineStart.UNDISPATCHED) {
