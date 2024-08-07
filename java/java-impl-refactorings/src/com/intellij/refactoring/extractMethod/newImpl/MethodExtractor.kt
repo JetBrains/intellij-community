@@ -27,6 +27,7 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.find
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.inplace.*
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createGreedyRangeMarker
 import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ResultObjectExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -85,7 +86,12 @@ class MethodExtractor {
       }
 
       val prepareStart = System.currentTimeMillis()
-      val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elements)
+
+      readAction { JavaDuplicatesFinder.linkCopiedClassMembersWithOrigin(file) }
+      val copiedFile = readAction { file.copy() as PsiFile }
+      val elementsInCopy = readAction { ExtractSelector().suggestElementsToExtract(copiedFile, range) }
+
+      val descriptorsForAllTargetPlaces = prepareDescriptorsForAllTargetPlaces(file.project, editor, elementsInCopy)
       if (descriptorsForAllTargetPlaces.isEmpty()) return
       val preparePlacesTime = System.currentTimeMillis() - prepareStart
 
@@ -95,7 +101,9 @@ class MethodExtractor {
       val guessedNames = readAction { suggestSafeMethodNames(options) }
       val methodName = guessedNames.first()
       val extractor = readAction {
-        DuplicatesMethodExtractor.create(options.targetClass, options.elements, methodName, options.isStatic)
+        val targetClass = PsiTreeUtil.findSameElementInCopy(options.targetClass, file)
+        val range = createGreedyRangeMarker(editor.document, range)
+        DuplicatesMethodExtractor(options.copy(methodName = methodName), targetClass, range)
       }
       if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
         val templateStart = System.currentTimeMillis()
