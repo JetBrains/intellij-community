@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -143,10 +144,9 @@ private fun RowScope.ColumnOne() {
             }
         }
 
-        var textFieldValue by remember { mutableStateOf("") }
+        val state = rememberTextFieldState("")
         TextField(
-            value = textFieldValue,
-            onValueChange = { textFieldValue = it },
+            state = state,
             modifier = Modifier.width(200.dp),
             placeholder = { Text("Write something...") },
         )

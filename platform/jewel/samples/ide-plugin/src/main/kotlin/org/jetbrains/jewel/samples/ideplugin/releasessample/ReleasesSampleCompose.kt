@@ -33,6 +33,7 @@ import androidx.compose.foundation.onClick
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +43,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -277,9 +279,13 @@ private fun SearchBar(
         focusRequester.requestFocus()
     }
 
+    val state = rememberTextFieldState(filterText)
+    LaunchedEffect(state) {
+        snapshotFlow { state.text }
+            .collect { service.filterContent(it.toString()) }
+    }
     TextField(
-        value = filterText,
-        onValueChange = { service.filterContent(it) },
+        state = state,
         modifier = modifier.focusRequester(focusRequester),
         leadingIcon = {
             Icon(AllIconsKeys.Actions.Find, contentDescription = null, Modifier.padding(end = 8.dp))

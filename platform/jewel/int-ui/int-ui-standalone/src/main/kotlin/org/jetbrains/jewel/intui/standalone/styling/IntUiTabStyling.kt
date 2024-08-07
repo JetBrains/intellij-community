@@ -20,13 +20,12 @@ public val TabStyle.Companion.Default: IntUiDefaultTabStyleFactory
     get() = IntUiDefaultTabStyleFactory
 
 public object IntUiDefaultTabStyleFactory {
-    @Composable
     public fun light(
         colors: TabColors = TabColors.Default.light(),
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.default(),
-        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.macOsLight(),
+        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.tabStripLight(),
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 
     @Composable
@@ -35,7 +34,7 @@ public object IntUiDefaultTabStyleFactory {
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.default(),
-        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
+        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.tabStripDark(),
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 }
 
@@ -49,7 +48,7 @@ public object IntUiEditorTabStyleFactory {
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.editor(),
-        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.light(),
+        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.tabStripLight(),
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 
     @Composable
@@ -58,7 +57,7 @@ public object IntUiEditorTabStyleFactory {
         metrics: TabMetrics = TabMetrics.defaults(),
         icons: TabIcons = TabIcons.defaults(),
         contentAlpha: TabContentAlpha = TabContentAlpha.editor(),
-        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
+        scrollbarStyle: ScrollbarStyle = ScrollbarStyle.tabStripDark(),
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 }
 

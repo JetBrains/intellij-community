@@ -5,11 +5,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -34,29 +31,30 @@ private const val LOREM_IPSUM =
 @Composable
 fun TextAreas() {
     Row(
-        Modifier.padding(horizontal = 16.dp).height(150.dp),
+        Modifier.padding(horizontal = 16.dp).height(200.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        var text1 by remember { mutableStateOf(LOREM_IPSUM) }
-        TextArea(text1, { text1 = it }, modifier = Modifier.weight(1f).fillMaxHeight())
-
-        var text2 by remember { mutableStateOf(LOREM_IPSUM) }
-        TextArea(text2, { text2 = it }, modifier = Modifier.weight(1f).fillMaxHeight(), enabled = false)
-
-        var text3 by remember { mutableStateOf("") }
         TextArea(
-            text3,
-            { text3 = it },
+            state = rememberTextFieldState(LOREM_IPSUM),
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+        )
+
+        TextArea(
+            state = rememberTextFieldState(LOREM_IPSUM),
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            enabled = false,
+        )
+
+        TextArea(
+            state = rememberTextFieldState(""),
             modifier = Modifier.weight(1f).fillMaxHeight(),
             outline = Outline.Error,
             placeholder = { Text("Text area with error") },
         )
 
-        var text4 by remember { mutableStateOf("") }
         TextArea(
-            text4,
-            { text4 = it },
+            state = rememberTextFieldState(""),
             modifier = Modifier.weight(1f).fillMaxHeight(),
             outline = Outline.Warning,
             placeholder = { Text("Text area with warning") },

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -36,6 +37,59 @@ import kotlin.math.max
  * @param placeholder the optional placeholder to be displayed over the
  *     component when the [value] is empty.
  */
+@Composable
+public fun TextField(
+    state: TextFieldState,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    readOnly: Boolean = false,
+    outline: Outline = Outline.None,
+    placeholder: @Composable() (() -> Unit)? = null,
+    leadingIcon: @Composable() (() -> Unit)? = null,
+    trailingIcon: @Composable() (() -> Unit)? = null,
+    undecorated: Boolean = false,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    style: TextFieldStyle = JewelTheme.textFieldStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+) {
+    InputField(
+        state = state,
+        enabled = enabled,
+        readOnly = readOnly,
+        outline = outline,
+        undecorated = undecorated,
+        keyboardOptions = keyboardOptions,
+        singleLine = true,
+        maxLines = 1,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        showScrollbar = false,
+        modifier = modifier,
+        decorationBox = { innerTextField, _ ->
+            val minSize = style.metrics.minSize
+
+            TextFieldDecorationBox(
+                modifier = Modifier
+                    .defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
+                    .padding(style.metrics.contentPadding),
+                innerTextField = innerTextField,
+                textStyle = textStyle,
+                placeholderTextColor = style.colors.placeholder,
+                placeholder = if (state.text.isEmpty()) placeholder else null,
+                leadingIcon = leadingIcon,
+                trailingIcon = trailingIcon,
+            )
+        },
+    )
+}
+
+/**
+ * @param placeholder the optional placeholder to be displayed over the
+ *     component when the [value] is empty.
+ */
+@Deprecated("Please use TextField(state) instead. If you want to observe text changes, use snapshotFlow { state.text }")
 @Composable
 public fun TextField(
     value: String,
@@ -92,6 +146,7 @@ public fun TextField(
  * @param placeholder the optional placeholder to be displayed over the
  *     component when the [value] is empty.
  */
+@Deprecated("Please use TextField(state) instead. If you want to observe text changes, use snapshotFlow { state.text }")
 @Composable
 public fun TextField(
     value: TextFieldValue,

@@ -38,6 +38,10 @@ internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
         }
 
         toolWindow.addSwingTab(SwingComparisonTabPanel(), "Swing Comparison")
+
+        toolWindow.addComposeTab("Scrollbars Sample") {
+            ScrollbarsShowcaseTab()
+        }
     }
 
     private fun ToolWindow.addSwingTab(
