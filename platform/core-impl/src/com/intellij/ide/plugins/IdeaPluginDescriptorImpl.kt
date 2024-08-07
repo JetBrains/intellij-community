@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "OVERRIDE_DEPRECATION")
 package com.intellij.ide.plugins
 
@@ -157,7 +157,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                    dataLoader: DataLoader) {
     // include module file descriptor if not specified as `depends` (old way - xi:include)
     // must be first because merged into raw descriptor
-    if (!isSub) {
+    // skipping for plugins to be installed into a future IDE version (not needed for `PluginDownloader`)
+    if (!isSub && context.productBuildNumber().baselineVersion <= PluginManagerCore.getBuildNumber().baselineVersion) {
       for (module in content.modules) {
         val subDescriptorFile = module.configFile ?: "${module.name}.xml"
         val subDescriptor = createSub(raw = pathResolver.resolveModuleFile(readContext = context,
