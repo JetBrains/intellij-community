@@ -40,6 +40,7 @@ public final class GrInjectionUtil {
     boolean visitVariable(PsiVariable variable);
     boolean visitAnnotationParameter(GrAnnotationNameValuePair nameValuePair, PsiAnnotation psiAnnotation);
     boolean visitReference(GrReferenceExpression expression);
+    boolean visitBinaryExpression(GrBinaryExpression expression);
   }
 
   public static void visitAnnotatedElements(@Nullable PsiElement element, AnnotatedElementVisitor visitor) {
@@ -84,6 +85,9 @@ public final class GrInjectionUtil {
     }
     else if (parent instanceof GrAnnotationArrayInitializer || parent instanceof GrAnnotationNameValuePair) {
       return true;
+    }
+    else if (parent instanceof GrBinaryExpression binaryExpression) {
+      visitor.visitBinaryExpression(binaryExpression);
     }
     else if (parent instanceof GrArgumentList && parent.getParent() instanceof GrCall && element instanceof GrExpression) {
       return visitor.visitMethodParameter((GrExpression)element, (GrCall)parent.getParent());

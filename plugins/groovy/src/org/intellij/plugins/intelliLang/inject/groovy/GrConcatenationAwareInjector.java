@@ -26,7 +26,9 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -37,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 
 import java.util.*;
 
@@ -210,6 +213,23 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
             visitVariable((PsiVariable)e);
           }
           return !myShouldStop;
+        }
+
+        @Override
+        public boolean visitBinaryExpression(GrBinaryExpression expression) {
+          if (expression.getOperator() != GroovyElementTypes.LEFT_SHIFT_SIGN) return false;
+
+          GroovyCallReference reference = expression.getReference();
+          if (reference == null) return false;
+
+          PsiElement resolveResult = reference.resolve();
+          if (!(resolveResult instanceof PsiMethod method)) return false;
+
+          PsiParameterList parameterList = method.getParameterList();
+          if (parameterList.getParametersCount() != 1) return false;
+
+          process(parameterList.getParameter(0) , method, 0);
+          return false;
         }
       };
 
