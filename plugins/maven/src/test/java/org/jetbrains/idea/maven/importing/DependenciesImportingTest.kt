@@ -1701,7 +1701,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     doImportProjectsAsync(listOf(projectPom), false)
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://$projectPath/foo/bar.jar!/"),
+                       listOf("jar://$projectPath/foo/bar.jar!/"),
                        emptyList(),
                        emptyList())
 
@@ -1721,10 +1721,10 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    doImportProjectsAsync(listOf(projectPom), false)
+    updateAllProjects()
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://$projectPath/foo/xxx.jar!/"),
+                       listOf("jar://$projectPath/foo/xxx.jar!/"),
                        emptyList(),
                        emptyList())
   }
