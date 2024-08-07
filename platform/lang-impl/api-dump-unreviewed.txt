@@ -3861,14 +3861,6 @@ f:com.intellij.codeInsight.daemon.impl.DaemonTooltipRendererProvider
 - calcTooltipRenderer(java.util.Collection):com.intellij.codeInsight.hint.TooltipRenderer
 f:com.intellij.codeInsight.daemon.impl.DaemonTooltipWithActionRendererKt
 - sf:getRunActionCustomShortcutSet():com.intellij.openapi.actionSystem.CustomShortcutSet
-f:com.intellij.codeInsight.daemon.impl.DefaultHighlightInfoProcessor
-- com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor
-- <init>():V
-- allHighlightsForRangeAreProduced(com.intellij.codeInsight.daemon.impl.HighlightingSession,J,java.util.List):V
-- highlightsInsideVisiblePartAreProduced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,I):V
-- highlightsOutsideVisiblePartAreProduced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,I):V
-- infoIsAvailable(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,I):V
-- progressIsAdvanced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,D):V
 f:com.intellij.codeInsight.daemon.impl.EditCleanupProfileIntentionAction
 - com.intellij.codeInsight.intention.IntentionAction
 - sf:INSTANCE:com.intellij.codeInsight.daemon.impl.EditCleanupProfileIntentionAction
