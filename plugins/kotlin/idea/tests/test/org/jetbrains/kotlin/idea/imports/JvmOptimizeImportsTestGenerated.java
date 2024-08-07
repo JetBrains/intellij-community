@@ -584,6 +584,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/common/Enums.kt");
             }
 
+            @TestMetadata("ExplicitImportIsNotRemovedToAvoidConflict.kt")
+            public void testExplicitImportIsNotRemovedToAvoidConflict() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ExplicitImportIsNotRemovedToAvoidConflict.kt");
+            }
+
             @TestMetadata("ExtensionFunWithThisReference.kt")
             public void testExtensionFunWithThisReference() throws Exception {
                 runTest("testData/editor/optimizeImports/common/ExtensionFunWithThisReference.kt");

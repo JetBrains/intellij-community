@@ -579,6 +579,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/Enums.kt");
             }
 
+            @TestMetadata("ExplicitImportIsNotRemovedToAvoidConflict.kt")
+            public void testExplicitImportIsNotRemovedToAvoidConflict() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/ExplicitImportIsNotRemovedToAvoidConflict.kt");
+            }
+
             @TestMetadata("ExtensionFunWithThisReference.kt")
             public void testExtensionFunWithThisReference() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/ExtensionFunWithThisReference.kt");

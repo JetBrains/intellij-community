@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.resolve.ImportPath
+import kotlin.collections.filter
 
 internal fun KaSession.buildOptimizedImports(
     file: KtFile,
@@ -51,8 +52,8 @@ internal class OptimizedImportsBuilder(
 
                 val parentFqName = resultFqName.parent()
                 if (
-                    alias == null
-                    && canUseStarImport(importableSymbol, resultFqName) &&
+                    alias == null &&
+                    canUseStarImport(importableSymbol, resultFqName) &&
                     ImportPath(parentFqName, isAllUnder = true).isAllowedByRules()
                 ) {
                     symbolsByParentFqName.getOrPut(parentFqName) { hashSetOf() }.add(importableSymbol)
@@ -84,6 +85,30 @@ internal class OptimizedImportsBuilder(
 
                 if (fqNames.all { needExplicitImport(it) }) {
                     importsToGenerate.add(starImportPath)
+                }
+            }
+        }
+
+        val importingScopeContext = buildScopeContextByImports(file, importsToGenerate.filter { it.isAllUnder })
+        val importingScopes = HierarchicalScope.run { createFrom(importingScopeContext) }
+
+        for (fqName in classNamesToCheck) {
+            val foundClassifiers = importingScopes.findClassifiers(fqName.shortName()).firstOrNull()
+            val singleFoundClassifier = foundClassifiers?.singleOrNull()
+
+            if (singleFoundClassifier?.importableFqName != fqName) {
+                // add explicit import if failed to import with * (or from current package)
+                importsToGenerate.add(ImportPath(fqName, false))
+
+                val parentFqName = fqName.parent()
+
+                val siblingsToImport = symbolsByParentFqName.getValue(parentFqName)
+                for (descriptor in siblingsToImport.filter { it.run {computeImportableName() } == fqName }) {
+                    siblingsToImport.remove(descriptor)
+                }
+
+                if (siblingsToImport.isEmpty()) { // star import is not really needed
+                    importsToGenerate.remove(ImportPath(parentFqName, true))
                 }
             }
         }
