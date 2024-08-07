@@ -299,7 +299,7 @@ data class ClientId(val value: String) {
       val currentClientIdContextElement = currentThreadContext.clientIdContextElement
       val newContext = currentThreadContext + ClientIdContextElement(newClientId)
       if (currentClientIdContextElement != null && currentClientIdContextElement.clientId != newClientId)  {
-        logger.error("Trying to set $newClientId, but it's already set to ${currentThreadContext.clientIdContextElement}")
+        logger.error("Trying to set $newClientId, but it's already set to ${currentClientIdContextElement}")
       }
       return installThreadContext(newContext, replace = true)
     }
@@ -398,7 +398,7 @@ class ClientIdContextElement(val clientId: ClientId?) : AbstractCoroutineContext
   private val creationTrace: Throwable? = if (logger.isTraceEnabled) Throwable() else null
   object Key : CoroutineContext.Key<ClientIdContextElement>
 
-  override fun toString(): String = if (creationTrace != null) "$clientId. Created at:\r$creationTrace" else "$clientId"
+  override fun toString(): String = if (creationTrace != null) "$clientId. Created at:\r${creationTrace.stackTraceToString()}" else "$clientId"
 }
 
 val CoroutineContext.clientIdContextElement: ClientIdContextElement?
