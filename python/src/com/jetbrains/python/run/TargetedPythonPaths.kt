@@ -95,7 +95,7 @@ private fun collectPythonPath(context: Context,
   if (isDebug && context.sdk?.let { PythonSdkFlavor.getFlavor(it) } is JythonSdkFlavor) {
     //that fixes Jython problem changing sys.argv on execfile, see PY-8164
     for (helpersResource in listOf("pycharm", "pydev")) {
-      val helperPath = PythonHelpersLocator.getHelperPath(helpersResource)
+      val helperPath = PythonHelpersLocator.findPathStringInHelpers(helpersResource)
       val targetHelperPath = targetPath(Path.of(helperPath))
       pythonPath.add(targetHelperPath)
     }

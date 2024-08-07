@@ -20,7 +20,7 @@ class IJMapperEventLoggerProvider : StatisticsEventLoggerProvider(
   sendFrequencyMs = TimeUnit.HOURS.toMillis(1),
   maxFileSizeInBytes = 1 * 512, // enough to fill a log file with one entry of the state collector
   sendLogsOnIdeClose = true,
-  isCharsEscapingRequired = true
+  isCharsEscapingRequired = false
 ) {
 
   /**

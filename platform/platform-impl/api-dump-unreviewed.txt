@@ -16309,12 +16309,6 @@ f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$AdvancedSet
 - f:getReset():kotlin.jvm.functions.Function0
 - hashCode():I
 - f:isDefault():com.intellij.ui.layout.ComponentPredicate
-f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$Config
-- sf:Companion:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$Config$Companion
-- <init>():V
-f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurable$Config$Companion
-- f:getShowFederatedLearningSwitches():Z
-- f:setShowFederatedLearningSwitches(Z):V
 f:com.intellij.openapi.options.advanced.AdvancedSettingsConfigurableKt
 - sf:updateMatchText(javax.swing.JComponent,java.lang.String,java.lang.String):V
 f:com.intellij.openapi.options.advanced.AdvancedSettingsImpl

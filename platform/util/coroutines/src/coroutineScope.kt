@@ -21,6 +21,14 @@ fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext,
   return ChildScope(coroutineContext + context, supervisor)
 }
 
+@Internal
+@Deprecated("Renamed to `childScope`", replaceWith = ReplaceWith("childScope(name, context, supervisor)"))
+fun CoroutineScope.namedChildScope(
+  name: String,
+  context: CoroutineContext = EmptyCoroutineContext,
+  supervisor: Boolean = true,
+): CoroutineScope = childScope(name, context, supervisor)
+
 /**
  * @return a scope with a [Job] which parent is the [Job] of [this] scope.
  *

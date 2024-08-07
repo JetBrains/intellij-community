@@ -9,6 +9,7 @@ import com.intellij.ide.util.BasePropertyService
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.fileSizeSafe
 import com.intellij.util.xmlb.JdomAdapter
@@ -26,7 +27,7 @@ internal object JbImportSpecialHandler {
         handler.process(prevConfigDir)
       }
       catch (th: Throwable) {
-        JbImportServiceImpl.LOG.warn("error during special import handler ${handler.name}", th)
+        logger.warn("error during special import handler ${handler.name}", th)
       }
     }
   }
@@ -44,7 +45,7 @@ private object OtherXmlHandler : JbImportXmlHandler {
   override fun process(configDir: Path) {
     val otherXmlFile = configDir / PathManager.OPTIONS_DIRECTORY / StoragePathMacros.NON_ROAMABLE_FILE
     if (!otherXmlFile.isRegularFile() || otherXmlFile.fileSizeSafe(MAX_FILE_SIZE) >= MAX_FILE_SIZE) {
-      JbImportServiceImpl.LOG.warn("Won't process handler $name, because the file is missing or too large")
+      logger.warn("Won't process handler $name, because the file is missing or too large")
       return
     }
     val otherXmlDocument = JDOMUtil.load(otherXmlFile)
@@ -76,3 +77,5 @@ private object OtherXmlHandler : JbImportXmlHandler {
     }
   }
 }
+
+private val logger = logger<JbImportSpecialHandler>()

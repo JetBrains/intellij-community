@@ -125,6 +125,32 @@ internal class CurrentFeatureBranchBaseDetectorTest {
     assertEquals(CurrentFeatureBranchBaseDetector.Status.CommitHasNoProtectedParents, findBaseCommit(graph, 0, emptySet()))
   }
 
+  @Test
+  fun `test long git log`() {
+    val size = 200
+    val graph = graph {
+      repeat(size) {
+        it(it + 1)
+      }
+      size()
+    }
+    assertEquals(CurrentFeatureBranchBaseDetector.Status.SearchLimitReached, findBaseCommit(graph, 0, emptySet()))
+  }
+
+  @Test
+  fun `test long git log with protected branch`() {
+    val size = 200
+    val graph = graph {
+      0(1, 201)
+      for (i in 1..<size) {
+        i(i + 1)
+      }
+      size()
+      201(201)
+    }
+    assertCommitFound(graph, 201, 201, setOf(200, 201))
+  }
+
   private fun assertCommitFound(graph: LinearGraph, expectedCommitId: Int, expectedProtectedId: Int, protectedNodeIds: Set<Int>) {
     assertCommitFound(graph, listOf(CurrentFeatureBranchBaseDetector.BaseCommit(expectedCommitId, expectedProtectedId)), protectedNodeIds)
   }

@@ -3,7 +3,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
+import com.intellij.codeInsight.editorActions.ReferenceCopyPasteProcessor
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
@@ -43,7 +46,7 @@ import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.IOException
 import org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinReferenceRestoringHelper as Helper
 
-class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReferenceTransferableData>() {
+class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReferenceTransferableData>(), ReferenceCopyPasteProcessor {
     override fun collectTransferableData(
         file: PsiFile,
         editor: Editor,
@@ -135,7 +138,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                 targetFile.declarationsSuggestedToBeImported = targetReferencesToRestore.toSortedStringSet()
             }
 
-            withContext(Dispatchers.EDT) {
+            withContext(Dispatchers.EDT + ModalityState.stateForComponent(editor.component).asContextElement()) {
                 // Step 4. If necessary, ask user which references should be restored.
                 val askBeforeRestoring = CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK
                 val selectedTargetReferencesToRestore = if (askBeforeRestoring && targetReferencesToRestore.isNotEmpty()) {

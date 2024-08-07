@@ -4,10 +4,14 @@ package com.intellij.pycharm.community.ide.impl.whatsnew
 import com.intellij.platform.whatsNew.ContentSource
 import com.intellij.platform.whatsNew.ResourceContentSource
 import com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider
+import com.intellij.util.PlatformUtils.isCommunityEdition
 
 class PyCharmWhatsNewInVisionContentProvider : WhatsNewInVisionContentProvider() {
+
   override fun getResource(): ContentSource {
     // return a vision file for the current version
-    return ResourceContentSource(PyCharmWhatsNewInVisionContentProvider::class.java.classLoader, "whatsNew/pycharm2024.2.json")
+    val resourceName = if (isCommunityEdition()) "whatsNew/pycharmCE2024.2.json" else "whatsNew/pycharm2024.2.json"
+    val resourceContentSource = ResourceContentSource(PyCharmWhatsNewInVisionContentProvider::class.java.classLoader, resourceName)
+    return resourceContentSource
   }
 }

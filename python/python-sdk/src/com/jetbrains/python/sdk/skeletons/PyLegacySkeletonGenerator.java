@@ -97,7 +97,7 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
     public List<String> getCommandLine() {
       final List<String> commandLine = new ArrayList<>();
       commandLine.add(mySdk.getHomePath());
-      commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
+      commandLine.add(PythonHelpersLocator.findPathStringInHelpers(GENERATOR3));
       commandLine.add("-d");
       commandLine.add(mySkeletonsPath);
       if (!ContainerUtil.isEmpty(myAssemblyRefs)) {

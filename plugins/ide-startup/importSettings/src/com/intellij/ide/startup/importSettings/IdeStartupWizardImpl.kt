@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings
 
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
 import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.data.StartupWizardService
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
@@ -25,16 +26,28 @@ internal class IdeStartupWizardImpl : IdeStartupWizard {
       val settingsService = SettingsService.getInstance()
       settingsService.warmUp()
 
-      if (!settingsService.shouldShowImport()) {
-        logger.info("No import options available: skipping the import wizard.")
-        ImportSettingsEventsCollector.importDialogNotShown()
+      if (settingsService.shouldShowImport()) {
+        logger.info("Settings service reports that we should show the import wizard.")
+        OnboardingController.getInstance().startImport(
+          { settingsService.importCancelled.fire() },
+          titleGetter = { ApplicationNamesInfo.getInstance().fullProductName }
+        )
         return@coroutineScope
       }
 
-      OnboardingController.getInstance().startImport(
-        { settingsService.importCancelled.fire() },
-        titleGetter = { ApplicationNamesInfo.getInstance().fullProductName }
-      )
+      logger.info("No import options available: skipping the import wizard.")
+      ImportSettingsEventsCollector.importDialogNotShown()
+
+      val wizardService = StartupWizardService.getInstance()
+      if (wizardService != null) {
+        logger.info("A startup wizard service is activated.")
+        OnboardingController.getInstance().startWizard(
+          cancelCallback = { settingsService.importCancelled.fire() },
+          titleGetter = { ApplicationNamesInfo.getInstance().fullProductName }
+        )
+      }
+
+      logger.info("No active startup wizard service detected either: skipping the startup wizard.")
     }
   }
 }

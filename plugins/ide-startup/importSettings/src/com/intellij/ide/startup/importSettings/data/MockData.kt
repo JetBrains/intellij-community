@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.data
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
+import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.OptProperty
@@ -218,8 +219,8 @@ class TestJbService private constructor(): JbService {
     TODO("Not yet implemented")
   }
 
-  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
+    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.importSettings.size}")
     return importFromProduct
   }
 
@@ -239,6 +240,8 @@ class TestJbService private constructor(): JbService {
   override fun getSettings(itemId: String): List<BaseSetting> {
     return if (itemId == main.id) settings1 else settings
   }
+
+  override fun getImportablePluginIds(itemId: String) = emptyList<String>()
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
     return TestJbService.getProductIcon(itemId, size)
@@ -285,8 +288,10 @@ class TestExternalProductService : ExternalProductService {
     return TestJbService.settings
   }
 
-  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+  override fun getImportablePluginIds(itemId: String) = emptyList<String>()
+
+  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
+    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.importSettings.size}")
     return TestJbService.simpleImport
   }
 }
@@ -333,8 +338,8 @@ class TestSyncService : SyncService {
     return TestJbService.importFromProduct
   }
 
-  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
+    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.importSettings.size}")
     return TestJbService.importFromProduct
   }
 
@@ -367,6 +372,8 @@ class TestSyncService : SyncService {
     return TestJbService.settings
   }
 
+  override fun getImportablePluginIds(itemId: String) = emptyList<String>()
+
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
     return AllIcons.Actions.Refresh
   }
@@ -377,8 +384,9 @@ class TestProduct(
   override val name: String,
   override val version: String,
   override val lastUsage: LocalDate,
-  override val id: String = UUID.randomUUID().toString()) : Product {
-
+  override val id: String = UUID.randomUUID().toString()
+) : Product {
+  override val origin = SettingsImportOrigin.JetBrainsProduct
 }
 
 

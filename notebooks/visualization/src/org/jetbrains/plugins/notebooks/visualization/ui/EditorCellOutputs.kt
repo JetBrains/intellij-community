@@ -287,6 +287,10 @@ class EditorCellOutputs(
       }
     }
   }
+
+  override fun doGetInlays(): Sequence<Inlay<*>> {
+    return inlay?.let { sequenceOf(it) } ?: emptySequence()
+  }
 }
 
 private var JComponent.outputComponentFactory: NotebookOutputComponentFactory<*, *>? by SwingClientProperty("outputComponentFactory")

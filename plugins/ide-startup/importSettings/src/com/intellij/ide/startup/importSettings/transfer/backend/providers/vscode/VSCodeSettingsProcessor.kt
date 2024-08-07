@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vscode
 
-import com.intellij.ide.startup.importSettings.db.KnownColorSchemes
 import com.intellij.ide.startup.importSettings.db.KnownKeymaps
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.db.WindowsEnvVariables
 import com.intellij.ide.startup.importSettings.models.Settings
+import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSchemes
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt

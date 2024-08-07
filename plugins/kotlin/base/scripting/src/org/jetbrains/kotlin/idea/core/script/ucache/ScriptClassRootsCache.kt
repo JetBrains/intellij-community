@@ -165,9 +165,9 @@ class ScriptClassRootsCache(
             ?: emptyList()
     }
 
-    fun diff(old: ScriptClassRootsCache?): Updates =
+    fun diff(old: ScriptClassRootsCache): Updates =
         when (old) {
-            null -> FullUpdate(this)
+            EMPTY -> FullUpdate(this)
             this -> NotChanged(this)
             else -> IncrementalUpdates(
                 cache = this,

@@ -33,7 +33,7 @@ internal class BuildProcessSatisfactionSurveyStore : PersistentStateComponent<Bu
 
     companion object {
         internal const val MINIMUM_BUILDS_BEFORE_SURVEY = 3
-        internal val MINIMUM_DURATION_SINCE_FIRST_BUILD = Duration.ofDays(30)
+        internal val MINIMUM_DURATION_SINCE_FIRST_BUILD = Duration.ofDays(14)
 
         fun getInstance(): BuildProcessSatisfactionSurveyStore {
             return service()

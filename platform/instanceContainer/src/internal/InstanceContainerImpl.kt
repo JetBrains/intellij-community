@@ -256,6 +256,12 @@ class InstanceContainerImpl(
     return existingHolder
   }
 
+  fun cleanCache() {
+    updateState { state: InstanceContainerState ->
+      InstanceContainerState(state.holders)
+    }
+  }
+
   override fun dispose() {
     stateHandle.setVolatile(this, DisposalTrace())
   }

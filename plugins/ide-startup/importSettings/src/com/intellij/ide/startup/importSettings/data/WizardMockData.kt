@@ -121,6 +121,8 @@ class PluginServiceImpl : PluginService {
   override fun skipPlugins() {
 
   }
+
+  override fun shouldShowPage(pluginIdsMarkedForInstallation: List<String>) = false
 }
 
 class TestPluginImportProgress(lifetime: Lifetime) : TestImportProgress(lifetime), PluginImportProgress {

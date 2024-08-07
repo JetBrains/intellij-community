@@ -130,6 +130,19 @@ public abstract class IndexPatternSearch extends ExtensibleQueryFactory<IndexPat
   }
 
   /**
+   * Returns a query which can be used to process occurrences of any pattern from the specified provider in the specified text range.
+   * The query is executed by parsing the contents of the file.
+   */
+  @NotNull
+  public static Query<IndexPatternOccurrence> search(@NotNull PsiFile file,
+                                                     @NotNull IndexPatternProvider patternProvider,
+                                                     int startOffset,
+                                                     int endOffset, boolean multiLines) {
+    final SearchParameters parameters = new SearchParameters(file, patternProvider, new TextRange(startOffset, endOffset), multiLines);
+    return getInstance().createQuery(parameters);
+  }
+
+  /**
    * Returns a query which can be used to process occurrences of any pattern from the
    * specified provider in the specified file. The query is executed by parsing the
    * contents of the file.

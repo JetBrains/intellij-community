@@ -30,7 +30,7 @@ public final class PyStdlibUtil {
   @Nullable
   private static Set<String> loadStdlibPackagesList() {
     final Logger log = Logger.getInstance(PyStdlibUtil.class.getName());
-    final String helperPath = PythonHelpersLocator.getHelperPath("/tools/stdlib_packages.txt");
+    final String helperPath = PythonHelpersLocator.findPathStringInHelpers("/tools/stdlib_packages.txt");
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(helperPath), StandardCharsets.UTF_8))) {
       return reader.lines().collect(Collectors.toSet());
     }

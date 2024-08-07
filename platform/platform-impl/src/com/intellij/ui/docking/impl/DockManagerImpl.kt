@@ -380,8 +380,18 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }
   }
 
-  internal fun createNewDockContainerFor(file: VirtualFile, openFile: (EditorWindow) -> FileEditorComposite): FileEditorComposite {
-    val container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null)
+  internal fun createNewDockContainerFor(
+    file: VirtualFile,
+    fileEditorManager: FileEditorManagerImpl,
+    isSingletonEditorInWindow: Boolean,
+    openFile: (EditorWindow) -> FileEditorComposite,
+  ): FileEditorComposite {
+    val container = createEditorDockContainer(
+      fileEditorManager = fileEditorManager,
+      loadingState = false,
+      coroutineScope = coroutineScope.childScope(),
+      isSingletonEditorInWindow = isSingletonEditorInWindow,
+    )
 
     // Order is important here.
     // Create the dock window, then create the editor window.
@@ -394,9 +404,8 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       window.show(true)
     }
 
-    val editorWindow = (container as DockableEditorTabbedContainer).splitters.getOrCreateCurrentWindow(file)
+    val editorWindow = container.splitters.getOrCreateCurrentWindow(file)
     val result = openFile(editorWindow)
-    val isSingletonEditorInWindow = isSingletonEditorInWindow(result.allEditors)
     if (!isSingletonEditorInWindow) {
       window.setupToolWindowPane()
     }

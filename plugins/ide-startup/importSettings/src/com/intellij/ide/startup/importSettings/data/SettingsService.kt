@@ -5,6 +5,7 @@ import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.TransferableIdeId
+import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
 import com.intellij.ide.startup.importSettings.jb.IDEData
 import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
@@ -208,6 +209,7 @@ interface BaseService {
 
   fun products(): List<Product>
   fun getSettings(itemId: String): List<BaseSetting>
+  fun getImportablePluginIds(itemId: String): List<String>
 
   fun getProductIcon(itemId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
 
@@ -215,8 +217,13 @@ interface BaseService {
   // import dialog progress looks differently, if it's importing from the same product
   fun baseProduct(id: String): Boolean = true
 
-  fun importSettings(productId: String, data: List<DataForSave>): DialogImportData
+  fun importSettings(productId: String, data: DataToApply): DialogImportData
 }
+
+class DataToApply(
+  val importSettings: List<DataForSave>,
+  val featuredPluginIds: List<String>
+)
 
 enum class IconProductSize(val int: Int) {
   SMALL(20),
@@ -228,6 +235,7 @@ enum class IconProductSize(val int: Int) {
 interface Product : SettingsContributor {
   val version: String?
   val lastUsage: LocalDate
+  val origin: SettingsImportOrigin
 }
 
 interface Config : SettingsContributor {
@@ -245,6 +253,12 @@ interface BaseSetting {
   val icon: Icon
   val name: @Nls String
   val comment: @Nls String?
+
+  /**
+   * Whether the user should be allowed to turn the setting on and off.
+   */
+  val isConfigurable: Boolean
+    get() = true
 }
 
 interface Configurable : Multiple {

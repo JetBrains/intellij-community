@@ -58,6 +58,7 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -951,6 +952,7 @@ object Utils {
       return runBlockingForActionExpand(CoroutineName("runWithInputEventEdtDispatcher") +
                                         PotemkinElement(potemkin)) {
         val mainJob = coroutineContext.job
+        ourCurrentInputEventProcessingJobFlow.value = mainJob
         val potemkinJob = launch(EmptyCoroutineContext, CoroutineStart.UNDISPATCHED) {
           delay(400)
           while (!potemkin.isCanceled) {
@@ -969,8 +971,41 @@ object Utils {
     }
     finally {
       ourInUpdateSessionForInputEventEDTLoop = false
+      ourCurrentInputEventProcessingJobFlow.value = null
       potemkin.stop()
     }
+  }
+
+  // this dispatcher should always be available
+  private val cancellationDispatcher = Dispatchers.IO.limitedParallelism(1)
+  private var ourCurrentInputEventProcessingJobFlow = MutableStateFlow<Job?>(null)
+
+  /**
+   * DO NOT USE. RIDER ONLY!
+   * Cancels the current input event processing and runs the provided block.
+   *
+   * This method ensures that any ongoing input event processing is canceled before running the block.
+   * Using to prevent deadlock when EDT is blocked by runWithInputEventEdtDispatcher and important sync call from
+   * the backend main thread is requiring to run something on the EDT
+   *
+   * @param block The suspending function to execute after cancelling the current input event processing.
+   * @return The result of the provided block function.
+   */
+  @DelicateCoroutinesApi
+  suspend fun <T> cancelCurrentInputEventProcessingAndRun(block: suspend () -> T): T = coroutineScope {
+    val cancelJob = launch(cancellationDispatcher) {
+      ourCurrentInputEventProcessingJobFlow.collect {
+        it?.cancel()
+      }
+    }
+    val result = try {
+      block()
+    }
+    finally {
+      cancelJob.cancel()
+    }
+
+    result
   }
 
   suspend fun <T> runUpdateSessionForInputEvent(actions: List<AnAction>,

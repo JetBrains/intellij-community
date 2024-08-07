@@ -2307,8 +2307,8 @@ f:com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 - sf:findFloatingWindowForFile(com.intellij.openapi.fileEditor.ex.FileEditorManagerEx,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWindow
 - sf:getInstance():com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 - f:getShouldOpenInNewWindow():Z
-- f:openFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.FileEditor[]
-- f:openFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,Z,Z):com.intellij.openapi.fileEditor.FileEditor[]
+- f:openFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):java.util.List
+- f:openFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z,Z,Z):java.util.List
 f:com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager$Companion
 - f:findFloatingWindowForFile(com.intellij.openapi.fileEditor.ex.FileEditorManagerEx,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:getInstance():com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager

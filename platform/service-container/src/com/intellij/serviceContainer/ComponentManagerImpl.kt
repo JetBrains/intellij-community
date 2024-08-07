@@ -982,6 +982,17 @@ abstract class ComponentManagerImpl(
 
   open fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
     val debugString = debugString(true)
+    // IJPL-157548 Component container also retains requested `keyClass` instances because it's the same `InstanceContainerImpl`.
+    componentContainer.cleanCache()
+    // IJPL-157548 If `serviceIfCreated` is used, no dynamic instance is registered,
+    // and the fact that there is no instance is kept in the cache by the `keyClass`.
+    //
+    // An alternative approach would be to put `cleanCache` inside `UnregisterHandle`, but it would make the handle non-null.
+    // Another more robust approach is to integrate `PluginServicesStore` into the `InstanceContainer`.
+    //
+    // If `handle` returns non-empty `holders` or `dynamicInstances` is not empty, the cache was cleared already.
+    // For simplicity’s sake, we clean the cache once every time.
+    serviceContainer.cleanCache()
     val handle = pluginServicesStore.removeServicesUnregisterHandle(module)
     val dynamicInstances = pluginServicesStore.removeDynamicServices(module)
     if (handle == null && dynamicInstances.isEmpty()) {

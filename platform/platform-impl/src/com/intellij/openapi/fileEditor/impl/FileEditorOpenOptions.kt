@@ -17,6 +17,8 @@ data class FileEditorOpenOptions(
   @JvmField val isExactState: Boolean = false,
   @Internal @JvmField val openMode: FileEditorManagerImpl.OpenMode? = null,
   @Internal @JvmField val waitForCompositeOpen: Boolean = true,
+  // it makes sense only if openMode == NEW_WINDOW
+  @Internal @JvmField val isSingletonEditorInWindow: Boolean = false,
 ) {
   @Contract(pure = true)
   // no arg copying for Java

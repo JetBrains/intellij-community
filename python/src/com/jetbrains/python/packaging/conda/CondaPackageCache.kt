@@ -46,7 +46,7 @@ class CondaPackageCache : PythonPackageCache<String> {
         .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
 
       val helpersAware = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
-      val (communityHelpers) = helpersAware.preparePyCharmHelpers()
+      val communityHelpers = helpersAware.preparePyCharmHelpers().helpers.first()
 
 
       val targetReq = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()

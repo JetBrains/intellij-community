@@ -62,7 +62,7 @@ public class PythonDebuggerPydevTest extends PyEnvTestCase {
                     @NotNull
                     @Override
                     public String getTestDataPath() {
-                      return PythonHelpersLocator.getPythonCommunityPath();
+                      return PythonHelpersLocator.getPythonCommunityPath().toString();
                     }
 
                     @NotNull
@@ -94,7 +94,7 @@ public class PythonDebuggerPydevTest extends PyEnvTestCase {
       @NotNull
       @Override
       public String getTestDataPath() {
-        return PythonHelpersLocator.getPythonCommunityPath();
+        return PythonHelpersLocator.getCommunityHelpersRoot().getParent().toString();
       }
 
       @Override

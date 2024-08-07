@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vfs.VirtualFile
 
 class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabFilesManager {
-
   fun subscribeToPreviewVisibilityChange(disposable: Disposable, onVisibilityChange: Runnable) {
     project.messageBus.connect(disposable)
       .subscribe(ChangesViewContentManagerListener.TOPIC,
@@ -23,7 +22,13 @@ class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabF
   }
 
   override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
-    return VcsEditorTabFilesManager.getInstance().openFile(project, diffFile, focusEditor, !isDiffInEditor, false)
+    return VcsEditorTabFilesManager.getInstance().openFile(
+      project = project,
+      file = diffFile,
+      focusEditor = focusEditor,
+      openInNewWindow = !isDiffInEditor,
+      shouldCloseFile = false,
+    ).toTypedArray()
   }
 
   companion object {

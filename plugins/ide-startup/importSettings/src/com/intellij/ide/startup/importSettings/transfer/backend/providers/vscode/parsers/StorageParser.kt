@@ -5,12 +5,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.RecentProjectMetaInfo
-import com.intellij.ide.startup.importSettings.db.KnownColorSchemes
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.models.RecentPathInfo
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.providers.vscode.mappings.ThemesMappings
 import com.intellij.ide.startup.importSettings.transfer.ExternalProjectImportChecker
+import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSchemes
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo

@@ -22,6 +22,9 @@
     <extensionPoint qualifiedName="com.intellij.transferSettings.thirdPartyProductSettingsTransfer"
                     interface="com.intellij.ide.startup.importSettings.transfer.ThirdPartyProductSettingsTransfer"
                     dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.transferSettings.thirdPartyProductSettingItem"
+                    interface="com.intellij.ide.startup.importSettings.transfer.ThirdPartyProductSettingItemProvider"
+                    dynamic="true" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

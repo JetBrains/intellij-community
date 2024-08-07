@@ -73,6 +73,15 @@ class SettingTransferProductService(
     } ?: emptyList()
   }
 
+  override fun getImportablePluginIds(itemId: String): List<String> {
+    return logger.runAndLogException {
+      val versions = loadProductInfos()
+      val product = versions[itemId] ?: return emptyList()
+      val settings = product.getSettingsQuickly() ?: error("Cannot load settings for $itemId quickly.")
+      settings.plugins.values.filterIsInstance<PluginFeature>().map { it.pluginId }
+    } ?: emptyList()
+  }
+
   override fun getSettings(itemId: String): List<BaseSetting> {
     return logger.runAndLogException {
       val versions = loadProductInfos()
@@ -87,6 +96,7 @@ class SettingTransferProductService(
           }
         }
         settings.recentProjects.nullize()?.let(TransferableSetting::recentProjects)?.let(::add)
+        addAll(ThirdPartyProductSettingItemProvider.generateSettingItems(product.product.transferableId, settings))
       }
     } ?: emptyList()
   }
@@ -99,7 +109,7 @@ class SettingTransferProductService(
     }
   }
 
-  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
+  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
     try {
       val info = loadProductInfos()[productId] ?: error(ImportSettingsBundle.message("transfer.error.product-not-found", productId))
       val product = info.product
@@ -130,15 +140,23 @@ class SettingTransferProductService(
     }
   }
 
-  private fun applyPreferences(product: IdeVersion, toApply: List<DataForSave>) {
-    val selectedIds = toApply.asSequence().map { it.id }.toSet()
+  private fun applyPreferences(product: IdeVersion, toApply: DataToApply) {
+    val selectedIds = toApply.importSettings.asSequence().map { it.id }.toSet()
     val settings = product.settingsCache
     val preferences = settings.preferences
+    val pluginImportRequestedByUser = selectedIds.contains(TransferableSetting.PLUGINS_ID)
     preferences[SettingsPreferencesKind.Laf] = selectedIds.contains(TransferableSetting.UI_ID)
     preferences[SettingsPreferencesKind.SyntaxScheme] = selectedIds.contains(TransferableSetting.UI_ID)
     preferences[SettingsPreferencesKind.Keymap] = selectedIds.contains(TransferableSetting.KEYMAP_ID)
-    preferences[SettingsPreferencesKind.Plugins] = selectedIds.contains(TransferableSetting.PLUGINS_ID)
+    preferences[SettingsPreferencesKind.Plugins] = pluginImportRequestedByUser || toApply.featuredPluginIds.isNotEmpty()
     preferences[SettingsPreferencesKind.RecentProjects] = selectedIds.contains(TransferableSetting.RECENT_PROJECTS_ID)
+
+    if (!pluginImportRequestedByUser) {
+      settings.plugins.clear()
+    }
+
+    val featuredPluginsToAdd = toApply.featuredPluginIds.asSequence().map { it to PluginFeature(null, it, it) }
+    settings.plugins.putAll(featuredPluginsToAdd)
 
     val featuresToRemove = settings.plugins.asSequence().filter { (_, feature) ->
       when (feature) {

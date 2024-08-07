@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
+import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
 import com.intellij.ide.startup.importSettings.data.Product
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import java.time.LocalDate
@@ -13,6 +14,7 @@ data class ExternalProductInfo(
   override val lastUsage: LocalDate,
   val comment: String
 ) : Product {
+  override val origin = SettingsImportOrigin.ThirdPartyProduct
 
   companion object {
 

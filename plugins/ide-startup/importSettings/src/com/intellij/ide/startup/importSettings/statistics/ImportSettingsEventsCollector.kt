@@ -13,7 +13,7 @@ import com.intellij.openapi.components.SettingsCategory
 
 
 object ImportSettingsEventsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("import.settings", 3)
+  private val GROUP = EventLogGroup("import.settings", 4)
   override fun getGroup(): EventLogGroup = GROUP
   private val UNKNOWN = "UNKNOWN"
   private val FOLDER = "FOLDER"
@@ -122,6 +122,9 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   private val configurePageButton = GROUP.registerEvent("page.configure.button", SECOND_PAGE_BUTTONS, "Button pressed on the second page")
   private val configurePageTimeSpent = GROUP.registerEvent("page.configure.time.spent", EventFields.DurationMs)
 
+  private val featuredPluginsPageShown = GROUP.registerEvent("page.featured.plugins.shown",
+                                                    "Indicates whether the Featured Plugins page was shown. Only for certain products (Rider) that include it.")
+
   // third page - (import) progress dialog
   private val importPageShown = GROUP.registerEvent("page.import.shown",
                                                     "Indicates whether the third page (import progress dialog) was shown. It's common for all import types")
@@ -224,6 +227,10 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
 
   fun oldJbIdes(jbIdes: List<String>) {
     jbIdeOldValues.log(jbIdes)
+  }
+
+  fun featuredPluginsPageShown() {
+    featuredPluginsPageShown.log()
   }
 
   fun importProgressPageShown() {

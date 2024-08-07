@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vsmac.parsers
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.parsers
 
-import com.intellij.ide.startup.importSettings.db.KnownColorSchemes
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.providers.vsmac.mappings.SchemesMappings
 import com.intellij.ide.startup.importSettings.providers.vsmac.mappings.ThemesMappings
+import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSchemes
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.mappings.SchemesMappings
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import org.jdom.Element

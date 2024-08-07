@@ -432,11 +432,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
   }
 
-  public static String getHelpersPath() {
-    return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
-  }
-
-
   /**
    * Compares sets with string sorting them and displaying one-per-line to make comparision easier
    *

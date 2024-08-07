@@ -542,4 +542,42 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
       throw new RuntimeException(e);
     }
   }
+
+  public void testTodoRehighlightsItselfEvenOnSmallChanges() {
+    @Language("JAVA")
+    String text = """
+      class X {
+        // TODO<caret>
+      }
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
+
+    assertOneElement(ContainerUtil.filter(doHighlighting(HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+
+    backspace();
+    assertEmpty(ContainerUtil.filter(doHighlighting(HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+
+    type('O');
+    assertOneElement(ContainerUtil.filter(doHighlighting(HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+  }
+
+  public void testTodoDoesNotClearTodosUnaffectedBySmallChange() {
+    @Language("JAVA")
+    String text = """
+      class X {
+        void foo() {
+          <caret>
+        }
+        // todo blah
+      }
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
+
+    assertOneElement(ContainerUtil.filter(doHighlighting(HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+
+    for (int i=0; i<10; i++) {
+      type("X");
+      assertOneElement(ContainerUtil.filter(doHighlighting(HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+    }
+  }
 }

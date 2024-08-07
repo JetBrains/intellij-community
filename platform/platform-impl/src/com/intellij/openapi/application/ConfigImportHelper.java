@@ -14,6 +14,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.openapi.application.migrations.AIAssistant241;
+import com.intellij.openapi.application.migrations.NotebooksMigration242;
 import com.intellij.openapi.application.migrations.PythonProMigration242;
 import com.intellij.openapi.application.migrations.RustUltimate241;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -1056,6 +1057,7 @@ public final class ConfigImportHelper {
     new RustUltimate241().migratePlugins(options);
     new AIAssistant241().migratePlugins(options);
     new PythonProMigration242().migratePlugins(options);
+    new NotebooksMigration242().migratePlugins(options);
   }
 
   private static void migrateGlobalPlugins(Path newConfigDir,
