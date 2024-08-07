@@ -235,6 +235,6 @@ class PyAddVirtualEnvPanel(
      *
      * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
      */
-    private const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
+    const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
   }
 }

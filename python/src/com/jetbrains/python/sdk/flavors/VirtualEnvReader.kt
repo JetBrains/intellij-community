@@ -4,7 +4,12 @@ package com.jetbrains.python.sdk.flavors
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.add.target.PyAddVirtualEnvPanel.Companion.DEFAULT_VIRTUALENVS_DIR
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -15,23 +20,29 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 @IntellijInternalApi
-class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> String = ::systemEnvGetter) {
+@ApiStatus.Internal
+class VirtualEnvReader(private val envs: Map<@NonNls String, @NonNls String> = System.getenv()) {
+  @RequiresBackgroundThread
   fun getVEnvRootDir(): Path? {
-    return resolveDir("WORKON_HOME", ".virtualenvs")
+    return resolveDir("WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
   }
 
+  @RequiresBackgroundThread
   fun findVEnvInterpreters(names: Set<String>, pattern: Pattern): List<Path> {
     return findLocalInterpreters(getVEnvRootDir(), names, pattern)
   }
 
+  @RequiresBackgroundThread
   fun getPyenvRootDir(): Path? {
     return resolveDir("PYENV_ROOT", ".pyenv")
   }
 
+  @RequiresBackgroundThread
   fun findPyenvInterpreters(names: Set<String>, pattern: Pattern): List<Path> {
     return findLocalInterpreters(getPyenvVersionsDir(), names, pattern)
   }
 
+  @RequiresBackgroundThread
   fun findLocalInterpreters(root: Path?, names: Set<String>, pattern: Pattern): List<Path> {
     if (root == null || !root.isDirectory()) {
       return listOf()
@@ -45,27 +56,31 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
     return candidates
   }
 
+  @RequiresBackgroundThread
   fun isPyenvSdk(path: String?): Boolean {
     if (path.isNullOrEmpty()) {
-      return false;
+      return false
     }
 
     return isPyenvSdk(tryResolvePath(path))
   }
 
+  @RequiresBackgroundThread
   fun isPyenvSdk(path: Path?): Boolean {
     val real = tryReadLink(path)
     if (real == null) {
       return false
     }
 
-    return getPyenvRootDir()?.toCanonicalPath()?.let { real.startsWith(it) } ?: false
+    return getPyenvRootDir()?.toCanonicalPath()?.let { real.startsWith(it) } == true
   }
 
+  @RequiresBackgroundThread
   private fun getPyenvVersionsDir(): Path? {
     return getPyenvRootDir()?.resolve("versions")
   }
 
+  @RequiresBackgroundThread
   private fun findInRootDirectory(dir: Path?, names: Set<String>, pattern: Pattern): Collection<Path> {
     if (dir == null || !dir.isDirectory()) {
       return listOf()
@@ -90,6 +105,7 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
     return candidates
   }
 
+  @RequiresBackgroundThread
   private fun findInterpreter(dir: Path, names: Set<String>, pattern: Pattern): Path? {
     for (child in dir.listDirectoryEntries()) {
       if (child.isDirectory()) {
@@ -105,9 +121,10 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
     return null
   }
 
+  @RequiresBackgroundThread
   private fun resolveDir(env: String, dirName: String): Path? {
-    val envPath = envGetter(env)
-    val path = if (!envPath.isEmpty()) {
+    val envPath = envs[env]
+    val path = if (!envPath.isNullOrEmpty()) {
       tryResolvePath(envPath)
     }
     else {
@@ -127,12 +144,13 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
       val path = Paths.get(str)
       return path
     }
-    catch (ignored: InvalidPathException) {
+    catch (_: InvalidPathException) {
     }
 
     return null
   }
 
+  @RequiresBackgroundThread
   private fun tryReadLink(path: Path?): Path? {
     try {
       if (path?.isSymbolicLink() == true) {
@@ -141,7 +159,7 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
 
       return path
     }
-    catch (ignored: Exception) {
+    catch (_: IOException) {
     }
 
     return null
@@ -150,10 +168,5 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
   companion object {
     @JvmStatic
     val Instance = VirtualEnvReader()
-
-    @JvmStatic
-    fun systemEnvGetter(name: String): String {
-      return System.getenv(name) ?: String()
-    }
   }
 }

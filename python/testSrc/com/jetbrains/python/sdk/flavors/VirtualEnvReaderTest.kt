@@ -18,10 +18,8 @@ class VirtualEnvReaderTest {
     val cwd = FileUtilRt.createTempDirectory("venvreader", "").toPath()
     val pyenv = cwd.resolve(".pyenv")
 
-    val env = HashMap<String, String>();
-    val virtualEnvReader = VirtualEnvReader { envVar ->
-      env[envVar] ?: String()
-    }
+    val env = HashMap<String, String>()
+    val virtualEnvReader = VirtualEnvReader(env)
 
     fun setupPyenv(versions: List<String>, binary: String) {
       for (version in versions) {
@@ -152,7 +150,7 @@ class VirtualEnvReaderTest {
 
     // should resolve symlinks
     val link = bootstrap.cwd.resolve("smthg")
-    val target  = bootstrap.pyenv.resolve("xxx")
+    val target = bootstrap.pyenv.resolve("xxx")
 
     // hanging links, should not resolve it
     Files.createSymbolicLink(link, target)
