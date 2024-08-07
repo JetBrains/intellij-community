@@ -168,4 +168,4 @@ createPython("python3.12", "3.12",
              listOf("python3", "poetry", "python3.12", "messages", "twisted", "pytest"))
 
 // set CONDA_PATH to conda binary location to be able to run tests
-createPython("conda", "Miniconda3-py310_23.3.1-0", listOf(), listOf("conda"), type = PythonType.CONDA)
+createPython("conda", "Miniconda3-py312_24.5.0-0", listOf(), listOf("conda"), type = PythonType.CONDA)
