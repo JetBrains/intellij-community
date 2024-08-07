@@ -15,7 +15,6 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.hasPlugin
 import org.gradle.kotlin.dsl.property
 import org.gradle.kotlin.dsl.setProperty
 import java.io.File
@@ -36,6 +35,7 @@ open class StudioVersionsGenerationExtension(project: Project) {
                     project.plugins.hasPlugin("org.gradle.jvm-ecosystem") ->
                         project.extensions.getByType<SourceSetContainer>()["main"]
                             .resources.srcDirs
+
                     else -> emptySet()
                 }
             })
