@@ -28,6 +28,7 @@ import com.intellij.util.graph.OutboundSemiGraph;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -37,8 +38,7 @@ import java.util.Set;
 
 public final class DebugUtil {
   private static final Logger LOG = Logger.getInstance(DebugUtil.class);
-
-  @SuppressWarnings("StaticNonFinalField") public static boolean CHECK;
+  @SuppressWarnings("StaticNonFinalField") private static boolean CHECK;
   public static final boolean DO_EXPENSIVE_CHECKS;
 
   static {
@@ -689,6 +689,29 @@ public final class DebugUtil {
       .replace(".impl.", ".i.")
       .replace(".source.", ".s.")
       .replace(".lang.", ".l.");
+  }
+
+  @TestOnly
+  public static void runWithCheckInternalInvariantsEnabled(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    boolean oldDebugUtilCheck = DebugUtil.CHECK;
+    DebugUtil.CHECK = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      DebugUtil.CHECK = oldDebugUtilCheck;
+    }
+  }
+  @TestOnly
+  public static void runWithCheckInternalInvariantsDisabled(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    boolean oldDebugUtilCheck = DebugUtil.CHECK;
+    DebugUtil.CHECK = false;
+    try {
+      runnable.run();
+    }
+    finally {
+      DebugUtil.CHECK = oldDebugUtilCheck;
+    }
   }
 
   //<editor-fold desc="Deprecated stuff">

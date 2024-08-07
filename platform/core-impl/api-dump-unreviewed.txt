@@ -1584,6 +1584,7 @@ c:com.intellij.openapi.editor.impl.RangeMarkerImpl
 - p:onReTarget(com.intellij.openapi.editor.event.DocumentEvent):V
 - p:persistentHighlighterUpdate(com.intellij.openapi.editor.event.DocumentEvent,Z):V
 - p:registerInTree(I,I,Z,Z,I):V
+- s:runAssertingInternalInvariants(com.intellij.util.ThrowableRunnable):V
 - setGreedyToLeft(Z):V
 - setGreedyToRight(Z):V
 - setStickingToRight(Z):V
@@ -1591,7 +1592,6 @@ c:com.intellij.openapi.editor.impl.RangeMarkerImpl
 - p:unregisterInTree():V
 a:com.intellij.openapi.editor.impl.RedBlackTree
 - java.util.concurrent.atomic.AtomicInteger
-- s:VERIFY:Z
 - p:root:com.intellij.openapi.editor.impl.RedBlackTree$Node
 - clear():V
 - p:deleteNode(com.intellij.openapi.editor.impl.RedBlackTree$Node):V
@@ -2450,7 +2450,6 @@ f:com.intellij.psi.impl.CheckUtil
 - s:checkDelete(com.intellij.openapi.vfs.VirtualFile):V
 - s:checkWritable(com.intellij.psi.PsiElement):V
 f:com.intellij.psi.impl.DebugUtil
-- s:CHECK:Z
 - sf:CHECK_INSIDE_ATOMIC_ACTION_ENABLED:Z
 - sf:DO_EXPENSIVE_CHECKS:Z
 - <init>():V
@@ -2478,6 +2477,8 @@ f:com.intellij.psi.impl.DebugUtil
 - s:psiToStringIgnoringNonCode(com.intellij.psi.PsiElement):java.lang.String
 - s:psiTreeToString(com.intellij.psi.PsiElement,Z):java.lang.String
 - s:revalidateNode(com.intellij.lang.ASTNode):V
+- s:runWithCheckInternalInvariantsDisabled(com.intellij.util.ThrowableRunnable):V
+- s:runWithCheckInternalInvariantsEnabled(com.intellij.util.ThrowableRunnable):V
 - s:sleep(J):V
 - s:startPsiModification(java.lang.String):V
 - s:stubTreeToBuffer(com.intellij.psi.stubs.Stub,java.lang.Appendable,I):V
