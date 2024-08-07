@@ -20,7 +20,6 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -28,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 
 import java.util.Collections;
 import java.util.List;
@@ -79,8 +77,8 @@ public final class GrConcatenationInjector implements MultiHostInjector {
       return getLanguageParams((PsiModifierListOwner)parent);
     }
     else if (parent instanceof GrBinaryExpression expression) {
-      PsiMethod method = GrInjectionUtil.extractMethodFromShiftOperator(expression);
-      PsiParameter parameter = GrInjectionUtil.extractFirstParameterFromMethod(method);
+      PsiMethod method = GrInjectionUtil.getMethodFromLeftShiftOperator(expression);
+      PsiParameter parameter = GrInjectionUtil.getSingleParameterFromMethod(method);
       return getLanguageParams(parameter);
     }
     else if (parent instanceof GrArgumentList) {

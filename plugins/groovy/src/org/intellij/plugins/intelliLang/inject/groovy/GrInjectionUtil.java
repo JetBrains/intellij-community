@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public final class GrInjectionUtil {
@@ -38,33 +40,31 @@ public final class GrInjectionUtil {
     return method.getParameterList().getParameterIndex(parameter);
   }
 
-  static @Nullable PsiMethod extractMethodFromShiftOperator(@NotNull GrBinaryExpression expression) {
+  static @Nullable PsiMethod getMethodFromLeftShiftOperator(@NotNull GrBinaryExpression expression) {
     IElementType operator = expression.getOperator();
     if (operator != GroovyElementTypes.LEFT_SHIFT_SIGN) return null;
 
     GroovyCallReference reference = expression.getReference();
     if (reference == null) return null;
 
-    PsiElement resolveResult = reference.resolve();
-    if (!(resolveResult instanceof PsiMethod method)) return null;
+    PsiElement resolvedElement = reference.resolve();
+    if (!(resolvedElement instanceof PsiMethod method)) return null;
     return method;
   }
 
-  static @Nullable PsiParameter extractFirstParameterFromMethod(@Nullable PsiMethod method) {
+  static @Nullable PsiParameter getSingleParameterFromMethod(@Nullable PsiMethod method) {
     if (method == null) return null;
-
     PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() != 1) return null;
-    return parameterList.getParameter(0);
+    return ContainerUtil.getOnlyItem(Arrays.asList(parameterList.getParameters()));
   }
 
   public interface AnnotatedElementVisitor {
-    boolean visitMethodParameter(GrExpression expression, GrCall psiCallExpression);
-    boolean visitMethodReturnStatement(GrReturnStatement parent, PsiMethod method);
-    boolean visitVariable(PsiVariable variable);
-    boolean visitAnnotationParameter(GrAnnotationNameValuePair nameValuePair, PsiAnnotation psiAnnotation);
-    boolean visitReference(GrReferenceExpression expression);
-    boolean visitBinaryExpression(GrBinaryExpression expression);
+    boolean visitMethodParameter(@NotNull GrExpression expression, @NotNull GrCall psiCallExpression);
+    boolean visitMethodReturnStatement(@NotNull GrReturnStatement parent, @NotNull PsiMethod method);
+    boolean visitVariable(@NotNull PsiVariable variable);
+    boolean visitAnnotationParameter(@NotNull GrAnnotationNameValuePair nameValuePair, @NotNull PsiAnnotation psiAnnotation);
+    boolean visitReference(@NotNull GrReferenceExpression expression);
+    boolean visitBinaryExpression(@NotNull GrBinaryExpression expression);
   }
 
   public static void visitAnnotatedElements(@Nullable PsiElement element, AnnotatedElementVisitor visitor) {
