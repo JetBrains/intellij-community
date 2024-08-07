@@ -1,0 +1,35 @@
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: renamedBarGetter
+    locationString: (foo.bar)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_variable.svg, Public])
+TargetElement: @set:JvmName("renamedBarGetter")
+QualifiedName: renamedBarGetter
+
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: renamedBarSetter
+    locationString: (foo.bar)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_variable.svg, Public])
+TargetElement: @get:JvmName("renamedBarSetter")
+QualifiedName: renamedBarSetter
+
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: renamedFooGetter
+    locationString: (foo.bar)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_variable.svg, Public])
+TargetElement: @JvmName("renamedFooGetter")
+QualifiedName: renamedFooGetter
+
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: renamedFooSetter
+    locationString: (foo.bar)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_variable.svg, Public])
+TargetElement: @JvmName("renamedFooSetter")
+QualifiedName: renamedFooSetter

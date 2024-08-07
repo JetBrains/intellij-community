@@ -7,4 +7,3 @@ class A {
 }
 
 // SEARCH_TEXT: Inner
-// REF: (in small.A).InnerA

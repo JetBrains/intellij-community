@@ -1,0 +1,8 @@
+NavigationItem:
+    name: NoImplementationInterface
+ItemPresentation:
+    presentableText: NoImplementationInterface
+    locationString: (test)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg, Public])
+TargetElement: interface NoImplementationInterface {
+QualifiedName: test.NoImplementationInterface

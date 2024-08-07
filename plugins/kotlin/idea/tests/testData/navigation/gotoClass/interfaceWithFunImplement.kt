@@ -7,4 +7,3 @@ interface InterfaceWithFunImplement {
 }
 
 // SEARCH_TEXT: Interface
-// REF: (test).InterfaceWithFunImplement

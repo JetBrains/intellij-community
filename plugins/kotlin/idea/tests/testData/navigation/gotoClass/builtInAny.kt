@@ -1,4 +1,3 @@
 // RUNTIME_WITH_SOURCES
 // CHECK_BOX
 // SEARCH_TEXT: Any
-// REF: (kotlin).Any

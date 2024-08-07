@@ -5,4 +5,3 @@ fun main(args: Array<String>) {
 }
 
 // SEARCH_TEXT: myFoo
-// REF: (in main).myFoo()

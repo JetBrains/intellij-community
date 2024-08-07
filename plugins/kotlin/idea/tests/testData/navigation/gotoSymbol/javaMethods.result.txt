@@ -1,0 +1,26 @@
+NavigationItem:
+    name: flushBuffer
+ItemPresentation:
+    presentableText: flushBuffer()
+    locationString: of java.io.BufferedOutputStream
+    icon: RowIcon(icons=[Method, Private])
+TargetElement: private void flushBuffer() throws IOException {
+QualifiedName: of java.io.BufferedOutputStream.flushBuffer
+
+NavigationItem:
+    name: flushBuffer
+ItemPresentation:
+    presentableText: flushBuffer()
+    locationString: of java.io.BufferedWriter
+    icon: RowIcon(icons=[Method, Local])
+TargetElement: void flushBuffer() throws IOException {
+QualifiedName: of java.io.BufferedWriter.flushBuffer
+
+NavigationItem:
+    name: flushBuffer
+ItemPresentation:
+    presentableText: flushBuffer()
+    locationString: of java.io.OutputStreamWriter
+    icon: RowIcon(icons=[Method, Local])
+TargetElement: void flushBuffer() throws IOException {
+QualifiedName: of java.io.OutputStreamWriter.flushBuffer

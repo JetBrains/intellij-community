@@ -1,0 +1,17 @@
+NavigationItem:
+    name: arrayOfNulls
+ItemPresentation:
+    presentableText: arrayOfNulls(Array<T>, Int)
+    locationString: (kotlin.collections)
+    icon: RowIcon(icons=[Function, Local])
+TargetElement: internal fun <T> arrayOfNulls(reference: kotlin.Array<T>, size: kotlin.Int): kotlin.Array<T> { /* compiled code */ }
+QualifiedName: (kotlin.collections).arrayOfNulls
+
+NavigationItem:
+    name: arrayOfNulls
+ItemPresentation:
+    presentableText: arrayOfNulls(Int)
+    locationString: (kotlin)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: public fun <reified @kotlin.internal.PureReifiable T> arrayOfNulls(size: kotlin.Int): kotlin.Array<T?> { /* compiled code */ }
+QualifiedName: (kotlin).arrayOfNulls

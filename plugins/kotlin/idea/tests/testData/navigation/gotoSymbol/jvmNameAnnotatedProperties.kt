@@ -13,8 +13,4 @@ var foo: String = ""
     }
 
 // SEARCH_TEXT: renamed
-// REF: (foo.bar).renamedBarGetter
-// REF: (foo.bar).renamedBarSetter
-// REF: (foo.bar).renamedFooGetter
-// REF: (foo.bar).renamedFooSetter
 

@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.ide.util.gotoByName.LanguageRef
+import com.intellij.navigation.NavigationItem
+import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.DumbModeTestUtils
@@ -11,8 +13,11 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.pathString
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 object GotoCheck {
@@ -62,11 +67,8 @@ object GotoCheck {
         }
 
         val inexactMatching = InTextDirectivesUtils.isDirectiveDefined(documentText, "// ALLOW_MORE_RESULTS")
-        val renderedSymbols = foundSymbols.map { (it as PsiElement).renderAsGotoImplementation() }.toSet()
+        val renderedSymbols = foundSymbols.map { getPsiTarget(it as NavigationItem)!!.renderAsGotoImplementation() }.toSet()
 
-        if (checkNavigation && (expectedReferences.size != 1 || inexactMatching)) {
-            error("Cannot check navigation targets when multiple references are expected")
-        }
 
         if (inexactMatching) {
             UsefulTestCase.assertContainsElements(renderedSymbols, expectedReferences)
@@ -77,12 +79,76 @@ object GotoCheck {
 
         assertTrue(foundSymbols.isNotEmpty())
         foundSymbols.forEach {
-            assertNavigationElementMatches(it as PsiElement, documentText)
+            assertNavigationElementMatches(getPsiTarget(it as NavigationItem), documentText)
         }
     }
 
+
     @JvmStatic
-    fun assertNavigationElementMatches(resolved: PsiElement, textWithDirectives: String) {
+    fun checkGotoResult(
+        model: FilteringGotoByModel<LanguageRef>,
+        editor: Editor,
+        expectedFile: Path,
+    ) {
+        val documentText = editor.document.text
+        val searchTextList = InTextDirectivesUtils.findListWithPrefixes(documentText, SEARCH_TEXT_DIRECTIVE)
+
+        val dumbMode = InTextDirectivesUtils.isDirectiveDefined(documentText, DUMB_MODE_DIRECTIVE)
+
+        val searchText = searchTextList.first()
+        val includeNonProjectSymbols = InTextDirectivesUtils.isDirectiveDefined(documentText, "// CHECK_BOX")
+
+        val symbolsTask: () -> List<Any?> = {
+            val names = model.getNames(includeNonProjectSymbols)
+            names.filter { it?.startsWith(searchText) == true }.flatMap {
+                model.getElementsByName(it, includeNonProjectSymbols, "$it*").toList()
+            }
+        }
+        val foundSymbols = if (dumbMode) {
+            val project = editor.project!!
+            // to trigger indexing
+            symbolsTask()
+
+            val result = AtomicReference<List<Any?>>(emptyList<Any?>())
+            DumbModeTestUtils.runInDumbModeSynchronously(project) { result.set(symbolsTask()) }
+            result.get()
+        } else {
+            symbolsTask()
+        }
+
+        val renderedSymbols = foundSymbols.mapIndexed { i, element ->
+            val navigationItem = element as NavigationItem
+            val psiTarget = getPsiTarget(navigationItem)
+            val presentation = navigationItem.presentation
+            """
+                |NavigationItem:
+                |    name: ${navigationItem.name}
+                |ItemPresentation:
+                |    presentableText: ${presentation?.presentableText}
+                |    locationString: ${presentation?.locationString}
+                |    icon: ${presentation?.getIcon(false)}
+                |TargetElement: ${psiTarget?.text?.lines()?.first()?.trim()}
+                |QualifiedName: ${model.getFullName(element)}
+            """.trimMargin()
+        }
+            .sorted()
+            .joinToString(separator = "\n\n")
+
+
+        UsefulTestCase.assertSameLinesWithFile(expectedFile.pathString, renderedSymbols)
+    }
+
+    private fun getPsiTarget(
+        navigationItem: NavigationItem,
+    ): PsiElement? = when (navigationItem) {
+        is PsiElementNavigationItem -> navigationItem.targetElement
+        is PsiElement -> navigationItem
+        else -> error("Unexpected NavigationItem ${navigationItem::class}")
+    }
+
+    @JvmStatic
+    fun assertNavigationElementMatches(resolved: PsiElement?, textWithDirectives: String) {
+        assertNotNull(resolved)
         val expectedBinaryFile = InTextDirectivesUtils.findStringWithPrefixes(textWithDirectives, "// BINARY:")
         val expectedSourceFile = InTextDirectivesUtils.findStringWithPrefixes(textWithDirectives, "// SRC:")
         assertEquals(expectedBinaryFile, getFileWithDir(resolved))

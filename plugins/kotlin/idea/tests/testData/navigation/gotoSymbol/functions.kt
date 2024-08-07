@@ -6,6 +6,4 @@ class Some {
 }
 
 // SEARCH_TEXT: test
-// REF: (in Some).testFunInClass()
-// REF: testFunction()
 
