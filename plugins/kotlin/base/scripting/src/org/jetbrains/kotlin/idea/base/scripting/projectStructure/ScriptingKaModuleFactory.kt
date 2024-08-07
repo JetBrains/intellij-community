@@ -142,7 +142,7 @@ private class KtScriptDependencySourceModuleByModuleInfo(
         get() = moduleInfo.project
 
     override val contentScope: GlobalSearchScope
-        get() = moduleInfo.contentScope
+        get() = moduleInfo.sourceScope()
 
     override val libraryName: String
         get() = "Script dependency sources"
