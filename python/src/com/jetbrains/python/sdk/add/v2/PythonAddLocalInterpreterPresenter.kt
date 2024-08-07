@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.util.SystemProperties
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
@@ -29,7 +30,7 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject) {
     get() = when (moduleOrProject) {
               is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath()
               is ModuleOrProject.ProjectOnly -> moduleOrProject.project.basePath?.toNioPathOrNull()
-            } ?: Path.of(System.getProperty("user.home"))
+            } ?: Path.of(SystemProperties.getUserHome())
 
   private val _sdkShared = MutableSharedFlow<Sdk>(1)
   val sdkCreatedFlow: Flow<Sdk> = _sdkShared.asSharedFlow()

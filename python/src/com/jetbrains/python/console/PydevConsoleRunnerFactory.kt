@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.PathMapper
+import com.intellij.util.SystemProperties
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.*
@@ -171,7 +172,7 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
           return root.path
         }
       }
-      return System.getProperty("user.home")
+      return SystemProperties.getUserHome()
     }
 
     fun createSetupFragment(module: Module?,
