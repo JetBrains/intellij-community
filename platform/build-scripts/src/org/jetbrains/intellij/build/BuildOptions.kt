@@ -440,10 +440,11 @@ data class BuildOptions(
   var useModularLoader: Boolean = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
 
   /**
-   * If this option is set to `true` and [enableEmbeddedJetBrainsClient] is enabled,
-   * a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] will be generated in the distribution.
+   * If this option is set to `false`, [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] won't be included in the installation.
+   * It's supposed to be used only for development to speed up the building process a bit. 
+   * Production builds must always include the module repository since tools like IntelliJ Platform Gradle Plugin and Plugin Verifier relies on it. 
    * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used
-   * (in this case, the generation is enabled automatically).
+   * (in this case, the generation is always enabled).
    */
   @ApiStatus.Experimental
   var generateRuntimeModuleRepository: Boolean = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
