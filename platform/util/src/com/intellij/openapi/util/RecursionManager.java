@@ -8,6 +8,8 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -490,8 +492,18 @@ public final class RecursionManager {
    */
   static final class CachingPreventedException extends RuntimeException {
     CachingPreventedException(Map<MyKey, Throwable> preventions) {
-      super("Caching disabled due to recursion prevention, please get rid of cyclic dependencies. Preventions: " + new ArrayList<>(preventions.keySet()),
+      super("Caching disabled due to recursion prevention, please get rid of cyclic dependencies. Preventions: "
+            + new ArrayList<>(preventions.keySet()) + getPreventionStackTrace(preventions),
             ContainerUtil.getFirstItem(preventions.values()));
     }
+  }
+
+  private static String getPreventionStackTrace(Map<MyKey, Throwable> preventions) {
+    Throwable prevention = ContainerUtil.getFirstItem(preventions.values());
+    if (prevention == null) return "";
+
+    StringWriter writer = new StringWriter();
+    prevention.printStackTrace(new PrintWriter(writer));
+    return "\nCaused by: " + writer;
   }
 }
