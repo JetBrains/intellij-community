@@ -423,10 +423,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (StringUtil.isNotEmpty(messageFromPatch) && myChangeListChooser != null) {
-        myChangeListChooser.setChangeListDescription(messageFromPatch);
-      }
-      else if (myShouldUpdateChangeListName && myChangeListChooser != null) {
+      if (myShouldUpdateChangeListName && myChangeListChooser != null) {
+        if (StringUtil.isNotEmpty(messageFromPatch)) {
+          myChangeListChooser.setChangeListDescription(messageFromPatch);
+        }
         String subject = chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim());
         myChangeListChooser.setSuggestedName(subject, messageFromPatch, false);
       }
