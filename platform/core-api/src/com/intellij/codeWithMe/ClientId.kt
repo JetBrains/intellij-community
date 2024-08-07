@@ -225,22 +225,8 @@ data class ClientId(val value: String) {
     @JvmStatic
     @RequiresBlockingContext
     inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
-      val service = getCachedService() ?: return action()
-
-      val newClientIdValue = if (clientId == null || service.isValid(clientId)) {
-        if (clientId != null && isFakeLocalId(clientId))
-          localId
-        else
-          clientId
-      }
-      else {
-        // todo throw CE?
-        getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
-        null
-      }
-
-      installThreadContext(ClientIdContextElement(newClientIdValue), replace = true).use {
-        return action()
+      return withClientId(clientId).use {
+        action()
       }
     }
 
@@ -313,7 +299,7 @@ data class ClientId(val value: String) {
       val currentClientIdContextElement = currentThreadContext.clientIdContextElement
       val newContext = currentThreadContext + ClientIdContextElement(newClientId)
       if (currentClientIdContextElement != null && currentClientIdContextElement.clientId != newClientId)  {
-        logger.error("Trying to set ClientId=$newClientId, but it's already set to ${currentThreadContext.clientIdContextElement}")
+        logger.error("Trying to set $newClientId, but it's already set to ${currentThreadContext.clientIdContextElement}")
       }
       return installThreadContext(newContext, replace = true)
     }
