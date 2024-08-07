@@ -7,7 +7,6 @@ import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
@@ -23,14 +22,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   }
 
   @Override
-  public Info getSlowInfo(@NotNull PsiElement element) {
-    if(!DumbService.isDumb(element.getProject())) return null;
-    return getInfoInner(element);
-  }
-
-  @Override
   public final @Nullable Info getInfo(@NotNull final PsiElement element) {
-    if(DumbService.isDumb(element.getProject())) return null;
     return getInfoInner(element);
   }
 
