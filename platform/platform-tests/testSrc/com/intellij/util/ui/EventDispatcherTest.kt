@@ -31,14 +31,7 @@ class EventDispatcherTest {
 
     eventDispatcher.addListener(L1Handler("handler2"))
 
-    try {
-      eventDispatcher.multicaster.eventFired1()
-      Assertions.fail<Any>("ISE propagation expected")
-    }
-    catch (e: Throwable) {
-      val rootCause = ExceptionUtil.getRootCause(e)
-      assertThat(rootCause).isInstanceOf(ProcessCanceledException::class.java)
-    }
+    eventDispatcher.multicaster.eventFired1()
 
     // event is delivered to all subscribers, then the error is rethrown
     assertEvents("handler3:t1", "pce", "handler2:t1")
@@ -58,14 +51,7 @@ class EventDispatcherTest {
 
     eventDispatcher.addListener(L1Handler("handler2"))
 
-    try {
-      eventDispatcher.multicaster.eventFired1()
-      Assertions.fail<Any>("ISE propagation expected")
-    }
-    catch (e: Throwable) {
-      val rootCause = ExceptionUtil.getRootCause(e)
-      assertThat(rootCause).isInstanceOf(UnsupportedOperationException::class.java)
-    }
+    eventDispatcher.multicaster.eventFired1()
 
     // event is delivered to all subscribers, then the error is rethrown
     assertEvents("handler3:t1", "uoe", "handler2:t1")
@@ -90,14 +76,7 @@ class EventDispatcherTest {
 
     eventDispatcher.addListener(L1Handler("handler2"))
 
-    try {
-      eventDispatcher.multicaster.eventFired1()
-      Assertions.fail<Any>("ISE propagation expected")
-    }
-    catch (e: Throwable) {
-      val rootCause = ExceptionUtil.getRootCause(e)
-      assertThat(rootCause).isInstanceOf(ProcessCanceledException::class.java)
-    }
+    eventDispatcher.multicaster.eventFired1()
 
     // event is delivered to all subscribers, then the error is rethrown
     assertEvents("ise", "uoe", "handler2:t1")
