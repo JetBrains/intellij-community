@@ -24,7 +24,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testGroupIdCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -43,7 +43,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testArtifactIdCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -64,7 +64,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testVersionCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -96,7 +96,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testPluginWithoutGroupIdResolution() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -120,7 +120,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testArtifactWithoutGroupCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -150,7 +150,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionInsideTag() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -180,7 +180,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testVersionWithoutGroupCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -210,7 +210,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testResolvingPlugins() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -236,7 +236,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   fun testResolvingAbsentPlugins() = runBlocking {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -259,7 +259,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotHighlightAbsentGroupIdAndVersion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -276,7 +276,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testHighlightingAbsentArtifactId() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -304,7 +304,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   private fun putCaretInConfigurationSection() {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -323,7 +323,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testNoParametersForUnknownPlugin() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -344,7 +344,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testNoParametersIfNothingIsSpecified() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -363,8 +363,8 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolvingParamaters() = runBlocking {
-    createProjectPom("""
+  fun testResolvingParameters() = runBlocking {
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -393,7 +393,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testResolvingInnerParamatersIntoOuter() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -423,7 +423,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testGoalsCompletionAndHighlighting() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -470,7 +470,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDontHighlightGoalsForUnresolvedPlugin() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -507,7 +507,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testGoalsCompletionAndHighlightingInPluginManagement() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -558,7 +558,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testGoalsResolution() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -592,7 +592,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testMavenDependencyReferenceProvider() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -626,7 +626,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testGoalsCompletionAndResolutionForUnknownPlugin() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -671,7 +671,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testPhaseCompletionAndHighlighting() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -714,7 +714,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testNoExecutionParametersIfNoGoalNorIdAreSpecified() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -739,7 +739,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testExecutionParametersForSpecificGoal() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -769,7 +769,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testExecutionParametersForDefaultGoalExecution() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -797,7 +797,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testExecutionParametersForSeveralSpecificGoals() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -826,7 +826,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testAliasCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -847,7 +847,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testListElementsCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -873,7 +873,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   fun testListElementWhatHasUnpluralizedNameCompletion() = runBlocking {
     // NPE test - StringUtil.unpluralize returns null.
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -896,7 +896,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotHighlightUnknownElementsUnderLists() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -919,7 +919,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testArrayElementsCompletion() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -945,7 +945,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   fun testCompletionInCustomObjects() = runBlocking {
     if (ignore()) return@runBlocking
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -970,7 +970,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDocumentationForParameter() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1030,7 +1030,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotCompleteNorHighlightNonPluginConfiguration() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1052,7 +1052,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotHighlightInnerParameters() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1075,7 +1075,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotHighlightRequiredParametersWithDefaultValues() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1097,7 +1097,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotHighlightInnerParameterAttributes() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1123,7 +1123,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotCompleteParameterAttributes() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1144,7 +1144,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testWorksWithPropertiesInPluginId() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1184,7 +1184,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testDoNotHighlightPropertiesForUnknownPlugins() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1207,7 +1207,7 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testTellNobodyThatIdeaIsRulezzz() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
