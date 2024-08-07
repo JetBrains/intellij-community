@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "RAW_RUN_BLOCKING", "LiftReturnOrAssignment")
 @file:JvmName("PluginDescriptorLoader")
 @file:Internal
@@ -818,7 +818,7 @@ fun loadDescriptorsFromOtherIde(
 @TestOnly
 fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescriptor> {
   val urlToFilename = collectPluginFilesInClassPath(loader)
-  val buildNumber = BuildNumber.fromString("2042.42")!!
+  val buildNumber = BuildNumber.fromString("220.0")!!
   val context = DescriptorListLoadingContext(customDisabledPlugins = Collections.emptySet(),
                                              customBrokenPluginVersions = emptyMap(),
                                              productBuildNumber = { buildNumber })
