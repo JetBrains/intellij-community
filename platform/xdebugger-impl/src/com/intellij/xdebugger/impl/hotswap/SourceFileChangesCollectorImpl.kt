@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 fun interface SourceFileChangeFilter<T> {
@@ -43,6 +44,8 @@ class SourceFileChangesCollectorImpl(
   @Volatile
   private var lastResetTimeStamp: Long = System.currentTimeMillis()
 
+  @TestOnly
+  internal var customLocalHistory: LocalHistory? = null
 
   init {
     val eventMulticaster = EditorFactory.getInstance().eventMulticaster
@@ -108,7 +111,8 @@ class SourceFileChangesCollectorImpl(
   }
 
   private fun getContentHashBeforeLastReset(file: VirtualFile): Int {
-    val bytes = LocalHistory.getInstance().getByteContent(file) { timestamp -> timestamp < lastResetTimeStamp } ?: return -1
+    val localHistory = customLocalHistory ?: LocalHistory.getInstance()
+    val bytes = localHistory.getByteContent(file) { timestamp -> timestamp < lastResetTimeStamp } ?: return -1
     val content = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false, false)
     return Strings.stringHashCode(content)
   }
