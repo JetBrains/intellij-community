@@ -7122,7 +7122,64 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/createLabel")
+    public static class CreateLabel extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("breakInLoop.kt")
+        public void testBreakInLoop() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/breakInLoop.kt");
+        }
+
+        @TestMetadata("breakInOuterLoop.kt")
+        public void testBreakInOuterLoop() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/breakInOuterLoop.kt");
+        }
+
+        @TestMetadata("breakInlambdaBeforeLoop.kt")
+        public void testBreakInlambdaBeforeLoop() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/breakInlambdaBeforeLoop.kt");
+        }
+
+        @TestMetadata("breakNoLoop.kt")
+        public void testBreakNoLoop() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/breakNoLoop.kt");
+        }
+
+        @TestMetadata("continueInLoop.kt")
+        public void testContinueInLoop() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/continueInLoop.kt");
+        }
+
+        @TestMetadata("continueNoLoop.kt")
+        public void testContinueNoLoop() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/continueNoLoop.kt");
+        }
+
+        @TestMetadata("returnInLambda.kt")
+        public void testReturnInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/returnInLambda.kt");
+        }
+
+        @TestMetadata("returnInOuterLambda.kt")
+        public void testReturnInOuterLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/returnInOuterLambda.kt");
+        }
+
+        @TestMetadata("returnNoLambda.kt")
+        public void testReturnNoLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/returnNoLambda.kt");
+        }
+    }
 
 
 

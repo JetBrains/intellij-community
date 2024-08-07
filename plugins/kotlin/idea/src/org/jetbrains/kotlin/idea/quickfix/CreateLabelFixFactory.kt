@@ -14,11 +14,19 @@ internal object CreateLabelFixFactory : KotlinSingleIntentionActionFactory() {
         val labelReferenceExpression = diagnostic.psiElement as? KtLabelReferenceExpression ?: return null
         return when ((labelReferenceExpression.parent as? KtContainerNode)?.parent) {
             is KtBreakExpression, is KtContinueExpression -> {
-                if (labelReferenceExpression.getContainingLoops().any()) CreateLabelFix.ForLoop(labelReferenceExpression) else null
+                if (labelReferenceExpression.getContainingLoops().any()) {
+                    CreateLabelFix.ForLoop(labelReferenceExpression)
+                } else {
+                    null
+                }
             }
 
             is KtReturnExpression -> {
-                if (labelReferenceExpression.getContainingLambdas().any()) CreateLabelFix.ForLambda(labelReferenceExpression) else null
+                if (labelReferenceExpression.getContainingLambdas().any()) {
+                    CreateLabelFix.ForLambda(labelReferenceExpression)
+                } else {
+                    null
+                }
             }
 
             else -> null
