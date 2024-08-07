@@ -234,6 +234,7 @@ data class ClientId(val value: String) {
           clientId
       }
       else {
+        // todo throw CE?
         getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
         null
       }
@@ -248,7 +249,7 @@ data class ClientId(val value: String) {
       if (currentId != null) {
         val service = getCachedService()
         if (service != null && !service.isValid(currentId)) {
-          getClientIdLogger().trace { "Invalid ClientId $currentId replaced with null at ${Throwable().fillInStackTrace()}" }
+          logger.trace { "Invalid ClientId $currentId replaced with null at ${Throwable().fillInStackTrace()}" }
           // TODO: is it ok to throw CE? I believe that is client has gone all its activity should be cancelled
           throw CancellationException("$currentId is not valid anymore")
         }
@@ -267,7 +268,7 @@ data class ClientId(val value: String) {
     fun withClientId(clientId: ClientId?): AccessToken {
       if (clientId == null) {
         if (absenceBehaviorValue == AbsenceBehavior.LOG_ERROR) {
-          LOG.error("Attempt to call withClientId with ClientId==null")
+          logger.error("Attempt to call withClientId with ClientId==null")
         }
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
@@ -300,7 +301,7 @@ data class ClientId(val value: String) {
           clientId
       }
       else {
-        LOG.trace { "Invalid ClientId $clientIdValue replaced with null at ${Throwable().fillInStackTrace()}" }
+        logger.trace { "Invalid ClientId $clientIdValue replaced with null at ${Throwable().fillInStackTrace()}" }
         null
       }
 
