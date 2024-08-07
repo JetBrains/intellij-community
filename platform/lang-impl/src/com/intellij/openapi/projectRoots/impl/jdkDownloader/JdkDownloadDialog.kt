@@ -412,8 +412,6 @@ internal class JdkDownloadDialog(
       return null
     }
 
-    JdkDownloaderLogger.logSelected(selectedItem)
-
     return selectedItem to selectedFile
   }
 

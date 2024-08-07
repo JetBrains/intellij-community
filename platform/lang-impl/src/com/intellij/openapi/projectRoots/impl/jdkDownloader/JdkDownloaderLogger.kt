@@ -22,13 +22,19 @@ internal object JdkDownloaderLogger : CounterUsagesCollector() {
                                                                          EventFields.String("product", JdkVersionDetector.VENDORS),
                                                                          EventFields.Int("version"))
 
+  private val FAILURE: EventId1<DownloadFailure> = GROUP.registerEvent("failure",
+                                                                       EventFields.Enum("reason", DownloadFailure::class.java))
+
+  enum class DownloadFailure {
+    WrongProtocol, WSLIssue, FileDoesNotExist, RuntimeException, IncorrectFileSize, ChecksumMismatch, ExtractionFailed, Cancelled,
+  }
+
   fun logDownload(success: Boolean) {
     DOWNLOAD.log(success)
   }
 
-  fun logSelected(jdkItem: JdkItem) {
-    val vendor = JdkVersionDetector.VENDORS.firstOrNull { jdkItem.fullPresentationText.contains(it) } ?: JdkVersionDetector.Variant.Unknown.displayName
-    SELECTED_SDK.log(vendor, jdkItem.jdkMajorVersion)
+  fun logFailed(failure: DownloadFailure) {
+    FAILURE.log(failure)
   }
 
   @JvmStatic
