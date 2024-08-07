@@ -175,10 +175,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
       (button.getComponent() as SquareStripeButton).setOrUpdateShowName(myCustomWidth > 0)
     }
 
-    val parent = myComponent.parent
-    parent.revalidate()
     myComponent.revalidate()
-    parent.repaint()
   }
 
   override fun asComponent(): Component {
