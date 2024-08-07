@@ -1,4 +1,8 @@
 public final class AnchorType {
+    @null public static final var Companion: AnchorType.Companion
+    @org.jetbrains.annotations.NotNull private static final var Start: float = AnchorType(0.0)
+    @org.jetbrains.annotations.NotNull private static final var Center: float = AnchorType(0.5)
+    @org.jetbrains.annotations.NotNull private static final var End: float = AnchorType(1.0)
     @org.jetbrains.annotations.NotNull private final var ratio: float
     public fun toString() : java.lang.String = UastEmptyExpression
     public fun hashCode() : int = UastEmptyExpression
@@ -39,6 +43,10 @@ public final class Alignment {
     public final fun getHorizontal() : int = UastEmptyExpression
     public final fun getVertical() : int = UastEmptyExpression
     public static final class Horizontal {
+        @null public static final var Companion: Alignment.Horizontal.Companion
+        @org.jetbrains.annotations.NotNull private static final var Start: int = Horizontal(0)
+        @org.jetbrains.annotations.NotNull private static final var CenterHorizontally: int = Horizontal(1)
+        @org.jetbrains.annotations.NotNull private static final var End: int = Horizontal(2)
         @org.jetbrains.annotations.NotNull private final var value: int
         public fun toString() : java.lang.String = UastEmptyExpression
         public fun hashCode() : int = UastEmptyExpression
@@ -51,6 +59,10 @@ public final class Alignment {
         }
     }
     public static final class Vertical {
+        @null public static final var Companion: Alignment.Vertical.Companion
+        @org.jetbrains.annotations.NotNull private static final var Top: int = Vertical(0)
+        @org.jetbrains.annotations.NotNull private static final var CenterVertically: int = Vertical(1)
+        @org.jetbrains.annotations.NotNull private static final var Bottom: int = Vertical(2)
         @org.jetbrains.annotations.NotNull private final var value: int
         public fun toString() : java.lang.String = UastEmptyExpression
         public fun hashCode() : int = UastEmptyExpression
