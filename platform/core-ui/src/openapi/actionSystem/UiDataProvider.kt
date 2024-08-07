@@ -6,7 +6,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import java.awt.BorderLayout
 import java.util.function.Consumer
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 /**
  * A UI component implements [UiDataProvider] to add its UI state data to [DataContext].
@@ -27,6 +30,25 @@ fun interface UiDataProvider {
    */
   @RequiresEdt
   fun uiDataSnapshot(sink: DataSink)
+
+  companion object {
+    /**
+     * Use for simple cases to provide additional data.
+     * In more complex cases provide your own component.
+     */
+    @JvmStatic
+    fun wrapComponent(component: JComponent, provider: UiDataProvider): JComponent {
+      return object : JPanel(BorderLayout()), UiDataProvider {
+        init {
+          add(component, BorderLayout.CENTER)
+        }
+
+        override fun uiDataSnapshot(sink: DataSink) {
+          DataSink.uiDataSnapshot(sink, provider)
+        }
+      }
+    }
+  }
 }
 
 /**

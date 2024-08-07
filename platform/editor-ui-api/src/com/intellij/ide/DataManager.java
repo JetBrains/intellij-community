@@ -105,6 +105,7 @@ public abstract class DataManager {
    * Implement {@link com.intellij.openapi.actionSystem.UiDataProvider} on a component directly
    * and use separate {@link com.intellij.openapi.actionSystem.UiDataRule} to add specific UI data.
    * <p>
+   * Use {@link UiDataProvider#wrapComponent(JComponent, UiDataProvider)} for simple cases.
    * Use {@link EdtNoGetDataProvider} as a temporary type-safe and performant solution.
    */
   @ApiStatus.Obsolete
@@ -125,6 +126,8 @@ public abstract class DataManager {
     return (DataProvider)component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
   }
 
+  /** Most components now implement {@link UiDataProvider} */
+  @ApiStatus.Obsolete
   public static void removeDataProvider(@NotNull JComponent component) {
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, null);
   }
