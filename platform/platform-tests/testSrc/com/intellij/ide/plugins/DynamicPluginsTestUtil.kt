@@ -22,7 +22,7 @@ internal fun loadDescriptorInTest(
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
 
-  val buildNumber = BuildNumber.fromString("2042.42")!!
+  val buildNumber = BuildNumber.fromString("220.0")!!
   val result = runBlocking {
     loadDescriptorFromFileOrDirInTests(
       file = dir,

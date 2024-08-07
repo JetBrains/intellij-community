@@ -17,7 +17,7 @@ import org.junit.Test
 import org.junit.rules.TestName
 import java.nio.file.Path
 
-private val buildNumber = BuildNumber.fromString("2042.0")!!
+private val buildNumber = BuildNumber.fromString("220.0")!!
 
 internal class ClassLoaderConfiguratorTest {
   @Rule @JvmField val name = TestName()

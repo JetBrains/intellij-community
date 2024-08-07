@@ -803,7 +803,7 @@ fun loadDescriptorsFromOtherIde(
 @TestOnly
 fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescriptor> {
   val urlToFilename = collectPluginFilesInClassPath(loader)
-  val buildNumber = BuildNumber.fromString("2042.42")!!
+  val buildNumber = BuildNumber.fromString("220.0")!!
   val context = DescriptorListLoadingContext(
     customDisabledPlugins = Collections.emptySet(),
     customBrokenPluginVersions = Collections.emptyMap(),

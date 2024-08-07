@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -73,7 +73,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
   @TestOnly
   fun addAll(descriptors: List<IdeaPluginDescriptorImpl>) {
-    val productBuildNumber = BuildNumber.fromString("2042.42")!!
+    val productBuildNumber = BuildNumber.fromString("220.0")!!
     for (descriptor in descriptors) {
       add(descriptor = descriptor, overrideUseIfCompatible = false, productBuildNumber = productBuildNumber)
     }
