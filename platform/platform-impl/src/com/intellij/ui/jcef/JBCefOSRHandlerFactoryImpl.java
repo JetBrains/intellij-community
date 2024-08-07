@@ -9,7 +9,12 @@ import javax.swing.*;
 public class JBCefOSRHandlerFactoryImpl implements JBCefOSRHandlerFactory {
   @Override
   @NotNull
-  public CefRenderHandler createCefRenderHandler(@NotNull JComponent component) {
+  public JComponent createComponent(boolean isMouseWheelEventEnabled) {
+    return new JBCefOsrComponent(isMouseWheelEventEnabled);
+  }
+
+  @Override
+  public @NotNull CefRenderHandler createCefRenderHandler(@NotNull JComponent component) {
     assert component instanceof JBCefOsrComponent;
     JBCefOsrComponent osrComponent = (JBCefOsrComponent)component;
     JBCefOsrHandler handler = JBCefApp.isRemoteEnabled() ? new JBCefNativeOsrHandler() : new JBCefOsrHandler();

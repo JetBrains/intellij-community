@@ -27,18 +27,10 @@ public interface JBCefOSRHandlerFactory {
    * @param isMouseWheelEventEnabled If {@code true}, the browser will intercept mouse wheel events. Otherwise, the browser won't react
    *                                 on scrolling, and the parent component will handle scroll events.
    */
-  default @NotNull JComponent createComponent(boolean isMouseWheelEventEnabled) {
-    return new JBCefOsrComponent(isMouseWheelEventEnabled);
-  }
+  @NotNull JComponent createComponent(boolean isMouseWheelEventEnabled);
 
   /**
    * Creates the OSR handler.
    */
-  default @NotNull CefRenderHandler createCefRenderHandler(@NotNull JComponent component) {
-    assert component instanceof JBCefOsrComponent;
-    JBCefOsrComponent osrComponent = (JBCefOsrComponent)component;
-    JBCefOsrHandler handler = new JBCefOsrHandler();
-    osrComponent.setRenderHandler(handler);
-    return handler;
-  }
+  @NotNull CefRenderHandler createCefRenderHandler(@NotNull JComponent component);
 }

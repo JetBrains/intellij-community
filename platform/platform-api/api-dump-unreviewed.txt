@@ -9609,6 +9609,9 @@ f:com.intellij.ui.hover.HoverUtilsKt
 - f:mouseExited(java.awt.Component):V
 - f:mouseMoved(java.awt.Component,I,I):V
 - a:onHover(javax.swing.JTree,I):V
+*:com.intellij.ui.jcef.CefOsrBrowserFactory
+- a:createOsrBrowser(com.intellij.ui.jcef.JBCefOSRHandlerFactory,org.cef.CefClient,java.lang.String,org.cef.browser.CefRequestContext,org.cef.browser.CefBrowser,java.awt.Point,Z,org.cef.CefBrowserSettings):org.cef.browser.CefBrowser
+- s:getInstance():com.intellij.ui.jcef.CefOsrBrowserFactory
 f:com.intellij.ui.jcef.JBCefApp
 - createClient():com.intellij.ui.jcef.JBCefClient
 - createMessageRouter(org.cef.browser.CefMessageRouter$CefMessageRouterConfig):org.cef.browser.CefMessageRouter
@@ -9746,9 +9749,6 @@ f:com.intellij.ui.jcef.JBCefBrowserJsCallKt
 - sf:executeJavaScript(com.intellij.ui.jcef.JBCefBrowser,java.lang.String,I,kotlin.coroutines.Continuation):java.lang.Object
 - bs:executeJavaScript$default(com.intellij.ui.jcef.JBCefBrowser,java.lang.String,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:executeJavaScriptAsync(com.intellij.ui.jcef.JBCefBrowser,java.lang.String):org.jetbrains.concurrency.Promise
-com.intellij.ui.jcef.JBCefCaretListener
-- a:onImeCompositionRangeChanged(org.cef.misc.CefRange,java.awt.Rectangle[]):V
-- a:onTextSelectionChanged(java.lang.String,org.cef.misc.CefRange):V
 f:com.intellij.ui.jcef.JBCefClient
 - com.intellij.ui.jcef.JBCefDisposable
 - addContextMenuHandler(org.cef.handler.CefContextMenuHandler,org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefClient
@@ -9835,8 +9835,8 @@ c:com.intellij.ui.jcef.JBCefJSQuery$Response
 - isSuccess():Z
 - response():java.lang.String
 com.intellij.ui.jcef.JBCefOSRHandlerFactory
-- createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
-- createComponent(Z):javax.swing.JComponent
+- a:createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
+- a:createComponent(Z):javax.swing.JComponent
 - s:getInstance():com.intellij.ui.jcef.JBCefOSRHandlerFactory
 a:com.intellij.ui.jcef.JBCefOsrHandlerBrowser
 - com.intellij.ui.jcef.JBCefBrowserBase
