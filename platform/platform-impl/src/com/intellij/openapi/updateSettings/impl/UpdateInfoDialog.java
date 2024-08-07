@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.CommandLineUtil;
@@ -57,7 +57,8 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     super(project, enableLink);
     myProject = project;
     myLoadedResult = loadedResult;
-    myUpdatedPlugins = updatedPlugins;
+    myUpdatedPlugins = updatedPlugins == null ? null :
+                       ContainerUtil.map(updatedPlugins, downloader -> downloader.withSilencedPluginDescriptorErrors());
     UpdateChain patches = myLoadedResult.getPatches();
     myWriteProtected = patches != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
     myLicenseInfo = getLicensingInfo(myLoadedResult);
