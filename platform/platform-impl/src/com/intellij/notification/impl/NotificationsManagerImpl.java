@@ -262,10 +262,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
                 AnAction action = actionListeners.get(e.getDescription());
                 if (action != null) {
                   Object source = e.getSource();
-                  if (source instanceof JComponent component) {
-                    Notification.setDataProvider(notification, component);
-                  }
-                  DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
+                  DataContext context = source instanceof Component o ? CustomizedDataContext.withSnapshot(
+                    DataManager.getInstance().getDataContext(o),
+                    sink -> sink.set(Notification.KEY, notification)) : null;
                   Notification.fire(notification, action, context);
                   NotificationCollector.getInstance()
                     .logNotificationActionInvoked(project, notification, action, NotificationCollector.NotificationPlace.TOOL_WINDOW);
@@ -829,7 +828,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
                                         NotificationCenterPanel centerPanel,
                                         int gap,
                                         HoverAdapter hoverAdapter) {
-    NotificationActionPanel actionPanel = new NotificationActionPanel(gap, notification.getCollapseDirection());
+    NotificationActionPanel actionPanel = new NotificationActionPanel(gap, notification.getCollapseDirection()) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        sink.set(Notification.KEY, notification);
+      }
+    };
     centerPanel.addActionPanel(actionPanel);
 
     List<AnAction> actions = notification.getActions();
@@ -849,8 +853,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.BALLOON);
           Notification.fire(notification, action, DataManager.getInstance().getDataContext(button));
         });
-        Notification.setDataProvider(notification, button);
-
         actionPanel.checkActionWidth = actionsSize > 1;
 
         if (actionsSize == 2) {
@@ -865,7 +867,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           DropDownAction dropDownAction = new DropDownAction(IdeCoreBundle.message("notifications.action.more"),
                                                              (link, _1) -> showPopup(notification, link, group, actionPanel.popupAlarm));
           actionPanel.addAction(dropDownAction);
-          Notification.setDataProvider(notification, dropDownAction);
         }
       }
     }
@@ -917,9 +918,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         .logNotificationActionInvoked(null, notification, _action, NotificationCollector.NotificationPlace.BALLOON);
       Notification.fire(notification, _action, DataManager.getInstance().getDataContext(link));
     }, action) {
-      {
-        Notification.setDataProvider(notification, this);
-      }
       @Override
       protected Color getTextColor() {
         return NotificationsUtil.getLinkButtonForeground();
@@ -938,7 +936,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       }
       showPopup(notification, link, group, actionPanel.popupAlarm);
     });
-    Notification.setDataProvider(notification, action);
     action.setVisible(false);
     actionPanel.addGroupedActionsLink(action);
   }
@@ -1325,7 +1322,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static final class NotificationActionPanel extends NonOpaquePanel {
+  private abstract static class NotificationActionPanel extends NonOpaquePanel implements UiDataProvider {
     private final List<LinkLabel<AnAction>> actionLinks = new ArrayList<>();
     private final Notification.CollapseActionsDirection collapseActionsDirection;
     private DropDownAction groupedActionsLink;

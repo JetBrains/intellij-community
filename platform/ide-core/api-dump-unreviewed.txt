@@ -734,7 +734,6 @@ c:com.intellij.notification.Notification
 - setCollapseDirection(com.intellij.notification.Notification$CollapseActionsDirection):com.intellij.notification.Notification
 - setContent(java.lang.String):com.intellij.notification.Notification
 - setContextHelpAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.notification.Notification
-- s:setDataProvider(com.intellij.notification.Notification,javax.swing.JComponent):V
 - setDisplayId(java.lang.String):com.intellij.notification.Notification
 - setDropDownText(java.lang.String):com.intellij.notification.Notification
 - setIcon(javax.swing.Icon):com.intellij.notification.Notification

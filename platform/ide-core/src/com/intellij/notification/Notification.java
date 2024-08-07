@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.ide.util.PropertiesComponent;
@@ -283,14 +282,10 @@ public class Notification {
   }
 
   public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
-    DataContext dataContext = context != null ? context :
-                              CustomizedDataContext.create(DataContext.EMPTY_CONTEXT, dataId -> KEY.is(dataId) ? notification : null);
+    DataContext dataContext = context != null ? context : CustomizedDataContext.withSnapshot(
+      DataContext.EMPTY_CONTEXT, sink -> sink.set(KEY, notification));
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, dataContext);
     IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
-  }
-
-  public static void setDataProvider(@NotNull Notification notification, @NotNull JComponent component) {
-    DataManager.registerDataProvider(component, (EdtNoGetDataProvider)sink -> sink.set(KEY, notification));
   }
 
   public @NotNull @LinkLabel String getDropDownText() {

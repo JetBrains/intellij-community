@@ -1025,7 +1025,6 @@ private class NotificationComponent(val project: Project,
           button.addActionListener {
             runAction(actions[0], it.source)
           }
-          Notification.setDataProvider(notification, button)
           actionPanel.add(button)
 
           if (actionsSize == 2) {
@@ -1063,7 +1062,9 @@ private class NotificationComponent(val project: Project,
       centerPanel.add(actionPanel)
     }
 
-    add(centerPanel)
+    add(UiDataProvider.wrapComponent(centerPanel) { sink ->
+      sink[Notification.KEY] = notification
+    })
 
     if (notification.isSuggestionType) {
       val button = createPopupAction(notification)
@@ -1126,10 +1127,6 @@ private class NotificationComponent(val project: Project,
   @Suppress("DialogTitleCapitalization")
   private fun createAction(action: AnAction): JComponent =
     object : LinkLabel<AnAction>(action.templateText, action.templatePresentation.icon, { lnk, act -> runAction(act, lnk) }, action) {
-      init {
-        Notification.setDataProvider(myNotificationWrapper.notification!!, this)
-      }
-
       override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
 
@@ -1223,11 +1220,6 @@ private class NotificationComponent(val project: Project,
 
     for (component in UIUtil.findComponentsOfType(this, LinkLabel::class.java)) {
       component.isEnabled = false
-    }
-
-    val dropDownAction = UIUtil.findComponentOfType(this, MyDropDownAction::class.java)
-    if (dropDownAction != null) {
-      DataManager.removeDataProvider(dropDownAction)
     }
 
     if (myMoreButton != null) {
@@ -1447,8 +1439,6 @@ private class MoreAction(val notificationComponent: NotificationComponent, actio
     }, null)
 
     text = IdeCoreBundle.message("notifications.action.more")
-
-    Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
 
   override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
@@ -1487,8 +1477,6 @@ private class MyDropDownAction(val notificationComponent: NotificationComponent)
 
     text = notificationComponent.myNotificationWrapper.notification!!.dropDownText
     isVisible = false
-
-    Notification.setDataProvider(notificationComponent.myNotificationWrapper.notification!!, this)
   }
 
   override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
