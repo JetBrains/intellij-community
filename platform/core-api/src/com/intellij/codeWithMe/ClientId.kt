@@ -244,8 +244,7 @@ data class ClientId(val value: String) {
         val service = getCachedService()
         if (service != null && !service.isValid(currentId)) {
           logger.trace { "Invalid ClientId $currentId replaced with null at ${Throwable().fillInStackTrace()}" }
-          // TODO: is it ok to throw CE? I believe that is client has gone all its activity should be cancelled
-          throw CancellationException("$currentId is not valid anymore")
+          return null
         }
       }
       return currentId?.value
