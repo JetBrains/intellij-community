@@ -417,8 +417,6 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             KtTokens.EXTERNAL_KEYWORD,
             KtTokens.ANNOTATION_KEYWORD,
             KtTokens.CROSSINLINE_KEYWORD,
-            KtTokens.HEADER_KEYWORD,
-            KtTokens.IMPL_KEYWORD,
             KtTokens.EXPECT_KEYWORD,
             KtTokens.ACTUAL_KEYWORD
         )
@@ -435,8 +433,6 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             KtTokens.OPERATOR_KEYWORD,
             KtTokens.INFIX_KEYWORD,
             KtTokens.SUSPEND_KEYWORD,
-            KtTokens.HEADER_KEYWORD,
-            KtTokens.IMPL_KEYWORD,
             KtTokens.EXPECT_KEYWORD,
             KtTokens.ACTUAL_KEYWORD
         )
@@ -449,8 +445,6 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             KtTokens.LATEINIT_KEYWORD,
             KtTokens.EXTERNAL_KEYWORD,
             KtTokens.CONST_KEYWORD,
-            KtTokens.HEADER_KEYWORD,
-            KtTokens.IMPL_KEYWORD,
             KtTokens.EXPECT_KEYWORD,
             KtTokens.ACTUAL_KEYWORD
         )

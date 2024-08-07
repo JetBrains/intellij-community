@@ -369,7 +369,6 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
             }
 
             else -> {
-                removeModifier(KtTokens.IMPL_KEYWORD)
                 removeModifier(KtTokens.ACTUAL_KEYWORD)
             }
         }
@@ -400,7 +399,6 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                 element.ownerFunction?.let {
                     with(KotlinSafeDeleteSettings) {
                         if (it.dropActualModifier == true) {
-                            it.removeModifier(KtTokens.IMPL_KEYWORD)
                             it.removeModifier(KtTokens.ACTUAL_KEYWORD)
                             it.dropActualModifier = null
                         }

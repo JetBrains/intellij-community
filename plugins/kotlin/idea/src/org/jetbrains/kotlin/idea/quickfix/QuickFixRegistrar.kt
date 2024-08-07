@@ -145,7 +145,6 @@ class QuickFixRegistrar : QuickFixContributor {
         PRIVATE_SETTER_FOR_OPEN_PROPERTY.registerFactory(addFinalToProperty, RemoveModifierFixBase.removeNonRedundantModifier)
         REDUNDANT_MODIFIER_IN_GETTER.registerFactory(RemoveModifierFixBase.removeRedundantModifier)
         WRONG_MODIFIER_TARGET.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier, ChangeVariableMutabilityFix.CONST_VAL_FACTORY)
-        DEPRECATED_MODIFIER.registerFactory(ReplaceModifierFix)
         REDUNDANT_MODIFIER_FOR_TARGET.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
         WRONG_MODIFIER_CONTAINING_DECLARATION.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
         REPEATED_MODIFIER.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
