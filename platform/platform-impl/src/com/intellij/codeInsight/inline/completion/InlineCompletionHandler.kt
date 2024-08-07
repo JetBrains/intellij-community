@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypingTracker
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
@@ -339,6 +340,9 @@ class InlineCompletionHandler(
     withContext(Dispatchers.EDT) {
       trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
     }
+    // TODO move to listener
+    InlineCompletionLogsContainer.create(editor)
+    // TODO add to onHide listener event code InlineCompletionLogsContainer.remove(editor).log()
     return provider.getSuggestion(request)
   }
 
