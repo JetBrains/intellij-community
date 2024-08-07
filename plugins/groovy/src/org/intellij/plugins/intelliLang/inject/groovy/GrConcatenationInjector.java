@@ -79,7 +79,7 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     else if (parent instanceof GrBinaryExpression expression) {
       PsiMethod method = GrInjectionUtil.getMethodFromLeftShiftOperator(expression);
       PsiParameter parameter = GrInjectionUtil.getSingleParameterFromMethod(method);
-      return getLanguageParams(parameter);
+      return parameter != null ? getLanguageParams(parameter) : null;
     }
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();

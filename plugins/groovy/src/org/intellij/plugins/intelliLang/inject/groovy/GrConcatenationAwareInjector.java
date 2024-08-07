@@ -217,7 +217,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
           PsiMethod method = GrInjectionUtil.getMethodFromLeftShiftOperator(expression);
           PsiParameter parameter = GrInjectionUtil.getSingleParameterFromMethod(method);
 
-          process(parameter, method, 0);
+          if (method != null && parameter != null) process(parameter, method, 0);
           return false;
         }
       };
