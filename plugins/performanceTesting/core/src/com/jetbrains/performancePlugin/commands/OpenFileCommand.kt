@@ -25,6 +25,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 import java.util.concurrent.TimeoutException
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -122,7 +123,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
   }
 
   private suspend fun waitForAnalysisWithNewApproach(project: Project, spanRef: Ref<Span>, timeout: Long, suppressErrors: Boolean) {
-    val timeoutDuration = if (timeout == 0L) null else timeout.seconds
+    val timeoutDuration = if (timeout == 0L) 5.minutes else timeout.seconds
     runCatching {
       project.service<CodeAnalysisStateListener>().waitAnalysisToFinish(timeoutDuration, !suppressErrors)
     }.onFailure { throwable ->
