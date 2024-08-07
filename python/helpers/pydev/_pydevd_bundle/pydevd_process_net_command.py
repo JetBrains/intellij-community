@@ -934,12 +934,12 @@ def process_net_command(py_db, cmd_id, seq, text):
                     parameters = text.split('\t')
                     thread_id, frame_id, init_command, command_type = parameters[:4]
 
-                    start_index, end_index = None, None
+                    start_index, end_index, format = None, None, None
 
-                    if len(parameters) >= 6:
+                    if len(parameters) >= 7:
                         start_index = int(parameters[4])
                         end_index = int(parameters[5])
-                        format = int(parameters[6])
+                        format = parameters[6]
 
                     int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format)
                     py_db.post_internal_command(int_cmd, thread_id)
