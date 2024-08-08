@@ -27,7 +27,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Gradle
-        run: ./gradlew publishMainPublicationToSpaceRepository
+        run: ./gradlew publishMainPublicationToSpaceRepository --no-daemon
         env:
           MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
@@ -59,7 +59,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Gradle
-        run: ./gradlew publishMainPublicationToSpaceRepository
+        run: ./gradlew publishMainPublicationToSpaceRepository --no-daemon
         env:
           MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}

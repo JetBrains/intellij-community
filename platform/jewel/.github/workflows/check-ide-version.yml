@@ -33,4 +33,4 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Gradle
-        run: ./gradlew checkLatestIntelliJPlatformBuild
+        run: ./gradlew checkLatestIntelliJPlatformBuild --no-daemon
