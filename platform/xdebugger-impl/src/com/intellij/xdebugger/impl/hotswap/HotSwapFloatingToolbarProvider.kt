@@ -19,7 +19,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import icons.PlatformDebuggerImplIcons
 import kotlinx.coroutines.*
-import java.awt.FlowLayout
+import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -84,7 +84,7 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
 }
 
 private class HotSwapToolbarComponent(action: AnAction, presentation: Presentation, place: String)
-  : JPanel(FlowLayout(FlowLayout.LEFT, JBUI.scale(4), 0)) {
+  : JPanel(BorderLayout(JBUI.scale(4), 0)) {
 
   private val tooltip = createHelpTooltip()
     .setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
@@ -94,8 +94,8 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
 
   init {
     isOpaque = false
-    add(JBLabel(XDebuggerBundle.message("xdebugger.hotswap.code.changed")))
-    add(button)
+    add(JBLabel(XDebuggerBundle.message("xdebugger.hotswap.code.changed")), BorderLayout.WEST)
+    add(button, BorderLayout.CENTER)
     tooltip.installOn(this)
   }
 
