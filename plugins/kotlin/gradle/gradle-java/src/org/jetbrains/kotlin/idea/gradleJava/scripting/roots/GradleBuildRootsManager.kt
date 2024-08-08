@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -14,7 +15,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -27,7 +29,6 @@ import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingErrorLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
-import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
 import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleVersion
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslGradleBuildSync
@@ -66,7 +67,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *   - [New] - not yet imported
  *   - [Imported] - imported
  */
-class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(project), ScriptingSupport {
+class GradleBuildRootsManager(val project: Project, private val coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project), ScriptingSupport {
     private val manager: CompositeScriptConfigurationManager
         get() = ScriptConfigurationManager.getInstance(project) as CompositeScriptConfigurationManager
 
@@ -393,7 +394,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
 
         if (openedScripts.isEmpty()) return
 
-        GlobalScope.launch(EDT(project)) {
+        coroutineScope.launch(Dispatchers.EDT) {
             if (project.isDisposed) return@launch
 
             openedScripts.forEach {

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
+@Deprecated("Use Dispatchers.EDT instead", replaceWith = ReplaceWith("Dispatchers.EDT"))
 object EDT : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !isDispatchThread()
 

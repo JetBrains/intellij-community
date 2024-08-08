@@ -8,6 +8,7 @@ import com.intellij.codeInsight.navigation.openFileWithPsiElement
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.EditorFactory
@@ -30,8 +31,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.completion.CompletionBenchmarkSink
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -46,7 +47,7 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
         val benchmarkSink = CompletionBenchmarkSink.enableAndGet()
         val scenario = createBenchmarkScenario(project, benchmarkSink) ?: return
 
-        GlobalScope.launch(EDT) {
+        KotlinPluginDisposable.getInstance(project).coroutineScope.launch(Dispatchers.EDT) {
             scenario.doBenchmark()
             CompletionBenchmarkSink.disable()
         }
