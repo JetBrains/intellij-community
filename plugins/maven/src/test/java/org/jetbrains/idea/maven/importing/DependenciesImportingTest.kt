@@ -43,9 +43,9 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
-                       "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0.jar!/",
-                       "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0-sources.jar!/",
-                       "jar://" + repositoryPath + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
+                       "jar://$repositoryPath/junit/junit/4.0/junit-4.0.jar!/",
+                       "jar://$repositoryPath/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://$repositoryPath/junit/junit/4.0/junit-4.0-javadoc.jar!/")
     assertProjectLibraryCoordinates("Maven: junit:junit:4.0", "junit", "junit", "4.0")
   }
 
@@ -979,6 +979,59 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  fun testIncrementalSyncTransitiveLibraryDependencyManagement() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencyManagement>
+                      <dependencies>
+                        <dependency>
+                          <groupId>asm</groupId>
+                          <artifactId>asm</artifactId>
+                          <version>3.3.0</version>
+                        </dependency>       
+                      </dependencies>
+                    </dependencyManagement>                    
+                    <dependencies>
+                      <dependency>
+                        <groupId>asm</groupId>
+                        <artifactId>asm-attrs</artifactId>
+                        <version>2.2.1</version>
+                      </dependency>
+                    </dependencies>
+                    """.trimIndent())
+
+    assertModules("project")
+    assertModuleLibDeps("project", "Maven: asm:asm-attrs:2.2.1", "Maven: asm:asm:3.3.0")
+
+    updateProjectPom("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencyManagement>
+                      <dependencies>
+                        <dependency>
+                          <groupId>asm</groupId>
+                          <artifactId>asm</artifactId>
+                          <version>3.3.1</version>
+                        </dependency>       
+                      </dependencies>
+                    </dependencyManagement>                    
+                    <dependencies>
+                      <dependency>
+                        <groupId>asm</groupId>
+                        <artifactId>asm-attrs</artifactId>
+                        <version>2.2.1</version>
+                      </dependency>
+                    </dependencies>
+                    """.trimIndent())
+    updateAllProjects()
+
+    assertModuleLibDeps("project", "Maven: asm:asm-attrs:2.2.1", "Maven: asm:asm:3.3.1")
+  }
+
+  @Test
   fun testExclusionOfTransitiveDependencies() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1469,7 +1522,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     assertProjectLibraries("Maven: junit:junit:4.0")
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
 
-    importProjectAsync()
+    updateAllProjects()
 
     assertProjectLibraries("Maven: junit:junit:4.0")
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
