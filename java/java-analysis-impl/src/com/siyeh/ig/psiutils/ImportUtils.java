@@ -130,7 +130,8 @@ public final class ImportUtils {
     if (hasExactImportConflict(fqName, file)) {
       return false;
     }
-    if (hasOnDemandImportConflict(fqName, file, true)) {
+    if (hasOnDemandImportConflict(fqName, file, true) && !isAlreadyImported(file, fqName)
+    ) {
       return false;
     }
     if (containsConflictingReference(file, fqName)) {
@@ -140,6 +141,34 @@ public final class ImportUtils {
       return false;
     }
     return !containsConflictingTypeParameter(fqName, context);
+  }
+
+  /**
+   * Checks if the class with the given fully qualified name is already imported in the specified Java file.
+   *
+   * @param file the Java file to check for the import.
+   * @param fullyQualifiedName the fully qualified name of the class to check.
+   * @return true if the class is already imported, false otherwise.
+   */
+  public static boolean isAlreadyImported(@NotNull PsiJavaFile file, @NotNull String fullyQualifiedName) {
+    String className = extractClassName(file, fullyQualifiedName);
+
+    Project project = file.getProject();
+    PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(project);
+
+    PsiClass psiClass = resolveHelper.resolveReferencedClass(className, file);
+    return psiClass != null && fullyQualifiedName.equals(psiClass.getQualifiedName());
+  }
+
+  private static @NotNull String extractClassName(@NotNull PsiJavaFile file, @NotNull String fullyQualifiedName) {
+    for (PsiClass aClass : file.getClasses()) {
+      String outerClassName = aClass.getQualifiedName();
+      if (outerClassName != null && fullyQualifiedName.startsWith(outerClassName)) {
+        return fullyQualifiedName.substring(outerClassName.lastIndexOf('.') + 1);
+      }
+    }
+
+    return ClassUtil.extractClassName(fullyQualifiedName);
   }
 
   private static boolean containsConflictingTypeParameter(String fqName, PsiElement context) {
