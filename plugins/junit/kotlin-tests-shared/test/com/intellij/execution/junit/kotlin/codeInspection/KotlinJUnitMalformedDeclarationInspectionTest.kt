@@ -471,7 +471,7 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = ["foo"])
-        fun <error descr="Multiple parameters are not supported by this source">testWithMultipleParams</error>(argument: String, i: Int) { }
+        fun <error descr="Only a single parameter can be provided by '@ValueSource'">testWithMultipleParams</error>(argument: String, i: Int) { }
       }
     """.trimIndent())
   }
@@ -863,6 +863,36 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
           @org.junit.jupiter.api.BeforeAll
           fun beforeAll(foo: String) { println(foo) }
         }
+      }
+    """.trimIndent())
+  }
+  fun `test non-malformed parameter resolver with value source`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.api.extension.*
+      import org.junit.jupiter.params.ParameterizedTest
+      import org.junit.jupiter.params.provider.ValueSource
+      
+      class MyParameterResolver : ParameterResolver {
+          override fun supportsParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Boolean {
+              return parameterContext.parameter.type === Any::class.java;
+          }
+
+          override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Any {
+              return Any()
+          }
+      }
+
+      @Target(AnnotationTarget.FIELD, AnnotationTarget.VALUE_PARAMETER)
+      @ExtendWith(MyParameterResolver::class)
+      annotation class ParameterResolverAnnotation
+
+      class MyTest {
+          @ParameterizedTest
+          @ValueSource(booleans = [false, true])
+          fun foo(async: Boolean, @ParameterResolverAnnotation disposable: Any) {
+
+          }
       }
     """.trimIndent())
   }

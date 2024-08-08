@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
@@ -500,7 +500,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = "foo")
-        void <error descr="Multiple parameters are not supported by this source">testWithMultipleParams</error>(String argument, int i) { }
+        void <error descr="Only a single parameter can be provided by '@ValueSource'">testWithMultipleParams</error>(String argument, int i) { }
       }
     """.trimIndent())
     }

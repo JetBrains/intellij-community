@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -502,13 +502,14 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun checkConflictingSourceAnnotations(annotations: List<PsiAnnotation>, method: UMethod) {
-    val isSingleParameterProvider = annotations.firstOrNull { ann ->
+    val firstSingleParameterProvider = annotations.firstOrNull { ann ->
       singleParamProviders.contains(ann.qualifiedName)
-    } != null
-
-    val isMultipleParameterProvider = annotations.firstOrNull { ann ->
+    }
+    val isSingleParameterProvider = firstSingleParameterProvider != null
+    val firstMultipleParameterProvider = annotations.firstOrNull { ann ->
       multipleParameterProviders.contains(ann.qualifiedName)
-    } != null
+    }
+    val isMultipleParameterProvider = firstMultipleParameterProvider != null
 
     if (!isMultipleParameterProvider && !isSingleParameterProvider && hasCustomProvider(annotations)) return
     if (!isMultipleParameterProvider) {
@@ -516,7 +517,7 @@ private class JUnitMalformedSignatureVisitor(
         JUnitBundle.message("jvm.inspections.junit.malformed.param.no.sources.are.provided.descriptor")
       }
       else if (hasMultipleParameters(method.javaPsi)) {
-        JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor")
+        JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor", firstSingleParameterProvider?.shortName)
       }
       else return
       holder.registerUProblem(method, message)
@@ -675,6 +676,7 @@ private class JUnitMalformedSignatureVisitor(
     return containingClass != null && method.parameterList.parameters.count { param ->
       !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_INFO) &&
       !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_REPORTER) &&
+      !param.inParameterResolverContext() &&
       !MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
     } > 1 && !containingClass.inParameterResolverContext()
   }
@@ -689,7 +691,7 @@ private class JUnitMalformedSignatureVisitor(
 
   private fun checkNullSource(method: UMethod, annotation: PsiAnnotation) {
     if (hasMultipleParameters(method.javaPsi)) {
-      val message = JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor")
+      val message = JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor", annotation.shortName)
       holder.registerProblem(annotation, message)
     }
     if (getPassedParameter(method.javaPsi) == null) {
@@ -703,7 +705,7 @@ private class JUnitMalformedSignatureVisitor(
 
   private fun checkEmptySource(method: UMethod, annotation: PsiAnnotation) {
     if (hasMultipleParameters(method.javaPsi)) {
-      val message = JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor")
+      val message = JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor", annotation.shortName)
       return holder.registerProblem(annotation.navigationElement, message)
     }
     val passedParameter = getPassedParameter(method.javaPsi)
