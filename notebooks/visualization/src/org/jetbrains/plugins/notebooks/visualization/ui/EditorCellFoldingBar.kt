@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
@@ -34,6 +35,7 @@ class EditorCellFoldingBar(
     get() = panel?.isVisible == true
     set(value) {
       if (visible == value) return
+      if (editor.editorKind != EditorKind.MAIN_EDITOR) return
 
       if (value) {
         val panel = createFoldingBar()

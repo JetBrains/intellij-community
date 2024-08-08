@@ -2,6 +2,7 @@ package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.IconLoader
@@ -67,7 +68,7 @@ class NotebookBelowCellDelimiterPanel(
 
   @NlsSafe
   private fun getExecutionLabelText(executionCount: Int?, durationText: String?): String {
-    val executionCountText = executionCount?.let { if (it > 0) "[$it]" else "" } ?: ""
+    val executionCountText = getExecutionCountLabelText(executionCount)
     val durationLabelText = durationText ?: ""
     val labelText = "$executionCountText $durationLabelText"
     return labelText
@@ -107,6 +108,12 @@ class NotebookBelowCellDelimiterPanel(
       addActionListener(createAddTagButtonActionListener(action))
     }
   }
+
+  private fun getExecutionCountLabelText(executionCount: Int?) = when {
+      editor.editorKind != EditorKind.MAIN_EDITOR -> ""
+      executionCount == null -> ""
+      else -> "[$executionCount]"
+    }
 
   private fun createAddTagButtonHoverListener(originalIcon: Icon, transparentIcon: Icon) = object : MouseAdapter() {
     override fun mouseEntered(e: MouseEvent) { (e.source as JButton).icon = originalIcon }

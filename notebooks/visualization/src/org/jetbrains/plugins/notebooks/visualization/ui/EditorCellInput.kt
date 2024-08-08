@@ -20,7 +20,7 @@ class EditorCellInput(
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
 
   private val shouldShowRunButton =
-    editor.editorKind != EditorKind.DIFF &&
+    editor.editorKind == EditorKind.MAIN_EDITOR &&
     editor.notebookAppearance.shouldShowRunButtonInGutter() &&
     cell.type == NotebookCellLines.CellType.CODE
 
