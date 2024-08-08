@@ -9,24 +9,20 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.removeUserData
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
-import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.setMode
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookCodeCellBackgroundLineMarkerRenderer
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookLineMarkerRenderer
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.*
+import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController.InputFactory
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -35,6 +31,16 @@ import java.awt.Rectangle
 import java.time.ZonedDateTime
 import javax.swing.JComponent
 import kotlin.reflect.KClass
+
+private val fallbackInputFactory = object : InputFactory {
+  override fun createComponent(editor: EditorImpl, cell: EditorCell): EditorCellViewComponent {
+    return TextEditorCellViewComponent(editor, cell)
+  }
+
+  override fun supports(editor: EditorImpl, cell: EditorCell): Boolean {
+    return true
+  }
+}
 
 class EditorCellView(
   private val editor: EditorImpl,
@@ -80,33 +86,10 @@ class EditorCellView(
   }
 
   private fun createEditorCellInput() =
-    EditorCellInput(editor,
-                    { parent: EditorCellInput, currentComponent: EditorCellViewComponent? ->
-                      val currentController = (currentComponent as? ControllerEditorCellViewComponent)?.controller
-                      val controller = getInputFactories().firstNotNullOfOrNull { factory ->
-                        failSafeCompute(factory, editor, currentController?.let { listOf(it) }
-                                                         ?: emptyList(), intervals.intervals.listIterator(interval.ordinal))
-                      }
-                      if (controller != null) {
-                        if (controller == currentController) {
-                          currentComponent
-                        }
-                        else {
-                          ControllerEditorCellViewComponent(controller, editor, cell)
-                        }
-                      }
-                      else {
-                        if (currentComponent is TextEditorCellViewComponent) {
-                          currentComponent
-                        }
-                        else {
-                          TextEditorCellViewComponent(editor, cell)
-                        }
-                      }
-                    }, cell)
-      .also {
-        add(it)
-      }
+    EditorCellInput(editor, getInputFactories().firstOrNull { it.supports(editor, cell) } ?: fallbackInputFactory, cell).also {
+      add(it)
+    }
+
 
   fun postInitInlays() {
     updateControllers()
@@ -127,14 +110,14 @@ class EditorCellView(
     Disposer.dispose(inlay)
   }
 
-  // Force == true only from disableMarkdownRenderingIfEnabled and caused recreation of components in EditorCellInput.updateInput.
   fun update(updateContext: UpdateContext) {
+    input.update()
     recreateControllers()
-    updateControllers(updateContext.force)
+    updateControllers()
     updateCellFolding(updateContext)
   }
 
-  private fun updateControllers(force: Boolean = false) {
+  private fun updateControllers() {
     for (controller in controllers) {
       val inlay = controller.inlay
       inlay.renderer.asSafely<JComponent>()?.let { component ->
@@ -146,14 +129,13 @@ class EditorCellView(
         DataManager.registerDataProvider(component, NotebookCellDataProvider(editor, component) { interval })
       }
     }
-    input.update(force)
     updateOutputs()
     updateCellHighlight()
   }
 
   private fun recreateControllers() {
     val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
-      .filter { it !is NotebookCellInlayController.InputFactory }
+      .filter { it !is InputFactory }
     val controllersToDispose = _controllers.toMutableSet()
     _controllers = if (!editor.isDisposed) {
       otherFactories.mapNotNull { factory -> failSafeCompute(factory, editor, _controllers, intervals.intervals.listIterator(interval.ordinal)) }
@@ -197,9 +179,8 @@ class EditorCellView(
   private fun hasOutputs() = interval.type == NotebookCellLines.CellType.CODE
                              && (editor.editorKind != EditorKind.DIFF || Registry.`is`("jupyter.diff.viewer.output"))
 
-  private fun getInputFactories(): Sequence<NotebookCellInlayController.Factory> {
-    return NotebookCellInlayController.Factory.EP_NAME.extensionList.asSequence()
-      .filter { it is NotebookCellInlayController.InputFactory }
+  private fun getInputFactories(): Sequence<InputFactory> {
+    return cellInlayManager.getInputFactories()
   }
 
   private fun failSafeCompute(
@@ -208,8 +189,14 @@ class EditorCellView(
     controllers: Collection<NotebookCellInlayController>,
     intervalIterator: ListIterator<NotebookCellLines.Interval>,
   ): NotebookCellInlayController? {
+    return failSafeCompute { factory.compute(editor as EditorImpl, controllers, intervalIterator) }
+  }
+
+  private fun <T> failSafeCompute(
+    factory: () -> T,
+  ): T? {
     try {
-      return factory.compute(editor as EditorImpl, controllers, intervalIterator)
+      return factory()
     }
     catch (t: Throwable) {
       thisLogger().error("${factory.javaClass.name} shouldn't throw exceptions at NotebookCellInlayController.Factory.compute(...)", t)
@@ -341,45 +328,6 @@ class EditorCellView(
     updateCellHighlight()
   }
 
-  fun disableMarkdownRenderingIfEnabled() {  // PY-73017 point 1
-    val markdownController = controllers.filterIsInstance<MarkdownInlayRenderingController>().firstOrNull()
-    markdownController?.let {  // exists iff this is a rendered markdown cell
-      it.stopRendering()
-      editor.setMode(NotebookEditorMode.EDIT)
-
-      val startOffset = editor.document.getLineStartOffset(interval.lines.first + 1)
-      val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-      val foldingModel = editor.foldingModel
-      val foldRegion: FoldRegion? = foldingModel.getFoldRegion(startOffset, endOffset)
-
-      foldRegion?.let {  // to avoid clash with folding created by EditorCellInput.toggleTextFolding
-        foldingModel.runBatchFoldingOperation {
-          foldingModel.removeFoldRegion(it)
-        }
-      }
-      cellInlayManager.update(true) { ctx ->
-        update(ctx)
-      }
-      cell.putUserData(WAS_FOLDED_IN_RENDERED_STATE_KEY, true)
-    }
-  }
-
-  fun enableMarkdownRenderingIfNeeded() {
-    // Making use of [org.jetbrains.plugins.notebooks.editor.JupyterMarkdownEditorCaretListener]
-    // The idea was to force rendering of md cells that were folded in the rendered state.
-    // This was a temporary solution written on rush, since we cannot use NotebookMarkdownEditorManager here directly.
-    // todo: a refactor will be required as part of the ongoing reorganization of Jupyter modules
-    cell.getUserData(WAS_FOLDED_IN_RENDERED_STATE_KEY) ?: return
-    val document = editor.document
-    val caretModel = editor.caretModel
-    val oldPosition = caretModel.offset
-    val startLine = cell.interval.lines.first
-    val startOffset = document.getLineEndOffset(startLine)
-    caretModel.moveToOffset(startOffset)
-    caretModel.moveToOffset(oldPosition)
-    cell.removeUserData(WAS_FOLDED_IN_RENDERED_STATE_KEY)
-  }
-
   private fun updateFolding() {
     input.folding.visible = mouseOver || selected
     input.folding.selected = selected
@@ -401,10 +349,6 @@ class EditorCellView(
 
     return Rectangle(0, inputBounds.y, editor.contentSize.width, height)
   }
-
-  val shouldUpdateFolding: Boolean
-    get() = controllers.any { it.shouldUpdateInlay }
-
 
   fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
     _controllers.filterIsInstance<CellExecutionStatusView>().firstOrNull()
@@ -461,8 +405,16 @@ class EditorCellView(
     return controllers.map { it.inlay }.asSequence()
   }
 
-  companion object {
-    val WAS_FOLDED_IN_RENDERED_STATE_KEY = Key<Boolean>("jupyter.markdown.folding.was.rendered")
+  fun switchToEditMode(ctx: UpdateContext) {
+    input.switchToEditMode(ctx)
+  }
+
+  fun switchToCommandMode(ctx: UpdateContext) {
+    input.switchToCommandMode(ctx)
+  }
+
+  fun requestCaret() {
+    input.requestCaret()
   }
 }
 

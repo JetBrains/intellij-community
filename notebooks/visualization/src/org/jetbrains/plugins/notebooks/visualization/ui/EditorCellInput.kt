@@ -3,16 +3,15 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.FoldingModelImpl
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
+import org.jetbrains.plugins.notebooks.visualization.UpdateContext
 import java.awt.Rectangle
 
 class EditorCellInput(
   private val editor: EditorImpl,
-  private val componentFactory: (EditorCellInput, EditorCellViewComponent?) -> EditorCellViewComponent,
+  componentFactory: NotebookCellInlayController.InputFactory,
   private val cell: EditorCell,
 ) : EditorCellViewComponent() {
 
@@ -28,19 +27,13 @@ class EditorCellInput(
     if (shouldShowRunButton) EditorCellRunGutterButton(editor, cell)
     else null
 
-  var component: EditorCellViewComponent = componentFactory(this, null).also { add(it) }
-    private set(value) {
-      if (value != field) {
-        field.dispose()
-        remove(field)
-        field = value
-        add(value)
-      }
-    }
+  val component: EditorCellViewComponent = componentFactory.createComponent(editor, cell).also { add(it) }
 
-  val folding = EditorCellFoldingBar(editor, ::getFoldingBounds) { toggleFolding(componentFactory) }
+  val folding = EditorCellFoldingBar(editor, ::getFoldingBounds) { toggleFolding() }
 
   private var gutterAction: AnAction? = null
+
+  private var folded = false
 
   private fun getFoldingBounds(): Pair<Int, Int> {
     //For disposed
@@ -60,45 +53,9 @@ class EditorCellInput(
     return bounds.y + delimiterPanelSize to bounds.height - delimiterPanelSize
   }
 
-  private fun toggleFolding(inputComponentFactory: (EditorCellInput, EditorCellViewComponent) -> EditorCellViewComponent) {
-    component = if (component is ControllerEditorCellViewComponent) {
-      toggleTextFolding()
-      TextEditorCellViewComponent(editor, cell)
-    }
-    else {
-      toggleTextFolding()
-      inputComponentFactory(this, component)
-    }
-  }
-
-  private fun toggleTextFolding() {
-    val interval = interval
-    val startOffset = editor.document.getLineStartOffset(interval.lines.first + 1)
-    val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-    val foldingModel = editor.foldingModel
-    val currentFoldingRegion = foldingModel.getFoldRegion(startOffset, endOffset)
-    if (currentFoldingRegion == null) {
-      if (cell.type == NotebookCellLines.CellType.MARKDOWN) cell.view?.disableMarkdownRenderingIfEnabled()
-      foldingModel.runBatchFoldingOperation {
-        val text = editor.document.getText(TextRange(startOffset, endOffset))
-        val firstNotEmptyString = text.lines().firstOrNull { it.trim().isNotEmpty() }
-        val placeholder = StringUtil.shortenTextWithEllipsis(firstNotEmptyString ?: "\u2026", 20, 0)
-        foldingModel.createFoldRegion(startOffset, endOffset, placeholder, null, false)?.apply {
-          FoldingModelImpl.hideGutterRendererForCollapsedRegion(this)
-          isExpanded = false
-        }
-      }
-    }
-    else {
-      foldingModel.runBatchFoldingOperation {
-        if (currentFoldingRegion.isExpanded) {
-          currentFoldingRegion.isExpanded = false
-        } else {
-            foldingModel.removeFoldRegion(currentFoldingRegion)
-        }
-      }
-      if (cell.type == NotebookCellLines.CellType.MARKDOWN) cell.view?.enableMarkdownRenderingIfNeeded()
-    }
+  private fun toggleFolding() = cell.manager.update { ctx ->
+    folded = !folded
+    (component as? InputComponent)?.updateFolding(ctx, folded)
   }
 
   override fun doDispose() {
@@ -106,8 +63,8 @@ class EditorCellInput(
     component.dispose()
   }
 
-  fun update(force: Boolean = false) {
-    updateInput(force)
+  fun update() {
+    updateInput()
     updateGutterIcons()
   }
 
@@ -118,10 +75,6 @@ class EditorCellInput(
   fun setGutterAction(action: AnAction) {
     gutterAction = action
     updateGutterIcons()
-  }
-
-  fun updatePresentation(view: EditorCellViewComponent) {
-    component = view
   }
 
   override fun calculateBounds(): Rectangle {
@@ -138,9 +91,19 @@ class EditorCellInput(
     return bounds
   }
 
+  fun updateInput() = cell.manager.update { ctx ->
+    (component as? InputComponent)?.updateInput(ctx)
+  }
 
-  fun updateInput(force: Boolean = false) {
-    val oldComponent = if (force) null else component
-    component = componentFactory(this, oldComponent)
+  fun switchToEditMode(ctx: UpdateContext) {
+    (component as? InputComponent)?.switchToEditMode(ctx)
+  }
+
+  fun switchToCommandMode(ctx: UpdateContext) {
+    (component as? InputComponent)?.switchToCommandMode(ctx)
+  }
+
+  fun requestCaret() {
+    (component as? InputComponent)?.requestCaret()
   }
 }

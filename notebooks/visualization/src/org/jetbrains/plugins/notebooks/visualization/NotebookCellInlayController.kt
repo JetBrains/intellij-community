@@ -6,7 +6,9 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Key
+import org.jetbrains.plugins.notebooks.visualization.ui.EditorCell
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView
+import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewComponent
 import java.awt.Graphics
 import java.awt.Rectangle
 
@@ -30,8 +32,6 @@ interface NotebookCellInlayController {
       currentControllers: Collection<NotebookCellInlayController>,
       intervalIterator: ListIterator<NotebookCellLines.Interval>,
     ): NotebookCellInlayController?
-
-    fun foldingUpdate() {}
 
     companion object {
       @JvmField
@@ -71,7 +71,13 @@ interface NotebookCellInlayController {
   /**
    * Marker interface for factories producing custom editors for cells
    */
-  interface InputFactory
+  interface InputFactory {
+
+    fun createComponent(editor: EditorImpl, cell: EditorCell): EditorCellViewComponent
+
+    fun supports(editor: EditorImpl, cell: EditorCell): Boolean
+
+  }
 
   val inlay: Inlay<*>
 
@@ -85,10 +91,6 @@ interface NotebookCellInlayController {
   fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, interval: NotebookCellLines.Interval) {}
 
   fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval, cellView: EditorCellView) {}
-
-
-  val shouldUpdateInlay: Boolean
-    get() = false
 
   companion object {
     val GUTTER_ACTION_KEY = Key<AnAction>("jupyter.editor.cell.gutter.action")

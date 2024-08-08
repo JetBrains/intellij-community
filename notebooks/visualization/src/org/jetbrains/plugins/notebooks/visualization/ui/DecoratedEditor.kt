@@ -61,7 +61,7 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
 
           val selectedCell = getCellViewByPoint(point)?.cell ?: return
 
-          if (event.area == EditorMouseEventArea.EDITING_AREA && event.inlay == null) {
+          if (event.area == EditorMouseEventArea.EDITING_AREA && event.inlay == null && event.collapsedFoldRegion == null) {
             editor.setMode(NotebookEditorMode.EDIT)
           }
           else {
@@ -258,12 +258,13 @@ fun decorateTextEditor(textEditor: TextEditor, manager: NotebookCellInlayManager
   return DecoratedEditor(textEditor, manager)
 }
 
-internal fun keepScrollingPositionWhile(editor: Editor, task: Runnable) {
-  ReadAction.run<Nothing> {
+internal fun <T> keepScrollingPositionWhile(editor: Editor, task: () -> T): T {
+  return ReadAction.compute<T, Nothing> {
     EditorScrollingPositionKeeper(editor).use { keeper ->
       keeper.savePosition()
-      task.run()
+      val r = task()
       keeper.restorePosition(false)
+      r
     }
   }
 }

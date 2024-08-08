@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.execution.ExecutionEvent
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
@@ -15,8 +16,8 @@ import kotlin.reflect.KClass
 
 class EditorCell(
   private val editor: EditorEx,
-  private val manager: NotebookCellInlayManager,
-  internal var intervalPointer: NotebookIntervalPointer,
+  val manager: NotebookCellInlayManager,
+  var intervalPointer: NotebookIntervalPointer,
   private val viewFactory: (EditorCell) -> EditorCellView,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
 
@@ -39,26 +40,28 @@ class EditorCell(
     set(value) {
       if (field == value) return
       field = value
-
-      if (value) {
-        view?.let {
-          disposeView(it)
+      manager.update<Unit> { ctx ->
+        if (!value) {
+          view?.let {
+            disposeView(it)
+          }
         }
-      }
-      else {
-        if (view == null) {
-          view = createView()
-          view?.selected = selected
-          gutterAction?.let { view?.setGutterAction(it) }
-          view?.updateExecutionStatus(executionCount, progressStatus, executionStartTime, executionEndTime)
+        else {
+          if (view == null) {
+            view = createView()
+          }
         }
       }
     }
 
-  private fun createView(): EditorCellView {
+  private fun createView(): EditorCellView = manager.update { ctx ->
     val view = viewFactory(this).also { Disposer.register(this, it) }
+    gutterAction?.let { view.setGutterAction(it) }
+    view.updateExecutionStatus(executionCount, progressStatus, executionStartTime, executionEndTime)
+    view.selected = selected
     manager.fireCellViewCreated(view)
-    return view
+    view.updateCellFolding(ctx)
+    view
   }
 
   private fun disposeView(it: EditorCellView) {
@@ -84,6 +87,8 @@ class EditorCell(
   private var executionStartTime: ZonedDateTime? = null
 
   private var executionEndTime: ZonedDateTime? = null
+
+  private var mode = NotebookEditorMode.COMMAND
 
   override fun dispose() {
     view?.let { disposeView(it) }
@@ -157,5 +162,19 @@ class EditorCell(
       }
     }
     view?.updateExecutionStatus(executionCount, progressStatus, executionStartTime, executionEndTime)
+  }
+
+  fun switchToEditMode() = manager.update { ctx ->
+    mode = NotebookEditorMode.EDIT
+    view?.switchToEditMode(ctx)
+  }
+
+  fun switchToCommandMode() = manager.update { ctx ->
+    mode = NotebookEditorMode.COMMAND
+    view?.switchToCommandMode(ctx)
+  }
+
+  fun requestCaret() {
+    view?.requestCaret()
   }
 }
