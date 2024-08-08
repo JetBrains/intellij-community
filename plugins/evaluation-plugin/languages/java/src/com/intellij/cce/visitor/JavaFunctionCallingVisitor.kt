@@ -23,6 +23,9 @@ class JavaFunctionCallingVisitor : EvaluationVisitor, JavaRecursiveElementVisito
   }
 
   override fun visitClass(aClass: PsiClass) {
+    if (aClass.isInterface || aClass.isEnum || aClass.isAnnotationType) {
+      return
+    }
     aClass.nameIdentifier?.let {
       codeFragment?.addChild(
         CodeToken(it.text, it.startOffset, SimpleTokenProperties.create(TypeProperty.CLASS, SymbolLocation.PROJECT) {})
