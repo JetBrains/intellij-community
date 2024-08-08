@@ -91,6 +91,7 @@ public fun PopupMenu(
     horizontalAlignment: Alignment.Horizontal,
     modifier: Modifier = Modifier,
     style: MenuStyle = JewelTheme.menuStyle,
+    popupProperties: PopupProperties = PopupProperties(focusable = true),
     content: MenuScope.() -> Unit,
 ) {
     val density = LocalDensity.current
@@ -110,7 +111,7 @@ public fun PopupMenu(
     Popup(
         popupPositionProvider = popupPositionProvider,
         onDismissRequest = { onDismissRequest(InputMode.Touch) },
-        properties = PopupProperties(focusable = true),
+        properties = popupProperties,
         onPreviewKeyEvent = { false },
         onKeyEvent = {
             val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
