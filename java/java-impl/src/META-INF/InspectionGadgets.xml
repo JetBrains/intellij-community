@@ -1338,6 +1338,10 @@
                      key="while.can.be.foreach.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.WhileCanBeForeachInspection"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="MarkdownDocumentationCommentsMigration" bundle="messages.InspectionGadgetsBundle"
+                     key="markdown.documentation.comments.migration.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids23" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.migration.MarkdownDocumentationCommentsMigrationInspection"/>
 
     <!--group.names.java.language.level.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AnnotationClass" bundle="messages.InspectionGadgetsBundle" key="annotation.class.display.name"
