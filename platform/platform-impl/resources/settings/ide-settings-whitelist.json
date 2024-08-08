@@ -208,6 +208,7 @@
     "Pythonid:app:PyDuplocatorSettings.distinguish_variables",
     "Pythonid:app:PyDuplocatorSettings.lower_bound",
     "PythonCore:app:PythonFoldingSettings.*",
+    "PythonCore:app:PythonDocumentationMap.entries",
     "Subversion:app:SvnApplicationSettings.mySvnCommandLine"
   ]
 }
