@@ -26,8 +26,12 @@ class WindowResizeListenerEx(private val glassPane: IdeGlassPane, content: Compo
       if (content is JComponent) {
         IdeGlassPaneImpl.savePreProcessedCursor(content, content.getCursor())
       }
-      super.setCursor(content, cursor)
     }
+    // On macOS, the component's cursor may be updated asynchronously,
+    // so we can't be sure it's the same as we set the last time.
+    // Therefore, this call must be outside the if statement above.
+    // No performance penalty for this, because there's another equality check inside.
+    super.setCursor(content, cursor)
   }
 
   override fun notifyResized() {
