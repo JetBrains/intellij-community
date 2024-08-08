@@ -475,7 +475,7 @@ public class Maven40ProjectResolver {
 
     ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
     projectBuildingRequest.setRepositorySession(session.getRepositorySession());
-    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MAVEN_3_1);
+    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
     projectBuildingRequest.setActiveProfileIds(request.getActiveProfiles());
     projectBuildingRequest.setInactiveProfileIds(request.getInactiveProfiles());
     projectBuildingRequest.setResolveDependencies(false);
