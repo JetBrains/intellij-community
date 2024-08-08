@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -54,8 +53,10 @@ final class AnnotatorRunner {
   }
 
   // run annotators on PSI elements inside/outside while running `runnable` in parallel
-  boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside, @NotNull Runnable runnable,
-                             @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+  boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside,
+                             @NotNull List<? extends PsiElement> outside,
+                             @NotNull Runnable runnable,
+                             @NotNull ResultSink resultSink) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
 
@@ -110,7 +111,7 @@ final class AnnotatorRunner {
   private void runAnnotator(@NotNull Annotator annotator,
                             @NotNull List<? extends PsiElement> insideThenOutside,
                             @NotNull Map<Annotator, Set<Language>> supportedLanguages,
-                            @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> result) {
+                            @NotNull ResultSink result) {
     Set<Language> supported = supportedLanguages.get(annotator);
     if (supported.isEmpty()) {
       return;

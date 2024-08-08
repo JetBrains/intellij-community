@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -28,7 +28,6 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
-import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -234,7 +233,7 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull LongList ranges2,
                                     HighlightVisitor @NotNull [] visitors,
                                     boolean forceHighlightParents,
-                                    @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+                                    @NotNull ResultSink resultSink) {
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
     Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
                                                             myUpdateAll, () -> createInfoHolder(getFile()), resultSink);

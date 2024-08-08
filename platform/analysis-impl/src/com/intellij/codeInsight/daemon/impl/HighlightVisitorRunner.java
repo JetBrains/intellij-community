@@ -20,7 +20,6 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -98,7 +97,7 @@ class HighlightVisitorRunner {
                       int chunkSize,
                       boolean myUpdateAll,
                       @NotNull Supplier<? extends HighlightInfoHolder> infoHolderProducer,
-                      @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+                      @NotNull ResultSink resultSink) {
     List<? extends VisitorInfo> visitorInfos = ContainerUtil.map(visitors, v -> new VisitorInfo(v, new HashSet<>(), infoHolderProducer.get()));
     // first, run all visitors in parallel on all visible elements, then run all visitors in parallel on all invisible elements
     List<PsiElement> elements = ContainerUtil.concat(elements1, elements2);
@@ -151,7 +150,7 @@ class HighlightVisitorRunner {
                                                  @NotNull PsiElement fakePsiElement,
                                                  @NotNull HighlightInfoHolder holder,
                                                  @NotNull HighlightVisitor visitor,
-                                                 @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+                                                 @NotNull ResultSink resultSink) {
     List<HighlightInfo> newInfos;
     if (holder.size() > fromIndex) {
       newInfos = new ArrayList<>(holder.size() - fromIndex);
@@ -177,7 +176,7 @@ class HighlightVisitorRunner {
                                   @NotNull HighlightInfoHolder holder,
                                   boolean forceHighlightParents,
                                   @NotNull HighlightVisitor visitor,
-                                  @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+                                  @NotNull ResultSink resultSink) {
     boolean failed = false;
     int nextLimit = chunkSize;
     List<HighlightInfo> infos = new ArrayList<>();

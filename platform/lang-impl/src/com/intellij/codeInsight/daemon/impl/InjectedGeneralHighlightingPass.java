@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
@@ -26,7 +26,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.NotNull;
@@ -176,7 +175,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
                                                      @NotNull PsiFile injectedPsi,
                                                      @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
                                                      @Nullable TextAttributesKey attributesKey,
-                                                     @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+                                                     @NotNull ResultSink resultSink) {
     DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
     if (documentWindow == null) return;
     highlightInjectedBackground(injectedPsi, places, attributesKey, resultSink);
@@ -221,7 +220,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
   private static void highlightInjectedBackground(@NotNull PsiFile injectedPsi,
                                                   @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
                                                   @Nullable TextAttributesKey attributesKey,
-                                                  @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+                                                  @NotNull ResultSink resultSink) {
     boolean addTooltips = places.size() < 100;
     List<HighlightInfo> result = new ArrayList<>(places.size());
     for (PsiLanguageInjectionHost.Shred place : places) {
@@ -289,8 +288,9 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     return result;
   }
 
-  private void highlightInjectedSyntax(@NotNull PsiFile injectedPsi, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
-                                       @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+  private void highlightInjectedSyntax(@NotNull PsiFile injectedPsi,
+                                       @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
+                                       @NotNull ResultSink resultSink) {
     List<HighlightInfo> result = new ArrayList<>(places.size()*2);
     InjectedLanguageUtil.processTokens(injectedPsi, places, (@NotNull TextRange hostRange, TextAttributesKey @NotNull [] keys) -> {
       List<HighlightInfo> infos = InjectedLanguageFragmentSyntaxUtil.addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, keys, InjectedLanguageManagerImpl.INJECTION_SYNTAX_TOOL_ID);
