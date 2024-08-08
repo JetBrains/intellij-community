@@ -69,7 +69,8 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void cancel() {
-    cancel("");
+    Throwable cause = LOG.isDebugEnabled() ? new Throwable() : null;
+    doCancel(cause, "cancel() was called");
   }
 
   public final void cancel(@NotNull String reason) {
@@ -85,9 +86,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
       if (LOG.isDebugEnabled()) {
         LOG.debug("doCancel(" + this +
                   (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
-                  (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) +
-                  ")"
-        );
+                  (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) + ")");
       }
       myCancellationCause = cause;
       if (cause != null) {
@@ -138,7 +137,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public String toString() {
-    return super.toString() + (debug ? "; "+myTraceableDisposable.getStackTrace()+"\n;" : "");
+    return System.identityHashCode(this) + (debug ? "; " + myTraceableDisposable.getStackTrace() + "\n;" : "") + " "+(isCanceled() ? "X" : "V");
   }
 
   @Override

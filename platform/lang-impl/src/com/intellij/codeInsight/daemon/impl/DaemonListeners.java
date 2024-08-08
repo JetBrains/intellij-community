@@ -72,6 +72,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -302,7 +303,7 @@ public final class DaemonListeners implements Disposable {
         if (document == null) {
           return;
         }
-        // when the file becomes un-highlighteable, clear all highlighters from previous HighlightPasses
+        // when the file becomes un-highlightable, clear all highlighters from previous HighlightPasses
         removeAllHighlightersFromHighlightPasses(document, project);
       }
     });
@@ -563,10 +564,7 @@ public final class DaemonListeners implements Disposable {
       if (!myDaemonCodeAnalyzer.isRunning()) {
         return;
       }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("cancelling code highlighting by command: " + event.getCommand());
-      }
-      stopDaemon(false, "Command start");
+      stopDaemon(false, ObjectUtils.notNull(event.getCommandName(), "command started"));
     }
 
     private static Document extractDocumentFromCommand(@NotNull CommandEvent event) {
