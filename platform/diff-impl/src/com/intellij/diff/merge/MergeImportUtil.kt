@@ -142,7 +142,7 @@ internal class ResolveConflictsInImportsToggleAction : ToggleAction() {
       return
     }
 
-    e.presentation.isEnabledAndVisible = MergeImportUtil.isEnabledFor(viewer.project, viewer.editor.document)
+    e.presentation.isEnabled = viewer.myResolveImportsPossible && MergeImportUtil.isEnabledFor(viewer.project, viewer.editor.document)
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
