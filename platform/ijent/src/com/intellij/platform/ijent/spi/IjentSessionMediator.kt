@@ -68,7 +68,7 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
       val connectionScope = IjentApplicationScope.instance().childScope(
         "ijent $ijentId > connection scope",
         supervisor = false,
-        context = exceptionHandler,
+        context = exceptionHandler + IjentThreadPool.asCoroutineDispatcher(),
       )
 
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole

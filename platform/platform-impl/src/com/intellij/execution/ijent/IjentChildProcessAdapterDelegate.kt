@@ -3,6 +3,7 @@ package com.intellij.execution.ijent
 
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.platform.util.coroutines.channel.ChannelInputStream
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
@@ -92,6 +93,7 @@ internal class IjentChildProcessAdapterDelegate(
   @Throws(InterruptedException::class)
   fun <T> runBlockingInContext(body: suspend () -> T): T =
     @Suppress("SSBasedInspection") runBlocking(coroutineScope.coroutineContext) {
+      IjentThreadPool.checkCurrentThreadIsInPool()
       body()
     }
 
