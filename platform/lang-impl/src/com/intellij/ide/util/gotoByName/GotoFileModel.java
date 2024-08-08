@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -49,7 +50,13 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     super(project, ChooseByNameContributor.FILE_EP_NAME.getExtensionList());
     myCustomFilter = createCustomFilter(project, GotoFileCustomizer.EP_NAME.getExtensionList());
     Application application = ApplicationManager.getApplication();
-    myMaxSize = (application.isUnitTestMode() || application.isHeadlessEnvironment()) ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
+    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+      myMaxSize = Integer.MAX_VALUE;
+    }
+    else {
+      IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
+      myMaxSize = frame != null ? frame.getSize().width : Integer.MAX_VALUE;
+    }
   }
 
   public boolean isSlashlessMatchingEnabled() {
