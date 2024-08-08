@@ -10321,19 +10321,11 @@ f:com.intellij.internal.focus.Util
 - <init>():V
 f:com.intellij.internal.inspector.ComponentPropertiesCollector
 - s:collect(java.awt.Component):java.util.List
-f:com.intellij.internal.inspector.UiInspectorUtil
-- sf:INSTANCE:com.intellij.internal.inspector.UiInspectorUtil
+f:com.intellij.internal.inspector.UiInspectorActionUtil
+- sf:INSTANCE:com.intellij.internal.inspector.UiInspectorActionUtil
 - sf:collectActionGroupInfo(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory):java.util.List
 - sf:collectAnActionInfo(com.intellij.openapi.actionSystem.AnAction):java.util.List
-- sf:findClassByFqn(com.intellij.openapi.project.Project,java.lang.String):com.intellij.psi.PsiElement
 - sf:getActionId(com.intellij.openapi.actionSystem.AnAction):java.lang.String
-- sf:getClassName(java.lang.Object):java.lang.String
-- f:getClassPresentation(java.lang.Class):java.lang.String
-- sf:getClassPresentation(java.lang.Object):java.lang.String
-- sf:getComponentName(java.awt.Component):java.lang.String
-- sf:getProvider(java.lang.Object):com.intellij.internal.inspector.UiInspectorContextProvider
-- sf:openClassByFqn(com.intellij.openapi.project.Project,java.lang.String,Z):V
-- sf:registerProvider(javax.swing.JComponent,com.intellij.internal.inspector.UiInspectorContextProvider):V
 a:com.intellij.internal.inspector.UiMouseAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>(java.lang.String):V

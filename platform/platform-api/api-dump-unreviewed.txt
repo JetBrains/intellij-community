@@ -1478,6 +1478,14 @@ com.intellij.internal.inspector.UiInspectorTableRendererContextProvider
 - a:getUiInspectorContext(javax.swing.JTable,java.lang.Object,I,I):java.util.List
 com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider
 - a:getUiInspectorContext(javax.swing.JTree,java.lang.Object,I):java.util.List
+f:com.intellij.internal.inspector.UiInspectorUtil
+- sf:INSTANCE:com.intellij.internal.inspector.UiInspectorUtil
+- sf:getClassName(java.lang.Object):java.lang.String
+- sf:getClassPresentation(java.lang.Class):java.lang.String
+- sf:getClassPresentation(java.lang.Object):java.lang.String
+- sf:getComponentName(java.awt.Component):java.lang.String
+- sf:getProvider(java.lang.Object):com.intellij.internal.inspector.UiInspectorContextProvider
+- sf:registerProvider(javax.swing.JComponent,com.intellij.internal.inspector.UiInspectorContextProvider):V
 c:com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService
 - com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 - <init>():V
@@ -6610,8 +6618,10 @@ a:com.intellij.ui.GroupedElementsRenderer$List
 - p:layout():V
 c:com.intellij.ui.GroupedElementsRenderer$MyComponent
 - com.intellij.ui.components.panels.OpaquePanel
+- com.intellij.internal.inspector.UiInspectorContextProvider
 - <init>(com.intellij.ui.GroupedElementsRenderer):V
 - getPreferredSize():java.awt.Dimension
+- getUiInspectorContext():java.util.List
 - setPreferredWidth(I):V
 a:com.intellij.ui.GroupedElementsRenderer$Tree
 - com.intellij.ui.GroupedElementsRenderer

@@ -279,7 +279,7 @@ public final class ComponentPropertiesCollector {
     }
 
     if (action != null) {
-      myProperties.addAll(UiInspectorUtil.collectAnActionInfo(action));
+      myProperties.addAll(UiInspectorActionUtil.collectAnActionInfo(action));
     }
   }
 

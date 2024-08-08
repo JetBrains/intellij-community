@@ -9,10 +9,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.internal.inspector.ComponentPropertiesCollector;
-import com.intellij.internal.inspector.PropertyBean;
-import com.intellij.internal.inspector.UiInspectorAction;
-import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.internal.inspector.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -498,9 +495,9 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     private void printClassName(String className) {
       String[] parts = className.split("@");  // there can be a class name with hashcode
       String classFqn = parts[0];
-      PsiElement classElement = ReadAction.compute(() -> UiInspectorUtil.findClassByFqn(myProject, classFqn));
+      PsiElement classElement = ReadAction.compute(() -> UiInspectorImpl.findClassByFqn(myProject, classFqn));
       if (classElement != null) {
-        printHyperlinkToPreview(classFqn, project -> UiInspectorUtil.openClassByFqn(project, classFqn, true));
+        printHyperlinkToPreview(classFqn, project -> UiInspectorImpl.openClassByFqn(project, classFqn, true));
         if (parts.length > 1) {
           printToPreview("@" + parts[1], NORMAL_OUTPUT);
         }

@@ -15,6 +15,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorActionUtil;
 import com.intellij.internal.inspector.UiInspectorContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.lang.LangBundle;
@@ -310,7 +311,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       // Implement here, as GotoActionListCellRenderer is behind 9000 wrappers
       List<PropertyBean> result = new ArrayList<>();
       if (value instanceof ActionWrapper actionWrapper) {
-        result.add(new PropertyBean("Action ID", UiInspectorUtil.getActionId(actionWrapper.myAction), true));
+        result.add(new PropertyBean("Action ID", UiInspectorActionUtil.getActionId(actionWrapper.myAction), true));
         result.add(new PropertyBean("Action Class", UiInspectorUtil.getClassPresentation(actionWrapper.myAction), true));
       }
       return result;

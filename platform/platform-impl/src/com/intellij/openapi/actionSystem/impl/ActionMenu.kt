@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeEventQueue.Companion.getInstance
 import com.intellij.ide.ui.UISettings
+import com.intellij.internal.inspector.UiInspectorActionUtil
 import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.Disposable
@@ -158,7 +159,7 @@ class ActionMenu constructor(private val context: DataContext?,
       popupListener = createWinListener(specialMenu)
       ReflectionUtil.setField(JMenu::class.java, this, JPopupMenu::class.java, "popupMenu", specialMenu)
       UiInspectorUtil.registerProvider(specialMenu, UiInspectorContextProvider {
-        UiInspectorUtil.collectActionGroupInfo("Menu", group.getAction(), place, presentationFactory)
+        UiInspectorActionUtil.collectActionGroupInfo("Menu", group.getAction(), place, presentationFactory)
       })
     }
     return super.getPopupMenu()

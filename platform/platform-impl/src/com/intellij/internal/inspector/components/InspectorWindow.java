@@ -8,7 +8,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
-import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.internal.inspector.UiInspectorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -395,7 +395,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
       sink.set(CommonDataKeys.NAVIGATABLE, new Navigatable() {
         @Override
         public void navigate(boolean requestFocus) {
-          UiInspectorUtil.openClassByFqn(myProject, selectedClassName, requestFocus);
+          UiInspectorImpl.openClassByFqn(myProject, selectedClassName, requestFocus);
         }
 
         @Override

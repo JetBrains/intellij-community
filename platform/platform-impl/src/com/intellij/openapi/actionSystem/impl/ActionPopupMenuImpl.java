@@ -5,6 +5,7 @@ import com.intellij.diagnostic.UILatencyLogger;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.internal.inspector.UiInspectorActionUtil;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.lang.Language;
@@ -103,7 +104,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       BegMenuItemUI.registerMultiChoiceSupport(this, popupMenu -> {
         Utils.updateMenuItems(popupMenu, myContext, myPlace, myPresentationFactory);
       });
-      UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo(
+      UiInspectorUtil.registerProvider(this, () -> UiInspectorActionUtil.collectActionGroupInfo(
         "Menu", myGroup, myPlace, myPresentationFactory));
     }
 

@@ -288,7 +288,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
     private static List<PropertyBean> findActionsFor(Object object) {
       if (object instanceof PopupFactoryImpl.ActionItem item) {
         AnAction action = item.getAction();
-        return UiInspectorUtil.collectAnActionInfo(action);
+        return UiInspectorActionUtil.collectAnActionInfo(action);
       }
       if (object instanceof IntentionActionDelegate actionDelegate) {
         IntentionAction delegate = IntentionActionDelegate.unwrap(actionDelegate.getDelegate());
