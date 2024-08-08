@@ -62,6 +62,8 @@
       <action id="RunDashboard.OpenRunningConfigInNewTab"
               class="com.intellij.platform.execution.dashboard.actions.OpenRunningConfigInNewTabAction"/>
       <separator/>
+      <action id="RunDashboard.ClearConsole" icon="AllIcons.General.Delete"
+              class="com.intellij.platform.execution.dashboard.actions.ClearConsoleAction"/>
       <action id="RunDashboard.ClearContent" icon="AllIcons.Actions.Cancel"
               class="com.intellij.platform.execution.dashboard.actions.ClearContentAction"/>
       <action id="RunDashboard.RestoreConfiguration" icon="AllIcons.Actions.Rollback"
