@@ -2,21 +2,15 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
-import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.infos.MethodCandidateInfo
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
@@ -30,7 +24,6 @@ import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class NewJavaToKotlinConverter(
     val project: Project,
@@ -59,6 +52,8 @@ class NewJavaToKotlinConverter(
         preprocessorExtensions: List<J2kPreprocessorExtension>,
         postprocessorExtensions: List<J2kPostprocessorExtension>
     ): FilesResult {
+        ThreadingAssertions.assertBackgroundThread()
+
         val withProgressProcessor = NewJ2kWithProgressProcessor(progressIndicator, files, postProcessor.phasesCount + phasesCount)
 
         // TODO looks like the progress dialog doesn't appear immediately, but should
@@ -71,9 +66,9 @@ class NewJavaToKotlinConverter(
         }
 
         val kotlinFiles = results.mapIndexed { i, result ->
+            val javaFile = files[i]
+            withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
             runUndoTransparentActionInEdt(inWriteAction = true) {
-                val javaFile = files[i]
-                withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
                 KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                     .also { it.addImports(result.importsToAdd) }
             }
@@ -88,13 +83,12 @@ class NewJavaToKotlinConverter(
         return FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     fun elementsToKotlin(
         inputElements: List<PsiElement>,
         processor: WithProgressProcessor,
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
-    ): Result = allowAnalysisOnEdt {
+    ): Result {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
         val targetKaModule = targetModule?.productionOrTestSourceModuleInfo?.toKaModule()
 
@@ -102,7 +96,7 @@ class NewJavaToKotlinConverter(
         // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
         // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
 
-        when {
+        return when {
             targetKaModule != null -> {
                 analyze(targetKaModule) {
                     doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)

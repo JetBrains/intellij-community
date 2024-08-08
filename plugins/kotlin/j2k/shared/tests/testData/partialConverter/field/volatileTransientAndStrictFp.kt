@@ -1,6 +1,4 @@
 // ERROR: This annotation is not applicable to target 'member property with backing field'.
-
-
 internal class A {
     @Deprecated("")
     @Volatile
