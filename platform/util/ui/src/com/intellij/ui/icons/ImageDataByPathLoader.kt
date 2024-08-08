@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
 import com.github.benmanes.caffeine.cache.Cache
@@ -144,34 +144,39 @@ fun isReflectivePath(path: String): Boolean {
 @Internal
 fun getReflectiveIcon(path: String, classLoader: ClassLoader): Icon? {
   try {
-    var dotIndex = path.lastIndexOf('.')
-    val fieldName = path.substring(dotIndex + 1)
-    val builder = StringBuilder(path.length + 20)
-    builder.append(path, 0, dotIndex)
-    var separatorIndex = -1
-    do {
-      dotIndex = path.lastIndexOf('.', dotIndex - 1)
-      // if starts with a lower case, char - it is a package name
-      if (dotIndex == -1 || path[dotIndex + 1].isLowerCase()) {
-        break
-      }
-      if (separatorIndex != -1) {
-        builder.setCharAt(separatorIndex, '$')
-      }
-      separatorIndex = dotIndex
-    }
-    while (true)
-    if (!builder[0].isLowerCase()) {
-      if (separatorIndex != -1) {
-        builder.setCharAt(separatorIndex, '$')
-      }
-      builder.insert(0, if (path.startsWith("AllIcons.")) "com.intellij.icons." else "icons.")
-    }
-    val aClass = classLoader.loadClass(builder.toString())
+    val fieldName = path.substring(path.lastIndexOf('.') + 1)
+    val className = getClassNameByIconPath(path)
+    val aClass = classLoader.loadClass(className)
     return LOOKUP.findStaticGetter(aClass, fieldName, Icon::class.java).invoke() as Icon
   }
   catch (e: Throwable) {
     logger<CachedImageIcon>().warn("Cannot get reflective icon (path=$path)", e)
     return null
   }
+}
+
+internal fun getClassNameByIconPath(path: String): String {
+  var dotIndex = path.lastIndexOf('.')
+  val builder = StringBuilder(path.length + 20)
+  builder.append(path, 0, dotIndex)
+  var separatorIndex = -1
+  do {
+    dotIndex = path.lastIndexOf('.', dotIndex - 1)
+    // if starts with a lower case, char - it is a package name
+    if (dotIndex == -1 || path[dotIndex + 1].isLowerCase()) {
+      break
+    }
+    if (separatorIndex != -1) {
+      builder.setCharAt(separatorIndex, '$')
+    }
+    separatorIndex = dotIndex
+  }
+  while (true)
+  if (!builder[0].isLowerCase()) {
+    if (separatorIndex != -1) {
+      builder.setCharAt(separatorIndex, '$')
+    }
+    builder.insert(0, if (path.startsWith("AllIcons.")) "com.intellij.icons." else "icons.")
+  }
+  return builder.toString()
 }

@@ -6,6 +6,9 @@ package com.intellij.util.ui
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.IconManager
+import com.intellij.ui.icons.getClassNameByIconPath
+import com.intellij.ui.icons.isReflectivePath
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
@@ -32,7 +35,7 @@ import kotlin.math.max
  */
 class ExtendableHTMLViewFactory internal constructor(
   private val extensions: List<(Element, View) -> View?>,
-  private val base: ViewFactory = HTMLEditorKit().viewFactory
+  private val base: ViewFactory = HTMLEditorKit().viewFactory,
 ) : HTMLFactory() {
   internal constructor(vararg extensions: (Element, View) -> View?) : this(extensions.asList())
 
@@ -190,7 +193,16 @@ private class IconExtension(private val existingIconProvider: (key: String) -> I
     if (existingIcon != null) {
       return existingIcon
     }
-    return findIconUsingNewImplementation(path = src, classLoader = ExtendableHTMLViewFactory::class.java.classLoader)
+
+    val classLoader = if (isReflectivePath(src)) {
+      val className = getClassNameByIconPath(src)
+      IconManager.getInstance().getClassLoaderByClassName(className)
+    } else null
+
+    return findIconUsingNewImplementation(
+      path = src,
+      classLoader = classLoader ?: ExtendableHTMLViewFactory::class.java.classLoader,
+    )
   }
 }
 
