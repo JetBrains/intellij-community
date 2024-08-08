@@ -98,7 +98,7 @@ tasks.register('copyMarkerBinary', Copy) {
   group "build"
   dependsOn 'build'
 
-  from new File(project.buildDir, "classes/java/main") into binaryRootDir
+  from sourceSets.main.java.classesDirectory into binaryRootDir
 }
 
 tasks.register('copyMarkerSources', Copy) {
