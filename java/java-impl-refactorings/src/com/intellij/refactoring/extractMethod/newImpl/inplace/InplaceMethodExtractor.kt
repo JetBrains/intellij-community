@@ -7,7 +7,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
@@ -16,7 +15,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.util.PsiTreeUtil
@@ -60,32 +58,14 @@ internal class InplaceMethodExtractor(
     }
   }
 
-  internal val extractor: DuplicatesMethodExtractor = createExtractor()
-
-  private val file: PsiFile = defaultExtractor.targetClass.containingFile
-
-  private val editorState = EditorState(file.project, editor)
-
-  private var methodIdentifierRange: RangeMarker? = null
-
-  private var callIdentifierRange: RangeMarker? = null
-
-  private val disposable = Disposer.newDisposable()
-
-  private val project = file.project
-
-  private fun createExtractor(): DuplicatesMethodExtractor {
-    var options = defaultExtractor.extractOptions
-    if (popupProvider.makeStatic == true) {
-      val analyzer = CodeFragmentAnalyzer(options.elements)
-      options = ExtractMethodPipeline.withForcedStatic(analyzer, options) ?: throw IllegalStateException()
-    }
-    val rangeToReplace = createGreedyRangeMarker(editor.document, defaultExtractor.rangeToReplaceOriginal)
-    return DuplicatesMethodExtractor(options, defaultExtractor.targetClass, rangeToReplace)
-  }
+  internal val extractor: DuplicatesMethodExtractor = createExtractor(defaultExtractor, popupProvider)
 
   suspend fun extractAndRunTemplate(suggestedNames: List<String>) {
+    val disposable = Disposer.newDisposable()
     try {
+      val file = readAction { extractor.targetClass.containingFile }
+      val project = readAction { file.project }
+      val editorState = readAction {  EditorState(file.project, editor) }
       ExtractMethodHelper.mergeWriteCommands(editor, disposable, ExtractMethodHandler.getRefactoringName())
       val (callElements, method) = extractor.extract()
 
@@ -95,7 +75,7 @@ internal class InplaceMethodExtractor(
       val callIdentifier = readAction {
         callExpression?.methodExpression?.referenceNameElement
       }
-      callIdentifierRange = readAction {
+      val callIdentifierRange = readAction {
         if (callIdentifier != null) createGreedyRangeMarker(editor.document, callIdentifier.textRange) else null
       }
       val callRange = if (callElements.isNotEmpty()) {
@@ -105,7 +85,7 @@ internal class InplaceMethodExtractor(
       }
 
       val methodIdentifier = readAction { method.nameIdentifier } ?: throw IllegalStateException()
-      methodIdentifierRange = readAction { createGreedyRangeMarker(editor.document, methodIdentifier.textRange) }
+      val methodIdentifierRange = readAction { createGreedyRangeMarker(editor.document, methodIdentifier.textRange) }
 
       withContext(Dispatchers.EDT) {
         val codePreview = createPreview(editor, method.textRange, methodIdentifier.textRange.endOffset, callRange, callIdentifierRange?.textRange?.endOffset)
@@ -131,7 +111,7 @@ internal class InplaceMethodExtractor(
             val methodName = editor.document.getText(range)
             val extractedMethod = findElementAt<PsiMethod>(file, methodIdentifierRange) ?: return@onSuccess
             InplaceExtractMethodCollector.executed.log(defaultExtractor.extractOptions.methodName != methodName)
-            installGotItTooltips(editor, callIdentifierRange?.asTextRange, methodIdentifierRange?.asTextRange)
+            installGotItTooltips(editor, callIdentifierRange.asTextRange, methodIdentifierRange.asTextRange)
             MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
             runWithModalProgressBlocking(project, ExtractMethodHandler.getRefactoringName()) {
               extractor.replaceDuplicates(editor, extractedMethod)
@@ -168,25 +148,41 @@ internal class InplaceMethodExtractor(
 
   private fun afterTemplateStart(templateState: TemplateState) {
     setActiveExtractor(editor, this)
-    popupProvider.setChangeListener {
-      val shouldAnnotate = popupProvider.annotate
-      if (shouldAnnotate != null) {
-        PropertiesComponent.getInstance(project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, shouldAnnotate, true)
-      }
-      val makeStatic = popupProvider.makeStatic
-      if (!popupProvider.staticPassFields && makeStatic != null) {
-        JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = makeStatic
-      }
-      ExtractMethodService.getInstance(project).scope.launch {
-        MethodExtractor().restartInplace(templateState, defaultExtractor, popupProvider)
-      }
-    }
-    popupProvider.setShowDialogAction { actionEvent ->
-      MethodExtractor().restartInDialog(templateState, extractor, actionEvent == null)
-    }
+    setupRestartOnSettingsChange(templateState, popupProvider, defaultExtractor)
     addInlaySettingsElement(templateState, popupProvider)?.also { inlay ->
-      Disposer.register(disposable, inlay)
+      Disposer.register(templateState, inlay)
     }
   }
 
+}
+
+private fun setupRestartOnSettingsChange(templateState: TemplateState, popupProvider: ExtractMethodPopupProvider, defaultExtractor: DuplicatesMethodExtractor){
+  val project = templateState.editor.project ?: return
+  popupProvider.setChangeListener {
+    val shouldAnnotate = popupProvider.annotate
+    if (shouldAnnotate != null) {
+      PropertiesComponent.getInstance(project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, shouldAnnotate, true)
+    }
+    val makeStatic = popupProvider.makeStatic
+    if (!popupProvider.staticPassFields && makeStatic != null) {
+      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = makeStatic
+    }
+    ExtractMethodService.getInstance(project).scope.launch {
+      MethodExtractor().restartInplace(templateState, defaultExtractor, popupProvider)
+    }
+  }
+  popupProvider.setShowDialogAction { actionEvent ->
+    val extractor = createExtractor(defaultExtractor, popupProvider)
+    MethodExtractor().restartInDialog(templateState, extractor, actionEvent == null)
+  }
+}
+
+private fun createExtractor(defaultExtractor: DuplicatesMethodExtractor, popupProvider: ExtractMethodPopupProvider): DuplicatesMethodExtractor {
+  var options = defaultExtractor.extractOptions
+  if (popupProvider.makeStatic == true) {
+    val analyzer = CodeFragmentAnalyzer(options.elements)
+    options = ExtractMethodPipeline.withForcedStatic(analyzer, options) ?: throw IllegalStateException()
+  }
+  val rangeToReplace = createGreedyRangeMarker(defaultExtractor.rangeToReplace.document, defaultExtractor.rangeToReplaceOriginal)
+  return DuplicatesMethodExtractor(options, defaultExtractor.targetClass, rangeToReplace)
 }
