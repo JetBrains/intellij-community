@@ -5,13 +5,11 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,6 +131,9 @@ public class ImportFromExistingAction implements QuestionAction {
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
     if (manager.isInjectedFragment(file)) {
       file = manager.getTopLevelFile(myTarget);
+    }
+    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
+      file = fragment.getImportContext();
     }
     // A root-level module or package cannot be imported with a "from" import.
     if (PyUtil.isRoot(item.getFile())) {

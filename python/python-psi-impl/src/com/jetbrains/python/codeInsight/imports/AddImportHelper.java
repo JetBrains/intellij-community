@@ -26,6 +26,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
@@ -444,6 +445,9 @@ public final class AddImportHelper {
                                            @Nullable ImportPriority priority,
                                            @Nullable PsiElement anchor,
                                            final @Nullable PsiElement insertBefore) {
+    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
+      file = fragment.getImportContext();
+    }
     if (!(file instanceof PyFile)) {
       return false;
     }
@@ -794,6 +798,9 @@ public final class AddImportHelper {
    * @see #addOrUpdateFromImportStatement
    */
   public static void addImport(@NotNull PsiNamedElement target, @NotNull PsiFile file, @NotNull PyElement element) {
+    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
+      file = fragment.getImportContext();
+    }
     if (target instanceof PsiFileSystemItem) {
       addFileSystemItemImport((PsiFileSystemItem)target, file, element);
       return;
@@ -810,6 +817,7 @@ public final class AddImportHelper {
 
     final String path = importPath.toString();
     final ImportPriority priority = getImportPriority(file, toImport);
+
     if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
       addImportStatement(file, path, null, priority, element);
 

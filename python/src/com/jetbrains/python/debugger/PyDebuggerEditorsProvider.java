@@ -15,6 +15,7 @@ import com.intellij.xdebugger.evaluation.InlineDebuggerHelper;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,7 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
                                           final @Nullable XSourcePosition sourcePosition,
                                           @NotNull EvaluationMode mode) {
     String text = expression.getExpression().trim();
-    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "fragment.py", text, true);
+    final PyExpressionCodeFragmentImpl fragment = new PyCodeFragmentWithHiddenImports(project, "fragment.py", text, true, true);
 
     // Bind to context
     final PsiElement element = getContextElement(project, sourcePosition);
