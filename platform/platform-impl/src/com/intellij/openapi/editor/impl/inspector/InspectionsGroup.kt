@@ -351,11 +351,8 @@ class InspectionsGroup(
     }
 
     private fun wrapDataContext(originalContext: DataContext): DataContext =
-      CustomizedDataContext.withProvider(originalContext) { dataId ->
-        when {
-          INSPECTION_TYPED_ERROR.`is`(dataId) -> item
-          else -> null
-        }
+      CustomizedDataContext.withSnapshot(originalContext) { sink ->
+        sink[INSPECTION_TYPED_ERROR] = item
       }
 
     override fun update(e: AnActionEvent) {

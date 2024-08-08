@@ -673,13 +673,8 @@ object Switcher : BaseSwitcherAction(null) {
       cancel()
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
         val focusDC = DataManager.getInstance().dataContextFromFocusAsync.await()
-        val dataContext = CustomizedDataContext.create(focusDC) { dataId ->
-          if (PlatformDataKeys.PREDEFINED_TEXT.`is`(dataId)) {
-            fileName
-          }
-          else {
-            null
-          }
+        val dataContext = CustomizedDataContext.withSnapshot(focusDC) { sink ->
+          sink[PlatformDataKeys.PREDEFINED_TEXT] = fileName
         }
         val event = AnActionEvent(e, dataContext, "Switcher",
                                   gotoAction.templatePresentation.clone(),

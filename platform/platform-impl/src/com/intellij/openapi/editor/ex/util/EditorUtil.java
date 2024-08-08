@@ -36,6 +36,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,7 +55,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
@@ -1256,11 +1256,10 @@ public final class EditorUtil {
     if (PROJECT.getData(context) == editor.getProject()) {
       return context;
     }
-    return CustomizedDataContext.create(context, dataId -> {
-      if (PROJECT.is(dataId)) {
-        return Objects.requireNonNullElse(editor.getProject(), CustomizedDataContext.EXPLICIT_NULL);
-      }
-      return null;
+    return CustomizedDataContext.withSnapshot(context, sink -> {
+      Project project = editor.getProject();
+      if (project != null) sink.set(PROJECT, project);
+      else sink.setNull(PROJECT);
     });
   }
 
