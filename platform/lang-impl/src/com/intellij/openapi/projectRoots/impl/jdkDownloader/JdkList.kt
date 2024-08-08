@@ -158,6 +158,10 @@ data class JdkItem(
     return cases.any { it.equals(match, ignoreCase = true) }
   }
 
+  fun detectVariant(): JdkVersionDetector.Variant {
+    return detectVariant(fullPresentationWithVendorText)
+  }
+
   /**
    * Returns versionString for the Java Sdk object in specific format
    */
@@ -187,6 +191,22 @@ data class JdkItem(
 
   val fullPresentationWithVendorText: @NlsSafe String
     get() = product.packagePresentationText + " " + (jdkVendorVersion ?: jdkVersion) + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
+
+  companion object {
+    fun detectVariant(vendorText: @NlsSafe String): JdkVersionDetector.Variant {
+      if (vendorText.contains("Oracle OpenJDK")) return JdkVersionDetector.Variant.Oracle
+      if (vendorText.contains("Corretto")) return JdkVersionDetector.Variant.Corretto
+      if (vendorText.contains("BellSoft")) return JdkVersionDetector.Variant.Liberica
+      if (vendorText.contains("Azul")) return JdkVersionDetector.Variant.Zulu
+      if (vendorText.contains("SAP")) return JdkVersionDetector.Variant.SapMachine
+      if (vendorText.contains("Temurin")) return JdkVersionDetector.Variant.Temurin
+      if (vendorText.contains("Semeru")) return JdkVersionDetector.Variant.Semeru
+      if (vendorText.contains("GraalVM Community")) return JdkVersionDetector.Variant.GraalVMCE
+      if (vendorText.contains("GraalVM")) return JdkVersionDetector.Variant.GraalVM
+      if (vendorText.contains("JetBrains Runtime")) return JdkVersionDetector.Variant.JBR
+      return JdkVersionDetector.Variant.Unknown
+    }
+  }
 }
 
 enum class JdkPackageType(@NonNls val type: String) {
