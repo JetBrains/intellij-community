@@ -99,4 +99,5 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   abstract boolean isEscapeJustPressed();
 
   abstract protected void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress);
+  static final int ANY_GROUP = -409423948;
 }

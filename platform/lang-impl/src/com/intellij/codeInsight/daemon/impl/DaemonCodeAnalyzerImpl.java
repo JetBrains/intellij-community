@@ -263,7 +263,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return false;
   }
 
-  private static final int ANY_GROUP = -409423948;
   void cleanAllFileLevelHighlights() {
     ThreadingAssertions.assertEventDispatchThread();
     for (FileEditor fileEditor : getFileEditorManager().getAllEditors()) {
