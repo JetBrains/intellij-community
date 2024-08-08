@@ -138,7 +138,7 @@ public class HighlightInfo implements Segment {
   private final @NotNull HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
   private final ProblemGroup myProblemGroup;
-  volatile Object toolId; // inspection.getShortName() in case when the inspection generated this info
+  volatile Object toolId; // inspection.getShortName() in case when the inspection generated this info; Class<Annotator> in case of annotators, etc
   private int group;
   /**
    * Quick fix text range: the range within which the Alt-Enter should open the quick fix popup.
@@ -1083,12 +1083,16 @@ public class HighlightInfo implements Segment {
     setFlag(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK, true);
   }
   boolean isFromAnnotator() {
-    return toolId instanceof Class<?> c && Annotator.class.isAssignableFrom(c);
+    return HighlightInfoUpdaterImpl.isAnnotatorToolId(toolId);
   }
+
   boolean isFromInspection() {
-    return toolId instanceof String;
+    return HighlightInfoUpdaterImpl.isInspectionToolId(toolId);
   }
   boolean isFromHighlightVisitor() {
-    return toolId instanceof Class<?> c && HighlightVisitor.class.isAssignableFrom(c);
+    return HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId);
+  }
+  boolean isInjectionRelated() {
+    return HighlightInfoUpdaterImpl.isInjectionRelated(toolId);
   }
 }
