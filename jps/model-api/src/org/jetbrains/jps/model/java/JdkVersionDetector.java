@@ -48,7 +48,7 @@ public abstract class JdkVersionDetector {
     public final @Nullable String prefix;
     public final @NotNull String displayName;
 
-    Variant(@Nullable String prefix, @Nullable String displayName) {
+    Variant(@Nullable String prefix, @NotNull String displayName) {
       this.prefix = prefix;
       this.displayName = displayName;
     }
