@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.j2k.post.processing.JKInMemoryFilesSearcher
-import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix.Companion.getExistingAnnotationTargets
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
@@ -80,7 +79,7 @@ import org.jetbrains.kotlin.utils.mapToIndex
  * into a single property, taking into account various complicated rules
  * of what makes a legal Kotlin property (for example, regarding inheritance)
  */
-internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostProcessing() {
+internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostProcessing() {
     override val options: PostProcessingOptions =
         PostProcessingOptions(
             disablePostprocessingFormatting = false // without it comment saver will make the file invalid :(
