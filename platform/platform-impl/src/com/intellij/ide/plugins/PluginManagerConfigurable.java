@@ -1695,6 +1695,7 @@ public final class PluginManagerConfigurable
 
     private MarketplaceSortByAction(@NotNull SortBy option) {
       super(option.getPresentableNameSupplier());
+      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
       myOption = option;
     }
 
@@ -1756,6 +1757,7 @@ public final class PluginManagerConfigurable
 
     private InstalledSearchOptionAction(@NotNull InstalledSearchOption option) {
       super(option.myPresentableNameSupplier);
+      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
       myOption = option;
     }
 
