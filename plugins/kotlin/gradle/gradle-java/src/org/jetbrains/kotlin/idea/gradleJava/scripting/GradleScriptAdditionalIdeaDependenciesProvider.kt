@@ -15,19 +15,22 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 class GradleScriptAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenciesProvider() {
     override fun getRelatedModules(file: VirtualFile, project: Project): List<Module> {
         val gradleSettings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID)
+
         val projectSettings = gradleSettings.linkedProjectsSettings.filterIsInstance<GradleProjectSettings>().firstOrNull()
             ?: return emptyList()
-        val includedModulesPath: List<String> = projectSettings.compositeBuild?.compositeParticipants?.mapNotNull { part ->
-            projectSettings.modules.find { it == part.rootPath }
-        } ?: emptyList()
+
+        val includedModulesPath: List<String> = projectSettings.compositeBuild?.compositeParticipants?.filter { part ->
+            projectSettings.modules.any { it == part.rootPath }
+        }?.flatMap { it.projects } ?: emptyList()
+
         val includedModulesBuildSrcPaths = includedModulesPath.map { "$it/buildSrc" }
 
         val rootBuildSrcPath = "${projectSettings.externalProjectPath}/buildSrc"
 
-        return (includedModulesPath + includedModulesBuildSrcPaths + rootBuildSrcPath).flatMap { path ->
-            ModuleManager.getInstance(project).modules.filter {
-                ExternalSystemApiUtil.getExternalProjectPath(it) == path
-            }
+        val pathsToCheck = (includedModulesPath + includedModulesBuildSrcPaths + rootBuildSrcPath).toSet()
+
+        return ModuleManager.getInstance(project).modules.filter {
+            pathsToCheck.contains(ExternalSystemApiUtil.getExternalProjectPath(it))
         }
     }
 
