@@ -1,11 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
+import com.intellij.ide.DataManager;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.OpenSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,11 +60,20 @@ public interface ServiceViewDescriptor {
 
   default boolean handleDoubleClick(@NotNull MouseEvent event) {
     Navigatable navigatable = getNavigatable();
-    if (navigatable != null && navigatable.canNavigateToSource()) {
-      navigatable.navigate(true);
-      return true;
-    }
-    return false;
+    if (navigatable == null) return false;
+
+    DataContext dataContext = DataManager.getInstance().getDataContext(event.getComponent());
+    DataContext wrapper = CustomizedDataContext.withProvider(dataContext, new DataProvider() {
+      @Override
+      public @Nullable Object getData(@NotNull String dataId) {
+        if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+          return navigatable;
+        }
+        return null;
+      }
+    });
+    OpenSourceUtil.openSourcesFrom(wrapper, false);
+    return true;
   }
 
   default @Nullable Object getPresentationTag(Object fragment) {
