@@ -116,7 +116,7 @@ final class HighlighterRecycler implements HighlighterRecyclerPickup {
 
   @Override
   public @Nullable RangeHighlighterEx pickupFileLevelRangeHighlighter(int fileTextLength) {
-    return pickupHighlighterFromGarbageBin(0, fileTextLength, -409423948);
+    return pickupHighlighterFromGarbageBin(0, fileTextLength, DaemonCodeAnalyzerEx.ANY_GROUP);
   }
 
   // dispose all highlighters (still) stored in this recycler, if possible
