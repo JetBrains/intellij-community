@@ -17,10 +17,10 @@ import com.intellij.collaboration.ui.util.bindIconIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -69,33 +69,32 @@ object CodeReviewCommentUIUtil {
       val scheme = EditorColorsManager.getInstance().globalScheme
       scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
     }
-    return ClippingRoundedPanel(EDITOR_INLAY_PANEL_ARC, borderColor, BorderLayout()).apply {
+    val roundedPanel = ClippingRoundedPanel(EDITOR_INLAY_PANEL_ARC, borderColor, BorderLayout()).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground
       }
-      add(component)
-    }.also {
-      component.addComponentListener(object : ComponentAdapter() {
-        override fun componentResized(e: ComponentEvent?) =
-          it.dispatchEvent(ComponentEvent(component, ComponentEvent.COMPONENT_RESIZED))
+      add(UiDataProvider.wrapComponent(component) { sink ->
+        suppressOuterEditorData(sink)
       })
-      DataManager.registerDataProvider(it) { dataId ->
-        when {
-          CommonDataKeys.EDITOR.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          CommonDataKeys.HOST_EDITOR.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          CommonDataKeys.CARET.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          CommonDataKeys.LANGUAGE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          CommonDataKeys.PSI_FILE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          CommonDataKeys.PSI_ELEMENT.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
-          else -> null
-        }
+    }
+    component.addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        roundedPanel.dispatchEvent(ComponentEvent(component, ComponentEvent.COMPONENT_RESIZED))
       }
+    })
+    return roundedPanel
+  }
+
+  private fun suppressOuterEditorData(sink: DataSink) {
+    arrayOf(CommonDataKeys.EDITOR, CommonDataKeys.HOST_EDITOR, CommonDataKeys.EDITOR_EVEN_IF_INACTIVE,
+            CommonDataKeys.CARET,
+            CommonDataKeys.VIRTUAL_FILE, CommonDataKeys.VIRTUAL_FILE_ARRAY,
+            CommonDataKeys.LANGUAGE,
+            CommonDataKeys.PSI_FILE, CommonDataKeys.PSI_ELEMENT,
+            PlatformCoreDataKeys.FILE_EDITOR,
+            PlatformCoreDataKeys.PSI_ELEMENT_ARRAY).forEach {
+      sink.setNull(it)
     }
   }
 

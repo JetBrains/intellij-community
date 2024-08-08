@@ -81,10 +81,6 @@ import java.util.List;
 @Deprecated(forRemoval = true)
 public class DocumentationComponent extends JPanel implements Disposable, UiCompatibleDataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
-  static final DataProvider HELP_DATA_PROVIDER =
-    dataId -> PlatformCoreDataKeys.HELP_ID.is(dataId)
-              ? "reference.toolWindows.Documentation"
-              : null;
 
   public static final ColorKey COLOR_KEY = EditorColors.DOCUMENTATION_COLOR;
   public static final Color SECTION_COLOR = Gray.get(0x90);
@@ -294,9 +290,6 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     else if (myManager.myToolWindow != null) {
       Disposer.register(myManager.myToolWindow.getContentManager(), this);
     }
-    DataManager.registerDataProvider(myEditorPane, HELP_DATA_PROVIDER);
-    DataManager.registerDataProvider(myScrollPane, HELP_DATA_PROVIDER);
-
     updateControlState();
   }
 
@@ -356,6 +349,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, "reference.toolWindows.Documentation");
     // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
     // with raw white spaces. See IDEA-86633 for more details.
     String selectedText = myEditorPane.getSelectedText();

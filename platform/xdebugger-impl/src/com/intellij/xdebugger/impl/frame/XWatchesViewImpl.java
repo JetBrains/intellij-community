@@ -58,7 +58,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -527,13 +526,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     return expressions;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (XWatchesView.DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return super.getData(dataId);
+  protected void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(XWatchesView.DATA_KEY, this);
   }
 
   @Override

@@ -54,7 +54,7 @@ public class ContentEntryTreeEditor {
   private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
   protected final Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;
-  private final JPanel myTreePanel;
+  private final JComponent myComponent;
   protected final DefaultActionGroup myEditingActionsGroup;
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
@@ -99,12 +99,14 @@ public class ContentEntryTreeEditor {
       new JBLabel(XmlStringUtil.wrapInHtml(ProjectBundle.message("label.content.entry.separate.name.patterns")));
     excludePatternsLegendLabel.setForeground(JBColor.GRAY);
     excludePatternsPanel.add(excludePatternsLegendLabel, gridBag.nextLine().next().next().fillCellHorizontally());
-    myTreePanel = new MyPanel(new BorderLayout());
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
-    myTreePanel.add(scrollPane, BorderLayout.CENTER);
-    myTreePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
-
-    myTreePanel.setVisible(false);
+    JPanel treePanel = new JPanel(new BorderLayout());
+    treePanel.add(ScrollPaneFactory.createScrollPane(myTree, true), BorderLayout.CENTER);
+    treePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
+    myComponent = UiDataProvider.wrapComponent(treePanel, sink -> {
+      sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
+      sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());
+    });
+    myComponent.setVisible(false);
     myDescriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
     myDescriptor.setShowFileSystemRoots(false);
   }
@@ -146,13 +148,13 @@ public class ContentEntryTreeEditor {
       myContentEntryEditor = null;
     }
     if (contentEntryEditor == null) {
-      myTreePanel.setVisible(false);
+      myComponent.setVisible(false);
       if (myFileSystemTree != null) {
         Disposer.dispose(myFileSystemTree);
       }
       return;
     }
-    myTreePanel.setVisible(true);
+    myComponent.setVisible(true);
     myContentEntryEditor = contentEntryEditor;
     myContentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
 
@@ -196,7 +198,7 @@ public class ContentEntryTreeEditor {
 
   public JComponent createComponent() {
     createEditingActions();
-    return myTreePanel;
+    return myComponent;
   }
 
   public void select(VirtualFile file) {
@@ -257,18 +259,6 @@ public class ContentEntryTreeEditor {
     @Override
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       return IconWithTextAction.createCustomComponentImpl(this, presentation, place);
-    }
-  }
-
-  private final class MyPanel extends JPanel implements UiDataProvider {
-    private MyPanel(final LayoutManager layout) {
-      super(layout);
-    }
-
-    @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
-      sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());
     }
   }
 

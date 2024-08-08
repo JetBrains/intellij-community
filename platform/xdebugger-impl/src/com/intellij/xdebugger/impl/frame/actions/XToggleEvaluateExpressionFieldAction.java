@@ -79,7 +79,7 @@ public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction 
   private static void findAllFieldsAndUpdateState(DataContext context, boolean state) {
     XWatchesView view = context.getData(XWatchesView.DATA_KEY);
     if (view instanceof XWatchesViewImpl) {
-      JPanel panel = ((XWatchesViewImpl)view).getPanel();
+      JComponent panel = ((XWatchesViewImpl)view).getPanel();
       UIUtil.uiTraverser(panel)
         .filter(c -> c instanceof JComponent && ClientProperty.get(c, EVALUATE_EXPRESSION_FIELD) != null)
         .forEach(c -> c.setVisible(state));

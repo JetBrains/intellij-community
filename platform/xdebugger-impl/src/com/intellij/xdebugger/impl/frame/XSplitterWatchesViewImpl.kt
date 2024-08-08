@@ -33,13 +33,16 @@ class XSplitterWatchesViewImpl(
     private fun tryGetBottomComponentProvider(session: XDebugSessionImpl) = session.debugProcess.getBottomLocalsComponentProvider()
   }
 
+  lateinit var splitter: OnePixelSplitter
+    private set
+
   override fun createMainPanel(localsPanelComponent: JComponent): JPanel {
     val session = mySession.get() ?: error("Not null session is expected here")
     val bottomLocalsComponentProvider = tryGetBottomComponentProvider(session)
                                         ?: error("BottomLocalsComponentProvider is not implemented to use SplitterWatchesVariablesView")
 
     val evaluatorComponent = bottomLocalsComponentProvider.createBottomLocalsComponent()
-    val splitter = OnePixelSplitter(true, proportionKey, 0.01f, 0.99f)
+    splitter = OnePixelSplitter(true, proportionKey, 0.01f, 0.99f)
 
     splitter.firstComponent = localsPanelComponent
     splitter.secondComponent = evaluatorComponent

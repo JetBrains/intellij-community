@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.*;
 import com.intellij.execution.services.ServiceEventListener.ServiceEvent;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.TreeState;
@@ -261,7 +260,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       myAutoScrollToSourceHandler = ServiceViewSourceScrollHelper.createAutoScrollToSourceHandler(myProject);
     }
     ToolWindowEx toolWindowEx = (ToolWindowEx)toolWindow;
-    Wrapper toolWindowHeaderSideComponent = setToolWindowHeaderSideComponent(toolWindowEx);
     ServiceViewSourceScrollHelper.installAutoScrollSupport(myProject, toolWindowEx, myAutoScrollToSourceHandler);
 
     Pair<ServiceViewState, List<ServiceViewState>> states = getServiceViewStates(toolWindowId);
@@ -270,8 +268,9 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     mainView.setAutoScrollToSourceHandler(myAutoScrollToSourceHandler);
 
     ContentManager contentManager = toolWindow.getContentManager();
-    ServiceViewContentHolder holder =
-      new ServiceViewContentHolder(mainView, contentManager, contributors, toolWindowId, toolWindowHeaderSideComponent);
+    Wrapper toolWindowHeaderSideComponent = setToolWindowHeaderSideComponent(toolWindowEx, contentManager);
+    ServiceViewContentHolder holder = new ServiceViewContentHolder(
+      mainView, contentManager, contributors, toolWindowId, toolWindowHeaderSideComponent);
     myContentHolders.add(holder);
     contentManager.addContentManagerListener(new ServiceViewContentMangerListener(myModelFilter, myAutoScrollToSourceHandler, holder));
     myProject.getMessageBus().connect(contentManager).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
@@ -296,20 +295,12 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         }
       }
     });
-    if (toolWindowHeaderSideComponent != null) {
-      DataManager.registerDataProvider(toolWindowHeaderSideComponent, dataId -> {
-        Content content = contentManager.getSelectedContent();
-        ServiceView serviceView = content == null ? null : getServiceView(content);
-        DataProvider dataProvider = serviceView == null ? null : DataManager.getDataProvider(serviceView);
-        return dataProvider == null ? null : dataProvider.getData(dataId);
-      });
-    }
     addMainContent(toolWindow.getContentManager(), mainView);
     loadViews(contentManager, mainView, contributors, states.second);
     ServiceViewDragHelper.installDnDSupport(myProject, toolWindowEx.getDecorator(), contentManager);
   }
 
-  private static Wrapper setToolWindowHeaderSideComponent(ToolWindowEx toolWindowEx) {
+  private static Wrapper setToolWindowHeaderSideComponent(ToolWindowEx toolWindowEx, ContentManager contentManager) {
     if (!Registry.is("ide.services.tool.window.header.nav.bar", true) ||
         AppMode.isRemoteDevHost()) {
       return null;
@@ -318,7 +309,11 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     if (decorator == null) return null;
 
     Wrapper wrapper = new Wrapper();
-    decorator.getHeader().setSideComponent(wrapper);
+    decorator.getHeader().setSideComponent(UiDataProvider.wrapComponent(wrapper, sink -> {
+      Content content = contentManager.getSelectedContent();
+      ServiceView serviceView = content == null ? null : getServiceView(content);
+      DataSink.uiDataSnapshot(sink, serviceView);
+    }));
     return wrapper;
   }
 

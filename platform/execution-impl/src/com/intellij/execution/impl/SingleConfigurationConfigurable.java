@@ -13,6 +13,8 @@ import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
@@ -234,32 +236,27 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   public JComponent createComponent() {
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     JComponent result = myComponent.getWholePanel();
-    DataManager.registerDataProvider(result, dataId -> {
-      if (myComponent == null) {
-        return null; // disposed
-      }
-      if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
-        return getEditor();
-      }
-      if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
-        return TargetEnvironmentConfigurations.getEffectiveTargetName(myRunOnTargetPanel.getDefaultTargetName(), myProject);
-      }
-      if (RunConfigurationSelector.KEY.is(dataId)) {
-        return new RunConfigurationSelector() {
-          @Override
-          public void select(@NotNull RunConfiguration configuration) {
-            RunnerAndConfigurationSettingsImpl settings = RunManagerImpl.getInstanceImpl(myProject).getSettings(configuration);
-            RunDialog.editConfiguration(myProject,
-                                        Objects.requireNonNull(settings),
-                                        ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
-          }
-        };
-      }
-      return null;
-    });
     Dimension size = result.getPreferredSize();
     result.setPreferredSize(new Dimension(Math.min(size.width, 800), Math.min(size.height, 600)));
-    return result;
+    return UiDataProvider.wrapComponent(result, sink -> uiDataSnapshot(sink));
+  }
+
+  private void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myComponent == null) return;
+
+    sink.set(ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY,
+             getEditor() instanceof ConfigurationSettingsEditorWrapper o ? o : null);
+    sink.set(RUN_ON_TARGET_NAME_KEY,
+             TargetEnvironmentConfigurations.getEffectiveTargetName(myRunOnTargetPanel.getDefaultTargetName(), myProject));
+    sink.set(RunConfigurationSelector.KEY, new RunConfigurationSelector() {
+      @Override
+      public void select(@NotNull RunConfiguration configuration) {
+        RunnerAndConfigurationSettingsImpl settings = RunManagerImpl.getInstanceImpl(myProject).getSettings(configuration);
+        RunDialog.editConfiguration(myProject,
+                                    Objects.requireNonNull(settings),
+                                    ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
+      }
+    });
   }
 
   JComponent getValidationComponent() {

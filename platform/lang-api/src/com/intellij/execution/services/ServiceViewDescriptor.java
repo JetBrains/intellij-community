@@ -63,14 +63,8 @@ public interface ServiceViewDescriptor {
     if (navigatable == null) return false;
 
     DataContext dataContext = DataManager.getInstance().getDataContext(event.getComponent());
-    DataContext wrapper = CustomizedDataContext.withProvider(dataContext, new DataProvider() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-          return navigatable;
-        }
-        return null;
-      }
+    DataContext wrapper = CustomizedDataContext.withSnapshot(dataContext, sink -> {
+      sink.set(CommonDataKeys.NAVIGATABLE, navigatable);
     });
     OpenSourceUtil.openSourcesFrom(wrapper, false);
     return true;

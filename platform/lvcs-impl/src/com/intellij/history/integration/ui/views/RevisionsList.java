@@ -6,10 +6,10 @@ import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.ide.CopyProvider;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -43,6 +43,7 @@ import java.util.*;
 public final class RevisionsList {
   public static final int RECENT_PERIOD = 12;
   private final JBTable table;
+  private final JComponent component;
   private volatile Set<Long> filteredRevisions;
 
   public RevisionsList(SelectionListener l) {
@@ -63,16 +64,13 @@ public final class RevisionsList {
     addSelectionListener(l);
 
     CopyProvider copyProvider = new MyCellRenderer.MyCopyProvider(table);
-    DataManager.registerDataProvider(table, dataId -> {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return copyProvider;
-      }
-      return null;
+    component = UiDataProvider.wrapComponent(table, sink -> {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, copyProvider);
     });
   }
 
-  public JComponent getComponent() {
-    return table;
+  public @NotNull JComponent getComponent() {
+    return component;
   }
 
   public boolean isEmpty() {

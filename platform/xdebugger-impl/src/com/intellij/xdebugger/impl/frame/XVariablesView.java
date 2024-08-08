@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ObjectUtils;
@@ -18,7 +18,6 @@ import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,15 +27,14 @@ import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
-public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  protected final JPanel myComponent;
+public class XVariablesView extends XVariablesViewBase {
+  protected final JComponent myComponent;
   protected final WeakReference<XDebugSessionImpl> mySession;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
     mySession = new WeakReference<>(session);
-    myComponent = createMainPanel(super.getPanel());
-    DataManager.registerDataProvider(myComponent, this);
+    myComponent = UiDataProvider.wrapComponent(createMainPanel(super.getPanel()), sink -> uiDataSnapshot(sink));
   }
 
   protected JPanel createMainPanel(JComponent localsPanel) {
@@ -44,7 +42,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   }
 
   @Override
-  public JPanel getPanel() {
+  public JComponent getPanel() {
     return myComponent;
   }
 
@@ -116,19 +114,12 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     super.clear();
   }
 
-  @Nullable
-  @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      XDebugSessionImpl session = mySession.get();
-      if (session != null) {
-        XSourcePosition position = session.getCurrentPosition();
-        if (position != null) {
-          return position.getFile();
-        }
-      }
+  protected void uiDataSnapshot(@NotNull DataSink sink) {
+    XDebugSessionImpl session = mySession.get();
+    XSourcePosition position = session == null ? null : session.getCurrentPosition();
+    if (position != null) {
+      sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> position.getFile());
     }
-    return null;
   }
 
   public static final class InlineVariablesInfo {

@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupPositionStrategy;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
@@ -99,14 +98,9 @@ final class LookupUi {
     menuAction.add(new ShowCompletionSettingsAction());
 
     myMenuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-    DataManager.registerDataProvider(myMenuButton, dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return this.lookup.getProject();
-      }
-      if (CommonDataKeys.EDITOR.is(dataId)) {
-        return this.lookup.getEditor();
-      }
-      return null;
+    JComponent menuButtonWrapper = UiDataProvider.wrapComponent(myMenuButton, sink -> {
+      sink.set(CommonDataKeys.PROJECT, this.lookup.getProject());
+      sink.set(CommonDataKeys.EDITOR, this.lookup.getEditor());
     });
 
     AnAction hintAction = new HintAction();
@@ -121,7 +115,7 @@ final class LookupUi {
       myBottomPanel.add(myAdvertiser.getAdComponent());
       myBottomPanel.add(processIcon);
       myBottomPanel.add(hintButton);
-      myBottomPanel.add(myMenuButton);
+      myBottomPanel.add(menuButtonWrapper);
       if (ExperimentalUI.isNewUI()) {
         myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
         myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());

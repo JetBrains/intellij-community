@@ -541,8 +541,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setBorder(IdeBorderFactory.createBorder(JBUI.CurrentTheme.Popup.toolbarBorderColor(), SideBorder.TOP | SideBorder.BOTTOM));
     panel.add(scrollPane, BorderLayout.CENTER);
-    DataManager.registerDataProvider(panel, this::getData);
-
     panel.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
@@ -550,59 +548,35 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     });
 
-    return panel;
+    return UiDataProvider.wrapComponent(panel, sink -> uiDataSnapshot(sink));
   }
 
-  private @Nullable Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
+  private void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myFileEditor);
+    if (myFileEditor instanceof TextEditor o) {
+      sink.set(OpenFileDescriptor.NAVIGATE_IN_EDITOR, o.getEditor());
     }
-    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      return myFileEditor;
-    }
-    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      if (myFileEditor instanceof TextEditor) {
-        return ((TextEditor)myFileEditor).getEditor();
-      }
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      TreePath[] selection = myTree.getSelectionPaths();
-      return (DataProvider)slowId -> getSlowData(slowId, selection);
-    }
-    if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-      return myPopup;
-    }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator.getCopyProvider();
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myTreeExpander;
-    }
-    return null;
-  }
+    sink.set(LangDataKeys.POSITION_ADJUSTER_POPUP, myPopup);
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyPasteDelegator.getCopyProvider());
+    sink.set(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, TreePath @Nullable [] selection) {
+    TreePath[] selection = myTree.getSelectionPaths();
     JBIterable<Object> selectedElements = JBIterable.of(selection)
       .filterMap(o -> StructureViewComponent.unwrapValue(o.getLastPathComponent()));
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       return selectedElements.filter(PsiElement.class).first();
-    }
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       return PsiUtilCore.toPsiElementArray(selectedElements.filter(PsiElement.class).toList());
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       return selectedElements.filter(Navigatable.class).first();
-    }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
       List<Navigatable> result = selectedElements.filter(Navigatable.class).toList();
       return result.isEmpty() ? null : result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-    }
-    return null;
-  }
-
-  private @NotNull JBIterable<Object> getSelectedElements() {
-    return JBIterable.of(myTree.getSelectionPaths())
-      .filterMap(o -> StructureViewComponent.unwrapValue(o.getLastPathComponent()));
+    });
   }
 
   private @NotNull JComponent createSettingsButton() {

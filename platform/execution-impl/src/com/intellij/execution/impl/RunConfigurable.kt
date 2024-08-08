@@ -11,7 +11,6 @@ import com.intellij.execution.impl.RunConfigurable.Companion.collectNodesRecursi
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
 import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.openapi.Disposable
@@ -486,16 +485,13 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
     }
 
   override fun createComponent(): JComponent? {
-    wholePanel = JPanel(BorderLayout())
-    DataManager.registerDataProvider(wholePanel!!) { dataId ->
-      when (dataId) {
-        RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
-        CommonDataKeys.PROJECT.name -> project
-        RunConfigurationCreator.KEY.name -> this
-        else -> null
+    wholePanel = object : JPanel(BorderLayout()), UiDataProvider {
+      override fun uiDataSnapshot(sink: DataSink) {
+        sink[RunConfigurationSelector.KEY] = RunConfigurationSelector { selectConfiguration(it) }
+        sink[CommonDataKeys.PROJECT] = project
+        sink[RunConfigurationCreator.KEY] = this@RunConfigurable
       }
     }
-
     if (SystemInfo.isMac) {
       val touchbarActions = DefaultActionGroup(toolbarAddAction)
       TouchbarActionCustomizations.setShowText(touchbarActions, true)
