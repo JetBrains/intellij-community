@@ -79,9 +79,6 @@
     <registryKey key="kotlin.indices.timing.threshold.batch"
                  defaultValue="5000"
                  description="Time threshold in ms to report slow index batch (processAll-like) access" />
-    <registryKey key="kotlin.indices.short.names.filtering.enabled" defaultValue="false"
-                 description="Filter irrelevant Kotlin FQNames by short name index"
-                 restartRequired="true"/>
 
     <notificationGroup
             id="Recover Kotlin Indices"
