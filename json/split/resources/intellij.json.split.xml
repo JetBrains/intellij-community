@@ -2,6 +2,8 @@
   <module value="intellij.json.split"/>
 
   <extensions defaultExtensionNs="com.intellij">
+    <inspection.basicVisitor class="com.intellij.json.psi.JsonElementVisitor"/>
+
     <fileType name="JSON" extensions="har;json;jsonc"
               implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE"
               language="JSON"/>
@@ -23,6 +25,20 @@
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
 
-
+    <lang.foldingBuilder language="JSON" implementationClass="com.intellij.json.editor.folding.JsonFoldingBuilder"/>
+    <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
+    <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
+    <lang.smartEnterProcessor language="JSON" implementationClass="com.intellij.json.editor.smartEnter.JsonSmartEnterProcessor"/>
+    <lang.braceMatcher language="JSON" implementationClass="com.intellij.json.JsonBraceMatcher"/>
+    <lang.commenter language="JSON" implementationClass="com.intellij.json.editor.JsonCommenter"/>
+    <copyPastePostProcessor implementation="com.intellij.json.editor.JsonCopyPastePostProcessor"/>
+    <copyPastePreProcessor implementation="com.intellij.json.editor.JsonCopyPasteProcessor"/>
+    <applicationService serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
+    <enterHandlerDelegate implementation="com.intellij.json.editor.JsonEnterHandler" id="JsonEnterHandler"/>
+    <focusModeProvider language="JSON" implementationClass="com.intellij.json.editor.JsonFocusModeProvider"/>
+    <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable" id="editor.preferences.jsonOptions"/>
+    <typedHandler implementation="com.intellij.json.editor.JsonTypedHandler" id="JsonTypedHandler"/>
+    <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
+    <quoteHandler fileType="JSON5" className="com.intellij.json.JsonQuoteHandler"/>
   </extensions>
 </idea-plugin>
