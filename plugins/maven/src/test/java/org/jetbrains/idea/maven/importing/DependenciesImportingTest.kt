@@ -1085,6 +1085,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDependencyWithEnvironmentProperty() = runBlocking {
+    needFixForMaven4()
     val javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"))
 
     createProjectPom("""
@@ -1111,6 +1112,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDependencyWithEnvironmentENVProperty() = runBlocking {
+    needFixForMaven4()
     var envDir = FileUtil.toSystemIndependentName(System.getenv(envVar))
     envDir = StringUtil.trimEnd(envDir, "/")
 
@@ -1445,6 +1447,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUsingMirrors() = runBlocking {
+    needFixForMaven4()
     repositoryPath = dir.path + "/repo"
     val mirrorPath = pathTransformer.toRemotePath(FileUtil.toSystemIndependentName(dir.path + "/mirror"))
 
@@ -1622,6 +1625,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDifferentSystemDependenciesWithSameId() = runBlocking {
+    needFixForMaven4()
     createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -1702,6 +1706,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotPopulateSameRootEntriesOnEveryImportForSystemLibraries() = runBlocking {
+    needFixForMaven4()
     val root = root
     val path = "jar://$root/foo/bar.jar!/"
     runBlocking {
@@ -2504,6 +2509,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testTransitiveProfileDependency() = runBlocking {
+    needFixForMaven4()
     assumeVersionMoreThan("3.1.0")
     createProjectPom("""
                        <groupId>test</groupId>

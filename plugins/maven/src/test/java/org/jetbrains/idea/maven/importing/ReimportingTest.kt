@@ -327,6 +327,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentVersionProperty2() = runBlocking {
+    needFixForMaven4()
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

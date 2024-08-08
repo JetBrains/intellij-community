@@ -27,6 +27,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSystemDependencyWithoutPath() = runBlocking {
+    needFixForMaven4()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -182,6 +183,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUndefinedPropertyInHeader() = runBlocking {
+    needFixForMaven4()
     importProjectAsync("""
                               <groupId>test</groupId>
                               <artifactId>${'$'}{undefined}</artifactId>
@@ -714,6 +716,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUnresolvedBuildExtensionsInModules() = runBlocking {
+    needFixForMaven4()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

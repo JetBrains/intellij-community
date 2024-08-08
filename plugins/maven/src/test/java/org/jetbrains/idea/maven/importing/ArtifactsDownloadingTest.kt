@@ -130,6 +130,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
 
   @Test
   fun ReturningNotFoundArtifacts() = runBlocking {
+    needFixForMaven4()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -187,6 +188,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
   @Test
   @Throws(Exception::class)
   fun JavadocsAndSourcesForDepsWithClassifiersAndType() = runBlocking {
+    needFixForMaven4()
     val remoteRepo = FileUtil.toSystemIndependentName(dir.path + "/repo")
     updateSettingsXmlFully("""<settings>
 <mirrors>

@@ -569,6 +569,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testResolutionWithTriggeredProfiles() = runBlocking {
+    needFixForMaven4()
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

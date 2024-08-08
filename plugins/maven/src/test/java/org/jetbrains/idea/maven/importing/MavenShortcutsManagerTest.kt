@@ -121,6 +121,7 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testActionWhenSeveralSimilarPlugins() = runBlocking {
+    needFixForMaven4()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>

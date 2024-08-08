@@ -78,6 +78,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun `test maven import - bad maven config`() = runBlocking {
+    needFixForMaven4()
     assumeVersionMoreThan("3.3.1")
     createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()

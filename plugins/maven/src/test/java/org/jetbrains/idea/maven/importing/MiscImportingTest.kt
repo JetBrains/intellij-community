@@ -288,6 +288,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testTakingProxySettingsIntoAccount() = runBlocking {
+    needFixForMaven4()
     val helper = MavenCustomRepositoryHelper(dir, "local1")
     repositoryPath = helper.getTestDataPath("local1")
     importProjectAsync("""

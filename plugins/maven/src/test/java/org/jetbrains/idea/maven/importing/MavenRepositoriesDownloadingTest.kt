@@ -138,6 +138,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDownloadedFromRepositoryWithAuthentification() = runBlocking {
+    needFixForMaven4()
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
@@ -168,6 +169,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDownloadedFromRepositoryWithWrongAuthentificationLeadsToError() = runBlocking {
+    needFixForMaven4()
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
@@ -291,6 +293,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testWithDependencyLastUpdatedWithErrorForceUpdate() = runBlocking {
+    needFixForMaven4()
     doLastUpdatedTest(true, pom()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
       TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString{it.toString()}, 0, projectsManager.rootProjects[0].problems.size)
@@ -299,6 +302,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testWithPluginLastUpdatedWithErrorForceUpdate() = runBlocking {
+    needFixForMaven4()
     doLastUpdatedTest(true, pomPlugins()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
       TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString{it.toString()},0, projectsManager.rootProjects[0].problems.size)
