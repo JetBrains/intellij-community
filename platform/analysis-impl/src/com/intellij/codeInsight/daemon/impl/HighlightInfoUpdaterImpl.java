@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -538,6 +539,15 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
 
   static boolean isInspectionToolId(Object toolId) {
     return toolId instanceof String;
+  }
+  static boolean isAnnotatorToolId(Object toolId) {
+    return toolId instanceof Class<?> c && Annotator.class.isAssignableFrom(c);
+  }
+  static boolean isHighlightVisitorToolId(Object toolId) {
+    return toolId instanceof Class<?> c && HighlightVisitor.class.isAssignableFrom(c);
+  }
+  static boolean isInjectionRelated(Object toolId) {
+    return InjectedLanguageManagerImpl.isInjectionRelated(toolId);
   }
 
   // TODO very dirty method which throws all incrementality away, but we'd need to rewrite too many inspections to get rid of it

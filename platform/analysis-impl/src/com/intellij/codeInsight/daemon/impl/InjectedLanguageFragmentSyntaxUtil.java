@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ class InjectedLanguageFragmentSyntaxUtil {
   @Contract(pure = true)
   static List<HighlightInfo> addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
                                                            @NotNull TextRange hostRange,
-                                                           TextAttributesKey @NotNull [] keys) {
+                                                           TextAttributesKey @NotNull [] keys, @Nullable Object toolId) {
     if (hostRange.isEmpty()) {
       return List.of();
     }
@@ -25,6 +26,7 @@ class InjectedLanguageFragmentSyntaxUtil {
       .range(hostRange)
       .textAttributes(TextAttributes.ERASE_MARKER)
       .createUnconditionally();
+    eraseInfo.toolId = toolId;
 
     LayeredTextAttributes injectedAttributes = LayeredTextAttributes.create(scheme, keys);
     if (injectedAttributes.isEmpty() || keys.length == 1 && keys[0] == HighlighterColors.TEXT) {
@@ -36,6 +38,7 @@ class InjectedLanguageFragmentSyntaxUtil {
       .range(hostRange)
       .textAttributes(injectedAttributes)
       .createUnconditionally();
+    injectedInfo.toolId = toolId;
     return List.of(eraseInfo, injectedInfo);
   }
 }
