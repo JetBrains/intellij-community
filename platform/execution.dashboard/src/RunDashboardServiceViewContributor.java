@@ -110,6 +110,9 @@ public final class RunDashboardServiceViewContributor
     if (group instanceof FolderDashboardGroup) {
       return new RunDashboardFolderGroupViewDescriptor(node);
     }
+    if (group instanceof RunDashboardGroupImpl<?> dashboardGroup && dashboardGroup.getValue() instanceof ConfigurationType type) {
+      return new RunDashboardTypeGroupViewDescriptor(node, type);
+    }
     return new RunDashboardGroupViewDescriptor(node);
   }
 
@@ -420,7 +423,7 @@ public final class RunDashboardServiceViewContributor
 
   private static class RunDashboardGroupViewDescriptor implements ServiceViewDescriptor, WeighedItem {
     protected final RunDashboardGroup myGroup;
-    private final GroupingNode myNode;
+    protected final GroupingNode myNode;
     private final PresentationData myPresentationData;
 
     protected RunDashboardGroupViewDescriptor(GroupingNode node) {
@@ -549,6 +552,30 @@ public final class RunDashboardServiceViewContributor
       finally {
         runManager.fireEndUpdate();
       }
+    }
+  }
+
+  private static class RunDashboardTypeGroupViewDescriptor extends RunDashboardGroupViewDescriptor {
+    private final ConfigurationType myType;
+
+    RunDashboardTypeGroupViewDescriptor(GroupingNode node, ConfigurationType type) {
+      super(node);
+      myType = type;
+    }
+
+    @Override
+    public void onNodeSelected(List<Object> selectedServices) {
+      ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent().setType(myType);
+    }
+
+    @Override
+    public void onNodeUnselected() {
+      ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent().setType(null);
+    }
+
+    @Override
+    public @Nullable JComponent getContentComponent() {
+      return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent();
     }
   }
 

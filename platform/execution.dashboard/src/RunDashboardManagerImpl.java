@@ -95,6 +95,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private final AtomicBoolean myListenersInitialized = new AtomicBoolean();
   private RunDashboardComponentWrapper myContentWrapper;
   private JComponent myEmptyContent;
+  private RunDashboardTypePanel myTypeContent;
 
   public RunDashboardManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -774,6 +775,13 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       myEmptyContent = mainPanel;
     }
     return myEmptyContent;
+  }
+
+  RunDashboardTypePanel getTypeContent() {
+    if (myTypeContent == null) {
+      myTypeContent = new RunDashboardTypePanel(myProject);
+    }
+    return myTypeContent;
   }
 
   RunDashboardComponentWrapper getContentWrapper() {
