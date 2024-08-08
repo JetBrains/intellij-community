@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.StatusBar;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,13 @@ public interface StatusBarEx extends StatusBar {
 
   BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull @PopupContent String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener);
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * </p>
+   */
+  @ApiStatus.Obsolete
   void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info);
 
   List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses();
