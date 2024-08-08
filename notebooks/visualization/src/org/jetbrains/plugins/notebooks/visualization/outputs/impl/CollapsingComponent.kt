@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -24,10 +24,12 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class CollapsingComponent(internal val editor: EditorImpl,
-                                   child: JComponent,
-                                   internal val resizable: Boolean,
-                                   private val collapsedTextSupplier: () -> @NlsSafe String) : JPanel(null) {
+internal class CollapsingComponent(
+  internal val editor: EditorImpl,
+  child: JComponent,
+  internal val resizable: Boolean,
+  private val collapsedTextSupplier: () -> @NlsSafe String,
+) : JPanel(null) {
   private var customHeight: Int = -1
 
   private val resizeController by lazy {
@@ -36,7 +38,13 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
         customHeight = height - insets.run { top + bottom }
       }
       customHeight += dy
+      setSize(width, customHeight)
       mainComponent.revalidate()
+    }.apply {
+      resizeStateDispatcher.addListener { state ->
+        (border as? CollapsingComponentBorder)?.resized = state != ResizeController.ResizeState.NONE
+        repaint()
+      }
     }
   }
 
@@ -84,7 +92,7 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
   }
 
   override fun remove(index: Int) {
-    LOG.error("Components should not be deleted from $this", Throwable())
+    thisLogger().error("Components should not be deleted from $this", Throwable())
     super.remove(index)
   }
 
@@ -202,8 +210,6 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
     const val MIN_HEIGHT_TO_COLLAPSE = 50
     const val COLLAPSING_RECT_WIDTH = 22
     private const val COLLAPSING_RECT_MARGIN_Y_BOTTOM = 5
-
-    private val LOG by lazy { logger<CollapsingComponent>() }
 
     @JvmStatic
     fun collapseRectHorizontalLeft(editor: EditorEx): Int =
