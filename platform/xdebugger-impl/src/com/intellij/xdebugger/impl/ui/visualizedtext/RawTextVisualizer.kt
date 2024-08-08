@@ -8,13 +8,13 @@ import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
 
 // It's not registered as an extension, added explicitly as the last visualizer.
-internal object FallbackTextVisualizer : TextValueVisualizer {
+internal object RawTextVisualizer : TextValueVisualizer {
   override fun visualize(value: @NlsSafe String): List<VisualizedContentTab> =
     listOf(object : TextBasedContentTab(), VisualizedContentTabWithStats {
       override val name
         get() = XDebuggerBundle.message("xdebugger.visualized.text.name.raw")
       override val id
-        get() = FallbackTextVisualizer::class.qualifiedName!!
+        get() = RawTextVisualizer::class.qualifiedName!!
       override val contentTypeForStats
         get() = TextVisualizerContentType.RAW
       override fun formatText() =

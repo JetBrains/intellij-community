@@ -15,19 +15,9 @@ import javax.swing.JComponent
  */
 @ApiStatus.Experimental // until we consider collection visualizers
 interface TextValueVisualizer {
-
-  /**
-   * Returns whether this extension can visualize the given value.
-   * If `true`, then [visualize] returns a non-empty list.
-   */
-  fun canVisualize(value: String): Boolean {
-    // Default implementation, feel free to override it if there is a more efficient way to check this.
-    return visualize(value).isNotEmpty()
-  }
-
   /**
    * Visualizes the given value, possibly in several ways.
-   * Returns an empty list, if [canVisualize] returns false.
+   * Returns an empty list, if [value] cannot be visualized.
    */
   fun visualize(value: @NlsSafe String): List<VisualizedContentTab>
 }

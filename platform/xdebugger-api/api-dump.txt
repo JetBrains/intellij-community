@@ -755,7 +755,6 @@ com.intellij.xdebugger.ui.DebuggerColors
 - sf:SMART_STEP_INTO_SELECTION:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:SMART_STEP_INTO_TARGET:com.intellij.openapi.editor.colors.TextAttributesKey
 *:com.intellij.xdebugger.ui.TextValueVisualizer
-- canVisualize(java.lang.String):Z
 - a:visualize(java.lang.String):java.util.List
 *:com.intellij.xdebugger.ui.VisualizedContentTab
 - a:createComponent(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):javax.swing.JComponent

@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.AppUIUtil.invokeOnEdt
 import com.intellij.ui.EditorTextField
 import com.intellij.xdebugger.frame.XFullValueEvaluator
-import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopup
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.CardLayout
 import java.awt.Font
@@ -32,7 +32,7 @@ abstract class CustomComponentEvaluator(name: String) : XFullValueEvaluator() {
                                     editor: Editor?,
                                     component: JComponent,
                                     cancelCallback: Runnable?) {
-    VisualizedTextPopup.showValuePopup(event, project, editor, component, cancelCallback)
+    VisualizedTextPopupUtil.showValuePopup(event, project, editor, component, cancelCallback)
   }
 
   protected class EvaluationCallback(private val myPanel: JComponent,

@@ -52,7 +52,7 @@ import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopup;
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -137,7 +137,7 @@ public final class DebuggerUIUtil {
                                     @NotNull MouseEvent event,
                                     @NotNull Project project,
                                     @Nullable Editor editor) {
-    WriteIntentReadAction.run((Runnable)() -> VisualizedTextPopup.INSTANCE.evaluateAndShowValuePopup(evaluator, event, project, editor));
+    WriteIntentReadAction.run((Runnable)() -> VisualizedTextPopupUtil.evaluateAndShowValuePopup(evaluator, event, project, editor));
   }
 
   /**

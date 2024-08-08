@@ -41,7 +41,7 @@ import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopup;
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -207,7 +207,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                   }
                 });
               }
-              else if (VisualizedTextPopup.INSTANCE.isVisualizable(text)) {
+              else if (VisualizedTextPopupUtil.isVisualizable(text)) {
                 node.setFullValueEvaluator(new XFullValueEvaluator() {
                   @Override
                   public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
