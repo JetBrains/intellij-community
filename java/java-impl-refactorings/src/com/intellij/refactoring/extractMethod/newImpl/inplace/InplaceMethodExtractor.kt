@@ -148,7 +148,6 @@ internal class InplaceMethodExtractor(
 
   private fun afterTemplateStart(templateState: TemplateState) {
     setActiveExtractor(editor, this)
-    setupRestartOnSettingsChange(templateState, popupProvider, defaultExtractor)
     addInlaySettingsElement(templateState, popupProvider)?.also { inlay ->
       Disposer.register(templateState, inlay)
     }
@@ -156,8 +155,8 @@ internal class InplaceMethodExtractor(
 
 }
 
-private fun setupRestartOnSettingsChange(templateState: TemplateState, popupProvider: ExtractMethodPopupProvider, defaultExtractor: DuplicatesMethodExtractor){
-  val project = templateState.editor.project ?: return
+fun setupRestartOnSettingsChange(editor: Editor, popupProvider: ExtractMethodPopupProvider, defaultExtractor: DuplicatesMethodExtractor){
+  val project = editor.project ?: return
   popupProvider.setChangeListener {
     val shouldAnnotate = popupProvider.annotate
     if (shouldAnnotate != null) {
@@ -168,10 +167,12 @@ private fun setupRestartOnSettingsChange(templateState: TemplateState, popupProv
       JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = makeStatic
     }
     ExtractMethodService.getInstance(project).scope.launch {
+      val templateState = TemplateManagerImpl.getTemplateState(editor) ?: return@launch
       MethodExtractor().restartInplace(templateState, defaultExtractor, popupProvider)
     }
   }
   popupProvider.setShowDialogAction { actionEvent ->
+    val templateState = TemplateManagerImpl.getTemplateState(editor) ?:return@setShowDialogAction
     val extractor = createExtractor(defaultExtractor, popupProvider)
     MethodExtractor().restartInDialog(templateState, extractor, actionEvent == null)
   }

@@ -9,7 +9,6 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -185,6 +184,7 @@ class MethodExtractor {
   private suspend fun runInplaceExtract(editor: Editor, extractor: DuplicatesMethodExtractor, methodNames: List<String>){
     val popupSettings = readAction { createInplaceSettingsPopup(extractor.extractOptions) }
     val suggestedNames = methodNames.takeIf { it.size > 1 }.orEmpty()
+    setupRestartOnSettingsChange(editor, popupSettings, extractor)
     val inplaceExtractor = readAction { InplaceMethodExtractor(editor, popupSettings, extractor) }
     inplaceExtractor.extractAndRunTemplate(suggestedNames)
   }
@@ -221,10 +221,6 @@ class MethodExtractor {
       makeStaticDefault = if (showStatic) defaultStatic else null,
       staticPassFields = makeStaticAndPassFields
     )
-  }
-
-  fun executeRefactoringCommand(project: Project, command: () -> Unit) {
-    CommandProcessor.getInstance().executeCommand(project, command, ExtractMethodHandler.getRefactoringName(), null)
   }
 
   fun extractMethod(extractOptions: ExtractOptions): ExtractedElements {
