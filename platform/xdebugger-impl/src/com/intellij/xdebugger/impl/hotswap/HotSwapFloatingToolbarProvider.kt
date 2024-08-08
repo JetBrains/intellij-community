@@ -25,7 +25,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 private val hotSwapIcon: Icon by lazy {
-  HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapIcon } ?: PlatformDebuggerImplIcons.Actions.Hot_swap
+  HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapIcon } ?: PlatformDebuggerImplIcons.Actions.DebuggerSync
 }
 
 private fun createHelpTooltip(): HelpTooltip =

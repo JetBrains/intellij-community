@@ -17,7 +17,7 @@ public final class PlatformDebuggerImplIcons {
   }
 
   public static final class Actions {
-    /** 16x16 */ public static final @NotNull Icon Hot_swap = load("icons/actions/hot_swap.svg", -216570490, 2);
+    /** 16x16 */ public static final @NotNull Icon DebuggerSync = load("icons/actions/debuggerSync.svg", -370007676, 2);
   }
 
   public static final class MemoryView {
