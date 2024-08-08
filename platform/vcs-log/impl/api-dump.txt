@@ -1689,13 +1689,13 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - addHighlighter(com.intellij.vcs.log.VcsLogHighlighter):V
 - p:appendActionToEmptyText(java.lang.String,java.lang.Runnable):V
 - applyHighlighters(java.awt.Component,I,I,Z,Z):com.intellij.ui.SimpleTextAttributes
+- changeSelection(I,I,Z,Z):V
 - dispose():V
 - doLayout():V
 - forceReLayout(com.intellij.vcs.log.ui.table.column.VcsLogColumn):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getAutoCreateColumnsFromModel():Z
 - getBaseStyle(I,I,Z,Z):com.intellij.vcs.log.VcsLogHighlighter$VcsCommitStyle
-- getCellEditor():javax.swing.table.TableCellEditor
 - getColorManager():com.intellij.vcs.log.ui.VcsLogColorManager
 - f:getColumnViewIndex(com.intellij.vcs.log.ui.table.column.VcsLogColumn):I
 - getCommitColumn():javax.swing.table.TableColumn

@@ -54,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.CellEditorListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
 import java.awt.*;
@@ -100,7 +99,6 @@ public class VcsLogGraphTable extends TableWithProgress
   private final @NotNull VcsLogUiProperties myProperties;
   private final @NotNull VcsLogColorManager myColorManager;
 
-  private final @NotNull MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   private final @NotNull BaseStyleProvider myBaseStyleProvider;
   private final @NotNull GraphCommitCellRenderer myGraphCommitCellRenderer;
   private final @NotNull MyMouseAdapter myMouseAdapter;
@@ -735,13 +733,6 @@ public class VcsLogGraphTable extends TableWithProgress
   }
 
   @Override
-  public TableCellEditor getCellEditor() {
-    // this fixes selection problems by prohibiting selection when user clicks on graph (CellEditor does that)
-    // what is fun about this code is that if you set cell editor in constructor with setCellEditor method it would not work
-    return myDummyEditor;
-  }
-
-  @Override
   public int getRowHeight() {
     return myGraphCommitCellRenderer.getPreferredHeight();
   }
@@ -921,53 +912,25 @@ public class VcsLogGraphTable extends TableWithProgress
     }
   }
 
-  private class MyDummyTableCellEditor implements TableCellEditor {
-    @Override
-    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      return null;
+  @Override
+  public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+    if (shouldChangeSelect(EventQueue.getCurrentEvent(), rowIndex, columnIndex )) {
+      super.changeSelection(rowIndex, columnIndex, toggle, extend);
     }
+  }
 
-    @Override
-    public Object getCellEditorValue() {
-      return null;
-    }
+  /**
+   * Allows avoiding selection update when graph is clicked
+   */
+  private boolean shouldChangeSelect(@Nullable AWTEvent event, int rowIndex, int columnIndex) {
+    if (!(event instanceof MouseEvent)) return true;
 
-    @Override
-    public boolean isCellEditable(EventObject anEvent) {
-      return false;
-    }
+    VcsLogColumn<?> column = getVcsLogColumn(columnIndex);
+    if (column == null) return false;
+    VcsLogCellController controller = getController(column);
+    if (controller == null) return true;
 
-    @Override
-    public boolean shouldSelectCell(EventObject anEvent) {
-      if (!(anEvent instanceof MouseEvent e)) return true;
-
-      int row = rowAtPoint(e.getPoint());
-      if (row < 0 || row >= getRowCount()) return true;
-
-      VcsLogColumn<?> column = getVcsLogColumn(columnAtPoint(e.getPoint()));
-      if (column == null) return true;
-      VcsLogCellController controller = getController(column);
-      if (controller == null) return true;
-
-      return controller.shouldSelectCell(row, e);
-    }
-
-    @Override
-    public boolean stopCellEditing() {
-      return false;
-    }
-
-    @Override
-    public void cancelCellEditing() {
-    }
-
-    @Override
-    public void addCellEditorListener(CellEditorListener l) {
-    }
-
-    @Override
-    public void removeCellEditorListener(CellEditorListener l) {
-    }
+    return controller.shouldSelectCell(rowIndex, (MouseEvent)event);
   }
 
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
