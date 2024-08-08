@@ -44,6 +44,10 @@ object ToolbarUtils {
     return MyComponent(editor.contentComponent, dataProvider)
   }
 
+  fun createTargetComponent(component: JComponent, dataProvider: UiDataProvider): JComponent {
+    return MyComponent(component, dataProvider)
+  }
+
   private class MyComponent(val base: JComponent,
                             val provider: UiDataProvider
   ) : JComponent(), UiDataProvider {
