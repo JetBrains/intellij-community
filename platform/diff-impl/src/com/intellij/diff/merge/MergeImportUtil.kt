@@ -88,8 +88,9 @@ class MergeImportUtil {
     private fun getImportLineRange(psiFile: PsiFile): LineRange? {
       val range = ImportBlockRangeProvider.getRange(psiFile) ?: return null
       val document = psiFile.fileDocument
-      return LineRange(document.getLineNumber(range.startOffset),
-                       document.getLineNumber(range.endOffset) + 1)
+      val startLine = document.getLineNumber(range.startOffset)
+      val endLine = if(range.startOffset == range.endOffset) startLine else document.getLineNumber(range.endOffset) + 1
+      return LineRange(startLine, endLine)
     }
 
     fun isEnabledFor(project: Project?, document: Document): Boolean {
