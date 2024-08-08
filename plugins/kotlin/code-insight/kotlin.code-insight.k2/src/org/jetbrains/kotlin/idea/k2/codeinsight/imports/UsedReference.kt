@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -11,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -223,22 +221,6 @@ private fun KaSession.isAccessibleAsMemberClassifier(symbol: KaSymbol, element: 
     val foundClass = foundClasses.firstOrNull()
 
     return symbol == foundClass
-}
-
-private fun KaSession.nonImportingScopesForPosition(element: KtElement): List<KaScope> {
-    val scopeContext = element.containingKtFile.scopeContext(element)
-
-    // we have to filter scopes created by implicit receivers (like companion objects, for example); see KT-70108
-    val implicitReceiverScopeIndices = scopeContext.implicitReceivers.map { it.scopeIndexInTower }.toSet()
-
-    val nonImportingScopes = scopeContext.scopes
-        .asSequence()
-        .filterNot { it.kind is KaScopeKind.ImportingScope }
-        .filterNot { it.kind.indexInTower in implicitReceiverScopeIndices }
-        .map { it.scope }
-        .toList()
-
-    return nonImportingScopes
 }
 
 private fun KaSession.resolveDispatchReceiver(element: KtElement): KaReceiverValue? {
