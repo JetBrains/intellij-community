@@ -20,6 +20,15 @@ NavigationItem:
     name: renamed
 ItemPresentation:
     presentableText: renamed()
+    locationString: (in foo.bar.JvmNameAnnotatedFunctionsKt)
+    icon: RowIcon(icons=[Function, Private])
+TargetElement: @JvmName("renamed")
+QualifiedName: foo.bar.JvmNameAnnotatedFunctionsKt.renamed
+
+NavigationItem:
+    name: renamed
+ItemPresentation:
+    presentableText: renamed()
     locationString: (jvmNameAnnotatedFunctions.kt in foo.bar)
     icon: RowIcon(icons=[Function, Private])
 TargetElement: @JvmName("renamed")

@@ -336,4 +336,8 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
 
         fun toArray(a: Array<T>): Array<T> = set.toArray(a)
     }
+
+    override fun serveDefaultGotoContributor(): Boolean {
+        return false
+    }
 }

@@ -8,6 +8,15 @@ TargetElement: class LocalClass {}
 QualifiedName: LocalClass
 
 NavigationItem:
+    name: LocalDeclarationsKt
+ItemPresentation:
+    presentableText: LocalDeclarationsKt
+    locationString: null
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: fun foo() {
+QualifiedName: LocalDeclarationsKt
+
+NavigationItem:
     name: LocalInterface
 ItemPresentation:
     presentableText: LocalInterface

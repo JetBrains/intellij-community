@@ -11,6 +11,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,5 +145,49 @@ public abstract class PsiShortNamesCache {
                                         @NotNull GlobalSearchScope scope,
                                         @Nullable IdFilter filter) {
     return ContainerUtil.process(getClassesByName(name, scope), processor);
+  }
+
+  /**
+   * <p>
+   * Determines whether the specific {@link PsiShortNamesCache} should be used in the default implementation of the goto contributor,
+   * specifically the {@link com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor} and {@link com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor}.
+   * </p>
+   *
+   * <p>
+   * Alternatively, a language for which <code>serveDefaultGotoContributor()</code> returns <code>false</code>,
+   * provides its own contributors,
+   * and supplies its own instances of {@link com.intellij.navigation.ChooseByNameContributor} and {@link com.intellij.navigation.GotoClassContributor}.
+   * </p>
+   *
+   * @return <code>true</code> (default) if a language should rely on Java-based PSI (e.g., {@link PsiClass}, {@link PsiMethod}, etc.) for goto contributors,
+   * and <code>false</code> if a language has its own contributors.
+   */
+  @ApiStatus.Internal
+  public boolean serveDefaultGotoContributor() {
+    return true;
+  }
+
+  /**
+   * <p>
+   * Returns a new instance
+   * of {@link PsiShortNamesCache} to be used in the {@link com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor}
+   * and {@link com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor}
+   * for providing default Java-based PSI declarations such as {@link PsiClass}, {@link PsiMethod}, etc.
+   * </p>
+   *
+   * <p>
+   * Languages that have implemented {@link #serveDefaultGotoContributor} have their own goto contributors, and these languages are not processed by the returned {@link PsiShortNamesCache}.
+   * </p>
+   *
+   * <p>
+   * This method is implemented only in the {@link PsiShortNamesCache}, which is registered as a project service.
+   * For other implementations, it throws a {@link UnsupportedOperationException}.
+   * </p>
+   *
+   * @see #serveDefaultGotoContributor
+   */
+  @ApiStatus.Internal
+  public @NotNull PsiShortNamesCache forDefaultGotoContributor() {
+    throw new UnsupportedOperationException("Works only in `PsiShortNamesCache` which is registered as a project service");
   }
 }

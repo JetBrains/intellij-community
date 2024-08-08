@@ -51,7 +51,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = scope.getProject();
     DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
-      PsiShortNamesCache.getInstance(project).processAllClassNames(processor, scope, filter);
+      PsiShortNamesCache.getInstance(project).forDefaultGotoContributor().processAllClassNames(processor, scope, filter);
     });
   }
 
@@ -62,6 +62,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       DefaultClassProcessor defaultClassProcessor = new DefaultClassProcessor(processor, parameters, false);
       PsiShortNamesCache.getInstance(parameters.getProject())
+        .forDefaultGotoContributor()
         .processClassesWithName(name, defaultClassProcessor, parameters.getSearchScope(), parameters.getIdFilter());
     });
   }

@@ -5,7 +5,7 @@ ItemPresentation:
     locationString: (kotlin)
     icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
 TargetElement: public final class Int private constructor() : kotlin.Number, kotlin.Comparable<kotlin.Int> {
-QualifiedName: (kotlin).Int
+QualifiedName: kotlin.Int
 
 NavigationItem:
     name: IntArray
@@ -14,7 +14,7 @@ ItemPresentation:
     locationString: (kotlin)
     icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
 TargetElement: public final class IntArray public constructor(size: kotlin.Int) {
-QualifiedName: (kotlin).IntArray
+QualifiedName: kotlin.IntArray
 
 NavigationItem:
     name: IntArrayNode
@@ -363,8 +363,8 @@ NavigationItem:
 ItemPresentation:
     presentableText: IntrinsicsKt
     locationString: (kotlin.coroutines.intrinsics)
-    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/kotlin_file.svg, null])
-TargetElement: 
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: // IntelliJ API Decompiler stub source generated from a class file
 QualifiedName: kotlin.coroutines.intrinsics.IntrinsicsKt
 
 NavigationItem:

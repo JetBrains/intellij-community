@@ -357,3 +357,12 @@ ItemPresentation:
     icon: RowIcon(icons=[Class, Public])
 TargetElement: public class Intrinsics {
 QualifiedName: kotlin.jvm.internal.Intrinsics
+
+NavigationItem:
+    name: IntrinsicsKt
+ItemPresentation:
+    presentableText: IntrinsicsKt
+    locationString: (kotlin.coroutines.intrinsics)
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: // IntelliJ API Decompiler stub source generated from a class file
+QualifiedName: kotlin.coroutines.intrinsics.IntrinsicsKt

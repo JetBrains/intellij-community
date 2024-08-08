@@ -124,7 +124,7 @@ class KtFunctionPresenter : ItemPresentationProvider<KtFunction> {
     }
 }
 
-private fun getPresentationInContainer(param: Any): String {
+internal fun getPresentationInContainer(param: Any): String {
     if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.in.container.paren.no.brackets", param)
     } else {
@@ -132,7 +132,7 @@ private fun getPresentationInContainer(param: Any): String {
     }
 }
 
-private fun getPresentationText(param: Any): String {
+internal fun getPresentationText(param: Any): String {
     if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.paren.no.brackets", param)
     } else {

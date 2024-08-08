@@ -3,8 +3,8 @@ NavigationItem:
 ItemPresentation:
     presentableText: FilesKt
     locationString: (kotlin.io)
-    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/kotlin_file.svg, null])
-TargetElement: 
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: // IntelliJ API Decompiler stub source generated from a class file
 QualifiedName: kotlin.io.FilesKt
 
 NavigationItem:

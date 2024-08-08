@@ -5,7 +5,7 @@ ItemPresentation:
     locationString: (in Foo)
     icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/enumKotlin.svg, Public])
 TargetElement: BAR,
-QualifiedName: (in Foo).BAR
+QualifiedName: Foo.BAR
 
 NavigationItem:
     name: BAZ
@@ -14,4 +14,4 @@ ItemPresentation:
     locationString: (in Foo)
     icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/enumKotlin.svg, Public])
 TargetElement: BAZ
-QualifiedName: (in Foo).BAZ
+QualifiedName: Foo.BAZ

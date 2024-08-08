@@ -11,6 +11,15 @@ NavigationItem:
     name: testFunction
 ItemPresentation:
     presentableText: testFunction()
+    locationString: (in FunctionsKt)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: fun testFunction() {
+QualifiedName: FunctionsKt.testFunction
+
+NavigationItem:
+    name: testFunction
+ItemPresentation:
+    presentableText: testFunction()
     locationString: null
     icon: RowIcon(icons=[Function, Public])
 TargetElement: fun testFunction() {

@@ -106,7 +106,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     Project project = scope.getProject();
     if (project == null) return;
     DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
-      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project).forDefaultGotoContributor();
       cache.processAllClassNames(processor, scope, filter);
       cache.processAllFieldNames(processor, scope, filter);
       cache.processAllMethodNames(processor, scope, filter);
@@ -126,7 +126,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     final Predicate<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(completePattern);
     final Set<PsiMethod> collectedMethods = new HashSet<>();
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project).forDefaultGotoContributor();
       boolean success = cache.processFieldsWithName(name, field -> {
         if (isOpenable(field) && qualifiedMatcher.test(field)) return processor.process(field);
         return true;

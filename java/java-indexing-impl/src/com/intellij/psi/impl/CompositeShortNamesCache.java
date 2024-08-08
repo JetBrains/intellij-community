@@ -13,6 +13,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,14 +25,36 @@ import java.util.Set;
 
 public final class CompositeShortNamesCache extends PsiShortNamesCache {
   private final Project myProject;
+  private final boolean myForDefaultGotoContributor;
 
   public CompositeShortNamesCache(Project project) {
+    this(project, /*forGotoContributor*/false);
+  }
+
+  private CompositeShortNamesCache(Project project, boolean forDefaultGotoContributor) {
     myProject = project;
+    myForDefaultGotoContributor = forDefaultGotoContributor;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull PsiShortNamesCache forDefaultGotoContributor() {
+    return new CompositeShortNamesCache(myProject, /*forGotoContributor*/true);
   }
 
   @NotNull
   private List<PsiShortNamesCache> getCaches() {
-    return myProject.isDefault() ? Collections.emptyList() : PsiShortNamesCache.EP_NAME.getExtensionList(myProject);
+    if (myProject.isDefault()) return Collections.emptyList();
+
+    List<@NotNull PsiShortNamesCache> extensionList = EP_NAME.getExtensionList(myProject);
+    if (myForDefaultGotoContributor) {
+      return extensionList
+        .stream()
+        .filter(cache -> cache.serveDefaultGotoContributor())
+        .toList();
+    } else {
+      return extensionList;
+    }
   }
 
   @Override
