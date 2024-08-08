@@ -5,6 +5,7 @@ import javaApi.TypeUseAnon1
 import javaApi.TypeUseAnon2
 import javaApi.TypeUseAnon3
 import java.io.File
+
 class TEST1 {
     @Anon5(1)
     fun foo(@Anon5(2) o: @TypeUseAnon1 Any?): @TypeUseAnon1 String {

@@ -1,4 +1,5 @@
 import java.io.IOException
+
 internal class C {
     fun foo() {
         try {
