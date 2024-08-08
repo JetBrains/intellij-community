@@ -26,7 +26,8 @@ final class ClearContentAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
-    boolean enabled = node != null && node.getContent() != null;
+    Content content = node == null ? null : node.getContent();
+    boolean enabled = content != null && RunContentManagerImpl.isTerminated(content);
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled || !ActionPlaces.isPopupPlace(e.getPlace()));
   }
