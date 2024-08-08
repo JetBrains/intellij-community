@@ -5,7 +5,8 @@ import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -31,7 +32,7 @@ import git4idea.ui.branch.dashboard.BranchesDashboardUtil.anyIncomingOutgoingSta
 import kotlin.properties.Delegates
 
 internal class BranchesDashboardController(private val project: Project,
-                                           private val ui: BranchesDashboardUi) : Disposable, DataProvider {
+                                           private val ui: BranchesDashboardUi) : Disposable, UiDataProvider {
 
   private val changeListener = DataPackChangeListener { ui.updateBranchesTree(false) }
   private val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener { rootsToFilter = ui.getRootsToFilter() }
@@ -247,10 +248,7 @@ internal class BranchesDashboardController(private val project: Project,
     logUiFilterListener.onFiltersChanged()
   }
 
-  override fun getData(dataId: String): Any? {
-    if (BRANCHES_UI_CONTROLLER.`is`(dataId)) {
-      return this
-    }
-    return null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[BRANCHES_UI_CONTROLLER] = this
   }
 }

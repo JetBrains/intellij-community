@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -31,17 +30,6 @@ class EditorCellOutput internal constructor(
 
   // Real UI Panel will be created lazily when folding became visible.
   val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, ::getFoldingBounds) { component.isSeen = !component.isSeen }
-
-  init {
-    if (DataManager.getDataProvider(component) == null) {
-      DataManager.registerDataProvider(component) { key ->
-        when (key) {
-          NOTEBOOK_CELL_OUTPUT_DATA_KEY.name -> this@EditorCellOutput
-          else -> null
-        }
-      }
-    }
-  }
 
   @TestOnly
   fun getOutputComponent(): JComponent = component.mainComponent

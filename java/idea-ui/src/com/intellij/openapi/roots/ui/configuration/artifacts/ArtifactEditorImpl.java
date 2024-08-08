@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -58,8 +57,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class ArtifactEditorImpl implements ArtifactEditorEx, UiDataProvider {
-  private JPanel myMainPanel;
+public class ArtifactEditorImpl implements ArtifactEditorEx {
+  private JPanel myPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;
   private JPanel myEditorPanel;
@@ -79,6 +78,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, UiDataProvider {
   private ArtifactPropertiesEditors myPropertiesEditors;
   private final ArtifactValidationManagerImpl myValidationManager;
   private boolean myDisposed;
+
+  private final JComponent myMainComponent;
 
   public ArtifactEditorImpl(final @NotNull ArtifactsStructureConfigurableContext context, @NotNull Artifact artifact, @NotNull ArtifactEditorSettings settings) {
     myContext = createArtifactEditorContext(context);
@@ -111,6 +112,9 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, UiDataProvider {
       public void actionPerformed(ActionEvent e) {
         ActionManager.getInstance().createActionPopupMenu("ArtifactEditor", myShowSpecificContentOptionsGroup).getComponent().show(myShowSpecificContentOptionsButton, 0, 0);
       }
+    });
+    myMainComponent = UiDataProvider.wrapComponent(myPanel, sink -> {
+      sink.set(ARTIFACTS_EDITOR_KEY, this);
     });
     setOutputPath(outputPath);
     updateShowContentCheckbox();
@@ -189,10 +193,6 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, UiDataProvider {
 
   public JComponent createMainComponent() {
     myLayoutTreeComponent.initTree();
-    DataManager.registerDataProvider(myMainPanel, (EdtNoGetDataProvider)sink -> {
-      DataSink.uiDataSnapshot(sink, ArtifactEditorImpl.this);
-    });
-
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
     final JBSplitter splitter = new OnePixelSplitter(false);
@@ -388,7 +388,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, UiDataProvider {
 
   @Override
   public JComponent getMainComponent() {
-    return myMainPanel;
+    return myMainComponent;
   }
 
   @Override
@@ -550,10 +550,4 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, UiDataProvider {
     String helpId = myPropertiesEditors.getHelpId(myTabbedPane.getSelectedTitle());
     return helpId != null ? helpId : "reference.settingsdialog.project.structure.artifacts";
   }
-
-  @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(ARTIFACTS_EDITOR_KEY, this);
-  }
-
 }

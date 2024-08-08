@@ -4,7 +4,6 @@ package git4idea.ui.branch.dashboard
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.icons.AllIcons
 import com.intellij.ide.CommonActionsManager
-import com.intellij.ide.DataManager
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -83,7 +82,8 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(filteringTree.component, true)
   private val branchesProgressStripe = ProgressStripe(branchesScrollPane, this)
   private val branchesTreeWithLogPanel = simplePanel()
-  private val mainPanel = simplePanel().apply { DataManager.registerDataProvider(this, uiController) }
+  private val mainPanel = simplePanel()
+  private val mainComponent = UiDataProvider.wrapComponent(mainPanel, uiController)
   private val branchesSearchFieldPanel = simplePanel()
   private val branchesSearchField = filteringTree.installSearchField().apply {
     textEditor.border = JBUI.Borders.emptyLeft(5)
@@ -302,7 +302,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   }
 
   fun getMainComponent(): JComponent {
-    return mainPanel
+    return mainComponent
   }
 
   fun updateBranchesTree(initial: Boolean) {

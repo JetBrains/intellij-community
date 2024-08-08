@@ -1,11 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.actions;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
@@ -40,8 +36,9 @@ final class ThemeEditorToolbar implements EditorNotificationProvider, DumbAware 
         JComponent toolbarComponent = actionToolbar.getComponent();
         toolbarComponent.setBackground(bg);
         panel.add(toolbarComponent);
-        DataManager.registerDataProvider(panel, dataId -> CommonDataKeys.VIRTUAL_FILE.is(dataId) ? fileEditor.getFile() : null);
-        return panel;
+        return UiDataProvider.wrapComponent(panel, sink -> {
+          sink.set(CommonDataKeys.VIRTUAL_FILE, fileEditor.getFile());
+        });
       }
       return null;
     };

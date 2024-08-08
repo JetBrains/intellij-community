@@ -59,13 +59,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
-import java.awt.*;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -415,7 +413,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @NotNull
   @Override
   public JComponent createComponent() {
-    return new MyDataProviderWrapper(super.createComponent());
+    return UiDataProvider.wrapComponent(super.createComponent(), sink -> {
+      sink.set(LangDataKeys.MODULE_CONTEXT_ARRAY, getModuleContexts());
+      sink.set(LangDataKeys.MODULE_CONTEXT, getSelectedModule());
+      sink.set(LangDataKeys.MODIFIABLE_MODULE_MODEL, myContext.myModulesConfigurator.getModuleModel());
+      sink.set(PlatformCoreDataKeys.SELECTED_ITEM, getSelectedObject());
+    });
   }
 
   @Override
@@ -802,46 +805,31 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-  private class MyDataProviderWrapper extends JPanel implements UiDataProvider {
-    MyDataProviderWrapper(final JComponent component) {
-      super(new BorderLayout());
-      add(component, BorderLayout.CENTER);
-    }
-
-    @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(LangDataKeys.MODULE_CONTEXT_ARRAY, getModuleContexts());
-      sink.set(LangDataKeys.MODULE_CONTEXT, getSelectedModule());
-      sink.set(LangDataKeys.MODIFIABLE_MODULE_MODEL, myContext.myModulesConfigurator.getModuleModel());
-      sink.set(PlatformCoreDataKeys.SELECTED_ITEM, getSelectedObject());
-    }
-
-    private Module @Nullable [] getModuleContexts() {
-      final TreePath[] paths = myTree.getSelectionPaths();
-      Set<Module> modules = new LinkedHashSet<>();
-      if (paths != null) {
-        for (TreePath path : paths) {
-          MyNode node = (MyNode)path.getLastPathComponent();
-          final NamedConfigurable<?> configurable = node.getConfigurable();
-          LOG.assertTrue(configurable != null, "already disposed");
-          final Object o = configurable.getEditableObject();
-          if (o instanceof Module) {
-            modules.add((Module)o);
-          }
-          else if (node instanceof ModuleGroupNode && ((ModuleGroupNode)node).getModuleGroup() != null) {
-            TreeUtil.treeNodeTraverser(node).forEach(descendant -> {
-              if (descendant instanceof MyNode) {
-                Object object = ((MyNode)descendant).getConfigurable().getEditableObject();
-                if (object instanceof Module) {
-                  modules.add((Module)object);
-                }
+  private Module @Nullable [] getModuleContexts() {
+    final TreePath[] paths = myTree.getSelectionPaths();
+    Set<Module> modules = new LinkedHashSet<>();
+    if (paths != null) {
+      for (TreePath path : paths) {
+        MyNode node = (MyNode)path.getLastPathComponent();
+        final NamedConfigurable<?> configurable = node.getConfigurable();
+        LOG.assertTrue(configurable != null, "already disposed");
+        final Object o = configurable.getEditableObject();
+        if (o instanceof Module) {
+          modules.add((Module)o);
+        }
+        else if (node instanceof ModuleGroupNode && ((ModuleGroupNode)node).getModuleGroup() != null) {
+          TreeUtil.treeNodeTraverser(node).forEach(descendant -> {
+            if (descendant instanceof MyNode) {
+              Object object = ((MyNode)descendant).getConfigurable().getEditableObject();
+              if (object instanceof Module) {
+                modules.add((Module)object);
               }
-            });
-          }
+            }
+          });
         }
       }
-      return !modules.isEmpty() ? modules.toArray(Module.EMPTY_ARRAY) : null;
     }
+    return !modules.isEmpty() ? modules.toArray(Module.EMPTY_ARRAY) : null;
   }
 
   private class HideGroupsAction extends ToggleAction implements DumbAware {

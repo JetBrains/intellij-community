@@ -2,6 +2,8 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
@@ -246,12 +248,17 @@ class EditorCellOutputs(
     document.getLineEndOffset(lines.last)
 
   private fun addIntoInnerComponent(newComponent: NotebookOutputComponentFactory.CreatedComponent<*>, pos: Int = -1) {
-    val collapsingComponent = CollapsingComponent(
+    lateinit var outputComponent: EditorCellOutput
+    val collapsingComponent = object : CollapsingComponent(
       editor,
       newComponent.component,
       newComponent.resizable,
       newComponent.collapsedTextSupplier,
-    )
+    ), UiDataProvider {
+      override fun uiDataSnapshot(sink: DataSink) {
+        sink[NOTEBOOK_CELL_OUTPUT_DATA_KEY] = outputComponent
+      }
+    }
 
     innerComponent.add(
       collapsingComponent,
@@ -259,7 +266,7 @@ class EditorCellOutputs(
       pos,
     )
 
-    val outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable).apply {
+    outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable).apply {
       folding.visible = foldingsVisible
       folding.selected = foldingsSelected
     }
