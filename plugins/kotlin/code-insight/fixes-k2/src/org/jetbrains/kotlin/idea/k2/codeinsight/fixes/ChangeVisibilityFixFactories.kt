@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfTypes
+import com.intellij.psi.util.parentsOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -50,7 +51,6 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -316,13 +316,18 @@ object ChangeVisibilityFixFactories {
                 Visibilities.Private to Visibilities.Public
             }
 
-        val userDeclaration = element.parentsWithSelf.firstOrNull { it is KtDeclaration && it !is KtTypeParameter } as? KtDeclaration
+        val userDeclaration = element.parentsOfType<KtDeclaration>(withSelf = true)
+            .filterNot { it is KtTypeParameter }
+            .filterNot { it is KtParameter && !it.hasValOrVar() }
+            .filterNot { it.isPrivate() }
+            .firstOrNull()
+
         val exposedDeclaration = restrictingSymbol.psi
         val protectedAllowed = exposedDeclaration?.parent == userDeclaration?.parent
 
         val modCommandActions = arrayListOf<ChangeVisibilityModCommandAction>()
 
-        if (userDeclaration != null && !userDeclaration.isPrivate()) {
+        if (userDeclaration != null) {
             if ((restrictingSymbol as? KaDeclarationSymbol)?.isVisible(element) == true) {
                 addFixToTargetVisibility(
                     symbol = restrictingSymbol,

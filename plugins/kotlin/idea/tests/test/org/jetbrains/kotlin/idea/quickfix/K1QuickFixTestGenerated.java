@@ -7599,9 +7599,29 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("exposedConstructorParameterType.kt")
+        public void testExposedConstructorParameterType() throws Exception {
+            runTest("testData/quickfix/decreaseVisibility/exposedConstructorParameterType.kt");
+        }
+
+        @TestMetadata("exposedConstructorParameterType_privateVal.kt")
+        public void testExposedConstructorParameterType_privateVal() throws Exception {
+            runTest("testData/quickfix/decreaseVisibility/exposedConstructorParameterType_privateVal.kt");
+        }
+
+        @TestMetadata("exposedConstructorParameterType_val.kt")
+        public void testExposedConstructorParameterType_val() throws Exception {
+            runTest("testData/quickfix/decreaseVisibility/exposedConstructorParameterType_val.kt");
+        }
+
         @TestMetadata("exposedParameterType.kt")
         public void testExposedParameterType() throws Exception {
             runTest("testData/quickfix/decreaseVisibility/exposedParameterType.kt");
+        }
+
+        @TestMetadata("exposedParameterType_privateType.kt")
+        public void testExposedParameterType_privateType() throws Exception {
+            runTest("testData/quickfix/decreaseVisibility/exposedParameterType_privateType.kt");
         }
 
         @TestMetadata("exposedPropertyType.kt")
