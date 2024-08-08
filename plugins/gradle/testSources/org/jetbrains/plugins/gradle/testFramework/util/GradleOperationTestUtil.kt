@@ -12,6 +12,7 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
 import com.intellij.openapi.observable.operation.OperationExecutionContext
@@ -47,15 +48,15 @@ private object TestGradleProjectConfigurationActivityKey: ActivityKey {
   override val presentableName: @Nls String
     get() = "The test Gradle project configuration"
 }
-
+val LOG = Logger.getInstance(TestGradleProjectConfigurationActivityKey::class.java)
 suspend fun awaitGradleOpenProjectConfiguration(openProject: suspend () -> Project): Project {
   return openProject()
-    .withProjectAsync { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it, ::println) }
+    .withProjectAsync { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it, LOG::debug) }
 }
 
 suspend fun <R> awaitGradleProjectConfiguration(project: Project, action: suspend () -> R): R {
   return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
-    .also { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project, ::println) }
+    .also { awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project, LOG::debug) }
 }
 
 suspend fun awaitConfiguration(timeout: Duration, project: Project, messageCallback: ((String) -> Unit)? = null) {

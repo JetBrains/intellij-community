@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.completion.spec.ShellCommandSpec
@@ -11,16 +12,16 @@ import com.intellij.testFramework.RuleChain
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCachingGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
-import org.jetbrains.plugins.terminal.block.testApps.MoveCursorToLineEndAndPrint
-import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
-import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.ShellCommandSentListener
+import org.jetbrains.plugins.terminal.block.testApps.MoveCursorToLineEndAndPrint
+import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.block.util.CommandResult
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil.assertCommandResult
@@ -95,6 +96,8 @@ internal class BlockTerminalTest(private val shellPath: Path) {
     }.attempts(1).start()
   }
 
+  val LOG = Logger.getInstance(BlockTerminalTest::class.java)
+
   @Test
   fun `concurrent command and generator execution`() {
     val session = startBlockTerminalSession()
@@ -130,7 +133,7 @@ internal class BlockTerminalTest(private val shellPath: Path) {
 
         // Wait until the user command is finished
         assertCommandResult(0, "foo\n", outputFuture)
-        println("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
+        LOG.debug("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
       }
     }
   }

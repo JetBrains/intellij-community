@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -160,13 +161,15 @@ class MockProjectAware(
     }
   }
 
+  val LOG = Logger.getInstance(MockProjectAware::class.java)
+
   fun <R> waitForAllProjectActivities(action: () -> R): R {
     return project.trackActivityBlocking(MockProjectReloadActivityKey, action)
       .also {
         runBlocking {
           withTimeout(10.seconds) {
             Observation.awaitConfiguration(project) { message ->
-              println(message)
+              LOG.debug(message)
             }
           }
         }
