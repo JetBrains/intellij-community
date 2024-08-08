@@ -13,7 +13,7 @@
     <a href="https://json-schema.org/overview/what-is-jsonschema">JSON Schema</a> languages
   ]]></description>
 
-  <xi:include href="/intellij.json.split.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="intellij.json.split.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions resource-bundle="messages.JsonBundle">
     <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction">

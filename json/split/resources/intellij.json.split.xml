@@ -1,6 +1,4 @@
-<idea-plugin >
-  <module value="intellij.json.split"/>
-
+<idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <inspection.basicVisitor class="com.intellij.json.psi.JsonElementVisitor"/>
 
