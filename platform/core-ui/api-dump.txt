@@ -63,6 +63,7 @@ com.intellij.openapi.actionSystem.DataSink
 - sf:Companion:com.intellij.openapi.actionSystem.DataSink$Companion
 - a:dataSnapshot(com.intellij.openapi.actionSystem.DataSnapshotProvider):V
 - a:lazy(com.intellij.openapi.actionSystem.DataKey,kotlin.jvm.functions.Function0):V
+- a:lazyNull(com.intellij.openapi.actionSystem.DataKey):V
 - a:set(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):V
 - a:setNull(com.intellij.openapi.actionSystem.DataKey):V
 - a:uiDataSnapshot(com.intellij.openapi.actionSystem.DataProvider):V

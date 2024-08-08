@@ -154,6 +154,12 @@ interface DataSink {
   fun <T : Any> lazy(key: DataKey<T>, data: () -> T?)
 
   /**
+   * Put the [com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL] value in the sink
+   * when it is its turn to provide a value.
+   */
+  fun <T : Any> lazyNull(key: DataKey<T>)
+
+  /**
    * Put all data from the [provider] in the sink.
    * When migrating code, consider [DataSink.Companion.uiDataSnapshot] instead.
    */

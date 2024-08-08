@@ -493,6 +493,11 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
 
     @Override
+    public <T> void lazyNull(@NotNull DataKey<T> key) {
+      set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, dataId -> key.is(dataId) ? EXPLICIT_NULL : null);
+    }
+
+    @Override
     public void uiDataSnapshot(@NotNull UiDataProvider provider) {
       Object prev = source;
       source = provider;
