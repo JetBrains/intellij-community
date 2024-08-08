@@ -1017,6 +1017,11 @@ public class VcsLogGraphTable extends TableWithProgress
 
     @Override
     public void moveColumn(int columnIndex, int newIndex) {
+      if (columnIndex == newIndex) {
+        super.moveColumn(columnIndex, newIndex);
+        return;
+      }
+
       VcsLogColumn<?> column = getVcsLogColumn(columnIndex);
       if (column == null ||
           column == Root.INSTANCE || getVcsLogColumn(newIndex) == Root.INSTANCE ||
