@@ -4,10 +4,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.DriverCallException
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RemoteMouseButton
-import com.intellij.driver.sdk.DeclarativeInlayRenderer
-import com.intellij.driver.sdk.Document
-import com.intellij.driver.sdk.Editor
-import com.intellij.driver.sdk.logicalPosition
+import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
 import com.intellij.driver.sdk.ui.Finder
@@ -126,6 +123,10 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     driver.utility(IntentionActionUtils::class).invokeIntentionAction(editor, intentionActionName)
   }
 
+  fun invokeQuickFix(highlightInfo: HighlightInfo, name: String) {
+    driver.utility(IntentionActionUtils::class).invokeQuickFix(editor, highlightInfo, name)
+  }
+
   fun invokeAiIntentionAction(intentionActionName: String) {
     driver.utility(AiTestIntentionUtils::class).invokeAiAssistantIntention(editor, intentionActionName)
   }
@@ -134,6 +135,7 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 @Remote("com.jetbrains.performancePlugin.utils.IntentionActionUtils", plugin = "com.jetbrains.performancePlugin")
 interface IntentionActionUtils {
   fun invokeIntentionAction(editor: Editor, intentionActionName: String)
+  fun invokeQuickFix(editor: Editor, highlightInfo: HighlightInfo, name: String)
 }
 
 @Remote("com.intellij.ml.llm.intentions.TestIntentionUtils", plugin = "com.intellij.ml.llm/intellij.ml.llm.core")
