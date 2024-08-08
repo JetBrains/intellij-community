@@ -23,8 +23,8 @@ import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.kernel.withKernel
@@ -314,8 +314,8 @@ suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): No
 
 private fun showIndicatorInUI(project: Project, taskInfo: TaskInfo, indicator: ProgressIndicatorEx): Boolean {
   val frameEx: IdeFrameEx = WindowManagerEx.getInstanceEx().findFrameHelper(project) ?: return false
-  val statusBar = frameEx.statusBar as? StatusBarEx ?: return false
-  statusBar.addProgress(indicator, taskInfo)
+  val statusBar = frameEx.statusBar as? IdeStatusBarImpl ?: return false
+  statusBar.addProgressImpl(indicator, taskInfo)
   return true
 }
 
