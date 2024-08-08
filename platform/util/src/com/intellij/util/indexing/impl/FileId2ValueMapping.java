@@ -9,6 +9,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Helper class: optimizes applying many modifications (add/remove inputId) to {@link ValueContainerImpl}.
+ * <br/>
+ * Adding/removing a record from {@link ValueContainerImpl} by inputId is O(size). This is
+ * because even though logically {@link ValueContainerImpl} is a set of (inputId -> Value)
+ * mappings, but implementation stores data as (Value-> Set of inputIds) -- hence to remove
+ * an entry for given inputId one basically has to scan through ~half the container.
+ * <br/>
+ * If the container is big enough, it is much faster to build a kind of 'index' over it, and
+ * apply changes via that index instead. This class is doing exactly this: it wraps around
+ * {@link ValueContainerImpl}, creates an 'index' over its content ({@link #id2ValueMap}),
+ * and uses the index to apply changes faster.
+ */
 final class FileId2ValueMapping<Value> {
   private final @NotNull Int2ObjectMap<Value> id2ValueMap = new Int2ObjectOpenHashMap<>();
   private final @NotNull ValueContainerImpl<Value> valueContainer;
