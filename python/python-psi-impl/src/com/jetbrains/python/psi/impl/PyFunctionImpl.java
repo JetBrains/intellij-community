@@ -42,6 +42,7 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.getGenericTypeForClass;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
 
@@ -208,6 +209,13 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (PyTypeChecker.hasGenerics(type, context)) {
       final var substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
       if (substitutions != null) {
+        PyClass containingClass = getContainingClass();
+        if (containingClass != null && type instanceof PySelfType) {
+          PyType genericType = getGenericTypeForClass(context, containingClass);
+          if (genericType != null) {
+            type = genericType;
+          }
+        }
         final var substitutionsWithUnresolvedReturnGenerics =
           PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(getParameters(context), type, substitutions, context);
         type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
