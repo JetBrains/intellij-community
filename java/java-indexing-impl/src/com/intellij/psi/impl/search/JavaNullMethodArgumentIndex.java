@@ -11,6 +11,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +32,14 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
     return INDEX_ID;
   }
 
+  private static final StringSearcher ourSearcher = new StringSearcher("null", true, true);
+
   @NotNull
   @Override
   public DataIndexer<MethodCallData, Void, FileContent> getIndexer() {
     return inputData -> {
+      if (ourSearcher.scan(inputData.getContentAsText()) < 0) return Map.of();
+
       Map<MethodCallData, Void> result = new HashMap<>();
 
       TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
