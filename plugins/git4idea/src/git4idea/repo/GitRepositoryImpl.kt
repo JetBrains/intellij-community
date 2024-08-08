@@ -44,7 +44,6 @@ class GitRepositoryImpl private constructor(
 
   private val stagingAreaHolder: GitStagingAreaHolder
   private val untrackedFilesHolder: GitUntrackedFilesHolder
-  private val ignoredRepositoryFilesHolder: GitRepositoryIgnoredFilesHolder
   private val tagHolder: GitTagHolder
 
   @Volatile
@@ -65,7 +64,6 @@ class GitRepositoryImpl private constructor(
     untrackedFilesHolder = GitUntrackedFilesHolder(this)
     Disposer.register(this, untrackedFilesHolder)
 
-    ignoredRepositoryFilesHolder = GitRepositoryIgnoredFilesHolder(this)
     tagHolder = GitTagHolder(this)
     repoInfo = readRepoInfo()
     tagHolder.updateEnabled()
@@ -89,7 +87,7 @@ class GitRepositoryImpl private constructor(
   }
 
   override fun getIgnoredFilesHolder(): GitRepositoryIgnoredFilesHolder {
-    return ignoredRepositoryFilesHolder
+    return untrackedFilesHolder.ignoredFilesHolder
   }
 
   override fun getTagHolder(): GitTagHolder {

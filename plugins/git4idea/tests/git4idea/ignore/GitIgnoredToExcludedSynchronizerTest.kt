@@ -84,7 +84,7 @@ class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
   }
 
   private fun createGitignoreAndWait(gitignoreContent: String) {
-    val ignoredHolderWaiter = repo.ignoredFilesHolder.createWaiter()
+    val ignoredHolderWaiter = repo.untrackedFilesHolder.createWaiter()
 
     val gitIgnore = file(GITIGNORE).create(gitignoreContent)
     VfsUtil.findFileByIoFile(gitIgnore.file, true) //trigger VFS create event explicitly

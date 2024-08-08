@@ -139,7 +139,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
   private fun generateIgnoreFileAndWaitHoldersUpdate() {
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
     flushIgnoreHoldersQueue()
-    val waiter = repo.ignoredFilesHolder.createWaiter()
+    val waiter = repo.untrackedFilesHolder.createWaiter()
     VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
     waiter.waitFor()
   }
