@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
-import com.intellij.util.Alarm
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
@@ -13,15 +12,16 @@ import org.jetbrains.plugins.terminal.block.session.scraper.StringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.CommandEndMarkerListeningStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.TerminalLinesCollector
+import org.jetbrains.plugins.terminal.block.session.util.Debouncer
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 
 internal class ShellCommandOutputScraperImpl(
   private val textBuffer: TerminalTextBuffer,
   parentDisposable: Disposable,
   private val commandEndMarker: String?,
+  private val debounceTimeout: Int = 50,
 ) : ShellCommandOutputScraper {
 
   constructor(session: BlockTerminalSession) : this(
@@ -31,11 +31,8 @@ internal class ShellCommandOutputScraperImpl(
   )
 
   private val listeners: MutableList<ShellCommandOutputListener> = CopyOnWriteArrayList()
-  private val contentChangedAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
-  private val scheduled: AtomicBoolean = AtomicBoolean(false)
 
-  @Volatile
-  private var useExtendedDelayOnce: Boolean = false
+  private val debouncer: Debouncer = Debouncer(debounceTimeout, parentDisposable)
 
   init {
     TerminalUtil.addModelListener(textBuffer, parentDisposable) {
@@ -48,24 +45,20 @@ internal class ShellCommandOutputScraperImpl(
    */
   override fun addListener(listener: ShellCommandOutputListener, parentDisposable: Disposable, useExtendedDelayOnce: Boolean) {
     TerminalUtil.addItem(listeners, listener, parentDisposable)
-    this.useExtendedDelayOnce = useExtendedDelayOnce
+    this.debouncer.setExtendedDelayOnce()
   }
 
   private fun onContentChanged() {
     if (listeners.isNotEmpty()) {
-      if (scheduled.compareAndSet(false, true)) {
-        val request = {
-          scheduled.set(false)
-          if (listeners.isNotEmpty()) {
-            val output = scrapeOutput()
-            for (listener in listeners) {
-              listener.commandOutputChanged(output)
-            }
-          }
-        }
-        val delay = if (useExtendedDelayOnce) 150 else 50
-        useExtendedDelayOnce = false
-        contentChangedAlarm.addRequest(request, delay)
+      debouncer.execute(::doOnContentChanged)
+    }
+  }
+
+  private fun doOnContentChanged() {
+    if (listeners.isNotEmpty()) {
+      val output = scrapeOutput()
+      for (listener in listeners) {
+        listener.commandOutputChanged(output)
       }
     }
   }
