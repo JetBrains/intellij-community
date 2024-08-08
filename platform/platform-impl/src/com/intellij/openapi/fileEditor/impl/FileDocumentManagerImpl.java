@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.converter.FileTextConverter;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -99,9 +100,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     @Override
     public void documentChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
-      if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
-        myUnsavedDocuments.add(document);
-      }
+      markDocumentUnsaved(document);
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       VirtualFile virtualFile = getFile(document);
@@ -207,6 +206,13 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       if (totalSize > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return true;
     }
     return false;
+  }
+
+  @ApiStatus.Internal
+  public void markDocumentUnsaved(Document document) {
+    if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
+      myUnsavedDocuments.add(document);
+    }
   }
 
   @Override
@@ -425,6 +431,10 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       String text = document.getText();
       String lineSeparator = getLineSeparator(document, file);
+
+      //Some files have document.text different from file representation
+      text = FileTextConverter.convertToSaveDocumentTextToFile(text, file);
+
       if (!lineSeparator.equals("\n")) {
         text = StringUtil.convertLineSeparators(text, lineSeparator);
       }

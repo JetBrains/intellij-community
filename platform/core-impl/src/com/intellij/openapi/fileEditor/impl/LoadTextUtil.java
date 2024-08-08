@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.impl.converter.FileTextConverter;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.CharsetUtil;
@@ -522,8 +523,11 @@ public final class LoadTextUtil {
       throw new IllegalArgumentException("Attempt to load truncated text for binary file: " + file.getPresentableUrl() + ". File type: " + type.getName());
     }
 
+    limit = FileTextConverter.updateFileSizeLoadLimit(file, limit);
     if (file instanceof LightVirtualFile) {
-      return limitCharSequence(((LightVirtualFile)file).getContent(), limit);
+      CharSequence text = ((LightVirtualFile)file).getContent();
+      text = FileTextConverter.convertToLoadDocumentTextFromFile(text, file);
+      return limitCharSequence(text, limit);
     }
 
     if (file.isDirectory()) {
@@ -531,7 +535,11 @@ public final class LoadTextUtil {
     }
     try {
       byte[] bytes = limit == UNLIMITED ? file.contentsToByteArray() : VfsUtilCore.loadNBytes(file, limit);
-      return getTextByBinaryPresentation(bytes, file);
+      CharSequence text = getTextByBinaryPresentation(bytes, file);
+
+      //In case of notebook we need additionally to transform text representation to other text
+      text = FileTextConverter.convertToLoadDocumentTextFromFile(text, file);
+      return text;
     }
     catch (IOException e) {
       LOG.debug(e);
