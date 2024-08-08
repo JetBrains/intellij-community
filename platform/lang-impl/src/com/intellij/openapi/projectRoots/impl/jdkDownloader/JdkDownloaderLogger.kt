@@ -18,7 +18,8 @@ internal object JdkDownloaderLogger : CounterUsagesCollector() {
   private val DETECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("detected",
                                                                          EventFields.String("product", JdkVersionDetector.VENDORS),
                                                                          EventFields.Int("version"))
-  private val SELECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("selected",
+
+  private val DOWNLOADED_SDK: EventId2<String?, Int> = GROUP.registerEvent("jdk.downloaded",
                                                                          EventFields.String("product", JdkVersionDetector.VENDORS),
                                                                          EventFields.Int("version"))
 
@@ -31,6 +32,15 @@ internal object JdkDownloaderLogger : CounterUsagesCollector() {
 
   fun logDownload(success: Boolean) {
     DOWNLOAD.log(success)
+  }
+
+  fun logDownload(success: Boolean, item: JdkItem) {
+    DOWNLOAD.log(success)
+
+    if (success) {
+      val variant = item.detectVariant()
+      DOWNLOADED_SDK.log(variant.displayName, item.jdkMajorVersion)
+    }
   }
 
   fun logFailed(failure: DownloadFailure) {

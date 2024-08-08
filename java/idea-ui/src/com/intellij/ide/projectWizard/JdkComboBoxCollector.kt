@@ -37,8 +37,8 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
   }
 
   fun jdkDownloaded(item: JdkItem) {
-    val vendor = JdkVersionDetector.VENDORS.firstOrNull { item.fullPresentationText.contains(it) } ?: JdkVersionDetector.Variant.Unknown.displayName
-    JDK_DOWNLOADED.log(vendor, findSdkVersion(item.presentableMajorVersionString))
+    val variant = item.detectVariant()
+    JDK_DOWNLOADED.log(variant.displayName, findSdkVersion(item.presentableMajorVersionString))
   }
 
   fun noJdkSelected() {

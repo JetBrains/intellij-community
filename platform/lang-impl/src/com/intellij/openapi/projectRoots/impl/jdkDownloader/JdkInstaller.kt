@@ -298,7 +298,7 @@ abstract class JdkInstallerBase {
         }
 
         runCatching { writeMarkerFile(request) }
-        JdkDownloaderLogger.logDownload(true)
+        JdkDownloaderLogger.logDownload(true, item)
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
