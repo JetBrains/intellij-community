@@ -116,7 +116,11 @@ class JavaToKotlinAction : AnAction() {
             // "Global" means that you can undo it from any changed file: the converted files,
             // or the external files that were updated.
             project.executeCommand(KotlinBundle.message("action.j2k.task.name")) {
-                if (!runSynchronousProcess(project, ::convertWithStatistics)) return@executeCommand
+                if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                        { convertWithStatistics() },
+                        title, /* canBeCanceled = */ true,
+                        project
+                    )) return@executeCommand
 
                 val result = converterResult ?: return@executeCommand
                 val externalCodeProcessing = result.externalCodeProcessing
@@ -151,17 +155,14 @@ class JavaToKotlinAction : AnAction() {
             if (!isEnabled || processing == null) return null
 
             var result: (() -> Unit)? = null
-            runSynchronousProcess(project) {
+            ProgressManager.getInstance().runProcessWithProgressSynchronously({
                 runReadAction {
                     result = processing.prepareWriteOperation(ProgressManager.getInstance().progressIndicator!!)
                 }
-            }
+            }, title, /* canBeCanceled = */ true, project)
 
             return result
         }
-
-        private fun runSynchronousProcess(project: Project, process: () -> Unit): Boolean =
-            ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, /* canBeCanceled = */ true, project)
 
         private fun <T> Project.runUndoTransparentGlobalWriteAction(command: () -> T): T =
             CommandProcessor.getInstance().withUndoTransparentAction().use {

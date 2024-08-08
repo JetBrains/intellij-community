@@ -163,9 +163,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
     private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings, directives: Directives): String {
         val preprocessorExtensions =
-            if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) listOf(J2kTestPreprocessorExtension) else emptyList()
+            if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) (listOf(J2kTestPreprocessorExtension) + J2kPreprocessorExtension.EP_NAME.extensionList) else J2kPreprocessorExtension.EP_NAME.extensionList
         val postprocessorExtensions =
-            if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) listOf(J2kTestPostprocessorExtension) else emptyList()
+            if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) (listOf(J2kTestPostprocessorExtension) + J2kPostprocessorExtension.EP_NAME.extensionList) else J2kPostprocessorExtension.EP_NAME.extensionList
 
         return when (prefix) {
             "expression" -> expressionToKotlin(javaCode, settings)
@@ -179,8 +179,8 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     open fun fileToKotlin(
         text: String,
         settings: ConverterSettings,
-        preprocessorExtensions: List<J2kPreprocessorExtension> = emptyList(),
-        postprocessorExtensions: List<J2kPostprocessorExtension> = emptyList()
+        preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList,
+        postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList
     ): String {
         val file = createJavaFile(text)
         val j2kKind = if (isFirPlugin) K2 else K1_NEW

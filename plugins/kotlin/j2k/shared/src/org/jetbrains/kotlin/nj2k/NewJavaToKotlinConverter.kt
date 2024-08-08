@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.infos.MethodCandidateInfo
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -60,82 +61,31 @@ class NewJavaToKotlinConverter(
     ): FilesResult {
         val withProgressProcessor = NewJ2kWithProgressProcessor(progressIndicator, files, postProcessor.phasesCount + phasesCount)
 
-        return withProgressProcessor.process {
-            // TODO looks like the progress dialog doesn't appear immediately, but should
-            withProgressProcessor.updateState(fileIndex = null, phase = PREPROCESSING, KotlinNJ2KBundle.message("j2k.phase.preprocessing"))
-            if (isK2Mode()) {
-                runK2Preprocessing(files)
-            }
+        // TODO looks like the progress dialog doesn't appear immediately, but should
+        withProgressProcessor.updateState(fileIndex = null, phase = PREPROCESSING, KotlinNJ2KBundle.message("j2k.phase.preprocessing"))
 
-            PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
+        PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
 
-            val (results, externalCodeProcessing, context) = runReadAction {
-                elementsToKotlin(files, withProgressProcessor, bodyFilter)
-            }
-
-            val kotlinFiles = results.mapIndexed { i, result ->
-                runUndoTransparentActionInEdt(inWriteAction = true) {
-                    val javaFile = files[i]
-                    withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
-                    KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
-                        .also { it.addImports(result.importsToAdd) }
-                }
-            }
-
-            postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
-                withProgressProcessor.updateState(fileIndex = null, phase = phase + phasesCount, description = description)
-            }
-
-            PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
-
-            FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
+        val (results, externalCodeProcessing, context) = runReadAction {
+            elementsToKotlin(files, withProgressProcessor, bodyFilter)
         }
-    }
 
-    // A preprocessing to add explicit type arguments (needed for K2 nullability inference).
-    // Resolve is done as a separate step for optimization.
-    private fun runK2Preprocessing(files: List<PsiJavaFile>) {
-        val set = mutableSetOf<PsiMethodCallExpression>()
-
-        runReadAction {
-            for (file in files) {
-                file.accept(object : JavaRecursiveElementWalkingVisitor() {
-                    override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
-                        super.visitMethodCallExpression(expression)
-
-                        if (expression.typeArguments.isNotEmpty()) return
-
-                        val resolveResult = expression.resolveMethodGenerics()
-                        if (resolveResult is MethodCandidateInfo && resolveResult.isApplicable) {
-                            val method = resolveResult.element
-                            if (method.isConstructor || !method.hasTypeParameters()) return
-
-                            // Avoid incorrect type arguments insertion that will lead to red code
-                            QualifiedNameProviderUtil.getQualifiedName(method)?.let { methodName ->
-                                if (methodName.startsWith("java.util.stream.Stream#collect") ||
-                                    methodName.startsWith("java.util.stream.Collectors")
-                                ) {
-                                    return
-                                }
-                            }
-                        }
-
-                        set += expression
-                    }
-                })
+        val kotlinFiles = results.mapIndexed { i, result ->
+            runUndoTransparentActionInEdt(inWriteAction = true) {
+                val javaFile = files[i]
+                withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
+                KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                    .also { it.addImports(result.importsToAdd) }
             }
         }
 
-        runUndoTransparentActionInEdt(inWriteAction = true) {
-            for (expression in set) {
-                val typeArgumentList = AddTypeArgumentsFix.addTypeArguments(expression, null, false)
-                    ?.safeAs<PsiMethodCallExpression>()
-                    ?.typeArgumentList
-                    ?: continue
-
-                expression.typeArgumentList.replace(typeArgumentList)
-            }
+        postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
+            withProgressProcessor.updateState(fileIndex = null, phase = phase + phasesCount, description = description)
         }
+
+        PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
+
+        return FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
