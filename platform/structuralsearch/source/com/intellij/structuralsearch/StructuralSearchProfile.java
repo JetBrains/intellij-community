@@ -421,4 +421,18 @@ public abstract class StructuralSearchProfile {
   public boolean isApplicableContextConfiguration(@NotNull Configuration configuration) {
     return !configuration.isPredefined();
   }
+
+  public boolean isReplacementTypedVariable(@NotNull String name) {
+    return name.length() > 1 && name.charAt(0) == '$' && name.charAt(name.length() - 1) == '$';
+  }
+
+  @NotNull
+  public String compileReplacementTypedVariable(@NotNull String name) {
+    return "$" + name + "$";
+  }
+
+  @NotNull
+  public String stripReplacementTypedVariableDecorations(@NotNull String name) {
+    return name.substring(1, name.length() - 1);
+  }
 }

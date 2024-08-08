@@ -14,10 +14,6 @@ public final class MatchUtil {
   private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
   private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
-  public static boolean isTypedVariable(@NotNull String name) {
-    return name.length() > 1 && name.charAt(0) == '$' && name.charAt(name.length() - 1) == '$';
-  }
-
   public static boolean containsRegExpMetaChar(String s) {
     return s.chars().anyMatch(MatchUtil::isRegExpMetaChar);
   }
