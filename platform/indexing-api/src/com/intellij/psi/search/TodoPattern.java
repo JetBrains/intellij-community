@@ -1,27 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
 public final class TodoPattern implements Cloneable {
-  private static final Logger LOG = Logger.getInstance(TodoPattern.class);
+  private static final String CASE_SENS_ATT = "case-sensitive";
+  private static final String PATTERN_ATT = "pattern";
 
-  private IndexPattern indexPattern;
-
-  private TodoAttributes attributes;
-
-  private static final @NonNls String CASE_SENS_ATT = "case-sensitive";
-  private static final @NonNls String PATTERN_ATT = "pattern";
+  private final IndexPattern myIndexPattern;
+  private TodoAttributes myAttributes;
 
   @Internal
   public TodoPattern(@NotNull TodoAttributes attributes) {
@@ -30,89 +24,68 @@ public final class TodoPattern implements Cloneable {
 
   @Internal
   public TodoPattern(@NotNull Element state, @NotNull TextAttributes defaultTodoAttributes) {
-    attributes = new TodoAttributes(state, defaultTodoAttributes);
-    indexPattern = new IndexPattern(state.getAttributeValue(PATTERN_ATT, "").trim(),
-                                    Boolean.parseBoolean(state.getAttributeValue(CASE_SENS_ATT)));
+    myAttributes = new TodoAttributes(state, defaultTodoAttributes);
+    myIndexPattern = new IndexPattern(
+      state.getAttributeValue(PATTERN_ATT, "").trim(),
+      Boolean.parseBoolean(state.getAttributeValue(CASE_SENS_ATT)));
   }
 
   public TodoPattern(@NotNull String patternString, @NotNull TodoAttributes attributes, boolean caseSensitive) {
-    indexPattern = new IndexPattern(patternString, caseSensitive);
-    this.attributes = attributes;
+    myIndexPattern = new IndexPattern(patternString, caseSensitive);
+    myAttributes = attributes;
   }
 
   @Override
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   public TodoPattern clone() {
-    try {
-      TodoAttributes attributes = this.attributes.clone();
-      TodoPattern pattern = (TodoPattern)super.clone();
-      pattern.indexPattern = new IndexPattern(indexPattern.getPatternString(), indexPattern.isCaseSensitive());
-      pattern.attributes = attributes;
-
-      return pattern;
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
-      return null;
-    }
+    return new TodoPattern(myIndexPattern.getPatternString(), myAttributes.clone(), myIndexPattern.isCaseSensitive());
   }
 
   public @NotNull @NlsSafe String getPatternString() {
-    return indexPattern.getPatternString();
+    return myIndexPattern.getPatternString();
   }
 
   public void setPatternString(@NotNull String patternString) {
-    indexPattern.setPatternString(patternString);
+    myIndexPattern.setPatternString(patternString);
   }
 
   public @NotNull TodoAttributes getAttributes() {
-    return attributes;
+    return myAttributes;
   }
 
   public void setAttributes(@NotNull TodoAttributes attributes) {
-    this.attributes = attributes;
+    myAttributes = attributes;
   }
 
   public boolean isCaseSensitive() {
-    return indexPattern.isCaseSensitive();
+    return myIndexPattern.isCaseSensitive();
   }
 
   public void setCaseSensitive(boolean caseSensitive) {
-    indexPattern.setCaseSensitive(caseSensitive);
+    myIndexPattern.setCaseSensitive(caseSensitive);
   }
 
   public @Nullable Pattern getPattern() {
-    return indexPattern.getPattern();
+    return myIndexPattern.getPattern();
   }
 
   public void writeExternal(@NotNull Element element) {
-    attributes.writeExternal(element);
-    if (indexPattern.isCaseSensitive()) {
+    myAttributes.writeExternal(element);
+    if (myIndexPattern.isCaseSensitive()) {
       element.setAttribute(CASE_SENS_ATT, "true");
     }
-    element.setAttribute(PATTERN_ATT, indexPattern.getPatternString());
+    element.setAttribute(PATTERN_ATT, myIndexPattern.getPatternString());
   }
 
-  public boolean equals(Object obj) {
-    if (!(obj instanceof TodoPattern pattern)) {
-      return false;
-    }
-
-    if (!indexPattern.equals(pattern.indexPattern)) {
-      return false;
-    }
-
-    if (!Comparing.equal(attributes, pattern.attributes)) {
-      return false;
-    }
-
-    return true;
+  public boolean equals(Object o) {
+    return this == o || o instanceof TodoPattern that && myIndexPattern.equals(that.myIndexPattern);
   }
 
   public int hashCode() {
-    return indexPattern.hashCode();
+    return myIndexPattern.hashCode();
   }
 
   public IndexPattern getIndexPattern() {
-    return indexPattern;
+    return myIndexPattern;
   }
 }

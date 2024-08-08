@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo.configurable;
 
 import com.intellij.ide.IdeBundle;
@@ -26,12 +11,7 @@ import javax.swing.table.AbstractTableModel;
 import java.util.List;
 
 final class FiltersTableModel extends AbstractTableModel implements ItemRemovable {
-  private final String[] ourColumnNames = new String[]{
-    IdeBundle.message("column.todo.filters.name"),
-    IdeBundle.message("column.todo.filter.patterns")
-  };
-  private final Class<?>[] ourColumnClasses = new Class[]{String.class, String.class};
-
+  private final String[] myColumnNames = {IdeBundle.message("column.todo.filters.name"), IdeBundle.message("column.todo.filter.patterns")};
   private final List<TodoFilter> myFilters;
 
   FiltersTableModel(List<TodoFilter> filters) {
@@ -40,12 +20,15 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
 
   @Override
   public String getColumnName(int column) {
-    return ourColumnNames[column];
+    return myColumnNames[column];
   }
 
   @Override
   public Class<?> getColumnClass(int column) {
-    return ourColumnClasses[column];
+    return switch (column) {
+      case 0, 1 -> String.class;
+      default -> throw new IllegalArgumentException();
+    };
   }
 
   @Override
@@ -60,9 +43,9 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
 
   @Override
   public Object getValueAt(int row, int column) {
-    TodoFilter filter = myFilters.get(row);
+    var filter = myFilters.get(row);
     return switch (column) {
-      case 0 -> filter.getName(); // "Name" column
+      case 0 -> filter.getName();
       case 1 -> StreamEx.of(filter.iterator()).map(TodoPattern::getPatternString).joining(" | ");
       default -> throw new IllegalArgumentException();
     };

@@ -7,7 +7,6 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,17 +14,17 @@ import javax.swing.*;
 import java.util.Objects;
 
 public final class TodoAttributes implements Cloneable {
+  private static final String ATTRIBUTE_ICON = "icon";
+  private static final String ICON_NULL = "null";
+  private static final String ICON_DEFAULT = "default";
+  private static final String ICON_QUESTION = "question";
+  private static final String ICON_IMPORTANT = "important";
+  private static final String ELEMENT_OPTION = "option";
+  private static final String USE_CUSTOM_COLORS_ATT = "useCustomColors";
+
   private @Nullable Icon myIcon;
   private TextAttributes myTextAttributes;
   private boolean myShouldUseCustomColors;
-
-  private static final @NonNls String ATTRIBUTE_ICON = "icon";
-  private static final @NonNls String ICON_NULL = "null";
-  private static final @NonNls String ICON_DEFAULT = "default";
-  private static final @NonNls String ICON_QUESTION = "question";
-  private static final @NonNls String ICON_IMPORTANT = "important";
-  private static final @NonNls String ELEMENT_OPTION = "option";
-  private static final @NonNls String USE_CUSTOM_COLORS_ATT = "useCustomColors";
 
   @Internal
   TodoAttributes(@NotNull Element element, @NotNull TextAttributes defaultTodoAttributes) {
@@ -58,6 +57,10 @@ public final class TodoAttributes implements Cloneable {
     return myIcon;
   }
 
+  public void setIcon(@Nullable Icon icon) {
+    myIcon = icon;
+  }
+
   public @NotNull TextAttributes getTextAttributes() {
     return getCustomizedTextAttributes();
   }
@@ -66,8 +69,15 @@ public final class TodoAttributes implements Cloneable {
     return myTextAttributes;
   }
 
-  public void setIcon(@Nullable Icon icon) {
-    myIcon = icon;
+  public boolean shouldUseCustomTodoColor() {
+    return myShouldUseCustomColors;
+  }
+
+  public void setUseCustomTodoColor(boolean useCustomColors, @NotNull TextAttributes defaultTodoAttributes) {
+    myShouldUseCustomColors = useCustomColors;
+    if (!useCustomColors) {
+      myTextAttributes = defaultTodoAttributes;
+    }
   }
 
   public void writeExternal(@NotNull Element element) {
@@ -92,15 +102,16 @@ public final class TodoAttributes implements Cloneable {
     }
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof TodoAttributes attributes)) return false;
-
     return myIcon == attributes.myIcon &&
            Objects.equals(myTextAttributes, attributes.myTextAttributes) &&
            myShouldUseCustomColors == attributes.myShouldUseCustomColors;
   }
 
+  @Override
   public int hashCode() {
     int result = myIcon != null ? myIcon.hashCode() : 0;
     result = 29 * result + (myTextAttributes != null ? myTextAttributes.hashCode() : 0);
@@ -108,28 +119,11 @@ public final class TodoAttributes implements Cloneable {
     return result;
   }
 
-  public boolean shouldUseCustomTodoColor() {
-    return myShouldUseCustomColors;
-  }
-
-  public void setUseCustomTodoColor(boolean useCustomColors, @NotNull TextAttributes defaultTodoAttributes) {
-    myShouldUseCustomColors = useCustomColors;
-    if (!useCustomColors) {
-      myTextAttributes = defaultTodoAttributes;
-    }
-  }
-
   @Override
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   public TodoAttributes clone() {
-    try {
-      TextAttributes textAttributes = myTextAttributes.clone();
-      TodoAttributes attributes = (TodoAttributes)super.clone();
-      attributes.myTextAttributes = textAttributes;
-      attributes.myShouldUseCustomColors = myShouldUseCustomColors;
-      return attributes;
-    }
-    catch (CloneNotSupportedException e) {
-      return null;
-    }
+    var attributes = new TodoAttributes(myIcon, myTextAttributes.clone());
+    attributes.myShouldUseCustomColors = myShouldUseCustomColors;
+    return attributes;
   }
 }

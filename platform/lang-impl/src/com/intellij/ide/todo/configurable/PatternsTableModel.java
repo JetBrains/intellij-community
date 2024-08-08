@@ -9,57 +9,53 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.List;
 
-final class PatternsTableModel extends AbstractTableModel implements ItemRemovable{
-  private final String[] ourColumnNames=new String[]{
-    IdeBundle.message("column.todo.patterns.icon"),
-    IdeBundle.message("column.todo.patterns.case.sensitive"),
-    IdeBundle.message("column.todo.patterns.pattern")
-  };
-  private final Class[] ourColumnClasses=new Class[]{Icon.class,Boolean.class,String.class};
-
+final class PatternsTableModel extends AbstractTableModel implements ItemRemovable {
+  private final String[] myColumnNames = {IdeBundle.message("column.todo.patterns.icon"), IdeBundle.message("column.todo.patterns.case.sensitive"), IdeBundle.message("column.todo.patterns.pattern")};
   private final List<TodoPattern> myPatterns;
 
-  PatternsTableModel(List<TodoPattern> patterns){
-    myPatterns=patterns;
+  PatternsTableModel(List<TodoPattern> patterns) {
+    myPatterns = patterns;
   }
 
   @Override
-  public String getColumnName(int column){
-    return ourColumnNames[column];
+  public String getColumnName(int column) {
+    return myColumnNames[column];
   }
 
   @Override
-  public Class getColumnClass(int column){
-    return ourColumnClasses[column];
+  public Class<?> getColumnClass(int column) {
+    return switch (column) {
+      case 0 -> Icon.class;
+      case 1 -> Boolean.class;
+      case 2 -> String.class;
+      default -> throw new IllegalArgumentException();
+    };
   }
 
   @Override
-  public int getColumnCount(){
+  public int getColumnCount() {
     return 3;
   }
 
   @Override
-  public int getRowCount(){
+  public int getRowCount() {
     return myPatterns.size();
   }
 
   @Override
-  public Object getValueAt(int row,int column){
-    TodoPattern pattern=myPatterns.get(row);
+  public Object getValueAt(int row, int column) {
+    var pattern = myPatterns.get(row);
     return switch (column) {
-      // "Icon" column
       case 0 -> pattern.getAttributes().getIcon();
-      // "Case Sensitive" column
       case 1 -> Boolean.valueOf(pattern.isCaseSensitive());
-      // "Pattern" column
       case 2 -> pattern.getPatternString();
       default -> throw new IllegalArgumentException();
     };
   }
 
   @Override
-  public void setValueAt(Object value,int row,int column){
-    TodoPattern pattern=myPatterns.get(row);
+  public void setValueAt(Object value, int row, int column) {
+    var pattern = myPatterns.get(row);
     switch (column) {
       case 0 -> pattern.getAttributes().setIcon((Icon)value);
       case 1 -> pattern.setCaseSensitive(((Boolean)value).booleanValue());
@@ -69,8 +65,8 @@ final class PatternsTableModel extends AbstractTableModel implements ItemRemovab
   }
 
   @Override
-  public void removeRow(int index){
+  public void removeRow(int index) {
     myPatterns.remove(index);
-    fireTableRowsDeleted(index,index);
+    fireTableRowsDeleted(index, index);
   }
 }
