@@ -23,6 +23,10 @@ import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
+        if (project.isDefault) {
+            return
+        }
+
         if (!PsiModificationTrackerImpl.canAffectPsi(event) ||
             event.isGenericChange ||
             event.code == PsiEventType.BEFORE_CHILD_ADDITION
