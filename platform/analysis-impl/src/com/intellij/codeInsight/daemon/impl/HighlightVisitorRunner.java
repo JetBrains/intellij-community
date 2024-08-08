@@ -155,9 +155,11 @@ class HighlightVisitorRunner {
     List<HighlightInfo> newInfos;
     if (holder.size() > fromIndex) {
       newInfos = new ArrayList<>(holder.size() - fromIndex);
+      Class<? extends @NotNull HighlightVisitor> toolId = visitor.getClass();
       for (int i = fromIndex; i < holder.size(); i++) {
         HighlightInfo info = holder.get(i);
         newInfos.add(info);
+        info.toolId = toolId;
       }
     }
     else {
