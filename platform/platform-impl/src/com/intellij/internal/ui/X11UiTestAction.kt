@@ -10,13 +10,16 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.X11UiUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
@@ -67,6 +70,33 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
     }
 
     return panel {
+      group("SystemInfo") {
+        val rows = listOf(
+          listOf(
+            SystemInfo::isLinux,
+            SystemInfo::isFreeBSD,
+            SystemInfo::isSolaris,
+            SystemInfo::isUnix,
+            SystemInfo::isChromeOS),
+          listOf(
+            SystemInfo::isWayland,
+            SystemInfo::isGNOME,
+            SystemInfo::isKDE,
+            SystemInfo::isXfce,
+            SystemInfo::isI3),
+        )
+
+        for (currentRow in rows) {
+          row {
+            for (property in currentRow) {
+              checkBox(property.name)
+                .selected(property.get())
+                .enabled(false)
+            }
+          }.layout(RowLayout.PARENT_GRID)
+        }
+      }
+
       group("X11UiUtil Values") {
         row("isInitialized:") {
           label(X11UiUtil.isInitialized().toString())
