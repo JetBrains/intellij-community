@@ -43,6 +43,8 @@ import kotlinx.coroutines.withContext
 
 class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetClass: PsiClass, val rangeToReplace: RangeMarker) {
 
+  val rangeToReplaceOriginal = rangeToReplace.textRange
+
   internal fun getElements(): List<PsiElement> {
     val file = targetClass.containingFile
     val range = rangeToReplace.textRange

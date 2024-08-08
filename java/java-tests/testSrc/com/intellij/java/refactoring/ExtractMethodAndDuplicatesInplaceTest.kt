@@ -18,6 +18,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
@@ -50,9 +51,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     fun renameTemplate(templateState: TemplateState?, name: String) {
       if (templateState == null) return
       WriteCommandAction.runWriteCommandAction(templateState.project) {
-        val range = templateState.currentVariableRange!!
-        templateState.editor.document.replaceString(range.startOffset, range.endOffset, name)
-        templateState.update()
+        ExtractMethodHelper.renameTemplate(templateState, name)
       }
     }
   }
