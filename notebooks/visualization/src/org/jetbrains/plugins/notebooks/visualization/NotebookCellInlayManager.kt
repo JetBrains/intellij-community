@@ -139,7 +139,7 @@ class NotebookCellInlayManager private constructor(
   private fun initialize() {
     // TODO It would be a cool approach to add inlays lazily while scrolling.
 
-    editor.putUserData(key, this)
+    editor.putUserData(CELL_INLAY_MANAGER_KEY, this)
 
     handleRefreshedDocument()
 
@@ -273,7 +273,6 @@ class NotebookCellInlayManager private constructor(
   }
 
   companion object {
-    @JvmStatic
     fun install(editor: EditorImpl, shouldCheckInlayOffsets: Boolean, inputFactories: List<NotebookCellInlayController.InputFactory> = listOf()) {
       EditorEmbeddedComponentContainer(editor as EditorEx)
       val notebookCellInlayManager = NotebookCellInlayManager(editor, shouldCheckInlayOffsets, inputFactories).also { Disposer.register(editor.disposable, it) }
@@ -282,10 +281,12 @@ class NotebookCellInlayManager private constructor(
       notebookCellInlayManager.initialize()
     }
 
-    @JvmStatic
-    fun get(editor: Editor): NotebookCellInlayManager? = key.get(editor)
+    fun get(editor: Editor): NotebookCellInlayManager? {
+      return CELL_INLAY_MANAGER_KEY.get(editor)
+    }
+
     val FOLDING_MARKER_KEY = Key<Boolean>("jupyter.folding.paragraph")
-    private val key = Key.create<NotebookCellInlayManager>(NotebookCellInlayManager::class.java.name)
+    private val CELL_INLAY_MANAGER_KEY = Key.create<NotebookCellInlayManager>(NotebookCellInlayManager::class.java.name)
   }
 
   override fun onUpdated(event: NotebookIntervalPointersEvent) = update { ctx ->
