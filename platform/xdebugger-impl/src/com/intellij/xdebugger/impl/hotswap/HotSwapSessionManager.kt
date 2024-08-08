@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class HotSwapSessionManager private constructor(private val project: Project, private val parentScope: CoroutineScope) {
+class HotSwapSessionManager private constructor(private val project: Project, internal val coroutineScope: CoroutineScope) {
   private val listeners = DisposableWrapperList<HotSwapChangesListener>()
   private val sessions = DisposableWrapperList<HotSwapSession<*>>()
 
@@ -30,7 +30,7 @@ class HotSwapSessionManager private constructor(private val project: Project, pr
    * @param disposable handles the session end
    */
   fun <T> createSession(provider: HotSwapProvider<T>, disposable: Disposable): HotSwapSession<T> {
-    val hotSwapSession = HotSwapSession(project, provider, parentScope)
+    val hotSwapSession = HotSwapSession(project, provider, coroutineScope)
     val removalDisposable = sessions.add(hotSwapSession, disposable)
     val sessionUnregisterDisposable = Disposable {
       val current = currentSession
@@ -39,7 +39,7 @@ class HotSwapSessionManager private constructor(private val project: Project, pr
       sessions.remove(hotSwapSession)
       val newCurrent = currentSession
       if (newCurrent != null) {
-        fireStatusChanged(newCurrent, newCurrent.currentStatus)
+        fireStatusChanged(newCurrent)
       }
     }
     // Force the session to remain current (if it was) during unregistering
@@ -61,7 +61,7 @@ class HotSwapSessionManager private constructor(private val project: Project, pr
       selectedSession = SoftReference(session)
     }
     if (session !== current) {
-      fireStatusChanged(session, session.currentStatus)
+      fireStatusChanged(session)
     }
   }
 
@@ -74,13 +74,13 @@ class HotSwapSessionManager private constructor(private val project: Project, pr
 
   internal fun addListener(listener: HotSwapChangesListener, disposable: Disposable) {
     listeners.add(listener, disposable)
-    val currentSession = currentSession ?: return
-    listener.onStatusChanged(currentSession, currentSession.currentStatus)
+    if (currentSession == null) return
+    listener.onStatusChanged()
   }
 
-  internal fun fireStatusChanged(session: HotSwapSession<*>, status: HotSwapVisibleStatus) {
+  internal fun fireStatusChanged(session: HotSwapSession<*>) {
     if (session !== currentSession) return
-    listeners.forEach { it.onStatusChanged(session, status) }
+    listeners.forEach { it.onStatusChanged() }
   }
 
   companion object {
@@ -93,8 +93,13 @@ internal enum class HotSwapVisibleStatus {
   NO_CHANGES, CHANGES_READY, IN_PROGRESS, SESSION_COMPLETED
 }
 
+/**
+ * Status change notification.
+ * @see HotSwapSessionManager.currentSession
+ * @see HotSwapSession.currentStatus
+ */
 internal fun interface HotSwapChangesListener {
-  fun onStatusChanged(session: HotSwapSession<*>, status: HotSwapVisibleStatus)
+  fun onStatusChanged()
 }
 
 @ApiStatus.Internal
@@ -110,7 +115,7 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
       // No further updates after the session is complete
       if (field == HotSwapVisibleStatus.SESSION_COMPLETED) return
       field = value
-      HotSwapSessionManager.getInstance(project).fireStatusChanged(this, value)
+      HotSwapSessionManager.getInstance(project).fireStatusChanged(this)
     }
 
   internal fun init() {

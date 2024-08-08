@@ -122,14 +122,17 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
     val instance = HotSwapSessionManager.getInstance(project)
 
-    instance.addListener(ChangesListener(component), parentDisposable)
+    instance.addListener(ChangesListener(component, project), parentDisposable)
   }
 
-  private inner class ChangesListener(private val component: FloatingToolbarComponent) : HotSwapChangesListener {
+  private inner class ChangesListener(private val component: FloatingToolbarComponent, private val project: Project) : HotSwapChangesListener {
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun onStatusChanged(session: HotSwapSession<*>, status: HotSwapVisibleStatus) {
+    override fun onStatusChanged() {
+      val manager = HotSwapSessionManager.getInstance(project)
       // We need to hide the button even if the coroutineScope is cancelled
-      session.coroutineScope.launch(Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
+      manager.coroutineScope.launch(Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
+        val session = manager.currentSession
+        val status = session?.currentStatus
         if (status == HotSwapVisibleStatus.IN_PROGRESS) {
           hotSwapAction.inProgress = true
           hotSwapAction.session = null
@@ -140,6 +143,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
           HotSwapVisibleStatus.NO_CHANGES -> HotSwapButtonAction.HIDE
           HotSwapVisibleStatus.CHANGES_READY -> HotSwapButtonAction.SHOW
           HotSwapVisibleStatus.SESSION_COMPLETED -> HotSwapButtonAction.HIDE_NOW
+          null -> HotSwapButtonAction.HIDE_NOW
           else -> error("Unexpected status $status")
         }
         if (action == HotSwapButtonAction.SHOW) {
