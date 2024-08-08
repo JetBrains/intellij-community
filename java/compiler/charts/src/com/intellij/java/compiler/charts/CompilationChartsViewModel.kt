@@ -2,7 +2,6 @@
 package com.intellij.java.compiler.charts
 
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
-import com.intellij.java.compiler.charts.jps.CompileStatisticBuilderMessage.*
 import com.jetbrains.rd.framework.impl.RdList
 import com.jetbrains.rd.framework.impl.RdMap
 import com.jetbrains.rd.framework.impl.RdProperty
@@ -37,15 +36,13 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
   }
 
   private fun index(threadId: Long): Int {
-    var index: Int? = threadIndexes[threadId]
+    val index: Int? = threadIndexes[threadId]
     if (index != null) return index
     synchronized(threadIndexes) {
-      index = threadIndexes[threadId]
-      if (index != null) return index!!
-
-      index = threadIndexes.size
-      threadIndexes[threadId] = index!!
-      return index!!
+      val updateAndGetIndex = { threadId: Long ->
+        threadIndexes.size.also { newIndex -> threadIndexes[threadId] = newIndex }
+      }
+      return threadIndexes[threadId] ?: updateAndGetIndex(threadId)
     }
   }
 

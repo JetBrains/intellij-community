@@ -5,14 +5,12 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.StartBuildEvent
 import com.intellij.compiler.server.CustomBuilderMessageHandler
-import com.intellij.java.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATISTIC_BUILDER_ID
-import com.intellij.java.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATUS_BUILDER_ID
-import com.intellij.java.compiler.charts.jps.CompileStatisticBuilderMessage.*
 import com.intellij.java.compiler.charts.ui.CompilationChartsBuildEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -26,6 +24,8 @@ class CompilationChartsProjectActivity : ProjectActivity {
   companion object {
     private val LOG: Logger = Logger.getInstance(CompilationChartsProjectActivity::class.java)
     const val COMPILATION_CHARTS_KEY: String = "compilation.charts"
+    const val COMPILATION_STATISTIC_BUILDER_ID: String = "jps.compile.statistic"
+    const val COMPILATION_STATUS_BUILDER_ID: String = "jps.compile.status"
   }
 
   override suspend fun execute(project: Project) {
@@ -54,7 +54,7 @@ class CompilationChartsProjectActivity : ProjectActivity {
   }
 
   private class CompilationChartsMessageHandler : CustomBuilderMessageHandler {
-    private val json = ObjectMapper(JsonFactory())
+    private val json = ObjectMapper(JsonFactory()).registerModule(KotlinModule.Builder().build())
     private val states: Queue<CompilationChartsBuildEvent> = ArrayDeque()
     private var currentState: CompilationChartsBuildEvent? = null
     private val defaultUUID: UUID = UUID.randomUUID()
