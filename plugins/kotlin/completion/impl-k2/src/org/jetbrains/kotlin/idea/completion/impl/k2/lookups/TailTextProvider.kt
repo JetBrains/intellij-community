@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionalTypeParameters
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.renderer.render
@@ -26,15 +25,7 @@ internal object TailTextProvider {
     context(KaSession)
     fun getTailText(
         signature: KaCallableSignature<*>,
-        options: CallableInsertionOptions,
     ): String = buildString {
-        if (signature is KaFunctionSignature<*>) {
-            if (insertLambdaBraces(signature, options.insertionStrategy)) {
-                append(" {...} ")
-            }
-            append(renderFunctionParameters(signature))
-        }
-
         // use unsubstituted type when rendering receiver type of extension
         val symbol = signature.symbol
         symbol.receiverType?.let { renderReceiverType(it) }

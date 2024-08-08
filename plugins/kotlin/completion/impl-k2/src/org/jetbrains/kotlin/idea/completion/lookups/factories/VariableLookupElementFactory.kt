@@ -81,7 +81,7 @@ internal object VariableLookupElementFactory {
                 val lookupObject = VariableLookupObject(name, options, rendered)
                 markIfSyntheticJavaProperty(
                     LookupElementBuilder.create(lookupObject, name.asString())
-                        .withTailText(getTailText(signature, options), true), signature.symbol
+                        .withTailText(getTailText(signature), true), signature.symbol
                 ).withInsertHandler(VariableInsertionHandler)
             }
         }

@@ -7,19 +7,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.types.Variance
 
 internal object CompletionShortNamesRenderer {
-    context(KaSession)
-    fun renderFunctionParameters(function: KaFunctionSignature<*>): String {
-        return function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it) }
-    }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
@@ -42,7 +37,7 @@ internal object CompletionShortNamesRenderer {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun renderFunctionParameter(parameter: KaVariableSignature<KaValueParameterSymbol>): String =
+    fun renderFunctionParameter(parameter: KaVariableSignature<KaValueParameterSymbol>): String =
         "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
             parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
         }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"

@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -24,8 +25,7 @@ import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameter
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -43,18 +43,27 @@ internal object FunctionLookupElementFactory {
         options: CallableInsertionOptions,
         expectedType: KaType? = null,
     ): LookupElementBuilder {
-        val insertEmptyLambda = insertLambdaBraces(signature, options.insertionStrategy)
+        val valueParameters = signature.valueParameters
+        val renderedDeclaration = valueParameters.joinToString(
+            prefix = "(",
+            postfix = ")",
+        ) { renderFunctionParameter(it) }
+
+        val insertLambdaBraces = insertLambdaBraces(signature, options.insertionStrategy)
+
         val lookupObject = FunctionCallLookupObject(
             shortName = name,
             options = options,
-            renderedDeclaration = renderFunctionParameters(signature),
-            inputValueArgumentsAreRequired = signature.valueParameters.isNotEmpty(),
+            renderedDeclaration = renderedDeclaration,
+            inputValueArgumentsAreRequired = valueParameters.isNotEmpty(),
             inputTypeArgumentsAreRequired = !functionCanBeCalledWithoutExplicitTypeArguments(signature.symbol, expectedType),
-            insertEmptyLambda = insertEmptyLambda,
+            insertEmptyLambda = insertLambdaBraces,
         )
 
         val builder = LookupElementBuilder.create(lookupObject, name.asString())
-            .withTailText(getTailText(signature, options))
+            .applyIf(insertLambdaBraces) { appendTailText(" {...} ", true) }
+            .appendTailText(renderedDeclaration, true)
+            .appendTailText(TailTextProvider.getTailText(signature), true)
             .let { withCallableSignatureInfo(signature, it) }
             .also { it.acceptOpeningBrace = true }
         return updateLookupElementBuilder(options, builder)
