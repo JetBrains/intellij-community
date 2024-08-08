@@ -69,7 +69,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
             val isResolved = reference.run { isResolved() }
 
-            val names = reference.resolvesByNames
+            val names = reference.run { resolvesByNames() }
             if (!isResolved) {
                 unresolvedNames += names
                 continue

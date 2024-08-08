@@ -430,6 +430,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
             public void testExtensionForBaseClassViaChildClass() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/extensionForBaseClassViaChildClass.kt");
             }
+
+            @TestMetadata("unresolvedNameInKDocDoesHoldImports.kt")
+            public void testUnresolvedNameInKDocDoesHoldImports() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/kDoc/unresolvedNameInKDocDoesHoldImports.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

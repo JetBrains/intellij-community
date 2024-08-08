@@ -157,6 +157,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
             public void testExtensionForBaseClassViaChildClass() throws Exception {
                 runTest("testData/editor/optimizeImports/common/kDoc/extensionForBaseClassViaChildClass.kt");
             }
+
+            @TestMetadata("unresolvedNameInKDocDoesHoldImports.kt")
+            public void testUnresolvedNameInKDocDoesHoldImports() throws Exception {
+                runTest("testData/editor/optimizeImports/common/kDoc/unresolvedNameInKDocDoesHoldImports.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

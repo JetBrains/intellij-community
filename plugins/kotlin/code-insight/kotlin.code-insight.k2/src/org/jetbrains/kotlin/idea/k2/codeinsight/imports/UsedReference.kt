@@ -40,8 +40,14 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 
 internal class UsedReference private constructor(val reference: KtReference) {
-    val resolvesByNames: Collection<Name>
-        get() = reference.resolvesByNames
+    fun KaSession.resolvesByNames(): Collection<Name> {
+        if (reference is KDocReference && !isResolved()) {
+            // if KDoc reference is unresolved, do not consider it to be an unresolved symbol (see KT-61785)
+            return emptyList()
+        }
+
+        return reference.resolvesByNames
+    }
 
     fun KaSession.isResolved(): Boolean {
         if (reference is KtInvokeFunctionReference) {
