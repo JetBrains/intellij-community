@@ -331,7 +331,7 @@ private fun reportScriptError(errorMessage: AbstractMessage) {
       causeMessage = if (index == -1) throwableMessage else throwableMessage.substring(0, index)
     }
   }
-  val scriptErrorsDir = Path.of(PathManager.getLogPath(), "script-errors")
+  val scriptErrorsDir = Path.of(PathManager.getLogPath(), "errors")
   Files.createDirectories(scriptErrorsDir)
   Files.walk(scriptErrorsDir).use { stream ->
     val finalCauseMessage = causeMessage
