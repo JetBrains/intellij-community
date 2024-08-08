@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -19,6 +22,7 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.util.ArrayList;
 
 public abstract class GroupedElementsRenderer implements Accessible {
   protected SeparatorWithText mySeparatorComponent = createSeparator();
@@ -190,7 +194,7 @@ public abstract class GroupedElementsRenderer implements Accessible {
     }
   }
 
-  public class MyComponent extends OpaquePanel {
+  public class MyComponent extends OpaquePanel implements UiInspectorContextProvider {
 
     private int myPrefWidth = -1;
     private final @NotNull GroupedElementsRenderer renderer;
@@ -219,6 +223,14 @@ public abstract class GroupedElementsRenderer implements Accessible {
     @ApiStatus.Internal
     public @NotNull GroupedElementsRenderer getRenderer() {
       return renderer;
+    }
+
+    @Override
+    public java.util.@NotNull List<PropertyBean> getUiInspectorContext() {
+      java.util.List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Renderer Delegate", renderer));
+      result.add(new PropertyBean("Renderer Delegate Class", UiInspectorUtil.getClassPresentation(renderer)));
+      return result;
     }
   }
 
