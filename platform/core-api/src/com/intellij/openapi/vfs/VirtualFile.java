@@ -22,13 +22,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * <p>Represents a file in {@link VirtualFileSystem}. A particular file is represented by equal
@@ -781,5 +779,44 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   @ApiStatus.Experimental
   public boolean isCaseSensitive() {
     return getFileSystem().isCaseSensitive();
+  }
+
+  public boolean isFromWSL() {
+    return this.getPath().startsWith("//wsl$/");
+  }
+
+  public @Nullable @NlsSafe String getWSLDistribution() {
+    if (!isFromWSL()) {
+      return null;
+    }
+
+    return getPath().replaceAll("^//wsl\\$/", "").split("/")[0];
+  }
+
+  public @NotNull @NlsSafe String getWSLPath() {
+    return getPath().replaceAll("^//wsl\\$/[^/]+", "");
+  }
+
+  private String WSLCanonicalPath;
+
+  public @Nullable @NlsSafe String getWSLCanonicalPath() {
+    if (!isFromWSL()) {
+      return null;
+    }
+
+    if (this.WSLCanonicalPath == null) {
+      try {
+        String parentPath = this.getParent().getWSLPath();
+        Process process = Runtime.getRuntime().exec(
+          String.format("wsl --cd \"%s\" readlink -f %s", parentPath, this.getName()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String link = reader.lines().collect(Collectors.joining("\n"));
+        this.WSLCanonicalPath = String.format("//wsl$/%s%s", getWSLDistribution(), link);
+      } catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+
+    return this.WSLCanonicalPath;
   }
 }
