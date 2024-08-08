@@ -32,6 +32,11 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
             KotlinTestUtils.runTest(this::doClassTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotationClass.kt")
+        public void testAnnotationClass() throws Exception {
+            runTest("testData/navigation/gotoClass/annotationClass.kt");
+        }
+
         @TestMetadata("builtInAny.kt")
         public void testBuiltInAny() throws Exception {
             runTest("testData/navigation/gotoClass/builtInAny.kt");
@@ -40,6 +45,11 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
         @TestMetadata("builtInInt.kt")
         public void testBuiltInInt() throws Exception {
             runTest("testData/navigation/gotoClass/builtInInt.kt");
+        }
+
+        @TestMetadata("enumClass.kt")
+        public void testEnumClass() throws Exception {
+            runTest("testData/navigation/gotoClass/enumClass.kt");
         }
 
         @TestMetadata("enumEntries.kt")
@@ -70,6 +80,11 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
         @TestMetadata("noImplementationInterface.kt")
         public void testNoImplementationInterface() throws Exception {
             runTest("testData/navigation/gotoClass/noImplementationInterface.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("testData/navigation/gotoClass/object.kt");
         }
 
         @TestMetadata("simpleClass.kt")
