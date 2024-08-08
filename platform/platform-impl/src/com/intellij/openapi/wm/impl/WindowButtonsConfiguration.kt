@@ -5,6 +5,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,7 +56,8 @@ internal class WindowButtonsConfiguration(private val scope: CoroutineScope) : P
     var windowButtonsState: State? = null
 
     if (isSupported()) {
-      val config = X11UiUtil.getWindowButtonsConfig()
+      val customConfig = Registry.stringValue("ide.linux.window.buttons.config")
+      val config = customConfig.ifBlank { X11UiUtil.getWindowButtonsConfig() }
       if (config != null) {
         windowButtonsState = parseFromString(config)
       }
