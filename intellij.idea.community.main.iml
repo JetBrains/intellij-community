@@ -223,5 +223,6 @@
     <orderEntry type="module" module-name="intellij.platform.whatsNew" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler.charts" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.compose" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.json.split" scope="RUNTIME" />
   </component>
 </module>
