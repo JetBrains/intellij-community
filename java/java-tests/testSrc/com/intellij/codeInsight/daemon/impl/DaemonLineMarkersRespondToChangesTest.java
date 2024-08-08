@@ -253,6 +253,7 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() {
     configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
     StringBuffer log = new StringBuffer();
+    // highlight all PsiComments
     LineMarkerProvider provider = element -> {
       String msg = "provider.getLineMarkerInfo(" + element + ") called\n";
       LineMarkerInfo<PsiComment> info = null;

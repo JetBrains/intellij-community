@@ -25,7 +25,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -240,13 +239,11 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
       }
       HighlightInfo info = builder.createUnconditionally();
       info.markFromInjection();
+      info.toolId = InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID;
       result.add(info);
     }
-    resultSink.accept(INJECTION_BACKGROUND_ID, injectedPsi, result);
+    resultSink.accept(InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID, injectedPsi, result);
   }
-
-  private static final Object INJECTION_BACKGROUND_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_ID");
-  private static final Object INJECTION_SYNTAX_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_ID");
 
   private static List<HighlightInfo> createPatchedInfos(@NotNull HighlightInfo info,
                                                         @NotNull PsiFile injectedPsi,
@@ -296,10 +293,10 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
                                        @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
     List<HighlightInfo> result = new ArrayList<>(places.size()*2);
     InjectedLanguageUtil.processTokens(injectedPsi, places, (@NotNull TextRange hostRange, TextAttributesKey @NotNull [] keys) -> {
-      List<HighlightInfo> infos = InjectedLanguageFragmentSyntaxUtil.addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, keys);
+      List<HighlightInfo> infos = InjectedLanguageFragmentSyntaxUtil.addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, keys, InjectedLanguageManagerImpl.INJECTION_SYNTAX_TOOL_ID);
       result.addAll(infos);
     });
-    resultSink.accept(INJECTION_SYNTAX_ID, injectedPsi, result);
+    resultSink.accept(InjectedLanguageManagerImpl.INJECTION_SYNTAX_TOOL_ID, injectedPsi, result);
   }
 
   @Override
