@@ -10,5 +10,6 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCodeGenerationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCompletionContextEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaFunctionCallingVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaSelfIdentificationVisitor"/>
   </extensions>
 </idea-plugin>
