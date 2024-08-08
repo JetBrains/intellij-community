@@ -7,14 +7,16 @@ import java.nio.file.attribute.UserPrincipalLookupService
 /**
  * See [IjentWslNioFileSystemProvider].
  */
-internal class IjentWslNioFileSystem(
+class IjentWslNioFileSystem(
   private val provider: IjentWslNioFileSystemProvider,
+  private val wslId: String,
   private val ijentFs: FileSystem,
   private val originalFs: FileSystem,
 ) : FileSystem() {
   override fun toString(): String = """${javaClass.simpleName}($provider)"""
 
   override fun close() {
+    provider.removeFileSystem(wslId)
     ijentFs.close()
   }
 
@@ -42,7 +44,7 @@ internal class IjentWslNioFileSystem(
     }
 
   override fun getPath(first: String, vararg more: String): Path =
-    originalFs.getPath(first, *more)
+    IjentWslNioPath(this, originalFs.getPath(first, *more))
 
   override fun getPathMatcher(syntaxAndPattern: String?): PathMatcher =
     originalFs.getPathMatcher(syntaxAndPattern)

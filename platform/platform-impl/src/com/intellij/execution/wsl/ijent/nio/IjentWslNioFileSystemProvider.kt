@@ -21,6 +21,7 @@ import java.nio.file.*
 import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.nio.file.spi.FileSystemProvider
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import kotlin.io.path.name
 
@@ -38,13 +39,18 @@ import kotlin.io.path.name
  * Nevertheless, in case when this filesystem should be accessed directly,
  * an instance of [IjentWslNioFileSystem] can be obtained with a URL like "ijent://wsl/distribution-name".
  */
-internal class IjentWslNioFileSystemProvider(
+class IjentWslNioFileSystemProvider(
   wslDistribution: WSLDistribution,
   private val ijentFsProvider: FileSystemProvider,
   internal val originalFsProvider: FileSystemProvider,
 ) : FileSystemProvider(), RoutingAwareFileSystemProvider {
   private val ijentFsUri: URI = URI("ijent", "wsl", "/${wslDistribution.id}", null, null)
   private val wslLocalRoot: Path = originalFsProvider.getFileSystem(URI("file:/")).getPath(wslDistribution.getWindowsPath("/"))
+  private val createdFileSystems: MutableMap<String, IjentWslNioFileSystem> = ConcurrentHashMap()
+
+  internal fun removeFileSystem(wslId: String) {
+    createdFileSystems.remove(wslId)
+  }
 
   override fun toString(): String = """${javaClass.simpleName}(${wslLocalRoot})"""
 
@@ -65,15 +71,22 @@ internal class IjentWslNioFileSystemProvider(
   override fun getFileSystem(uri: URI): IjentWslNioFileSystem {
     require(uri.scheme == scheme) { "Wrong scheme in `$uri` (expected `$scheme`)" }
     val wslId = wslIdFromPath(originalFsProvider.getPath(uri))
-    return IjentWslNioFileSystem(
-      provider = this,
-      ijentFs = ijentFsProvider.getFileSystem(URI("ijent", "wsl", "/$wslId", null, null)),
-      originalFsProvider.getFileSystem(URI("file:/"))
-    )
+    return getFileSystem(wslId)
   }
 
   override fun newFileSystem(uri: URI, env: MutableMap<String, *>?): IjentWslNioFileSystem =
     getFileSystem(uri)
+
+  private fun getFileSystem(wslId: String): IjentWslNioFileSystem {
+    return createdFileSystems.computeIfAbsent(wslId) { wslId ->
+      IjentWslNioFileSystem(
+        provider = this,
+        wslId = wslId,
+        ijentFs = ijentFsProvider.getFileSystem(URI("ijent", "wsl", "/$wslId", null, null)),
+        originalFsProvider.getFileSystem(URI("file:/"))
+      )
+    }
+  }
 
   private fun wslIdFromPath(path: Path): String {
     val root = path.toAbsolutePath().root.toString()
@@ -113,11 +126,17 @@ internal class IjentWslNioFileSystemProvider(
   override fun deleteIfExists(path: Path): Boolean =
     ijentFsProvider.deleteIfExists(path.toIjentPath())
 
-  override fun readSymbolicLink(link: Path?): Path =
-    originalFsProvider.readSymbolicLink(link)
+  override fun readSymbolicLink(link: Path): IjentWslNioPath =
+    IjentWslNioPath(
+      getFileSystem(wslIdFromPath(link)),
+      originalFsProvider.readSymbolicLink(link),
+    )
 
   override fun getPath(uri: URI): Path =
-    originalFsProvider.getPath(uri)
+    IjentWslNioPath(
+      getFileSystem(wslIdFromPath(originalFsProvider.getPath(uri))),
+      originalFsProvider.getPath(uri),
+    )
 
   override fun newByteChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel =
     ijentFsProvider.newByteChannel(path.toIjentPath(), options, *attrs)
@@ -125,6 +144,7 @@ internal class IjentWslNioFileSystemProvider(
   override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>?): DirectoryStream<Path> =
     object : DirectoryStream<Path> {
       val delegate = ijentFsProvider.newDirectoryStream(dir.toIjentPath(), filter)
+      val wslId = wslIdFromPath(dir)
 
       override fun iterator(): MutableIterator<Path> =
         object : MutableIterator<Path> {
@@ -136,7 +156,8 @@ internal class IjentWslNioFileSystemProvider(
           override fun next(): Path {
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
             val ijentPath = delegateIterator.next()
-            return ijentPath.asSequence().map(Path::name).map(::sanitizeFileName).fold(wslLocalRoot, Path::resolve)
+            val originalPath = ijentPath.asSequence().map(Path::name).map(::sanitizeFileName).fold(wslLocalRoot, Path::resolve)
+            return IjentWslNioPath(getFileSystem(wslId), originalPath)
           }
 
           override fun remove() {
