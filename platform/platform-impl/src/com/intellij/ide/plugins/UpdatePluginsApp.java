@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.InternalPluginResults;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -12,12 +14,11 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -83,14 +84,17 @@ final class UpdatePluginsApp implements ApplicationStarter {
       pluginsToUpdate = availableUpdates;
     }
 
+    pluginsToUpdate = hotfix242PythonSplit(pluginsToUpdate);
+
     logInfo("Plugins to update: " +
             ContainerUtil.map(pluginsToUpdate, downloader -> downloader.getPluginName() + " version " + downloader.getPluginVersion()));
 
     final boolean installed;
     try {
+      final var finalPluginsToUpdate = pluginsToUpdate;
       installed = ApplicationManager.getApplication().executeOnPooledThread(
-          () -> UpdateInstaller.installPluginUpdates(pluginsToUpdate, new EmptyProgressIndicator())
-        ).get();
+        () -> UpdateInstaller.installPluginUpdates(finalPluginsToUpdate, new EmptyProgressIndicator())
+      ).get();
     }
     catch (InterruptedException | ExecutionException e) {
       LOG.error("Failed to install plugin updates", e);
@@ -113,5 +117,48 @@ final class UpdatePluginsApp implements ApplicationStarter {
     // INFO level messages are not printed to stdout/stderr and toolbox does not include stdout/stderr by default in logs
     System.out.println(msg);
     LOG.info(msg);
+  }
+
+  private static @NotNull Collection<PluginDownloader> hotfix242PythonSplit(@NotNull Collection<PluginDownloader> pluginsToUpdate) {
+    final PluginId pythonidId = PluginId.getId("Pythonid");
+    final PluginId pythonCoreId = PluginId.getId("PythonCore");
+    if (PluginManagerCore.isPluginInstalled(pythonCoreId)
+        || !PluginManagerCore.getBuildNumber().getProductCode().equals("IU")
+        || !ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(pythonidId))
+        || ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(pythonCoreId))) {
+      return pluginsToUpdate;
+    }
+    final @NotNull PluginDownloader pythonidDownloader = Objects.requireNonNull(
+      ContainerUtil.find(pluginsToUpdate, p -> p.getId().equals(pythonidId))
+    );
+    if (!ContainerUtil.exists(pythonidDownloader.getDescriptor().getDependencies(), d -> d.getPluginId().equals(pythonCoreId))) {
+      logInfo("Plugin Pythonid does not depend on PythonCore");
+      return pluginsToUpdate;
+    }
+    final @Nullable PluginNode pythonCoreNode;
+    try {
+      pythonCoreNode = ApplicationManager.getApplication().executeOnPooledThread(
+        () -> MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(pythonCoreId)
+      ).get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.error("Failed to process Pythonid plugin dependencies");
+      return pluginsToUpdate;
+    }
+    if (pythonCoreNode == null) {
+      logInfo("Failed to find a suitable PythonCore plugin");
+      return pluginsToUpdate;
+    }
+    final PluginDownloader pythonCoreDownloader;
+    try {
+      pythonCoreDownloader = PluginDownloader.createDownloader(pythonCoreNode);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    logInfo("Added a required dependency for Pythonid plugin: PythonCore");
+    final var result = new ArrayList<>(pluginsToUpdate);
+    result.add(pythonCoreDownloader);
+    return result;
   }
 }
