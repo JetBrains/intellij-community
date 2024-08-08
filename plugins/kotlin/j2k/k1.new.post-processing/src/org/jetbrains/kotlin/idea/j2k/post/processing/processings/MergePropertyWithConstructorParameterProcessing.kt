@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInE
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
+import org.jetbrains.kotlin.j2k.resolve
+import org.jetbrains.kotlin.j2k.unpackedReferenceToProperty
 import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext

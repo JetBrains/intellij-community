@@ -6,26 +6,13 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.nj2k.asExplicitLabel
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
-internal fun KtExpression.unpackedReferenceToProperty(): KtProperty? {
-    val referenceExpression = when (this) {
-        is KtNameReferenceExpression -> this
-        is KtDotQualifiedExpression -> selectorExpression as? KtNameReferenceExpression
-        else -> null
-    }
-    return referenceExpression?.references
-        ?.firstOrNull { it is KtSimpleNameReference }
-        ?.resolve() as? KtProperty
-}
-
-internal fun KtReferenceExpression.resolve(): PsiElement? =
-    mainReference.resolve()
 
 internal fun KtDeclaration.type(): KotlinType? =
     (resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType

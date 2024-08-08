@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DuplicatedCode")
 
 package org.jetbrains.kotlin.j2k.k2.postProcessings
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -11,43 +11,32 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ArrayValue
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.EnumEntryValue
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.base.util.projectScope
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
-import org.jetbrains.kotlin.idea.core.setVisibility
-import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
-import org.jetbrains.kotlin.idea.j2k.post.processing.JKInMemoryFilesSearcher
-import org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix.Companion.getExistingAnnotationTargets
+import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
-import org.jetbrains.kotlin.j2k.PostProcessingApplier
-import org.jetbrains.kotlin.j2k.PostProcessingOptions
-import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
+import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.name.Name
@@ -58,17 +47,7 @@ import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
-import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
-import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.isError
-import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
-import org.jetbrains.kotlin.types.typeUtil.isUnit
-import org.jetbrains.kotlin.types.typeUtil.makeNullable
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -80,59 +59,72 @@ import org.jetbrains.kotlin.utils.mapToIndex
  * of what makes a legal Kotlin property (for example, regarding inheritance)
  */
 internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostProcessing() {
-    override val options: PostProcessingOptions =
-        PostProcessingOptions(
-            disablePostprocessingFormatting = false // without it comment saver will make the file invalid :(
-        )
+    private data class ApplicationInfo(
+        val converter: ClassConverter,
+        val klass: KtClassOrObject,
+        val propertiesWithAccessors: List<PropertyWithAccessors>
+    )
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
-        val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return }
-        val psiFactory = KtPsiFactory(converterContext.project)
-        val searcher = JKInMemoryFilesSearcher.create(ktElements)
-        val resolutionFacade = runReadAction {
-            KotlinCacheService.getInstance(converterContext.project).getResolutionFacade(ktElements)
-        }
-
-        val collector = PropertiesDataCollector(resolutionFacade, searcher)
-        val filter = PropertiesDataFilter(resolutionFacade, ktElements, searcher, psiFactory)
-        val externalProcessingUpdater = ExternalProcessingUpdater(converterContext.externalCodeProcessor)
-        val converter = ClassConverter(searcher, psiFactory)
-
-        val classesWithPropertiesData: List<Pair<KtClassOrObject, List<PropertyData>>> = runReadAction {
-            val classes = ktElements.descendantsOfType<KtClassOrObject>().sortedByInheritance(resolutionFacade)
-            classes.map { klass -> klass to collector.collectPropertiesData(klass) }
-        }.ifEmpty { return }
-
-        for ((klass, propertiesData) in classesWithPropertiesData) {
-            val propertiesWithAccessors = runReadAction { filter.filter(klass, propertiesData) }
-
-            allowAnalysisOnEdt {
-                runReadAction {
-                    analyze(klass) {
-                        externalProcessingUpdater.update(klass, propertiesWithAccessors)
-                    }
-                }
-            }
-
-            runUndoTransparentActionInEdt(inWriteAction = true) {
+    // TODO:
+    //  We can't apply for all classes at once, because it breaks inheritance cases.
+    //  K1 version relies on sequential analysis and application to all classes.
+    //  Test: org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverterSingleFileTestGenerated.DetectProperties.testAccessorsImplementInterface
+    private class Applier(private val infos: Set<ApplicationInfo>?) : PostProcessingApplier {
+        override fun apply() {
+            if (infos == null) return
+            for ((converter, klass, propertiesWithAccessors) in infos) {
+                // TODO change everything to PSI element pointers
                 converter.convertClass(klass, propertiesWithAccessors)
             }
         }
+
+        companion object {
+            val EMPTY = Applier(infos = null)
+        }
+    }
+
+    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
+        error("Not supported in K2 J2K")
     }
 
     context(KaSession)
     override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
-        error("Not supported in K1 J2K")
+        val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return Applier.EMPTY }
+        val psiFactory = KtPsiFactory(converterContext.project)
+        val searcher = JKInMemoryFilesSearcher.create(ktElements)
+
+        val collector = PropertiesDataCollector(searcher)
+        val filter = PropertiesDataFilter(ktElements, searcher, psiFactory)
+        val externalProcessingUpdater = ExternalProcessingUpdater(converterContext.externalCodeProcessor)
+        val converter = ClassConverter(searcher, psiFactory)
+
+        val classes = ktElements
+            .descendantsOfType<KtClassOrObject>()
+            // KtEnumEntrySymbol is not a KtClassOrObjectSymbol, so we skip enum entries here
+            // TODO handle enum overrides (KTIJ-29782)
+            .filterNot { it is KtEnumEntry }
+            .sortedByInheritance()
+        val classesWithPropertiesData = collector.collectPropertiesData(classes).ifEmpty { return Applier.EMPTY }
+        val infos = mutableSetOf<ApplicationInfo>()
+
+        for ((klass, propertiesData) in classesWithPropertiesData) {
+            val propertiesWithAccessors = filter.filter(klass, propertiesData)
+            infos.add(ApplicationInfo(converter, klass, propertiesWithAccessors))
+            externalProcessingUpdater.update(klass, propertiesWithAccessors)
+        }
+
+        return Applier(infos)
     }
 
-    private fun List<KtClassOrObject>.sortedByInheritance(resolutionFacade: ResolutionFacade): List<KtClassOrObject> {
+    context(KaSession)
+    private fun List<KtClassOrObject>.sortedByInheritance(): List<KtClassOrObject> {
         val sorted = mutableListOf<KtClassOrObject>()
         val visited = Array(size) { false }
-        val descriptors = map { it.resolveToDescriptorIfAny(resolutionFacade)!! }
-        val descriptorToIndex = descriptors.mapToIndex()
-        val outers = descriptors.map { descriptor ->
-            descriptor.superClassAndSuperInterfaces().mapNotNull { descriptorToIndex[it] }
+
+        val symbols = mapNotNull { it.symbol as? KaClassSymbol }
+        val symbolToIndex = symbols.mapToIndex()
+        val outers = symbols.map { symbol ->
+            symbol.superClassAndSuperInterfaces().mapNotNull { symbolToIndex[it] }
         }
 
         fun dfs(current: Int) {
@@ -145,11 +137,12 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
             sorted.add(get(current))
         }
 
-        for (index in descriptors.indices) {
+        for (index in symbols.indices) {
             if (!visited[index]) {
                 dfs(index)
             }
         }
+
         return sorted
     }
 }
@@ -158,50 +151,68 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
  * Extracts groups of (getter, setter, property) for a class
  * that are potentially eligible to be converted to a single property
  */
-private class PropertiesDataCollector(private val resolutionFacade: ResolutionFacade, private val searcher: JKInMemoryFilesSearcher) {
-    private val propertyNameToSuperType: MutableMap<Pair<KtClassOrObject, String>, KotlinType> = mutableMapOf()
+private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearcher) {
+    private val propertyNameToSuperType: MutableMap<Pair<KtClassOrObject, String>, KaType> = mutableMapOf()
 
-    fun collectPropertiesData(klass: KtClassOrObject): List<PropertyData> {
+    context(KaSession)
+    fun collectPropertiesData(classes: List<KtClassOrObject>): List<Pair<KtClassOrObject, List<PropertyData>>> {
+        val result = classes.map { klass -> klass to collectPropertiesData(klass) }
+        propertyNameToSuperType.clear() // flush KaTypes
+        return result
+    }
+
+    context(KaSession)
+    private fun collectPropertiesData(klass: KtClassOrObject): List<PropertyData> {
         val propertyInfos: List<PropertyInfo> = klass.declarations.mapNotNull { it.asPropertyInfo() }
         val propertyInfoGroups: Collection<List<PropertyInfo>> =
             propertyInfos.groupBy { it.name.removePrefix("is").decapitalizeAsciiOnly() }.values
 
-        return propertyInfoGroups.mapNotNull { group -> collectPropertyData(klass, group) }
+        val propertyDataList = propertyInfoGroups.mapNotNull { group -> collectPropertyData(klass, group) }
+        return propertyDataList
     }
 
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun collectPropertyData(klass: KtClassOrObject, propertyInfoGroup: List<PropertyInfo>): PropertyData? {
         val property = propertyInfoGroup.firstIsInstanceOrNull<RealProperty>()
         val getter = propertyInfoGroup.firstIsInstanceOrNull<RealGetter>()
         val setter = propertyInfoGroup.firstIsInstanceOrNull<RealSetter>()?.takeIf { setterCandidate ->
             if (getter == null) return@takeIf true
-            val getterType = getter.function.type() ?: return@takeIf false
-            val setterType = setterCandidate.function.valueParameters.first().type() ?: return@takeIf false
+            val getterType = getter.function.symbol.returnType
+            val setterType = setterCandidate.function.symbol.valueParameters.first().returnType
+
             // The inferred nullability of accessors may be different due to semi-random reasons,
             // so we check types compatibility ignoring nullability. Anyway, the final property type will be nullable if necessary.
-            getterType.isSubtypeOf(setterType.makeNullable())
+            getterType.isSubtypeOf(setterType.withNullability(KaTypeNullability.NULLABLE))
         }
 
         val accessor = getter ?: setter ?: return null
         val name = accessor.name
-        val functionDescriptor = accessor.function.resolveToDescriptorIfAny(resolutionFacade) ?: return null
+        val functionSymbol = accessor.function.symbol as? KaNamedFunctionSymbol ?: return null
 
         // Fun interfaces cannot have abstract properties
-        if (klass.isSamDescriptor(functionDescriptor)) return null
+        if (klass.isSamSymbol(functionSymbol)) return null
 
-        val superDeclarationOwner = functionDescriptor.getSuperDeclarationOwner()
+        val superDeclarationOwner = functionSymbol.getSuperDeclarationOwner()
         val type = propertyNameToSuperType[superDeclarationOwner to name]
             ?: calculatePropertyType(getter?.function, setter?.function)
             ?: return null
         propertyNameToSuperType[klass to name] = type
 
+        val renderedType =
+            type.takeIf { it !is KaErrorType }?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                ?: getter?.function?.typeReference?.text
+                ?: setter?.function?.valueParameters?.firstOrNull()?.typeReference?.text
+
         return PropertyData(
             property,
             getter?.withTargetSet(property),
             setter?.withTargetSet(property),
-            type
+            renderedType
         )
     }
 
+    context(KaSession)
     private fun KtDeclaration.asPropertyInfo(): PropertyInfo? {
         return when (this) {
             is KtProperty -> RealProperty(this, name ?: return null)
@@ -210,6 +221,7 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
         }
     }
 
+    context(KaSession)
     private fun KtNamedFunction.asGetter(): Getter? {
         val name = name?.asGetterName() ?: return null
         if (valueParameters.isNotEmpty()) return null
@@ -219,17 +231,19 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
         val property = returnExpression?.returnedExpression?.unpackedReferenceToProperty()
         val getterType = type()
         val singleTimeUsedTarget = property?.takeIf {
-            it.containingClass() == containingClass() && getterType != null && it.type() == getterType
+            it.containingClass() == containingClass() && getterType != null && it.type()?.semanticallyEquals(getterType) == true
         }
 
         return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
     }
 
+    context(KaSession)
     private fun KtNamedFunction.asSetter(): Setter? {
         val name = name?.asSetterName() ?: return null
         val parameter = valueParameters.singleOrNull() ?: return null
         if (typeParameters.isNotEmpty()) return null
-        if (resolveToDescriptorIfAny(resolutionFacade)?.returnType?.isUnit() != true) return null
+
+        if (!symbol.returnType.isUnitType) return null
 
         val binaryExpression = bodyExpression?.statements()?.singleOrNull() as? KtBinaryExpression
         val property = binaryExpression?.let { expression ->
@@ -239,7 +253,8 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
             expression.left?.unpackedReferenceToProperty()
         }
         val singleTimeUsedTarget = property?.takeIf {
-            it.containingClass() == containingClass() && it.type() == parameter.type()
+            val parameterType = parameter.type() ?: return@takeIf false
+            it.containingClass() == containingClass() && it.type()?.semanticallyEquals(parameterType) == true
         }
 
         return RealSetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
@@ -255,19 +270,26 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
         else -> this
     }
 
-    private fun KtClassOrObject.isSamDescriptor(functionDescriptor: FunctionDescriptor): Boolean {
-        val classDescriptor = descriptor as? ClassDescriptor ?: return false
-        return getSingleAbstractMethodOrNull(classDescriptor) == functionDescriptor
+    context(KaSession)
+    private fun KtClassOrObject.isSamSymbol(functionSymbol: KaNamedFunctionSymbol): Boolean {
+        if (functionSymbol.modality != KaSymbolModality.ABSTRACT) return false
+        val classSymbol = classSymbol as? KaNamedClassSymbol ?: return false
+        if (!classSymbol.isFun) return false
+
+        val callableSymbolsWithSameName = classSymbol.declaredMemberScope.callables(functionSymbol.name)
+        return callableSymbolsWithSameName.filter { it is KaNamedFunctionSymbol && it.modality == KaSymbolModality.ABSTRACT }.count() == 1
     }
 
-    private fun FunctionDescriptor.getSuperDeclarationOwner(): KtClassOrObject? {
-        val overriddenDeclaration = overriddenDescriptors.firstOrNull()?.findPsi() as? KtDeclaration
+    context(KaSession)
+    private fun KaFunctionSymbol.getSuperDeclarationOwner(): KtClassOrObject? {
+        val overriddenDeclaration = directlyOverriddenSymbols.firstOrNull()?.psi as? KtDeclaration
         return overriddenDeclaration?.containingClassOrObject
     }
 
-    private fun calculatePropertyType(getter: KtNamedFunction?, setter: KtNamedFunction?): KotlinType? {
-        val getterType = getter?.resolveToDescriptorIfAny(resolutionFacade)?.returnType
-        val setterType = setter?.resolveToDescriptorIfAny(resolutionFacade)?.valueParameters?.singleOrNull()?.type
+    context(KaSession)
+    private fun calculatePropertyType(getter: KtNamedFunction?, setter: KtNamedFunction?): KaType? {
+        val getterType = getter?.symbol?.returnType
+        val setterType = setter?.symbol?.valueParameters?.singleOrNull()?.returnType
         return when {
             getterType != null && getterType.isMarkedNullable -> getterType
             setterType != null && setterType.isMarkedNullable -> setterType
@@ -280,35 +302,42 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
  * Filters the accessors that are eligible for conversion to property
  */
 private class PropertiesDataFilter(
-    private val resolutionFacade: ResolutionFacade,
     private val elements: List<KtElement>,
     private val searcher: JKInMemoryFilesSearcher,
     private val psiFactory: KtPsiFactory
 ) {
+    context(KaSession)
     fun filter(klass: KtClassOrObject, propertiesData: List<PropertyData>): List<PropertyWithAccessors> {
-        val classDescriptor = klass.resolveToDescriptorIfAny(resolutionFacade) ?: return emptyList()
-        val declarationDescriptors = classDescriptor.superClassAndSuperInterfaces().flatMap { superType ->
-            superType.unsubstitutedMemberScope.getDescriptorsFiltered(DescriptorKindFilter.VARIABLES)
-        }
-        val variableNameToDescriptor = declarationDescriptors
-            .asSequence()
-            .filterIsInstance<VariableDescriptor>()
-            .associateBy { it.name.asString() }
+        val classSymbol = klass.classSymbol ?: return emptyList()
+        val superSymbols = classSymbol.superClassAndSuperInterfaces()
 
-        return propertiesData.mapNotNull { getPropertyWithAccessors(it, klass, classDescriptor, variableNameToDescriptor) }
+        // TODO
+        //  There is a problem when we first convert a getter to property of a super interface
+        //  and then we need to extract the new property from the super interface scope to convert the subclass.
+        //  It looks like we need some reanalysis that is not happening with Analysis API
+        //  (i.e., we are getting the previous getter instead of a property, and so cannot properly convert the subclass).
+        //  Tests:
+        //   - org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverterMultiFileTestGenerated.testDetectPropertiesMultipleFiles
+        //   - org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverterMultiFileTestGenerated.testInterfaceWithGetterInOtherFile
+        val superVariableSymbols = superSymbols.flatMap { superSymbol ->
+            superSymbol.declaredMemberScope.callables().filterIsInstance<KaVariableSymbol>()
+        }
+        val superVariableNameToSymbol = superVariableSymbols.associateBy { it.name.toString() }
+
+        return propertiesData.mapNotNull { getPropertyWithAccessors(it, klass, classSymbol, superVariableNameToSymbol) }
     }
 
+    context(KaSession)
     private fun getPropertyWithAccessors(
         propertyData: PropertyData,
         klass: KtClassOrObject,
-        classDescriptor: ClassDescriptor,
-        variableNameToDescriptor: Map<String, VariableDescriptor>
+        classSymbol: KaClassSymbol,
+        superVariableNameToSymbol: Map<String, KaVariableSymbol>
     ): PropertyWithAccessors? {
-        val (realProperty, realGetter, realSetter, type) = propertyData
+        val (realProperty, realGetter, realSetter, renderedType) = propertyData
 
-        fun renderType(): String? = type.takeUnless { it.isError }?.let { IdeDescriptorRenderers.SOURCE_CODE.renderType(it) }
-            ?: realGetter?.function?.typeReference?.text
-            ?: realSetter?.function?.valueParameters?.firstOrNull()?.typeReference?.text
+        val name = realGetter?.name ?: realSetter?.name ?: return null
+        if (renderedType == null) return null
 
         fun getterIsCompatibleWithSetter(): Boolean {
             if (realGetter == null || realSetter == null) return true
@@ -359,36 +388,47 @@ private class PropertiesDataFilter(
             return false
         }
 
+        // If a real accessor is annotated with an annotation with the "FUNCTION" target only,
+        // we can't change it into a property accessor
         fun accessorsAreAnnotatedWithFunctionOnlyAnnotations(): Boolean {
-            val descriptorToTargetPairs = listOf(
-                realGetter?.function?.resolveToDescriptorIfAny(resolutionFacade) to "PROPERTY_GETTER",
-                realSetter?.function?.resolveToDescriptorIfAny(resolutionFacade) to "PROPERTY_SETTER",
+            fun KaDeclarationSymbol.getExistingAnnotationTargets(): Set<String> {
+                val targetAnnotation = annotations.firstOrNull { it.classId == StandardNames.FqNames.targetClassId } ?: return emptySet()
+                val targets = (targetAnnotation.arguments.firstOrNull()?.expression as? ArrayValue)?.values ?: return emptySet()
+                return targets.mapNotNull { (it as? EnumEntryValue)?.callableId?.callableName?.asString() }.toSet()
+            }
+
+            fun KaAnnotation.isInapplicable(requiredTarget: String): Boolean {
+                val annotationSymbol = constructorSymbol?.containingDeclaration ?: return false
+                val existingTargets = annotationSymbol.getExistingAnnotationTargets()
+                return existingTargets.contains("FUNCTION") && !existingTargets.contains(requiredTarget)
+            }
+
+            val symbolToTargetPairs = listOf(
+                realGetter?.function?.symbol to "PROPERTY_GETTER",
+                realSetter?.function?.symbol to "PROPERTY_SETTER",
             )
 
-            for ((functionDescriptor, requiredTarget) in descriptorToTargetPairs) {
-                val hasInapplicableAnnotation = functionDescriptor?.annotations?.any { annotationDescriptor ->
-                    val annotationClassDescriptor = annotationDescriptor.annotationClass ?: return@any false
-                    val existingTargets = getExistingAnnotationTargets(annotationClassDescriptor)
-                    existingTargets.contains("FUNCTION") && !existingTargets.contains(requiredTarget)
-                } == true
-
+            for ((functionSymbol, requiredTarget) in symbolToTargetPairs) {
+                val accessorAnnotations = functionSymbol?.annotations ?: continue
+                val hasInapplicableAnnotation = accessorAnnotations.any { it.isInapplicable(requiredTarget) }
                 if (hasInapplicableAnnotation) return true
             }
 
             return false
         }
 
-        fun createFakeGetter(name: String): FakeGetter? = when {
-            // TODO write a test for this branch, may be related to KTIJ-8621, KTIJ-8673
-            realProperty?.property?.resolveToDescriptorIfAny(resolutionFacade)?.overriddenDescriptors?.any {
-                it.safeAs<VariableDescriptor>()?.isVar == true
-            } == true -> FakeGetter(name, body = null, modifiersText = "")
+        fun createFakeGetter(name: String): FakeGetter? {
+            return when {
+                // TODO write a test for this branch, may be related to KTIJ-8621, KTIJ-8673
+                realProperty?.property?.overridesVarProperty() == true ->
+                    FakeGetter(name, body = null, modifiersText = "")
 
-            variableNameToDescriptor[name]?.let { variable ->
-                variable.isVar && variable.containingDeclaration != classDescriptor
-            } == true -> FakeGetter(name, body = psiFactory.createExpression("super.$name"), modifiersText = "")
+                superVariableNameToSymbol[name]?.let { variable ->
+                    !variable.isVal && variable.containingSymbol != classSymbol
+                } == true -> FakeGetter(name, body = psiFactory.createExpression("super.$name"), modifiersText = "")
 
-            else -> null
+                else -> null
+            }
         }
 
         fun createMergedProperty(name: String, renderedType: String): MergedProperty? =
@@ -402,10 +442,7 @@ private class PropertiesDataFilter(
                 FakeSetter(name, body = null, modifiersText = "")
 
             // Var property cannot be overridden by val
-            realProperty?.property?.resolveToDescriptorIfAny(resolutionFacade)?.overriddenDescriptors?.any {
-                it.safeAs<VariableDescriptor>()?.isVar == true
-            } == true
-                    || variableNameToDescriptor[name]?.isVar == true ->
+            realProperty?.property?.overridesVarProperty() == true || superVariableNameToSymbol[name]?.isVal == false ->
                 FakeSetter(
                     name,
                     body = psiFactory.createBlock("super.$name = $name"),
@@ -434,11 +471,8 @@ private class PropertiesDataFilter(
             accessorsAreAnnotatedWithFunctionOnlyAnnotations()
         ) return null
 
-        val name = realGetter?.name ?: realSetter?.name ?: return null
-        val renderedType = renderType() ?: return null
-
-        // Avoid shadowing outer properties with same name
-        if (realProperty == null && isNameShadowed(name, classDescriptor.containingDeclaration)) return null
+        // Avoid shadowing outer properties with the same name
+        if (realProperty == null && isNameShadowed(name, classSymbol.containingSymbol)) return null
 
         val getter = realGetter ?: createFakeGetter(name) ?: return null
         val mergedProperty = createMergedProperty(name, renderedType)
@@ -452,6 +486,10 @@ private class PropertiesDataFilter(
         return PropertyWithAccessors(property, getter, setter)
     }
 
+    context(KaSession)
+    private fun KtProperty.overridesVarProperty(): Boolean =
+        symbol.directlyOverriddenSymbols.any { it.safeAs<KaVariableSymbol>()?.isVal == false }
+
     private fun KtNamedFunction.hasOverrides(): Boolean {
         val lightMethod = toLightMethods().singleOrNull() ?: return false
         if (OverridingMethodsSearch.search(lightMethod).findFirst() != null) return true
@@ -461,14 +499,19 @@ private class PropertiesDataFilter(
         }
     }
 
+    context(KaSession)
     private fun KtNamedFunction.hasSuperFunction(): Boolean =
-        resolveToDescriptorIfAny(resolutionFacade)?.original?.overriddenDescriptors?.isNotEmpty() == true
+        symbol.directlyOverriddenSymbols.toList().isNotEmpty()
 
-    private fun isNameShadowed(name: String, parent: DeclarationDescriptor?): Boolean {
-        if (parent !is ClassDescriptor) return false
-        val parentHasSameNameVariable =
-            parent.unsubstitutedMemberScope.getDescriptorsFiltered(DescriptorKindFilter.VARIABLES) { it.asString() == name }.isNotEmpty()
-        return parentHasSameNameVariable || isNameShadowed(name, parent.containingDeclaration)
+    context(KaSession)
+    private fun isNameShadowed(name: String, parent: KaSymbol?): Boolean {
+        if (parent !is KaClassSymbol) return false
+        val parentHasSameNamedVariable = parent.declaredMemberScope
+            .callables { it.asString() == name }
+            .filterIsInstance<KaVariableSymbol>()
+            .toList()
+            .isNotEmpty()
+        return parentHasSameNamedVariable || isNameShadowed(name, parent.containingSymbol)
     }
 
     private fun KtElement.hasUsagesOutsideOf(inElement: KtElement, outsideElements: List<KtElement>): Boolean =
@@ -814,11 +857,17 @@ private class ClassConverter(
     }
 
     private fun moveAccessorAnnotationsToProperty(property: KtProperty) {
+        val ktPsiFactory = KtPsiFactory(property.project)
+
+        fun KtAnnotationEntry.addUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget) {
+            replace(ktPsiFactory.createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
+        }
+
         for (accessor in property.accessors.sortedBy { it.isGetter }) {
             for (accessorEntry in accessor.annotationEntries) {
                 val propertyEntry = property.addAnnotationEntry(accessorEntry)
                 val target = if (accessor.isGetter) PROPERTY_GETTER else PROPERTY_SETTER
-                propertyEntry.addUseSiteTarget(target, property.project)
+                propertyEntry.addUseSiteTarget(target)
             }
             accessor.annotationEntries.forEach { it.delete() }
         }
@@ -846,8 +895,10 @@ private class ClassConverter(
 private fun KtElement.usages(searcher: JKInMemoryFilesSearcher, scope: PsiElement? = null): Iterable<PsiReference> =
     searcher.search(element = this, scope)
 
-private fun ClassDescriptor.superClassAndSuperInterfaces(): List<ClassDescriptor> =
-    getSuperInterfaces() + listOfNotNull(getSuperClassNotAny())
+context(KaSession)
+private fun KaClassSymbol.superClassAndSuperInterfaces(): List<KaClassSymbol> {
+    return superTypes.filter { !it.isAnyType }.mapNotNull { it.expandedSymbol }
+}
 
 private fun KtExpression.isReferenceToThis(): Boolean {
     val reference = when (this) {
@@ -869,7 +920,7 @@ private data class PropertyData(
     val realProperty: RealProperty?,
     val realGetter: RealGetter?,
     val realSetter: RealSetter?,
-    val type: KotlinType
+    val renderedType: String?
 )
 
 private interface PropertyInfo {
@@ -968,3 +1019,7 @@ private data class FakeSetter(
 
 private fun String.fixSetterParameterName(): String =
     if (this == FIELD_KEYWORD.value) "value" else this
+
+context(KaSession)
+private fun KtDeclaration.type(): KaType? =
+    (symbol as? KaCallableSymbol)?.returnType

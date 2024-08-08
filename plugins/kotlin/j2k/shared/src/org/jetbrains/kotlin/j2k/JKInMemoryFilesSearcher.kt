@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.j2k.post.processing
+package org.jetbrains.kotlin.j2k
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -8,7 +8,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.psi.KtElement
 
-internal abstract class JKInMemoryFilesSearcher {
+abstract class JKInMemoryFilesSearcher {
     abstract fun search(element: KtElement, scope: PsiElement? = null): Iterable<PsiReference>
 
     companion object {

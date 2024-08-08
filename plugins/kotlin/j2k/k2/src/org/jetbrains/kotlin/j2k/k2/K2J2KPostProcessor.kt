@@ -82,6 +82,13 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
     NamedPostProcessingGroup(
         KotlinJ2KK2Bundle.message("processing.step.cleaning.up.code"),
         listOf(
+            K2ConvertGettersAndSettersToPropertyProcessing()
+        ),
+    ),
+
+    NamedPostProcessingGroup(
+        KotlinJ2KK2Bundle.message("processing.step.cleaning.up.code"),
+        listOf(
             @Suppress("UNCHECKED_CAST") // fighting with generics :(
             K2DiagnosticBasedPostProcessingGroup(
                 uselessCastProcessing as K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>,
