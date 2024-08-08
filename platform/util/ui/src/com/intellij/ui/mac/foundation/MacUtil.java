@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +81,35 @@ public final class MacUtil {
       }
     }
     return ID.NIL;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Object getPlatformPeer(@NotNull Window w) {
+    if (SystemInfo.isJetBrainsJvm) {
+      try {
+        Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
+        Object componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null);
+        Method getPeer = componentAccessor.getClass().getMethod("getPeer", Component.class);
+        getPeer.setAccessible(true);
+        return getPeer.invoke(componentAccessor, w);
+      }
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+        LOG.debug(e);
+      }
+    }
+    return null;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Object getPeerUnderCursor(@NotNull Object peer) {
+    try {
+      Method method = peer.getClass().getMethod("getPeerUnderCursor");
+      return method.invoke(null); // null because the method is static, we only need the peer here to get its class
+    }
+    catch (Throwable ex) {
+      LOG.debug(ex);
+    }
+    return null;
   }
 
   public static @Nullable Object getPlatformWindow(@NotNull Window w) {
