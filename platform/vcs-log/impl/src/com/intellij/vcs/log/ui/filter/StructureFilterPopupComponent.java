@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -345,7 +346,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
       e.getPresentation().setIcon(myIcon);
       var modifierText = InputEvent.getModifiersExText(getModifier() << 6);
       var tooltip = VcsLogBundle.message("vcs.log.filter.tooltip.click.to.see.only", modifierText, e.getPresentation().getText());
-      e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, tooltip);
+      e.getPresentation().putClientProperty(ActionUtil.TOOLTIP_TEXT, tooltip);
     }
 
     private void updateIcon() {

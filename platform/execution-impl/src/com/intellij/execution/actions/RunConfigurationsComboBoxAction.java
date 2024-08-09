@@ -623,7 +623,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       Presentation presentation = e.getPresentation();
       presentation.setText(name, false);
       presentation.setDescription(ExecutionBundle.message("select.0.1", myConfiguration.getType().getConfigurationTypeDescription(), name));
-      presentation.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, toolTip);
+      presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, toolTip);
 
       setConfigurationIcon(e.getPresentation(), myConfiguration, myProject);
     }

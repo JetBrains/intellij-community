@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -183,7 +184,7 @@ public final class GitBranchPopupActions {
    * @see com.intellij.ui.popup.ActionStepBuilder#appendAction
    */
   public static void addTooltipText(Presentation presentation, @NlsContexts.Tooltip String tooltipText) {
-    presentation.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, tooltipText);
+    presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, tooltipText);
   }
 
   /**
