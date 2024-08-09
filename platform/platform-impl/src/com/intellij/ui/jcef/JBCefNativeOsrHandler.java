@@ -63,7 +63,6 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
                                    long sharedMemHandle,
                                    int width,
                                    int height) {
-    // TODO: support popups
     SharedMemory.WithRaster mem = mySharedMemCache.get(sharedMemName);
     if (mem == null) {
       cleanCacheIfNecessary();
@@ -80,7 +79,23 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
     mem.setHeight(height);
     mem.setDirtyRectsCount(dirtyRectsCount);
     mem.lasUsedMs = System.currentTimeMillis();
-    myCurrentFrame = mem;
+
+    if (popup) {
+      JBHiDPIScaledImage image = myPopupImage;
+      if (image == null || image.getDelegate() == null
+          || image.getDelegate().getWidth(null) != width
+          || image.getDelegate().getHeight(null) != height) {
+        image = (JBHiDPIScaledImage)RetinaImage.createFrom(
+          new BufferedImage(mem.getWidth(), mem.getHeight(), BufferedImage.TYPE_INT_ARGB_PRE),
+          getPixelDensity(), null);
+      }
+      synchronized (myPopupMutex) {
+        loadBuffered((BufferedImage)Objects.requireNonNull(image.getDelegate()), mem);
+        myPopupImage = image;
+      }
+    } else {
+      myCurrentFrame = mem;
+    }
 
     // TODO: calculate outerRect
     myContentOutdated = true;

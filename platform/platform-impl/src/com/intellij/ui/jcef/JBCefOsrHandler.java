@@ -37,10 +37,10 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   protected volatile @Nullable JBHiDPIScaledImage myImage;
 
-  private volatile @Nullable JBHiDPIScaledImage myPopupImage;
+  protected volatile @Nullable JBHiDPIScaledImage myPopupImage;
   private volatile boolean myPopupShown = false;
   private volatile @NotNull Rectangle myPopupBounds = new Rectangle();
-  private final Object myPopupMutex = new Object();
+  protected final Object myPopupMutex = new Object();
 
   private volatile @Nullable VolatileImage myVolatileImage;
   protected volatile boolean myContentOutdated = false;
@@ -143,6 +143,15 @@ class JBCefOsrHandler implements CefRenderHandler {
     while (vi.contentsLost());
 
     myVolatileImage = vi;
+
+    if (myPopupShown) {
+      synchronized (myPopupMutex) {
+        Image popupImage = myPopupImage;
+        if (myPopupShown && popupImage != null) {
+          UIUtil.drawImage(g, popupImage, myPopupBounds.x, myPopupBounds.y, null);
+        }
+      }
+    }
 
     myFpsMeter.paintFrameFinished(g);
   }
@@ -272,18 +281,8 @@ class JBCefOsrHandler implements CefRenderHandler {
       g.setComposite(AlphaComposite.Src);
       g.clearRect(0, 0, vi.getWidth(), vi.getHeight());
 
-      // Draw volatile image from BufferedImage
       if (image != null) {
         UIUtil.drawImage(g, image, 0, 0, null);
-      }
-
-      if (myPopupShown) {
-        synchronized (myPopupMutex) {
-          Image popupImage = myPopupImage;
-          if (myPopupShown && popupImage != null) {
-            UIUtil.drawImage(g, popupImage, myPopupBounds.x, myPopupBounds.y, null);
-          }
-        }
       }
     }
     finally {
