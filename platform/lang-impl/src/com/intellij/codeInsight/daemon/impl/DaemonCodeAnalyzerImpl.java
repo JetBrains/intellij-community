@@ -1261,9 +1261,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           }
           session.additionalSetupFromBackground(psiFile);
           try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
-            HighlightingPass[] r = backgroundEditorHighlighter instanceof TextEditorBackgroundHighlighter textHighlighter ?
-                                   textHighlighter.getPasses(passesToIgnore).toArray(HighlightingPass.EMPTY_ARRAY) :
-                                   backgroundEditorHighlighter.createPassesForEditor();
+            HighlightingPass[] r = backgroundEditorHighlighter.createPassesForEditor();
+            if (passesToIgnore.length != 0) {
+              r = ContainerUtil.findAllAsArray(r, pass->!(pass instanceof TextEditorHighlightingPass te) || ArrayUtil.indexOf(passesToIgnore, te.getId()) == -1);
+            }
             if (heavyProcessIsRunning) {
               r = ContainerUtil.findAllAsArray(r, o -> DumbService.isDumbAware(o));
             }
