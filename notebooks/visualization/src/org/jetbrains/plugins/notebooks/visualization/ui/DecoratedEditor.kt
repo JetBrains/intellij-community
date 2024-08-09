@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.ide.structureView.StructureViewBuilder
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Caret
@@ -95,7 +96,7 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
 
   private fun scheduleSelectionUpdate() {
     if (selectionUpdateScheduled.compareAndSet(false, true)) {
-      SwingUtilities.invokeLater {
+      ApplicationManager.getApplication().invokeLater {
         try {
           updateSelectionByCarets()
         }

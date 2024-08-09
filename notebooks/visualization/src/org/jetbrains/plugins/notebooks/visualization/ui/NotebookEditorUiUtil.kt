@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
@@ -57,7 +58,7 @@ fun EditorEx.addComponentInlay(
 private fun updateUiOnParentResizeImpl(parent: JComponent, childRef: WeakReference<JComponent>) {
   val listener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-      ReadAction.run<Throwable> {
+      WriteIntentReadAction.run {
         val child = childRef.get()
         if (child != null) {
           child.updateUI()
