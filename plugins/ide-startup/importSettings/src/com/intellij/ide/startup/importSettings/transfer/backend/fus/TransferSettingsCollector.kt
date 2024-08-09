@@ -200,7 +200,7 @@ class KnownPluginValidationRule : LocalFileCustomValidationRule(
 
     override fun createValue(value: String): String? = value.nullize(true)?.trim()?.lowercase()
     override fun readItems(): Set<String?> {
-      return super.readItems() + VisualStudioPluginsMapping.RESHARPER
+      return super.readItems() + VisualStudioPluginsMapping.RESHARPER.lowercase()
     }
   }
 )
