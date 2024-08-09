@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.updatableUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -112,17 +113,13 @@ fun createCopyTarget(
     val oldToNewMap = declarationsToMove.moveInto(fakeTargetFile)
     val usageInfos = fakeTargetFile.collectOldToNewUsageInfos(oldToNewMap)
     usageInfos.forEach { (originalUsageInfo, copyUsageInfo) ->
-        if (!originalUsageInfo.isUpdatable(oldToNewMap.values.toList())) {
-            (copyUsageInfo.reference?.element as? KtReferenceExpression)?.internalUsageInfo = originalUsageInfo
-            return@forEach
-        }
-
+        if ((originalUsageInfo.element as KtElement).updatableUsageInfo == null) return@forEach // if not updatable, skip
         // Retarget all references to make sure all references are resolvable after moving
         val retargetResult = copyUsageInfo.retarget(copyUsageInfo.referencedElement as PsiNamedElement) as? KtElement ?: return@forEach
         val retargetReference = retargetResult.getQualifiedElementSelector() as? KtReferenceExpression ?: return@forEach
         // Attach physical usage info to the copied reference.
         // This will make it possible for the conflict checker to check whether a conflict exists before even calling the refactoring.
-        retargetReference.internalUsageInfo = originalUsageInfo
+        retargetReference.updatableUsageInfo = originalUsageInfo
     }
     fakeTargetFile.originalFile = declarationsToMove.firstOrNull()?.containingKtFile ?: error("Moved element is not in a Kotlin file")
     return fakeTargetFile to oldToNewMap

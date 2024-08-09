@@ -30,6 +30,16 @@ abstract class AbstractK2MoveFileOrDirectoriesTest : AbstractMultifileMoveRefact
 internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoringAction {
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
         val project = mainFile.project
+        val fileNames = config.getAsJsonArray("filesToMove")?.map { it.asString }
+            ?: listOfNotNull(config.getString("mainFile"))
+        val files = if (fileNames.isEmpty()) {
+            listOf(mainFile)
+        } else {
+            fileNames.mapNotNull { path ->
+                val vFile = rootDir.findFileByRelativePath(path)
+                vFile?.toPsiFile(project) ?: vFile?.toPsiDirectory(project)
+            }.toSet()
+        }
         if (mainFile.name.endsWith(".java")) {
             val targetPackage = config.getNullableString("targetPackage")
             val targetDirPath = targetPackage?.replace('.', '/') ?: config.getNullableString("targetDirectory") ?: return
@@ -40,7 +50,7 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
             }
             MoveFilesOrDirectoriesProcessor(
                 project,
-                arrayOf(mainFile),
+                files.toTypedArray(),
                 newParent,
                 config.searchInComments(),
                 /* searchInNonJavaFiles = */ true,
@@ -48,13 +58,6 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
                 /* prepareSuccessfulCallback = */ null
             ).run()
         } else {
-            val fileNames = config.getAsJsonArray("filesToMove")?.map { it.asString }
-                ?: listOfNotNull(config.getString("mainFile"))
-            if (fileNames.isEmpty()) fail("No file name specified")
-            val files = fileNames.mapNotNull { path ->
-                val vFile = rootDir.findFileByRelativePath(path)
-                vFile?.toPsiFile(project) ?: vFile?.toPsiDirectory(project)
-            }.toSet()
             val sourceDescriptor = K2MoveSourceDescriptor.FileSource(files)
             val targetPackage = config.getNullableString("targetPackage")
             val targetDir = config.getNullableString("targetDirectory")

@@ -144,6 +144,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveFile/java/moveFileToAnotherPackage/moveFileToAnotherPackage.test");
         }
 
+        @TestMetadata("java/movePackageWithDestructuringReference/movePackageWithDestructuringReference.test")
+        public void testJava_movePackageWithDestructuringReference_MovePackageWithDestructuringReference() throws Exception {
+            runTest("testData/refactoring/moveFile/java/movePackageWithDestructuringReference/movePackageWithDestructuringReference.test");
+        }
+
         @TestMetadata("kotlin/addExtensionImport/addExtensionImport.test")
         public void testKotlin_addExtensionImport_AddExtensionImport() throws Exception {
             runTest("testData/refactoring/moveFile/kotlin/addExtensionImport/addExtensionImport.test");

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -31,27 +29,7 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOperationDe
     descriptor.searchForText,
     descriptor.moveCallBack,
     Runnable { }
-) {
-    private fun PsiElement.allFiles(): List<KtFile> = when (this) {
-        is PsiDirectory -> children.flatMap { it.allFiles() }
-        is KtFile -> listOf(this)
-        else -> emptyList()
-    }
-
-    override fun preprocessUsages(refUsages: Ref<Array<out UsageInfo>>): Boolean {
-        val toContinue = super.preprocessUsages(refUsages)
-        if (!toContinue) return false
-
-        // after conflict checking, we don't need non-updatable usages anymore
-        val elementsToMove = myElementsToMove.toList()
-        unMarkNonUpdatableUsages(elementsToMove)
-        val updatableUsages = K2MoveRenameUsageInfo.filterUpdatable(elementsToMove, refUsages.get())
-        refUsages.set(updatableUsages.toTypedArray())
-        val usagesByFile = updatableUsages.groupBy { (it as? K2MoveRenameUsageInfo)?.referencedElement?.containingFile }
-        usagesByFile.forEach { file, usages -> myFoundUsages.replace(file, usages) }
-        return true
-    }
-}
+)
 
 class K2MoveFilesHandler : MoveFileHandler() {
     /**

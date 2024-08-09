@@ -98,7 +98,7 @@ internal fun KtFile.findUsages(
     searchForText: Boolean,
     newPkgName: FqName
 ): List<UsageInfo> {
-    markInternalUsages(this)
+    markInternalUsages(this, this)
     return topLevelDeclarationsToUpdate.flatMap { decl ->
         K2MoveRenameUsageInfo.findExternalUsages(decl) + decl.findNonCodeUsages(searchInCommentsAndStrings, searchForText, newPkgName)
     }
