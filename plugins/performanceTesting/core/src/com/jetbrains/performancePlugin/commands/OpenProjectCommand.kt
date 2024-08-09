@@ -8,6 +8,7 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -83,14 +84,16 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
 
     if (!project.isDefault) {
       withContext(Dispatchers.EDT) {
-        WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(project)
+        writeIntentReadAction {
+          WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(project)
 
-        // for backward compatibility with older code
-        if (closeProjectBeforeOpening) {
-          // prevent the script from stopping on project close
-          context.setProject(null)
+          // for backward compatibility with older code
+          if (closeProjectBeforeOpening) {
+            // prevent the script from stopping on project close
+            context.setProject(null)
 
-          ProjectManager.getInstance().closeAndDispose(project)
+            ProjectManager.getInstance().closeAndDispose(project)
+          }
         }
       }
       RecentProjectsManager.getInstance().updateLastProjectPath()

@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -44,17 +45,19 @@ class CollectAllFilesCommand(text: String, line: Int) : PlaybackCommandCoroutine
       }
     withContext(Dispatchers.EDT) {
       val index = ProjectFileIndex.getInstance(project)
-      extensions.forEach { extension ->
-        getAllFilesByExt(project, extension, GlobalSearchScope.projectScope(project))
-          .forEach { file ->
-            val searchCondition = when (fromSources) {
-              true -> index.isInSourceContent(file)
-              else -> true
+      writeIntentReadAction {
+        extensions.forEach { extension ->
+          getAllFilesByExt(project, extension, GlobalSearchScope.projectScope(project))
+            .forEach { file ->
+              val searchCondition = when (fromSources) {
+                true -> index.isInSourceContent(file)
+                else -> true
+              }
+              if (searchCondition) {
+                collectedFiles.appendText(file.path + "\n")
+              }
             }
-            if (searchCondition) {
-              collectedFiles.appendText(file.path + "\n")
-            }
-          }
+        }
       }
     }
   }

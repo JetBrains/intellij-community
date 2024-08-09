@@ -6,6 +6,7 @@ import com.intellij.internal.performance.LatencyRecord
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.actionSystem.LatencyListener
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -85,7 +86,9 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
                 NonProjectFileWritingAccessProvider.allowWriting(listOf(editor.virtualFile))
               }
               span.addEvent("Typing ${text[i]}")
-              typingTarget.type(text[i].toString())
+              writeIntentReadAction {
+                typingTarget.type(text[i].toString())
+              }
             }
           }
         }
