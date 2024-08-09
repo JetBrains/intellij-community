@@ -1,0 +1,11 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_16789_14678)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M6.14645 3.14645C6.34171 2.95118 6.65829 2.95118 6.85356 3.14645C7.04882 3.34171 7.04882 3.65829 6.85356 3.85355L3.70711 7L13.5039 7C13.78 7 14.0039 7.22386 14.0039 7.5C14.0039 7.77614 13.78 8 13.5039 8L3.70711 8L6.85356 11.1464C7.04882 11.3417 7.04882 11.6583 6.85356 11.8536C6.65829 12.0488 6.34171 12.0488 6.14645 11.8536L2.14645 7.85355C2.05268 7.75979 2 7.63261 2 7.5C2 7.36739 2.05268 7.24021 2.14645 7.14645L6.14645 3.14645Z" fill="#6C707E"/>
+</g>
+<defs>
+<clipPath id="clip0_16789_14678">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>

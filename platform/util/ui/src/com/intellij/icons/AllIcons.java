@@ -303,7 +303,7 @@ public class AllIcons {
   public static final class Debugger {
     /** 16x16 */ public static final @NotNull Icon AddToWatch = load("expui/debugger/addToWatch.svg", "debugger/addToWatch.svg", 409901811, 2);
     /** 16x16 */ public static final @NotNull Icon AttachToProcess = load("expui/run/attachToProcess.svg", "debugger/attachToProcess.svg", 1092374815, 2);
-    /** 16x16 */ public static final @NotNull Icon ClassLevelWatch = load("debugger/classLevelWatch.svg", -270615083, 2);
+    /** 16x16 */ public static final @NotNull Icon ClassLevelWatch = load("expui/debugger/classLevelWatch.svg", "debugger/classLevelWatch.svg", -270615083, 2);
     /** 16x16 */ public static final @NotNull Icon Console = load("expui/fileTypes/shell.svg", "debugger/console.svg", -1395573079, 2);
     /** 16x16 */ public static final @NotNull Icon Db_array = load("expui/debugger/dbArray.svg", "debugger/db_array.svg", -929290955, 2);
     /** 16x16 */ public static final @NotNull Icon Db_db_object = load("debugger/db_db_object.svg", -1037510563, 0);
@@ -343,7 +343,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon Db_verified_no_suspend_method_breakpoint = load("expui/breakpoints/breakpointMethodUnsuspendentValid.svg", "debugger/db_verified_no_suspend_method_breakpoint.svg", 1053525169, 2);
     /** 16x16 */ public static final @NotNull Icon Db_watch = load("expui/debugger/watch.svg", "debugger/db_watch.svg", -1666860072, 0);
     /** 16x16 */ public static final @NotNull Icon EvaluateExpression = load("expui/run/evaluateExpression.svg", "debugger/evaluateExpression.svg", -1762455063, 2);
-    /** 16x16 */ public static final @NotNull Icon EvaluationResult = load("debugger/evaluationResult.svg", 1466088690, 2);
+    /** 16x16 */ public static final @NotNull Icon EvaluationResult = load("expui/debugger/evaluationResult.svg", "debugger/evaluationResult.svg", 1466088690, 2);
     /** 16x16 */ public static final @NotNull Icon ForceRunToCursor = load("expui/run/forceRunToCursor.svg", "debugger/forceRunToCursor.svg", 1765887966, 2);
     /** 16x16 */ public static final @NotNull Icon ForceStepInto = load("expui/run/forceStepInto.svg", "debugger/forceStepInto.svg", -897444087, 2);
     /** 16x16 */ public static final @NotNull Icon ForceStepOver = load("expui/run/forceStepOver.svg", "debugger/forceStepOver.svg", 1412423475, 2);
@@ -356,19 +356,19 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon MuteBreakpoints = load("expui/run/muteBreakpoints.svg", "debugger/muteBreakpoints.svg", 896463102, 2);
     /** 12x12 */ public static final @NotNull Icon NextStatement = load("debugger/nextStatement.svg", -1096276944, 2);
     /** 16x16 */ public static final @NotNull Icon Overhead = load("debugger/overhead.svg", -837590875, 2);
-    /** 16x16 */ public static final @NotNull Icon PromptInput = load("debugger/promptInput.svg", -1485755492, 2);
-    /** 16x16 */ public static final @NotNull Icon PromptInputHistory = load("debugger/promptInputHistory.svg", -526772481, 2);
+    /** 16x16 */ public static final @NotNull Icon PromptInput = load("expui/debugger/promptInput.svg", "debugger/promptInput.svg", -1485755492, 2);
+    /** 16x16 */ public static final @NotNull Icon PromptInputHistory = load("expui/debugger/promptInputHistory.svg", "debugger/promptInputHistory.svg", -526772481, 2);
     /** 7x9 */ public static final @NotNull Icon Question_badge = load("expui/breakpoints/questionBadge.svg", "debugger/question_badge.svg", -1174769014, 2);
     /** 16x16 */ public static final @NotNull Icon RestoreLayout = load("expui/general/layout.svg", "debugger/restoreLayout.svg", 2034206966, 2);
     /** 16x16 */ public static final @NotNull Icon Selfreference = load("expui/debugger/selfReference.svg", "debugger/selfreference.svg", 1895404117, 2);
     /** 16x16 */ public static final @NotNull Icon ShowCurrentFrame = load("expui/run/showCurrentFrame.svg", "debugger/showCurrentFrame.svg", 1735060707, 2);
     /** 16x16 */ public static final @NotNull Icon SmartStepInto = load("expui/run/smartStepInto.svg", "debugger/smartStepInto.svg", 1962394045, 2);
-    /** 16x16 */ public static final @NotNull Icon ThreadAtBreakpoint = load("debugger/threadAtBreakpoint.svg", -2130465671, 0);
-    /** 16x16 */ public static final @NotNull Icon ThreadCurrent = load("debugger/threadCurrent.svg", -580743407, 0);
-    /** 16x16 */ public static final @NotNull Icon ThreadFrozen = load("debugger/threadFrozen.svg", 579300096, 0);
-    /** 16x16 */ public static final @NotNull Icon ThreadGroup = load("debugger/threadGroup.svg", 1735881944, 0);
-    /** 16x16 */ public static final @NotNull Icon ThreadGroupCurrent = load("debugger/threadGroupCurrent.svg", -46476841, 0);
-    /** 16x16 */ public static final @NotNull Icon ThreadRunning = load("debugger/threadRunning.svg", 1288287186, 0);
+    /** 16x16 */ public static final @NotNull Icon ThreadAtBreakpoint = load("expui/debugger/threadAtBreakpoint.svg", "debugger/threadAtBreakpoint.svg", -2130465671, 0);
+    /** 16x16 */ public static final @NotNull Icon ThreadCurrent = load("expui/debugger/threadCurrent.svg", "debugger/threadCurrent.svg", -580743407, 0);
+    /** 16x16 */ public static final @NotNull Icon ThreadFrozen = load("expui/debugger/threadFrozen.svg", "debugger/threadFrozen.svg", 579300096, 0);
+    /** 16x16 */ public static final @NotNull Icon ThreadGroup = load("expui/debugger/threads.svg", "debugger/threadGroup.svg", 1735881944, 0);
+    /** 16x16 */ public static final @NotNull Icon ThreadGroupCurrent = load("expui/debugger/threadGroupCurrent.svg", "debugger/threadGroupCurrent.svg", -46476841, 0);
+    /** 16x16 */ public static final @NotNull Icon ThreadRunning = load("expui/debugger/threadRunning.svg", "debugger/threadRunning.svg", 1288287186, 0);
     /** 16x16 */ public static final @NotNull Icon Threads = load("expui/debugger/threads.svg", "debugger/threads.svg", 49928727, 2);
 
     public static final class ThreadStates {
@@ -377,12 +377,12 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon Socket = load("debugger/threadStates/socket.svg", 1241843581, 2);
     }
 
-    /** 16x16 */ public static final @NotNull Icon ThreadSuspended = load("debugger/threadSuspended.svg", 1956118369, 0);
+    /** 16x16 */ public static final @NotNull Icon ThreadSuspended = load("expui/debugger/threads.svg", "debugger/threadSuspended.svg", 1956118369, 0);
     /** 16x16 */ public static final @NotNull Icon Value = load("expui/debugger/value.svg", "debugger/value.svg", 2139427402, 0);
-    /** 16x16 */ public static final @NotNull Icon VariablesTab = load("debugger/variablesTab.svg", -2045357702, 2);
+    /** 16x16 */ public static final @NotNull Icon VariablesTab = load("expui/debugger/variablesTab.svg", "debugger/variablesTab.svg", -2045357702, 2);
     /** 16x16 */ public static final @NotNull Icon ViewBreakpoints = load("expui/run/viewBreakpoints.svg", "debugger/viewBreakpoints.svg", -1788984126, 2);
     /** 16x16 */ public static final @NotNull Icon Watch = load("expui/debugger/watch.svg", "debugger/watch.svg", 366548176, 2);
-    /** 16x16 */ public static final @NotNull Icon WatchLastReturnValue = load("debugger/watchLastReturnValue.svg", 1692442305, 2);
+    /** 16x16 */ public static final @NotNull Icon WatchLastReturnValue = load("expui/debugger/watchLastReturnValue.svg", "debugger/watchLastReturnValue.svg", 1692442305, 2);
   }
 
   public static final class Diff {

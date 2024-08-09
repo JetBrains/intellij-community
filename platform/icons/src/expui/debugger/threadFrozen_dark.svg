@@ -1,0 +1,12 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_16789_14718)">
+<rect x="3.5" y="2.5" width="3" height="11" rx="0.5" stroke="#CED0D6"/>
+<rect x="9.5" y="2.5" width="3" height="11" rx="0.5" stroke="#CED0D6"/>
+</g>
+<defs>
+<clipPath id="clip0_16789_14718">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>
