@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -65,7 +66,9 @@ class MavenProjectAsyncBuilder {
     syncProject: Boolean,
   ): List<Module> = project.trackActivity(MavenActivityKey) {
     if (ApplicationManager.getApplication().isDispatchThread) {
-      FileDocumentManager.getInstance().saveAllDocuments()
+      writeIntentReadAction {
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
     }
 
     val importProjectFile = if (!projectFile.isDirectory) projectFile else null

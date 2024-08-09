@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.compiler
 import com.intellij.maven.testFramework.MavenCompilingTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -594,7 +595,9 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
 
     WriteAction.runAndWait<IOException> { VfsUtil.saveText(filter, "xxx=2") }
     withContext(Dispatchers.EDT) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      writeIntentReadAction {
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
     }
     compileModules("project")
     assertResult("target/classes/file.properties", "value=2")

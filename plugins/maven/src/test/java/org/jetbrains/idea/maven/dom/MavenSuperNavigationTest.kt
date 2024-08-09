@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -286,7 +287,10 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
 
   private suspend fun checkResultWithInlays(text: String) {
     withContext(Dispatchers.EDT) {
-      fixture.checkResultWithInlays(text)
+      //readaction is not enough
+      writeIntentReadAction {
+        fixture.checkResultWithInlays(text)
+      }
     }
   }
 }

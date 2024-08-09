@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -401,7 +402,9 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     configConfirmationForYesAnswer()
     val action = DeleteAction()
     withContext(Dispatchers.EDT) {
-      action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)))
+      writeIntentReadAction {
+        action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)))
+      }
     }
     updateAllProjects()
     assertModuleModuleDeps("m2")
@@ -589,7 +592,9 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     val action = RemoveManagedFilesAction()
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)))
+        writeIntentReadAction {
+          action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)))
+        }
       }
     }
     assertEquals(1, ModuleManager.getInstance(project).modules.size)

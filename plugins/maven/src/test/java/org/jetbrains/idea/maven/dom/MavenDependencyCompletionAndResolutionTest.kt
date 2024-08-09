@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
@@ -1259,11 +1260,14 @@ $libPath<caret></systemPath>
     importProjectAsync()
 
     withContext(Dispatchers.EDT) {
-      val model = MavenDomUtil.getMavenDomModel(project, projectPom, MavenDomProjectModel::class.java)
+      //maybe readacton
+      writeIntentReadAction {
+        val model = MavenDomUtil.getMavenDomModel(project, projectPom, MavenDomProjectModel::class.java)
 
-      val dependency = MavenDependencyCompletionUtil.findManagedDependency(model, project, "org.example", "something")
-      assertNotNull(dependency)
-      assertEquals("42", dependency.getVersion().getStringValue())
+        val dependency = MavenDependencyCompletionUtil.findManagedDependency(model, project, "org.example", "something")
+        assertNotNull(dependency)
+        assertEquals("42", dependency.getVersion().getStringValue())
+      }
     }
   }
 }

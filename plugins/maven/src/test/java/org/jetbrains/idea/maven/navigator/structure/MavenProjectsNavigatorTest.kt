@@ -5,6 +5,7 @@ import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.PlatformTestUtil
@@ -389,7 +390,9 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
 
     readFiles(projectPom)
     withContext(Dispatchers.EDT) {
-      assertTrue(rootNodes[0].navigatable!!.canNavigateToSource())
+      writeIntentReadAction {
+        assertTrue(rootNodes[0].navigatable!!.canNavigateToSource())
+      }
     }
   }
 

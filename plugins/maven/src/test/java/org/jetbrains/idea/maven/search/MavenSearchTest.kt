@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.UsefulTestCase
@@ -49,10 +50,12 @@ class MavenSearchTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
 
     withContext(Dispatchers.EDT) {
-      val m1Psi = PsiManager.getInstance(project).findFile(m1File)
-      val m2Psi = PsiManager.getInstance(project).findFile(m2File)
-      UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
-      UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
+      writeIntentReadAction {
+        val m1Psi = PsiManager.getInstance(project).findFile(m1File)
+        val m2Psi = PsiManager.getInstance(project).findFile(m2File)
+        UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
+        UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
+      }
     }
   }
 

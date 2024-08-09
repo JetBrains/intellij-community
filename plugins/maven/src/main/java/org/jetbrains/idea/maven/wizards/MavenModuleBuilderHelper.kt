@@ -6,6 +6,7 @@ import com.intellij.openapi.GitSilentFileAdderProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -110,7 +111,9 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
           showError(project, RuntimeException("Project is not valid"))
           return@withContext
         }
-        EditorHelper.openInEditor(getPsiFile(project, pom)!!)
+        writeIntentReadAction {
+          EditorHelper.openInEditor(getPsiFile(project, pom)!!)
+        }
         if (myArchetype != null) generateFromArchetype(project, pom)
       }
     }

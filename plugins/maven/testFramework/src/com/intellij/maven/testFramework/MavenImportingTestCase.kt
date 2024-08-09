@@ -11,6 +11,8 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
@@ -36,6 +38,7 @@ import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -425,16 +428,16 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertTrue("Auto-reload is disabled in this test", isAutoReloadEnabled)
   }
 
-  protected suspend fun assertHasPendingProjectForReload() {
+  protected fun assertHasPendingProjectForReload() {
     assertAutoReloadIsEnabled()
-    awaitConfiguration()
+    blockTillCinfigurationReady()
     assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
     assertNotEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
-  protected suspend fun assertNoPendingProjectForReload() {
+  protected fun assertNoPendingProjectForReload() {
     assertAutoReloadIsEnabled()
-    awaitConfiguration()
+    blockTillCinfigurationReady()
     assertFalse(myNotificationAware!!.isNotificationVisible())
     assertEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
@@ -464,6 +467,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertFalse("Call awaitConfiguration() from background thread", isEdt)
     Observation.awaitConfiguration(project) { message ->
       logConfigurationMessage(message)
+    }
+  }
+
+  protected fun blockTillCinfigurationReady() {
+    runBlockingCancellable {
+      awaitConfiguration()
     }
   }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -102,10 +103,10 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
   }
 
   suspend fun waitForProjectCreation(createProject: () -> Project): Project {
-    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { createProject() } }
+    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { writeIntentReadAction { createProject() } } }
   }
 
   suspend fun waitForModuleCreation(createModule: () -> Module): Module {
-    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { createModule() } }
+    return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { writeIntentReadAction { createModule() } } }
   }
 }

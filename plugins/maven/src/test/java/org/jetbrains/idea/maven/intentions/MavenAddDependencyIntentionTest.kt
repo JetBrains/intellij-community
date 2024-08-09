@@ -2,6 +2,7 @@ package org.jetbrains.idea.maven.intentions
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -86,22 +87,23 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
   }
 
   private fun doTest(classText: String, referenceText: String?) = runBlocking(Dispatchers.EDT) {
-    fixture.configureByText("A.java", classText)
-    ReadAction.nonBlocking(Callable {
-      val element = PsiTreeUtil.getParentOfType(fixture.getFile().findElementAt(fixture.getCaretOffset()),
-                                                PsiJavaCodeReferenceElement::class.java)
+    writeIntentReadAction {
+      fixture.configureByText("A.java", classText)
+      ReadAction.nonBlocking(Callable {
+        val element = PsiTreeUtil.getParentOfType(fixture.getFile().findElementAt(fixture.getCaretOffset()),
+                                                  PsiJavaCodeReferenceElement::class.java)
 
-      assertNull(element!!.resolve())
+        assertNull(element!!.resolve())
 
-      val fix = AddMavenDependencyQuickFix(element)
+        val fix = AddMavenDependencyQuickFix(element)
 
-      if (referenceText == null) {
-        assertFalse(fix.isAvailable(project, fixture.getEditor(), fixture.getFile()))
-      }
-      else {
-        assertEquals(fix.getReferenceText(), referenceText)
-      }
-    }).inSmartMode(project).executeSynchronously()
-
+        if (referenceText == null) {
+          assertFalse(fix.isAvailable(project, fixture.getEditor(), fixture.getFile()))
+        }
+        else {
+          assertEquals(fix.getReferenceText(), referenceText)
+        }
+      }).inSmartMode(project).executeSynchronously()
+    }
   }
 }

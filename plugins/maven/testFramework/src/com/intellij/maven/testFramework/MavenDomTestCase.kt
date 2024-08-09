@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -159,7 +160,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     assertTrue(textOffset > 0)
     val offset = textOffset + caretOffset
     withContext(Dispatchers.EDT) {
-      getEditor(f).caretModel.moveToOffset(offset)
+      val editor = getEditor(f)
+      //maybe readaction
+      writeIntentReadAction {
+        editor.caretModel.moveToOffset(offset)
+      }
     }
   }
 
@@ -418,7 +423,10 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     MavenLog.LOG.warn("checkHighlighting: test configured")
     try {
       withContext(Dispatchers.EDT) {
-        fixture.testHighlighting(true, false, true, f)
+        //readaction is not enough
+        writeIntentReadAction {
+          fixture.testHighlighting(true, false, true, f)
+        }
       }
     }
     catch (throwable: Throwable) {
@@ -474,7 +482,10 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     assertNotNull(renameHandler)
     assertInstanceOf(renameHandler, VariableInplaceRenameHandler::class.java)
     withContext(Dispatchers.EDT) {
-      CodeInsightTestUtil.doInlineRename(renameHandler as VariableInplaceRenameHandler?, value, fixture)
+      //maybe readaction
+      writeIntentReadAction {
+        CodeInsightTestUtil.doInlineRename(renameHandler as VariableInplaceRenameHandler?, value, fixture)
+      }
     }
   }
 
@@ -494,7 +505,10 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   private suspend fun invokeRename(context: DataContext, renameHandler: RenameHandler) {
     withContext(Dispatchers.EDT) {
-      renameHandler.invoke(project, PsiElement.EMPTY_ARRAY, context)
+      //maybe readaction
+      writeIntentReadAction {
+        renameHandler.invoke(project, PsiElement.EMPTY_ARRAY, context)
+      }
     }
   }
 
@@ -538,7 +552,10 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     val editor = getEditor(file)
     val psiFile = getTestPsiFile(file)
     withContext(Dispatchers.EDT) {
-      HighlightUsagesHandler.invoke(project, editor, psiFile)
+      //readaction is not enough
+      writeIntentReadAction {
+        HighlightUsagesHandler.invoke(project, editor, psiFile)
+      }
     }
 
     val highlighters = editor.markupModel.allHighlighters
@@ -579,14 +596,17 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun doHighlighting(file: VirtualFile): Collection<HighlightInfo> {
     return withContext(Dispatchers.EDT) {
-      refreshFiles(listOf(file))
-      val content = String(file.contentsToByteArray())
-      MavenLog.LOG.warn("Checking highlighting in file $file:\n$content")
-      fixture.openFileInEditor(file)
-      MavenLog.LOG.warn("Text in editor: ${fixture.editor.document.text}")
-      val highlightingInfos = fixture.doHighlighting()
-      MavenLog.LOG.warn("Highlighting results: ${highlightingInfos.joinToString { "\n${it.severity} ${it.description} (${it.startOffset}, ${it.endOffset})" }}")
-      highlightingInfos
+      //readaction is not enough
+      writeIntentReadAction {
+        refreshFiles(listOf(file))
+        val content = String(file.contentsToByteArray())
+        MavenLog.LOG.warn("Checking highlighting in file $file:\n$content")
+        fixture.openFileInEditor(file)
+        MavenLog.LOG.warn("Text in editor: ${fixture.editor.document.text}")
+        val highlightingInfos = fixture.doHighlighting()
+        MavenLog.LOG.warn("Highlighting results: ${highlightingInfos.joinToString { "\n${it.severity} ${it.description} (${it.startOffset}, ${it.endOffset})" }}")
+        highlightingInfos
+      }
     }
   }
 

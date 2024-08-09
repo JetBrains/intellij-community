@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.VirtualFile
@@ -200,24 +201,28 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 
   private suspend fun checkGutters(virtualFile: VirtualFile, expectedFileContent: String, expectedProperties: Collection<String>) {
     withContext(Dispatchers.EDT) {
-      val file = PsiManager.getInstance(project).findFile(virtualFile)!!
-      val text = file.text
-      TestCase.assertTrue("Unexpected pom content:\n$text", text.contains(expectedFileContent))
+      //maybe narrower
+      //maybe readaction
+      writeIntentReadAction {
+        val file = PsiManager.getInstance(project).findFile(virtualFile)!!
+        val text = file.text
+        TestCase.assertTrue("Unexpected pom content:\n$text", text.contains(expectedFileContent))
 
-      //fixture.configureFromExistingVirtualFile(virtualFile)
-      fixture.configureByText("pom.xml", text)
-      val highlighting = fixture.doHighlighting()
-      MavenLog.LOG.warn("Highlighting:\n\n" + highlighting.joinToString("\n\n") { it.toString() })
-      val actualProperties = highlighting
-        .filter { it.gutterIconRenderer != null }
-        .map { text.substring(it.getStartOffset(), it.getEndOffset()) }
-        .map { it.replace(" ", "") }
-        .toSet()
+        //fixture.configureFromExistingVirtualFile(virtualFile)
+        fixture.configureByText("pom.xml", text)
+        val highlighting = fixture.doHighlighting()
+        MavenLog.LOG.warn("Highlighting:\n\n" + highlighting.joinToString("\n\n") { it.toString() })
+        val actualProperties = highlighting
+          .filter { it.gutterIconRenderer != null }
+          .map { text.substring(it.getStartOffset(), it.getEndOffset()) }
+          .map { it.replace(" ", "") }
+          .toSet()
 
-      val expectedPropertiesClearing = expectedProperties
-        .map { it.replace(" ", "") }
-        .toSet()
-      assertEquals(expectedPropertiesClearing, actualProperties)
+        val expectedPropertiesClearing = expectedProperties
+          .map { it.replace(" ", "") }
+          .toSet()
+        assertEquals(expectedPropertiesClearing, actualProperties)
+      }
     }
   }
 }

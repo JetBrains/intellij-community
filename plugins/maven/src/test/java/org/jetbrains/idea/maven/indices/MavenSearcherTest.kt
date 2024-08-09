@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.searcher.MavenLuceneIndexer
@@ -37,8 +38,10 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   override fun setUp()  {
     super.setUp()
     runBlocking(Dispatchers.EDT) {
-      myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
-      myIndicesFixture.setUp()
+      writeIntentReadAction {
+        myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
+        myIndicesFixture.setUp()
+      }
     }
     runBlocking {
       MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()

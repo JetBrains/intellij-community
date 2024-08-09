@@ -252,7 +252,9 @@ abstract class MavenTestCase : UsefulTestCase() {
     else {
       runBlockingMaybeCancellable {
         withContext(Dispatchers.EDT) {
-          tearDownFixtures()
+          writeIntentReadAction {
+            tearDownFixtures()
+          }
         }
       }
     }

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.search
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.refactoring.rename.RenameDialog
@@ -14,8 +15,10 @@ import org.junit.Test
 class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   private suspend fun renameDirectory(directory: PsiDirectory, newName: String) {
     withContext(Dispatchers.EDT) {
-      val renameDialog = RenameDialog(project, directory, directory, null)
-      renameDialog.performRename(newName)
+      writeIntentReadAction {
+        val renameDialog = RenameDialog(project, directory, directory, null)
+        renameDialog.performRename(newName)
+      }
     }
   }
 
