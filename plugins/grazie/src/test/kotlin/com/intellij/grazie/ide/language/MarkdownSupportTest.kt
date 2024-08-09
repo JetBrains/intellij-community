@@ -21,4 +21,10 @@ class MarkdownSupportTest : GrazieTestBase() {
     myFixture.launchAction(myFixture.findSingleIntention("gather"))
     myFixture.checkResult("Please, gather[ the](url) documentation.") // the result could be different, but the markup should still be preserved
   }
+
+  fun `test no highlighting in a very large file to avoid slow analysis`() {
+    val text = "This is an very nice mistake in English text.\n\n".repeat(10_000)
+    myFixture.configureByText("a.md", text)
+    myFixture.checkHighlighting()
+  }
 }
