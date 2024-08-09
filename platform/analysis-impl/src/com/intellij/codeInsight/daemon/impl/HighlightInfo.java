@@ -372,7 +372,7 @@ public class HighlightInfo implements Segment {
     return highlighter;
   }
 
-  public void setHighlighter(@Nullable RangeHighlighterEx highlighter) {
+  public void setHighlighter(@NotNull RangeHighlighterEx highlighter) {
     this.highlighter = highlighter;
   }
 
@@ -468,9 +468,7 @@ public class HighlightInfo implements Segment {
     if (obj == this) return true;
     if (!(obj instanceof HighlightInfo info)) return false;
 
-    return info.startOffset == startOffset &&
-           info.endOffset == endOffset &&
-           attributesEqual(info);
+    return equalsByActualOffset(info);
   }
 
   protected boolean equalsByActualOffset(@NotNull HighlightInfo info) {
@@ -497,9 +495,9 @@ public class HighlightInfo implements Segment {
 
   @Override
   public @NonNls String toString() {
-    String s = "HighlightInfo(" + startOffset + "," + endOffset + ")";
-    if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
-      s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
+    String s = "HighlightInfo(" + getStartOffset() + "," + getEndOffset() + ")";
+    if (getStartOffset() != startOffset || getEndOffset() != endOffset) {
+      s += "; created as: (" + startOffset + "," + endOffset + ")";
     }
     if (highlighter != null) s += " text='" + StringUtil.first(getText(), 40, true) + "'";
     if (getDescription() != null) s += ", description='" + getDescription() + "'";

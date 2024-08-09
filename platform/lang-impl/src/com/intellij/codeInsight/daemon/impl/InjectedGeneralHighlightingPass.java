@@ -81,17 +81,19 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     TextAttributesKey fragmentKey = EditorColors.createInjectedLanguageFragmentKey(myFile.getLanguage());
     Set<@NotNull PsiFile> injected = ConcurrentCollectionFactory.createConcurrentSet();  // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
-    processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, injected,
-                            (injectedPsi, places) ->
-      runAnnotatorsAndVisitorsOnInjectedPsi(injectedLanguageManager, injectedPsi, places, fragmentKey, (toolId, psiElement, infos) -> {
-        myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, infos, getDocument(), injectedPsi, myProject, getHighlightingSession(), HighlighterRecyclerPickup.EMPTY);
-        if (!infos.isEmpty()) {
-          synchronized (myHighlights) {
-            myHighlights.addAll(infos);
+    ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), recycler -> {
+      processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, injected,
+                              (injectedPsi, places) ->
+        runAnnotatorsAndVisitorsOnInjectedPsi(injectedLanguageManager, injectedPsi, places, fragmentKey, (toolId, psiElement, infos) -> {
+          myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, infos, getDocument(), injectedPsi, myProject, getHighlightingSession(), recycler);
+          if (!infos.isEmpty()) {
+            synchronized (myHighlights) {
+              myHighlights.addAll(infos);
+            }
           }
-        }
-      })
-    );
+        })
+      );
+    });
 
     synchronized (myHighlights) {
       // injections were re-calculated, remove highlights stuck in highlightInfoUpdater from the previous invalid injection fragments
@@ -200,9 +202,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
               // convert injected infos to host
               List<? extends HighlightInfo> hostInfos = infos.isEmpty()
                                                         ? infos
-                                                        : ContainerUtil.flatMap(infos, info -> createPatchedInfos(info, injectedPsi,
-                                                                                                                  documentWindow,
-                                                                                                                  injectedLanguageManager));
+                                                        : ContainerUtil.flatMap(infos, info -> createPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager));
               resultSink.accept(toolId, psiElement, hostInfos);
             });
         });

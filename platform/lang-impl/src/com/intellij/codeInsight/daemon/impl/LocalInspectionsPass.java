@@ -96,7 +96,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
       List<PsiFile> injectedFragments = List.of();
     };
     if (!toolWrappers.isEmpty()) {
-      Consumer<? super HighlighterRecyclerPickup> withRecycler = invalidPsiRecycler -> {
+      Consumer<? super ManagedHighlighterRecycler> withRecycler = invalidPsiRecycler -> {
         InspectionRunner.ApplyIncrementallyCallback applyIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) -> {
           List<HighlightInfo> allInfos = descriptors.isEmpty() ? null : new ArrayList<>(descriptors.size());
           for (ProblemDescriptor descriptor : descriptors) {
@@ -147,10 +147,10 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
         result.injectedFragments = runner.getInjectedFragments();
       };
       if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
-        impl.runWithInvalidPsiRecycler(getHighlightingSession(), true, withRecycler);
+        impl.runWithInvalidPsiRecycler(getHighlightingSession(), HighlightInfoUpdaterImpl.WhatTool.INSPECTION, withRecycler);
       }
       else {
-        withRecycler.accept(HighlighterRecyclerPickup.EMPTY);
+        ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), withRecycler);
       }
     }
     if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
