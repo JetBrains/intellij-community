@@ -874,7 +874,6 @@ f:com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 - com.intellij.codeHighlighting.BackgroundEditorHighlighter
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - createPassesForEditor():com.intellij.codeHighlighting.TextEditorHighlightingPass[]
-- f:getPasses(I[]):java.util.List
 f:com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 - com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
