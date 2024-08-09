@@ -805,7 +805,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   @Override
   public void advanceLexer() {
-    ProgressIndicatorProvider.checkCanceled();
+    if ((myCurrentLexeme & 0xff) == 0) {
+      ProgressIndicatorProvider.checkCanceled();
+    }
 
     if (eof()) return;
 
@@ -968,7 +970,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       }
     }
 
-    if (rootNode.getTextLength() != myText.length()) {
+    if (LOG.isDebugEnabled() && rootNode.getTextLength() != myText.length()) {
       LOG.error("Inconsistent root node. " +
                 "; node type: " + rootNode.getElementType() +
                 "; text length: " + myText.length() +
@@ -1306,7 +1308,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private int insertLeaves(int curToken, int lastIdx, @NotNull CompositeElement curNode) {
     lastIdx = Math.min(lastIdx, myLexemeCount);
     while (curToken < lastIdx) {
-      ProgressIndicatorProvider.checkCanceled();
+      if ((curToken & 0xff) == 0) {
+        ProgressIndicatorProvider.checkCanceled();
+      }
       int start = myLexStarts[curToken];
       int end = myLexStarts[curToken + 1];
       if (start < end || myLexTypes[curToken] instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in Python
