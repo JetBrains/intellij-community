@@ -123,7 +123,6 @@ final class UpdatePluginsApp implements ApplicationStarter {
                                                                                   PluginId pluginId,
                                                                                   PluginId dependencyId) {
     if (PluginManagerCore.isPluginInstalled(dependencyId)
-        || !PluginManagerCore.getBuildNumber().getProductCode().equals("IU")
         || !ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(pluginId))
         || ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(dependencyId))) {
       return pluginsToUpdate;
