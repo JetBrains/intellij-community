@@ -92,19 +92,18 @@ internal class SmoothRobot : Robot {
   }
 
   override fun click(component: Component, mouseButton: MouseButton, counts: Int) {
-    clickWithRetry(component, mouseButton, counts)
+    clickWithRetry(component, null, mouseButton, counts)
   }
 
-  private fun clickWithRetry(component: Component, mouseButton: MouseButton, counts: Int) {
+  private fun clickWithRetry(component: Component, where: Point?, mouseButton: MouseButton, counts: Int) {
     if (useInputEvents()) {
       postClickEvent(component, mouseButton, counts)
       return
     }
     //we don't want to register mouse listener to component that doesn't have mouse listeners
     //this will break event propagation to a parent component
-    if (component.mouseListeners.size == 0) {
-      moveMouse(component)
-      basicRobot.click(component, mouseButton, counts)
+    if (component.mouseListeners.isEmpty()) {
+      moveMouseAndClick(component, where, mouseButton, counts)
       return
     }
 
@@ -132,10 +131,8 @@ internal class SmoothRobot : Robot {
 
       component.addMouseListener(mouseListener)
 
-      moveMouse(component)
+      moveMouseAndClick(component, where, mouseButton, counts)
 
-      ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
-      basicRobot.click(component, mouseButton, counts)
       val clicked = clickLatch.await(3, TimeUnit.SECONDS)
       if (!clicked) {
         logger.warn("Repeating click. Click was unsuccessful on $component")
@@ -380,12 +377,7 @@ internal class SmoothRobot : Robot {
   }
 
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
-    if (useInputEvents()) {
-      postClickEvent(c, button, times, where)
-    }
-    else {
-      moveMouseAndClick(c, where, button, times)
-    }
+    clickWithRetry(c, where, button, times)
   }
 
   //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
@@ -394,7 +386,7 @@ internal class SmoothRobot : Robot {
   }
 
   override fun click(where: Point, button: MouseButton, times: Int) {
-    moveMouseAndClick(null, where, button, times)
+    moveMouseAndClick(where, button, times)
   }
 
   override fun pressKeyWhileRunning(keyCode: Int, runnable: Runnable?) {
@@ -472,11 +464,23 @@ internal class SmoothRobot : Robot {
 
   private fun isEdt() = SwingUtilities.isEventDispatchThread()
 
-  private fun moveMouseAndClick(c: Component? = null, where: Point, button: MouseButton, times: Int) {
-    if (c != null) moveMouse(c, where.x, where.y) else moveMouse(where.x, where.y)
+  private fun moveMouseAndClick(where: Point, button: MouseButton, times: Int) {
+    moveMouse(where.x, where.y)
     //pause between moving cursor and performing a click.
     pause(waitConst)
-    myEdtAwareClick(button, times, where, c)
+    myEdtAwareClick(button, times, where, null)
+  }
+
+  private fun moveMouseAndClick(component: Component, where: Point?, button: MouseButton, times: Int) {
+    if (where != null) {
+      moveMouse(component, where)
+      ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
+      basicRobot.click(component, where, button, times)
+    } else {
+      moveMouse(component)
+      ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
+      basicRobot.click(component, button, times)
+    }
   }
 
   private fun moveMouseWithAttempts(c: Component, x: Int, y: Int, attempts: Int = 3) {
