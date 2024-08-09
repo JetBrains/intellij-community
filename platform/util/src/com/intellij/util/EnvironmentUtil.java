@@ -538,7 +538,10 @@ public final class EnvironmentUtil {
   private static final Pattern pattern = Pattern.compile("\\$(.*?)\\$");
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {
-    LinkedHashMap<String, String> lookup = new LinkedHashMap<>(envs);
+    // On Windows, names of environment variables are case-insensitive. On UNIX, names are case-sensitive.
+    Comparator<String> keyComparator = SystemInfoRt.isWindows ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+    Map<String, String> lookup = new TreeMap<>(keyComparator);
+    lookup.putAll(envs);
     lookup.putAll(parentEnv);
     for (Map.Entry<String, String> entry : envs.entrySet()) {
       String key = entry.getKey();
