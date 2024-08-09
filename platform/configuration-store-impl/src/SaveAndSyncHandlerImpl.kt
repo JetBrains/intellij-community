@@ -72,7 +72,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         .collect {
           val eventPublisher = eventPublisher
           withContext(Dispatchers.EDT) {
-            blockingContext {
+            writeIntentReadAction {
               eventPublisher.beforeRefresh()
               refreshOpenFiles()
               maybeRefresh(ModalityState.nonModal())

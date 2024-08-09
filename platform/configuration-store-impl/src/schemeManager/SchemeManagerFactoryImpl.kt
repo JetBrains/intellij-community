@@ -3,6 +3,8 @@ package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory

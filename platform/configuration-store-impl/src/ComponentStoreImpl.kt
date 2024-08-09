@@ -9,9 +9,7 @@ import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -823,7 +821,8 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
 
 internal suspend fun getStateForComponent(component: PersistentStateComponent<*>, stateSpec: State): Any? = when {
   component is SerializablePersistentStateComponent<*> -> component.state
-  stateSpec.getStateRequiresEdt -> withContext(Dispatchers.EDT) { component.state }
+  //maybe readaction
+  stateSpec.getStateRequiresEdt -> withContext(Dispatchers.EDT) { writeIntentReadAction { component.state } }
   else -> readAction { component.state }
 }
 

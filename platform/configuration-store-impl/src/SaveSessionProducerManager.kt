@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
 import java.util.*
 
@@ -42,6 +44,14 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
   protected suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
     if (isUseVfsForWrite) {
       writeAction {
+        for (saveSession in saveSessions) {
+          saveSessionBlocking(saveSession, saveResult)
+        }
+      }
+    }
+    else if (EDT.isCurrentThreadEdt()) {
+      @Suppress("ForbiddenInSuspectContextMethod")
+      ApplicationManager.getApplication().runWriteAction {
         for (saveSession in saveSessions) {
           saveSessionBlocking(saveSession, saveResult)
         }
