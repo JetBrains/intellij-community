@@ -132,8 +132,11 @@ public class BreakpointManager {
       public void breakpointChanged(@NotNull XBreakpoint xBreakpoint) {
         Breakpoint<?> breakpoint = getJavaBreakpoint(xBreakpoint);
         if (breakpoint != null) {
-          breakpoint.scheduleReload();
-          breakpoint.updateUI();
+          //maybe readaction
+          ReadAction.run(() -> {
+            breakpoint.scheduleReload();
+            breakpoint.updateUI();
+          });
         }
       }
     });
