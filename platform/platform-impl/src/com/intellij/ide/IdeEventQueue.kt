@@ -1042,7 +1042,7 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
     runnable()
   }
   else {
-    val runnableWithWIL = {  WriteIntentReadAction.run(runnable) }
+    val runnableWithWIL = if (isCoroutineWILEnabled) { { WriteIntentReadAction.run(runnable) } } else { runnable }
     transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnableWithWIL)
   }
 }

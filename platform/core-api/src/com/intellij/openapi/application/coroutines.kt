@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.ThrowableComputable
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asContextElement
@@ -238,6 +239,28 @@ suspend fun <T> writeAction(action: () -> T): T {
     blockingContext {
       ApplicationManager.getApplication().runWriteAction(Computable(action))
     }
+  }
+}
+
+/**
+ * Runs given [action] under [write intent read lock][com.intellij.openapi.application.Application.runWriteIntentReadAction].
+ *
+ * Acquiring the write intent lock happens in blocking manner,
+ * i.e. [runWriteIntentReadAction][com.intellij.openapi.application.Application.runWriteIntentReadAction] call will block
+ * until all currently running write actions are finished.
+ *
+ * NB This function is an API stub.
+ * The implementation will change once running write actions would be allowed on other threads.
+ * This function exists to make it possible to use it in suspending contexts
+ * before the platform is ready to handle write actions differently.
+ *
+ * @see readAndWriteAction
+ * @see com.intellij.openapi.command.writeCommandAction
+ */
+@Experimental
+suspend fun <T> writeIntentReadAction(action: () -> T): T {
+  return blockingContext {
+    ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable(action))
   }
 }
 
