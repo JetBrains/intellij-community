@@ -20,6 +20,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
   protected final GlobalSearchScope myScope;
   protected final JavaPsiFacade myFacade;
   private final GroovyPsiManager myGroovyPsiManager;
+  private final Object myResolveResultGuardKey = new Object();
 
   public GrLiteralClassType(@NotNull LanguageLevel languageLevel, @NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
     super(languageLevel);
@@ -57,7 +58,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
       @Override
       @NotNull
       public PsiSubstitutor getSubstitutor() {
-        PsiSubstitutor substitutor = doPreventingRecursion(GrLiteralClassType.this, false, () -> mySubstitutor.getValue());
+        PsiSubstitutor substitutor = doPreventingRecursion(myResolveResultGuardKey, false, () -> mySubstitutor.getValue());
         return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
       }
 
