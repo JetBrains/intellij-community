@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
+import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefFocusHandler;
 import org.cef.handler.CefFocusHandlerAdapter;
@@ -315,7 +316,8 @@ public class JBCefBrowser extends JBCefBrowserBase {
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        if (JBCefAppArmorUtils.areUnprivilegedUserNamespacesRestricted()) {
+        CefSettings settings = JBCefApp.getInstance().getCefSettings();
+        if (settings != null && !settings.no_sandbox && JBCefAppArmorUtils.areUnprivilegedUserNamespacesRestricted()) {
           SwingUtilities.invokeLater(() -> {
             removeAll();
             add(JBCefAppArmorUtils.getUnprivilegedUserNamespacesRestrictedStubPanel(), BorderLayout.CENTER);

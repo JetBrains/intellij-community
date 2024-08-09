@@ -4,6 +4,7 @@ kotlin/reflect/KMutableProperty0
 kotlin/reflect/KProperty
 org/cef/CefBrowserSettings
 org/cef/CefClient
+org/cef/CefSettings
 org/cef/browser/CefBrowser
 org/cef/browser/CefFrame
 org/cef/browser/CefMessageRouter
