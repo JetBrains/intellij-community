@@ -59,4 +59,14 @@ internal class TextTest {
     assertTrue("public void Method<TA, in TB,out    TC>()".looksLikeCode())
     assertTrue("public void Method<in (TA, TB, TC)>()".looksLikeCode())
   }
+
+  @Test
+  fun `testLooksLikeCode Java loop`() {
+    assertTrue("for (Person person : people)".looksLikeCode())
+  }
+
+  @Test
+  fun `testLooksLikeCode Scala`() {
+    assertTrue("given j: Int = ???".looksLikeCode())
+  }
 }
