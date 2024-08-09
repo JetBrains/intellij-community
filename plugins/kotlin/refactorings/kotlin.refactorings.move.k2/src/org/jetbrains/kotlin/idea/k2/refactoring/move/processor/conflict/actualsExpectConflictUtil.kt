@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
-fun checkMoveExpectedDeclarationIntoPlatformCode(
+internal fun checkMoveExpectedDeclarationIntoPlatformCode(
     declarationsToMove: Iterable<KtNamedDeclaration>,
     targetModule: KaModule
 ): MultiMap<PsiElement, String> {
@@ -26,7 +26,7 @@ fun checkMoveExpectedDeclarationIntoPlatformCode(
     return conflicts
 }
 
-fun checkMoveActualDeclarationIntoCommonModule(
+internal fun checkMoveActualDeclarationIntoCommonModule(
     declarationsToMove: Iterable<KtNamedDeclaration>,
     targetModule: KaModule
 ): MultiMap<PsiElement, String> {
