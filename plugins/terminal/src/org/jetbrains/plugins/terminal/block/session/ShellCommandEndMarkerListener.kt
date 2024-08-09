@@ -6,6 +6,10 @@ import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.block.session.scraper.CommandEndMarkerListeningStringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.SimpleTerminalLinesCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.StringCollector
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class ShellCommandEndMarkerListener(
@@ -43,8 +47,15 @@ internal class ShellCommandEndMarkerListener(
   }
 
   private fun findCommandEndMarker(): Boolean {
-    val output = terminalTextBuffer.withLock { ShellCommandOutputScraperImpl.scrapeOutput(terminalTextBuffer, commandEndMarker) }
-    if (output.commandEndMarkerFound && found.compareAndSet(false, true)) {
+    var commandEndMarkerFound = false
+    terminalTextBuffer.withLock {
+      val stringCollector: StringCollector = CommandEndMarkerListeningStringCollector(SimpleStringCollector(), commandEndMarker) {
+        commandEndMarkerFound = true
+      }
+      // TODO no real need to collect all lines. Last lines of the screen must be enough.
+      terminalTextBuffer.collectLines(SimpleTerminalLinesCollector(stringCollector))
+    }
+    if (commandEndMarkerFound && found.compareAndSet(false, true)) {
       Disposer.dispose(disposable)
       onFound()
       return true
