@@ -114,49 +114,63 @@ public final class TrigramBuilder {
   /**
    * Produces <a href="https://en.wikipedia.org/wiki/Trigram">trigrams</a> from a given text.
    * <p>
-   * Every single trigram is represented by single integer where char bytes are stored with 8 bit offset.
+   * Every single trigram is represented by a single integer where char bytes are stored with 8-bit offsets.
    */
   public static @NotNull IntSet getTrigrams(@NotNull CharSequence text) {
-    final AddonlyIntSet set = new AddonlyIntSet();
-    int index = 0;
-    final char[] fileTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+    State state = new State(new AddonlyIntSet(1 + text.length() / 8));
+    char[] array = CharArrayUtil.fromSequenceWithoutCopying(text);
+    return array != null ? state.processArray(array) : state.processSequence(text);
+  }
 
-    ScanWordsLoop:
-    while (true) {
-      while (true) {
-        if (index == text.length()) break ScanWordsLoop;
-        final char c = fileTextArray != null ? fileTextArray[index]:text.charAt(index);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-            Character.isJavaIdentifierPart(c)) {
-          break;
+  private static class State {
+    private int tc1, tc2, idChars;
+    private final AddonlyIntSet set;
+
+    private State(AddonlyIntSet set) {
+      this.set = set;
+    }
+
+    void process(char c) {
+      if (c < ASCII_END ? idPartAscii[c] : Character.isJavaIdentifierPart(c)) {
+        c = StringUtilRt.toLowerCase(c);
+        if (idChars == 0) {
+          tc1 = tc2 = c;
+          idChars = 1;
+        } else {
+          if (++idChars >= 3) {
+            set.add((tc2 << 8) + c);
+          }
+          tc2 = (tc1 << 8) + c;
+          tc1 = c;
         }
-        index++;
-      }
-      int identifierStart = index;
-      while (true) {
-        index++;
-        if (index == text.length()) break;
-        final char c = fileTextArray != null ? fileTextArray[index]:text.charAt(index);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
-        if (!Character.isJavaIdentifierPart(c)) break;
-      }
-
-      int tc1 = 0;
-      int tc2 = 0;
-      int tc3;
-      for (int i = identifierStart, iters = 0; i < index; ++i, ++iters) {
-        char c = StringUtil.toLowerCase(fileTextArray != null ? fileTextArray[i]:text.charAt(i));
-        tc3 = (tc2 << 8) + c;
-        tc2 = (tc1 << 8) + c;
-        tc1 = c;
-
-        if (iters >= 2) {
-          set.add(tc3);
-        }
+      } else {
+        idChars = 0;
       }
     }
 
-    return set;
+    AddonlyIntSet processSequence(CharSequence text) {
+      int length = text.length();
+      for (int i = 0; i < length; i++) {
+        process(text.charAt(i));
+      }
+      return set;
+    }
+
+    AddonlyIntSet processArray(char[] text) {
+      for (char c : text) {
+        process(c);
+      }
+      return set;
+    }
+  }
+
+  private static final int ASCII_END = 128;
+  private static final boolean[] idPartAscii = new boolean[ASCII_END];
+
+  static {
+    for (char c = 0; c < idPartAscii.length; c++) {
+      idPartAscii[c] = Character.isJavaIdentifierPart(c);
+    }
   }
 
   private static final class AddonlyIntSet extends AbstractIntSet {
