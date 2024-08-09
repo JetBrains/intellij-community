@@ -152,7 +152,12 @@ private suspend fun unpackNativeLibraries(
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
         file = tempDir.resolve(path)!!
         if (!dryRun) {
-          extractFileToDisk(file = file, zipFile = zipFile, pathWithPackage = pathWithPackage, isExecutable = isExecutable)
+          try {
+            extractFileToDisk(file = file, zipFile = zipFile, pathWithPackage = pathWithPackage, isExecutable = isExecutable)
+          }
+          catch (e: Throwable) {
+            context.messages.error("Failed to extractFileToDisk: file=$file, path=$path, isExecutable=$isExecutable, os=$os", e)
+          }
         }
 
         if (os != OsFamily.LINUX) {
