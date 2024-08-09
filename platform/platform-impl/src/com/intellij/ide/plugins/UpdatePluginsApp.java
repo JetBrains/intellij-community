@@ -54,8 +54,8 @@ final class UpdatePluginsApp implements ApplicationStarter {
     final Collection<PluginDownloader> availableUpdates;
     try {
       updateCheckResult = ApplicationManager.getApplication().executeOnPooledThread(
-          () -> UpdateChecker.getInternalPluginUpdates()
-        ).get();
+        () -> UpdateChecker.getInternalPluginUpdates()
+      ).get();
     }
     catch (InterruptedException | ExecutionException e) {
       LOG.error("Failed to check plugin updates", e);
@@ -84,7 +84,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
       pluginsToUpdate = availableUpdates;
     }
 
-    pluginsToUpdate = hotfix242PythonSplit(pluginsToUpdate);
+    pluginsToUpdate = hotfix242InstallDependency(pluginsToUpdate, PluginId.getId("Pythonid"), PluginId.getId("PythonCore"));
 
     logInfo("Plugins to update: " +
             ContainerUtil.map(pluginsToUpdate, downloader -> downloader.getPluginName() + " version " + downloader.getPluginVersion()));
@@ -119,46 +119,46 @@ final class UpdatePluginsApp implements ApplicationStarter {
     LOG.info(msg);
   }
 
-  private static @NotNull Collection<PluginDownloader> hotfix242PythonSplit(@NotNull Collection<PluginDownloader> pluginsToUpdate) {
-    final PluginId pythonidId = PluginId.getId("Pythonid");
-    final PluginId pythonCoreId = PluginId.getId("PythonCore");
-    if (PluginManagerCore.isPluginInstalled(pythonCoreId)
+  private static @NotNull Collection<PluginDownloader> hotfix242InstallDependency(@NotNull Collection<PluginDownloader> pluginsToUpdate,
+                                                                                  PluginId pluginId,
+                                                                                  PluginId dependencyId) {
+    if (PluginManagerCore.isPluginInstalled(dependencyId)
         || !PluginManagerCore.getBuildNumber().getProductCode().equals("IU")
-        || !ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(pythonidId))
-        || ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(pythonCoreId))) {
+        || !ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(pluginId))
+        || ContainerUtil.exists(pluginsToUpdate, p -> p.getId().equals(dependencyId))) {
       return pluginsToUpdate;
     }
-    final @NotNull PluginDownloader pythonidDownloader = Objects.requireNonNull(
-      ContainerUtil.find(pluginsToUpdate, p -> p.getId().equals(pythonidId))
+    final @NotNull PluginDownloader pluginDownloader = Objects.requireNonNull(
+      ContainerUtil.find(pluginsToUpdate, p -> p.getId().equals(pluginId))
     );
-    if (!ContainerUtil.exists(pythonidDownloader.getDescriptor().getDependencies(), d -> d.getPluginId().equals(pythonCoreId))) {
-      logInfo("Plugin Pythonid does not depend on PythonCore");
+    if (!ContainerUtil.exists(pluginDownloader.getDescriptor().getDependencies(), d -> d.getPluginId().equals(dependencyId))) {
+      logInfo("Plugin " + pluginId + " does not depend on " + dependencyId);
       return pluginsToUpdate;
     }
-    final @Nullable PluginNode pythonCoreNode;
+    final @Nullable PluginNode dependencyNode;
     try {
-      pythonCoreNode = ApplicationManager.getApplication().executeOnPooledThread(
-        () -> MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(pythonCoreId)
+      dependencyNode = ApplicationManager.getApplication().executeOnPooledThread(
+        () -> MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(dependencyId)
       ).get();
     }
     catch (InterruptedException | ExecutionException e) {
-      LOG.error("Failed to process Pythonid plugin dependencies");
+      LOG.error("Failed to process " + pluginId + " plugin dependencies");
       return pluginsToUpdate;
     }
-    if (pythonCoreNode == null) {
-      logInfo("Failed to find a suitable PythonCore plugin");
+    if (dependencyNode == null) {
+      logInfo("Failed to find a suitable " + dependencyId + " plugin");
       return pluginsToUpdate;
     }
-    final PluginDownloader pythonCoreDownloader;
+    final PluginDownloader dependencyDownloader;
     try {
-      pythonCoreDownloader = PluginDownloader.createDownloader(pythonCoreNode);
+      dependencyDownloader = PluginDownloader.createDownloader(dependencyNode);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    logInfo("Added a required dependency for Pythonid plugin: PythonCore");
+    logInfo("Added a required dependency for " + pluginId + " plugin for installation: " + dependencyId);
     final var result = new ArrayList<>(pluginsToUpdate);
-    result.add(pythonCoreDownloader);
+    result.add(dependencyDownloader);
     return result;
   }
 }
