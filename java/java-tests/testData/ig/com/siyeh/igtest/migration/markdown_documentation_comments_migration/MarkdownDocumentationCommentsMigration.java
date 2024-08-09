@@ -341,3 +341,26 @@ public class MarkdownDocumentationCommentsMigration {
  * @see com.intellij.openapi.actionSystem.impl.SimpleDataContext
  */
 interface Nothing {}
+<warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+ * <h1>Ident formatter</h1>
+ * <h2>What does it do?</h2>
+ * <p>
+ * Creates list of lookup elements with priority and help text and correct indent.
+ * Indent has size of longest element to make it pretty formatted:
+ * <pre>
+ *   command_1         : command help text
+ *   very_long_command : help goes here
+ *   spam              : again here
+ * </pre>
+ * </p>
+ * <h2>How to use it?</h2>
+ * <p>
+ * Create it, fill with {@link #addElement(LookupElementBuilder, String)} or {@link #addElement(LookupElementBuilder, String, int)}
+ * and obtain result with {@link #getResult()}.
+ * </p>
+ * <h2>Priority</h2>
+ * <p>If <strong>at least</strong> one element has priority, elements would be prioritized. No priority will be used otherwise</p>
+ *
+ * @author Ilya.Kazakevich
+ */
+final class LookupWithIndentsBuilder {}

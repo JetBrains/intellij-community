@@ -326,3 +326,25 @@ public class MarkdownDocumentationCommentsMigration {
 /// @see com.intellij.openapi.actionSystem.CustomizedDataContext
 /// @see com.intellij.openapi.actionSystem.impl.SimpleDataContext
 interface Nothing {}
+/// # Ident formatter
+/// ## What does it do?
+/// 
+/// Creates list of lookup elements with priority and help text and correct indent.
+/// Indent has size of longest element to make it pretty formatted:
+/// <pre>
+///   command_1         : command help text
+///   very_long_command : help goes here
+///   spam              : again here
+/// </pre>
+/// 
+/// ## How to use it?
+/// 
+/// Create it, fill with [#addElement(LookupElementBuilder,String)] or [#addElement(LookupElementBuilder,String,int)]
+/// and obtain result with [#getResult()].
+/// 
+/// ## Priority
+/// 
+/// If **at least** one element has priority, elements would be prioritized. No priority will be used otherwise
+///
+/// @author Ilya.Kazakevich
+final class LookupWithIndentsBuilder {}

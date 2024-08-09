@@ -183,6 +183,36 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
             else if ("ul".equals(name)) {
               if (endTag) inList = false;
             }
+            else if ("h1".equals(name)) {
+              if (!endTag) {
+                result.append("# ");
+              }
+            }
+            else if ("h2".equals(name)) {
+              if (!endTag) {
+                result.append("## ");
+              }
+            }
+            else if ("h3".equals(name)) {
+              if (!endTag) {
+                result.append("### ");
+              }
+            }
+            else if ("h4".equals(name)) {
+              if (!endTag) {
+                result.append("#### ");
+              }
+            }
+            else if ("h5".equals(name)) {
+              if (!endTag) {
+                result.append("##### ");
+              }
+            }
+            else if ("h6".equals(name)) {
+              if (!endTag) {
+                result.append("####### ");
+              }
+            }
             else {
               result.append(html, tag, i + 1);
             }
