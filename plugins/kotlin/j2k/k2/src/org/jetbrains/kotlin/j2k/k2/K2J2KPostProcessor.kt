@@ -61,9 +61,9 @@ internal class K2J2KPostProcessor : PostProcessor {
 
             // Step 2: apply them
             forbidAnalysis("Apply J2K post-processings") {
-                runUndoTransparentActionInEdt(inWriteAction = true) {
-                    for (applier in appliers) {
-                        ProgressManager.checkCanceled()
+                for (applier in appliers) {
+                    ProgressManager.checkCanceled()
+                    runUndoTransparentActionInEdt(inWriteAction = true) {
                         try {
                             applier.apply()
                         } catch (e: ProcessCanceledException) {
