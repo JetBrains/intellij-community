@@ -185,7 +185,7 @@ internal fun latestChangeCommit(path: String, repo: Path): CommitInfo? {
   if (!latestChangeCommits.containsKey(file)) {
     synchronized(file) {
       if (!latestChangeCommits.containsKey(file)) {
-        val commitInfo = monoRepoMergeAwareCommitInfo(repo, path)
+        val commitInfo = pathInfo(repo, "--", path)
         if (commitInfo != null) {
           synchronized(latestChangeCommitsGuard) {
             latestChangeCommits = latestChangeCommits + (file to commitInfo)
@@ -196,26 +196,6 @@ internal fun latestChangeCommit(path: String, repo: Path): CommitInfo? {
     }
   }
   return latestChangeCommits.getValue(file)
-}
-
-private fun monoRepoMergeAwareCommitInfo(repo: Path, path: String) =
-  pathInfo(repo, "--", path)?.let { commitInfo ->
-    if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
-      val strippedPath = path.stripMergedRepoPrefix()
-      commitInfo.parents.asSequence().mapNotNull {
-        pathInfo(repo, it, "--", strippedPath)
-      }.firstOrNull()
-    }
-    else commitInfo
-  }
-
-private fun String.stripMergedRepoPrefix(): String = when {
-  startsWith("community/android/tools-base/") -> removePrefix("community/android/tools-base/")
-  startsWith("community/android/") -> removePrefix("community/android/")
-  startsWith("community/") -> removePrefix("community/")
-  startsWith("contrib/") -> removePrefix("contrib/")
-  startsWith("CIDR/") -> removePrefix("CIDR/")
-  else -> this
 }
 
 /**
