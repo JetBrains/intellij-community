@@ -576,5 +576,8 @@
     <extensionPoint name="recentProjectsBranchesProvider"
                     interface="com.intellij.ide.vcs.RecentProjectsBranchesProvider"
                     dynamic="true"/>
+    <extensionPoint name="documentationRequestBuilderProvider"
+                    interface="com.intellij.codeInsight.documentation.DocumentationRequestBuilderProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

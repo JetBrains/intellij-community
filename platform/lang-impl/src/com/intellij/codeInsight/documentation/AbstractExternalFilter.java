@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.io.RequestBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,6 +101,11 @@ public abstract class AbstractExternalFilter {
 
   @Nullable
   public String getExternalDocInfo(String url) throws Exception {
+    return getExternalDocInfoForElementInternal(url, null);
+  }
+
+  @Nullable
+  private String getExternalDocInfoForElementInternal(String url, @Nullable PsiElement element) throws Exception {
     Application app = ApplicationManager.getApplication();
     // May block indefinitely: shouldn't be called from EDT or under write lock
     app.assertIsNonDispatchThread();
@@ -108,7 +114,7 @@ public abstract class AbstractExternalFilter {
       return null;
     }
 
-    MyJavadocFetcher fetcher = new MyJavadocFetcher(url, (_url, input, result) -> doBuildFromStream(_url, input, result));
+    MyJavadocFetcher fetcher = new MyJavadocFetcher(url, element, (_url, input, result) -> doBuildFromStream(_url, input, result));
     try {
       app.executeOnPooledThread(fetcher).get();
     }
@@ -136,7 +142,7 @@ public abstract class AbstractExternalFilter {
 
   @Nullable
   public String getExternalDocInfoForElement(String docURL, PsiElement element) throws Exception {
-    return getExternalDocInfo(docURL);
+    return getExternalDocInfoForElementInternal(docURL, element);
   }
 
   protected void doBuildFromStream(String url, Reader input, StringBuilder data) throws IOException {
@@ -321,10 +327,12 @@ public abstract class AbstractExternalFilter {
     private final StringBuilder data = new StringBuilder();
     private final String url;
     private final MyDocBuilder myBuilder;
+    @Nullable private final PsiElement element;
     private Exception myException;
 
-    MyJavadocFetcher(String url, MyDocBuilder builder) {
+    MyJavadocFetcher(String url, @Nullable PsiElement element, MyDocBuilder builder) {
       this.url = url;
+      this.element = element;
       myBuilder = builder;
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourFree = false;
@@ -346,8 +354,11 @@ public abstract class AbstractExternalFilter {
         else {
           URL parsedUrl = BrowserUtil.getURL(url);
           if (parsedUrl != null) {
-            // gzip is disabled because in any case compressed JAR is downloaded
-            HttpRequests.request(parsedUrl.toString()).gzip(false).connect(request -> {
+            DocumentationRequestBuilderProvider.RequestContext context = new DocumentationRequestBuilderProvider.RequestContext(element);
+            RequestBuilder requestBuilder = DocumentationRequestBuilderProvider.createRequestBuilder(context, parsedUrl)
+              // gzip is disabled because in any case compressed JAR is downloaded
+              .gzip(false);
+            requestBuilder.connect(request -> {
               String contentEncoding = request.getConnection().getContentEncoding();
 
               byte[] bytes = request.readBytes(null);
