@@ -85,6 +85,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
     }
 
     pluginsToUpdate = hotfix242InstallDependency(pluginsToUpdate, PluginId.getId("Pythonid"), PluginId.getId("PythonCore"));
+    pluginsToUpdate = hotfix242InstallDependency(pluginsToUpdate, PluginId.getId("intellij.jupyter"), PluginId.getId("com.intellij.notebooks.core"));
 
     logInfo("Plugins to update: " +
             ContainerUtil.map(pluginsToUpdate, downloader -> downloader.getPluginName() + " version " + downloader.getPluginVersion()));
