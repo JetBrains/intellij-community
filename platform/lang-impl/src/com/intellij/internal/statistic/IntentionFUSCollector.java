@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
@@ -13,6 +13,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import org.jetbrains.annotations.NotNull;
@@ -25,33 +26,57 @@ import java.util.List;
  */
 public final class IntentionFUSCollector extends CounterUsagesCollector {
   private static final ClassEventField ID_FIELD = EventFields.Class("id");
+  private static final BooleanEventField DUMB_MODE_FIELD = EventFields.Boolean("dumb_mode");
   private static final IntEventField POSITION_FIELD = EventFields.Int("position");
   private static final IntEventField DISTANCE_FIELD = EventFields.Int("distance");
   private static final StringEventField INSPECTION_ID_FIELD =
     EventFields.StringValidatedByCustomRule("inspection_id", InspectionUsageFUSCollector.InspectionToolValidator.class);
 
-  private final static EventLogGroup GROUP = new EventLogGroup("intentions", 62);
+  private final static EventLogGroup GROUP = new EventLogGroup("intentions", 63);
+
   private final static VarargEventId CALLED =
-    GROUP.registerVarargEvent("called", ID_FIELD, EventFields.PluginInfo, EventFields.Language, DISTANCE_FIELD);
+    GROUP.registerVarargEvent("called",
+                              ID_FIELD,
+                              EventFields.PluginInfo,
+                              EventFields.Language,
+                              DISTANCE_FIELD,
+                              DUMB_MODE_FIELD);
+
   private final static VarargEventId SHOWN =
-    GROUP.registerVarargEvent("shown", ID_FIELD, EventFields.PluginInfo, EventFields.Language, POSITION_FIELD, INSPECTION_ID_FIELD, DISTANCE_FIELD);
-  private static final EventId2<Long, FileType> POPUP_DELAY =
-    GROUP.registerEvent("popup.delay", EventFields.DurationMs, EventFields.FileType);
+    GROUP.registerVarargEvent("shown",
+                              ID_FIELD,
+                              EventFields.PluginInfo,
+                              EventFields.Language,
+                              POSITION_FIELD,
+                              INSPECTION_ID_FIELD,
+                              DISTANCE_FIELD,
+                              DUMB_MODE_FIELD);
+
+  private static final EventId3<Long, FileType, Boolean> POPUP_DELAY =
+    GROUP.registerEvent("popup.delay",
+                        EventFields.DurationMs,
+                        EventFields.FileType,
+                        DUMB_MODE_FIELD);
 
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
   }
 
-  public static void record(@NotNull Project project, @NotNull CommonIntentionAction action, @NotNull Language language,
-                            @Nullable Editor hostEditor, int fixOffset) {
+  public static void record(@NotNull Project project,
+                            @NotNull CommonIntentionAction action,
+                            @NotNull Language language,
+                            @Nullable Editor hostEditor,
+                            int fixOffset) {
     final Class<?> clazz = getOriginalHandlerClass(action);
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
+    boolean dumb = DumbService.isDumb(project);
     CALLED.log(project,
                EventFields.PluginInfo.with(info),
                ID_FIELD.with(clazz),
                EventFields.Language.with(language),
-               DISTANCE_FIELD.with(getDistance(hostEditor, fixOffset)));
+               DISTANCE_FIELD.with(getDistance(hostEditor, fixOffset)),
+               DUMB_MODE_FIELD.with(dumb));
     FeatureUsageTracker.getInstance().triggerFeatureUsedByIntention(clazz);
   }
 
@@ -62,8 +87,10 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
 
   public static void reportShownIntentions(@NotNull Project project,
                                            @NotNull ListPopup popup,
-                                           @NotNull Language language, @NotNull Editor editor) {
+                                           @NotNull Language language,
+                                           @NotNull Editor editor) {
     @SuppressWarnings("unchecked") List<IntentionActionWithTextCaching> values = popup.getListStep().getValues();
+    boolean dumb = DumbService.isDumb(project);
     for (int i = 0; i < values.size(); i++) {
       IntentionActionWithTextCaching intention = values.get(i);
       final Class<?> clazz = getOriginalHandlerClass(intention.getAction());
@@ -75,7 +102,8 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
         EventFields.Language.with(language),
         POSITION_FIELD.with(i),
         INSPECTION_ID_FIELD.with(intention.getToolId()),
-        DISTANCE_FIELD.with(getDistance(editor, intention.getFixOffset()))
+        DISTANCE_FIELD.with(getDistance(editor, intention.getFixOffset())),
+        DUMB_MODE_FIELD.with(dumb)
       );
     }
   }
@@ -88,7 +116,8 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
    * Report time between Alt-Enter invocation and the intention popup appearing onscreen
    */
   public static void reportPopupDelay(@NotNull Project project, long delayMs, @NotNull FileType fileType) {
-    POPUP_DELAY.log(project, delayMs, fileType);
+    boolean dumb = DumbService.isDumb(project);
+    POPUP_DELAY.log(project, delayMs, fileType, dumb);
   }
 }
 
