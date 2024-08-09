@@ -94,8 +94,7 @@ public final class BuiltInServerOptions implements PersistentStateComponent<Buil
 
   public static void onBuiltInServerPortChanged() {
     CustomPortServerManager.EP_NAME.forEachExtensionSafe(extension -> {
-      CustomPortServerManagerBase baseManager = (CustomPortServerManagerBase) extension;
-      if (baseManager != null) {
+      if (extension instanceof CustomPortServerManagerBase baseManager) {
         baseManager.portChanged();
       }
     });
