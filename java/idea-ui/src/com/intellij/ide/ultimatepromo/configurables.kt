@@ -22,9 +22,11 @@ internal abstract class UltimatePromoConfigurable : ConfigurableWithId, Configur
 
 internal abstract class UltimateConfigurableProvider(private val clazz: KClass<out Configurable>) : ConfigurableProvider() {
   final override fun createConfigurable(): Configurable? {
-    if (!Registry.`is`("idea.ultimate.features.hints.enabled")) return null
-
     return clazz.java.getConstructor().newInstance()
+  }
+
+  final override fun canCreateConfigurable(): Boolean {
+    return Registry.`is`("idea.ultimate.features.hints.enabled")
   }
 }
 
