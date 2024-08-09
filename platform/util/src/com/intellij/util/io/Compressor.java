@@ -352,6 +352,15 @@ public abstract class Compressor implements Closeable {
         return FileVisitResult.CONTINUE;
       }
 
+      @Override
+      public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+        String name = entryName(file);
+        if (accept(name, file)) {
+          throw exc;
+        }
+        return FileVisitResult.CONTINUE;
+      }
+
       private String entryName(Path fileOrDir) {
         String relativeName = Compressor.entryName(root.relativize(fileOrDir).toString());
         return prefix.isEmpty() ? relativeName : prefix + '/' + relativeName;
