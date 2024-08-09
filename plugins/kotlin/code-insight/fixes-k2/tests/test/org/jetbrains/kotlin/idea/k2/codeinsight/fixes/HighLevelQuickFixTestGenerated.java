@@ -7927,6 +7927,75 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi")
+        public static class PublishedApi extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("existingStub.kt")
+            public void testExistingStub() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/existingStub.kt");
+            }
+
+            @TestMetadata("existingStubForVar.kt")
+            public void testExistingStubForVar() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/existingStubForVar.kt");
+            }
+
+            @TestMetadata("extension.kt")
+            public void testExtension() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/extension.kt");
+            }
+
+            @TestMetadata("extensionVar.kt")
+            public void testExtensionVar() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/extensionVar.kt");
+            }
+
+            @TestMetadata("generic.kt")
+            public void testGeneric() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/generic.kt");
+            }
+
+            @TestMetadata("genericDerived.kt")
+            public void testGenericDerived() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/genericDerived.kt");
+            }
+
+            @TestMetadata("genericFunction.kt")
+            public void testGenericFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/genericFunction.kt");
+            }
+
+            @TestMetadata("infix.kt")
+            public void testInfix() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/infix.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/simple.kt");
+            }
+
+            @TestMetadata("simpleVal.kt")
+            public void testSimpleVal() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/simpleVal.kt");
+            }
+
+            @TestMetadata("simpleVar.kt")
+            public void testSimpleVar() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/publishedApi/simpleVar.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/safeCall")
         public static class SafeCall extends AbstractHighLevelQuickFixTest {
             @java.lang.Override
