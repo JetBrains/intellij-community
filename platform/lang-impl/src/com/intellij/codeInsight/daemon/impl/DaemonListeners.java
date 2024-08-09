@@ -446,7 +446,7 @@ public final class DaemonListeners implements Disposable {
       for (RangeHighlighter highlighter : toRemove) {
         HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
         if (info != null) {
-          UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, myProject, info);
+          UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrorsInEDT(highlighter, myProject, info);
         }
       }
     }

@@ -444,7 +444,7 @@ public final class UpdateHighlightersUtil {
     for (HighlightInfo info : toRemove) {
       RangeHighlighterEx highlighter = info.getHighlighter();
       if (!highlighter.isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
-        disposeWithFileLevelIgnoreErrors(highlighter, project, info);
+        disposeWithFileLevelIgnoreErrorsInEDT(highlighter, project, info);
       }
     }
 
@@ -454,9 +454,9 @@ public final class UpdateHighlightersUtil {
   }
 
   @RequiresEdt
-  static void disposeWithFileLevelIgnoreErrors(@NotNull RangeHighlighter highlighter,
-                                               @NotNull Project project,
-                                               @NotNull HighlightInfo info) {
+  static void disposeWithFileLevelIgnoreErrorsInEDT(@NotNull RangeHighlighter highlighter,
+                                                    @NotNull Project project,
+                                                    @NotNull HighlightInfo info) {
     if (info.isFileLevelAnnotation()) {
       DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(highlighter.getDocument());
