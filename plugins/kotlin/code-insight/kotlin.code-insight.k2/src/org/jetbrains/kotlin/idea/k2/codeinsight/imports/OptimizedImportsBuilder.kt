@@ -42,7 +42,7 @@ internal class OptimizedImportsBuilder(
 
         val symbolsByParentFqName = HashMap<FqName, MutableSet<ImportableKaSymbol>>()
         for (importableSymbol in importableSymbols) {
-            val fqName = importableSymbol.run { computeImportableName() } ?: continue
+            val fqName = importableSymbol.run { computeImportableName() }
             for (name in usedReferencesData.usedDeclarations.getValue(fqName)) {
                 val alias = if (name != fqName.shortName()) name else null
 
@@ -70,7 +70,7 @@ internal class OptimizedImportsBuilder(
             val starImportPath = ImportPath(parentFqName, isAllUnder = true)
             if (starImportPath in importsToGenerate) continue
 
-            val fqNames = symbols.mapNotNull { importSymbolWithMapping(it) }.toSet()
+            val fqNames = symbols.map { importSymbolWithMapping(it) }.toSet()
 
             val nameCountToUseStar = nameCountToUseStar(symbols.first())
             val useExplicitImports = !starImportPath.isAllowedByRules() || (fqNames.size < nameCountToUseStar && !parentFqName.isInPackagesToUseStarImport())
@@ -80,7 +80,7 @@ internal class OptimizedImportsBuilder(
             } else {
                 symbols.asSequence()
                     .filter { it is ImportableKaClassLikeSymbol }
-                    .mapNotNull { importSymbolWithMapping(it) }
+                    .map { importSymbolWithMapping(it) }
                     .filterTo(classNamesToCheck) { needExplicitImport(it) }
 
                 if (fqNames.all { needExplicitImport(it) }) {
@@ -103,7 +103,7 @@ internal class OptimizedImportsBuilder(
                 val parentFqName = fqName.parent()
 
                 val siblingsToImport = symbolsByParentFqName.getValue(parentFqName)
-                for (descriptor in siblingsToImport.filter { it.run {computeImportableName() } == fqName }) {
+                for (descriptor in siblingsToImport.filter { it.run { computeImportableName() } == fqName }) {
                     siblingsToImport.remove(descriptor)
                 }
 
@@ -130,8 +130,8 @@ internal class OptimizedImportsBuilder(
         return ImportMapper.findCorrespondingKotlinFqName(fqName, apiVersion)
     }
 
-    private fun KaSession.importSymbolWithMapping(symbol: ImportableKaSymbol): FqName? {
-        val importableName = symbol.run { computeImportableName() } ?: return null
+    private fun KaSession.importSymbolWithMapping(symbol: ImportableKaSymbol): FqName {
+        val importableName = symbol.run { computeImportableName() }
 
         return findCorrespondingKotlinFqName(importableName) ?: importableName
     }
