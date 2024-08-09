@@ -155,7 +155,10 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         myEditor = createEditor(psiFile, document)
         lineHeight = myEditor!!.lineHeight
         myEditor!!.setBorder(if (myIsEditor) null else JBEmptyBorder(0, UIUtil.LARGE_VGAP, 0, 0))
-        add(myEditor!!.component, BorderLayout.CENTER)
+        //maybe readaction
+        writeIntentReadAction {
+          add(myEditor!!.component, BorderLayout.CENTER)
+        }
         invalidate()
         validate()
       }
@@ -164,7 +167,10 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         if (infos != myCachedSelectedUsageInfos // avoid moving viewport
             || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.searchPattern)
             || myCachedReplaceString != myPresentation.replaceString || myCachedCaseSensitive != myPresentation.isCaseSensitive) {
-          highlight(infos, myEditor!!, project, myShowTooltipBalloon, HighlighterLayer.ADDITIONAL_SYNTAX)
+          //maybe readaction
+          WriteIntentReadAction.run {
+            highlight(infos, myEditor!!, project, myShowTooltipBalloon, HighlighterLayer.ADDITIONAL_SYNTAX)
+          }
           myCachedSelectedUsageInfos = infos
           myCachedSearchPattern = myPresentation.searchPattern
           myCachedCaseSensitive = myPresentation.isCaseSensitive
