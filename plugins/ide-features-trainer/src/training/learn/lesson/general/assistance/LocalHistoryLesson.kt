@@ -7,8 +7,6 @@ import com.intellij.history.integration.ui.actions.LocalHistoryGroup
 import com.intellij.history.integration.ui.actions.ShowHistoryAction
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
@@ -281,7 +279,7 @@ class LocalHistoryLesson(
   }
 
   private fun findDiffGutterRect(ui: EditorGutterComponentEx): Rectangle? {
-    val editor = CommonDataKeys.EDITOR.getData(ui as DataProvider) ?: return null
+    val editor = ui.editor
     val offset = editor.document.charsSequence.indexOf(textToDelete)
     return if (offset != -1) {
       val lineIndex = editor.document.getLineNumber(offset)

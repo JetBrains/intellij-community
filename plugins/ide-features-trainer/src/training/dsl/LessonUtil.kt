@@ -15,8 +15,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -311,7 +309,7 @@ object LessonUtil {
       this.highlightInside = highlightInside
       this.usePulsation = usePulsation
     }.componentPart l@{ ui: EditorGutterComponentEx ->
-      if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
+      if (ui.editor != editor) return@l null
       val runGutterLines = (0 until editor.document.lineCount).mapNotNull { lineInd ->
         if (ui.getGutterRenderers(lineInd).any { (it as? LineMarkerInfo.LineMarkerGutterIconRenderer<*>)?.featureId == "run" })
           lineInd

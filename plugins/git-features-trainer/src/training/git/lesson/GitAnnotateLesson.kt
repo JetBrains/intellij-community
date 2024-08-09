@@ -5,8 +5,6 @@ import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.Editor
@@ -279,7 +277,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
         text(GitLessonsBundle.message("git.annotate.close.annotations") + " "
              + GitLessonsBundle.message("git.annotate.invoke.manually.2", strong(closeAnnotationsText)))
         triggerAndBorderHighlight().componentPart { ui: EditorGutterComponentEx ->
-          if (CommonDataKeys.EDITOR.getData(ui as DataProvider) == editor) {
+          if (ui.editor == editor) {
             Rectangle(ui.x + ui.annotationsAreaOffset, ui.y, ui.annotationsAreaWidth, ui.height)
           }
           else null
@@ -318,7 +316,6 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
 
   private fun EditorGutterComponentEx.checkInsideSplitterAndRightEditor(splitter: DiffSplitter?, partOfEditorText: String): Boolean {
     if (splitter != null && !isInsideSplitter(splitter, this)) return false
-    val editor = CommonDataKeys.EDITOR.getData(this as DataProvider) ?: return false
     return editor.document.charsSequence.contains(partOfEditorText)
   }
 
@@ -330,7 +327,6 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   }
 
   private fun EditorGutterComponentEx.getAnnotationRect(partOfLineText: String, rightOriented: Boolean): Rectangle? {
-    val editor = CommonDataKeys.EDITOR.getData(this as DataProvider) ?: return null
     val offset = editor.document.charsSequence.indexOf(partOfLineText)
     if (offset == -1) return null
     return invokeAndWaitIfNeeded {
