@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiCompiledFile;
@@ -20,11 +21,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
+@ApiStatus.Internal
 public final class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
   private static final int[] IGNORE_FOR_COMPILED = {
     Pass.UPDATE_FOLDING,
@@ -39,6 +42,10 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
   private final Editor editor;
   private final Document document;
 
+  /**
+   * please use {@link FileEditor#getBackgroundHighlighter()} instead of manual instantiation
+   */
+  @ApiStatus.Internal
   public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
     this.project = project;
     this.editor = editor;
@@ -87,7 +94,7 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
   }
 
   @Override
-  public @NotNull TextEditorHighlightingPass @NotNull []  createPassesForEditor() {
+  public @NotNull TextEditorHighlightingPass @NotNull [] createPassesForEditor() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     GlobalInspectionContextBase.assertUnderDaemonProgress();
     List<TextEditorHighlightingPass> passes = createPasses();
