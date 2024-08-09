@@ -85,6 +85,7 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "parallelStream", "stream").parameterCount(0);
   private static final CallMatcher PARALLEL_STREAM_SOURCE =
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "parallelStream").parameterCount(0);
+  private static final CallMatcher JAVA_CAST = exactInstanceCall(CommonClassNames.JAVA_LANG_CLASS, "cast").parameterCount(1);
 
   @SuppressWarnings("PublicField")
   public boolean USELESS_BOXING_IN_STREAM_MAP = true;
@@ -143,7 +144,7 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
           case "map" -> {
             boolean allowBoxUnbox =
               USELESS_BOXING_IN_STREAM_MAP || optional || StreamApiUtil.getStreamElementType(call.getType()) instanceof PsiPrimitiveType;
-            if (args.length == 1 && isIdentityMapping(args[0], allowBoxUnbox)) {
+            if (args.length == 1 && ((isIdentityMapping(args[0], allowBoxUnbox) || isCastMethodCalled(args[0])) )) {
               register(call, null);
             }
           }
@@ -248,6 +249,10 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
             }
           }
         }
+      }
+
+      private static boolean isCastMethodCalled(PsiExpression method){
+        return method instanceof PsiMethodReferenceExpression referenceExpression && JAVA_CAST.methodReferenceMatches(referenceExpression);
       }
 
       private static boolean isParallelStream(PsiMethodCallExpression call) {
