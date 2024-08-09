@@ -90,22 +90,24 @@ public class UpdateSettings implements PersistentStateComponentWithModificationT
   }
 
   public @NotNull List<ChannelStatus> getActiveChannels() {
-    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+    var tweaker = UpdateStrategyCustomization.getInstance();
     return Stream.of(ChannelStatus.values())
       .filter(ch -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
       .collect(Collectors.toList());
   }
 
   public @NotNull ChannelStatus getSelectedActiveChannel() {
-    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
-    ChannelStatus current = getSelectedChannelStatus();
+    var tweaker = UpdateStrategyCustomization.getInstance();
+    var current = getSelectedChannelStatus();
     return tweaker.isChannelActive(current)
            ? current
            : getActiveChannels().stream().filter(ch -> ch.compareTo(current) > 0).findFirst().orElse(ChannelStatus.RELEASE);
   }
 
+  /** @deprecated same as {@link #getStoredPluginHosts()} */
+  @Deprecated(forRemoval = true)
   public @NotNull List<String> getPluginHosts() {
-    return myState.getPluginHosts();
+    return getStoredPluginHosts();
   }
 
   public void forceCheckForUpdateAfterRestart() {

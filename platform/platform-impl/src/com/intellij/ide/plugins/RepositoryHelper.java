@@ -51,7 +51,7 @@ public final class RepositoryHelper {
    * Note that the list always ends with {@code null} element denoting the main plugin repository (Marketplace).
    */
   public static @NotNull List<@Nullable String> getPluginHosts() {
-    var hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
+    var hosts = new ArrayList<>(UpdateSettings.getInstance().getStoredPluginHosts());
 
     var pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {

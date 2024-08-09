@@ -463,7 +463,7 @@ public final class PluginManagerConfigurable
               LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
             }
 
-            for (String host : UpdateSettings.getInstance().getPluginHosts()) {
+            for (String host : UpdateSettings.getInstance().getStoredPluginHosts()) {
               List<PluginNode> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
                 String groupName = IdeBundle.message("plugins.configurable.repository.0", host);
@@ -543,7 +543,7 @@ public final class PluginManagerConfigurable
             attributes.add(SearchWords.TAG.getValue());
             attributes.add(SearchWords.SORT_BY.getValue());
             attributes.add(SearchWords.VENDOR.getValue());
-            if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
+            if (!UpdateSettings.getInstance().getStoredPluginHosts().isEmpty()) {
               attributes.add(SearchWords.REPOSITORY.getValue());
             }
             attributes.add(SearchWords.STAFF_PICKS.getValue());
@@ -599,7 +599,7 @@ public final class PluginManagerConfigurable
                 }
                 yield myVendorsSorted;
               }
-              case REPOSITORY -> UpdateSettings.getInstance().getPluginHosts();
+              case REPOSITORY -> UpdateSettings.getInstance().getStoredPluginHosts();
               case INTERNAL, SUGGESTED, STAFF_PICKS -> null;
             };
           }
