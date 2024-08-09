@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -102,8 +103,10 @@ private suspend fun openProjectPerformTaskCloseProject(projectDir: Path, task: (
   val project = projectManager.openProject(projectDir, createTestOpenProjectOptions())!!
   try {
     withContext(Dispatchers.EDT) {
-      task(project)
-      project.stateStore.saveComponent(EditorHistoryManager.getInstance(project))
+      writeIntentReadAction {
+        task(project)
+        project.stateStore.saveComponent(EditorHistoryManager.getInstance(project))
+      }
     }
   }
   finally {

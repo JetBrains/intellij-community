@@ -12,8 +12,10 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -61,16 +63,20 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
 
       val lookupElement = fixture.lookupElements!!.find { it.lookupString == element }
       assertThat(lookupElement).isNotNull()
-      fixture.lookup.currentItem = lookupElement
+      writeIntentReadAction {
+        fixture.lookup.currentItem = lookupElement
+      }
     }
   }
 
   @ICRequest
   suspend fun insertLookupElement() {
     withContext(Dispatchers.EDT) {
-      val lookup = fixture.lookup as? LookupImpl
-      assertThat(lookup?.currentItem).isNotNull()
-      lookup!!.finishLookup('\n')
+      writeIntentReadAction {
+        val lookup = fixture.lookup as? LookupImpl
+        assertThat(lookup?.currentItem).isNotNull()
+        lookup!!.finishLookup('\n')
+      }
     }
   }
 
@@ -93,25 +99,31 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @ICUtil
   suspend fun navigateTo(position: Int) {
     withContext(Dispatchers.EDT) {
-      fixture.editor.caretModel.moveToOffset(position)
-      val pos = fixture.editor.caretModel.visualPosition
+      writeIntentReadAction {
+        fixture.editor.caretModel.moveToOffset(position)
+        val pos = fixture.editor.caretModel.visualPosition
 
-      EditorMouseFixture(fixture.editor as EditorImpl).pressAt(pos.line, pos.column)
+        EditorMouseFixture(fixture.editor as EditorImpl).pressAt(pos.line, pos.column)
+      }
     }
   }
 
   @ICUtil
   suspend fun navigateOnlyCaretTo(position: Int) {
     withContext(Dispatchers.EDT) {
-      fixture.editor.caretModel.moveToOffset(position)
+      writeIntentReadAction {
+        fixture.editor.caretModel.moveToOffset(position)
+      }
     }
   }
 
   @ICUtil
   suspend fun loseFocus(cause: FocusEvent.Cause = FocusEvent.Cause.UNKNOWN) {
     withContext(Dispatchers.EDT) {
-      val ev = FocusEvent(fixture.editor.component, 0, false, null, cause)
-      (fixture.editor as FocusListener).focusLost(ev)
+      writeIntentReadAction {
+        val ev = FocusEvent(fixture.editor.component, 0, false, null, cause)
+        (fixture.editor as FocusListener).focusLost(ev)
+      }
     }
   }
 
@@ -126,7 +138,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   suspend fun insert() {
     withContext(Dispatchers.EDT) {
       callAction(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
-      PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
+      writeIntentReadAction {
+        PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
+      }
     }
   }
 
@@ -138,7 +152,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
         0, KeyEvent.VK_TAB, KeyEvent.CHAR_UNDEFINED
       )
       IdeEventQueue.getInstance().dispatchEvent(tabKeyEvent)
-      PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
+      writeIntentReadAction {
+        PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
+      }
     }
   }
 
@@ -157,7 +173,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   suspend fun nextVariant() {
     withContext(Dispatchers.EDT) {
       coroutineToIndicator {
-        InlineCompletionSession.getOrNull(fixture.editor)?.useNextVariant()
+        WriteIntentReadAction.run {
+          InlineCompletionSession.getOrNull(fixture.editor)?.useNextVariant()
+        }
       }
     }
   }
@@ -167,7 +185,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   suspend fun prevVariant() {
     withContext(Dispatchers.EDT) {
       coroutineToIndicator {
-        InlineCompletionSession.getOrNull(fixture.editor)?.usePrevVariant()
+        WriteIntentReadAction.run {
+          InlineCompletionSession.getOrNull(fixture.editor)?.usePrevVariant()
+        }
       }
     }
   }

@@ -356,7 +356,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     var undoManager = (UndoManagerImpl)UndoManager.getGlobalInstance();
     if (undoManager != null) {
-      undoManager.dropHistoryInTests();
+      app.runWriteIntentReadAction(() -> { undoManager.dropHistoryInTests(); return null; });
     }
 
     var docRefManager = (DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance();

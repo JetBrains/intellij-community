@@ -302,7 +302,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           leaveAllModals(throwErrorIfModal = true)
           ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
           withContext(Dispatchers.EDT + NonCancellable) {
-            ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
+            writeIntentReadAction {
+              ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
+            }
           }
         }
         /**
@@ -310,8 +312,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
          */
         session.exitApp.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
           lifetime.launch(Dispatchers.EDT + NonCancellable) {
-            LOG.info("Exiting the application...")
-            app.exit(/* force = */ false, /* exitConfirmed = */ true, /* restart = */ false)
+            writeIntentReadAction {
+              LOG.info("Exiting the application...")
+              app.exit(/* force = */ false, /* exitConfirmed = */ true, /* restart = */ false)
+            }
           }
         }
 
