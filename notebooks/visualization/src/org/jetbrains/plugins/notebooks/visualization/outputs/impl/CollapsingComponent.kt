@@ -24,7 +24,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal open class CollapsingComponent(
+open class CollapsingComponent(
   internal val editor: EditorImpl,
   child: JComponent,
   internal val resizable: Boolean,
