@@ -319,6 +319,17 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false
     )
 
+    fun testInjectionOffCustomParameterInEnumConstructorWithAnnotation() = doInjectionPresentTest(
+        """
+        import org.intellij.lang.annotations.Language
+
+        enum class Test(@Language("HTML") val s: String){
+          ONE("<caret>some")
+        }
+        """,
+        languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false
+    )
+
     fun testInjectionOfCustomParameterJavaWithAnnotation() = doInjectionPresentTest(
         """
         fun bar() { Test.foo("<caret>some") }
