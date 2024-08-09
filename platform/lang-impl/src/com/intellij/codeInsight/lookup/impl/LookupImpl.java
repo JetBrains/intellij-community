@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -747,9 +748,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
 
-    LookupUsageTracker.trackLookup(myCreatedTimestamp, this);
-
-    return doShowLookup();
+    return WriteIntentReadAction.compute((Computable<Boolean>)() -> {
+      LookupUsageTracker.trackLookup(myCreatedTimestamp, this);
+      return doShowLookup();
+    });
   }
 
   /**

@@ -8,10 +8,7 @@ import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.MATCHED
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.bodyInsets
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.getGrayedForeground
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.IconDecorator
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -136,7 +133,9 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
           .throttle(50)
           .collect {
             withContext(coroutineContext) {
-              updateLookupWidthFromVisibleItems()
+              writeIntentReadAction {
+                updateLookupWidthFromVisibleItems()
+              }
             }
           }
       }

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation.render
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory.Item
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.impl.zombie.*
@@ -86,7 +87,9 @@ private class DocRenderNecromancer(
           if (DocRenderManager.isDocRenderingEnabled(editor)) {
             withContext(Dispatchers.EDT) {
               if (!project.isDisposed && !editor.isDisposed && document.modificationStamp == stamp) {
-                DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
+                writeIntentReadAction {
+                  DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
+                }
               }
             }
           }

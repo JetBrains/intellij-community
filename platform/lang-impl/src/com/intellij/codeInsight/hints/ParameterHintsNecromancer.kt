@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.ParameterHintsPass.HintData
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.zombie.*
@@ -66,14 +67,16 @@ private class ParameterHintsNecromancer(
       }
       val editor = recipe.editorSupplier()
       withContext(Dispatchers.EDT) {
-        if (recipe.isValid(editor)) {
-          ParameterHintsUpdater(
-            editor,
-            listOf(),
-            zombieHints,
-            Int2ObjectOpenHashMap(0),
-            true
-          ).update()
+        writeIntentReadAction {
+          if (recipe.isValid(editor)) {
+            ParameterHintsUpdater(
+              editor,
+              listOf(),
+              zombieHints,
+              Int2ObjectOpenHashMap(0),
+              true
+            ).update()
+          }
         }
       }
     }

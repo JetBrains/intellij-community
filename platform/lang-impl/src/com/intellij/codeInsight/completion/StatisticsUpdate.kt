@@ -10,6 +10,8 @@ import com.intellij.featureStatistics.FeatureUsageTrackerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.WeakReferenceDisposableWrapper
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -78,7 +80,10 @@ class StatisticsUpdate
 
     ourStatsAlarm.addRequest({
                                if (ourPendingUpdate === this) {
-                                 applyLastCompletionStatisticsUpdate()
+                                 //readaction is not enough
+                                 WriteIntentReadAction.run {
+                                   applyLastCompletionStatisticsUpdate()
+                                 }
                                }
                              }, 20 * 1000)
 

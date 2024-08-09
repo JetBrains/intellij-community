@@ -24,6 +24,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,7 +92,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private final Update myUpdate = new Update("update") {
     @Override
     public void run() {
-      updateLookup();
+      WriteIntentReadAction.run((Runnable)() -> updateLookup());
       queue.setMergingTimeSpan(ourShowPopupGroupingTime);
     }
   };

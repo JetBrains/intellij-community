@@ -17,10 +17,12 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
@@ -208,7 +210,10 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      final List<EventPair<?>> data = getCommonUsageInfo(finishType, currentItem, completionChar);
+      final List<EventPair<?>> data = WriteIntentReadAction.compute(
+        //maybe readaction
+        (Computable<List<EventPair<?>>>)() -> getCommonUsageInfo(finishType, currentItem, completionChar)
+      );
 
       final List<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {

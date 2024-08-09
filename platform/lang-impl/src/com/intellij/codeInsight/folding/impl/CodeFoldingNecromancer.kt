@@ -5,6 +5,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -53,10 +54,12 @@ private class CodeFoldingNecromancer(
         isNotCompiledFile(recipe.project, recipe.document)) {
       val editor = recipe.editorSupplier()
       withContext(Dispatchers.EDT) {
-        if (recipe.isValid(editor) &&
-            editor.foldingModel.isFoldingEnabled &&
-            !CodeFoldingManagerImpl.isFoldingsInitializedInEditor(editor)) {
-          zombie.applyState(document, editor.foldingModel)
+        writeIntentReadAction {
+          if (recipe.isValid(editor) &&
+              editor.foldingModel.isFoldingEnabled &&
+              !CodeFoldingManagerImpl.isFoldingsInitializedInEditor(editor)) {
+            zombie.applyState(document, editor.foldingModel)
+          }
         }
       }
     } else {
