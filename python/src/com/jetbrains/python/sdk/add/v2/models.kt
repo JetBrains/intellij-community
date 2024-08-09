@@ -17,9 +17,9 @@ import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.interpreters.detectSystemInterpreters
 import com.jetbrains.python.sdk.pipenv.pipEnvPath
 import com.jetbrains.python.sdk.poetry.poetryPath
 import kotlinx.coroutines.*
@@ -41,7 +41,8 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
   internal val uiContext = params.uiContext
 
   internal val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
-  internal val detectedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
+  private val _detectedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
+  val detectedInterpreters: StateFlow<List<PythonSelectableInterpreter>> = _detectedInterpreters
   val manuallyAddedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
   private var installable: List<PythonSelectableInterpreter> = emptyList()
   val condaEnvironments: MutableStateFlow<List<PyCondaEnv>> = MutableStateFlow(emptyList())
@@ -122,17 +123,17 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
         .sortedByDescending { it.first }
         .map { InstallableSelectableInterpreter(it.second) }
 
-      val detected = runCatching {
-        detectSystemInterpreters(projectDir = null, null, targetEnvironmentConfiguration, existingSdks)
-        // todo check fix about appending recently used
-        //return@runCatching appendMostRecentlyUsedBaseSdk(detected, context.targetEnvironmentConfiguration)
-        //detected.filter { it.homePath !in savedPaths }
-      }.getOrLogException(PythonAddInterpreterPresenter.LOG) ?: emptyList()
+
+      val existingSdkPaths = existingSdks.mapNotNull { it.homePath }.mapNotNull { tryResolvePath(it) }.toSet()
+
+      val detected = PythonSdkFlavor.getApplicableFlavors(true).flatMap { it.suggestLocalHomePaths(null, null) }
+        .filterNot { it in existingSdkPaths }
+        .map { DetectedSelectableInterpreter(it.pathString) }
 
       withContext(uiContext) {
         installable = filteredInstallable
         knownInterpreters.value = allValidSdks // todo check target?
-        detectedInterpreters.value = detected
+        _detectedInterpreters.value = detected
       }
 
     }
@@ -233,6 +234,8 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
 // todo does it need target configuration
 abstract class PythonSelectableInterpreter {
   abstract val homePath: String
+  override fun toString(): String =
+    "PythonSelectableInterpreter(homePath='$homePath')"
 }
 
 class ExistingSelectableInterpreter(val sdk: Sdk, val languageLevel: LanguageLevel, val isSystemWide: Boolean) : PythonSelectableInterpreter() {
@@ -240,7 +243,7 @@ class ExistingSelectableInterpreter(val sdk: Sdk, val languageLevel: LanguageLev
 }
 
 
-class DetectedSelectableInterpreter(override val homePath: String, targetConfiguration: TargetEnvironmentConfiguration? = null) : PythonSelectableInterpreter()
+class DetectedSelectableInterpreter(override val homePath: String) : PythonSelectableInterpreter()
 
 class ManuallyAddedSelectableInterpreter(override val homePath: String) : PythonSelectableInterpreter()
 class InstallableSelectableInterpreter(val sdk: PySdkToInstall) : PythonSelectableInterpreter() {
@@ -248,15 +251,9 @@ class InstallableSelectableInterpreter(val sdk: PySdkToInstall) : PythonSelectab
 }
 
 
-
-
 class InterpreterSeparator(val text: String) : PythonSelectableInterpreter() {
   override val homePath: String = ""
 }
-
-
-
-
 
 
 open class AddInterpreterState(propertyGraph: PropertyGraph) {
@@ -277,7 +274,6 @@ class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(pro
 }
 
 
-
 val PythonAddInterpreterModel.existingSdks
   get() = allInterpreters.value.filterIsInstance<ExistingSelectableInterpreter>().map { it.sdk }
 
@@ -285,5 +281,5 @@ val PythonAddInterpreterModel.baseSdks
   get() = baseInterpreters.value.filterIsInstance<ExistingSelectableInterpreter>().map { it.sdk }
 
 fun PythonAddInterpreterModel.findInterpreter(path: String): PythonSelectableInterpreter? {
-  return allInterpreters.value.asSequence().find { it.homePath == path}
+  return allInterpreters.value.asSequence().find { it.homePath == path }
 }

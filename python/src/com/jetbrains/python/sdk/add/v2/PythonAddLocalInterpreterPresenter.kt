@@ -4,8 +4,8 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.util.SystemProperties
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.flavors.VirtualEnvReader
 import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +21,7 @@ import java.nio.file.Path
  *
  * @see PythonAddLocalInterpreterDialog
  */
-class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject) {
+class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, val envReader: VirtualEnvReader = VirtualEnvReader.Instance) {
 
   /**
    * Default path to create virtualenv it
@@ -30,7 +30,7 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject) {
     get() = when (moduleOrProject) {
               is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath()
               is ModuleOrProject.ProjectOnly -> moduleOrProject.project.basePath?.toNioPathOrNull()
-            } ?: Path.of(SystemProperties.getUserHome())
+            } ?: envReader.getVEnvRootDir()
 
   private val _sdkShared = MutableSharedFlow<Sdk>(1)
   val sdkCreatedFlow: Flow<Sdk> = _sdkShared.asSharedFlow()
