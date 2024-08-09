@@ -23,7 +23,7 @@ plugins {
 
 def libraryGroup = "com.fasterxml.jackson.core"
 def libraryArtifactId = "jackson-core"
-def libraryVersion = readProperty("jacksonCoreVersion")
+def libraryVersion = readProperty("gradleTAPI.jacksonCoreVersion")
 
 def repackagedGroup = "org.jetbrains.intellij.deps"
 def repackagedVersionSuffix = "-gradle-rt"
