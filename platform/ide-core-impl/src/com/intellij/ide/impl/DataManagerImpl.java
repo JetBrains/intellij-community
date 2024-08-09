@@ -176,19 +176,9 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext customizeDataContext(@NotNull DataContext context, @NotNull Object provider) {
-    class MyAdapter implements EdtNoGetDataProvider, DataValidators.SourceWrapper {
-      @Override
-      public @NotNull Object unwrapSource() { return provider; }
-
-      @Override
-      public void dataSnapshot(@NotNull DataSink sink) {
-        if (provider instanceof UiDataProvider o) o.uiDataSnapshot(sink);
-        else if (provider instanceof DataSnapshotProvider o) o.dataSnapshot(sink);
-      }
-    }
     DataProvider p = provider instanceof DataProvider o ? o :
-                     provider instanceof UiDataProvider ? new MyAdapter() :
-                     provider instanceof DataSnapshotProvider ? new MyAdapter() :
+                     provider instanceof UiDataProvider o ? (EdtNoGetDataProvider)sink -> sink.uiDataSnapshot(o) :
+                     provider instanceof DataSnapshotProvider o ? (EdtNoGetDataProvider)sink -> sink.dataSnapshot(o) :
                      null;
     if (p == null) throw new AssertionError("Unexpected provider: " + provider.getClass().getName());
     return IdeUiService.getInstance().createCustomizedDataContext(context, p);
