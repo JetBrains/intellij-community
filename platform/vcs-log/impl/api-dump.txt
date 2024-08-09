@@ -794,20 +794,17 @@ c:com.intellij.vcs.log.ui.VcsLogUiImpl
 - com.intellij.vcs.log.ui.MainVcsLogUi
 - <init>(java.lang.String,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.ui.VcsLogColorManager,com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.visible.VisiblePackRefresher,com.intellij.vcs.log.VcsLogFilterCollection):V
 - <init>(java.lang.String,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.ui.VcsLogColorManager,com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.visible.VisiblePackRefresher,com.intellij.vcs.log.VcsLogFilterCollection,Z):V
-- p:applyFiltersAndUpdateUi(com.intellij.vcs.log.VcsLogFilterCollection):V
 - p:createFilterUi(java.util.function.Consumer,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.openapi.Disposable):com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 - p:createMainFrame(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx,Z):com.intellij.vcs.log.ui.frame.MainFrame
 - getChangesBrowser():com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 - getFilterUi():com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 - getMainComponent():javax.swing.JComponent
 - p:getMainFrame():com.intellij.vcs.log.ui.frame.MainFrame
-- getProperties():com.intellij.vcs.log.impl.MainVcsLogUiProperties
 - getTable():com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - getToolbar():javax.swing.JComponent
 - p:handleCommitNotFound(java.lang.Object,Z,java.util.function.BiFunction):V
-- isHighlighterEnabled(java.lang.String):Z
-- p:onVisiblePackUpdated(Z):V
 - selectFilePath(com.intellij.openapi.vcs.FilePath,Z):V
+- p:updateDataPack(Z):V
 a:com.intellij.vcs.log.ui.actions.TwoStepCompletionProvider
 - com.intellij.util.textCompletion.ValuesCompletionProvider
 - <init>(com.intellij.util.textCompletion.TextCompletionValueDescriptor):V
