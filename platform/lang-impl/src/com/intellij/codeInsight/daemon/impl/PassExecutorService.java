@@ -132,7 +132,10 @@ final class PassExecutorService implements Disposable {
                     @NotNull FileEditor fileEditor,
                     HighlightingPass @NotNull [] passes,
                     @NotNull DaemonProgressIndicator updateProgress) {
-    if (isDisposed()) return;
+    if (isDisposed()) {
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopMyProcess(updateProgress, true, "PES is disposed");
+      return;
+    }
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     List<TextEditorHighlightingPass> documentBoundPasses = new ArrayList<>();
@@ -434,12 +437,11 @@ final class PassExecutorService implements Disposable {
           }
           catch (ProcessCanceledException e) {
             log(myUpdateProgress, myPass, "Canceled ");
-
             if (!myUpdateProgress.isCanceled()) {
               //in case some smart asses throw PCE just for fun
-              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopProcess(true, "PCE was thrown by visitor");
+              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopMyProcess(myUpdateProgress, true, "PCE was thrown by pass");
               if (LOG.isDebugEnabled()) {
-                LOG.debug("PCE was thrown by " + myPass.getClass(), new RuntimeException(e));
+                LOG.debug("PCE was thrown by " + myPass.getClass(), e);
               }
             }
           }
