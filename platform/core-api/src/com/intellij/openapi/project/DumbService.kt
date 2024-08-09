@@ -73,11 +73,25 @@ abstract class DumbService {
   abstract fun waitForSmartMode()
 
   /**
-   * Pause the current thread until dumb mode ends, and then run the read action. Indexes are guaranteed to be available inside that read action,
-   * unless this method is already called with read access allowed.
+   * DEPRECATED.
+   *
+   * Use instead:
+   * - [com.intellij.openapi.application.smartReadAction]
+   * - [com.intellij.openapi.application.NonBlockingReadAction] with `inSmartMode` option.
+   *
+   * WARNING: This method does not have any effect if it is called inside another read action.
+   *
+   * Otherwise, it pauses the current thread until dumb mode ends, and then runs the read action.
+   * In this case indexes are guaranteed to be available inside
    *
    * @throws ProcessCanceledException if the project is closed during dumb mode
    */
+  @Deprecated("""
+    This method is dangerous because it does not provide any guaranties if it is called inside another read action.
+    Instead, consider using  
+    - `com.intellij.openapi.application.smartReadAction` 
+    - `NonBlockingReadAction(...).inSmartMode()` 
+  """)
   fun <T> runReadActionInSmartMode(r: Computable<T>): T {
     val result = Ref<T>()
     runReadActionInSmartMode { result.set(r.compute()) }
@@ -93,6 +107,12 @@ abstract class DumbService {
     return tryRunReadActionInSmartMode(task, notification, DumbModeBlockedFunctionality.Other)
   }
 
+  /**
+   * WARNING: this method does not guarantee that Indexes are available if called under read action.
+   *
+   * Consider using [com.intellij.openapi.application.smartReadAction] or
+   * [com.intellij.openapi.application.NonBlockingReadAction] with `inSmartMode` option.
+   */
   fun <T> tryRunReadActionInSmartMode(task: Computable<T>,
                                       notification: @NlsContexts.PopupContent String?,
                                       functionality: DumbModeBlockedFunctionality): T? {
@@ -111,11 +131,25 @@ abstract class DumbService {
   }
 
   /**
-   * Pause the current thread until dumb mode ends, and then run the read action. Indexes are guaranteed to be available inside that read action,
-   * unless this method is already called with read access allowed.
+   * DEPRECATED.
+   *
+   * Use instead:
+   * - [com.intellij.openapi.application.smartReadAction]
+   * - [com.intellij.openapi.application.NonBlockingReadAction] with `inSmartMode` option.
+   *
+   * WARNING: This method does not have any effect if it is called inside another read action.
+   *
+   * Otherwise, it pauses the current thread until dumb mode ends, and then runs the read action.
+   * In this case indexes are guaranteed to be available inside
    *
    * @throws ProcessCanceledException if the project is closed during dumb mode
    */
+  @Deprecated("""
+    This method is dangerous because it does not provide any guaranties if it is called inside another read action.
+    Instead, consider using  
+    - `com.intellij.openapi.application.smartReadAction` 
+    - `NonBlockingReadAction(...).inSmartMode()` 
+  """)
   fun runReadActionInSmartMode(r: Runnable) {
     if (ApplicationManager.getApplication().isReadAccessAllowed) {
       // we can't wait for smart mode to begin (it'd result in a deadlock),
