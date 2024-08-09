@@ -3,11 +3,13 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -60,7 +62,9 @@ internal class ExecutionPositionNavigator(
     EDT.assertIsEdt()
     val effectiveNavigationMode = if (isActiveSourceKind) navigationMode else ExecutionPositionNavigationMode.SCROLL
     val descriptor = getDescriptor()
-    navigateTo(descriptor, effectiveNavigationMode)
+    writeIntentReadAction {
+      navigateTo(descriptor, effectiveNavigationMode)
+    }
   }
 
   private suspend fun invalidate() {
