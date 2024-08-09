@@ -9689,6 +9689,7 @@ f:com.intellij.ui.hover.HoverUtilsKt
 f:com.intellij.ui.jcef.JBCefApp
 - createClient():com.intellij.ui.jcef.JBCefClient
 - createMessageRouter(org.cef.browser.CefMessageRouter$CefMessageRouterConfig):org.cef.browser.CefMessageRouter
+- getCefSettings():org.cef.CefSettings
 - s:getForceDeviceScaleFactor():D
 - s:getInstance():com.intellij.ui.jcef.JBCefApp
 - s:getNotificationGroup():com.intellij.notification.NotificationGroup
