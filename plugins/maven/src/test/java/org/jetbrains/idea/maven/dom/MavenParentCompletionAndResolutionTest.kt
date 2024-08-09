@@ -526,6 +526,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testHighlightingAbsentVersion() = runBlocking {
+    needFixForMaven4()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
