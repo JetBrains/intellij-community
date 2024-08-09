@@ -134,15 +134,15 @@ sealed class K2MoveRenameUsageInfo(
     companion object {
         fun find(declaration: KtNamedDeclaration): List<UsageInfo> {
             markInternalUsages(declaration, declaration)
-            return preProcessUsages(findExternalUsages(declaration))
+            return findExternalUsages(declaration)
         }
 
         /**
          * Removes unwanted usages, like, for example, usages through import aliases.
          */
-        private fun preProcessUsages(usages: List<UsageInfo>): List<UsageInfo> {
+        private fun preProcessUsages(usages: List<K2MoveRenameUsageInfo>): List<K2MoveRenameUsageInfo> {
             MoveClassHandler.EP_NAME.extensionList.forEach { handler -> handler.preprocessUsages(usages) }
-            return usages
+            return usages.filter { it.element !is KtPropertyDelegate } // for property delegates, process simple name reference instead
         }
 
         /**
@@ -259,7 +259,7 @@ sealed class K2MoveRenameUsageInfo(
          * Finds usages to [declaration] excluding the usages inside [declaration].
          */
         fun findExternalUsages(declaration: KtNamedDeclaration): List<MoveRenameUsageInfo> {
-            return ReferencesSearch.search(declaration, declaration.useScope).findAll()
+            val allUsages = ReferencesSearch.search(declaration, declaration.useScope).findAll()
                 .filter { !declaration.isAncestor(it.element) } // exclude internal usages
                 .mapNotNull { ref ->
                     val element = ref.element
@@ -276,6 +276,7 @@ sealed class K2MoveRenameUsageInfo(
                         Light(ref.element, ref, declaration, lightElement is PsiMember, fqn, lightElements.indexOf(lightElement))
                     }
                 }
+            return preProcessUsages(allUsages)
         }
 
         internal fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {

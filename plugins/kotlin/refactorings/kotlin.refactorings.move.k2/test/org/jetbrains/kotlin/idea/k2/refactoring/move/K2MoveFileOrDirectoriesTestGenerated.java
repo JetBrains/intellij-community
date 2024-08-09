@@ -140,6 +140,11 @@ public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDi
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/moveObject/moveObject.test");
     }
 
+    @TestMetadata("kotlin/movePropertyDelegateReference/movePropertyDelegateReference.test")
+    public void testKotlin_movePropertyDelegateReference_MovePropertyDelegateReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/movePropertyDelegateReference/movePropertyDelegateReference.test");
+    }
+
     @TestMetadata("kotlin/moveUnaryOperator/moveUnaryOperator.test")
     public void testKotlin_moveUnaryOperator_MoveUnaryOperator() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/moveUnaryOperator/moveUnaryOperator.test");
