@@ -10,6 +10,7 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.PsiTypes
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.annotations.NotNull
@@ -660,6 +661,29 @@ interface UastApiFixtureTestBase {
                 return super.visitParameter(node)
             }
         })
+    }
+
+    fun checkGenericParameterSubtype(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface MyContext
+
+                abstract class MyContextImpl : MyContext
+
+                fun <T : MyContext> genericFunction(context: T) {}
+
+                fun test(myContext : MyContext) {
+                  generic<caret>Function(myContext)
+                } 
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+        TestCase.assertNotNull(resolved)
+        TestCase.assertEquals("genericFunction", resolved!!.name)
+        val param = resolved.parameterList.parameters[0]
+        TestCase.assertTrue(InheritanceUtil.isInheritor(param.type, "MyContext"))
     }
 
     fun checkImplicitReceiverType(myFixture: JavaCodeInsightTestFixture) {
