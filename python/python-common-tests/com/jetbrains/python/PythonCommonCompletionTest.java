@@ -1278,6 +1278,17 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     assertContainsElements(suggested, "baz");
   }
 
+  public void testCompleteStrTypehintForClassDefineAfter() {
+    doTestByText("""
+                   def f(v: 'My<caret>'): pass
+                   class MyClass: pass
+                   """);
+    myFixture.checkResult("""
+                            def f(v: 'MyClass'): pass
+                            class MyClass: pass
+                            """);
+  }
+
   // PY-22570
   public void testNamesReexportedViaStarImport() {
     final List<String> suggested = doMultiFileTestCompletionVariants();
@@ -2160,13 +2171,13 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   private void assertSingleVariantInExtendedCompletionWithSourceRoots() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.runWithSourceRoots(Lists.newArrayList(
-      myFixture.findFileInTempDir("root1"),
-      myFixture.findFileInTempDir("root2")),
-                       () -> {
-                         myFixture.configureByFile("a.py");
-                         assertNull(myFixture.complete(CompletionType.BASIC, 2));
-                         myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
-                       });
+                                   myFixture.findFileInTempDir("root1"),
+                                   myFixture.findFileInTempDir("root2")),
+                                 () -> {
+                                   myFixture.configureByFile("a.py");
+                                   assertNull(myFixture.complete(CompletionType.BASIC, 2));
+                                   myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
+                                 });
   }
 
   private void doTestImportFromLocalPython3NamespacePackage() {
