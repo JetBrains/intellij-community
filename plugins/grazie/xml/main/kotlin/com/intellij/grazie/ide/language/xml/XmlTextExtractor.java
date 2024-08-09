@@ -228,6 +228,19 @@ public class XmlTextExtractor extends TextExtractor {
     }
 
     @Override
+    protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
+                                                           @NotNull Set<TextContent.TextDomain> allowedDomains) {
+      if (PsiUtilCore.getElementType(element) == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
+          element.getParent() instanceof XmlAttributeValue value &&
+          value.getParent() instanceof XmlAttribute attr &&
+          "class".equalsIgnoreCase(attr.getName())) {
+        return List.of();
+      }
+
+      return super.buildTextContents(element, allowedDomains);
+    }
+
+    @Override
     protected Function<XmlTag, TagKind> tagClassifier(@NotNull PsiElement context) {
       if (!Registry.is("grazie.html.concatenate.inline.tag.contents")) {
         return super.tagClassifier(context);
