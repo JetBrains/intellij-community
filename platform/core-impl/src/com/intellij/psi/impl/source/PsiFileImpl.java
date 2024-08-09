@@ -38,6 +38,7 @@ import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,17 @@ import java.util.function.Supplier;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable, Cloneable {
+  private static final CharTable NON_INTERNING_CHAR_TABLE = new CharTable() {
+    @Override
+    public @NotNull CharSequence intern(@NotNull CharSequence text) {
+      return text;
+    }
+
+    @Override
+    public @NotNull CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset) {
+      return new CharSequenceSubSequence(baseText, startOffset, endOffset);
+    }
+  };
   private static final Logger LOG = Logger.getInstance(PsiFileImpl.class);
   static final @NonNls String STUB_PSI_MISMATCH = "stub-psi mismatch";
 
@@ -282,6 +294,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     if (contentLeaf instanceof FileElement) {
       treeElement = (FileElement)contentLeaf;
+      if (getUserData(IndexingDataKeys.VIRTUAL_FILE) != null) {
+        treeElement.setCharTable(NON_INTERNING_CHAR_TABLE);
+      }
     }
     else {
       CompositeElement xxx = ASTFactory.composite(myElementType);
