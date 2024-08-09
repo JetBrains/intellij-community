@@ -46,6 +46,9 @@
       <module fileurl="file://$PROJECT_DIR$/android/assistant/intellij.android.assistant-test.iml" filepath="$PROJECT_DIR$/android/assistant/intellij.android.assistant-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/avd/intellij.android.avd.iml" filepath="$PROJECT_DIR$/android/avd/intellij.android.avd.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/intellij.android.avdmanager.tests/intellij.android.avdmanager.tests.iml" filepath="$PROJECT_DIR$/android/intellij.android.avdmanager.tests/intellij.android.avdmanager.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/backup/intellij.android.backup.iml" filepath="$PROJECT_DIR$/android/backup/intellij.android.backup.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/backup/intellij.android.backup.api.iml" filepath="$PROJECT_DIR$/android/backup/intellij.android.backup.api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/backup/intellij.android.backup.tests.iml" filepath="$PROJECT_DIR$/android/backup/intellij.android.backup.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/bleak/intellij.android.bleak.iml" filepath="$PROJECT_DIR$/android/bleak/intellij.android.bleak.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/bleak-config/intellij.android.bleak-config.iml" filepath="$PROJECT_DIR$/android/bleak-config/intellij.android.bleak-config.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/build-attribution/intellij.android.build-attribution.iml" filepath="$PROJECT_DIR$/android/build-attribution/intellij.android.build-attribution.iml" />

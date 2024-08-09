@@ -348,6 +348,8 @@ object CommunityRepositoryModules {
       //tools/adt/idea/connection-assistant:connection-assistant <= REMOVED
       spec.withModule("intellij.android.adb", "android.jar")
       spec.withModule("intellij.android.adb.ui", "android.jar")
+      spec.withModule("intellij.android.backup", "android.jar")
+      spec.withModule("intellij.android.backup.api", "android.jar")
       spec.withModule("intellij.android.lint", "android.jar")
       spec.withModule("intellij.android.templates", "android.jar")
       spec.withModule("intellij.android.apkanalyzer", "android.jar")
