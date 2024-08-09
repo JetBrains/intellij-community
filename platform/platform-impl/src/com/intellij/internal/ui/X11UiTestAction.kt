@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.X11UiUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
@@ -27,6 +28,8 @@ import kotlinx.coroutines.*
 import java.awt.Frame
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.reflect.KCallable
+import kotlin.reflect.KFunction0
 import kotlin.reflect.KProperty0
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -71,30 +74,25 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
 
     return panel {
       group("SystemInfo") {
-        val rows = listOf(
-          listOf(
-            SystemInfo::isLinux,
-            SystemInfo::isFreeBSD,
-            SystemInfo::isSolaris,
-            SystemInfo::isUnix,
-            SystemInfo::isChromeOS),
-          listOf(
-            SystemInfo::isWayland,
-            SystemInfo::isGNOME,
-            SystemInfo::isKDE,
-            SystemInfo::isXfce,
-            SystemInfo::isI3),
-        )
+        properties(listOf(
+          SystemInfo::isLinux,
+          SystemInfo::isFreeBSD,
+          SystemInfo::isSolaris,
+          SystemInfo::isUnix,
+          SystemInfo::isChromeOS))
+        properties(listOf(
+          SystemInfo::isWayland,
+          SystemInfo::isGNOME,
+          SystemInfo::isKDE,
+          SystemInfo::isXfce,
+          SystemInfo::isI3))
+      }
 
-        for (currentRow in rows) {
-          row {
-            for (property in currentRow) {
-              checkBox(property.name)
-                .selected(property.get())
-                .enabled(false)
-            }
-          }.layout(RowLayout.PARENT_GRID)
-        }
+      group("StartupUiUtil") {
+        properties(listOf(
+          StartupUiUtil::isWaylandToolkit,
+          StartupUiUtil::isXToolkit,
+        ))
       }
 
       group("X11UiUtil Values") {
@@ -208,6 +206,21 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
         }
       }
     }
+  }
+
+  private fun Panel.properties(properties: List<KCallable<Boolean>>) {
+    row {
+      for (property in properties) {
+        val value = when (property) {
+          is KProperty0 -> property.get()
+          is KFunction0 -> property.invoke()
+          else -> throw IllegalArgumentException("Unknown property type: $property")
+        }
+        checkBox(property.name)
+          .selected(value)
+          .enabled(false)
+      }
+    }.layout(RowLayout.PARENT_GRID)
   }
 
   @RequiresEdt
