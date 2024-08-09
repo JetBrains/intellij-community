@@ -150,7 +150,7 @@ class CreatePatchConfigurationPanel(val project: Project) {
   }
 
   fun isOkToExecute(): Boolean {
-    return panel.validateAll().any { !it.warning }
+    return panel.validateAll().none { !it.warning }
   }
 
   private fun validateFileName(): ValidationInfo? {
@@ -162,7 +162,7 @@ class CreatePatchConfigurationPanel(val project: Project) {
     }
 
     if (File(fileName).exists()) {
-      return ValidationInfo(IdeBundle.message("error.file.with.name.already.exists", fileName)).asWarning()
+      return ValidationInfo(IdeBundle.message("error.file.with.name.already.exists", fileName)).asWarning().withOKEnabled()
     }
 
     return null
