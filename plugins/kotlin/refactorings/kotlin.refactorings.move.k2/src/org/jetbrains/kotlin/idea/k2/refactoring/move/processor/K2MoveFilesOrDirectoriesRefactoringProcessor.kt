@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -38,7 +37,6 @@ class K2MoveFilesHandler : MoveFileHandler() {
     private var KtFile.packageNeedsUpdate: Boolean? by CopyablePsiUserDataProperty(Key.create("PACKAGE_NEEDS_UPDATE"))
 
     override fun canProcessElement(element: PsiFile): Boolean {
-        if (!Registry.`is`("kotlin.k2.smart.move")) return false
         return element is KtFile
     }
 

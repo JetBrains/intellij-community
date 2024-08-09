@@ -5,9 +5,5 @@
     <refactoring.moveHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.KotlinMoveFilesOrDirectoriesHandler"/>
     <refactoring.moveDirectoryWithClassesHelper
             implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDirectoryWithClassesHelper"/>
-    <registryKey defaultValue="true"
-                 key="kotlin.k2.smart.move"
-                 description="Enable smart move refactoring, when disabled move is performed without updating of package statements as pure file system move"/>
   </extensions>
-
 </idea-plugin>

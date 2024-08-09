@@ -5,7 +5,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.move.MoveCallback
@@ -25,7 +24,6 @@ class K2MoveHandler : MoveHandlerDelegate() {
     override fun supportsLanguage(language: Language): Boolean = language == KotlinLanguage.INSTANCE
 
     override fun canMove(elements: Array<out PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
-        if (!Registry.`is`("kotlin.k2.smart.move")) return false
         if (elements.any { it !is KtElement && it !is PsiFile && it !is PsiClass && it !is PsiDirectory }) return false
         if (elements.none { it is KtElement }) return false // only handle the refactoring if it includes Kotlin elements
         (elements.firstOrNull()?.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return false }
