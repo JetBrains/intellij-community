@@ -131,17 +131,10 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
               substitute = notSpaces.get(0).getPsi();
             }
             else {
-              String rootKey = "root";
               String valueText = parent.getText();
               YAMLFile file = YAMLElementGenerator.getInstance(parent.getProject())
-                .createDummyYamlWithText(rootKey + ":\n  " + valueText);
-              YAMLValue value = file.getDocuments().get(0).getTopLevelValue();
-              if (value instanceof YAMLMapping mapping) {
-                YAMLKeyValue root = mapping.getKeyValueByKey(rootKey);
-                if (root != null) {
-                  substitute = root.getValue();
-                }
-              }
+                .createDummyYamlWithText(valueText);
+              substitute = file.getDocuments().get(0).getTopLevelValue();
               if (substitute == null) {
                 Logger.getInstance(YamlKeyCompletionInsertHandler.class).error("Could not substitute: " + valueText);
               }
