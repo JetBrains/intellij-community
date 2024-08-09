@@ -24,8 +24,10 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
 
   // items supporting 'multiple' (with configure/showAll link)
   private val ITEMS_MULTIPLE_IDS = listOf(
+    com.intellij.ide.startup.importSettings.transfer.TransferableSetting.UI_ID,
     com.intellij.ide.startup.importSettings.transfer.TransferableSetting.KEYMAP_ID,
     com.intellij.ide.startup.importSettings.transfer.TransferableSetting.PLUGINS_ID,
+    com.intellij.ide.startup.importSettings.transfer.TransferableSetting.RECENT_PROJECTS_ID,
     SettingsCategory.PLUGINS.name
   )
 
