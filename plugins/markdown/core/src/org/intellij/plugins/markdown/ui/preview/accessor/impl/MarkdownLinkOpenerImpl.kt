@@ -157,18 +157,18 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       }
     }
 
-    private fun URI.findVirtualFile(): VirtualFile? {
+    private fun URI.findVirtualFile(project: Project?): VirtualFile? {
       val actualPath = when {
         SystemInfo.isWindows -> UriUtil.trimLeadingSlashes(path)
         else -> path
       }
       val path = Path.of(actualPath)
-      return VfsUtil.findFile(path, true)
+      return VfsUtil.findFile(path, project, true)
     }
 
     private fun actuallyOpenInEditor(project: Project?, uri: URI): Boolean {
       val anchor = uri.fragment
-      val targetFile = uri.findVirtualFile() ?: return false
+      val targetFile = uri.findVirtualFile(project) ?: return false
       @Suppress("NAME_SHADOWING")
       val project = project ?: guessProjectForFile(targetFile) ?: return false
       if (anchor == null) {
