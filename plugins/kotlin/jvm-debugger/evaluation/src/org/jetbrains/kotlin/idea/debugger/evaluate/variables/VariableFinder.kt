@@ -584,6 +584,12 @@ class VariableFinder(val context: ExecutionContext) {
             // No worries: it will be checked again (and more carefully) in `unwrapAndCheck()`.
             return true
         }
+        if (this is VariableKind.Ordinary) {
+            // It's a workaround for the problem with the JVM backend emitting an incorrect type for local variable, KT-70527, IDEA-353808.
+            // However, it seems pretty safe to check ordinary variables only by name because we were unable to craft any counter-example
+            // that would somehow break the evaluator.
+            return true
+        }
         return evaluatorValueConverter.typeMatches(asmType, actualType)
     }
 
