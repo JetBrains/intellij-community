@@ -42,10 +42,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.FontUtil;
-import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -1139,19 +1136,19 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   private static final class BalloonPopupSupport extends PopupMenuListenerAdapter implements Disposable {
     private final JPopupMenu myPopupMenu;
     private final JComponent myComponent;
-    private final Alarm myAlarm;
+    private final SingleEdtTaskScheduler myAlarm;
     private boolean myHandleDispose = true;
 
     private BalloonPopupSupport(@NotNull JPopupMenu popupMenu,
                                 @NotNull JComponent component,
-                                @NotNull Alarm popupAlarm) {
+                                @NotNull SingleEdtTaskScheduler popupAlarm) {
       myPopupMenu = popupMenu;
       myComponent = component;
       myAlarm = popupAlarm;
     }
 
     private void setupListeners(@NotNull Balloon balloon) {
-      myAlarm.cancelAllRequests();
+      myAlarm.cancel();
       myPopupMenu.addPopupMenuListener(this);
       Disposer.register(balloon, this);
     }
@@ -1161,7 +1158,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       myHandleDispose = false;
       Disposer.dispose(this);
       myComponent.putClientProperty("PopupHideInProgress", Boolean.TRUE);
-      myAlarm.addRequest(() -> myComponent.putClientProperty("PopupHideInProgress", null), 500);
+      myAlarm.request(500, () -> myComponent.putClientProperty("PopupHideInProgress", null));
     }
 
     @Override
@@ -1209,7 +1206,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   private static void showPopup(@NotNull Notification notification,
                                 @NotNull LinkLabel<?> link,
                                 @NotNull DefaultActionGroup group,
-                                @NotNull Alarm popupAlarm) {
+                                @NotNull SingleEdtTaskScheduler popupAlarm) {
     if (link.getClientProperty("PopupHideInProgress") != null) {
       return;
     }
@@ -1327,7 +1324,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     private final Notification.CollapseActionsDirection collapseActionsDirection;
     private DropDownAction groupedActionsLink;
     boolean checkActionWidth;
-    final Alarm popupAlarm = new Alarm();
+    final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
     private NotificationActionPanel(int gap, Notification.CollapseActionsDirection direction) {
       super(new HorizontalLayout(gap, SwingConstants.CENTER));
