@@ -154,7 +154,8 @@ final class UpdatePluginsApp implements ApplicationStarter {
       dependencyDownloader = PluginDownloader.createDownloader(dependencyNode);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      LOG.error("Failed to create a plugin downloader", e);
+      return pluginsToUpdate;
     }
     logInfo("Added a required dependency for " + pluginId + " plugin for installation: " + dependencyId);
     final var result = new ArrayList<>(pluginsToUpdate);
