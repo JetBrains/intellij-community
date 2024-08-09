@@ -37,7 +37,7 @@ internal class ExternalProjectSelector(
   }
 
   private fun createPopup(externalProjects: List<DependencyAnalyzerProject>, onChange: (DependencyAnalyzerProject) -> Unit): JBPopup {
-    val content = ExternalProjectPopupContent(externalProjects)
+    val content = ExternalProjectPopupContent(externalProjects.sortedBy { it.title })
       .apply { whenMousePressed { onChange(selectedValue) } }
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content, null)
