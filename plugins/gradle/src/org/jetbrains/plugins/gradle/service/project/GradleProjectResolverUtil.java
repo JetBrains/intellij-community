@@ -696,7 +696,6 @@ public final class GradleProjectResolverUtil {
         ModuleMappingInfo mapping = artifactMap.getModuleMapping(ExternalSystemApiUtil.toCanonicalPath(file.getPath()));
         if (mapping != null) {
           for (String moduleId : mapping.getModuleIds()) {
-            if (moduleId == null) continue;
             projectPair = sourceSetMap.get(moduleId);
 
             if (projectPair == null) continue;
