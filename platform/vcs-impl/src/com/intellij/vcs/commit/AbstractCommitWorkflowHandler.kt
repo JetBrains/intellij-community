@@ -2,6 +2,9 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -130,7 +133,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private suspend fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
     val proceed = coroutineToIndicator {
       checkCommit(sessionInfo) &&
-      saveCommitOptionsOnCommit()
+      WriteIntentReadAction.compute<Boolean> { saveCommitOptionsOnCommit() }
     }
     if (!proceed) return false
 
@@ -139,7 +142,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
     if (!updateWorkflow(sessionInfo)) return false
 
-    FileDocumentManager.getInstance().saveAllDocuments()
+    writeIntentReadAction {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
 
     val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
     return doExecuteSession(sessionInfo, commitInfo)

@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -305,7 +306,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   private void beforeInit() {
-    getBrowser().setInclusionChangedListener(() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged());
+    //readaction is not enough
+    getBrowser().setInclusionChangedListener(() -> WriteIntentReadAction.run(
+      (Runnable)() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged()
+    ));
 
     addInclusionListener(() -> updateButtons(), this);
     getBrowser().getViewer().addSelectionListener(() -> {

@@ -19,6 +19,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Document;
@@ -267,7 +268,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       myModel.setChanges(ContainerUtil.notNullize(changes), isContentsEqual);
       myAlignedDiffModel.realignChanges();
 
-      myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
+      //maybe readaction
+      WriteIntentReadAction.run((Runnable)() -> myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings()));
 
       myInitialScrollHelper.onRediff();
 

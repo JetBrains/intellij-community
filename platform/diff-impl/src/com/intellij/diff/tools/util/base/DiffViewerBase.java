@@ -10,6 +10,7 @@ import com.intellij.diff.util.DiffTaskQueue;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
@@ -118,7 +119,7 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
     abortRediff();
 
     if (UIUtil.isShowing(getComponent())) {
-      taskAlarm.addRequest(this::rediff, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      taskAlarm.addRequest(() -> WriteIntentReadAction.run((Runnable)() -> rediff()), ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     }
   }
 

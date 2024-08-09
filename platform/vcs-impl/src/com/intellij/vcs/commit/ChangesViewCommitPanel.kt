@@ -4,7 +4,9 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -69,7 +71,10 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
     }
 
-    changesView.setInclusionListener { fireInclusionChanged() }
+    changesView.setInclusionListener {
+      //readaction is not enough
+      WriteIntentReadAction.run { fireInclusionChanged () }
+    }
     changesView.isShowCheckboxes = true
     changesViewHost.statusComponent =
       CommitStatusPanel(this).apply {

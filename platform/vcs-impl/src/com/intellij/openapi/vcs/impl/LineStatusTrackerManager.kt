@@ -144,8 +144,10 @@ class LineStatusTrackerManager(
 
       EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this@LineStatusTrackerManager)
 
-      MyEditorFactoryListener().install(this@LineStatusTrackerManager)
-      onEverythingChanged()
+      writeIntentReadAction {
+        MyEditorFactoryListener().install(this@LineStatusTrackerManager)
+        onEverythingChanged()
+      }
 
       PartialLineStatusTrackerManagerState.restoreState(project)
     }

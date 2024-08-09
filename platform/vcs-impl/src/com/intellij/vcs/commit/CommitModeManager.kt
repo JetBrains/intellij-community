@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -55,8 +56,11 @@ class CommitModeManager(private val project: Project, private val coroutineScope
 
       val commitModeManager = project.serviceAsync<CommitModeManager>()
       commitModeManager.coroutineScope.launch(Dispatchers.EDT) {
-        commitModeManager.subscribeToChanges()
-        commitModeManager.updateCommitMode()
+        //maybe readaction
+        writeIntentReadAction {
+          commitModeManager.subscribeToChanges()
+          commitModeManager.updateCommitMode()
+        }
       }
     }
   }

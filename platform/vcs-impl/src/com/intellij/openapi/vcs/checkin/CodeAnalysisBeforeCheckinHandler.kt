@@ -108,7 +108,10 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     val changes = commitInfo.committedChanges
     if (changes.isEmpty()) return null
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    //readaction is not enough
+    writeIntentReadAction {
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+    }
 
     val codeSmells: List<CodeSmellInfo> = withProgressText(message("progress.text.analyzing.code")) {
       withContext(Dispatchers.Default) {

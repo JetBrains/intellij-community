@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil.DiffStripeTextAttributes
 import com.intellij.openapi.editor.Document
@@ -63,7 +64,11 @@ abstract class LineStatusMarkerRenderer internal constructor(
   }
 
   fun scheduleUpdate() {
-    updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "update", Runnable { updateHighlighters() }))
+    updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "update", Runnable {
+      WriteIntentReadAction.run {
+        updateHighlighters()
+      }
+    }))
   }
 
   /**
