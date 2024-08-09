@@ -21,12 +21,12 @@ fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit) {
   this.ui.ideFrame(action)
 }
 
-fun Finder.secondIdeFrame(action: IdeaFrameUI.() -> Unit) {
-  x("//div[@class='IdeFrameImpl'][1]", IdeaFrameUI::class.java).action()
+fun Finder.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
+  x("//div[@class='IdeFrameImpl' and contains(@accessiblename, '${projectName}')]", IdeaFrameUI::class.java).action()
 }
 
-fun Driver.secondIdeFrame(action: IdeaFrameUI.() -> Unit) {
-  this.ui.secondIdeFrame(action)
+fun Driver.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
+  this.ui.projectIdeFrame(projectName, action)
 }
 
 open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
