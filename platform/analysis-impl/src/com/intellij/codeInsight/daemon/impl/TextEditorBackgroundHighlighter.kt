@@ -5,7 +5,9 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -16,7 +18,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.PsiFileEx
-import com.intellij.util.ArrayUtilRt
+import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.toArray
 import java.util.concurrent.CancellationException
 
@@ -36,7 +38,7 @@ class TextEditorBackgroundHighlighter(private val project: Project, private val 
     return file
   }
 
-  fun getPasses(passesToIgnore: IntArray): List<TextEditorHighlightingPass> {
+  private fun createPasses(): List<TextEditorHighlightingPass> {
     if (project.isDisposed()) {
       return emptyList()
     }
@@ -48,13 +50,16 @@ class TextEditorBackgroundHighlighter(private val project: Project, private val 
 
     var file = renewFile() ?: return emptyList()
 
-    var effectivePassesToIgnore = passesToIgnore
+    val effectivePassesToIgnore =
     if (file is PsiCompiledFile) {
       file = file.getDecompiledPsiFile()
-      effectivePassesToIgnore = IGNORE_FOR_COMPILED
+      IGNORE_FOR_COMPILED
     }
     else if (!DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file)) {
       return emptyList()
+    }
+    else {
+      ArrayUtil.EMPTY_INT_ARRAY
     }
 
     HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder("passes instantiation").use { span ->
@@ -81,7 +86,9 @@ class TextEditorBackgroundHighlighter(private val project: Project, private val 
   }
 
   override fun createPassesForEditor(): Array<TextEditorHighlightingPass> {
-    val passes = getPasses(ArrayUtilRt.EMPTY_INT_ARRAY)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    GlobalInspectionContextBase.assertUnderDaemonProgress()
+    val passes = createPasses()
     return if (passes.isEmpty()) TextEditorHighlightingPass.EMPTY_ARRAY else passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY)
   }
 }
