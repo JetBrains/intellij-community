@@ -13,12 +13,17 @@ import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class NewUsersOnboardingService(private val project: Project, private val coroutineScope: CoroutineScope) {
+class NewUsersOnboardingService(private val project: Project, private val coroutineScope: CoroutineScope) {
   // Should be accessed only in EDT
   private var currentExecutor: NewUsersOnboardingExecutor? = null
   private var currentDialog: DialogWrapper? = null
+
+  var wasDialogShownDuringIdeSession: Boolean = false
+    private set
 
   fun showOnboardingDialog() {
     // Close with the other exit code to not trigger showing of notification
@@ -28,6 +33,7 @@ internal class NewUsersOnboardingService(private val project: Project, private v
     currentDialog = dialog
     dialog.show()
 
+    wasDialogShownDuringIdeSession = true
     PropertiesComponent.getInstance().setValue(NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY, true)
     NewUsersOnboardingStatistics.logDialogShown(project)
   }
