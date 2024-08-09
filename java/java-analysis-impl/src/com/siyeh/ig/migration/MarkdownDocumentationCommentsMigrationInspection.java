@@ -151,7 +151,7 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
             continue;
           }
           else if (c == '>') {
-            String name = html.substring(tag + (endTag ? 2 : 1), (html.charAt(i-1) == '/') ? i - 1 : i).toLowerCase(Locale.ENGLISH);
+            String name = html.substring(tag + (endTag ? 2 : 1), (html.charAt(i-1) == '/') ? i - 1 : i).trim().toLowerCase(Locale.ENGLISH);
             if ("li".equals(name)) {
               if (endTag) {
                 inList = false;
@@ -247,7 +247,7 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
     }
 
     private static boolean isLetterOrDigitAscii(char cur) {
-      return cur >= 'a' && cur <= 'z' || cur >= 'A' && cur <= 'Z' || cur >= '0' && cur <= '9';
+      return cur >= 'a' && cur <= 'z' || cur >= 'A' && cur <= 'Z' || cur >= '0' && cur <= '9' || cur == ' ';
     }
 
     private static String getElementIndent(PsiElement element) {
