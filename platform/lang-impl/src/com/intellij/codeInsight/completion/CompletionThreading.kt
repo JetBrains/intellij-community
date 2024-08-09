@@ -89,7 +89,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
   override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*> {
     val startSemaphore = Semaphore()
     startSemaphore.down()
-    val task = ClientId.decorateRunnable {
+      val task = {
       ProgressManager.getInstance().runProcess(
         {
           try {
@@ -101,7 +101,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
           }
         }, progressIndicator)
     }
-    val future = coroutineScope.async(Dispatchers.IO) { task.run() }
+    val future = coroutineScope.async(Dispatchers.IO + ClientId.coroutineContext()) { task() }
     startSemaphore.waitFor()
     return future
   }
