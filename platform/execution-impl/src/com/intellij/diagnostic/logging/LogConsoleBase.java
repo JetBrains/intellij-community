@@ -13,6 +13,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -473,8 +474,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private @Nullable Editor getEditor() {
-    final ConsoleView console = getConsole();
-    return console != null ? CommonDataKeys.EDITOR.getData((DataProvider) console) : null;
+    ConsoleView console = getConsole();
+    if (console == null) return null;
+    DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
+    return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
   private void filterConsoleOutput() {
