@@ -236,6 +236,9 @@ abstract class ParallelIndexWriter(val workersCount: Int = TOTAL_WRITERS_NUMBER)
    */
   abstract fun totalTimeIndexersSlept(unit: TimeUnit): Long
 
+  /** @return number of writes queued at this moment. (Contrary to other monitoring methods, this is not an aggregate value) */
+  open fun writesQueued(): Int  = 0
+
   /**
    * @return worker index for indexId, in [0..workersCount).
    * Allow partitioning indexes writing to different threads to avoid concurrency.
@@ -723,15 +726,19 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
     //TODO RC: why we don't repeat the CAS below if it fails?
     if (writesInQueue > writesInQueueToSleep && sleepingIndexers.compareAndSet(currentlySleeping, couldBeSleeping)) {
       val writesToWakeUp = writesInQueueToSleep - MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER
-      LOG.debug("Sleeping indexer: ", couldBeSleeping, " of ", numberOfIndexingWorkers, "; writes queued: ", writesInQueue,
-                "; wake up when queue shrinks to ", writesToWakeUp)
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Sleeping indexer: ", couldBeSleeping, " of ", numberOfIndexingWorkers, "; writes queued: ", writesInQueue,
+                  "; wake up when queue shrinks to ", writesToWakeUp)
+      }
       //TODO RC: EXPECTED_SINGLE_WRITE_TIME_NS should be dynamically adjusted to actual value, not fixed
       val napTimeNs = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * EXPECTED_SINGLE_WRITE_TIME_NS
       try {
         val sleptNs = suspendUntilUpdatesQueueIsShrunk(writesToWakeUp, napTimeNs)
-        LOG.debug("Waking indexer ", sleepingIndexers.get(), " of ", numberOfIndexingWorkers, " by ", indexWritesQueued.get(),
-                  " updates in queue, should have wake up on ", writesToWakeUp,
-                  "; slept for ", sleptNs, " ns")
+        if (LOG.isDebugEnabled) {
+          LOG.debug("Waking indexer ", sleepingIndexers.get(), " of ", numberOfIndexingWorkers, " by ", indexWritesQueued.get(),
+                    " updates in queue, should have wake up on ", writesToWakeUp,
+                    "; slept for ", sleptNs, " ns")
+        }
         totalTimeSleptNs.addAndGet(sleptNs)
       }
       finally {
@@ -811,6 +818,8 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
   override fun totalTimeIndexersSlept(unit: TimeUnit): Long {
     return unit.convert(totalTimeSleptNs.get(), NANOSECONDS)
   }
+
+  override fun writesQueued(): Int = indexWritesQueued.get()
 }
 
 
