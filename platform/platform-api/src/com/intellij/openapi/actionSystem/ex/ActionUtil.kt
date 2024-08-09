@@ -53,6 +53,9 @@ private val InputEventDummyAction = EmptyAction.createEmptyAction(null, null, tr
 
 object ActionUtil {
 
+  @JvmField
+  val TOOLTIP_TEXT: Key<@NlsContexts.Tooltip String> = Key.create(JComponent.TOOL_TIP_TEXT_KEY)
+
   /**
    * By default, a "performable" non-empty popup action group menu item still shows a submenu.
    * Use this key to disable the submenu and avoid children expansion on update as follows:

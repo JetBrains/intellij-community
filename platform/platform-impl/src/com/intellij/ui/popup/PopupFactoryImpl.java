@@ -912,9 +912,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return description == null ? getTooltip() : description;
     }
 
-    public @NlsContexts.DetailedDescription String getTooltip() {
-      //noinspection deprecation
-      return (String)myPresentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY);
+    public @NlsContexts.Tooltip String getTooltip() {
+      return myPresentation.getClientProperty(ActionUtil.TOOLTIP_TEXT);
     }
 
     @Override
