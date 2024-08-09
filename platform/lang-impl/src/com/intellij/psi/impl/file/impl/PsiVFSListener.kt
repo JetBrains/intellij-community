@@ -1,786 +1,752 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.impl.file.impl;
+package com.intellij.psi.impl.file.impl
 
-import com.intellij.ide.PsiCopyPasteManager;
-import com.intellij.ide.impl.ProjectUtilCore;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeEvent;
-import com.intellij.openapi.fileTypes.FileTypeListener;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
-import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
-import com.intellij.openapi.startup.InitProjectActivityJavaShim;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.project.ProjectKt;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.messages.SimpleMessageBusConnection;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.PsiCopyPasteManager
+import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
+import com.intellij.openapi.fileTypes.FileTypeEvent
+import com.intellij.openapi.fileTypes.FileTypeListener
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectLocator
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.project.stateStore
+import com.intellij.psi.*
+import com.intellij.psi.impl.DebugUtil
+import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.psi.impl.PsiTreeChangeEventImpl
+import com.intellij.util.FileContentUtilCore
+import one.util.streamex.StreamEx
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
+import java.util.concurrent.atomic.AtomicBoolean
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+private val LOG = logger<PsiVFSListener>()
 
 @Service(Service.Level.PROJECT)
-public final class PsiVFSListener implements BulkFileListener {
-  private static final Logger LOG = Logger.getInstance(PsiVFSListener.class);
+@Internal
+class PsiVFSListener internal constructor(private val project: Project) {
+  private val myProjectRootManager: ProjectRootManager = ProjectRootManager.getInstance(project)
+  private val manager = PsiManager.getInstance(project) as PsiManagerImpl
+  private val fileManager = manager.fileManager as FileManagerImpl
+  private var reportedUnloadedPsiChange = false
 
-  private final ProjectRootManager myProjectRootManager;
-  private final PsiManagerImpl myManager;
-  private final FileManagerImpl myFileManager;
-  private final Project myProject;
-  private boolean myReportedUnloadedPsiChange;
+  internal class MyStartUpActivity : ProjectActivity {
+    override suspend fun execute(project: Project) {
+      val connection = project.messageBus.simpleConnect()
 
-  private static final AtomicBoolean ourGlobalListenerInstalled = new AtomicBoolean(false);
+      serviceAsync<LanguageSubstitutors>().point?.addChangeListener({
+                                                                      if (project.isDisposed) {
+                                                                        return@addChangeListener
+                                                                      }
+                                                                      val fileManager = PsiManagerEx.getInstanceEx(project).fileManager
+                                                                      (fileManager as FileManagerImpl).processFileTypesChanged(true)
+                                                                    }, project)
 
-  PsiVFSListener(@NotNull Project project) {
-    myProject = project;
-    myProjectRootManager = ProjectRootManager.getInstance(project);
-    myManager = (PsiManagerImpl)PsiManager.getInstance(project);
-    myFileManager = (FileManagerImpl)myManager.getFileManager();
-  }
-
-  static final class MyStartUpActivity extends InitProjectActivityJavaShim {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
-
-      ExtensionPoint<@NotNull KeyedLazyInstance<LanguageSubstitutor>> point = LanguageSubstitutors.getInstance().getPoint();
-      if (point != null) {
-        point.addChangeListener(() -> {
-          if (project.isDisposed()) {
-            return;
-          }
-
-          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-          ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(true);
-        }, project);
-      }
-
-      connection.subscribe(AdditionalLibraryRootsListener.TOPIC, new MyAdditionalLibraryRootListener(project));
-      connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-        @Override
-        public void fileTypesChanged(@NotNull FileTypeEvent e) {
-          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-          ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(e.getRemovedFileType() != null);
+      connection.subscribe(AdditionalLibraryRootsListener.TOPIC, MyAdditionalLibraryRootListener(project))
+      connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
+        override fun fileTypesChanged(e: FileTypeEvent) {
+          val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
+          fileManager.processFileTypesChanged(e.removedFileType != null)
         }
-      });
-      connection.subscribe(FileDocumentManagerListener.TOPIC, new MyFileDocumentManagerListener(project));
+      })
+      connection.subscribe(FileDocumentManagerListener.TOPIC, MyFileDocumentManagerListener(project))
 
-      connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-        @Override
-        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-          ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(true);
+      connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+        override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+          val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
+          fileManager.processFileTypesChanged(true)
         }
 
-        @Override
-        public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-          ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(true);
+        override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+          val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
+          fileManager.processFileTypesChanged(true)
         }
-      });
+      })
 
-      installGlobalListener();
+      installGlobalListener()
     }
   }
 
-  private static void installGlobalListener() {
-    if (!ourGlobalListenerInstalled.compareAndSet(false, true)) {
-      return;
-    }
-
-    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-        for (Project project : ProjectUtilCore.getOpenProjects()) {
-          if (!project.isDisposed()) {
-            project.getService(PsiVFSListener.class).before(events);
-          }
-        }
-      }
-
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        Project[] projects = ProjectUtilCore.getOpenProjects();
-        // let PushedFilePropertiesUpdater process all pending VFS events and update file properties before we issue PSI events
-        for (Project project : projects) {
-          PushedFilePropertiesUpdater updater = PushedFilePropertiesUpdater.getInstance(project);
-          if (updater instanceof PushedFilePropertiesUpdaterImpl) {
-            ((PushedFilePropertiesUpdaterImpl)updater).processAfterVfsChanges(events);
-          }
-        }
-        for (Project project : projects) {
-          project.getService(PsiVFSListener.class).after(events);
-        }
-      }
-    });
+  private fun getCachedDirectory(parent: VirtualFile?): PsiDirectory? {
+    return if (parent == null) null else fileManager.getCachedDirectory(parent)
   }
 
-  private @Nullable PsiDirectory getCachedDirectory(VirtualFile parent) {
-    return parent == null ? null : myFileManager.getCachedDirectory(parent);
-  }
-
-  private void fileCreated(@NotNull VirtualFile vFile) {
-    ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> {
-      VirtualFile parent = vFile.getParent();
-      PsiDirectory parentDir = getCachedDirectory(parent);
+  private fun fileCreated(vFile: VirtualFile) {
+    ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
+      val parent = vFile.parent
+      val parentDir = getCachedDirectory(parent)
       if (parentDir == null) {
-        handleVfsChangeWithoutPsi(vFile);
-        return;
+        handleVfsChangeWithoutPsi(vFile)
+        return@ExternalChangeAction
       }
 
-      PsiFileSystemItem item = vFile.isDirectory() ? myFileManager.findDirectory(vFile) : myFileManager.findFile(vFile);
-      if (item != null && item.getProject() == myManager.getProject()) {
-        PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-        treeEvent.setParent(parentDir);
-        myManager.beforeChildAddition(treeEvent);
-        treeEvent.setChild(item);
-        myManager.childAdded(treeEvent);
+      val item = if (vFile.isDirectory) fileManager.findDirectory(vFile) else fileManager.findFile(vFile)
+      if (item != null && item.project === manager.project) {
+        val treeEvent = PsiTreeChangeEventImpl(manager)
+        treeEvent.parent = parentDir
+        manager.beforeChildAddition(treeEvent)
+        treeEvent.child = item
+        manager.childAdded(treeEvent)
       }
-    });
+    })
   }
 
-  private void beforeFileDeletion(@NotNull VFileDeleteEvent event) {
-    VirtualFile vFile = event.getFile();
+  private fun beforeFileDeletion(event: VFileDeleteEvent) {
+    val vFile = event.file
 
-    VirtualFile parent = vFile.getParent();
-    PsiDirectory parentDir = getCachedDirectory(parent);
-    if (parentDir == null) return; // do not notify listeners if parent directory was never accessed via PSI
+    val parent = vFile.parent
+    // do not notify listeners if parent directory was never accessed via PSI
+    val parentDir = getCachedDirectory(parent) ?: return
 
-    ApplicationManager.getApplication().runWriteAction(
-      (ExternalChangeAction)() -> {
-        PsiFileSystemItem item = vFile.isDirectory() ? myFileManager.findDirectory(vFile) : myFileManager.getCachedPsiFile(vFile);
-        if (item != null) {
-          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-          treeEvent.setParent(parentDir);
-          treeEvent.setChild(item);
-          myManager.beforeChildRemoval(treeEvent);
-        }
-      }
-    );
+    ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
+      val item = (if (vFile.isDirectory) fileManager.findDirectory(vFile) else fileManager.getCachedPsiFile(vFile))
+                 ?: return@ExternalChangeAction
+      val treeEvent = PsiTreeChangeEventImpl(manager)
+      treeEvent.parent = parentDir
+      treeEvent.child = item
+      manager.beforeChildRemoval(treeEvent)
+    })
   }
 
   // optimization: call myFileManager.removeInvalidFilesAndDirs() once for a group of deletion events, instead of once for each event
-  private void filesDeleted(@NotNull List<? extends VFileEvent> events) {
-    boolean needToRemoveInvalidFilesAndDirs = false;
-    for (VFileEvent event : events) {
-      VFileDeleteEvent de = (VFileDeleteEvent)event;
-      VirtualFile vFile = de.getFile();
-      VirtualFile parent = vFile.getParent();
+  private fun filesDeleted(events: List<VFileEvent>) {
+    var needToRemoveInvalidFilesAndDirs = false
+    for (event in events) {
+      val de = event as VFileDeleteEvent
+      val vFile = de.file
+      val parent = vFile.parent
 
-      PsiFile psiFile = myFileManager.getCachedPsiFileInner(vFile);
-      PsiElement element;
+      val psiFile = fileManager.getCachedPsiFileInner(vFile)
+      var element: PsiElement?
       if (psiFile != null) {
-        myFileManager.setViewProvider(vFile, null);
-        element = psiFile;
+        fileManager.setViewProvider(vFile, null)
+        element = psiFile
       }
       else {
-        PsiDirectory psiDir = myFileManager.getCachedDirectory(vFile);
+        val psiDir = fileManager.getCachedDirectory(vFile)
         if (psiDir != null) {
-          needToRemoveInvalidFilesAndDirs = true;
-          element = psiDir;
+          needToRemoveInvalidFilesAndDirs = true
+          element = psiDir
         }
         else if (parent != null) {
-          handleVfsChangeWithoutPsi(parent);
-          return;
+          handleVfsChangeWithoutPsi(parent)
+          return
         }
         else {
-          element = null;
+          element = null
         }
       }
-      PsiDirectory parentDir = getCachedDirectory(parent);
+      val parentDir = getCachedDirectory(parent)
       if (element != null && parentDir != null) {
-        ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> {
-          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-          treeEvent.setParent(parentDir);
-          treeEvent.setChild(element);
-          myManager.childRemoved(treeEvent);
-        });
+        ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
+          val treeEvent = PsiTreeChangeEventImpl(manager)
+          treeEvent.parent = parentDir
+          treeEvent.child = element
+          manager.childRemoved(treeEvent)
+        })
       }
     }
     if (needToRemoveInvalidFilesAndDirs) {
-      myFileManager.removeInvalidFilesAndDirs(false);
+      fileManager.removeInvalidFilesAndDirs(false)
     }
   }
 
-  private void clearViewProvider(@NotNull VirtualFile vFile, @NotNull String why) {
-    DebugUtil.performPsiModification(why, ()-> myFileManager.setViewProvider(vFile, null));
+  private fun clearViewProvider(vFile: VirtualFile, why: String) {
+    DebugUtil.performPsiModification<RuntimeException>(why) { fileManager.setViewProvider(vFile, null) }
   }
 
-  private void beforePropertyChange(@NotNull VFilePropertyChangeEvent event) {
-    VirtualFile vFile = event.getFile();
-    String propertyName = event.getPropertyName();
+  private fun beforePropertyChange(event: VFilePropertyChangeEvent) {
+    val vFile = event.file
+    val propertyName = event.propertyName
 
-    FileViewProvider viewProvider = myFileManager.findCachedViewProvider(vFile);
+    val viewProvider = fileManager.findCachedViewProvider(vFile)
 
-    VirtualFile parent = vFile.getParent();
-    PsiDirectory parentDir = viewProvider != null && parent != null ? myFileManager.findDirectory(parent) : getCachedDirectory(parent);
-    if (parent != null && parentDir == null) return; // do not notifyListeners event if parent directory was never accessed via PSI
+    val parent = vFile.parent
+    val parentDir = if (viewProvider != null && parent != null) fileManager.findDirectory(parent) else getCachedDirectory(parent)
+    // do not notifyListeners event if parent directory was never accessed via PSI
+    if (parent != null && parentDir == null) {
+      return
+    }
 
-    ApplicationManager.getApplication().runWriteAction(
-      (ExternalChangeAction)() -> {
-        PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-        treeEvent.setParent(parentDir);
+    ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
+      val treeEvent = PsiTreeChangeEventImpl(manager)
+      treeEvent.parent = parentDir
+      if (propertyName == VirtualFile.PROP_NAME) {
+        if (parentDir == null) {
+          return@ExternalChangeAction
+        }
 
-        if (VirtualFile.PROP_NAME.equals(propertyName)) {
-          String newName = (String)event.getNewValue();
-
-          if (parentDir == null) return;
-
-          if (vFile.isDirectory()) {
-            PsiDirectory psiDir = myFileManager.findDirectory(vFile);
-            if (psiDir != null) {
-              if (!FileTypeManager.getInstance().isFileIgnored(newName)) {
-                treeEvent.setChild(psiDir);
-                treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_DIRECTORY_NAME);
-                treeEvent.setOldValue(vFile.getName());
-                treeEvent.setNewValue(newName);
-                myManager.beforePropertyChange(treeEvent);
-              }
-              else {
-                treeEvent.setChild(psiDir);
-                myManager.beforeChildRemoval(treeEvent);
-              }
+        val newName = event.newValue as String
+        if (vFile.isDirectory) {
+          val psiDir = fileManager.findDirectory(vFile)
+          if (psiDir != null) {
+            if (!FileTypeManager.getInstance().isFileIgnored(newName)) {
+              treeEvent.child = psiDir
+              treeEvent.propertyName = PsiTreeChangeEvent.PROP_DIRECTORY_NAME
+              treeEvent.oldValue = vFile.name
+              treeEvent.newValue = newName
+              manager.beforePropertyChange(treeEvent)
             }
             else {
-              if ((!Registry.is("ide.hide.excluded.files") || !isExcludeRoot(vFile)) && !FileTypeManager.getInstance().isFileIgnored(newName)) {
-                myManager.beforeChildAddition(treeEvent);
-              }
+              treeEvent.child = psiDir
+              manager.beforeChildRemoval(treeEvent)
             }
           }
           else {
-            FileViewProvider viewProvider1 = myFileManager.findViewProvider(vFile);
-            PsiFile psiFile = viewProvider1.getPsi(viewProvider1.getBaseLanguage());
-            PsiFile psiFile1 = createFileCopyWithNewName(vFile, newName);
-
-            if (psiFile != null) {
-              if (psiFile1 == null) {
-                treeEvent.setChild(psiFile);
-                myManager.beforeChildRemoval(treeEvent);
-              }
-              else if (!psiFile1.getClass().equals(psiFile.getClass())) {
-                treeEvent.setOldChild(psiFile);
-                myManager.beforeChildReplacement(treeEvent);
-              }
-              else {
-                treeEvent.setChild(psiFile);
-                treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_FILE_NAME);
-                treeEvent.setOldValue(vFile.getName());
-                treeEvent.setNewValue(newName);
-                myManager.beforePropertyChange(treeEvent);
-              }
-            }
-            else {
-              if (psiFile1 != null) {
-                myManager.beforeChildAddition(treeEvent);
-              }
+            if ((!Registry.`is`("ide.hide.excluded.files") || !isExcludeRoot(vFile)) && !FileTypeManager.getInstance().isFileIgnored(newName)) {
+              manager.beforeChildAddition(treeEvent)
             }
           }
         }
-        else if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
-          PsiFile psiFile = myFileManager.getCachedPsiFileInner(vFile);
-          if (psiFile == null) return;
+        else {
+          val viewProvider1 = fileManager.findViewProvider(vFile)
+          val psiFile = viewProvider1.getPsi(viewProvider1.baseLanguage)
+          val psiFile1 = createFileCopyWithNewName(vFile, newName)
 
-          treeEvent.setElement(psiFile);
-          treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_WRITABLE);
-          treeEvent.setOldValue(event.getOldValue());
-          treeEvent.setNewValue(event.getNewValue());
-          myManager.beforePropertyChange(treeEvent);
+          if (psiFile != null) {
+            if (psiFile1 == null) {
+              treeEvent.child = psiFile
+              manager.beforeChildRemoval(treeEvent)
+            }
+            else if (psiFile1.javaClass != psiFile.javaClass) {
+              treeEvent.oldChild = psiFile
+              manager.beforeChildReplacement(treeEvent)
+            }
+            else {
+              treeEvent.child = psiFile
+              treeEvent.propertyName = PsiTreeChangeEvent.PROP_FILE_NAME
+              treeEvent.oldValue = vFile.name
+              treeEvent.newValue = newName
+              manager.beforePropertyChange(treeEvent)
+            }
+          }
+          else if (psiFile1 != null) {
+            manager.beforeChildAddition(treeEvent)
+          }
         }
       }
-    );
+      else if (propertyName == VirtualFile.PROP_WRITABLE) {
+        val psiFile = fileManager.getCachedPsiFileInner(vFile) ?: return@ExternalChangeAction
+        treeEvent.element = psiFile
+        treeEvent.propertyName = PsiTreeChangeEvent.PROP_WRITABLE
+        treeEvent.oldValue = event.oldValue
+        treeEvent.newValue = event.newValue
+        manager.beforePropertyChange(treeEvent)
+      }
+    })
   }
 
-  private boolean isExcludeRoot(VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    if (parent == null) return false;
-
-    Module module = myProjectRootManager.getFileIndex().getModuleForFile(parent);
-    if (module == null) return false;
-    VirtualFile[] excludeRoots = ModuleRootManager.getInstance(module).getExcludeRoots();
-    return ArrayUtil.contains(file, excludeRoots);
+  private fun isExcludeRoot(file: VirtualFile): Boolean {
+    val parent = file.parent ?: return false
+    val module = myProjectRootManager.fileIndex.getModuleForFile(parent) ?: return false
+    val excludeRoots = ModuleRootManager.getInstance(module).excludeRoots
+    return excludeRoots.contains(file)
   }
 
-  private void propertyChanged(@NotNull VFilePropertyChangeEvent event) {
-    String propertyName = event.getPropertyName();
-    VirtualFile vFile = event.getFile();
+  private fun propertyChanged(event: VFilePropertyChangeEvent) {
+    val propertyName = event.propertyName
+    val vFile = event.file
 
-    FileViewProvider oldFileViewProvider = myFileManager.findCachedViewProvider(vFile);
-    PsiFile oldPsiFile = myFileManager.getCachedPsiFile(vFile);
+    val oldFileViewProvider = fileManager.findCachedViewProvider(vFile)
+    val oldPsiFile = fileManager.getCachedPsiFile(vFile)
 
-    VirtualFile parent = vFile.getParent();
-    PsiDirectory parentDir = oldPsiFile != null && parent != null ? myFileManager.findDirectory(parent) : getCachedDirectory(parent);
+    val parent = vFile.parent
+    val parentDir = if (oldPsiFile != null && parent != null) fileManager.findDirectory(parent) else getCachedDirectory(parent)
 
-    if (oldFileViewProvider != null && FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
+    if (oldFileViewProvider != null && FileContentUtilCore.FORCE_RELOAD_REQUESTOR == event.requestor) {
       // there is no need to rebuild if there were no PSI in the first place
-      myFileManager.forceReload(vFile);
-      return;
+      fileManager.forceReload(vFile)
+      return
     }
 
     // do not suppress reparse request for light files
     if (parentDir == null) {
-      boolean fire = VirtualFile.PROP_NAME.equals(propertyName) && vFile.isDirectory();
+      var fire = VirtualFile.PROP_NAME == propertyName && vFile.isDirectory
       if (fire) {
-        PsiDirectory psiDir = myFileManager.getCachedDirectory(vFile);
-        fire = psiDir != null;
+        val psiDir = fileManager.getCachedDirectory(vFile)
+        fire = psiDir != null
       }
-      if (!fire && !VirtualFile.PROP_WRITABLE.equals(propertyName)) {
-        handleVfsChangeWithoutPsi(vFile);
-        return;
+      if (!fire && VirtualFile.PROP_WRITABLE != propertyName) {
+        handleVfsChangeWithoutPsi(vFile)
+        return
       }
     }
 
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> {
-      PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-      treeEvent.setParent(parentDir);
-
-      switch (propertyName) {
-        case VirtualFile.PROP_NAME -> {
-          if (vFile.isDirectory()) {
-            PsiDirectory psiDir = myFileManager.getCachedDirectory(vFile);
+    val fileTypeManager = FileTypeManager.getInstance()
+    ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
+      val treeEvent = PsiTreeChangeEventImpl(manager)
+      treeEvent.parent = parentDir
+      when (propertyName) {
+        VirtualFile.PROP_NAME -> {
+          if (vFile.isDirectory) {
+            val psiDir = fileManager.getCachedDirectory(vFile)
             if (psiDir != null) {
               if (fileTypeManager.isFileIgnored(vFile)) {
-                myFileManager.removeFilesAndDirsRecursively(vFile);
+                fileManager.removeFilesAndDirsRecursively(vFile)
 
-                treeEvent.setChild(psiDir);
-                myManager.childRemoved(treeEvent);
+                treeEvent.child = psiDir
+                manager.childRemoved(treeEvent)
               }
               else {
-                treeEvent.setElement(psiDir);
-                treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_DIRECTORY_NAME);
-                treeEvent.setOldValue(event.getOldValue());
-                treeEvent.setNewValue(event.getNewValue());
-                myManager.propertyChanged(treeEvent);
+                treeEvent.element = psiDir
+                treeEvent.propertyName = PsiTreeChangeEvent.PROP_DIRECTORY_NAME
+                treeEvent.oldValue = event.oldValue
+                treeEvent.newValue = event.newValue
+                manager.propertyChanged(treeEvent)
               }
             }
             else {
-              PsiDirectory psiDir1 = myFileManager.findDirectory(vFile);
+              val psiDir1 = fileManager.findDirectory(vFile)
               if (psiDir1 != null) {
-                treeEvent.setChild(psiDir1);
-                myManager.childAdded(treeEvent);
+                treeEvent.child = psiDir1
+                manager.childAdded(treeEvent)
               }
             }
           }
           else {
-            FileViewProvider fileViewProvider = myFileManager.createFileViewProvider(vFile, true);
-            PsiFile newPsiFile = fileViewProvider.getPsi(fileViewProvider.getBaseLanguage());
+            val fileViewProvider = fileManager.createFileViewProvider(vFile, true)
+            val newPsiFile = fileViewProvider.getPsi(fileViewProvider.baseLanguage)
             if (oldPsiFile != null) {
               if (newPsiFile == null) {
-                clearViewProvider(vFile, "PSI renamed");
+                clearViewProvider(vFile, "PSI renamed")
 
-                treeEvent.setChild(oldPsiFile);
-                myManager.childRemoved(treeEvent);
+                treeEvent.child = oldPsiFile
+                manager.childRemoved(treeEvent)
               }
-              else if (!FileManagerImpl.areViewProvidersEquivalent(fileViewProvider, oldFileViewProvider)) {
-                myFileManager.setViewProvider(vFile, fileViewProvider);
+              else if (!FileManagerImpl.areViewProvidersEquivalent(fileViewProvider, oldFileViewProvider!!)) {
+                fileManager.setViewProvider(vFile, fileViewProvider)
 
-                treeEvent.setOldChild(oldPsiFile);
-                treeEvent.setNewChild(newPsiFile);
-                myManager.childReplaced(treeEvent);
+                treeEvent.oldChild = oldPsiFile
+                treeEvent.newChild = newPsiFile
+                manager.childReplaced(treeEvent)
               }
               else {
-                FileManagerImpl.clearPsiCaches(oldFileViewProvider);
+                FileManagerImpl.clearPsiCaches(oldFileViewProvider)
 
-                treeEvent.setElement(oldPsiFile);
-                treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_FILE_NAME);
-                treeEvent.setOldValue(event.getOldValue());
-                treeEvent.setNewValue(event.getNewValue());
-                myManager.propertyChanged(treeEvent);
+                treeEvent.element = oldPsiFile
+                treeEvent.propertyName = PsiTreeChangeEvent.PROP_FILE_NAME
+                treeEvent.oldValue = event.oldValue
+                treeEvent.newValue = event.newValue
+                manager.propertyChanged(treeEvent)
               }
             }
             else if (newPsiFile != null) {
-              myFileManager.setViewProvider(vFile, fileViewProvider);
+              fileManager.setViewProvider(vFile, fileViewProvider)
               if (parentDir != null) {
-                treeEvent.setChild(newPsiFile);
-                myManager.childAdded(treeEvent);
+                treeEvent.child = newPsiFile
+                manager.childAdded(treeEvent)
               }
             }
           }
         }
-        case VirtualFile.PROP_WRITABLE -> {
-          if (oldPsiFile == null) return;
+        VirtualFile.PROP_WRITABLE -> {
+          if (oldPsiFile == null) {
+            return@ExternalChangeAction
+          }
 
-          treeEvent.setElement(oldPsiFile);
-          treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_WRITABLE);
-          treeEvent.setOldValue(event.getOldValue());
-          treeEvent.setNewValue(event.getNewValue());
-          myManager.propertyChanged(treeEvent);
+          treeEvent.element = oldPsiFile
+          treeEvent.propertyName = PsiTreeChangeEvent.PROP_WRITABLE
+          treeEvent.oldValue = event.oldValue
+          treeEvent.newValue = event.newValue
+          manager.propertyChanged(treeEvent)
         }
-        case VirtualFile.PROP_ENCODING -> {
-          if (oldPsiFile == null) return;
+        VirtualFile.PROP_ENCODING -> {
+          if (oldPsiFile == null) {
+            return@ExternalChangeAction
+          }
 
-          treeEvent.setElement(oldPsiFile);
-          treeEvent.setPropertyName(VirtualFile.PROP_ENCODING);
-          treeEvent.setOldValue(event.getOldValue());
-          treeEvent.setNewValue(event.getNewValue());
-          myManager.propertyChanged(treeEvent);
+          treeEvent.element = oldPsiFile
+          treeEvent.propertyName = VirtualFile.PROP_ENCODING
+          treeEvent.oldValue = event.oldValue
+          treeEvent.newValue = event.newValue
+          manager.propertyChanged(treeEvent)
         }
       }
-    });
+    })
   }
 
-  private void beforeFileMovement(@NotNull VFileMoveEvent event) {
-    VirtualFile vFile = event.getFile();
+  private fun beforeFileMovement(event: VFileMoveEvent) {
+    val vFile = event.file
 
-    PsiDirectory oldParentDir = myFileManager.findDirectory(event.getOldParent());
-    PsiDirectory newParentDir = myFileManager.findDirectory(event.getNewParent());
+    val oldParentDir = fileManager.findDirectory(event.oldParent)
+    val newParentDir = fileManager.findDirectory(event.newParent)
     if ((oldParentDir == null && newParentDir == null) || FileTypeManager.getInstance().isFileIgnored(vFile)) {
-      return;
+      return
     }
 
-    ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> {
-      PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-
-      boolean isExcluded = vFile.isDirectory() &&
-                           Registry.is("ide.hide.excluded.files") && myProjectRootManager.getFileIndex().isExcluded(vFile);
+    ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
+      val treeEvent = PsiTreeChangeEventImpl(manager)
+      val isExcluded = vFile.isDirectory && Registry.`is`("ide.hide.excluded.files") && myProjectRootManager.fileIndex.isExcluded(vFile)
       if (oldParentDir != null && !isExcluded) {
-        PsiElement eventChild = vFile.isDirectory() ? myFileManager.findDirectory(vFile) : myFileManager.findFile(vFile);
-        treeEvent.setChild(eventChild);
+        val eventChild = if (vFile.isDirectory) fileManager.findDirectory(vFile) else fileManager.findFile(vFile)
+        treeEvent.child = eventChild
         if (newParentDir != null) {
-          treeEvent.setOldParent(oldParentDir);
-          treeEvent.setNewParent(newParentDir);
-          myManager.beforeChildMovement(treeEvent);
+          treeEvent.oldParent = oldParentDir
+          treeEvent.newParent = newParentDir
+          manager.beforeChildMovement(treeEvent)
         }
         else {
-          treeEvent.setParent(oldParentDir);
-          myManager.beforeChildRemoval(treeEvent);
+          treeEvent.parent = oldParentDir
+          manager.beforeChildRemoval(treeEvent)
         }
       }
       else {
-        LOG.assertTrue(newParentDir != null); // checked above
-        treeEvent.setParent(newParentDir);
-        myManager.beforeChildAddition(treeEvent);
+        // checked above
+        LOG.assertTrue(newParentDir != null)
+        treeEvent.parent = newParentDir
+        manager.beforeChildAddition(treeEvent)
       }
-    });
+    })
   }
 
-  // optimization: call myFileManager.removeInvalidFilesAndDirs() once for a group of move events, instead of once for each event
-  private void filesMoved(@NotNull List<? extends VFileEvent> events) {
-    List<PsiElement> oldElements = new ArrayList<>(events.size());
-    List<PsiDirectory> oldParentDirs = new ArrayList<>(events.size());
-    List<PsiDirectory> newParentDirs = new ArrayList<>(events.size());
+  // optimization: call fileManager.removeInvalidFilesAndDirs() once for a group of move events, instead of once for each event
+  private fun filesMoved(events: List<VFileEvent>) {
+    val oldElements = ArrayList<PsiElement?>(events.size)
+    val oldParentDirs = ArrayList<PsiDirectory?>(events.size)
+    val newParentDirs = ArrayList<PsiDirectory?>(events.size)
 
     // find old directories before removing invalid ones
-    for (VFileEvent e : events) {
-      VFileMoveEvent event = (VFileMoveEvent)e;
+    for (e in events) {
+      val event = e as VFileMoveEvent
+      val vFile = event.file
 
-      VirtualFile vFile = event.getFile();
+      var oldParentDir = fileManager.findDirectory(event.oldParent)
+      var newParentDir = fileManager.findDirectory(event.newParent)
 
-      PsiDirectory oldParentDir = myFileManager.findDirectory(event.getOldParent());
-      PsiDirectory newParentDir = myFileManager.findDirectory(event.getNewParent());
-
-      PsiElement oldElement = vFile.isDirectory()
-                              ? myFileManager.getCachedDirectory(vFile)
-                              : myFileManager.getCachedPsiFileInner(vFile);
-      Project oldProject = ProjectLocator.getInstance().guessProjectForFile(vFile);
-      if (oldProject != null && oldProject != myProject) {
-        // file moved between projects, remove all associations to the old project
-        myFileManager.removeFilesAndDirsRecursively(vFile);
-        // avoiding crashes in filePointer.getElement()
-        PsiCopyPasteManager.getInstance().fileMovedOutsideProject(vFile);
-        oldElement = null;
-        oldParentDir = null;
-        newParentDir = null;
-      }
-      oldElements.add(oldElement);
-      oldParentDirs.add(oldParentDir);
-      newParentDirs.add(newParentDir);
-    }
-    myFileManager.removeInvalidFilesAndDirs(true);
-
-    for (int i = 0; i < events.size(); i++) {
-      VFileMoveEvent event = (VFileMoveEvent)events.get(i);
-
-      VirtualFile vFile = event.getFile();
-
-      PsiDirectory oldParentDir = oldParentDirs.get(i);
-      PsiDirectory newParentDir = newParentDirs.get(i);
-      if (oldParentDir == null && newParentDir == null) continue;
-
-      PsiElement oldElement = oldElements.get(i);
-      PsiElement newElement;
-      FileViewProvider newViewProvider;
-      if (vFile.isDirectory()) {
-        newElement = myFileManager.findDirectory(vFile);
-        newViewProvider = null;
+      var oldElement: PsiElement? = if (vFile.isDirectory) {
+        fileManager.getCachedDirectory(vFile)
       }
       else {
-        newViewProvider = myFileManager.createFileViewProvider(vFile, true);
-        newElement = newViewProvider.getPsi(myFileManager.findViewProvider(vFile).getBaseLanguage());
+        fileManager.getCachedPsiFileInner(vFile)
+      }
+      val oldProject = ProjectLocator.getInstance().guessProjectForFile(vFile)
+      if (oldProject != null && oldProject !== project) {
+        // file moved between projects, remove all associations to the old project
+        fileManager.removeFilesAndDirsRecursively(vFile)
+        // avoiding crashes in filePointer.getElement()
+        PsiCopyPasteManager.getInstance().fileMovedOutsideProject(vFile)
+        oldElement = null
+        oldParentDir = null
+        newParentDir = null
+      }
+      oldElements.add(oldElement)
+      oldParentDirs.add(oldParentDir)
+      newParentDirs.add(newParentDir)
+    }
+    fileManager.removeInvalidFilesAndDirs(true)
+
+    for ((i, event) in events.withIndex()) {
+      val vFile = event.file!!
+
+      val oldParentDir = oldParentDirs[i]
+      val newParentDir = newParentDirs[i]
+      if (oldParentDir == null && newParentDir == null) {
+        continue
       }
 
-      if (oldElement == null && newElement == null) continue;
+      val oldElement = oldElements[i]
+      var newElement: PsiElement?
+      var newViewProvider: FileViewProvider?
+      if (vFile.isDirectory) {
+        newElement = fileManager.findDirectory(vFile)
+        newViewProvider = null
+      }
+      else {
+        newViewProvider = fileManager.createFileViewProvider(vFile, true)
+        newElement = newViewProvider.getPsi(fileManager.findViewProvider(vFile).baseLanguage)
+      }
 
-      ApplicationManager.getApplication().runWriteAction(
-        (ExternalChangeAction)() -> {
-          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-          if (oldElement == null) {
-            myFileManager.setViewProvider(vFile, newViewProvider);
-            treeEvent.setParent(newParentDir);
-            treeEvent.setChild(newElement);
-            myManager.childAdded(treeEvent);
+      if (oldElement == null && newElement == null) {
+        continue
+      }
+
+      ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
+        val treeEvent = PsiTreeChangeEventImpl(manager)
+        if (oldElement == null) {
+          fileManager.setViewProvider(vFile, newViewProvider)
+          treeEvent.parent = newParentDir
+          treeEvent.child = newElement
+          manager.childAdded(treeEvent)
+        }
+        else {
+          if (newElement == null) {
+            clearViewProvider(vFile, "PSI moved")
+            treeEvent.parent = oldParentDir
+            treeEvent.child = oldElement
+            manager.childRemoved(treeEvent)
           }
           else {
-            if (newElement == null) {
-              clearViewProvider(vFile, "PSI moved");
-              treeEvent.setParent(oldParentDir);
-              treeEvent.setChild(oldElement);
-              myManager.childRemoved(treeEvent);
+            if (newElement is PsiDirectory ||
+                FileManagerImpl.areViewProvidersEquivalent(newViewProvider!!, (oldElement as PsiFile).viewProvider)) {
+              treeEvent.oldParent = oldParentDir
+              treeEvent.newParent = newParentDir
+              treeEvent.child = oldElement
+              manager.childMoved(treeEvent)
             }
             else {
-              if (newElement instanceof PsiDirectory ||
-                  FileManagerImpl.areViewProvidersEquivalent(newViewProvider, ((PsiFile)oldElement).getViewProvider())) {
-                treeEvent.setOldParent(oldParentDir);
-                treeEvent.setNewParent(newParentDir);
-                treeEvent.setChild(oldElement);
-                myManager.childMoved(treeEvent);
-              }
-              else {
-                myFileManager.setViewProvider(vFile, newViewProvider);
-                PsiTreeChangeEventImpl treeRemoveEvent = new PsiTreeChangeEventImpl(myManager);
-                treeRemoveEvent.setParent(oldParentDir);
-                treeRemoveEvent.setChild(oldElement);
-                myManager.childRemoved(treeRemoveEvent);
-                PsiTreeChangeEventImpl treeAddEvent = new PsiTreeChangeEventImpl(myManager);
-                treeAddEvent.setParent(newParentDir);
-                treeAddEvent.setChild(newElement);
-                myManager.childAdded(treeAddEvent);
-              }
+              fileManager.setViewProvider(vFile, newViewProvider)
+              val treeRemoveEvent = PsiTreeChangeEventImpl(manager)
+              treeRemoveEvent.parent = oldParentDir
+              treeRemoveEvent.child = oldElement
+              manager.childRemoved(treeRemoveEvent)
+              val treeAddEvent = PsiTreeChangeEventImpl(manager)
+              treeAddEvent.parent = newParentDir
+              treeAddEvent.child = newElement
+              manager.childAdded(treeAddEvent)
             }
           }
         }
-      );
+      })
     }
   }
 
-  private @Nullable PsiFile createFileCopyWithNewName(VirtualFile vFile, String name) {
+  private fun createFileCopyWithNewName(vFile: VirtualFile, name: String): PsiFile? {
     // TODO[ik] remove this. Event handling and generation must be in view providers mechanism since we
     // need to track changes in _all_ psi views (e.g. namespace changes in XML)
-    FileTypeManager instance = FileTypeManager.getInstance();
-    if (instance.isFileIgnored(name)) return null;
-    FileType fileTypeByFileName = instance.getFileTypeByFileName(name);
-    return PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(
-      name, fileTypeByFileName, "", vFile.getModificationStamp(), true, false);
+    val instance = FileTypeManager.getInstance()
+    if (instance.isFileIgnored(name)) {
+      return null
+    }
+
+    val fileTypeByFileName = instance.getFileTypeByFileName(name)
+    return PsiFileFactory.getInstance(manager.project).createFileFromText(
+      /* name = */ name,
+      /* fileType = */ fileTypeByFileName,
+      /* text = */ "",
+      /* modificationStamp = */ vFile.modificationStamp,
+      /* eventSystemEnabled = */ true,
+      /* markAsCopy = */ false,
+    )
   }
 
-  public static final class MyModuleRootListener implements ModuleRootListener {
-    private int depthCounter; // accessed from within write action only
-    private final Project myListenerProject;
+  internal class MyModuleRootListener(private val listenerProject: Project) : ModuleRootListener {
+    // accessed from within write action only
+    private var depthCounter = 0
 
-    public MyModuleRootListener(@NotNull Project project) {
-      myListenerProject = project;
-    }
-
-    @Override
-    public void beforeRootsChange(@NotNull ModuleRootEvent event) {
-      if (LOG.isTraceEnabled()) LOG.trace("beforeRootsChanged call");
-      if (event.isCausedByFileTypesChange()) return;
-      if (LOG.isTraceEnabled()) LOG.trace("Event is not caused by file types change");
-      ApplicationManager.getApplication().runWriteAction(
-        (ExternalChangeAction)() -> {
-          depthCounter++;
-          if (LOG.isTraceEnabled()) LOG.trace("depthCounter increased " + depthCounter);
-          if (depthCounter > 1) return;
-
-          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(myListenerProject);
-          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(psiManager);
-          treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-          psiManager.beforePropertyChange(treeEvent);
-        }
-      );
-    }
-
-    @Override
-    public void rootsChanged(@NotNull ModuleRootEvent event) {
-      if (LOG.isTraceEnabled()) LOG.trace("rootsChanged call");
-      PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(myListenerProject);
-      FileManagerImpl fileManager = (FileManagerImpl)psiManager.getFileManager();
-      fileManager.dispatchPendingEvents();
-
-      if (event.isCausedByFileTypesChange()) return;
-      if (LOG.isTraceEnabled()) LOG.trace("Event is not caused by file types change");
-      ApplicationManager.getApplication().runWriteAction(
-        (ExternalChangeAction)() -> {
-          depthCounter--;
-          if (LOG.isTraceEnabled()) LOG.trace("depthCounter decreased " + depthCounter);
-          assert depthCounter >= 0 : "unbalanced `beforeRootsChange`/`rootsChanged`: " + depthCounter;
-          if (depthCounter > 0) return;
-
-          DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);
-
-          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(psiManager);
-          treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-          psiManager.propertyChanged(treeEvent);
-        }
-      );
-    }
-  }
-
-  private static final class MyAdditionalLibraryRootListener implements AdditionalLibraryRootsListener {
-    private final PsiManagerImpl psiManager;
-    private final FileManagerImpl fileManager;
-
-    MyAdditionalLibraryRootListener(@NotNull Project project) {
-      psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-      fileManager = (FileManagerImpl)psiManager.getFileManager();
-    }
-
-    @Override
-    public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
-                                    @NotNull Collection<? extends VirtualFile> oldRoots,
-                                    @NotNull Collection<? extends VirtualFile> newRoots,
-                                    @NotNull String libraryNameForDebug) {
-      ApplicationManager.getApplication().runWriteAction(
-        (ExternalChangeAction)() -> {
-          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(psiManager);
-          treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-          psiManager.beforePropertyChange(treeEvent);
-          DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);
-
-          treeEvent = new PsiTreeChangeEventImpl(psiManager);
-          treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-          psiManager.propertyChanged(treeEvent);
-        }
-      );
-    }
-  }
-
-  private static final class MyFileDocumentManagerListener implements FileDocumentManagerListener {
-    private final FileManagerImpl fileManager;
-    private final Project project;
-
-    private MyFileDocumentManagerListener(@NotNull Project project) {
-      this.project = project;
-      fileManager = (FileManagerImpl)((PsiManagerImpl)PsiManager.getInstance(project)).getFileManager();
-    }
-
-    @Override
-    public void fileWithNoDocumentChanged(@NotNull VirtualFile file) {
-      FileViewProvider viewProvider = fileManager.findCachedViewProvider(file);
-      if (viewProvider == null) {
-        project.getService(PsiVFSListener.class).handleVfsChangeWithoutPsi(file);
+    override fun beforeRootsChange(event: ModuleRootEvent) {
+      LOG.trace  { "beforeRootsChanged call" }
+      if (event.isCausedByFileTypesChange) {
+        return
       }
-      else {
-        ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> {
-          if (FileDocumentManagerImpl.recomputeFileTypeIfNecessary(file)) {
-            fileManager.forceReload(file);
+
+      LOG.trace { "Event is not caused by file types change" }
+      ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
+        depthCounter++
+        LOG.trace { "depthCounter increased $depthCounter" }
+        if (depthCounter > 1) {
+          return@ExternalChangeAction
+        }
+
+        val psiManager = PsiManager.getInstance(listenerProject) as PsiManagerImpl
+        val treeEvent = PsiTreeChangeEventImpl(psiManager)
+        treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
+        psiManager.beforePropertyChange(treeEvent)
+      })
+    }
+
+    override fun rootsChanged(event: ModuleRootEvent) {
+      LOG.trace { "rootsChanged call" }
+      val psiManager = PsiManager.getInstance(listenerProject) as PsiManagerImpl
+      val fileManager = psiManager.fileManager as FileManagerImpl
+      fileManager.dispatchPendingEvents()
+
+      if (event.isCausedByFileTypesChange) {
+        return
+      }
+
+      LOG.trace { "Event is not caused by file types change" }
+      ApplicationManager.getApplication().runWriteAction(
+        ExternalChangeAction {
+          depthCounter--
+          LOG.trace { "depthCounter decreased $depthCounter" }
+          assert(depthCounter >= 0) { "unbalanced `beforeRootsChange`/`rootsChanged`: $depthCounter" }
+          if (depthCounter > 0) {
+            return@ExternalChangeAction
           }
-          else {
-            fileManager.reloadPsiAfterTextChange(viewProvider, file);
-          }
-        });
-      }
-    }
 
-    @Override
-    public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
-      FileViewProvider psiFile = fileManager.findCachedViewProvider(file);
-      if (!file.isValid() || psiFile == null || !FileUtilRt.isTooLarge(file.getLength()) || psiFile instanceof PsiLargeFile) return;
-      ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> fileManager.reloadPsiAfterTextChange(psiFile, file));
+          DebugUtil.performPsiModification<RuntimeException>(null) { fileManager.possiblyInvalidatePhysicalPsi() }
+
+          val treeEvent = PsiTreeChangeEventImpl(psiManager)
+          treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
+          psiManager.propertyChanged(treeEvent)
+        }
+      )
     }
   }
 
-  private void handleVfsChangeWithoutPsi(@NotNull VirtualFile vFile) {
-    if (!myReportedUnloadedPsiChange && isInRootModel(vFile)) {
-      myFileManager.firePropertyChangedForUnloadedPsi();
-      myReportedUnloadedPsiChange = true;
+  private class MyAdditionalLibraryRootListener(project: Project) : AdditionalLibraryRootsListener {
+    private val psiManager = PsiManager.getInstance(project) as PsiManagerImpl
+    private val fileManager = psiManager.fileManager as FileManagerImpl
+
+    override fun libraryRootsChanged(
+      presentableLibraryName: @Nls String?,
+      oldRoots: Collection<VirtualFile>,
+      newRoots: Collection<VirtualFile>,
+      libraryNameForDebug: String
+    ) {
+      ApplicationManager.getApplication().runWriteAction(
+        ExternalChangeAction {
+          var treeEvent = PsiTreeChangeEventImpl(psiManager)
+          treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
+          psiManager.beforePropertyChange(treeEvent)
+          DebugUtil.performPsiModification<RuntimeException>(null) { fileManager.possiblyInvalidatePhysicalPsi() }
+
+          treeEvent = PsiTreeChangeEventImpl(psiManager)
+          treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
+          psiManager.propertyChanged(treeEvent)
+        }
+      )
     }
   }
 
-  private boolean isInRootModel(@NotNull VirtualFile file) {
-    if (ProjectKt.getStateStore(myProject).isProjectFile(file)) {
-      return false;
-    }
-
-    ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
-    return index.isInContent(file) || index.isInLibrary(file);
-  }
-
-  @Override
-  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-    myReportedUnloadedPsiChange = false;
-    for (VFileEvent event : events) {
-      if (event instanceof VFileDeleteEvent) {
-        beforeFileDeletion((VFileDeleteEvent)event);
-      }
-      else if (event instanceof VFilePropertyChangeEvent) {
-        beforePropertyChange((VFilePropertyChangeEvent)event);
-      }
-      else if (event instanceof VFileMoveEvent) {
-        beforeFileMovement((VFileMoveEvent)event);
-      }
+  internal fun handleVfsChangeWithoutPsi(vFile: VirtualFile) {
+    if (!reportedUnloadedPsiChange && isInRootModel(vFile)) {
+      fileManager.firePropertyChangedForUnloadedPsi()
+      reportedUnloadedPsiChange = true
     }
   }
 
-  @Override
-  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-    groupAndFire(events);
-    myReportedUnloadedPsiChange = false;
+  private fun isInRootModel(file: VirtualFile): Boolean {
+    if (project.stateStore.isProjectFile(file)) {
+      return false
+    }
+
+    val index = ProjectFileIndex.getInstance(project)
+    return index.isInContent(file) || index.isInLibrary(file)
+  }
+
+  fun before(events: List<VFileEvent>) {
+    reportedUnloadedPsiChange = false
+    for (event in events) {
+      when (event) {
+        is VFileDeleteEvent -> beforeFileDeletion(event)
+        is VFilePropertyChangeEvent -> beforePropertyChange(event)
+        is VFileMoveEvent -> beforeFileMovement(event)
+      }
+    }
+  }
+
+  fun after(events: List<VFileEvent>) {
+    groupAndFire(events)
+    reportedUnloadedPsiChange = false
   }
 
   // grouping events of the same type together and calling fireForGrouped() for each batch
-  private void groupAndFire(@NotNull List<? extends VFileEvent> events) {
+  private fun groupAndFire(events: List<VFileEvent>) {
+    // group several VFileDeleteEvents together, several VFileMoveEvents together, place all other events into one-element lists
     StreamEx.of(events)
-      // group several VFileDeleteEvents together, several VFileMoveEvents together, place all other events into one-element lists
-      .groupRuns((e1, e2) -> e1 instanceof VFileDeleteEvent && e2 instanceof VFileDeleteEvent ||
-                             e1 instanceof VFileMoveEvent && e2 instanceof VFileMoveEvent)
-      .forEach(this::fireForGrouped);
+      .groupRuns { e1, e2 -> e1 is VFileDeleteEvent && e2 is VFileDeleteEvent || e1 is VFileMoveEvent && e2 is VFileMoveEvent }
+      .forEach { fireForGrouped(it) }
   }
 
-  private void fireForGrouped(@NotNull List<? extends VFileEvent> subList) {
-    VFileEvent event = subList.get(0);
-    if (event instanceof VFileDeleteEvent) {
-      DebugUtil.performPsiModification(null, () -> filesDeleted(subList));
+  private fun fireForGrouped(subList: List<VFileEvent>) {
+    val event = subList[0]
+    if (event is VFileDeleteEvent) {
+      DebugUtil.performPsiModification<RuntimeException>(null) { filesDeleted(subList) }
     }
-    else if (event instanceof VFileMoveEvent) {
-      filesMoved(subList);
+    else if (event is VFileMoveEvent) {
+      filesMoved(subList)
     }
     else {
-      assert subList.size() == 1;
-      if (event instanceof VFileCopyEvent ce) {
-        VirtualFile copy = ce.getNewParent().findChild(ce.getNewChildName());
+      assert(subList.size == 1)
+      if (event is VFileCopyEvent) {
+        val copy = event.newParent.findChild(event.newChildName)
         if (copy != null) {
-          fileCreated(copy); // no need to group file creation events
+          // no need to group file creation events
+          fileCreated(copy)
         }
       }
-      else if (event instanceof VFileCreateEvent) {
-        VirtualFile file = event.getFile();
+      else if (event is VFileCreateEvent) {
+        val file = event.getFile()
         if (file != null) {
-          fileCreated(file); // no need to group file creation events
+          // no need to group file creation events
+          fileCreated(file)
         }
       }
-      else if (event instanceof VFilePropertyChangeEvent) {
-        propertyChanged((VFilePropertyChangeEvent)event);
+      else if (event is VFilePropertyChangeEvent) {
+        propertyChanged(event)
       }
     }
   }
+}
+
+private class MyFileDocumentManagerListener(private val project: Project) : FileDocumentManagerListener {
+  private val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
+
+  override fun fileWithNoDocumentChanged(file: VirtualFile) {
+    val viewProvider = fileManager.findCachedViewProvider(file)
+    if (viewProvider == null) {
+      project.service<PsiVFSListener>().handleVfsChangeWithoutPsi(file)
+    }
+    else {
+      ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
+        if (FileDocumentManagerImpl.recomputeFileTypeIfNecessary(file)) {
+          fileManager.forceReload(file)
+        }
+        else {
+          fileManager.reloadPsiAfterTextChange(viewProvider, file)
+        }
+      })
+    }
+  }
+
+  override fun fileContentReloaded(file: VirtualFile, document: Document) {
+    val psiFile = fileManager.findCachedViewProvider(file)
+    if (file.isValid && psiFile != null && FileUtilRt.isTooLarge(file.length) && psiFile !is PsiLargeFile) {
+      ApplicationManager.getApplication().runWriteAction(ExternalChangeAction { fileManager.reloadPsiAfterTextChange(psiFile, file) })
+    }
+  }
+}
+
+private val globalListenerInstalled = AtomicBoolean(false)
+
+private fun installGlobalListener() {
+  if (!globalListenerInstalled.compareAndSet(false, true)) {
+    return
+  }
+
+  ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    override fun before(events: List<VFileEvent>) {
+      for (project in ProjectUtilCore.getOpenProjects()) {
+        if (!project.isDisposed) {
+          project.service<PsiVFSListener>().before(events)
+        }
+      }
+    }
+
+    override fun after(events: List<VFileEvent>) {
+      val projects = ProjectUtilCore.getOpenProjects()
+      // let PushedFilePropertiesUpdater process all pending VFS events and update file properties before we issue PSI events
+      for (project in projects) {
+        val updater = PushedFilePropertiesUpdater.getInstance(project)
+        if (updater is PushedFilePropertiesUpdaterImpl) {
+          updater.processAfterVfsChanges(events)
+        }
+      }
+      for (project in projects) {
+        project.service<PsiVFSListener>().after(events)
+      }
+    }
+  })
 }

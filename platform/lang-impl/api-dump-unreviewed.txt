@@ -23211,15 +23211,6 @@ f:com.intellij.psi.impl.file.SourceRootIconProvider$DirectoryProvider
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - getIcon(com.intellij.psi.PsiElement,I):javax.swing.Icon
-f:com.intellij.psi.impl.file.impl.PsiVFSListener
-- com.intellij.openapi.vfs.newvfs.BulkFileListener
-- after(java.util.List):V
-- before(java.util.List):V
-f:com.intellij.psi.impl.file.impl.PsiVFSListener$MyModuleRootListener
-- com.intellij.openapi.roots.ModuleRootListener
-- <init>(com.intellij.openapi.project.Project):V
-- beforeRootsChange(com.intellij.openapi.roots.ModuleRootEvent):V
-- rootsChanged(com.intellij.openapi.roots.ModuleRootEvent):V
 f:com.intellij.psi.impl.include.FileIncludeIndex
 - com.intellij.util.indexing.FileBasedIndexExtension
 - sf:INDEX_ID:com.intellij.util.indexing.ID
