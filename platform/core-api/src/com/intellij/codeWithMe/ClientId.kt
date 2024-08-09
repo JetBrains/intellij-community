@@ -2,7 +2,6 @@
 package com.intellij.codeWithMe
 
 import com.intellij.concurrency.IntelliJContextElement
-import com.intellij.concurrency.client.*
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.concurrency.installThreadContext
@@ -462,9 +461,11 @@ fun ClientId.asContextElement(): CoroutineContext.Element {
 fun CoroutineContext.clientId(): ClientId? = this[ClientIdContextElement.Key]?.clientId
 
 @ApiStatus.Internal
-class ClientIdContextElement(val clientId: ClientId?) : AbstractCoroutineContextElement(Key) {
+class ClientIdContextElement(val clientId: ClientId?) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
   private val creationTrace: Throwable? = if (logger.isTraceEnabled) Throwable() else null
   object Key : CoroutineContext.Key<ClientIdContextElement>
+
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
   override fun toString(): String = if (creationTrace != null) "$clientId. Created at:\r${creationTrace.stackTraceToString()}" else "$clientId"
 
