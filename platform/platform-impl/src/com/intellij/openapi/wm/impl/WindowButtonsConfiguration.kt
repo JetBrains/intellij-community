@@ -3,6 +3,8 @@
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -41,10 +43,7 @@ internal class WindowButtonsConfiguration(private val scope: CoroutineScope) : P
 
   override fun loadState(state: State) {
     mutableStateFlow.value = state
-
-    scope.launch {
-      loadStateFromOs()
-    }
+    scheduleUpdateFromOs()
   }
 
   override fun noStateLoaded() {
@@ -52,11 +51,16 @@ internal class WindowButtonsConfiguration(private val scope: CoroutineScope) : P
     loadStateFromOs()
   }
 
+  fun scheduleUpdateFromOs() {
+    scope.launch {
+      loadStateFromOs()
+    }
+  }
   private fun loadStateFromOs() {
     var windowButtonsState: State? = null
 
     if (isSupported()) {
-      val customConfig = Registry.stringValue("ide.linux.window.buttons.config")
+      val customConfig = if (LoadingState.COMPONENTS_LOADED.isOccurred) Registry.stringValue("ide.linux.window.buttons.config") else ""
       val config = customConfig.ifBlank { X11UiUtil.getWindowButtonsConfig() }
       if (config != null) {
         windowButtonsState = parseFromString(config)
@@ -105,5 +109,12 @@ private fun stringsToWindowButtons(strings: List<String>): List<WindowButtonsCon
       "close" -> WindowButtonsConfiguration.WindowButton.CLOSE
       else -> null
     }
+  }
+}
+
+internal class WindowButtonsAppLifecycleListener : AppLifecycleListener {
+
+  override fun appStarted() {
+    WindowButtonsConfiguration.getInstance()?.scheduleUpdateFromOs()
   }
 }
