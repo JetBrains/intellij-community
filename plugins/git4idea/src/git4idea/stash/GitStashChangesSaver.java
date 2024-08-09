@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitActivity;
 import git4idea.GitStashUsageCollector;
@@ -124,10 +125,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   public void showSavedChanges() {
+    VirtualFile firstRoot = ContainerUtil.getFirstItem(myStashedRoots.keySet());
     if (isStashTabAvailable()) {
-      showStashes(myProject);
+      showStashes(myProject, firstRoot);
     } else {
-      GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), myStashedRoots.keySet().iterator().next());
+      GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), firstRoot);
     }
   }
 
@@ -171,11 +173,12 @@ public class GitStashChangesSaver extends GitChangesSaver {
         .setDisplayId(UNSTASH_WITH_CONFLICTS)
         .addAction(NotificationAction.createSimple(
           GitBundle.messagePointer("stash.unstash.unresolved.conflict.warning.notification.show.stash.action"), () -> {
+            VirtualFile firstRoot = ContainerUtil.getFirstItem(myStashedRoots);
             if (isStashTabAvailable()) {
-              showStashes(myProject);
+              showStashes(myProject, firstRoot);
             } else {
               // we don't use #showSavedChanges to specify unmerged root first
-              GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
+              GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), firstRoot);
             }
           }))
         .addAction(NotificationAction.createSimple(

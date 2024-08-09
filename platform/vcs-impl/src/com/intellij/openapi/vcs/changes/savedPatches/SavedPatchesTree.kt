@@ -19,6 +19,8 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.ui.tree.TreeVisitor
+import com.intellij.ui.tree.TreeVisitor.Action
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
@@ -27,6 +29,7 @@ import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
 class SavedPatchesTree(project: Project,
@@ -82,10 +85,33 @@ class SavedPatchesTree(project: Project,
 
   override fun getToggleClickCount(): Int = 2
 
-  internal fun expandPatchesByProvider(provider: SavedPatchesProvider<*>) {
-    if (!isProviderVisible(provider)) return
-    val tagNode = VcsTreeModelData.findTagNode(this, provider.tag) ?: root
-    expandPath(TreeUtil.getPathFromRoot(tagNode))
+  private fun findNodeForProvider(provider: SavedPatchesProvider<*>): ChangesBrowserNode<*>? {
+    if (!isProviderVisible(provider)) return null
+    return VcsTreeModelData.findTagNode(this, provider.tag) ?: root
+  }
+
+  private fun showFirstUnderNode(node: TreeNode) {
+    if (!isRootVisible && node.parent == null) {
+      TreeUtil.promiseSelectFirst(this)
+      return
+    }
+    val treePath = TreeUtil.getPathFromRoot(node)
+    TreeUtil.promiseSelect(this, TreeVisitor {
+      if (it.isDescendant(treePath)) Action.CONTINUE
+      else if (treePath.isDescendant(it)) Action.INTERRUPT
+      else Action.SKIP_CHILDREN
+    })
+  }
+
+  internal fun showFirstUnderProvider(provider: SavedPatchesProvider<*>) {
+    val providerNode = findNodeForProvider(provider) ?: return
+    showFirstUnderNode(providerNode)
+  }
+
+  internal fun showFirstUnderObject(provider: SavedPatchesProvider<*>, userObject: Any) {
+    val providerNode = findNodeForProvider(provider) ?: return
+    val node = TreeUtil.findNodeWithObject(providerNode, userObject) ?: providerNode
+    showFirstUnderNode(node)
   }
 
   private inner class SavedPatchesTreeModel : SimpleAsyncChangesTreeModel() {

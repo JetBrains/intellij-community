@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -30,6 +31,7 @@ import com.intellij.util.messages.Topic
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
 import git4idea.index.showToolWindowTab
+import git4idea.repo.GitRepositoryManager
 import git4idea.stash.GitStashTracker
 import git4idea.stash.GitStashTrackerListener
 import git4idea.stash.isNotEmpty
@@ -201,11 +203,17 @@ internal fun setStashesAndShelvesTabEnabled(enabled: Boolean) {
   ApplicationManager.getApplication().messageBus.syncPublisher(GitStashSettingsListener.TOPIC).onCombineStashAndShelveSettingChanged()
 }
 
-internal fun showStashes(project: Project) {
+@JvmOverloads
+internal fun showStashes(project: Project, root: VirtualFile? = null) {
+  val repository = root?.let { GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) }
   showToolWindowTab(project, GitStashContentProvider.TAB_NAME) { component ->
     val savedPatchesUi = component as? SavedPatchesUi ?: return@showToolWindowTab
     val provider = savedPatchesUi.providers.filterIsInstance<GitStashProvider>().firstOrNull() ?: return@showToolWindowTab
-    savedPatchesUi.expandPatchesByProvider(provider)
+    if (repository == null) {
+      savedPatchesUi.showFirstUnderProvider(provider)
+    } else {
+      savedPatchesUi.showFirstUnderObject(provider, repository)
+    }
   }
 }
 
