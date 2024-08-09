@@ -1,94 +1,106 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl
+package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter
-import com.intellij.codeHighlighting.Pass
-import com.intellij.codeHighlighting.TextEditorHighlightingPass
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInspection.ex.GlobalInspectionContextBase
-import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.Project
-import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.psi.PsiCompiledFile
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.PsiDocumentManagerBase
-import com.intellij.psi.impl.PsiFileEx
-import com.intellij.util.ArrayUtil
-import com.intellij.util.containers.toArray
-import java.util.concurrent.CancellationException
+import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
-private val IGNORE_FOR_COMPILED = intArrayOf(
-  Pass.UPDATE_FOLDING,
-  Pass.POPUP_HINTS,
-  Pass.LOCAL_INSPECTIONS,
-  Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
-  Pass.EXTERNAL_TOOLS)
+import java.util.List;
+import java.util.concurrent.CancellationException;
 
-class TextEditorBackgroundHighlighter(private val project: Project, private val editor: Editor) : BackgroundEditorHighlighter {
-  private val document = editor.getDocument()
+public final class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
+  private static final int[] IGNORE_FOR_COMPILED = {
+    Pass.UPDATE_FOLDING,
+    Pass.POPUP_HINTS,
+    Pass.LOCAL_INSPECTIONS,
+    Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
+    Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
+  Pass.EXTERNAL_TOOLS};
+  private static final Logger LOG = Logger.getInstance(TextEditorBackgroundHighlighter.class);
 
-  private fun renewFile(): PsiFile? {
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
-    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, true)
-    return file
+  private final Project project;
+  private final Editor editor;
+  private final Document document;
+
+  public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
+    this.project = project;
+    this.editor = editor;
+    document = editor.getDocument();
   }
 
-  private fun createPasses(): List<TextEditorHighlightingPass> {
+  @NotNull
+  private List<TextEditorHighlightingPass> createPasses() {
     if (project.isDisposed()) {
-      return emptyList()
+      return List.of();
     }
 
-    val documentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     if (!documentManager.isCommitted(document)) {
-      logger<TextEditorBackgroundHighlighter>().error("$document; ${documentManager.someDocumentDebugInfo(document)}")
+      LOG.error(document + documentManager.someDocumentDebugInfo(document));
     }
 
-    var file = renewFile() ?: return emptyList()
+    PsiFile psiFile = renewFile(project, document);
+    if (psiFile == null) return List.of();
 
-    val effectivePassesToIgnore =
-    if (file is PsiCompiledFile) {
-      file = file.getDecompiledPsiFile()
-      IGNORE_FOR_COMPILED
-    }
-    else if (!DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file)) {
-      return emptyList()
-    }
-    else {
-      ArrayUtil.EMPTY_INT_ARRAY
+    int[] effectivePassesToIgnore =
+    psiFile.getOriginalFile() instanceof PsiCompiledFile ? IGNORE_FOR_COMPILED:
+    DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile) ?
+    ArrayUtil.EMPTY_INT_ARRAY : null;
+    if (effectivePassesToIgnore == null) {
+      return List.of();
     }
 
-    HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder("passes instantiation").use { span ->
-      val startupActivity = StartUpMeasurer.startActivity("highlighting passes instantiation")
-      var cancelled = false
+    return TraceKt.use(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder("passes instantiation"), span -> {
+      Activity startupActivity = StartUpMeasurer.startActivity("highlighting passes instantiation");
+      boolean cancelled = false;
       try {
-        val passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project)
-        return passRegistrar.instantiatePasses(file, editor, effectivePassesToIgnore)
+        TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
+        return passRegistrar.instantiatePasses(psiFile, editor, effectivePassesToIgnore);
       }
-      catch (e: ProcessCanceledException) {
-        cancelled = true
-        throw e
-      }
-      catch (e: CancellationException) {
-        cancelled = true
-        throw e
+      catch (CancellationException e) {
+        cancelled = true;
+        throw e;
       }
       finally {
-        startupActivity.end()
-        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, file.getName())
-        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, cancelled.toString())
+        startupActivity.end();
+        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, psiFile.getName());
+        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, cancelled+"");
       }
-    }
+    });
   }
 
-  override fun createPassesForEditor(): Array<TextEditorHighlightingPass> {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-    GlobalInspectionContextBase.assertUnderDaemonProgress()
-    val passes = createPasses()
-    return if (passes.isEmpty()) TextEditorHighlightingPass.EMPTY_ARRAY else passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY)
+  @Override
+  public @NotNull TextEditorHighlightingPass @NotNull []  createPassesForEditor() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    GlobalInspectionContextBase.assertUnderDaemonProgress();
+    List<TextEditorHighlightingPass> passes = createPasses();
+    return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
+  }
+
+  static PsiFile renewFile(@NotNull Project project, @NotNull Document document)  {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile instanceof PsiCompiledFile compiled) {
+      psiFile = compiled.getDecompiledPsiFile();
+    }
+    if (psiFile == null) return null;
+    psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, true);
+    return psiFile;
   }
 }

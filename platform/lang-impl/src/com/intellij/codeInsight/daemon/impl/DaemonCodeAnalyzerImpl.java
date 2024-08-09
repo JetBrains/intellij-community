@@ -280,15 +280,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     List<HighlightInfo> infosToRemove = new ArrayList<>(infos.size());
     for (HighlightInfo info : infos) {
       if (info.getGroup() == group || group == ANY_GROUP) {
-        JComponent component = info.getFileLevelComponent(fileEditor);
-        if (component != null) {
-          getFileEditorManager().removeTopComponent(fileEditor, component);
-          info.removeFileLeverComponent(fileEditor);
-        }
-        RangeHighlighterEx highlighter = info.highlighter;
-        if (highlighter != null) {
-          highlighter.dispose();
-        }
+        disposeFileLevelInfo(fileEditor, info);
         infosToRemove.add(info);
       }
     }
@@ -308,24 +300,29 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (infos == null) {
         continue;
       }
-      infos.removeIf(i-> {
-        if (!info.attributesEqual(i)) {
+      infos.removeIf(fileLevelInfo-> {
+        if (!info.attributesEqual(fileLevelInfo)) {
           return false;
         }
-        JComponent component = i.getFileLevelComponent(fileEditor);
-        if (component != null) {
-          getFileEditorManager().removeTopComponent(fileEditor, component);
-          i.removeFileLeverComponent(fileEditor);
-        }
-        RangeHighlighterEx highlighter = i.highlighter;
-        if (highlighter != null) {
-          highlighter.dispose();
-        }
+        disposeFileLevelInfo(fileEditor, fileLevelInfo);
         return true;
       });
       if (LOG.isDebugEnabled()) {
         LOG.debug("removeFileLevelHighlight [" + info + "]: fileLevelInfos:" + infos);
       }
+    }
+  }
+
+  private void disposeFileLevelInfo(@NotNull FileEditor fileEditor, @NotNull HighlightInfo info) {
+    ThreadingAssertions.assertEventDispatchThread();
+    JComponent component = info.getFileLevelComponent(fileEditor);
+    if (component != null) {
+      getFileEditorManager().removeTopComponent(fileEditor, component);
+      info.removeFileLeverComponent(fileEditor);
+    }
+    RangeHighlighterEx highlighter = info.highlighter;
+    if (highlighter != null) {
+      highlighter.dispose();
     }
   }
 
@@ -526,15 +523,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                            @Nullable Runnable callbackWhileWaiting) {
     ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
       VirtualFile virtualFile = textEditor.getFile();
-      PsiFile psiFile = PsiManagerEx.getInstanceEx(myProject).findFile(virtualFile); // findCachedFile doesn't work with the temp file system in tests
-      psiFile = psiFile instanceof PsiCompiledFile compiled ? compiled.getDecompiledPsiFile() : psiFile;
-      LOG.assertTrue(psiFile != null, "PsiFile not found for " + virtualFile);
-      HighlightingSession session = queuePassesCreation(textEditor, virtualFile, psiFile, passesToIgnore);
+      HighlightingSession session = queuePassesCreation(textEditor, virtualFile, passesToIgnore);
       if (session == null) {
         LOG.error("Can't create session for " + textEditor + " (" + textEditor.getClass() + ")," +
                   " fileEditor.getBackgroundHighlighter()=" + textEditor.getBackgroundHighlighter() +
-                  "; virtualFile=" + virtualFile +
-                  "; psiFile=" + psiFile);
+                  "; virtualFile=" + virtualFile);
         throw new ProcessCanceledException();
       }
       ProgressIndicator progress = session.getProgressIndicator();
@@ -1152,7 +1145,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         else {
           VirtualFile virtualFile = getVirtualFile(fileEditor);
           PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(myProject, virtualFile);
-          HighlightingSession session = psiFile == null ? null : queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY);
+          HighlightingSession session = psiFile == null ? null : queuePassesCreation(fileEditor, virtualFile, ArrayUtil.EMPTY_INT_ARRAY);
           submitted |= session != null;
           if (PassExecutorService.LOG.isDebugEnabled()) {
             PassExecutorService.log(session==null?null:session.getProgressIndicator(), null, "submit psiFile:", psiFile + " (" + virtualFile + "); submitted=", submitted);
@@ -1189,7 +1182,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    */
   private HighlightingSession queuePassesCreation(@NotNull FileEditor fileEditor,
                                                   @NotNull VirtualFile virtualFile,
-                                                  @NotNull PsiFile psiFile,
                                                   int @NotNull [] passesToIgnore) {
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundEditorHighlighter highlighter;
@@ -1229,12 +1221,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     HighlightingSessionImpl session;
     try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       TextRange compositeDocumentDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
-      session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
+      PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.renewFile(myProject, document);
+      if (psiFileToSubmit == null) return null;
+      session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
+      JobLauncher.getInstance().submitToJobThread(ThreadContext.captureThreadContext(Context.current().wrap(() ->
+            submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, highlighter, passesToIgnore, progress, session))),
+            // manifest exceptions in EDT to avoid storing them in the Future and abandoning
+            task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     }
-    JobLauncher.getInstance().submitToJobThread(ThreadContext.captureThreadContext(Context.current().wrap(() ->
-      submitInBackground(fileEditor, document, virtualFile, psiFile, highlighter, passesToIgnore, progress, session))),
-      // manifest exceptions in EDT to avoid storing them in the Future and abandoning
-      task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     if (PassExecutorService.LOG.isDebugEnabled()) {
       PassExecutorService.log(progress, null, "queuePassesCreation completed. session=",session);
     }
