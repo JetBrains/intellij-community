@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiAnnotation;
@@ -26,12 +26,7 @@ public class JavaCompiledPattern extends CompiledPattern {
 
   @Override
   public boolean isTypedVar(@NotNull final String str) {
-    if (str.isEmpty()) return false;
-    if (str.charAt(0)=='@') {
-      return str.regionMatches(1,TYPED_VAR_PREFIX,0,TYPED_VAR_PREFIX.length());
-    } else {
-      return str.startsWith(TYPED_VAR_PREFIX);
-    }
+    return str.startsWith(TYPED_VAR_PREFIX, (!str.isEmpty() && str.charAt(0) == '@') ? 1 : 0);
   }
 
   @Override
