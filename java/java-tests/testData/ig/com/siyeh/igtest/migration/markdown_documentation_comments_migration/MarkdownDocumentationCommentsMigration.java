@@ -1,7 +1,7 @@
 import java.util.HashMap;
 
 <warning descr="Javadoc comment can be Markdown documentation comment">/**<caret></warning>
- * test data file<br>
+ * test data file<br />
  * another line
  * <HR>
  * {@code System.out.println()}
