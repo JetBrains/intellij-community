@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -359,7 +360,7 @@ private suspend fun doBuildSearchableOptions(
 
   val defaultProject = serviceAsync<ProjectManager>().defaultProject
   withContext(Dispatchers.EDT) {
-    blockingContext {
+    writeIntentReadAction {
       for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
         extension.beforeStart()
       }

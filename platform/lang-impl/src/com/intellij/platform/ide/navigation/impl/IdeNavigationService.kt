@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.Utils.isAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.*
@@ -275,7 +276,10 @@ private suspend fun openFile(
       // try to navigate opened editor
       if (editor is NavigatableFileEditor) {
         val navigated = withContext(Dispatchers.EDT) {
-          navigateAndSelectEditor(editor = editor, descriptor = descriptor, composite = composite as? EditorComposite)
+          //todo: try read action only
+          writeIntentReadAction {
+            navigateAndSelectEditor(editor = editor, descriptor = descriptor, composite = composite as? EditorComposite)
+          }
         }
         if (navigated) {
           return true

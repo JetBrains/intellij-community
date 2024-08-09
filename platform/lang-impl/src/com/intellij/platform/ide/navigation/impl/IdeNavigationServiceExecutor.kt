@@ -3,6 +3,10 @@ package com.intellij.platform.ide.navigation.impl
 
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
@@ -25,7 +29,10 @@ open class IdeNavigationServiceExecutor {
     else {
       withContext(Dispatchers.EDT) {
         blockingContext {
-          navigatable.navigate(requestFocus)
+          //readaction is not enough
+          WriteIntentReadAction.run {
+            navigatable.navigate(requestFocus)
+          }
         }
       }
     }

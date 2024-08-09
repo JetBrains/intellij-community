@@ -30,6 +30,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -801,14 +802,17 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
               mySpeedSearch.refreshSelection(); // Selection failed, let the speed search reflect that by coloring itself red.
             })
             .onSuccess(p -> EdtInvocationManager.invokeLaterIfNeeded(() -> {
-              TreeUtil.expand(getTree(),
-                              myTreeModel instanceof StructureViewCompositeModel
-                              ? 3
-                              : 2);
-              TreeUtil.ensureSelection(myTree);
-              mySpeedSearch.refreshSelection();
-              result.setResult(p);
-              FileStructurePopupTimeTracker.logRebuildTime(System.nanoTime() - finalLastRebuildStartTime);
+              //maybe readaction
+              WriteIntentReadAction.run((Runnable)() -> {
+                TreeUtil.expand(getTree(),
+                                myTreeModel instanceof StructureViewCompositeModel
+                                ? 3
+                                : 2);
+                TreeUtil.ensureSelection(myTree);
+                mySpeedSearch.refreshSelection();
+                result.setResult(p);
+                FileStructurePopupTimeTracker.logRebuildTime(System.nanoTime() - finalLastRebuildStartTime);
+              });
             }));
         });
       }

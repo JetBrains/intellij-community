@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
@@ -336,7 +337,9 @@ open class ConsoleViewImpl protected constructor(
   override fun performWhenNoDeferredOutput(runnable: Runnable) {
     ThreadingAssertions.assertEventDispatchThread()
     if (!hasDeferredOutput()) {
-      runnable.run()
+      WriteIntentReadAction.run {
+        runnable.run()
+      }
       return
     }
     if (spareTimeAlarm.isDisposed) {
@@ -1418,7 +1421,9 @@ open class ConsoleViewImpl protected constructor(
       }
 
       clearRequested()
-      doRun()
+      WriteIntentReadAction.run {
+        doRun()
+      }
     }
 
     protected open fun doRun() {

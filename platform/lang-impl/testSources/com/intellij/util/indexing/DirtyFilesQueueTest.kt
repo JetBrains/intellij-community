@@ -5,10 +5,7 @@ import com.intellij.find.TextSearchService
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.smartReadAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -121,7 +118,9 @@ class DirtyFilesQueueTest {
         assertThat(project.getQueueFile()).exists()
         assertThat(getQueueFile()).exists()
         runBlocking(Dispatchers.EDT) {
-          ForceIndexRebuildAction().actionPerformed(createTestEvent())
+          writeIntentReadAction {
+            ForceIndexRebuildAction().actionPerformed(createTestEvent())
+          }
         }
         IndexingTestUtil.suspendUntilIndexesAreReady(project)
         assertThat(project.getQueueFile()).doesNotExist()
@@ -191,11 +190,13 @@ class DirtyFilesQueueTest {
           assertThat(foundFiles).containsAll(files)
         }
 
-        IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
-        val scanning = findScanningTriggeredBy(project, ReopeningType.PROJECT_REOPEN)
-        assertIsFullScanning(scanning, expectFullScanning)
-        if (!expectFullScanning) {
-          assertCameFromOrphanQueue(scanning, fileNames)
+        writeIntentReadAction {
+          IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
+          val scanning = findScanningTriggeredBy(project, ReopeningType.PROJECT_REOPEN)
+          assertIsFullScanning(scanning, expectFullScanning)
+          if (!expectFullScanning) {
+            assertCameFromOrphanQueue(scanning, fileNames)
+          }
         }
       }
     }
@@ -315,12 +316,14 @@ class DirtyFilesQueueTest {
 
   private fun restart(skipFullScanning: Boolean, project: Project? = null) {
     runBlocking(Dispatchers.EDT) {
-      val tumbler = FileBasedIndexTumbler("test")
-      if (skipFullScanning) {
-        tumbler.allowSkippingFullScanning()
+      writeIntentReadAction {
+        val tumbler = FileBasedIndexTumbler("test")
+        if (skipFullScanning) {
+          tumbler.allowSkippingFullScanning()
+        }
+        tumbler.turnOff()
+        tumbler.turnOn()
       }
-      tumbler.turnOff()
-      tumbler.turnOn()
       if (project != null) {
         IndexingTestUtil.suspendUntilIndexesAreReady(project)
       }

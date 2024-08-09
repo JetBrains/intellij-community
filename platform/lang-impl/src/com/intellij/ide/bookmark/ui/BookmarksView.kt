@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.fileTypes.FileTypes
@@ -64,7 +65,8 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val preview = DescriptorPreview(this, false, project.currentSession)
 
   private val selectionAlarm = SingleAlarm(
-    task = this::selectionChanged,
+    //maybe readaction
+    task = { WriteIntentReadAction.run(this::selectionChanged) },
     delay = 50,
     parentDisposable = this,
     modalityState = stateForComponent(this),
