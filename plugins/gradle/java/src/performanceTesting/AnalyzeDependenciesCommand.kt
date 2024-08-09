@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.performanceTesting
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DAModule
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerManager
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerViewImpl
@@ -35,7 +36,7 @@ class AnalyzeDependenciesCommand(text: String, line: Int) : PerformanceCommandCo
         "Module $moduleName not found")
       val systemId = ProjectSystemId.findById(providerId) ?: throw IllegalArgumentException("Provider $providerId not found")
       val dependencyAnalyzerManager = DependencyAnalyzerManager.getInstance(project)
-      val dependencyAnalyzerView = dependencyAnalyzerManager.getOrCreate(systemId) as DependencyAnalyzerViewImpl
+      val dependencyAnalyzerView = writeIntentReadAction { dependencyAnalyzerManager.getOrCreate(systemId) as DependencyAnalyzerViewImpl }
       dependencyAnalyzerView.setSelectedDependency(module, DAModule(moduleName))
       withTimeout(20.seconds) {
         while (dependencyAnalyzerView.getDependencies().isEmpty()) {
