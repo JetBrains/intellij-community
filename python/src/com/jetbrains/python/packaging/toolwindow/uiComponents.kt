@@ -117,7 +117,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
     PopupHandler.installPopupMenu(this, DefaultActionGroup(object : DumbAwareAction({
                                                                                       val pkg = if (selectedRow >= 0) model.items[selectedRow] else null
                                                                                       if (pkg is InstalledPackage) {
-                                                                                        message("python.toolwindow.packages.delete.package")
+                                                                                        message("python.toolwindow.packages.uninstall")
                                                                                       }
                                                                                       else {
                                                                                         message("python.toolwindow.packages.install.link")
