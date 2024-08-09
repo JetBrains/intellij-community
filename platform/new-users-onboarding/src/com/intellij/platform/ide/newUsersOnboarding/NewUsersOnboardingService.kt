@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUsersOnboarding
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -26,6 +28,7 @@ internal class NewUsersOnboardingService(private val project: Project, private v
     currentDialog = dialog
     dialog.show()
 
+    PropertiesComponent.getInstance().setValue(NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY, true)
     NewUsersOnboardingStatistics.logDialogShown(project)
   }
 
@@ -52,6 +55,12 @@ internal class NewUsersOnboardingService(private val project: Project, private v
         // do nothing
       }
     }
+  }
+
+  fun shouldShowOnboardingDialog(): Boolean {
+    return NewUsersOnboardingExperiment.getInstance().isEnabled() &&
+           !PropertiesComponent.getInstance().getBoolean(NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY) &&
+           ConfigImportHelper.isNewUser()
   }
 
   fun startOnboarding() {
@@ -92,6 +101,6 @@ internal class NewUsersOnboardingService(private val project: Project, private v
   companion object {
     fun getInstance(project: Project): NewUsersOnboardingService = project.service()
 
-    const val NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY: String = "NEW_USERS_ONBOARDING_DIALOG_SHOWN"
+    private const val NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY: String = "NEW_USERS_ONBOARDING_DIALOG_SHOWN"
   }
 }
