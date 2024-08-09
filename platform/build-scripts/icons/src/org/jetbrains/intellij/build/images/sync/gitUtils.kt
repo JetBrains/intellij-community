@@ -250,8 +250,6 @@ private fun findMergeCommit(repo: Path, commit: String, searchUntil: String = "H
       it.parents.first() != commit
     }?.let {
       when {
-        // if it's a merge of master into master then all parents belong to master but the first one doesn't lead to [commit]
-        isMergeOfMasterIntoMaster(repo, it) -> findMergeCommit(repo, commit, it.parents[1])
         it.parents.size > 2 -> {
           log("WARNING: Merge commit ${it.hash} for $commit in $repo is found but it has more than two parents (one of them could be master), skipping")
           null
@@ -261,23 +259,6 @@ private fun findMergeCommit(repo: Path, commit: String, searchUntil: String = "H
       }
     }
 }
-
-/**
- * Inspecting commit subject which isn't reliable criteria, may need to be adjusted
- *
- * @param merge merge commit
- */
-private fun isMergeOfMasterIntoMaster(repo: Path, merge: CommitInfo) =
-  merge.parents.size == 2 && with(merge.subject) {
-    val head = head(repo)
-    (contains("Merge branch $head") ||
-     contains("Merge branch '$head'") ||
-     contains("origin/$head")) &&
-    (!contains(" into ") ||
-     endsWith("into $head") ||
-     endsWith("into '$head'"))
-  }
-
 
 @Volatile
 private var heads = emptyMap<Path, String>()
