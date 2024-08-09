@@ -6957,6 +6957,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/typeParameters/needTypeArgs.java");
         }
 
+        @TestMetadata("noUnnecessaryAny.java")
+        public void testNoUnnecessaryAny() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/typeParameters/noUnnecessaryAny.java");
+        }
+
         @TestMetadata("rawTypeCast.java")
         public void testRawTypeCast() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/typeParameters/rawTypeCast.java");
