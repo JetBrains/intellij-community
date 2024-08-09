@@ -221,6 +221,7 @@ sealed class K2MoveModel {
                 return this == file.declarations.singleOrNull()
             }
 
+            if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements.toList(), true)) return null;
 
             if (elementsToMove.any { it.parentOfType<KtNamedDeclaration>(withSelf = false) != null }) {
                 val message = RefactoringBundle.getCannotRefactorMessage(
