@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.j2k.k2.postProcessings
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.project.Project
+import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
@@ -35,12 +37,14 @@ internal class K2ShortenReferenceProcessing : FileBasedPostProcessing() {
     ): PostProcessingApplier {
         val range = if (rangeMarker != null && rangeMarker.isValid) rangeMarker.textRange else file.textRange
         val shortenCommand = collectPossibleReferenceShortenings(file, range)
-        return Applier(shortenCommand)
+        return Applier(shortenCommand, file.project)
     }
 
-    private class Applier(private val shortenCommand: ShortenCommand) : PostProcessingApplier {
+    private class Applier(private val shortenCommand: ShortenCommand, private val project: Project) : PostProcessingApplier {
         override fun apply() {
-            shortenCommand.invokeShortening()
+            CodeStyleManager.getInstance(project).performActionWithFormatterDisabled {
+                shortenCommand.invokeShortening()
+            }
         }
     }
 }
