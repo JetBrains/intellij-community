@@ -25,7 +25,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
-import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 import java.util.function.Function
@@ -371,35 +370,73 @@ data class ClientId(val value: String) {
       }
     }
 
-    // TODO: drop this wrappers along with ClientIdPropagation.kt
     @JvmStatic
-    fun <T> decorateFunction(action: () -> T): () -> T {
-      return captureClientId(action)
+    private fun assertClientIdMismatch(assertInfo: Pair<ClientIdContextElement?, Throwable>) {
+      val currentClientIdElement = currentThreadContextOrNull()?.clientIdContextElement
+      if (assertInfo.first != currentClientIdElement) {
+        logger.error(Throwable("Captured is '${assertInfo.first}' but current is '$currentClientIdElement'", assertInfo.second))
+      }
+    }
+
+    private fun captureInfoForAssertion(): Pair<ClientIdContextElement?, Throwable> {
+      // TODO: drop capturing of Throwable because of performance
+      val clientIdContextElement = currentThreadContextOrNull()?.clientIdContextElement
+      return clientIdContextElement to Throwable("'$clientIdContextElement' captured at")
     }
 
     @JvmStatic
+    fun <T> decorateFunction(action: () -> T): () -> T {
+      val infoForAssertion = captureInfoForAssertion()
+      return {
+        assertClientIdMismatch(infoForAssertion)
+        action()
+      }
+    }
+
+
+    @JvmStatic
     fun decorateRunnable(runnable: Runnable): Runnable {
-      return captureClientIdInRunnable(runnable)
+      val infoForAssertion = captureInfoForAssertion()
+      return Runnable {
+        assertClientIdMismatch(infoForAssertion)
+        runnable.run()
+      }
     }
 
     @JvmStatic
     fun <T> decorateCallable(callable: Callable<T>): Callable<T> {
-      return captureClientIdInCallable(callable)
+      val infoForAssertion = captureInfoForAssertion()
+      return Callable {
+        assertClientIdMismatch(infoForAssertion)
+        callable.call()
+      }
     }
 
     @JvmStatic
     fun <T, R> decorateFunction(function: Function<T, R>): Function<T, R> {
-      return captureClientIdInFunction(function)
+      val infoForAssertion = captureInfoForAssertion()
+      return Function {
+        assertClientIdMismatch(infoForAssertion)
+        function.apply(it)
+      }
     }
 
     @JvmStatic
     fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
-      return captureClientIdInBiConsumer(biConsumer)
+      val infoForAssertion = captureInfoForAssertion()
+      return BiConsumer { t, u ->
+        assertClientIdMismatch(infoForAssertion)
+        biConsumer.accept(t, u)
+      }
     }
 
     @JvmStatic
     fun <T> decorateProcessor(processor: Processor<T>): Processor<T> {
-      return captureClientIdInProcessor(processor)
+      val infoForAssertion = captureInfoForAssertion()
+      return Processor {
+        assertClientIdMismatch(infoForAssertion)
+        processor.process(it)
+      }
     }
 
     fun coroutineContext(): CoroutineContext = currentOrNull?.asContextElement() ?: EmptyCoroutineContext
@@ -430,6 +467,19 @@ class ClientIdContextElement(val clientId: ClientId?) : AbstractCoroutineContext
   object Key : CoroutineContext.Key<ClientIdContextElement>
 
   override fun toString(): String = if (creationTrace != null) "$clientId. Created at:\r${creationTrace.stackTraceToString()}" else "$clientId"
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ClientIdContextElement
+
+    return clientId == other.clientId
+  }
+
+  override fun hashCode(): Int {
+    return clientId?.hashCode() ?: 0
+  }
 }
 
 val CoroutineContext.clientIdContextElement: ClientIdContextElement?
