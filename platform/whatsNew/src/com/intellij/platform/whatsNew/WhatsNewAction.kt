@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -76,7 +77,8 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     val title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().fullProductName)
     withContext(Dispatchers.EDT) {
       LOG.info("Opening What's New in editor.")
-      openEditor(project, title, whatsNewContent.getRequest(dataContext))?.let {
+      val editor = writeIntentReadAction { openEditor(project, title, whatsNewContent.getRequest(dataContext)) }
+      editor?.let {
         project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
         WhatsNewCounterUsageCollector.openedPerformed(project, byClient)
 
