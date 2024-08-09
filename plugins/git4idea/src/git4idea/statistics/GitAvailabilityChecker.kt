@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.net.IdeHttpClientHelpers
 import git4idea.repo.GitRepository
 import org.apache.http.HttpStatus
+import org.apache.http.client.config.CookieSpecs
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpHead
 import org.apache.http.impl.client.CloseableHttpClient
@@ -60,6 +61,7 @@ class GitAvailabilityChecker(val project: Project) {
     val requestConfigBuilder = RequestConfig.custom()
       .setConnectTimeout(CONNECTION_TIMEOUT)
       .setSocketTimeout(CONNECTION_TIMEOUT)
+      .setCookieSpec(CookieSpecs.STANDARD)
     IdeHttpClientHelpers.ApacheHttpClient4.setProxyForUrlIfEnabled(requestConfigBuilder, url)
     return requestConfigBuilder
   }
