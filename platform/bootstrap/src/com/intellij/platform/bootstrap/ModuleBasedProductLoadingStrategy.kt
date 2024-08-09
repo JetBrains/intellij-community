@@ -267,9 +267,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         descriptor?.content?.modules?.forEach { module ->
           val requireDescriptor = module.requireDescriptor()
           if (requireDescriptor.packagePrefix == null) {
-            requireDescriptor.jarFiles = includedModules.single {
-              it.moduleDescriptor.moduleId.stringId == requireDescriptor.moduleName
-            }.moduleDescriptor.resourceRootPaths
+            val moduleName = requireDescriptor.moduleName
+            if (moduleName != null) {
+              requireDescriptor.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleName)).resourceRootPaths
+            }
           }
         }
       }
@@ -296,7 +297,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pool = zipFilePool,
       )
     }
-    val modulesWithJarFiles = descriptor?.content?.modules?.mapNotNull { it.requireDescriptor().jarFiles }?.flatten()
+    val modulesWithJarFiles = descriptor?.content?.modules?.flatMap { it.requireDescriptor().jarFiles ?: emptyList() }
     descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
     return descriptor
   }
