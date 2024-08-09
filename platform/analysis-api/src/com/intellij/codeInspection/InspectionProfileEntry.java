@@ -69,7 +69,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
   private Boolean myUseNewSerializer;
 
   /**
-   * For global tools read-only, for local tools would be used instead getID for modules with alternative classpath storage
+   * This alternative ID is a descriptive name to be used in "suppress" comments and annotations in modules with alternative
+   * classpath storage.
    */
   public @NonNls @Nullable String getAlternativeID() {
     return null;
@@ -317,6 +318,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
 
   /**
    * DO NOT OVERRIDE this method.
+   * <p>
+   * This name is used as a unique identifier of the inspection.
    *
    * @see InspectionEP#shortName
    */
