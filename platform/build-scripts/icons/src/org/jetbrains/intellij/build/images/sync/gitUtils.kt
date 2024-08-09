@@ -6,6 +6,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
 import java.util.stream.Stream
+import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
 import kotlin.math.max
 
 internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
@@ -199,9 +201,13 @@ internal fun latestChangeCommit(path: String, repo: Path): CommitInfo? {
 }
 
 /**
- * @return latest commit (or merge) time
+ * @return latest modified time of existing [path] (ignoring git commit time for performance reasons) or latest commit (or merge) time if [path] doesn't exist anymore
  */
 internal fun latestChangeTime(path: String, repo: Path): Long {
+  val file = repo.resolve(path)
+  if (file.exists()) {
+    return file.getLastModifiedTime().toMillis()
+  }
   // latest commit for file
   val commit = latestChangeCommit(path, repo)
   if (commit == null) return -1
