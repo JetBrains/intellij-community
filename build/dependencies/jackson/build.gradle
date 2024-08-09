@@ -25,7 +25,7 @@ def libraryGroup = "com.fasterxml.jackson.core"
 def libraryArtifactId = "jackson-core"
 def libraryVersion = readProperty("jacksonCoreVersion")
 
-def repackagedGroup = readProperty("intelliJDepsGroupId")
+def repackagedGroup = "org.jetbrains.intellij.deps"
 def repackagedVersionSuffix = "-gradle-rt"
 
 def repackagerDirTarget = new File(project.buildDir, "/exp")
