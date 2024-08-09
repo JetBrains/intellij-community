@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
@@ -297,7 +297,7 @@ public class PluginManagerTest {
   private static PluginManagerState loadAndInitializeDescriptors(String testDataName, boolean isBundled)
     throws IOException, XMLStreamException {
     Path file = Path.of(getTestDataPath(), testDataName);
-    BuildNumber buildNumber = BuildNumber.fromString("2042.42");
+    BuildNumber buildNumber = BuildNumber.fromString("220.0");
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(Set.of(),
                                                                                   Set.of(),
                                                                                   Map.of(),
