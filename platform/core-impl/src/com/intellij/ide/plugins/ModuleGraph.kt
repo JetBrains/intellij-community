@@ -92,11 +92,11 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
         moduleMap.get("intellij.platform.vcs.impl")?.let { result.add(it) }
         moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
         moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
+      }
+      if (!strictCheck) {
         if (System.getProperty("enable.implicit.json.dependency").toBoolean()) {
           moduleMap.get("com.intellij.modules.json")?.let { result.add(it) }
         }
-      }
-      if (!strictCheck) {
         moduleMap.get("intellij.platform.collaborationTools")?.let { result.add(it) }
       }
 
