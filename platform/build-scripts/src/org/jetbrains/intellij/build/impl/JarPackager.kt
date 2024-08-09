@@ -697,6 +697,7 @@ private data class AssetDescriptor(
   @JvmField val nativeFiles: List<String>?,
   @JvmField val useCacheAsTargetFile: Boolean = true,
 ) {
+  // must be sorted - we use it as is for Jar Cache
   @JvmField
   val sources: MutableList<Source> = mutableListOf()
 
@@ -820,7 +821,7 @@ private suspend fun buildJars(
                     digest.putString(layout.mainModule)
                   }
                   else {
-                    digest.putByte(0)
+                    digest.putInt(0)
                   }
                 }
 
