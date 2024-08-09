@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -9,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -89,5 +91,12 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
       if (list == null) return Collections.emptyList();
       return ContainerUtil.map(list.getElements(), PsiCaseLabelElement::getText);
     };
+  }
+
+  @Nullable
+  public static PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block,
+                                                                        @NotNull Set<String> cases,
+                                                                        @NotNull List<String> names) {
+    return createWithNull(block, () -> new CreateSealedClassMissingSwitchBranchesFix(block, cases, names));
   }
 }

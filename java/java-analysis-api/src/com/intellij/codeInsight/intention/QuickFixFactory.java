@@ -474,7 +474,15 @@ public abstract class QuickFixFactory {
                                                                          @NotNull List<? extends PsiCaseLabelElement> elements);
 
   @Nullable
+  public abstract IntentionAction createAddMissingSealedClassBranchesFixWithNull(@NotNull PsiSwitchBlock switchBlock,
+                                                                                           @NotNull Set<String> missingCases,
+                                                                                           @NotNull List<String> allNames);
+
+  @Nullable
   public abstract IntentionAction createAddMissingBooleanPrimitiveBranchesFix(@NotNull PsiSwitchBlock block);
+
+  @Nullable
+  public abstract IntentionAction createAddMissingBooleanPrimitiveBranchesFixWithNull(@NotNull PsiSwitchBlock block);
 
   @NotNull
   public abstract IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @Nullable String message);

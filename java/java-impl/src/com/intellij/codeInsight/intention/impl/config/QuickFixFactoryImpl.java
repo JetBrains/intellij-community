@@ -5,7 +5,10 @@ import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer;
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
 import com.intellij.codeInsight.daemon.impl.analysis.UpgradeSdkFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
@@ -31,6 +34,7 @@ import com.intellij.lang.java.request.CreateMethodFromUsage;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -875,8 +879,27 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
+  public @Nullable IntentionAction createAddMissingSealedClassBranchesFixWithNull(@NotNull PsiSwitchBlock switchBlock,
+                                                                                  @NotNull Set<String> missingCases,
+                                                                                  @NotNull List<String> allNames) {
+    PsiBasedModCommandAction<PsiSwitchBlock> withNull =
+      CreateSealedClassMissingSwitchBranchesFix.createWithNull(switchBlock, missingCases, allNames);
+    if (withNull == null) {
+      return null;
+    }
+    return withNull.asIntention();
+  }
+
+  @Override
   public @Nullable IntentionAction createAddMissingBooleanPrimitiveBranchesFix(@NotNull PsiSwitchBlock block) {
     CreateMissingBooleanPrimitiveBranchesFix fix = CreateMissingBooleanPrimitiveBranchesFix.createFix(block);
+    if (fix == null) return null;
+    return fix.asIntention();
+  }
+
+  @Override
+  public @Nullable IntentionAction createAddMissingBooleanPrimitiveBranchesFixWithNull(@NotNull PsiSwitchBlock block) {
+    @Nullable PsiBasedModCommandAction<PsiSwitchBlock> fix = CreateMissingBooleanPrimitiveBranchesFix.createWithNull(block);
     if (fix == null) return null;
     return fix.asIntention();
   }

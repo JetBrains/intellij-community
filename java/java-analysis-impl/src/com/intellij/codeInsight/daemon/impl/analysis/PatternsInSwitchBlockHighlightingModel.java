@@ -743,6 +743,10 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
         IntentionAction fix = getFixFactory().createAddMissingBooleanPrimitiveBranchesFix(myBlock);
         if (fix != null) {
           completenessInfoForSwitch.registerFix(fix, null, null, null, null);
+          IntentionAction fixWithNull = getFixFactory().createAddMissingBooleanPrimitiveBranchesFixWithNull(myBlock);
+          if (fixWithNull != null) {
+            completenessInfoForSwitch.registerFix(fixWithNull, null, null, null, null);
+          }
         }
       }
       errorSink.accept(completenessInfoForSwitch);
@@ -868,6 +872,10 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     Set<String> missingCases = ContainerUtil.map2LinkedSet(missedClasses, PsiClass::getQualifiedName);
     IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
     info.registerFix(fix, null, null, null, null);
+    IntentionAction fixWithNull = getFixFactory().createAddMissingSealedClassBranchesFixWithNull(myBlock, missingCases, allNames);
+    if (fixWithNull != null) {
+      info.registerFix(fixWithNull, null, null, null, null);
+    }
     return info;
   }
 
