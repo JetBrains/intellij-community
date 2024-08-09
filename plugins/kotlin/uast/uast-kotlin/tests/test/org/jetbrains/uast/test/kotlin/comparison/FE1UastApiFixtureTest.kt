@@ -86,6 +86,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkGenericTypeNullability_reified(myFixture)
     }
 
+    fun testGenericParameterSubtype() {
+        checkGenericParameterSubtype(myFixture)
+    }
+
     fun testImplicitReceiverType() {
         checkImplicitReceiverType(myFixture)
     }
