@@ -251,7 +251,9 @@ class EditorNotificationsImpl(private val project: Project,
             }
 
             for (fileEditor in fileEditors) {
-              updateNotification(fileEditor = fileEditor, provider = provider, component = componentProvider?.apply(fileEditor))
+              writeIntentReadAction {
+                updateNotification(fileEditor = fileEditor, provider = provider, component = componentProvider?.apply(fileEditor))
+              }
             }
           }
         }

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
@@ -504,7 +505,10 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
   val toolWindowManager = project.serviceAsync<ToolWindowManager>()
   withContext(Dispatchers.EDT) {
     if (toolWindowManager.activeToolWindowId == null) {
-      toolWindowManager.getToolWindow("Project")?.activate(null)
+      //maybe readaction
+      writeIntentReadAction {
+        toolWindowManager.getToolWindow("Project")?.activate(null)
+      }
     }
   }
 }

@@ -14,10 +14,7 @@ import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -252,7 +249,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public ActionCallback type(String text) {
     ActionCallback result = new ActionCallback();
-    EdtInvocationManager.invokeLaterIfNeeded(() -> editor.type(text).notify(result));
+    EdtInvocationManager.invokeLaterIfNeeded(() -> WriteIntentReadAction.run((Runnable)() -> editor.type(text).notify(result)));
     return result;
   }
 

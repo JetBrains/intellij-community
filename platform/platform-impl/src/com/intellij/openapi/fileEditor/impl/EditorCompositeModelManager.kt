@@ -5,10 +5,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -126,7 +123,9 @@ internal class EditorCompositeModelManager(
             }
             else {
               withContext(Dispatchers.EDT) {
-                provider.createEditor(project, file)
+                writeIntentReadAction {
+                  provider.createEditor(project, file)
+                }
               }
             }
 

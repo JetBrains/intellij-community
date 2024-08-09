@@ -760,7 +760,9 @@ open class FileEditorManagerImpl(
     }
 
     openFileSetModificationCount.increment()
-    window.closeFile(file = file, composite = composite)
+    WriteIntentReadAction.run {
+      window.closeFile(file = file, composite = composite)
+    }
     return true
   }
 
@@ -945,19 +947,21 @@ open class FileEditorManagerImpl(
 
     val reuseOpen = options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)
     var composite: FileEditorComposite? = withContext(Dispatchers.EDT) {
-      val existingWindow = if (reuseOpen) findWindowInAllSplitters(file) else null
-      val window = existingWindow ?: getOrCreateCurrentWindow(file)
-      if (forbidSplitFor(file) && !window.isFileOpen(file)) {
-        closeFile(file)
-      }
+      writeIntentReadAction {
+        val existingWindow = if (reuseOpen) findWindowInAllSplitters(file) else null
+        val window = existingWindow ?: getOrCreateCurrentWindow(file)
+        if (forbidSplitFor(file) && !window.isFileOpen(file)) {
+          closeFile(file)
+        }
 
-      if (!isCurrentlyUnderLocalId) {
-        return@withContext null
-      }
+        if (!isCurrentlyUnderLocalId) {
+          return@writeIntentReadAction null
+        }
 
-      @Suppress("DuplicatedCode")
-      runBulkTabChangeInEdt(window.owner) {
-        doOpenInEdt(window = window, file = file, options = options, fileEntry = null)
+        @Suppress("DuplicatedCode")
+        runBulkTabChangeInEdt(window.owner) {
+          doOpenInEdt(window = window, file = file, options = options, fileEntry = null)
+        }
       }
     }
 
@@ -1136,20 +1140,22 @@ open class FileEditorManagerImpl(
     }
 
     if (EDT.isCurrentThreadEdt()) {
-      val composite = open()
-      if (composite is EditorComposite) {
-        if (options.waitForCompositeOpen) {
-          blockingWaitForCompositeFileOpen(composite)
-          if (composite.providerSequence.none()) {
-            closeFile(window = window, composite = composite, runChecks = false)
-            return FileEditorComposite.EMPTY
+      return WriteIntentReadAction.compute(Computable {
+        val composite = open()
+        if (composite is EditorComposite) {
+          if (options.waitForCompositeOpen) {
+            blockingWaitForCompositeFileOpen(composite)
+            if (composite.providerSequence.none()) {
+              closeFile(window = window, composite = composite, runChecks = false)
+              return@Computable FileEditorComposite.EMPTY
+            }
+          }
+          else {
+            scheduleCloseIfEmpty(window, composite)
           }
         }
-        else {
-          scheduleCloseIfEmpty(window, composite)
-        }
-      }
-      return composite
+        return@Computable composite
+      })
     }
     else {
       return runBlockingCancellable {
@@ -1233,49 +1239,51 @@ open class FileEditorManagerImpl(
     options: FileEditorOpenOptions,
     forceCompositeCreation: Boolean = false,
   ): EditorComposite? {
-    var composite = if (forceCompositeCreation) null else window.getComposite(file)
-    val isNewEditor = composite == null
-    if (composite == null) {
-      composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry) ?: return null
-      openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
-    }
-
-    window.addComposite(
-      composite = composite,
-      file = composite.file,
-      options = options,
-      isNewEditor = isNewEditor,
-    )
-
-    if (isNewEditor) {
-      openFileSetModificationCount.increment()
-    }
-    else {
-      for (editorWithProvider in composite.allEditorsWithProviders) {
-        restoreEditorState(
-          file = file,
-          fileEditorWithProvider = editorWithProvider,
-          isNewEditor = false,
-          exactState = options.isExactState,
-          project = project,
-        )
+    return WriteIntentReadAction.compute(Computable {
+      var composite = if (forceCompositeCreation) null else window.getComposite(file)
+      val isNewEditor = composite == null
+      if (composite == null) {
+        composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry) ?: return@Computable null
+        openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
       }
 
-      // restore selected editor
-      val provider = (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl)
-        .getSelectedFileEditorProvider(composite = composite, project = project)
-      if (provider != null) {
-        composite.setSelectedEditor(provider)
+      window.addComposite(
+        composite = composite,
+        file = composite.file,
+        options = options,
+        isNewEditor = isNewEditor,
+      )
+
+      if (isNewEditor) {
+        openFileSetModificationCount.increment()
+      }
+      else {
+        for (editorWithProvider in composite.allEditorsWithProviders) {
+          restoreEditorState(
+            file = file,
+            fileEditorWithProvider = editorWithProvider,
+            isNewEditor = false,
+            exactState = options.isExactState,
+            project = project,
+          )
+        }
+
+        // restore selected editor
+        val provider = (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl)
+          .getSelectedFileEditorProvider(composite = composite, project = project)
+        if (provider != null) {
+          composite.setSelectedEditor(provider)
+        }
+
+        window.owner.afterFileOpen(file)
       }
 
-      window.owner.afterFileOpen(file)
-    }
+      selectionHistory.addRecord(file to window)
 
-    selectionHistory.addRecord(file to window)
-
-    // update frame and tab title
-    scheduleUpdateFileName(file)
-    return composite
+      // update frame and tab title
+      scheduleUpdateFileName(file)
+      return@Computable composite
+    })
   }
 
   @RequiresEdt
@@ -1789,18 +1797,20 @@ open class FileEditorManagerImpl(
     oldEditorWithProvider?.fileEditor?.deselectNotify()
     val newEditor = newEditorWithProvider?.fileEditor
     if (newEditor != null) {
-      blockingContext {
+      writeIntentReadAction {
         newEditor.selectNotify()
       }
       FileEditorCollector.logAlternativeFileEditorSelected(project = project, file = newState!!.composite.file, editor = newEditor)
       (serviceAsync<FileEditorProviderManager>() as FileEditorProviderManagerImpl).providerSelected(newState.composite)
     }
 
-    publisher.selectionChanged(FileEditorManagerEvent(
-      manager = this,
-      oldEditorWithProvider = oldEditorWithProvider,
-      newEditorWithProvider = newEditorWithProvider,
-    ))
+    writeIntentReadAction {
+      publisher.selectionChanged(FileEditorManagerEvent(
+        manager = this,
+        oldEditorWithProvider = oldEditorWithProvider,
+        newEditorWithProvider = newEditorWithProvider,
+      ))
+    }
   }
 
   override fun isChanged(editor: EditorComposite): Boolean {

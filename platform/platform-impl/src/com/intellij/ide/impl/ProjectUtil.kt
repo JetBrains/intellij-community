@@ -316,7 +316,10 @@ object ProjectUtil {
     }
 
     return withContext(Dispatchers.EDT) {
-      processor.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+      //readaction is not enough
+      writeIntentReadAction {
+        processor.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+      }
     }
   }
 
@@ -549,7 +552,10 @@ object ProjectUtil {
         val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
         if (virtualFile != null && virtualFile.isValid) {
           withContext(Dispatchers.EDT) {
-            OpenFileAction.openFile(virtualFile, projectToClose)
+            //readaction is not enough
+            writeIntentReadAction {
+              OpenFileAction.openFile(virtualFile, projectToClose)
+            }
           }
         }
         result = projectToClose

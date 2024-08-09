@@ -12,10 +12,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
@@ -253,7 +250,7 @@ open class EditorComposite internal constructor(
           selectedFileEditorProvider = selectedFileEditor,
         )
 
-        blockingContext {
+        writeIntentReadAction {
           goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
           @Suppress("DEPRECATION")
           deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
@@ -270,7 +267,7 @@ open class EditorComposite internal constructor(
 
       val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
       span("fileOpened event executing", Dispatchers.EDT) {
-        blockingContext {
+        writeIntentReadAction {
           publisher.fileOpened(fileEditorManager, file)
         }
       }
@@ -357,7 +354,7 @@ open class EditorComposite internal constructor(
     fileEditorWithProviders: List<FileEditorWithProvider>,
     states: List<FileEditorState?>,
     selectedFileEditorProvider: FileEditorProvider?,
-  ) {
+  ) = WriteIntentReadAction.run {
     for ((index, fileEditorWithProvider) in fileEditorWithProviders.withIndex()) {
       restoreEditorState(
         fileEditorWithProvider = fileEditorWithProvider,

@@ -14,10 +14,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -658,8 +655,10 @@ class EditorWindow internal constructor(
     runBulkTabChange(owner) {
       val fileEditorManager = manager
       try {
-        fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
-          .beforeFileClosed(fileEditorManager, file)
+        WriteIntentReadAction.run {
+          fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
+            .beforeFileClosed(fileEditorManager, file)
+        }
         val componentIndex = findComponentIndex(composite)
         val editorTabs = tabbedPane.editorTabs
         // composite could close itself on decomposition

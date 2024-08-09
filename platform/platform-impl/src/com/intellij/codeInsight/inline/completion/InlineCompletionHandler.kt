@@ -18,6 +18,8 @@ import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExec
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
@@ -420,7 +422,7 @@ class InlineCompletionHandler(
               .collect { (elementIndex, element) ->
                 ensureActive()
                 trace(InlineCompletionEventType.Computed(variantIndex, element, elementIndex))
-                coroutineToIndicator { elementComputed(variantIndex, elementIndex, element) }
+                coroutineToIndicator { WriteIntentReadAction.run<Nothing?> { elementComputed(variantIndex, elementIndex, element) } }
                 allVariantsEmpty.set(false)
               }
           }

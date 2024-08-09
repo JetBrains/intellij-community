@@ -13,10 +13,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -424,7 +421,9 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
 
     // setting isHidden to true will hide the tab - we must select another tab now
     window.getTabToSelect(tabBeingClosed = info, fileBeingClosed = file, componentIndex = dragStartIndex)?.let {
-      window.setCurrentCompositeAndSelectTab(it)
+      WriteIntentReadAction.run {
+        window.setCurrentCompositeAndSelectTab(it)
+      }
     }
     info.isHidden = true
 

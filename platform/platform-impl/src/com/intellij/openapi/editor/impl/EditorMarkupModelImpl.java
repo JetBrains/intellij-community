@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionWithMergeId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -388,7 +389,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private void updateTrafficLightVisibility() {
-    myStatusUpdates.queue(Update.create("visibility", this::doUpdateTrafficLightVisibility));
+    myStatusUpdates.queue(Update.create("visibility", () -> WriteIntentReadAction.run((Runnable)() -> doUpdateTrafficLightVisibility())));
   }
 
   private void doUpdateTrafficLightVisibility() {

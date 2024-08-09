@@ -7,10 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.concurrency.resetThreadContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -145,7 +142,9 @@ class AsyncEditorLoader internal constructor(
         val scrollingModel = textEditor.editor.scrollingModel
         scrollingModel.disableAnimation()
         try {
-          executeDelayedActions(delayedActions.getAndSet(null))
+          writeIntentReadAction {
+            executeDelayedActions(delayedActions.getAndSet(null))
+          }
         }
         finally {
           scrollingModel.enableAnimation()

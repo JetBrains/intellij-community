@@ -3,6 +3,7 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -81,7 +82,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
         ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
           @Override
           public void focusGained(@NotNull Editor editor) {
-            checkUpdate(editor);
+            WriteIntentReadAction.run((Runnable)() -> checkUpdate(editor));
           }
         }, this);
       }

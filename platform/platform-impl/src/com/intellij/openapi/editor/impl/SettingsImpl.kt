@@ -728,9 +728,11 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
                 defaultValue = result
                 newGetValueResult = overwrittenValue ?: cachedValue ?: defaultValue
               }
-              fireEditorRefresh(false)
-              if (oldGetValueResult != newGetValueResult) {
-                fireValueChanged(newGetValueResult)
+              writeIntentReadAction {
+                fireEditorRefresh(false)
+                if (oldGetValueResult != newGetValueResult) {
+                  fireValueChanged(newGetValueResult)
+                }
               }
             }
           }

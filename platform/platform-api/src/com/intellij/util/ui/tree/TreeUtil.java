@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -1962,7 +1963,8 @@ public final class TreeUtil {
     }
     if (model == null) return Promises.rejectedPromise("tree model is not set");
     AsyncPromise<TreePath> promise = new AsyncPromise<>();
-    EdtInvocationManager.invokeLaterIfNeeded(() -> promise.setResult(visitModel(model, visitor)));
+    // Code run under "invokeLaterIfNeeded" must not touch PSI, but this code touches it.
+    EdtInvocationManager.invokeLaterIfNeeded(() -> ReadAction.run(() -> promise.setResult(visitModel(model, visitor))));
     return promise;
   }
 

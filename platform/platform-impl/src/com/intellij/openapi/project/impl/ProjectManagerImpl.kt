@@ -308,7 +308,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       if (project.isDisposed) {
         return@withContext false
       }
-      closeProject(project = project, saveProject = save, checkCanClose = false)
+      writeIntentReadAction {
+        closeProject(project = project, saveProject = save, checkCanClose = false)
+      }
     }
   }
 
@@ -710,7 +712,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             }
 
             withContext(Dispatchers.EDT) {
-              closeProject(project, saveProject = false, checkCanClose = false)
+              writeIntentReadAction {
+                closeProject(project, saveProject = false, checkCanClose = false)
+              }
             }
           }
           catch (secondException: Throwable) {
@@ -1004,7 +1008,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private suspend fun closeAndDisposeKeepingFrame(project: Project): Boolean {
     return withContext(Dispatchers.EDT) {
       try {
-        blockingContext {
+        writeIntentReadAction {
           (WindowManager.getInstance() as WindowManagerImpl).withFrameReuseEnabled().use {
             closeProject(project, checkCanClose = true)
           }
@@ -1042,8 +1046,10 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
   }
 
   launch(CoroutineName("projectOpened event executing") + Dispatchers.EDT) {
-    @Suppress("DEPRECATION", "removal")
-    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+    writeIntentReadAction {
+      @Suppress("DEPRECATION", "removal")
+      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+    }
   }
 
   @Suppress("DEPRECATION")
@@ -1367,7 +1373,8 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
     }
 
     val openInExistingFrame = withContext(Dispatchers.EDT) {
-      blockingContext {
+      //readaction is not enough
+      writeIntentReadAction {
         if (options.isNewProject)
           MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.new.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))

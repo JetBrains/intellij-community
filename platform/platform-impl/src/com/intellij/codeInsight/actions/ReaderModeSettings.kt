@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.blockingContext
@@ -72,7 +73,7 @@ interface ReaderModeSettings : Disposable {
 
             if (matchMode || forceUpdate) {
               withContext(Dispatchers.EDT) {
-                blockingContext {
+                writeIntentReadAction {
                   applyModeChanged(project = project, editor = editor, matchMode = matchMode, fileIsOpenAlready = fileIsOpenAlready)
                 }
               }

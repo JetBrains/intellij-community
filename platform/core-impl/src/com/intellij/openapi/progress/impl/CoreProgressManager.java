@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -404,7 +405,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public void run(@NotNull Task task) {
     if (isSynchronousHeadless(task)) {
       if (SwingUtilities.isEventDispatchThread()) {
-        runProcessWithProgressSynchronously(task);
+        WriteIntentReadAction.run((Runnable)() -> runProcessWithProgressSynchronously(task));
       }
       else {
         runProcessWithProgressInCurrentThread(task, new EmptyProgressIndicator(), ModalityState.defaultModalityState());

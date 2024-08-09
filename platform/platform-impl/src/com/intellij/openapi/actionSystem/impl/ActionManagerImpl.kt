@@ -1109,14 +1109,20 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     for (listener in actionListeners) {
       listener.beforeEditorTyping(c, dataContext)
     }
-    publisher().beforeEditorTyping(c, dataContext)
+    //maybe readaction
+    WriteIntentReadAction.run {
+      publisher().beforeEditorTyping(c, dataContext)
+    }
   }
 
   override fun fireAfterEditorTyping(c: Char, dataContext: DataContext) {
     for (listener in actionListeners) {
       listener.afterEditorTyping(c, dataContext)
     }
-    publisher().afterEditorTyping(c, dataContext)
+    //maybe readaction
+    WriteIntentReadAction.run {
+      publisher().afterEditorTyping(c, dataContext)
+    }
   }
 
   val actionIds: Set<String>
@@ -1392,7 +1398,8 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
     inputEvent, wrappedContext, place, presentation, ActionManager.getInstance(), 0, false, false)
   else null
   if (event != null && event.presentation.isEnabled) {
-    blockingContext {
+    //todo fix all clients and move locks into them
+    writeIntentReadAction {
       doPerformAction(action, event, result)
     }
   }

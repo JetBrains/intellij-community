@@ -63,7 +63,10 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   private class MyEdtExecutor(private val modality: ModalityState) : Executor {
     override fun execute(command: Runnable) {
+      // TransactionGuard.isWritingAllowed could throw exception if there is no write intent lock
+      // It was always so, but now we could be here without WIL
       if (ApplicationManager.getApplication().isDispatchThread
+          && ApplicationManager.getApplication().isWriteIntentLockAcquired
           && (!TransactionGuard.getInstance().isWriteSafeModality(modality)
               || TransactionGuard.getInstance().isWritingAllowed)
           && !ModalityState.current().dominates(modality)) {

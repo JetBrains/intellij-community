@@ -5,6 +5,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -617,13 +618,15 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   @Override
   public void onBatchModeFinish(@NotNull Editor editor) {
-    if (myEditor.getDocument().isInBulkUpdate()) return;
-    doWithCaretMerging(() -> {
-      for (CaretImpl caret : myCarets) {
-        caret.resetCachedState();
-        caret.myVisualColumnAdjustment = 0;
-        caret.updateVisualPosition();
-      }
+    WriteIntentReadAction.run((Runnable)() -> {
+      if (myEditor.getDocument().isInBulkUpdate()) return;
+      doWithCaretMerging(() -> {
+        for (CaretImpl caret : myCarets) {
+          caret.resetCachedState();
+          caret.myVisualColumnAdjustment = 0;
+          caret.updateVisualPosition();
+        }
+      });
     });
   }
 

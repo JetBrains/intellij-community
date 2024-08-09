@@ -15,10 +15,7 @@ import com.intellij.openapi.actionSystem.ex.ActionCopiedShortcutsTracker
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -791,9 +788,11 @@ open class JBTabsImpl internal constructor(
         val anyModality = ModalityState.any().asContextElement()
         (serviceAsync<ActionManager>() as ActionManagerEx).timerEvents.collect {
           withContext(Dispatchers.EDT + anyModality) {
-            val modalityState = ModalityState.stateForComponent(this@JBTabsImpl)
-            if (!ModalityState.current().dominates(modalityState)) {
-              updateTabActions(validateNow = false)
+            writeIntentReadAction {
+              val modalityState = ModalityState.stateForComponent(this@JBTabsImpl)
+              if (!ModalityState.current().dominates(modalityState)) {
+                updateTabActions(validateNow = false)
+              }
             }
           }
         }

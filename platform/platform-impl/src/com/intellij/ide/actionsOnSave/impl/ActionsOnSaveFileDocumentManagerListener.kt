@@ -218,7 +218,9 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
   private suspend fun runActionsOnSave(projectDocuments: List<Document>) {
     val projectActionsOnSave = EP_NAME.extensionList.filter { it.isEnabledForProject(project) }
 
-    projectActionsOnSave.forEach { it.processDocuments(project, projectDocuments.toTypedArray()) }
+    writeIntentReadAction {
+      projectActionsOnSave.forEach { it.processDocuments(project, projectDocuments.toTypedArray()) }
+    }
 
     val documentUpdatingActionsOnSave = projectActionsOnSave.filterIsInstance<DocumentUpdatingActionOnSave>()
     if (documentUpdatingActionsOnSave.isNotEmpty()) {
@@ -229,7 +231,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
       }
     }
     else {
-      projectDocuments.forEach(FileDocumentManager.getInstance()::saveDocument)
+      writeIntentReadAction { projectDocuments.forEach(FileDocumentManager.getInstance()::saveDocument) }
     }
   }
 

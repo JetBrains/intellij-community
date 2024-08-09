@@ -62,8 +62,11 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
       var events = runRefreshSession(session, -1L);
       fireEvents(events, session);
     }
-    else if (app.holdsReadLock() || EDT.isCurrentThreadEdt()) {
+    else if (app.holdsReadLock()) {
       LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire)");
+    }
+    else if (EDT.isCurrentThreadEdt()) {
+      LOG.error("Do not perform a synchronous refresh on naked EDT (without WIL) (causes deadlocks if there are events to fire)");
     }
     else {
       queueSession(session, session.getModality());

@@ -6,6 +6,8 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener

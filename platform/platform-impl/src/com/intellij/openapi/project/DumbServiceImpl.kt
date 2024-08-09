@@ -93,7 +93,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         }
         else {
           scope.launch(modality.asContextElement() + Dispatchers.EDT) {
-            blockingContext {
+            writeIntentReadAction {
               dumbTaskLaunchers.remove(this@DumbTaskLauncher)
               decrementDumbCounter()
             }
@@ -347,10 +347,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
     if (wasDumb != currentState.isDumb) {
       if (currentState.isDumb) {
-        runCatchingIgnorePCE { myPublisher.enteredDumbMode() }
+        runCatchingIgnorePCE { WriteIntentReadAction.run { myPublisher.enteredDumbMode() } }
       }
       else {
-        runCatchingIgnorePCE { myPublisher.exitDumbMode() }
+        runCatchingIgnorePCE { WriteIntentReadAction.run { myPublisher.exitDumbMode() } }
       }
     }
   }

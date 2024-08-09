@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -285,7 +286,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir)!!
       }
       withContext(Dispatchers.EDT) {
-        virtualFile.refresh(false, false)
+        writeIntentReadAction {
+          virtualFile.refresh(false, false)
+        }
       }
 
       for (configurator in EP_NAME.lazySequence()) {
