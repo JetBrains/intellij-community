@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -208,8 +209,10 @@ class MarkdownPreviewFileEditor(
     val currentHtml = "<html><head></head>$html</html>"
     lastRenderedHtml = currentHtml
     val editor = mainEditor.firstOrNull() ?: return
-    val offset = editor.caretModel.offset
-    panel.setHtml(lastRenderedHtml, offset, file)
+    writeIntentReadAction {
+      val offset = editor.caretModel.offset
+      panel.setHtml(lastRenderedHtml, offset, file)
+    }
   }
 
   @RequiresEdt
