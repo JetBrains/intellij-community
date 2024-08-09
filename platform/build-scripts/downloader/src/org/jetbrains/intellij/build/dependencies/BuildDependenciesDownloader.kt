@@ -127,8 +127,7 @@ object BuildDependenciesDownloader {
                                  vararg options: BuildDependenciesExtractOptions): Path {
     cleanUpIfRequired(communityRoot)
     val cachePath = getDownloadCachePath(communityRoot)
-    val relative = cachePath.relativize(archiveFile)
-    val hash = hashString(relative.toString() + getExtractOptionsShortString(options)).substring(0, 6)
+    val hash = hashString(archiveFile.toString() + getExtractOptionsShortString(options)).substring(0, 6)
     val directoryName = "${archiveFile.fileName}.${hash}.d"
     val targetDirectory = cachePath.resolve(directoryName)
     val flagFile = cachePath.resolve("${directoryName}.flag")
