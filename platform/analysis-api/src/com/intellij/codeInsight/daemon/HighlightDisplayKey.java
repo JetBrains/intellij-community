@@ -4,10 +4,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Map;
 import java.util.Objects;
@@ -145,6 +142,14 @@ public final class HighlightDisplayKey {
     return ourKeyToAlternativeIDMap.get(key);
   }
 
+  /**
+   * @deprecated Use {@link #find} or {@link #findOrRegister} to get an instance of HighlightDisplayKey.
+   * If `find` returns null for you, creating a new instance of HighlightDisplayKey won't help.
+   * Most likely, this means that the inspection is disabled or missing completely, and you need to properly
+   * handle this case.
+   */
+  @Deprecated
+  @ApiStatus.Internal
   public HighlightDisplayKey(@NonNls @NotNull String shortName, @NonNls @NotNull String ID) {
     myShortName = shortName;
     myID = ID;

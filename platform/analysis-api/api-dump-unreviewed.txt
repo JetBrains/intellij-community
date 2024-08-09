@@ -461,7 +461,6 @@ com.intellij.codeInsight.daemon.GroupNames
 - sf:PROPERTIES_GROUP_NAME:java.lang.String
 - sf:STYLE_GROUP_NAME:java.lang.String
 f:com.intellij.codeInsight.daemon.HighlightDisplayKey
-- <init>(java.lang.String,java.lang.String):V
 - s:find(java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
 - s:findById(java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
 - s:findOrRegister(java.lang.String,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
