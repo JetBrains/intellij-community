@@ -477,13 +477,15 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   public static void runCustomTask(@NotNull Project project,
                                    @NotNull @Nls String executionName,
                                    @NotNull Class<? extends Task> taskClass,
+                                   @NotNull List<String> gradleFlags,
                                    @NotNull String projectPath,
                                    @NotNull String gradlePath,
                                    @Nullable String taskConfiguration,
                                    @NotNull ProgressExecutionMode progressExecutionMode,
                                    @Nullable TaskCallback callback,
                                    @NotNull Set<Class<?>> toolingExtensionClasses) {
-    String taskName = taskClass.getSimpleName();
+    String flags = gradleFlags.isEmpty() ? "" : " " + String.join(" ", gradleFlags);
+    String taskName = taskClass.getSimpleName() + flags;
     String taskType = taskClass.getName();
     Set<Class<?>> tools = new HashSet<>(toolingExtensionClasses);
     tools.add(taskClass);
@@ -498,12 +500,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   public static void runCustomTask(@NotNull Project project,
                                    @NotNull @Nls String executionName,
                                    @NotNull Class<? extends Task> taskClass,
+                                   @NotNull List<String> gradleFlags,
                                    @NotNull String projectPath,
                                    @NotNull String gradlePath,
                                    @Nullable String taskConfiguration,
                                    @NotNull ProgressExecutionMode progressExecutionMode,
                                    @Nullable TaskCallback callback) {
-    runCustomTask(project, executionName, taskClass, projectPath, gradlePath, taskConfiguration, progressExecutionMode, callback,
-                  new HashSet<>());
+    runCustomTask(project, executionName, taskClass, gradleFlags, projectPath, gradlePath, taskConfiguration, progressExecutionMode,
+                  callback, new HashSet<>());
   }
 }
