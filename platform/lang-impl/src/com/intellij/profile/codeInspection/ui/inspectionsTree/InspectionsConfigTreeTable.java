@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -252,7 +252,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
         else {
           final MultiColoredHighlightSeverityIconSink sink = new MultiColoredHighlightSeverityIconSink();
           for (final HighlightDisplayKey selectedInspectionsNode : inspectionsKeys) {
-            final String toolId = selectedInspectionsNode.toString();
+            final String toolId = selectedInspectionsNode.getShortName();
             if (mySettings.getInspectionProfile().getTools(toolId, mySettings.getProject()).isEnabled()) {
               sink.put(mySettings.getInspectionProfile().getToolDefaultState(toolId, mySettings.getProject()),
                        mySettings.getInspectionProfile().getNonDefaultTools(toolId, mySettings.getProject()));
@@ -271,7 +271,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     private Boolean isEnabled(@NotNull List<HighlightDisplayKey> selectedInspectionsNodes) {
       return selectedInspectionsNodes
         .stream()
-        .map(key -> mySettings.getInspectionProfile().getTools(key.toString(), mySettings.getProject()))
+        .map(key -> mySettings.getInspectionProfile().getTools(key.getShortName(), mySettings.getProject()))
         .flatMap(tools -> tools.isEnabled() ? tools.getTools().stream().map(ScopeToolState::isEnabled) : Stream.of(false))
         .distinct()
         .collect(MoreCollectors.onlyOne()).orElse(null);
@@ -292,7 +292,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
 
       for (final InspectionConfigTreeNode.Tool aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
-        InspectionProfileImpl.setToolEnabled(doEnable, profile, aNode.getKey().toString(), mySettings.getProject());
+        InspectionProfileImpl.setToolEnabled(doEnable, profile, aNode.getKey().getShortName(), mySettings.getProject());
         mySettings.onChanged(aNode);
       }
       updateRightPanel();
@@ -327,7 +327,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
 
       for (HighlightDisplayKey tool : tools) {
-        InspectionProfileImpl.setToolEnabled(newState, profile, tool.toString(), mySettings.getProject());
+        InspectionProfileImpl.setToolEnabled(newState, profile, tool.getShortName(), mySettings.getProject());
       }
 
       for (InspectionConfigTreeNode node : nodes) {

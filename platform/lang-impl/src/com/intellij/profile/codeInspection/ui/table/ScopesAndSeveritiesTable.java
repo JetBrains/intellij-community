@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -182,7 +182,7 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       for(final InspectionConfigTreeNode.Tool node : nodes) {
         final HighlightDisplayKey key = node.getKey();
         myKeys.add(key);
-        myKeyNames.add(key.toString());
+        myKeyNames.add(key.getShortName());
       }
 
       myInspectionProfile = inspectionProfile;

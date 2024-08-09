@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.openapi.components.BaseState
@@ -8,7 +8,6 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
-import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
@@ -71,7 +70,7 @@ internal class VisibleTreeState : BaseState() {
     var node = _node
     val expandedNode: State
     if (node is InspectionConfigTreeNode.Tool) {
-      expandedNode = State(node.key.toString())
+      expandedNode = State(node.key.shortName)
     }
     else {
       val buf = StringBuilder()

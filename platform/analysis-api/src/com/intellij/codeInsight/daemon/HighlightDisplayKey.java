@@ -159,6 +159,15 @@ public final class HighlightDisplayKey {
   }
 
   /**
+   * @see LocalInspectionTool#getShortName()
+   *
+   * @return short name of inspection tool
+   */
+  public String getShortName() {
+    return myShortName;
+  }
+
+  /**
    * @see LocalInspectionTool#getID()
    *
    * @return inspection tool ID.

@@ -469,6 +469,7 @@ f:com.intellij.codeInsight.daemon.HighlightDisplayKey
 - s:getAlternativeID(com.intellij.codeInsight.daemon.HighlightDisplayKey):java.lang.String
 - s:getDisplayNameByKey(com.intellij.codeInsight.daemon.HighlightDisplayKey):java.lang.String
 - getID():java.lang.String
+- getShortName():java.lang.String
 - s:register(java.lang.String,com.intellij.openapi.util.Computable,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
 - s:register(java.lang.String,com.intellij.openapi.util.Computable,java.lang.String,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
 - s:register(java.lang.String,java.lang.String,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey

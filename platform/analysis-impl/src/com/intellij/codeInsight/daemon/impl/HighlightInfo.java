@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -13,7 +13,10 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -766,7 +769,7 @@ public class HighlightInfo implements Segment {
           myCanCleanup = false;
         }
         else {
-          InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(myKey.toString(), element);
+          InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(myKey.getShortName(), element);
           myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
         }
       }
@@ -806,7 +809,7 @@ public class HighlightInfo implements Segment {
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-      InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.toString(), element);
+      InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.getShortName(), element);
       if (toolWrapper != null) {
         myCanCleanup = toolWrapper.isCleanupTool();
 
