@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.roots.ModuleRootManager
@@ -129,12 +130,14 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
         addPom(projectPom)
         importProjectAsync()
         withContext(Dispatchers.EDT) {
-            assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))
-            codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
-            (codeInsightTestFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
-            codeInsightTestFixture.launchAction(codeInsightTestFixture.findSingleIntention(intentionName))
-            FileDocumentManager.getInstance().saveAllDocuments()
-            checkResult(pomVFile)
+            writeIntentReadAction {
+                assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))
+                codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
+                (codeInsightTestFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+                codeInsightTestFixture.launchAction(codeInsightTestFixture.findSingleIntention(intentionName))
+                FileDocumentManager.getInstance().saveAllDocuments()
+                checkResult(pomVFile)
+            }
         }
     }
 
