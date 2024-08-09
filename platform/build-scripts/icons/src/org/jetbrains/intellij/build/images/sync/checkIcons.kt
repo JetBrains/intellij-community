@@ -30,7 +30,7 @@ internal fun checkIcons(context: Context = Context()) {
   when {
     !context.devIconsSyncAll && !context.iconsSyncRequired() && !context.devSyncRequired() -> log("No changes are found")
     isUnderTeamCity() -> {
-      if (context.devCommitsToSync.isNotEmpty()) try {
+      if (context.devCommitsToSync.isNotEmpty() && !context.dryRun) try {
         push(context)
       }
       catch (e: Throwable) {
