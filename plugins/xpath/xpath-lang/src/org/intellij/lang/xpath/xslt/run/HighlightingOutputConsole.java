@@ -18,6 +18,7 @@ package org.intellij.lang.xpath.xslt.run;
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -36,15 +37,13 @@ import java.awt.*;
 public class HighlightingOutputConsole extends AdditionalTabComponent implements UiDataProvider {
 
     private final ConsoleView myConsole;
-    private final JComponent myConsoleComponent;
 
     public HighlightingOutputConsole(Project project, @Nullable FileType fileType) {
         super(new BorderLayout());
 
         myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
-        myConsoleComponent = myConsole.getComponent();
-        add(myConsoleComponent, BorderLayout.CENTER);
+        add(myConsole.getComponent(), BorderLayout.CENTER);
 
         final EditorEx editorEx = getEditor();
         assert editorEx != null;
@@ -87,13 +86,14 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
 
     @Nullable
     private EditorEx getEditor() {
-        return (EditorEx)((DataProvider)myConsole).getData(LangDataKeys.EDITOR.getName());
+      DataContext dataContext = DataManager.getInstance().getDataContext(myConsole.getComponent());
+      return (EditorEx)CommonDataKeys.EDITOR.getData(dataContext);
     }
 
-    @Override
-    public JComponent getPreferredFocusableComponent() {
-        return myConsoleComponent;
-    }
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    return myConsole.getComponent();
+  }
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
