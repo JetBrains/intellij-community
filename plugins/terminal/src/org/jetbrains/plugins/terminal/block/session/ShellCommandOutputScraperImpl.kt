@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
 import com.jediterm.terminal.TextStyle
+import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
@@ -35,7 +36,7 @@ internal class ShellCommandOutputScraperImpl(
   private val debouncer: Debouncer = Debouncer(debounceTimeout, parentDisposable)
 
   init {
-    TerminalUtil.addModelListener(textBuffer, parentDisposable) {
+    textBuffer.addModelListener(parentDisposable) {
       onContentChanged()
     }
   }
@@ -168,4 +169,8 @@ internal fun TerminalTextBuffer.collectLines(
   }
   terminalLinesCollector.addLines(screenBuffer)
   terminalLinesCollector.flush()
+}
+
+internal fun TerminalTextBuffer.addModelListener(parentDisposable: Disposable, listener: TerminalModelListener) {
+  TerminalUtil.addModelListener(this, parentDisposable, listener)
 }
