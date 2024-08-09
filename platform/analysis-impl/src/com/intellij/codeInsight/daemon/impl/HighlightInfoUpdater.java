@@ -34,7 +34,7 @@ abstract class HighlightInfoUpdater {
                                   @NotNull PsiFile psiFile,
                                   @NotNull Project project,
                                   @NotNull HighlightingSession session,
-                                  @NotNull HighlighterRecyclerPickup invalidElementRecycler);
+                                  @NotNull ManagedHighlighterRecycler invalidElementRecycler);
 
   abstract void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
                                                      @NotNull TextRange restrictRange,
@@ -61,7 +61,7 @@ abstract class HighlightInfoUpdater {
                            @NotNull PsiFile psiFile,
                            @NotNull Project project,
                            @NotNull HighlightingSession session,
-                           @NotNull HighlighterRecyclerPickup invalidElementRecycler) {
+                           @NotNull ManagedHighlighterRecycler invalidElementRecycler) {
     }
   };
 }

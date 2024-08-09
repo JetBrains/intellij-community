@@ -89,10 +89,7 @@ import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.TestTimeOut;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -2080,26 +2077,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, bigText);
     makeEditorWindowVisible(new Point(0, 1000), myEditor);
     assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
     for (int i=0; i<10; i++) {
       type(" // TS");
       assertEmpty(doHighlighting(HighlightSeverity.ERROR));
-      List<HighlightInfo> errorsFromMarkup =
-        Arrays.stream(DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true).getAllHighlighters())
-          .map(m -> HighlightInfo.fromRangeHighlighter(m))
-          .filter(Objects::nonNull)
-          .filter(h -> h.getSeverity() == HighlightSeverity.ERROR)
-          .toList();
-      assertEmpty(errorsFromMarkup);
+      assertEmpty(getErrorsFromMarkup(markupModel));
       
       backspace();backspace();backspace();backspace();backspace();backspace();
       assertEmpty(doHighlighting(HighlightSeverity.ERROR));
-      List<HighlightInfo> errorsFromMarkup2 =
-        Arrays.stream(DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true).getAllHighlighters())
-          .map(m -> HighlightInfo.fromRangeHighlighter(m))
-          .filter(Objects::nonNull)
-          .filter(h -> h.getSeverity() == HighlightSeverity.ERROR)
-          .toList();
-      assertEmpty(errorsFromMarkup2);
+      assertEmpty(getErrorsFromMarkup(markupModel));
     }
   }
 
@@ -2201,5 +2187,129 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertNotEmpty(MyVerySlowAnnotator.myHighlights(markupModel));
       assertTrue(success.get());
     });
+  }
+
+  @Language(value = "JAVA", prefix="class X { void foo() {\n", suffix = "\n}\n}")
+  String MANY_LAMBDAS_TEXT_TO_TYPE = """
+    if (i(()->{
+            i(()-> {
+              System.out.println("vFile = ");
+            });
+          })) {
+       i(new Runnable() {
+           @Override public void run() {
+              if (true==true) { return; 
+              } 
+           }
+        });
+      }
+    else {
+      // return this
+    }
+    """;
+
+  @Language("JAVA")
+  String MANY_LAMBDAS_INITIAL = """
+    class X {
+      void invokeLater(Runnable r) {}
+      boolean i(Runnable r) { return true;}
+      void foo() {
+       <caret>
+      }
+    }""";
+  public void testDaemonDoesRestartDuringMadMonkeyTyping/*Stress*/() {
+    assertDaemonRestartsAndLeavesNoErrorElementsInTheEnd(MANY_LAMBDAS_INITIAL, MANY_LAMBDAS_TEXT_TO_TYPE, null);
+  }
+  @Language(value = "JAVA", prefix="class X { void foo() {\n", suffix = "\n}\n}")
+  String LONG_LINE_WITH_PARENS_TEXT_TO_TYPE = """
+    if (highlighter != null) highlighter += " text='" + StringUtil.first(getText(), 40, true) + "'";
+    """;
+  @Language("JAVA")
+  String LONG_LINE_WITH_PARENS_INITIAL_TEXT = """
+    class X {
+      static String getText() { return ""; }
+      static class StringUtil {
+        static String first(String t, int length, boolean b) { return t; }
+      }
+      String highlighter;
+      void foo() {
+       <caret>
+      }
+    }""";
+  public void testDaemonDoesRestartDuringMadMonkeyTyping2/*Stress*/() {
+    assertDaemonRestartsAndLeavesNoErrorElementsInTheEnd(LONG_LINE_WITH_PARENS_INITIAL_TEXT, LONG_LINE_WITH_PARENS_TEXT_TO_TYPE, null);
+  }
+
+  public void testDaemonDoesNotLeaveObsoleteErrorElementHighlightsBehind/*Stress*/() {
+    Random random = new Random();
+    assertDaemonRestartsAndLeavesNoErrorElementsInTheEnd(MANY_LAMBDAS_INITIAL, MANY_LAMBDAS_TEXT_TO_TYPE, () -> TimeoutUtil.sleep(random.nextInt(10)));
+  }
+  public void testDaemonDoesNotLeaveObsoleteErrorElementHighlightsBehind2/*Stress*/() {
+    Random random = new Random();
+    assertDaemonRestartsAndLeavesNoErrorElementsInTheEnd(LONG_LINE_WITH_PARENS_INITIAL_TEXT, LONG_LINE_WITH_PARENS_TEXT_TO_TYPE, () -> TimeoutUtil.sleep(random.nextInt(10)));
+  }
+
+  // start typing in the empty java file char by char
+  // after each typing, wait for the daemon to start and immediately proceed to type the next char
+  // thus making daemon interrupt itself constantly, in hope for multiple highlighting sessions overlappings to manifest themselves more quickly.
+  // after all typings are over, wait for final highlighting to complete and check that no errors are left in the markup
+  private void assertDaemonRestartsAndLeavesNoErrorElementsInTheEnd(String initialText, String textToType, Runnable afterWaitForDaemon) {
+    // run expensive consistency checks on each typing
+    HighlightInfoUpdaterImpl.ASSERT_INVARIANTS = true; Disposer.register(getTestRootDisposable(), () -> HighlightInfoUpdaterImpl.ASSERT_INVARIANTS = false);
+    String finalText = initialText.replace("<caret>", textToType);
+    configureByText(JavaFileType.INSTANCE, finalText);
+    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject());
+    assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+    runWithReparseDelay(0, () -> {
+      for (int i=0; i<10; i++) {
+        //System.out.println("i = " + i);
+        PassExecutorService.LOG.debug("i = " + i);
+        WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText(""));
+        MarkupModel markupModel = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
+        for (int c = 0; c < finalText.length(); c++) {
+          PassExecutorService.LOG.debug("c = " + c);
+          //System.out.println("  c = " + c);
+          int o=c;
+          //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
+          WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+            assertFalse(myDaemonCodeAnalyzer.isRunning());
+            type(finalText.charAt(o));
+            assertFalse(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile));
+          });
+          //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
+          TestTimeOut t = TestTimeOut.setTimeout(30, TimeUnit.SECONDS);
+          myDaemonCodeAnalyzer.restart(myFile);
+          List<HighlightInfo> errorsFromMarkup = getErrorsFromMarkup(markupModel);
+          //updater.assertNoDuplicates(myFile, errorsFromMarkup, "errors from markup ");
+          //((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject())).assertMarkupDataConsistent(myFile);
+          PassExecutorService.LOG.debug(" errorsfrommarkup:\n" + StringUtil.join(ContainerUtil.sorted(errorsFromMarkup, Segment.BY_START_OFFSET_THEN_END_OFFSET), "\n") + "\n-----\n");
+          while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile)/*in case the highlighting has already finished miraculously by now*/) {
+            Thread.yield();
+            UIUtil.dispatchAllInvocationEvents();
+            if (t.timedOut()) throw new RuntimeException(new TimeoutException());
+          }
+          if (afterWaitForDaemon != null) {
+            afterWaitForDaemon.run();
+          }
+        }
+        // some chars might be inserted by TypeHandlers
+        while (!myEditor.getDocument().getText().substring(myEditor.getCaretModel().getOffset()).isEmpty()) {
+          delete(myEditor);
+        }
+        LOG.debug("All typing completed. " +
+                  "\neditor text:-----------\n"+myEditor.getDocument().getText()+"\n-------\n"+
+                  "errors in markup: " + StringUtil.join(getErrorsFromMarkup(markupModel), "\n") + "\n-----\n");
+        waitForDaemon(getProject(), myEditor.getDocument());
+        assertEmpty(myEditor.getDocument().getText(), getErrorsFromMarkup(markupModel));
+      }
+    });
+  }
+
+  private static @NotNull List<HighlightInfo> getErrorsFromMarkup(MarkupModel model) {
+    return Arrays.stream(model.getAllHighlighters())
+      .map(m -> HighlightInfo.fromRangeHighlighter(m))
+      .filter(Objects::nonNull)
+      .filter(h -> h.getSeverity() == HighlightSeverity.ERROR)
+      .toList();
   }
 }
