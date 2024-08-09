@@ -4,6 +4,8 @@ package org.jetbrains.idea.devkit.run;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +18,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,6 +29,7 @@ import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
@@ -37,6 +41,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
@@ -134,7 +139,9 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       var scope = ProjectScope.getContentScope(project);
       var files = ReadAction.compute(() -> FilenameIndex.getVirtualFilesByName("OpenedPackages.txt", scope));
       if (files.size() > 1) {
-        LOG.error("expecting 1 file, found: " + files);
+        var list = files.stream().map(VirtualFile::getPresentableUrl).collect(Collectors.joining("\n"));
+        var message = DevKitBundle.message("notification.message.duplicate.packages.file", list);
+        new Notification("DevKit Errors", message, NotificationType.ERROR).notify(project);
       }
       else if (!files.isEmpty()) {
         var file = files.iterator().next();
