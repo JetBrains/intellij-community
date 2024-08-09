@@ -57,10 +57,18 @@ class IjentWslNioFileSystemProvider(
   override fun canHandleRouting(): Boolean = true
 
   private fun Path.toIjentPath(): IjentNioPath =
-    if (this is IjentNioPath)
-      this
-    else
-      fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, IjentNioPath::resolve)
+    when (this) {
+      is IjentNioPath -> this
+      is IjentWslNioPath -> delegate.toIjentPath()
+      else -> fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, IjentNioPath::resolve)
+    }
+
+  private fun Path.toOriginalPath(): Path =
+    when (this) {
+      is IjentNioPath -> FileSystems.getDefault().getPath(toAbsolutePath().toString())
+      is IjentWslNioPath -> delegate.toOriginalPath()
+      else -> this
+    }
 
   override fun getScheme(): String =
     originalFsProvider.scheme
@@ -108,19 +116,19 @@ class IjentWslNioFileSystemProvider(
     ijentFsProvider.newFileChannel(path.toIjentPath(), options, *attrs)
 
   override fun newAsynchronousFileChannel(
-    path: Path?,
+    path: Path,
     options: MutableSet<out OpenOption>?,
     executor: ExecutorService?,
     vararg attrs: FileAttribute<*>?,
   ): AsynchronousFileChannel =
-    originalFsProvider.newAsynchronousFileChannel(path, options, executor, *attrs)
+    originalFsProvider.newAsynchronousFileChannel(path.toOriginalPath(), options, executor, *attrs)
 
-  override fun createSymbolicLink(link: Path?, target: Path?, vararg attrs: FileAttribute<*>?) {
-    originalFsProvider.createSymbolicLink(link, target, *attrs)
+  override fun createSymbolicLink(link: Path, target: Path, vararg attrs: FileAttribute<*>?) {
+    originalFsProvider.createSymbolicLink(link.toOriginalPath(), target, *attrs)
   }
 
-  override fun createLink(link: Path?, existing: Path?) {
-    originalFsProvider.createLink(link, existing)
+  override fun createLink(link: Path, existing: Path) {
+    originalFsProvider.createLink(link.toOriginalPath(), existing.toOriginalPath())
   }
 
   override fun deleteIfExists(path: Path): Boolean =
@@ -129,7 +137,7 @@ class IjentWslNioFileSystemProvider(
   override fun readSymbolicLink(link: Path): IjentWslNioPath =
     IjentWslNioPath(
       getFileSystem(wslIdFromPath(link)),
-      originalFsProvider.readSymbolicLink(link),
+      originalFsProvider.readSymbolicLink(link.toOriginalPath()),
     )
 
   override fun getPath(uri: URI): Path =
@@ -186,17 +194,17 @@ class IjentWslNioFileSystemProvider(
     ijentFsProvider.move(source.toIjentPath(), target.toIjentPath(), *options)
   }
 
-  override fun isSameFile(path: Path?, path2: Path?): Boolean =
-    originalFsProvider.isSameFile(path, path2)
+  override fun isSameFile(path: Path, path2: Path): Boolean =
+    originalFsProvider.isSameFile(path.toOriginalPath(), path2.toOriginalPath())
 
-  override fun isHidden(path: Path?): Boolean =
-    originalFsProvider.isHidden(path)
+  override fun isHidden(path: Path): Boolean =
+    originalFsProvider.isHidden(path.toOriginalPath())
 
-  override fun getFileStore(path: Path?): FileStore =
-    originalFsProvider.getFileStore(path)
+  override fun getFileStore(path: Path): FileStore =
+    originalFsProvider.getFileStore(path.toOriginalPath())
 
-  override fun <V : FileAttributeView?> getFileAttributeView(path: Path?, type: Class<V>, vararg options: LinkOption): V =
-    originalFsProvider.getFileAttributeView(path, type, *options)
+  override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V =
+    originalFsProvider.getFileAttributeView(path.toOriginalPath(), type, *options)
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     // There's some contract violation at least in com.intellij.openapi.util.io.FileAttributes.fromNio:
@@ -226,8 +234,8 @@ class IjentWslNioFileSystemProvider(
   override fun readAttributes(path: Path, attributes: String?, vararg options: LinkOption?): MutableMap<String, Any> =
     ijentFsProvider.readAttributes(path.toIjentPath(), attributes, *options)
 
-  override fun setAttribute(path: Path?, attribute: String?, value: Any?, vararg options: LinkOption?) {
-    originalFsProvider.setAttribute(path, attribute, value, *options)
+  override fun setAttribute(path: Path, attribute: String?, value: Any?, vararg options: LinkOption?) {
+    originalFsProvider.setAttribute(path.toOriginalPath(), attribute, value, *options)
   }
 }
 
