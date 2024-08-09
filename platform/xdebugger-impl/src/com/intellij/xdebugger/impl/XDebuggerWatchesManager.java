@@ -104,7 +104,7 @@ public final class XDebuggerWatchesManager {
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
     XDebuggerUtil debuggerUtil = XDebuggerUtil.getInstance();
     for (InlineWatchState inlineWatchState : state.getInlineExpressionStates()) {
-      if (inlineWatchState == null || inlineWatchState.getFileUrl() == null || inlineWatchState.getWatchState() == null) continue;
+      if (inlineWatchState.getFileUrl() == null || inlineWatchState.getWatchState() == null) continue;
 
       VirtualFile file = fileManager.findFileByUrl(inlineWatchState.getFileUrl());
       XSourcePosition position = debuggerUtil.createPosition(file, inlineWatchState.getLine());
