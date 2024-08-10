@@ -130,6 +130,13 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     }
   }
 
+  override fun withKotlinDsl(): BSB = apply {
+    withMavenCentral()
+    withPlugin {
+      code("`kotlin-dsl`")
+    }
+  }
+
   override fun withGroovyPlugin() =
     withGroovyPlugin(groovyVersion)
 
