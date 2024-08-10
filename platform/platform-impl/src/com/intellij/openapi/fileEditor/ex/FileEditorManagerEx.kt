@@ -193,6 +193,8 @@ abstract class FileEditorManagerEx : FileEditorManager() {
 
   abstract fun getPrevWindow(window: EditorWindow): EditorWindow?
 
+  /** @deprecated Use [com.intellij.openapi.actionSystem.UiDataRule] instead */
+  @Deprecated("Use [UiDataRule] instead", level = DeprecationLevel.ERROR)
   override fun getData(dataId: String, editor: Editor, caret: Caret): Any? {
     for (dataProvider in dataProviders) {
       val o = dataProvider.getData(dataId, editor, caret) ?: continue
@@ -201,6 +203,8 @@ abstract class FileEditorManagerEx : FileEditorManager() {
     return null
   }
 
+  /** @deprecated Use [com.intellij.openapi.actionSystem.UiDataRule] instead */
+  @Deprecated("Use [UiDataRule] instead", level = DeprecationLevel.ERROR)
   override fun registerExtraEditorDataProvider(provider: EditorDataProvider, parentDisposable: Disposable?) {
     dataProviders.add(provider)
     if (parentDisposable != null) {
