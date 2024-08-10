@@ -9,8 +9,6 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.editor.Editor
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 object InlineCompletionLogs : CounterUsagesCollector() {
   val GROUP = EventLogGroup("inline.completion.v2", 1, recorder = "ML")
@@ -29,19 +27,17 @@ object InlineCompletionLogs : CounterUsagesCollector() {
   }
 
   class Listener : InlineCompletionEventAdapter {
-    private val lock = ReentrantLock()
     private var editor: Editor? = null
 
-    override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
+    override fun onRequest(event: InlineCompletionEventType.Request) {
       InlineCompletionLogsContainer.create(event.request.editor)
       editor = event.request.editor
     }
 
-    override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
-      editor?.let {
-        InlineCompletionLogsContainer.get(it).log()
-        InlineCompletionLogsContainer.remove(it)
-      }
+    override fun onHide(event: InlineCompletionEventType.Hide) {
+      val curEditor = editor ?: return
+      val container = InlineCompletionLogsContainer.get(curEditor)
+      container.log() // TODO move from EDT to background
     }
   }
 }
