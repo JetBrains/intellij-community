@@ -49,6 +49,9 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
     // everything). See go/project-aplos-design for details.
     args.add("-Didea.load.plugins=false")
 
+    // We disable the task-based UI because it doesn't work properly in standalone mode (b/338285051).
+    args.add("-Dprofiler.task.based.ux=false")
+
     args.addAll(listOf(
       "-Didea.platform.prefix=AndroidGameDevelopmentTools",
       "-Didea.initially.ask.config=never"
