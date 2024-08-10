@@ -31,7 +31,7 @@ class InlineCompletionLogsContainer {
   fun log() {
     InlineCompletionLogs.Session.SESSION_EVENT.log(
       logs.map { (step, events) ->
-        InlineCompletionLogs.Session.stepToStepField[step]!!.with(ObjectEventData(events.toList<EventPair<*>>()))
+        InlineCompletionLogs.Session.stepToStepField[step]!!.with(ObjectEventData(events.toList()))
       }
     )
   }
