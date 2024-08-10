@@ -58,8 +58,8 @@ object InlineCompletionLogs : CounterUsagesCollector() {
 
     override fun onHide(event: InlineCompletionEventType.Hide) {
       val curEditor = editor ?: return
-      val container = InlineCompletionLogsContainer.get(curEditor)
-      container.log() // TODO move from EDT to background
+      val container = InlineCompletionLogsContainer.remove(curEditor) ?: return
+      container.log() // TODO move from EDT to background?
     }
   }
 }

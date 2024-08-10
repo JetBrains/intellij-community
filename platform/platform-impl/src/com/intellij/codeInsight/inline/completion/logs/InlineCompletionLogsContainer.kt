@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
-import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
@@ -40,8 +39,7 @@ class InlineCompletionLogsContainer {
   companion object {
     private val KEY: Key<InlineCompletionLogsContainer> = Key("inline.completion.logs.container")
     fun create(editor: Editor) {
-      val session = requireNotNull(InlineCompletionSession.getOrNull(editor)) { "Cannot find session" }
-      session.context.putUserData(KEY, InlineCompletionLogsContainer())
+      editor.putUserData(KEY, InlineCompletionLogsContainer())
     }
 
     fun get(editor: Editor): InlineCompletionLogsContainer {
