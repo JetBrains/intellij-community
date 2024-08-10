@@ -10,7 +10,7 @@ import com.intellij.openapi.util.removeUserData
 
 class InlineCompletionLogsContainer {
 
-  enum class Step(val description: String) {
+  enum class Phase(val description: String) {
     INLINE_API_STARTING("Execution inside inline completion API"),
     CONTEXT_COLLECTION("During context collecting"),
     COMPLETION_MODEL_EXECUTION("During model execution"),
@@ -20,12 +20,12 @@ class InlineCompletionLogsContainer {
     ;
   }
 
-  private val logs: Map<Step, MutableSet<EventPair<*>>> = Step.entries.associateWith {
+  private val logs: Map<Phase, MutableSet<EventPair<*>>> = Phase.entries.associateWith {
     ConcurrentCollectionFactory.createConcurrentSet<EventPair<*>>()
   }
 
   fun add(value: EventPair<*>) {
-    val stepName = requireNotNull(InlineCompletionLogs.Session.eventFieldNameToStep[value.field.name]) {
+    val stepName = requireNotNull(InlineCompletionLogs.Session.eventFieldNameToPhase[value.field.name]) {
       "Cannot find step for ${value.field.name}"
     }
     logs[stepName]!!.add(value)
@@ -34,7 +34,7 @@ class InlineCompletionLogsContainer {
   fun log() {
     InlineCompletionLogs.Session.SESSION_EVENT.log(
       logs.map { (step, events) ->
-        InlineCompletionLogs.Session.stepToStepField[step]!!.with(ObjectEventData(events.toList()))
+        InlineCompletionLogs.Session.stepToPhaseField[step]!!.with(ObjectEventData(events.toList()))
       }
     )
   }

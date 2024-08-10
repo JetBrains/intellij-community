@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Step
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
@@ -21,7 +21,7 @@ object InlineCompletionLogs : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   object Session {
-    private val stepToFieldList: List<Pair<Step, EventField<*>>> = run {
+    private val phaseToFieldList: List<Pair<Phase, EventField<*>>> = run {
       val fields = Cancellation.withNonCancelableSection().use {
         // Non-cancellable section, because this function is often used in
         // static initializer code of `object`, and any exception (namely, CancellationException)
@@ -34,16 +34,16 @@ object InlineCompletionLogs : CounterUsagesCollector() {
       fields
     }
 
-    val stepToStepField: Map<Step, ObjectEventField> = Step.entries.associateWith { step ->
-      ObjectEventField(step.name, step.description, *stepToFieldList.filter { step == it.first }.map { it.second }.toTypedArray())
+    val stepToPhaseField: Map<Phase, ObjectEventField> = Phase.entries.associateWith { step ->
+      ObjectEventField(step.name, step.description, *phaseToFieldList.filter { step == it.first }.map { it.second }.toTypedArray())
     }
 
-    val eventFieldNameToStep: Map<String, Step> = stepToFieldList.associate { it.second.name to it.first }
+    val eventFieldNameToPhase: Map<String, Phase> = phaseToFieldList.associate { it.second.name to it.first }
 
     val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
       "session",
       description = "The whole inline completion session",
-      *stepToStepField.values.toTypedArray(),
+      *stepToPhaseField.values.toTypedArray(),
     )
   }
 
