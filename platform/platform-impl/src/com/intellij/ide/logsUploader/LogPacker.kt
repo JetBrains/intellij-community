@@ -38,7 +38,6 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
@@ -80,22 +79,7 @@ object LogPacker {
             for (dir in entry.files) {
               if (dir.exists()) {
                 val dirPrefix = if (entry.entryName.isNotEmpty()) "${entry.entryName}/${dir.name}" else ""
-                if (dir == PathManager.getLogDir()) {
-                  // OT files are added/removed every minute, so they need special treatment
-                  zip.filter { _, file -> file?.name?.startsWith("open-telemetry-") == false }
-                  zip.addDirectory(dirPrefix, dir)
-                  zip.filter(null)
-                  dir.listDirectoryEntries("open-telemetry-*").forEach { file ->
-                    val entryName = if (dirPrefix.isNotEmpty()) "${dirPrefix}/${file.name}" else file.name
-                    try {
-                      zip.addFile(entryName, file)
-                    }
-                    catch (_: NoSuchFileException) { }
-                  }
-                }
-                else {
-                  zip.addDirectory(dirPrefix, dir)
-                }
+                zip.addDirectory(dirPrefix, dir)
               }
             }
           }

@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -354,11 +355,8 @@ public abstract class Compressor implements Closeable {
 
       @Override
       public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-        String name = entryName(file);
-        if (accept(name, file)) {
-          throw exc;
-        }
-        return FileVisitResult.CONTINUE;
+        if (exc instanceof NoSuchFileException) return FileVisitResult.CONTINUE;  // ignoring disappearing files
+        throw exc;
       }
 
       private String entryName(Path fileOrDir) {
