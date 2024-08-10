@@ -14,7 +14,7 @@ class InlineCompletionLogsContainer {
     CONTEXT_COLLECTION("Context collection step"),
     COMPLETION_MODEL_EXECUTION("Completion model execution step"),
     POSTPROCESSING("Postprocessing step"),
-    SHOW("Show step"),
+    FINISH("End of execution show, cancellation, etc step"),
   }
 
   private val logs: Map<Step, MutableSet<EventPair<*>>> = Step.entries.associateWith {
