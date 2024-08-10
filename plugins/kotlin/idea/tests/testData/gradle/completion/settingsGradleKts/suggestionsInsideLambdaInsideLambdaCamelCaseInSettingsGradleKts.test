@@ -1,5 +1,5 @@
 // FILE: settings.gradle.kts
-// "EXPECTED-SUGGESTION": "[mavenCentral]"
+// "EXPECTED-SUGGESTION": "mavenCentral"
 rootProject.name = "GradleKotlinFixture"
 
 pluginManagement {

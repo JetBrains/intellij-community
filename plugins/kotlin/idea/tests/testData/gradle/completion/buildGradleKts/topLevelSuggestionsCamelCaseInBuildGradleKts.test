@@ -1,5 +1,6 @@
 // FILE: build.gradle.kts
-// "EXPECTED-SUGGESTION": "[getSourceSets, sourceSets]"
+// "EXPECTED-SUGGESTION": "getSourceSets"
+// "EXPECTED-SUGGESTION": "sourceSets"
 plugins {
     id("java")
 }

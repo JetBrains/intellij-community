@@ -1,7 +1,7 @@
 // FILE: buildSrc/build.gradle.kts
-// "EXPECTED-SUGGESTION": "[commonMain]"
+// "EXPECTED-SUGGESTION": "compilerOptions"
 plugins {
-    kotlin("multiplatform") version "2.0.0"
+    `kotlin-dsl`
 }
 
 repositories {
@@ -11,7 +11,7 @@ repositories {
 kotlin {
     jvm()
     sourceSets {
-        comM<caret>
+        com<caret>
     }
 }
 

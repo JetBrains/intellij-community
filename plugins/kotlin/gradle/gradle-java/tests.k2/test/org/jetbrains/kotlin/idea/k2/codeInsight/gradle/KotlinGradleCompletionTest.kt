@@ -81,7 +81,6 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
         verifyCompletion(gradleVersion)
     }
 
-    @Disabled("KTIJ-29809 K2 IDE: no completion from Kotlin plugin inside `kotlin` block")
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("buildGradleKts/suggestionsInsideLambdaInBuildGradleKts.test")
@@ -89,7 +88,6 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
         verifyCompletion(gradleVersion)
     }
 
-    @Disabled("KTIJ-29809 K2 IDE: no completion from Kotlin plugin inside `kotlin` block")
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("buildGradleKts/suggestionsInsideLambdaInsideLambdaCamelCaseInBuildGradleKts.test")
@@ -260,7 +258,6 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
         verifyCompletion(gradleVersion)
     }
 
-    @Disabled("KTIJ-29809 K2 IDE: no completion from Kotlin plugin inside `kotlin` block")
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("buildSrcDir/suggestionsInsideLambdaInsideLambdaCamelCaseInBuildGradleKtsInBuildSrc.test")
@@ -303,10 +300,10 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
             var mainFile = mainTestDataPsiFile
             val noExpectedSuggestions =
                 InTextDirectivesUtils.isDirectiveDefined(mainFileContent.content, "// \"NO-EXPECTED-SUGGESTIONS\"")
-            val expectedSuggestion =
-                InTextDirectivesUtils.findStringWithPrefixes(mainFileContent.content, "// \"EXPECTED-SUGGESTION\": ")
-            val unexpectedSuggestion =
-                InTextDirectivesUtils.findStringWithPrefixes(mainFileContent.content, "// \"UNEXPECTED-SUGGESTION\": ")
+            val expectedSuggestions =
+                InTextDirectivesUtils.findListWithPrefixes(mainFileContent.content, "// \"EXPECTED-SUGGESTION\": ")
+            val unexpectedSuggestions =
+                InTextDirectivesUtils.findListWithPrefixes(mainFileContent.content, "// \"UNEXPECTED-SUGGESTION\": ")
 
             codeInsightFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
             assertTrue("<caret> is not present") {
@@ -317,14 +314,25 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
             runInEdtAndWait {
                 codeInsightFixture.performEditorAction(IdeActions.ACTION_CODE_COMPLETION)
                 val actualLookupElements = codeInsightFixture.lookupElements
-                val suggestions = actualLookupElements?.map { it.allLookupStrings.toString() }
-                println(suggestions)
-                println(expectedSuggestion)
-                if (suggestions == null) {
-                    assertTrue(noExpectedSuggestions, "Actual suggestion list is empty, but should not")
+                val suggestions = actualLookupElements?.flatMap { it.allLookupStrings } ?: emptyList()
+                if (suggestions.isEmpty()) {
+                    assertTrue(noExpectedSuggestions, "Actual suggestion list is empty. Expected: $expectedSuggestions")
                 } else {
-                    assertEquals(expectedSuggestion, suggestions.first())
-                    assertFalse(suggestions.contains(unexpectedSuggestion), "Actual suggestions list contains unexpected suggestions")
+                    for ((index, expectedSuggestion) in expectedSuggestions.withIndex()) {
+                        val suggestion = suggestions.getOrNull(index)
+                        assertEquals(
+                            expectedSuggestion,
+                            suggestion,
+                            "Actual suggestion at #$index is $suggestion, expected: $expectedSuggestion\n\n" +
+                                "actual suggestions: $suggestions\nexpected suggestions: $expectedSuggestions"
+                        )
+                    }
+                    unexpectedSuggestions.forEach {
+                        assertFalse(
+                            suggestions.contains(it),
+                            "Actual suggestions list contains unexpected suggestion: $it"
+                        )
+                    }
                 }
             }
         }

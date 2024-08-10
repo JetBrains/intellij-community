@@ -1,5 +1,5 @@
 // FILE: settings.gradle.kts
-// "EXPECTED-SUGGESTION": "[DEFAULT_BUILD_DIR_NAME]"
+// "EXPECTED-SUGGESTION": "DEFAULT_BUILD_DIR_NAME"
 rootProject.name = "GradleKotlinFixture"
 
 org.gradle.api.Project.<caret>

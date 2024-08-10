@@ -1,5 +1,5 @@
 // FILE: build.gradle.kts
-// "EXPECTED-SUGGESTION": "[commonMain]"
+// "EXPECTED-SUGGESTION": "commonMain"
 plugins {
     kotlin("multiplatform") version "2.0.0"
 }

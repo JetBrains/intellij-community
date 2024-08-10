@@ -1,5 +1,6 @@
 // FILE: settings.gradle.kts
-// "EXPECTED-SUGGESTION": "[getRepositories, repositories]"
+// "EXPECTED-SUGGESTION": "getRepositories"
+// "EXPECTED-SUGGESTION": "repositories"
 rootProject.name = "GradleKotlinFixture"
 
 pluginManagement {

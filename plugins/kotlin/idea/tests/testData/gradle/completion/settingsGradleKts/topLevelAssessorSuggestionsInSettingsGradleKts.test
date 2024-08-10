@@ -1,5 +1,7 @@
 // FILE: settings.gradle.kts
-// "EXPECTED-SUGGESTION": "[projectDir, getProjectDir, setProjectDir]"
+// "EXPECTED-SUGGESTION": "projectDir"
+// "EXPECTED-SUGGESTION": "getProjectDir"
+// "EXPECTED-SUGGESTION": "setProjectDir"
 rootProject.name = "GradleKotlinFixture"
 
 rootProject.pro<caret>

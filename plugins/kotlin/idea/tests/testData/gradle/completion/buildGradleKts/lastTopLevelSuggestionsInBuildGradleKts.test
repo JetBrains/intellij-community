@@ -1,5 +1,6 @@
 // FILE: build.gradle.kts
-// "EXPECTED-SUGGESTION": "[getDependencies, dependencies]"
+// "EXPECTED-SUGGESTION": "getDependencies"
+// "EXPECTED-SUGGESTION": "dependencies"
 plugins {
     id("java")
 }

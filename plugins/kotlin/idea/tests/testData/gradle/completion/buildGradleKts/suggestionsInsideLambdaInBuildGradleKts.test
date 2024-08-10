@@ -1,5 +1,5 @@
 // FILE: build.gradle.kts
-// "EXPECTED-SUGGESTION": "[jvm]"
+// "EXPECTED-SUGGESTION": "jvm"
 plugins {
     kotlin("multiplatform") version "2.0.0"
 }

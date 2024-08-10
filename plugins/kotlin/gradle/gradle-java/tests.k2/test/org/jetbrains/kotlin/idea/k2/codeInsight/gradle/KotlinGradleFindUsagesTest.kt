@@ -139,7 +139,7 @@ class KotlinGradleFindUsagesTest : AbstractGradleCodeInsightTest() {
                 if (usages.isNotEmpty()) {
                     assertEquals(expectedFindUsageFileAndText, usages.sorted())
                 } else {
-                    assertTrue(noExpectedFindUsages)
+                    assertTrue(noExpectedFindUsages, "no expected find usages, but theses were found: $usages")
                 }
             }
         }

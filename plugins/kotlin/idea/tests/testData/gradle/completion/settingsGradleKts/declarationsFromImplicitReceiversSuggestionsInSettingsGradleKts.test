@@ -1,5 +1,5 @@
 // FILE: settings.gradle.kts
-// "EXPECTED-SUGGESTION": "[Project]"
+// "EXPECTED-SUGGESTION": "Project"
 rootProject.name = "GradleKotlinFixture"
 
 org.gradle.api.Proje<caret>

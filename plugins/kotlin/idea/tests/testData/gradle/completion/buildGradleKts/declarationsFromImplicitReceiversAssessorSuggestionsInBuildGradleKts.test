@@ -1,5 +1,5 @@
 // FILE: build.gradle.kts
-// "EXPECTED-SUGGESTION": "[DEFAULT_BUILD_DIR_NAME]"
+// "EXPECTED-SUGGESTION": "DEFAULT_BUILD_DIR_NAME"
 plugins {
     id("java")
 }

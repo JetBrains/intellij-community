@@ -145,7 +145,10 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 withMavenCentral()
             }
             withBuildFile(gradleVersion, relativeModulePath = "buildSrc", useKotlinDsl = true) {
-                withKotlinJvmPlugin()
+                withKotlinMultiplatformPlugin()
+                withPlugin {
+                    code("`kotlin-dsl`")
+                }
                 withMavenCentral()
             }
             withBuildFile(gradleVersion, relativeModulePath = "module1", useKotlinDsl = true) {

@@ -1,5 +1,5 @@
 // FILE: settings.gradle.kts
-// "EXPECTED-SUGGESTION": "[plugins]"
+// "EXPECTED-SUGGESTION": "plugins"
 rootProject.name = "GradleKotlinFixture"
 
 pluginManagement {

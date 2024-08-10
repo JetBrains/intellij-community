@@ -1,5 +1,6 @@
 // FILE: buildSrc/build.gradle.kts
-// "EXPECTED-SUGGESTION": "[getPerson, person]"
+// "EXPECTED-SUGGESTION": "getPerson"
+// "EXPECTED-SUGGESTION": "person"
 plugins {
     id("java")
 }

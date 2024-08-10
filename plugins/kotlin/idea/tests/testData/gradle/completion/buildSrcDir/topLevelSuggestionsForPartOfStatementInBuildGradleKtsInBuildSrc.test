@@ -1,5 +1,6 @@
 // FILE: buildSrc/build.gradle.kts
-// "EXPECTED-SUGGESTION": "[getTasks, tasks]"
+// "EXPECTED-SUGGESTION": "getTasks"
+// "EXPECTED-SUGGESTION": "tasks"
 plugins {
     id("java")
 }

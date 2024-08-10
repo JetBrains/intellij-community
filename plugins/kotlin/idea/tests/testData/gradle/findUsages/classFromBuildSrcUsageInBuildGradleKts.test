@@ -14,6 +14,3 @@ open class My<caret>Task : DefaultTask() {
 
 // FILE: module1/build.gradle.kts
 tasks.register<MyTask>("myTask")
-
-// FILE: settings.gradle.kts
-

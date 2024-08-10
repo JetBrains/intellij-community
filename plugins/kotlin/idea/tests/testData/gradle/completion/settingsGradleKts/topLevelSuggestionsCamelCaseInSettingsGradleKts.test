@@ -1,5 +1,6 @@
 // FILE: settings.gradle.kts
-// "EXPECTED-SUGGESTION": "[getPluginManagement, pluginManagement]"
+// "EXPECTED-SUGGESTION": "getPluginManagement"
+// "EXPECTED-SUGGESTION": "pluginManagement"
 plugM<caret>
 
 // FILE: build.gradle.kts

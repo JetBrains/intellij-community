@@ -1,5 +1,5 @@
 // FILE: buildSrc/build.gradle.kts
-// "EXPECTED-SUGGESTION": "[create]"
+// "EXPECTED-SUGGESTION": "create"
 plugins {
     id("java")
 }

@@ -1,5 +1,6 @@
 // FILE: settings.gradle.kts
-// "EXPECTED-SUGGESTION": "[person1, getPerson1]"
+// "EXPECTED-SUGGESTION": "person1"
+// "EXPECTED-SUGGESTION": "getPerson1"
 rootProject.name = "GradleKotlinFixture"
 
 data class Person(val fullName: String, val age: Int)
