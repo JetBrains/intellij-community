@@ -2,34 +2,37 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
-import com.intellij.platform.ml.feature.Feature
-import com.intellij.platform.ml.logs.toEventField
 
 class InlineCompletionLogsContainer {
 
-  // TODO extentions? But actually it's ok to have it in this simple way.
-  enum class Step {
-    CONTEXT_COLLECTION,
-    COMPLETION_MODEL_EXECUTION,
-    POSTPROCESSING,
-    SHOW,
+  enum class Step(val description: String) {
+    CONTEXT_COLLECTION("Context collection step"),
+    COMPLETION_MODEL_EXECUTION("Completion model execution step"),
+    POSTPROCESSING("Postprocessing step"),
+    SHOW("Show step"),
   }
-  private val logs = mutableListOf<Pair<Feature, Step>>() // TODO maybe step -> list<feature>?
 
+  private val logs: Map<Step, MutableSet<EventPair<*>>> = Step.entries.associateWith {
+    ConcurrentCollectionFactory.createConcurrentSet<EventPair<*>>()
+  }
 
-  fun addFeature(step: Step, feature: Feature) {
-    logs.add(feature to step)
+  fun add(value: EventPair<*>) {
+    val stepName = requireNotNull(InlineCompletionLogs.Session.eventFieldNameToStep[value.field.name]) {
+      "Cannot find step for ${value.field.name}"
+    }
+    logs[stepName]!!.add(value)
   }
 
   fun log() {
     InlineCompletionLogs.Session.SESSION_EVENT.log(
-      logs.map { (feature, step) ->
-        // fixme: use step
-        val eventField = createConverter(feature.declaration.toEventField())
-        eventField.with(feature.value)
+      logs.map { (step, events) ->
+        InlineCompletionLogs.Session.stepToStepField[step]!!.with(ObjectEventData(events.toList<EventPair<*>>()))
       }
     )
   }

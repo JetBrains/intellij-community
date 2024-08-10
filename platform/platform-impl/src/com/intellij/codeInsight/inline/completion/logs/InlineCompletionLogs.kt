@@ -3,12 +3,16 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Step
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields.createAdditionalDataField
+import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.Cancellation
+import kotlin.use
 
 object InlineCompletionLogs : CounterUsagesCollector() {
   val GROUP = EventLogGroup("inline.completion.v2", 1, recorder = "ML")
@@ -16,13 +20,31 @@ object InlineCompletionLogs : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   object Session {
-    private const val SESSION_EVENT_ID = "session"
+    private val stepToFieldList: List<Pair<Step, EventField<*>>> = run {
+      val fields = Cancellation.withNonCancelableSection().use {
+        // Non-cancellable section, because this function is often used in
+        // static initializer code of `object`, and any exception (namely, CancellationException)
+        // breaks the object with ExceptionInInitializerError, and subsequent NoClassDefFoundError
+        InlineCompletionSessionLogsEP.EP_NAME.extensionsIfPointIsRegistered
+      }.flatMap { it.fields }
+      fields.groupingBy { it.second.name }.eachCount().filter { it.value > 1 }.forEach {
+        thisLogger().error("Log ${it.key} is registered multiple times: ${it.value}")
+      }
+      fields
+    }
 
-    private val ADDITIONAL: ObjectEventField = createAdditionalDataField(GROUP.id, SESSION_EVENT_ID)
+    val stepToStepField: Map<Step, ObjectEventField> = Step.entries.associateWith { step ->
+      ObjectEventField(step.name, step.description, *stepToFieldList.filter { step == it.first }.map { it.second }.toTypedArray())
+    }
+
+    val eventFieldNameToStep: Map<String, Step> = stepToFieldList.associate { it.second.name to it.first }
+
+    private const val SESSION_EVENT_ID = "session"
 
     val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
       SESSION_EVENT_ID,
-      ADDITIONAL,
+      description = "The whole inline completion session",
+      *stepToStepField.values.toTypedArray(),
     )
   }
 

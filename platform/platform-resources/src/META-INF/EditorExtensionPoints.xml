@@ -91,5 +91,9 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionQuoteHandlerEx"/>
     </extensionPoint>
+    <extensionPoint
+      name="inline.completion.session.logs"
+      interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionSessionLogsEP"
+      dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
