@@ -56,6 +56,7 @@ internal object InlineCompletionLogs : CounterUsagesCollector() {
     override fun onRequest(event: InlineCompletionEventType.Request) {
       InlineCompletionLogsContainer.create(event.request.editor)
       editor = event.request.editor
+      // TODO log request_id
       // todo async log context features
     }
 
