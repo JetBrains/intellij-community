@@ -11,10 +11,13 @@ import com.intellij.openapi.util.removeUserData
 class InlineCompletionLogsContainer {
 
   enum class Step(val description: String) {
-    CONTEXT_COLLECTION("Context collection step"),
-    COMPLETION_MODEL_EXECUTION("Completion model execution step"),
-    POSTPROCESSING("Postprocessing step"),
-    FINISH("End of execution show, cancellation, etc step"),
+    INLINE_API_STARTING("Execution inside inline completion API"),
+    CONTEXT_COLLECTION("During context collecting"),
+    COMPLETION_MODEL_EXECUTION("During model execution"),
+    POSTPROCESSING_BEFORE_FILTER_MODEL("During postprocessing, before filter model"),
+    PROVIDER_FINISHING("End of postprocessing, end of pipeline"),
+    INLINE_API_FINISHING("Finishing execution inside inline completion API"),
+    ;
   }
 
   private val logs: Map<Step, MutableSet<EventPair<*>>> = Step.entries.associateWith {
