@@ -4,7 +4,9 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface InlineCompletionSessionLogsEP {
 
   val fields: List<Pair<Phase, EventField<*>>>

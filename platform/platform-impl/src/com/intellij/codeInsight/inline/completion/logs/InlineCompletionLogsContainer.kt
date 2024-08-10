@@ -12,7 +12,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class InlineCompletionLogsContainer {
 
   enum class Phase(val description: String) {

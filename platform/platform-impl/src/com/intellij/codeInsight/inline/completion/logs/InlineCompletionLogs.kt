@@ -13,9 +13,11 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.Cancellation
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import kotlin.use
 
-object InlineCompletionLogs : CounterUsagesCollector() {
+@ApiStatus.Internal
+internal object InlineCompletionLogs : CounterUsagesCollector() {
   // TODO use ML_RECORDER_ID
   val GROUP = EventLogGroup("inline.completion.v2", 1, recorder = "ML")
 
