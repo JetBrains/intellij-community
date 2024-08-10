@@ -13,7 +13,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 /**
- * HighlightDisplayKey is a unique identifier of an inspection.
+ * HighlightDisplayKey is a unique object created for every inspection tool from the current
+ * {@link com.intellij.codeInspection.InspectionProfile Inspection Profile}.
+ * <p>
+ *
+ * You can get HighlightDisplayKey by the tool's @{link com.intellij.codeInspection.InspectionProfileEntry#getShortName() short name}
+ * or by its {@link LocalInspectionTool#getID() (suppression) ID}.
+ * <p>
+ *
+ * HighlightDisplayKey serves as a key for requesting the display name of a given tool.
+ * Also, it can be used as a unique identifier of an inspection in various situations.
  */
 public final class HighlightDisplayKey {
   private static final Logger LOG = Logger.getInstance(HighlightDisplayKey.class);
@@ -27,6 +36,14 @@ public final class HighlightDisplayKey {
   private final String myID;
 
   /**
+   * Returns a HighlightDisplayKey for a given inspection by its {@link LocalInspectionTool#getShortName short name}
+   * or {@code null} if the inspection is not registered.
+   * <p>
+   * Note: if this method returns {@code null} for your inspection,
+   * then this inspection is disabled in the current {@link com.intellij.codeInspection.InspectionProfile} by the user,
+   * and you should create any related warnings or quick fixes.
+   * Please do not try to create new instances of {@link HighlightDisplayKey} in this situation.
+   *
    * @return a HighlightDisplayKey for a given inspection by its {@link LocalInspectionTool#getShortName short name}
    * or {@code null} if the inspection is not registered.
    */
@@ -35,7 +52,15 @@ public final class HighlightDisplayKey {
   }
 
   /**
-   * @return a HighlightDisplayKey for a given inspection by its {@link LocalInspectionTool#getID() id}
+   * Returns a HighlightDisplayKey for a given inspection by its {@link LocalInspectionTool#getID() (suppression) id}
+   * or {@code null} if the inspection is not registered.
+   * <p>
+   * Note: if this method returns {@code null} for your inspection,
+   * then this inspection is disabled in the current {@link com.intellij.codeInspection.InspectionProfile} by the user,
+   * and you should create any related warnings or quick fixes.
+   * Please do not try to create new instances of {@link HighlightDisplayKey} in this situation.
+   *
+   * @return a HighlightDisplayKey for a given inspection by its {@link LocalInspectionTool#getID() (suppression) id}
    * or {@code null} if the inspection is not registered.
    */
   public static @Nullable HighlightDisplayKey findById(@NonNls @NotNull String id) {
@@ -91,6 +116,12 @@ public final class HighlightDisplayKey {
   }
 
   /**
+   * Finds an existing or registers a new instance of HighlightDisplayKey for the provided inspection information.
+   * <p>
+   *
+   * Note: You shall not use this method for ordinary inspection tools. Instead, use {@link #find(String)}.
+   * <p>
+   *
    * @param shortName {@link LocalInspectionTool#getShortName()}
    * @param displayName {@link  LocalInspectionTool#getDisplayName()}
    *
@@ -102,6 +133,12 @@ public final class HighlightDisplayKey {
   }
 
   /**
+   * Finds an existing or registers a new instance of HighlightDisplayKey for the provided inspection information.
+   * <p>
+   *
+   * Note: You shall not use this method for ordinary inspection tools. Instead, use {@link #find(String)}.
+   * <p>
+   *
    * @param shortName {@link LocalInspectionTool#getShortName()}
    * @param displayName {@link  LocalInspectionTool#getDisplayName()}
    * @param id {@link LocalInspectionTool#getID()} or {@code null} if it is equal to shortName.
