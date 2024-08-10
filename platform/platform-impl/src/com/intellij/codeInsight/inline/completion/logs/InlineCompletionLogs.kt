@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.Cancellation
 import kotlin.use
 
 object InlineCompletionLogs : CounterUsagesCollector() {
+  // TODO use ML_RECORDER_ID
   val GROUP = EventLogGroup("inline.completion.v2", 1, recorder = "ML")
 
   override fun getGroup(): EventLogGroup = GROUP
