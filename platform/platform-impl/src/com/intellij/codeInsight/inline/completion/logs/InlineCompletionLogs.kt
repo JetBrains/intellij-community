@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.Cancellation
+import kotlinx.coroutines.launch
 import kotlin.use
 
 object InlineCompletionLogs : CounterUsagesCollector() {
@@ -53,12 +54,19 @@ object InlineCompletionLogs : CounterUsagesCollector() {
     override fun onRequest(event: InlineCompletionEventType.Request) {
       InlineCompletionLogsContainer.create(event.request.editor)
       editor = event.request.editor
+      // todo async log context features
+    }
+
+    override fun onShow(event: InlineCompletionEventType.Show) {
+      // todo add was shown event to container
     }
 
     override fun onHide(event: InlineCompletionEventType.Hide) {
       val curEditor = editor ?: return
       val container = InlineCompletionLogsContainer.remove(curEditor) ?: return
-      container.log() // TODO move from EDT to background?
+      InlineCompletionLogsScopeProvider.getInstance().cs.launch {
+        container.log()
+      }
     }
   }
 }

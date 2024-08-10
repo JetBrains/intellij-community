@@ -7,6 +7,11 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 
 class InlineCompletionLogsContainer {
 
@@ -24,6 +29,19 @@ class InlineCompletionLogsContainer {
     ConcurrentCollectionFactory.createConcurrentSet<EventPair<*>>()
   }
 
+  private val asyncAdds = Channel<Deferred<*>>(capacity = Channel.UNLIMITED)
+
+  private suspend fun waitForAsyncAdds() {
+    while (currentCoroutineContext().isActive) {
+      val job = asyncAdds.tryReceive().getOrNull() ?: break
+      job.await()
+    }
+  }
+
+  /**
+   * Use to add log to log container.
+   * If you have to launch expensive computation and don't want to pause your main execution (especially if you are on EDT) use [addAsync].
+   */
   fun add(value: EventPair<*>) {
     val stepName = requireNotNull(InlineCompletionLogs.Session.eventFieldNameToPhase[value.field.name]) {
       "Cannot find step for ${value.field.name}"
@@ -31,12 +49,34 @@ class InlineCompletionLogsContainer {
     logs[stepName]!!.add(value)
   }
 
-  fun log() {
+  /**
+   * Use [add] if there is no special need to use async variant. See [add] documentation for more info.
+   */
+  fun addAsync(block: () -> List<EventPair<*>>) {
+    val deferred = InlineCompletionLogsScopeProvider.getInstance().cs.async {
+      block().forEach { add(it) }
+    }
+    asyncAdds.trySend(deferred).getOrThrow()
+  }
+
+  /**
+   * Send log container.
+   */
+  suspend fun log() {
+    waitForAsyncAdds()
     InlineCompletionLogs.Session.SESSION_EVENT.log(
       logs.map { (step, events) ->
         InlineCompletionLogs.Session.stepToPhaseField[step]!!.with(ObjectEventData(events.toList()))
       }
     )
+  }
+
+  /**
+   * Get current logs to use as a feature for some model.
+   */
+  suspend fun currentLogs(): List<EventPair<*>> {
+    waitForAsyncAdds()
+    return logs.values.flatten()
   }
 
   companion object {
