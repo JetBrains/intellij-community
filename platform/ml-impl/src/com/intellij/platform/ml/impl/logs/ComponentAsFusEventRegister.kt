@@ -68,7 +68,7 @@ class ComponentAsFusEventRegister(private val baseEventGroup: IJEventLogGroup) :
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <L> createConverter(mlEventField: MLEventField<L>): IJEventPairConverter<L, *> = when (mlEventField) {
+private fun <L> createConverter(mlEventField: MLEventField<L>): IJEventPairConverter<L, *> = when (mlEventField) {
   is MLObjectEventField -> ConverterOfObject(
     mlEventField.name,
     mlEventField.descriptionProvider,
@@ -179,7 +179,7 @@ private class ConverterOfEnum<T : Enum<*>>(mlEnumField: MLEnumEventField<T>) : I
   }
 }
 
-interface IJEventPairConverter<M, I> {
+private interface IJEventPairConverter<M, I> {
   val ijEventField: IJEventField<I>
 
   fun buildEventPair(mlEventPair: MLEventPair<M>): IJEventPair<I>

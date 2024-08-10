@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @Deprecated("Provide a description")
 val NO_DESCRIPTION: () -> String = { "" }
 
-fun FeatureDeclaration<*>.toEventField(): EventField<*> {
+internal fun FeatureDeclaration<*>.toEventField(): EventField<*> {
   return when (val valueType = type) {
     is FeatureValueType.Enum<*> -> EnumEventField(name, descriptionProvider, valueType.enumClass, Enum<*>::name)
     is FeatureValueType.Int -> IntEventField(name, descriptionProvider)
