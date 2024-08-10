@@ -53,7 +53,6 @@ com/intellij/platform/workspace/storage/VersionedEntityStorage
 com/intellij/psi/codeStyle/CodeStyleSettingsServiceListener
 com/intellij/psi/impl/source/codeStyle/json/CodeStyleSchemeJsonDescriptor$PropertyListHolder
 com/intellij/psi/search/impl/VirtualFileEnumeration
-com/intellij/psi/stubs/StubIndexEx$FileUpdateProcessor
 com/intellij/slicer/SliceManager$StoredSettingsBean
 com/intellij/ui/tabs/FileColorConfiguration
 com/intellij/util/gist/storage/GistStorage$Gist

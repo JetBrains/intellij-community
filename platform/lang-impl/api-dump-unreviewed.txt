@@ -23771,26 +23771,6 @@ com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes
 f:com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer
 - com.intellij.lexer.FlexAdapter
 - <init>():V
-f:com.intellij.psi.stubs.StubIndexImpl
-- com.intellij.psi.stubs.StubIndex
-- sf:PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE:com.intellij.psi.stubs.StubIndexImpl$PerFileElementTypeStubChangeTrackingSource
-- <init>():V
-- dispose():V
-- flush():V
-- forceRebuild(java.lang.Throwable):V
-- getIndexModificationStamp(com.intellij.psi.stubs.StubIndexKey,com.intellij.openapi.project.Project):J
-- *:getIndexModificationTracker(com.intellij.psi.stubs.StubIndexKey,com.intellij.openapi.project.Project):com.intellij.openapi.util.ModificationTracker
-- getLogger():com.intellij.openapi.diagnostic.Logger
-- getPerFileElementTypeModificationTracker(com.intellij.psi.tree.StubFileElementType):com.intellij.openapi.util.ModificationTracker
-- getPerFileElementTypeModificationTrackerUpdateProcessor():com.intellij.psi.stubs.StubIndexEx$FileUpdateProcessor
-- getStubIndexModificationTracker(com.intellij.openapi.project.Project):com.intellij.openapi.util.ModificationTracker
-- initializationFailed(java.lang.Throwable):V
-e:com.intellij.psi.stubs.StubIndexImpl$PerFileElementTypeStubChangeTrackingSource
-- java.lang.Enum
-- sf:ChangedFilesCollector:com.intellij.psi.stubs.StubIndexImpl$PerFileElementTypeStubChangeTrackingSource
-- sf:Disabled:com.intellij.psi.stubs.StubIndexImpl$PerFileElementTypeStubChangeTrackingSource
-- s:valueOf(java.lang.String):com.intellij.psi.stubs.StubIndexImpl$PerFileElementTypeStubChangeTrackingSource
-- s:values():com.intellij.psi.stubs.StubIndexImpl$PerFileElementTypeStubChangeTrackingSource[]
 f:com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
