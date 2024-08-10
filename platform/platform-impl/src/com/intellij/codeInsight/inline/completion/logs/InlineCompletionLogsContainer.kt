@@ -13,7 +13,7 @@ class InlineCompletionLogsContainer {
   // TODO extentions? But actually it's ok to have it in this simple way.
   enum class Step {
     CONTEXT_COLLECTION,
-    MODEL_EXECUTION,
+    COMPLETION_MODEL_EXECUTION,
     POSTPROCESSING,
     SHOW,
   }
