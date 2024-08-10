@@ -40,10 +40,8 @@ object InlineCompletionLogs : CounterUsagesCollector() {
 
     val eventFieldNameToStep: Map<String, Step> = stepToFieldList.associate { it.second.name to it.first }
 
-    private const val SESSION_EVENT_ID = "session"
-
     val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
-      SESSION_EVENT_ID,
+      "session",
       description = "The whole inline completion session",
       *stepToStepField.values.toTypedArray(),
     )
