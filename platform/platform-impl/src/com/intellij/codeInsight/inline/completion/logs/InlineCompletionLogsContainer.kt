@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.ml.feature.Feature
+import com.intellij.platform.ml.logs.toEventField
 
 class InlineCompletionLogsContainer {
 
@@ -21,6 +22,16 @@ class InlineCompletionLogsContainer {
 
   fun addFeature(step: Step, feature: Feature) {
     logs.add(feature to step)
+  }
+
+  fun log() {
+    InlineCompletionLogs.Session.SESSION_EVENT.log(
+      logs.map { (feature, step) ->
+        // fixme: use step
+        val eventField = createConverter(feature.declaration.toEventField())
+        eventField.with(feature.value)
+      }
+    )
   }
 
   companion object {

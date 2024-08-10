@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypingTracker
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogs
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
@@ -63,7 +64,8 @@ class InlineCompletionHandler(
   private val completionState = InlineCompletionState()
 
   init {
-    addEventListener(InlineCompletionUsageTracker.Listener())
+    addEventListener(InlineCompletionUsageTracker.Listener()) // todo remove
+    addEventListener(InlineCompletionLogs.Listener())
     InlineCompletionOnboardingListener.createIfOnboarding(editor)?.let(::addEventListener)
   }
 
