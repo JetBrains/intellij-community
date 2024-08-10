@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Key
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -286,8 +285,6 @@ class PythonInterpreterComboBox(val backingProperty: ObservableMutableProperty<P
     (editor as PythonSdkComboBoxWithBrowseButtonEditor).setBusy(busy)
   }
 }
-
-private val KEY_PATH_TO_SELECT_AFTER_MODEL_UPDATED: Key<String> by lazy { Key.create("PATH_TO_SELECT_AFTER_MODEL_UPDATED") }
 
 /**
  * Note. Here [ExtendableTextComponent.Extension] is used to display animated loader icon. This approach requires [ExtendableTextComponent]

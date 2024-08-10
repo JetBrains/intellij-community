@@ -30,13 +30,6 @@ import javax.swing.Icon
 @Service(Service.Level.APP)
 class PythonAddSdkService(val coroutineScope: CoroutineScope)
 
-interface PythonTargetEnvironmentInterpreterCreator {
-  fun buildPanel(outerPanel: Panel, validationRequestor: DialogValidationRequestor)
-  fun onShown() {}
-  fun getSdk(): Sdk?
-  fun createStatisticsInfo(): InterpreterStatisticsInfo = throw NotImplementedError()
-}
-
 abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
   val state: AddInterpreterState

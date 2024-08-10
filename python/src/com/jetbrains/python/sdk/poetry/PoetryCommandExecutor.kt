@@ -180,16 +180,6 @@ private fun getPoetryEnvs(projectPath: Path): List<String> =
     result.lineSequence().map { it.split(" ")[0] }.filterNot { it.isEmpty() }.toList()
   }
 
-internal fun isVirtualEnvsInProject(projectPath: Path): Boolean? =
-  if (projectPath.exists()) {
-    syncRunPoetry(projectPath, "config", "virtualenvs.in-project", defaultResult = null) {
-      it.trim() == "true"
-    }
-  }
-  else {
-    false
-  }
-
 internal val poetryVersion: String?
   get() = syncRunPoetry(null, "--version", defaultResult = "") {
     it.split(' ').lastOrNull()

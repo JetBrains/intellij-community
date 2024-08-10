@@ -6,15 +6,12 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.target.PyAddVirtualEnvPanel.Companion.DEFAULT_VIRTUALENVS_DIR
 import com.jetbrains.python.sdk.tryResolvePath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.isSymbolicLink
@@ -25,9 +22,9 @@ import kotlin.io.path.name
 @ApiStatus.Internal
 class VirtualEnvReader(private val envs: Map<@NonNls String, @NonNls String> = System.getenv(), isWindows: Boolean = SystemInfoRt.isWindows) {
   private val pythonNames = if (isWindows)
-    setOf("pypy.exe", "python.exe", "jython.bat")
+    setOf("pypy.exe", "python.exe")
   else
-    setOf("pypy", "python", "jython")
+    setOf("pypy", "python")
 
   @RequiresBackgroundThread
   fun getVEnvRootDir(): Path {
