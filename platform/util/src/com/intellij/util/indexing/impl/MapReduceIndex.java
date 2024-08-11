@@ -294,30 +294,36 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   protected void checkNonCancellableSection() { }
 
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
-    if (myForwardIndex != null) {
-      if (myUseIntForwardIndex) {
-        ((IntForwardIndex)myForwardIndex).putInt(inputId,
-                                                 ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).serializeIndexedDataToInt(
-                                                   data));
-      }
-      else {
-        myForwardIndex.put(inputId, myForwardIndexAccessor.serializeIndexedData(data));
-      }
+    if (myForwardIndex == null) {
+      return;
     }
+
+    if (myUseIntForwardIndex) {
+      IntForwardIndex forwardIndex = (IntForwardIndex)myForwardIndex;
+      IntForwardIndexAccessor<Key, Value> forwardIndexAccessor = (IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor;
+
+      int value = forwardIndexAccessor.serializeIndexedDataToInt(data);
+      forwardIndex.putInt(inputId, value);
+      return;
+    }
+
+    myForwardIndex.put(inputId, myForwardIndexAccessor.serializeIndexedData(data));
   }
 
   protected @NotNull InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
-    if (myForwardIndex != null) {
-      if (myUseIntForwardIndex) {
-        return ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).getDiffBuilderFromInt(inputId,
-                                                                                                   ((IntForwardIndex)myForwardIndex).getInt(
-                                                                                                     inputId));
-      }
-      else {
-        return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndex.get(inputId));
-      }
+    if (myForwardIndex == null) {
+      return new EmptyInputDataDiffBuilder<>(inputId);
     }
-    return new EmptyInputDataDiffBuilder<>(inputId);
+
+    if (myUseIntForwardIndex) {
+      IntForwardIndex forwardIndex = (IntForwardIndex)myForwardIndex;
+      IntForwardIndexAccessor<Key, Value> accessor = (IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor;
+
+      int value = forwardIndex.getInt(inputId);
+      return accessor.getDiffBuilderFromInt(inputId, value);
+    }
+
+    return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndex.get(inputId));
   }
 
   protected @NotNull InputData<Key, Value> mapInput(int inputId, @Nullable Input content) {
