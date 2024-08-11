@@ -130,13 +130,13 @@ public class ObjectStubTree<T extends Stub> {
           // second and subsequent occurrence calls for the same value are no op
           return;
         }
-        int lastZero = lastNonZero + 1;
+        int firstZero = lastNonZero + 1;
 
-        if (lastZero == list.length) {
+        if (firstZero == list.length) {
           list = ArrayUtil.realloc(list, Math.max(4, list.length << 1));
           map.put(value, list);
         }
-        list[lastZero] = myStubIdx;
+        list[firstZero] = myStubIdx;
       }
     }
 
