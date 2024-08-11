@@ -355,13 +355,13 @@ public abstract class StubIndexEx extends StubIndex {
    */
   private @Nullable <Key> IntSet getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,
                                                   @NotNull Key dataKey,
-                                                  final @NotNull Project project,
+                                                  @NotNull Project project,
                                                   @Nullable IdFilter idFilter,
-                                                  final @Nullable GlobalSearchScope scope) {
+                                                  @Nullable GlobalSearchScope scope) {
     var trace = TRACE_OF_STUB_ENTRIES_LOOKUP.get();
-    final FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
+    FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
-    final UpdatableIndex<Key, Void, FileContent, ?> index = getIndex(indexKey);   // wait for initialization to finish
+    UpdatableIndex<Key, Void, FileContent, ?> index = getIndex(indexKey);   // wait for initialization to finish
     if (index == null || !fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope, null)) return null;
 
     trace.indexValidationFinished();
@@ -409,7 +409,7 @@ public abstract class StubIndexEx extends StubIndex {
     }
     catch (RuntimeException e) {
       trace.lookupFailed();
-      final Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
+      Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
       if (cause != null) {
         forceRebuild(cause);
       }
@@ -429,7 +429,7 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   @ApiStatus.Internal
-  void setDataBufferingEnabled(final boolean enabled) { }
+  void setDataBufferingEnabled(boolean enabled) { }
 
   @ApiStatus.Internal
   void cleanupMemoryStorage() { }
