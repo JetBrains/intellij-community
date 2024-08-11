@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -22,7 +23,7 @@ import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
-import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -50,43 +51,6 @@ class PsiVFSListener internal constructor(private val project: Project) {
   private val manager = PsiManager.getInstance(project) as PsiManagerImpl
   private val fileManager = manager.fileManager as FileManagerImpl
   private var reportedUnloadedPsiChange = false
-
-  internal class MyStartUpActivity : ProjectActivity {
-    override suspend fun execute(project: Project) {
-      val connection = project.messageBus.simpleConnect()
-
-      serviceAsync<LanguageSubstitutors>().point?.addChangeListener({
-                                                                      if (project.isDisposed) {
-                                                                        return@addChangeListener
-                                                                      }
-                                                                      val fileManager = PsiManagerEx.getInstanceEx(project).fileManager
-                                                                      (fileManager as FileManagerImpl).processFileTypesChanged(true)
-                                                                    }, project)
-
-      connection.subscribe(AdditionalLibraryRootsListener.TOPIC, MyAdditionalLibraryRootListener(project))
-      connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
-        override fun fileTypesChanged(e: FileTypeEvent) {
-          val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
-          fileManager.processFileTypesChanged(e.removedFileType != null)
-        }
-      })
-      connection.subscribe(FileDocumentManagerListener.TOPIC, MyFileDocumentManagerListener(project))
-
-      connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-        override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-          val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
-          fileManager.processFileTypesChanged(true)
-        }
-
-        override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-          val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
-          fileManager.processFileTypesChanged(true)
-        }
-      })
-
-      installGlobalListener()
-    }
-  }
 
   private fun getCachedDirectory(parent: VirtualFile?): PsiDirectory? {
     return if (parent == null) null else fileManager.getCachedDirectory(parent)
@@ -595,31 +559,6 @@ class PsiVFSListener internal constructor(private val project: Project) {
     }
   }
 
-  private class MyAdditionalLibraryRootListener(project: Project) : AdditionalLibraryRootsListener {
-    private val psiManager = PsiManager.getInstance(project) as PsiManagerImpl
-    private val fileManager = psiManager.fileManager as FileManagerImpl
-
-    override fun libraryRootsChanged(
-      presentableLibraryName: @Nls String?,
-      oldRoots: Collection<VirtualFile>,
-      newRoots: Collection<VirtualFile>,
-      libraryNameForDebug: String
-    ) {
-      ApplicationManager.getApplication().runWriteAction(
-        ExternalChangeAction {
-          var treeEvent = PsiTreeChangeEventImpl(psiManager)
-          treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
-          psiManager.beforePropertyChange(treeEvent)
-          DebugUtil.performPsiModification<RuntimeException>(null) { fileManager.possiblyInvalidatePhysicalPsi() }
-
-          treeEvent = PsiTreeChangeEventImpl(psiManager)
-          treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
-          psiManager.propertyChanged(treeEvent)
-        }
-      )
-    }
-  }
-
   internal fun handleVfsChangeWithoutPsi(vFile: VirtualFile) {
     if (!reportedUnloadedPsiChange && isInRootModel(vFile)) {
       fileManager.firePropertyChangedForUnloadedPsi()
@@ -749,4 +688,62 @@ private fun installGlobalListener() {
       }
     }
   })
+}
+
+private class PsiVfsInitProjectActivity : InitProjectActivity {
+  override suspend fun run(project: Project) {
+    val connection = project.messageBus.simpleConnect()
+
+    @Suppress("UsagesOfObsoleteApi")
+    serviceAsync<LanguageSubstitutors>().point?.addChangeListener((project as ComponentManagerEx).getCoroutineScope()) {
+      if (!project.isDisposed) {
+        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl).processFileTypesChanged(true)
+      }
+    }
+
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, PsiVfsAdditionalLibraryRootListener(project))
+    connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
+      override fun fileTypesChanged(e: FileTypeEvent) {
+        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl).processFileTypesChanged(e.removedFileType != null)
+      }
+    })
+    connection.subscribe(FileDocumentManagerListener.TOPIC, MyFileDocumentManagerListener(project))
+
+    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl).processFileTypesChanged(true)
+      }
+
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl).processFileTypesChanged(true)
+      }
+    })
+
+    installGlobalListener()
+  }
+}
+
+private class PsiVfsAdditionalLibraryRootListener(project: Project) : AdditionalLibraryRootsListener {
+  private val psiManager = PsiManager.getInstance(project) as PsiManagerImpl
+  private val fileManager = psiManager.fileManager as FileManagerImpl
+
+  override fun libraryRootsChanged(
+    presentableLibraryName: @Nls String?,
+    oldRoots: Collection<VirtualFile>,
+    newRoots: Collection<VirtualFile>,
+    libraryNameForDebug: String
+  ) {
+    ApplicationManager.getApplication().runWriteAction(
+      ExternalChangeAction {
+        var treeEvent = PsiTreeChangeEventImpl(psiManager)
+        treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
+        psiManager.beforePropertyChange(treeEvent)
+        DebugUtil.performPsiModification<RuntimeException>(null) { fileManager.possiblyInvalidatePhysicalPsi() }
+
+        treeEvent = PsiTreeChangeEventImpl(psiManager)
+        treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
+        psiManager.propertyChanged(treeEvent)
+      }
+    )
+  }
 }
