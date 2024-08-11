@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.Cancellation
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import kotlin.use
 
 @ApiStatus.Internal
 internal object InlineCompletionLogs : CounterUsagesCollector() {
@@ -22,6 +21,10 @@ internal object InlineCompletionLogs : CounterUsagesCollector() {
   val GROUP = EventLogGroup("inline.completion.v2", 1, recorder = "ML")
 
   override fun getGroup(): EventLogGroup = GROUP
+
+  init {
+    Session.SESSION_EVENT // accces session_event to load it
+  }
 
   object Session {
     private val phaseToFieldList: List<Pair<Phase, EventField<*>>> = run {
