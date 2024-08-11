@@ -189,9 +189,11 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   final void setTreeParent(CompositeElement parent) {
     if (parent == myParent) return;
 
-    PsiFileImpl file = getCachedFile(this);
-    if (file != null) {
-      file.beforeAstChange();
+    if (myParent != null) {
+      PsiFileImpl file = getCachedFile(this);
+      if (file != null) {
+        file.beforeAstChange();
+      }
     }
 
     myParent = parent;
