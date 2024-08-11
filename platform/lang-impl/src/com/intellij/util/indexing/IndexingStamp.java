@@ -46,13 +46,13 @@ public final class IndexingStamp {
       return stamp == IndexVersion.getIndexCreationStamp(indexName) ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
     }
     catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (!(cause instanceof IOException)) {
-        throw e; // in case of IO exceptions consider file unindexed
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        // in case of IO exceptions, consider the file unindexed
+        return FileIndexingState.OUT_DATED;
       }
+      throw e;
     }
-
-    return FileIndexingState.OUT_DATED;
   }
 
   public static void setFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> id, boolean isProvidedByInfrastructureExtension) {
