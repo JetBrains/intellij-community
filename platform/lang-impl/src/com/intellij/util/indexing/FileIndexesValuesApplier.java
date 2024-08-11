@@ -147,7 +147,7 @@ public final class FileIndexesValuesApplier {
 
     if (getApplicationMode() == ApplicationMode.SameThreadOutsideReadLock) {
       separateApplicationTimeNanos.set(System.nanoTime() - startTime);
-      applyModifications(file, -1, null, callback, "same thread");
+      applyModifications(file, -1, null, callback);
       return;
     }
 
@@ -169,7 +169,7 @@ public final class FileIndexesValuesApplier {
       if (executorsToSchedule.get(i)) {
         var executorIndex = i;
         scheduleIndexWriting(executorIndex,
-                             () -> applyModifications(file, executorIndex, syncCounter, callback, "executor " + executorIndex));
+                             () -> applyModifications(file, executorIndex, syncCounter, callback));
       }
     }
 
@@ -205,8 +205,7 @@ public final class FileIndexesValuesApplier {
   private void applyModifications(@NotNull VirtualFile file,
                                   int indexerFilter,
                                   @Nullable AtomicInteger syncCounter,
-                                  @Nullable Runnable finishCallback,
-                                  @NotNull String debugThreadString) {
+                                  @Nullable Runnable finishCallback) {
     var startTime = System.nanoTime();
     boolean allModificationsSuccessful = true;
     try {
