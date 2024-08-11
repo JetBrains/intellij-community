@@ -4,7 +4,7 @@ import numpy as np
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
 
-ONE_DIM, TWO_DIM, WITH_TYPES = range(3)
+ONE_DIM, TWO_DIM = range(2)
 NP_ROWS_TYPE = "int64"
 
 is_pd = False
@@ -68,11 +68,6 @@ class _NpTable:
         self.format = format
 
     def get_array_type(self):
-        col_type = self.array.dtype
-
-        if len(col_type) != 0:
-            return WITH_TYPES
-
         if self.array.ndim > 1:
             return TWO_DIM
 
@@ -84,10 +79,6 @@ class _NpTable:
         if self.type == ONE_DIM:
             # [1, 2, 3] -> [int]
             return [str(col_type)]
-
-        if self.type == WITH_TYPES:
-            # ([(10, 3.14), (20, 2.71)], dtype=[("ci", "i4"), ("cf", "f4")]) -> [int, float]
-            return [str(col_type[i]) for i in range(len(col_type))]  # is not iterable
 
         # [[1, 2], [3, 4]] -> [int, int]
         return [str(col_type) for _ in range(len(self.array[0]))]
@@ -119,9 +110,6 @@ class _NpTable:
     def _collect_cols_names(self):
         if self.type == ONE_DIM:
             return ['<th>0</th>\n']
-
-        if self.type == WITH_TYPES:
-            return ['<th>{}</th>\n'.format(name) for name in self.array.dtype.names]
 
         return ['<th>{}</th>\n'.format(i) for i in range(len(self.array[0]))]
 
@@ -174,23 +162,6 @@ class _NpTable:
             result = extended[sort_extended]
             self.array = result[:, 1]
             self.indexes = result[:, 0]
-            return self
-
-        if self.type == WITH_TYPES:
-            new_dt = np.dtype([('_pydevd_i', 'i8')] + self.array.dtype.descr)
-            extended = np.zeros(self.array.shape, dtype=new_dt)
-            extended['_pydevd_i'] = list(range(self.array.shape[0]))
-            for col in self.array.dtype.names:
-                extended[col] = self.array[col]
-
-            column_names = self.array.dtype.names
-            for i in range(len(cols) - 1, -1, -1):
-                name = column_names[cols[i] - 1]
-                sort = extended[name].argsort(kind='stable')
-                extended = extended[sort if orders[i] else sort[::-1]]
-            self.indexes = extended['_pydevd_i']
-            for col in self.array.dtype.names:
-                self.array[col] = extended[col]
             return self
 
         extended = np.insert(self.array, 0, self.indexes, axis=1)
