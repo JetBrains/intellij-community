@@ -399,6 +399,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     });
   }
 
+  @Internal
   public final class IndexUpdateComputable implements StorageUpdate {
     private final UpdateData<Key, Value> myUpdateData;
     private final InputData<Key, Value> myInputData;
