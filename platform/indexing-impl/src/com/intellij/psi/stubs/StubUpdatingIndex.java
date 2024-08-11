@@ -315,9 +315,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   @Override
   @ApiStatus.Internal
-  public @NotNull UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> createIndexImplementation(final @NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
-                                                                                                        @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout)
-    throws StorageException, IOException {
+  public @NotNull UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> createIndexImplementation(
+    @NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
+    @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout
+  ) throws StorageException, IOException {
+
     ((StubIndexEx)StubIndex.getInstance()).initializeStubIndexes();
     checkNameStorage();
     mySerializationManager.initialize();
