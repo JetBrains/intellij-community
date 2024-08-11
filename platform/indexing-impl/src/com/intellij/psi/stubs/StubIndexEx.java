@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -148,10 +148,17 @@ public abstract class StubIndexEx extends StubIndex {
           throw new AssertionError("raw index data access is not available for StubIndex");
         }
       }
+
       Predicate<? super Psi> keyFilter = StubIndexKeyDescriptorCache.INSTANCE.getKeyPsiMatcher(indexKey, key);
-      PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> myStubProcessingHelper.processStubsInFile(
-        project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass,
-        () -> "Looking for " + key + " in " + indexKey);
+      Processor<? super Psi> processorWithKeyFilter = keyFilter == null
+                                                      ? processor
+                                                      : o -> !keyFilter.test(o) || processor.process(o);
+
+      PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> {
+        return myStubProcessingHelper.processStubsInFile(
+          project, file, list, processorWithKeyFilter, scope, requiredClass,
+          () -> "Looking for " + key + " in " + indexKey);
+      };
 
       Iterator<VirtualFile> singleFileInScope = FileBasedIndexEx.extractSingleFileOrEmpty(scope);
       Iterator<VirtualFile> fileStream;
