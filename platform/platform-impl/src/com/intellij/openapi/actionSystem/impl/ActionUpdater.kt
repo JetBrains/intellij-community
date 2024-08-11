@@ -61,7 +61,7 @@ private val LOG = logger<ActionUpdater>()
 @JvmField
 internal val SUPPRESS_SUBMENU_IMPL: Key<Boolean> = Key.create("internal.SUPPRESS_SUBMENU_IMPL")
 
-private const val OLD_EDT_MSG_SUFFIX = ". Revise AnAction.getActionUpdateThread property"
+private const val REVISE_AUT_MSG_SUFFIX = ". Revise AnAction.getActionUpdateThread property"
 
 private const val OP_expandActionGroup = "expandGroup"
 private const val OP_groupChildren = "children"
@@ -97,7 +97,6 @@ internal class ActionUpdater @JvmOverloads constructor(
     else Registry.intValue("actionSystem.update.actions.async.test.delay", 0)
   private val threadDumpService = ThreadDumpService.getInstance()
 
-  private val preCacheSlowDataKeys = !Registry.`is`("actionSystem.update.actions.suppress.dataRules.on.edt")
   private val maxAwaitSharedDataRetries = max(1, Registry.intValue("actionSystem.update.actions.max.await.retries", 500))
 
   private var edtCallsCount: Int = 0 // used only in EDT
@@ -156,10 +155,6 @@ internal class ActionUpdater @JvmOverloads constructor(
           }
         }
       }
-    }
-    @Suppress("removal", "DEPRECATION")
-    if (updateThread == ActionUpdateThread.OLD_EDT) {
-      ensureSlowDataKeysPreCached(opElement)
     }
     return computeOnEdt(opElement, updateThread == ActionUpdateThread.EDT) {
       call()
@@ -257,53 +252,6 @@ internal class ActionUpdater @JvmOverloads constructor(
         LOG.warn(edtWaitMillis.toString() + " ms total to grab EDT " + edtCallsCount + " times to expand " +
                  Utils.operationName(group, OP_expandActionGroup, place) + ". Use `ActionUpdateThread.BGT`.")
       }
-    }
-  }
-
-  private suspend fun ensureSlowDataKeysPreCached(opElement: OpElement) {
-    if (!preCacheSlowDataKeys) return
-    val sessionKey = SessionKey("precache-slow-data@${opElement.operationName}", Unit)
-    getSessionDataDeferred(opElement, sessionKey) {
-      readActionUndispatchedForActionExpand {
-        precacheSlowDataKeys(opElement)
-      }
-    }.await()
-  }
-
-  private fun precacheSlowDataKeys(opElement: OpElement) {
-    val start = System.nanoTime()
-    try {
-      for (key in DataKey.allKeys()) {
-        try {
-          dataContext.getData(key)
-        }
-        catch (ex: ProcessCanceledException) {
-          throw ex
-        }
-        catch (ex: Throwable) {
-          LOG.error(ex)
-        }
-      }
-    }
-    finally {
-      logTimeProblemForPreCached(opElement, TimeoutUtil.getDurationMillis(start))
-    }
-  }
-
-  private fun logTimeProblemForPreCached(opElement: OpElement, elapsed: Long) {
-    if (elapsed > 300 && ActionPlaces.isShortcutPlace(place)) {
-      val operationName = "precache-slow-data@${opElement.operationName}"
-      LOG.error(PluginException.createByClass(
-        elapsedReport(elapsed, false, operationName) + OLD_EDT_MSG_SUFFIX, null,
-        (opElement.sessionKey?.source ?: opElement.action ?: opElement).javaClass))
-    }
-    else if (elapsed > 3000) {
-      val operationName = "precache-slow-data@${opElement.operationName}"
-      LOG.warn(elapsedReport(elapsed, false, operationName))
-    }
-    else if (elapsed > 500 && LOG.isDebugEnabled()) {
-      val operationName = "precache-slow-data@${opElement.operationName}"
-      LOG.debug(elapsedReport(elapsed, false, operationName))
     }
   }
 
@@ -741,7 +689,7 @@ private fun reportSlowEdtOperation(action: Any,
                                    edtTraces: List<Throwable>?) {
   var edtTraces1 = edtTraces
   val throwable: Throwable = PluginException.createByClass(
-    elapsedReport(currentEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass)
+    elapsedReport(currentEDTPerformMillis, true, operationName) + REVISE_AUT_MSG_SUFFIX, null, action.javaClass)
   val edtTraces = edtTraces1
   // do not report pauses without EDT traces (e.g., due to debugging)
   if (edtTraces != null && !edtTraces.isEmpty() && edtTraces[0].stackTrace.isNotEmpty()) {

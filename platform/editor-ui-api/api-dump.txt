@@ -1161,7 +1161,6 @@ e:com.intellij.openapi.actionSystem.ActionUpdateThread
 - java.lang.Enum
 - sf:BGT:com.intellij.openapi.actionSystem.ActionUpdateThread
 - sf:EDT:com.intellij.openapi.actionSystem.ActionUpdateThread
-- sf:OLD_EDT:com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:valueOf(java.lang.String):com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:values():com.intellij.openapi.actionSystem.ActionUpdateThread[]
 com.intellij.openapi.actionSystem.ActionUpdateThreadAware

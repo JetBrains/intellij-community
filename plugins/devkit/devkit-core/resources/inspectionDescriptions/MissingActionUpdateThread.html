@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports actions, action groups and other <code>ActionUpdateThreadAware</code> classes
-  that implicitly state the deprecated and costly <code>ActionUpdateThread.OLD_EDT</code> mode.
+that do not explicitly state their mode.
 
 <p>
   When an action or an action group defines its own <code>update()</code> method, IntelliJ Platform tries to mimic
@@ -10,7 +10,7 @@ Reports actions, action groups and other <code>ActionUpdateThreadAware</code> cl
   To do that, it caches all the possible data on a background thread beforehand, even if it is not needed.
 </p>
 <p>
-  Provide one of the two new modes <code>ActionUpdateThread.EDT</code> or <code>ActionUpdateThread.BGT</code>
+  Provide one of the two modes <code>ActionUpdateThread.EDT</code> or <code>ActionUpdateThread.BGT</code>
   by overriding the <code>getActionUpdateThread()</code> method.
 </p>
 <p>

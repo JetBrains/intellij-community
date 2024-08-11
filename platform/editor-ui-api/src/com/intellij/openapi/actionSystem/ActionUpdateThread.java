@@ -35,11 +35,4 @@ public enum ActionUpdateThread {
    * PSI, VFS and project models must not be used.
    */
   EDT,
-  /**
-   * UI thread with all data in the provided {@link DataContext} instance (can be very slow).
-   *
-   * @deprecated Migrate to {@link #EDT} or {@link #BGT} ASAP.
-   */
-  @Deprecated(forRemoval = true)
-  OLD_EDT
 }

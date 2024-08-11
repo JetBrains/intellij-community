@@ -190,6 +190,16 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return ActionClassMetaData.isDefaultUpdate(this);
   }
 
+  /**
+   * Specifies the thread and the way {@link AnAction#update(AnActionEvent)},
+   * {@link ActionGroup#getChildren(AnActionEvent)} or other update-like methods shall be called.
+   * <p>
+   * The preferred value is {@link ActionUpdateThread#BGT}.
+   * <p>
+   * The default value is {@link ActionUpdateThread#EDT}.
+   *
+   * @see ActionUpdateThread
+   */
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
@@ -198,7 +208,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     if (ActionClassMetaData.isDefaultUpdate(this)) {
       return ActionUpdateThread.BGT;
     }
-    return ActionUpdateThreadAware.super.getActionUpdateThread();
+    return ActionUpdateThread.EDT;
   }
 
   /** Returns the set of shortcuts associated with this action. */
