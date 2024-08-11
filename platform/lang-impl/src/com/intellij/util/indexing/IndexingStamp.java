@@ -26,10 +26,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * A file has three indexed states (per particular index): indexed (with particular index_stamp which monotonically increases), outdated and (trivial) unindexed.
  * <ul>
- *   <li>If index version is advanced or we rebuild it then index_stamp is advanced, we rebuild everything.</li>
- *   <li>If we get remove file event -> we should remove all indexed state from indices data for it (if state is nontrivial)
+ *   <li>If the index version is advanced, or we rebuild it, then index_stamp is advanced, we rebuild everything.</li>
+ *   <li>If we get a remove file event, then we should remove all indexed state from indices data for it (if state is nontrivial)
  *  * and set its indexed state to outdated.</li>
- *   <li>If we get other event we set indexed state to outdated.</li>
+ *   <li>If we get another event we set indexed state to outdated.</li>
  * </ul>
  */
 @Internal
@@ -70,8 +70,8 @@ public final class IndexingStamp {
 
   private static final int INDEXING_STAMP_CACHE_CAPACITY = SystemProperties.getIntProperty("index.timestamp.cache.size", 100);
   //MAYBE RC: do we still need in-memory cache (fileId->Timestamps)? With new fast-attributes + fast enumerator
-  //          access may be fast enough even without caching -- or, at least, it may be worth to cache enumerator
-  //          records (which is 100-1000 records at max) _only_
+  //          access may be fast enough even without caching -- or, at least, it may be worth caching enumerator
+  //          records (which are 100-1000 records at max) _only_
   private static final ConcurrentIntObjectMap<Timestamps> ourTimestampsCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
@@ -80,7 +80,7 @@ public final class IndexingStamp {
     new AutoRefreshingOnVfsCloseRef<>(IndexingStamp::createStorage);
 
   // Read lock is used to flush caches. Write lock is to wait until all threads have finished flushing.
-  // This is kind of abuse of RW lock. The goal ot to allow concurrent execution of flushCache(int finishedFile) from different threads.
+  // This is kind of abuse of RW lock. The goal is to allow concurrent execution of flushCache(int finishedFile) from different threads.
   private static final ReadWriteLock flushLock = new ReentrantReadWriteLock();
 
   private static IndexingStampStorage createStorage(FSRecordsImpl unused) {
