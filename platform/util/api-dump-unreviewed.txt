@@ -4255,8 +4255,8 @@ com.intellij.util.indexing.InvertedIndex
 - a:dispose():V
 - a:flush():V
 - a:getData(java.lang.Object):com.intellij.util.indexing.ValueContainer
-- a:mapInputAndPrepareUpdate(I,java.lang.Object):com.intellij.openapi.util.Computable
-- a:prepareUpdate(I,com.intellij.util.indexing.impl.InputData):com.intellij.openapi.util.Computable
+- a:mapInputAndPrepareUpdate(I,java.lang.Object):com.intellij.util.indexing.StorageUpdate
+- a:prepareUpdate(I,com.intellij.util.indexing.impl.InputData):com.intellij.util.indexing.StorageUpdate
 f:com.intellij.util.indexing.InvertedIndexUtil
 - <init>():V
 - s:collectInputIdsContainingAllKeys(com.intellij.util.indexing.InvertedIndex,java.util.Collection,com.intellij.openapi.util.Condition,java.util.function.IntPredicate):it.unimi.dsi.fastutil.ints.IntSet
@@ -4266,6 +4266,8 @@ f:com.intellij.util.indexing.StorageException
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.Throwable):V
 - <init>(java.lang.Throwable):V
+com.intellij.util.indexing.StorageUpdate
+- a:update():Z
 a:com.intellij.util.indexing.ValueContainer
 - <init>():V
 - f:forEach(com.intellij.util.indexing.ValueContainer$ContainerAction):Z

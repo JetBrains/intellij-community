@@ -3,7 +3,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.indexing.events.VfsEventsMerger;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,12 +14,12 @@ abstract class StorageBufferingHandler {
   private volatile boolean myPreviousDataBufferingState;
   private final Object myBufferingStateUpdateLock = new Object();
 
-  boolean runUpdate(boolean transientInMemoryIndices, @NotNull Computable<Boolean> update) {
+  boolean runUpdate(boolean transientInMemoryIndices, @NotNull StorageUpdate update) {
     ProgressManager.checkCanceled();
     StorageGuard.StorageModeExitHandler storageModeExitHandler = myStorageLock.enter(transientInMemoryIndices);
     try {
       ensureBufferingState(transientInMemoryIndices);
-      return update.compute();
+      return update.update();
     }
     finally {
       storageModeExitHandler.leave();

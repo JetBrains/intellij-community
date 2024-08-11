@@ -3,7 +3,6 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
@@ -261,7 +260,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Override
-  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content)
+  public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable Input content)
     throws MapReduceIndexMappingException, ProcessCanceledException {
     InputData<Key, Value> data;
     try {
@@ -400,7 +399,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     });
   }
 
-  public final class IndexUpdateComputable implements Computable<Boolean> {
+  public final class IndexUpdateComputable implements StorageUpdate {
     private final UpdateData<Key, Value> myUpdateData;
     private final InputData<Key, Value> myInputData;
 
@@ -414,7 +413,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     }
 
     @Override
-    public Boolean compute() {
+    public boolean update() {
       checkNonCancellableSection();
       try {
         MapReduceIndex.this.updateWithMap(myUpdateData);

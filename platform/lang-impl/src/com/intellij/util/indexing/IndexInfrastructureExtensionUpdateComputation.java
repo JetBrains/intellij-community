@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
  * or calculated from {@link FileContent} by {@link FileBasedIndexExtension}
  */
 @ApiStatus.Internal
-public final class IndexInfrastructureExtensionUpdateComputation implements Computable<Boolean> {
+public final class IndexInfrastructureExtensionUpdateComputation implements StorageUpdate {
   private final Computable<Boolean> myComputation;
   private final boolean myIndexProvided;
 
@@ -23,7 +23,7 @@ public final class IndexInfrastructureExtensionUpdateComputation implements Comp
   }
 
   @Override
-  public Boolean compute() {
+  public boolean update() {
     return myComputation.compute();
   }
 }

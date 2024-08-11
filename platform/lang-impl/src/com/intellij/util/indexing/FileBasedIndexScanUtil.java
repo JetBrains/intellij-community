@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilesScanExecutor;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -298,8 +297,8 @@ public final class FileBasedIndexScanUtil {
         Map<K, V> map = content == null ? null : indexer.map(content);
         if (unsavedDocument) return map;
         InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
-        Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
-        ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
+        StorageUpdate computable = index.prepareUpdate(fileId, inputData);
+        ProgressManager.getInstance().computeInNonCancelableSection(computable::update);
         IndexingStamp.setFileIndexedStateCurrent(fileId, indexId, false);
         return map;
       }

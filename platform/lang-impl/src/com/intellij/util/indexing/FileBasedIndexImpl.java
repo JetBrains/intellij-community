@@ -1073,8 +1073,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private void updateIndexInNonCancellableSection(@NotNull ID<?, ?> requestedIndexId, int inputId, FileContentImpl newFc) {
-    Computable<Boolean> update = getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc);
-    ProgressManager.getInstance().executeNonCancelableSection(update::compute);
+    StorageUpdate update = getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc);
+    ProgressManager.getInstance().executeNonCancelableSection(update::update);
   }
 
   private static void tuneFileContent(@NotNull Document document,
@@ -1224,7 +1224,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Internal
   @Override
   public void runCleanupAction(@NotNull Runnable cleanupAction) {
-    Computable<Boolean> updateComputable = () -> {
+    StorageUpdate updateComputable = () -> {
       ProgressManager.getInstance().executeNonCancelableSection(cleanupAction);
       return true;
     };
@@ -1622,7 +1622,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     markFileIndexed(file, currentFC);
     try {
-      Supplier<Boolean> storageUpdate;
+      StorageUpdate storageUpdate;
       long evaluatingIndexValueApplierTime = System.nanoTime();
       FileIndexMetaData fileIndexMetaData = index.getFileIndexMetaData(currentFC);
       try {
@@ -1691,9 +1691,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return new SingleIndexValueRemover(this, indexId, file, fileContent, inputId, applicationMode);
   }
 
-  boolean runUpdateForPersistentData(Supplier<Boolean> storageUpdate) {
+  boolean runUpdateForPersistentData(StorageUpdate storageUpdate) {
     return myStorageBufferingHandler.runUpdate(false, () -> {
-      return ProgressManager.getInstance().computeInNonCancelableSection(() -> storageUpdate.get());
+      return ProgressManager.getInstance().computeInNonCancelableSection(() -> storageUpdate.update());
     });
   }
 

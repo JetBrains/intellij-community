@@ -256,7 +256,7 @@ public abstract class StubIndexEx extends StubIndex {
 
         for (VirtualFile file : filesWithProblems) {
           int fileId = FileBasedIndex.getFileId(file);
-          index.mapInputAndPrepareUpdate(fileId, null).compute();
+          index.mapInputAndPrepareUpdate(fileId, null).update();
         }
 
         Lock writeLock = getIndex(indexKey).getLock().writeLock();
