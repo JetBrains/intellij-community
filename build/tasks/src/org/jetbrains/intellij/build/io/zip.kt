@@ -23,14 +23,21 @@ fun zipWithCompression(
   fileFilter: ((name: String) -> Boolean)? = null,
 ) {
   Files.createDirectories(targetFile.parent)
-  ZipFileWriter(channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
-                deflater = if (compressionLevel == Deflater.NO_COMPRESSION) null else Deflater(compressionLevel, true)).use { zipFileWriter ->
+  ZipFileWriter(
+    channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
+    deflater = if (compressionLevel == Deflater.NO_COMPRESSION) null else Deflater(compressionLevel, true),
+  ).use { zipFileWriter ->
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
-      doArchive(zipFileWriter = zipFileWriter, fileAdded = fileFilter, dirs = dirs, indexWriter = null)
+      doArchive(
+        zipFileWriter = zipFileWriter,
+        fileAdded = if (fileFilter == null) null else { name, _ -> fileFilter(name) },
+        dirs = dirs,
+        indexWriter = null,
+      )
     }
     else {
       val dirNameSetToAdd = LinkedHashSet<String>()
-      val fileAdded = { name: String ->
+      val fileAdded = { name: String, _: Path ->
         if (fileFilter != null && !fileFilter(name)) {
           false
         }
@@ -63,13 +70,18 @@ fun zip(
   Files.createDirectories(targetFile.parent)
   ZipFileWriter(channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW)).use { zipFileWriter ->
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
-      doArchive(zipFileWriter = zipFileWriter, fileAdded = fileFilter, dirs = dirs, indexWriter = null)
+      doArchive(
+        zipFileWriter = zipFileWriter,
+        fileAdded = if (fileFilter == null) null else { name, _ -> fileFilter(name) },
+        dirs = dirs,
+        indexWriter = null,
+      )
     }
     else {
       val packageIndexBuilder = PackageIndexBuilder()
       doArchive(
         zipFileWriter = zipFileWriter,
-        fileAdded = { name ->
+        fileAdded = { name, _ ->
           if (fileFilter != null && !fileFilter(name)) {
             false
           }
@@ -86,7 +98,7 @@ fun zip(
   }
 }
 
-private fun doArchive(zipFileWriter: ZipFileWriter, fileAdded: ((String) -> Boolean)?, dirs: Map<Path, String>, indexWriter: IkvIndexBuilder?) {
+private fun doArchive(zipFileWriter: ZipFileWriter, fileAdded: ((String, Path) -> Boolean)?, dirs: Map<Path, String>, indexWriter: IkvIndexBuilder?) {
   val archiver = ZipArchiver(zipFileWriter, fileAdded)
   for ((dir, prefix) in dirs.entries) {
     val normalizedDir = dir.toAbsolutePath().normalize()
@@ -107,7 +119,7 @@ private fun addDirWithParents(name: String, dirNameSetToAdd: MutableSet<String>)
   }
 }
 
-class ZipArchiver(private val zipCreator: ZipFileWriter, @JvmField val fileAdded: ((String) -> Boolean)? = null) : AutoCloseable {
+class ZipArchiver(private val zipCreator: ZipFileWriter, @JvmField val fileAdded: ((String, Path) -> Boolean)? = null) : AutoCloseable {
   private var localPrefixLength = -1
   private var archivePrefix = ""
 
@@ -124,7 +136,7 @@ class ZipArchiver(private val zipCreator: ZipFileWriter, @JvmField val fileAdded
 
   fun addFile(file: Path, indexWriter: IkvIndexBuilder?) {
     val name = archivePrefix + file.toString().substring(localPrefixLength).replace('\\', '/')
-    if (fileAdded == null || fileAdded.invoke(name)) {
+    if (fileAdded == null || fileAdded.invoke(name, file)) {
       zipCreator.file(name, file, indexWriter)
     }
   }

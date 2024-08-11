@@ -16,6 +16,9 @@ import java.nio.file.PathMatcher
 import java.util.zip.Deflater
 import kotlin.io.path.name
 
+private const val listOfEntitiesFileName = "META-INF/listOfEntities.txt"
+
+
 fun interface DistributionFileEntryProducer {
   fun consume(size: Int, hash: Long, targetFile: Path): DistributionFileEntry
 }
@@ -47,6 +50,8 @@ internal suspend fun buildJar(
     ).use { zipCreator ->
       val uniqueNames = HashMap<String, Path>()
 
+      val filesToMerge = mutableListOf<CharSequence>()
+
       for (source in sources) {
         val positionBefore = zipCreator.channelPosition
         writeSource(
@@ -57,13 +62,18 @@ internal suspend fun buildJar(
           targetFile = targetFile,
           sources = sources,
           nativeFileHandler = nativeFileHandler,
-          compress = compress
+          compress = compress,
+          filesToMerge = filesToMerge,
         )
 
         if (notify) {
           source.size = (zipCreator.channelPosition - positionBefore).toInt()
           source.hash = 0
         }
+      }
+
+      if (filesToMerge.isNotEmpty()) {
+        zipCreator.uncompressedData(nameString = listOfEntitiesFileName, data = filesToMerge.joinToString("\n") { it.trim() }, indexWriter = packageIndexBuilder?.indexWriter)
       }
 
       packageIndexBuilder?.writePackageIndex(zipCreator)
@@ -80,12 +90,17 @@ private suspend fun writeSource(
   sources: List<Source>,
   nativeFileHandler: NativeFileHandler?,
   compress: Boolean,
+  filesToMerge: MutableList<CharSequence>,
 ) {
   when (source) {
     is DirSource -> {
-      val archiver = ZipArchiver(zipCreator, fileAdded = {
-        if (uniqueNames.putIfAbsent(it, source.dir) == null && (!source.removeModuleInfo || it != "module-info.class")) {
-          packageIndexBuilder?.addFile(it)
+      val archiver = ZipArchiver(zipCreator = zipCreator, fileAdded = { name, file ->
+        if (name == listOfEntitiesFileName) {
+          filesToMerge.add(Files.readString(file))
+          false
+        }
+        else if (uniqueNames.putIfAbsent(name, source.dir) == null && (!source.removeModuleInfo || name != "module-info.class")) {
+          packageIndexBuilder?.addFile(name)
           true
         }
         else {
@@ -98,9 +113,7 @@ private suspend fun writeSource(
         startDir = normalizedDir,
         archiver = archiver,
         indexWriter = packageIndexBuilder?.indexWriter,
-        excludes = source.excludes.takeIf(
-          List<PathMatcher>::isNotEmpty,
-        )
+        excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty)
       )
     }
 
@@ -142,6 +155,7 @@ private suspend fun writeSource(
           zipCreator = zipCreator,
           compress = compress,
           targetFile = targetFile,
+          filesToMerge = filesToMerge,
         )
       }
       finally {
@@ -163,7 +177,8 @@ private suspend fun writeSource(
           targetFile = targetFile,
           sources = sources,
           nativeFileHandler = nativeFileHandler,
-          compress = compress
+          compress = compress,
+          filesToMerge = filesToMerge
         )
       }
     }
@@ -180,6 +195,7 @@ private suspend fun handleZipSource(
   zipCreator: ZipFileWriter,
   compress: Boolean,
   targetFile: Path,
+  filesToMerge: MutableList<CharSequence>,
 ) {
   val nativeFiles = if (nativeFileHandler == null) {
     null
@@ -195,6 +211,11 @@ private suspend fun handleZipSource(
   // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
   // ability to read data without setting channel position, as setting channel position will require synchronization
   suspendAwareReadZipFile(sourceFile) { name, dataSupplier ->
+    if (name == listOfEntitiesFileName) {
+      filesToMerge.add(Charsets.UTF_8.decode(dataSupplier()))
+      return@suspendAwareReadZipFile
+    }
+
     fun writeZipData(data: ByteBuffer) {
       if (compress) {
         zipCreator.compressedData(name, data)
@@ -230,7 +251,8 @@ private suspend fun handleZipSource(
         // sign it
         val file = nativeFileHandler.sign(name, dataSupplier)
         if (file == null) {
-          writeZipData(dataSupplier())
+          val data = dataSupplier()
+          writeZipData(data)
         }
         else {
           zipCreator.file(name, file, indexWriter = packageIndexBuilder?.indexWriter)
