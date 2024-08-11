@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.util.application
-import com.intellij.util.asSafely
 import com.intellij.util.indexing.dependencies.*
 import com.intellij.util.indexing.impl.perFileVersion.LongFileAttribute
 import org.jetbrains.annotations.ApiStatus
@@ -66,7 +65,12 @@ object IndexingFlag {
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileWithId? {
-    return asSafely<VirtualFileWithId>()?.let { if (isIndexedFlagDisabled()) null else it }
+    if (this is VirtualFileWithId && !isIndexedFlagDisabled()) {
+      return this
+    }
+    else {
+      return null
+    }
   }
 
   @JvmStatic
