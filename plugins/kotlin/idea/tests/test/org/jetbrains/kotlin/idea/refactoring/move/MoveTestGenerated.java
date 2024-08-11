@@ -463,6 +463,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/invokeOperatorInternalUsage/invokeOperatorInternalUsage.test");
         }
 
+        @TestMetadata("kotlin/iteratorOperatorInternalUsage/iteratorOperatorInternalUsage.test")
+        public void testKotlin_iteratorOperatorInternalUsage_IteratorOperatorInternalUsage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/iteratorOperatorInternalUsage/iteratorOperatorInternalUsage.test");
+        }
+
         @TestMetadata("kotlin/kt17032/kt17032.test")
         public void testKotlin_kt17032_Kt17032() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/kt17032/kt17032.test");

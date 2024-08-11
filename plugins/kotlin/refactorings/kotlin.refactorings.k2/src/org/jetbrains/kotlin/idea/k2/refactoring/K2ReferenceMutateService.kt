@@ -45,6 +45,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 is KDocReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
                 is KtInvokeFunctionReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.INVOKE)
                 is KtArrayAccessReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.GET)
+                is KtForLoopInReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.ITERATOR)
                 else -> throw IncorrectOperationException("Unsupported reference type: $ktReference")
             }
         }

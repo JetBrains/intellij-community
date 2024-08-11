@@ -177,8 +177,24 @@ sealed class K2MoveRenameUsageInfo(
                         elem.updatableUsageInfo = Source(elem, reference, resolved, true)
                     }
                 }
+
                 is KtReferenceExpression -> {
                     elem.markInternalUsageInfo(topLevelMoved)
+                }
+
+                is KtForExpression -> {
+                    val mainReference = elem.mainReference
+                    if (mainReference != null) {
+                        val declPsi = analyze(elem) {
+                            mainReference.resolveToSymbols().firstOrNull { declSymbol ->
+                                (declSymbol as KaCallableSymbol).isExtensionDecl()
+                            }?.psi
+                        }
+                        if (declPsi is PsiNamedElement) {
+                            elem.updatableUsageInfo = Source(elem, mainReference, declPsi, true)
+                        }
+                    }
+
                 }
             }
             for (child in elem.children) {
@@ -200,7 +216,7 @@ sealed class K2MoveRenameUsageInfo(
             val isExtensionReference = if (resolved is KtCallableDeclaration) {
                 analyze(resolved) {
                     val symbol = resolved.symbol
-                    if (symbol is KaCallableSymbol) expr.isExtensionReference(symbol) else false
+                    if (symbol is KaCallableSymbol) symbol.isExtensionDecl() else false
                 }
             } else false
             if (resolved is KtParameter) return
@@ -225,10 +241,10 @@ sealed class K2MoveRenameUsageInfo(
         }
 
         context(KaSession)
-        private fun KtReferenceExpression.isExtensionReference(symbol: KaCallableSymbol): Boolean {
-            if (symbol.isExtension == true) return true
-            return if (symbol is KaPropertySymbol) {
-                val returnType = symbol.returnType
+        private fun KaCallableSymbol.isExtensionDecl(): Boolean {
+            if (isExtension == true) return true
+            return if (this is KaPropertySymbol) {
+                val returnType = returnType
                 returnType is KaFunctionType && returnType.receiverType != null
             } else false
         }
@@ -279,12 +295,6 @@ sealed class K2MoveRenameUsageInfo(
             return preProcessUsages(allUsages)
         }
 
-        internal fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
-            // Retarget external usages before internal usages to make sure imports in moved files are properly updated
-            retargetExternalUsages(usages, oldToNewMap)
-            retargetInternalUsages(oldToNewMap)
-        }
-
         /**
          *
          * [org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo]
@@ -296,7 +306,10 @@ sealed class K2MoveRenameUsageInfo(
             oldToNewMap: Map<PsiElement, PsiElement>,
             fromCopy: Boolean
         ): List<UsageInfo> {
-            return (containingElem.collectDescendantsOfType<KDocName>() + containingElem.collectDescendantsOfType<KtReferenceExpression>())
+            val elements = (containingElem.collectDescendantsOfType<KDocName>()
+                + containingElem.collectDescendantsOfType<KtReferenceExpression>()
+                + containingElem.collectDescendantsOfType<KtForExpression>())
+            return elements
                 .mapNotNull { refExpr ->
                     val usageInfo = refExpr.updatableUsageInfo
                     if (!fromCopy && usageInfo?.element != null) return@mapNotNull usageInfo
@@ -305,6 +318,12 @@ sealed class K2MoveRenameUsageInfo(
                     if (!newReferencedElement.isValid || newReferencedElement !is PsiNamedElement) return@mapNotNull null
                     usageInfo.refresh(refExpr, newReferencedElement)
                 }
+        }
+
+        internal fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
+            // Retarget external usages before internal usages to make sure imports in moved files are properly updated
+            retargetExternalUsages(usages, oldToNewMap)
+            retargetInternalUsages(oldToNewMap)
         }
 
         /**
