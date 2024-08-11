@@ -16,13 +16,6 @@ import java.nio.file.PathMatcher
 import java.util.zip.Deflater
 import kotlin.io.path.name
 
-const val UTIL_JAR: String = "util.jar"
-const val PLATFORM_LOADER_JAR: String = "platform-loader.jar"
-const val UTIL_RT_JAR: String = "util_rt.jar"
-const val UTIL_8_JAR: String = "util-8.jar"
-
-internal val isWindows: Boolean = System.getProperty("os.name").startsWith("windows", ignoreCase = true)
-
 fun interface DistributionFileEntryProducer {
   fun consume(size: Int, hash: Long, targetFile: Path): DistributionFileEntry
 }
@@ -207,7 +200,7 @@ private suspend fun handleZipSource(
         zipCreator.compressedData(name, data)
       }
       else {
-        zipCreator.uncompressedData(name, data, indexWriter = packageIndexBuilder?.indexWriter)
+        zipCreator.uncompressedData(nameString = name, data = data, indexWriter = packageIndexBuilder?.indexWriter)
       }
     }
 
@@ -223,32 +216,33 @@ private suspend fun handleZipSource(
       filter(name)
     }
 
-    if (isIncluded && !isDuplicated(uniqueNames, name, sourceFile)) {
-      if (nativeFileHandler?.isNative(name) == true) {
-        if (source.isPreSignedAndExtractedCandidate) {
-          nativeFiles!!.value.add(name)
-        }
-        else {
-          packageIndexBuilder?.addFile(name)
+    if (!isIncluded || isDuplicated(uniqueNames = uniqueNames, name = name, sourceFile = sourceFile)) {
+      return@suspendAwareReadZipFile
+    }
 
-          // sign it
-          val file = nativeFileHandler.sign(name, dataSupplier)
-          if (file == null) {
-            val data = dataSupplier()
-            writeZipData(data)
-          }
-          else {
-            zipCreator.file(name, file, indexWriter = packageIndexBuilder?.indexWriter)
-            Files.delete(file)
-          }
-        }
+    if (nativeFileHandler?.isNative(name) == true) {
+      if (source.isPreSignedAndExtractedCandidate) {
+        nativeFiles!!.value.add(name)
       }
       else {
         packageIndexBuilder?.addFile(name)
 
-        val data = dataSupplier()
-        writeZipData(data)
+        // sign it
+        val file = nativeFileHandler.sign(name, dataSupplier)
+        if (file == null) {
+          writeZipData(dataSupplier())
+        }
+        else {
+          zipCreator.file(name, file, indexWriter = packageIndexBuilder?.indexWriter)
+          Files.delete(file)
+        }
       }
+    }
+    else {
+      packageIndexBuilder?.addFile(name)
+
+      val data = dataSupplier()
+      writeZipData(data)
     }
   }
 }
@@ -259,8 +253,11 @@ private suspend fun handleZipSource(
  * Here the attribute value is replaced with the target jar name.
  */
 private fun checkCoverageAgentManifest(
-  name: String, sourceFile: Path, targetFile: Path,
-  dataSupplier: () -> ByteBuffer, writeData: (ByteBuffer) -> Unit,
+  name: String,
+  sourceFile: Path,
+  targetFile: Path,
+  dataSupplier: () -> ByteBuffer,
+  writeData: (ByteBuffer) -> Unit,
 ): Boolean {
   if (name != "META-INF/MANIFEST.MF") {
     return false
@@ -286,16 +283,18 @@ private fun checkCoverageAgentManifest(
 
 private fun isDuplicated(uniqueNames: MutableMap<String, Path>, name: String, sourceFile: Path): Boolean {
   val old = uniqueNames.putIfAbsent(name, sourceFile) ?: return false
-  Span.current().addEvent("$name is duplicated and ignored", Attributes.of(
+  Span.current().addEvent(
+    "$name is duplicated and ignored", Attributes.of(
     AttributeKey.stringKey("firstSource"), old.toString(),
     AttributeKey.stringKey("secondSource"), sourceFile.toString(),
-  ))
+  )
+  )
   return true
 }
 
 @Suppress("SpellCheckingInspection")
 private fun getIgnoredNames(): Set<String> {
-  val set = HashSet<String>()
+  val set = mutableListOf<String>()
   // compilation cache on TC
   set.add(".hash")
   set.add("classpath.index")
@@ -337,8 +336,8 @@ private fun getIgnoredNames(): Set<String> {
   @Suppress("SpellCheckingInspection")
   set.add(".gitkeep")
   set.add(INDEX_FILENAME)
-  for (originalName in listOf("NOTICE", "README", "LICENSE", "DEPENDENCIES", "CHANGES", "THIRD_PARTY_LICENSES", "COPYING")) {
-    for (name in listOf(originalName, originalName.lowercase())) {
+  for (originalName in sequenceOf("NOTICE", "README", "LICENSE", "DEPENDENCIES", "CHANGES", "THIRD_PARTY_LICENSES", "COPYING")) {
+    for (name in sequenceOf(originalName, originalName.lowercase())) {
       set.add(name)
       set.add("$name.txt")
       set.add("$name.md")
