@@ -87,8 +87,8 @@ class InlineCompletionLogsContainer {
       editor.putUserData(KEY, InlineCompletionLogsContainer())
     }
 
-    fun get(editor: Editor): InlineCompletionLogsContainer {
-      return requireNotNull(editor.getUserData(KEY)) { "Cannot find logs container" }
+    fun get(editor: Editor): InlineCompletionLogsContainer? {
+      return editor.getUserData(KEY)
     }
 
     fun remove(editor: Editor): InlineCompletionLogsContainer? {
