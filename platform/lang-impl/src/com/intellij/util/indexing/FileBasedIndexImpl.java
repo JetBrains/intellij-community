@@ -1452,7 +1452,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (fileTypeManagerEx instanceof FileTypeManagerImpl) {
       ((FileTypeManagerImpl)fileTypeManagerEx).freezeFileTypeTemporarilyWithProvidedValueIn(file, cachedFileType, () -> {
         ProgressManager.checkCanceled();
-        FileContentImpl fc = null;
+        FileContentImpl fileContent = null;
 
         Set<ID<?, ?>> currentIndexedStates = getAppliedIndexes(inputId);
         List<ID<?, ?>> requiredIndexes = getRequiredIndexes(indexedFile);
@@ -1461,18 +1461,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) continue;
           ProgressManager.checkCanceled();
 
-          if (fc == null) {
-            fc = (FileContentImpl)FileContentImpl.createByContent(file, () -> content.getBytesOrEmpty(), guessedProject);
-            fc.setSubstituteFileType(indexedFile.getFileType());
+          if (fileContent == null) {
+            fileContent = (FileContentImpl)FileContentImpl.createByContent(file, () -> content.getBytesOrEmpty(), guessedProject);
+            fileContent.setSubstituteFileType(indexedFile.getFileType());
             ProgressManager.checkCanceled();
 
-            fileTypeRef.set(fc.getFileType());
+            fileTypeRef.set(fileContent.getFileType());
 
             ProgressManager.checkCanceled();
           }
 
           boolean update;
-          boolean acceptedAndRequired = getIndexingState(fc, indexId, indexingStamp).updateRequired();
+          boolean acceptedAndRequired = getIndexingState(fileContent, indexId, indexingStamp).updateRequired();
           if (acceptedAndRequired) {
             update = RebuildStatus.isOk(indexId);
             if (!update) {
@@ -1492,12 +1492,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
               reason = "update is not required";
             }
 
-            LOG.info("index " + indexId + " should not be updated for " + fc.getFileName() + " because " + reason);
+            LOG.info("index " + indexId + " should not be updated for " + fileContent.getFileName() + " because " + reason);
           }
 
           if (update) {
             ProgressManager.checkCanceled();
-            SingleIndexValueApplier<?> singleIndexValueApplier = createSingleIndexValueApplier(indexId, file, inputId, fc);
+            SingleIndexValueApplier<?> singleIndexValueApplier = createSingleIndexValueApplier(indexId, file, inputId, fileContent);
             if (singleIndexValueApplier == null) {
               setIndexedStatus.set(Boolean.FALSE);
             }
@@ -1509,7 +1509,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         for (ID<?, ?> indexId : currentIndexedStates) {
           ProgressManager.checkCanceled();
-          SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fc, inputId, applicationMode);
+          SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fileContent, inputId, applicationMode);
           if (remover == null) {
             setIndexedStatus.set(Boolean.FALSE);
           }
@@ -1518,7 +1518,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
 
-        fileTypeRef.set(fc != null ? fc.getFileType() : file.getFileType());
+        fileTypeRef.set(fileContent != null ? fileContent.getFileType() : file.getFileType());
       });
     }
 
@@ -1983,7 +1983,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  FileIndexingState getIndexingState(@NotNull IndexedFile file, @NotNull ID<?, ?> indexId, @NotNull FileIndexingStamp indexingStamp) {
+  FileIndexingState getIndexingState(@NotNull IndexedFile file,
+                                     @NotNull ID<?, ?> indexId,
+                                     @NotNull FileIndexingStamp indexingStamp) {
     return getIndexingState(file, getIndex(indexId), indexingStamp);
   }
 
