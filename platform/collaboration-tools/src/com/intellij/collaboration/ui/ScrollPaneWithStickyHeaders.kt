@@ -151,12 +151,7 @@ object ScrollPaneWithStickyHeaders {
     private val dummy = NonOpaquePanel()
 
     init {
-      wrapperTop.addMouseListener(object : MouseAdapter() {
-        override fun mouseClicked(e: MouseEvent) {
-          scrolledBody.scrollRectToVisible(wrapperBody.bounds)
-        }
-      })
-      wrapperBottom.addMouseListener(object : MouseAdapter() {
+      val listener = object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           if (beforeElems == null) {
             beforeElems = stickyElems.takeWhile { it != this@StickyElement }
@@ -164,7 +159,9 @@ object ScrollPaneWithStickyHeaders {
 
           scrollPane.viewport.viewPosition = Point(0, wrapperBody.y - beforeElems!!.sumOf { it.component.height })
         }
-      })
+      }
+      wrapperTop.addMouseListener(listener)
+      wrapperBottom.addMouseListener(listener)
     }
 
     fun move() {
