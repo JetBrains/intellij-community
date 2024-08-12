@@ -23,17 +23,25 @@ import java.io.File
 internal class GitRepositoryReader(private val project: Project, private val gitFiles: GitRepositoryFiles) {
 
   fun readState(remotes: Collection<GitRemote>): GitBranchState {
-    val branches = readBranches(remotes)
-    val localBranches = branches.localBranches
-
     val headInfo = readHead()
-    val state = readRepositoryState(headInfo is HeadInfo.Branch)
+    val branches = readBranches(remotes)
 
+    val state = readRepositoryState(headInfo is HeadInfo.Branch)
+    val headState = parseHeadState(headInfo, state, branches)
+    return GitBranchState(headState.currentRevision, headState.currentBranch, state,
+                          branches.localBranches, branches.remoteBranches)
+  }
+
+  private fun parseHeadState(
+    headInfo: HeadInfo,
+    state: Repository.State,
+    branches: GitBranches,
+  ): GitHeadState {
     var currentBranch: GitLocalBranch?
     var currentRevision: String?
-    if (headInfo !is HeadInfo.Branch || !localBranches.isEmpty()) {
-      currentBranch = findCurrentBranch(headInfo, state, localBranches.keys)
-      currentRevision = getCurrentRevision(headInfo, if (currentBranch == null) null else localBranches[currentBranch])
+    if (headInfo !is HeadInfo.Branch || !branches.localBranches.isEmpty()) {
+      currentBranch = findCurrentBranch(headInfo, state, branches.localBranches.keys)
+      currentRevision = getCurrentRevision(headInfo, if (currentBranch == null) null else branches.localBranches[currentBranch])
     }
     else {
       currentBranch = headInfo.branch
@@ -44,7 +52,7 @@ internal class GitRepositoryReader(private val project: Project, private val git
       LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled())
       GitRefUtil.logDebugAllRefsFiles(gitFiles)
     }
-    return GitBranchState(currentRevision, currentBranch, state, localBranches, branches.remoteBranches)
+    return GitHeadState(currentBranch, currentRevision)
   }
 
   fun readHooksInfo(): GitHooksInfo {
@@ -201,6 +209,11 @@ internal class GitRepositoryReader(private val project: Project, private val git
   private class GitBranches(
     val localBranches: Map<GitLocalBranch, Hash>,
     val remoteBranches: Map<GitRemoteBranch, Hash>,
+  )
+
+  private class GitHeadState(
+    val currentBranch: GitLocalBranch?,
+    val currentRevision: String?,
   )
 
   companion object {
