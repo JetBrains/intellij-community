@@ -19,6 +19,7 @@ internal fun <T, E : IjentFsError> IjentFsResult<T, E>.getOrThrowFileSystemExcep
     is IjentFsResult.Error -> error.throwFileSystemException()
   }
 
+// TODO There's java.nio.file.FileSystemLoopException, so ELOOP should be added to all error codes for a decent support of all exceptions.
 @Throws(FileSystemException::class)
 internal fun IjentFsError.throwFileSystemException(): Nothing {
   throw when (this) {

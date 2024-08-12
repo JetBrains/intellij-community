@@ -8,6 +8,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.CreateDirectoryException
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.CreateSymbolicLinkException
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import com.intellij.util.text.nullize
 import com.sun.nio.file.ExtendedCopyOption
@@ -22,6 +23,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
+import java.nio.file.spi.FileSystemProvider.installedProviders
 import java.util.concurrent.ExecutorService
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -414,8 +416,29 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     TODO("Not yet implemented")
   }
 
-  override fun createSymbolicLink(link: Path?, target: Path?, vararg attrs: FileAttribute<*>?) {
-    TODO("Not yet implemented")
+  override fun createSymbolicLink(link: Path, target: Path, vararg attrs: FileAttribute<*>?) {
+    if (attrs.isNotEmpty()) {
+      throw UnsupportedOperationException("Attributes are not supported for symbolic links")
+    }
+
+    val fs = ensureIjentNioPath(link).nioFs
+    val linkPath = ensurePathIsAbsolute(link.ijentPath)
+
+    require(ensureIjentNioPath(target).nioFs == fs) {
+      "Can't create symlinks between different file systems"
+    }
+
+    try {
+      fsBlocking {
+        when (val ijentFs = fs.ijentFs) {
+          is IjentFileSystemPosixApi -> ijentFs.createSymbolicLink(target.ijentPath, linkPath)
+          is IjentFileSystemWindowsApi -> TODO("Symbolic links are not supported on Windows")
+        }
+      }
+    }
+    catch (e: CreateSymbolicLinkException) {
+      e.throwFileSystemException()
+    }
   }
 
   override fun createLink(link: Path?, existing: Path?) {

@@ -186,4 +186,10 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       move(source, target, replaceExisting, followLinks)
     }
   }
+
+  override suspend fun createSymbolicLink(target: IjentPath, linkPath: IjentPath.Absolute) {
+    holder.withDelegateRetrying {
+      createSymbolicLink(target, linkPath)
+    }
+  }
 }

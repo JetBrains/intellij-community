@@ -437,6 +437,52 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
   override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<
     IjentPosixFileInfo,
     IjentFileSystemApi.StatError>
+
+  /**
+   * Notice that the first argument is the target of the symlink,
+   * like in `ln -s` tool, like in `symlink(2)` from LibC, but opposite to `java.nio.file.spi.FileSystemProvider.createSymbolicLink`.
+   */
+  @Throws(CreateSymbolicLinkException::class, IjentUnavailableException::class)
+  suspend fun createSymbolicLink(target: IjentPath, linkPath: IjentPath.Absolute)
+
+  sealed class CreateSymbolicLinkException(
+    where: IjentPath.Absolute,
+    additionalMessage: @NlsSafe String,
+  ) : IjentFsIOException(where, additionalMessage) {
+    /**
+     * Example: `createSymbolicLink("anywhere", "/directory_that_does_not_exist")`
+     */
+    class DoesNotExist(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.DoesNotExist
+
+    /**
+     * Examples:
+     * * `createSymbolicLink("anywhere", "/etc/passwd")`
+     * * `createSymbolicLink("anywhere", "/home")`
+     */
+    class FileAlreadyExists(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.AlreadyExists
+
+    /**
+     * Example: `createSymbolicLink("anywhere", "/etc/passwd/oops")`
+     */
+    class NotDirectory(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.NotDirectory
+
+    /**
+     * Example:
+     * * With non-root permissions: `createSymbolicLink("anywhere", "/root/oops")`
+     */
+    class PermissionDenied(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.PermissionDenied
+
+    /**
+     * Everything else, including `ELOOP`.
+     * Despite an allegedly related name, the errno `ELOOP` has nothing to do with symlinks creation,
+     * and it can appear only in this case:
+     * ```
+     * createSymbolicLink("/tmp/foobar", "/tmp/foobar") // OK
+     * createSymbolicLink("anywhere", "/tmp/foobar/oops") // Other("something about ELOOP")
+     * ```
+     */
+    class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String) : CreateSymbolicLinkException(where, additionalMessage), IjentFsError.Other
+  }
 }
 
 interface IjentFileSystemWindowsApi : IjentFileSystemApi {

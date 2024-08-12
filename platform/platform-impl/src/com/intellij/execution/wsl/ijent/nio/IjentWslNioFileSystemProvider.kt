@@ -124,7 +124,7 @@ class IjentWslNioFileSystemProvider(
     originalFsProvider.newAsynchronousFileChannel(path.toOriginalPath(), options, executor, *attrs)
 
   override fun createSymbolicLink(link: Path, target: Path, vararg attrs: FileAttribute<*>?) {
-    originalFsProvider.createSymbolicLink(link.toOriginalPath(), target, *attrs)
+    ijentFsProvider.createSymbolicLink(link.toIjentPath(), target.toIjentPath(), *attrs)
   }
 
   override fun createLink(link: Path, existing: Path) {
