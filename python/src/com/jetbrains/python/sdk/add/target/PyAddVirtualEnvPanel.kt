@@ -5,6 +5,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -19,6 +20,7 @@ import com.intellij.ui.layout.not
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
@@ -31,9 +33,9 @@ import com.jetbrains.python.sdk.configuration.createSdkForTarget
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
+import com.jetbrains.python.sdk.flavors.VirtualEnvReader.Companion.DEFAULT_VIRTUALENVS_DIR
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
-import com.jetbrains.python.icons.PythonIcons
 import java.awt.BorderLayout
 import java.util.function.Supplier
 
@@ -226,15 +228,5 @@ class PyAddVirtualEnvPanel(
       val homePath = selectedSdk.homePath!!
       return createSdkForTarget(project, targetEnvironmentConfiguration, homePath, existingSdks, targetPanelExtension)
     }
-  }
-
-  companion object {
-    /**
-     * We assume this is the default name of the directory that is located in user home and which contains user virtualenv Python
-     * environments.
-     *
-     * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
-     */
-    const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
   }
 }

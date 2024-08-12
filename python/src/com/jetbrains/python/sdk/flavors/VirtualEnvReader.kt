@@ -6,53 +6,63 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.sdk.add.target.PyAddVirtualEnvPanel.Companion.DEFAULT_VIRTUALENVS_DIR
 import com.jetbrains.python.sdk.tryResolvePath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.isSymbolicLink
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
+import kotlin.io.path.*
+
+/**
+ * `python` or `python.exe`
+ */
+typealias PythonBinary = Path
+typealias Directory = Path
 
 @IntellijInternalApi
 @ApiStatus.Internal
-class VirtualEnvReader(private val envs: Map<@NonNls String, @NonNls String> = System.getenv(), isWindows: Boolean = SystemInfoRt.isWindows) {
+class VirtualEnvReader(
+  private val envs: Map<@NonNls String, @NonNls String> = System.getenv(),
+  isWindows: Boolean = SystemInfoRt.isWindows,
+) {
   private val pythonNames = if (isWindows)
     setOf("pypy.exe", "python.exe")
   else
     setOf("pypy", "python")
 
+  /**
+   * Dir with virtual envs
+   */
   @RequiresBackgroundThread
-  fun getVEnvRootDir(): Path {
+  fun getVEnvRootDir(): Directory {
     return resolveDir("WORKON_HOME", DEFAULT_VIRTUALENVS_DIR)
   }
 
+  /**
+   * Pythons from virtualenvs
+   */
   @RequiresBackgroundThread
-  fun findVEnvInterpreters(): List<Path> =
+  fun findVEnvInterpreters(): List<PythonBinary> =
     findLocalInterpreters(getVEnvRootDir())
 
   @RequiresBackgroundThread
-  fun getPyenvRootDir(): Path {
+  fun getPyenvRootDir(): Directory {
     return resolveDir("PYENV_ROOT", ".pyenv")
   }
 
   @RequiresBackgroundThread
-  fun findPyenvInterpreters(): List<Path> =
+  fun findPyenvInterpreters(): List<PythonBinary> =
     findLocalInterpreters(getPyenvVersionsDir())
 
   @RequiresBackgroundThread
-  fun findLocalInterpreters(root: Path): List<Path> {
+  fun findLocalInterpreters(root: Directory): List<PythonBinary> {
     if (!root.isDirectory()) {
       return listOf()
     }
 
     val candidates: ArrayList<Path> = arrayListOf()
     for (dir in root.listDirectoryEntries()) {
-      candidates.addAll(findInRootDirectory(dir))
+      findPythonInPythonRoot(dir)?.let { candidates.add(it) }
     }
 
     return candidates
@@ -75,7 +85,7 @@ class VirtualEnvReader(private val envs: Map<@NonNls String, @NonNls String> = S
   }
 
   @RequiresBackgroundThread
-  private fun getPyenvVersionsDir(): Path {
+  private fun getPyenvVersionsDir(): Directory {
     return getPyenvRootDir().resolve("versions")
   }
 
@@ -91,33 +101,33 @@ class VirtualEnvReader(private val envs: Map<@NonNls String, @NonNls String> = S
   }
 
 
+  /**
+   * [dir] is root directory of python installation or virtualenv
+   */
   @RequiresBackgroundThread
-  private fun findInRootDirectory(dir: Path): Collection<Path> {
+  private fun findPythonInPythonRoot(dir: Directory): PythonBinary? {
     if (!dir.isDirectory()) {
-      return listOf()
+      return null
     }
-
-    val candidates: ArrayList<Path> = arrayListOf()
 
     val bin = dir.resolve("bin")
     if (bin.isDirectory()) {
-      findInterpreter(bin)?.let { candidates.add(it) }
+      findInterpreter(bin)?.let { return it }
     }
 
     val scripts = dir.resolve("Scripts")
     if (scripts.isDirectory()) {
-      findInterpreter(scripts)?.let { candidates.add(it) }
+      findInterpreter(scripts)?.let { return it }
     }
 
-    if (candidates.isEmpty()) {
-      findInterpreter(dir)?.let { candidates.add(it) }
-    }
-
-    return candidates
+    return findInterpreter(dir)
   }
 
+  /**
+   * Looks for python binary among directory entries
+   */
   @RequiresBackgroundThread
-  private fun findInterpreter(dir: Path): Path? =
+  private fun findInterpreter(dir: Path): PythonBinary? =
     dir.listDirectoryEntries().firstOrNull { it.isRegularFile() && it.name.lowercase() in pythonNames }
 
   @RequiresBackgroundThread
@@ -126,9 +136,17 @@ class VirtualEnvReader(private val envs: Map<@NonNls String, @NonNls String> = S
     ?: Path.of(SystemProperties.getUserHome(), dirName)
 
 
-
   companion object {
     @JvmStatic
     val Instance = VirtualEnvReader()
+
+
+    /**
+     * We assume this is the default name of the directory that is located in user home and which contains user virtualenv Python
+     * environments.
+     *
+     * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
+     */
+    const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
   }
 }
