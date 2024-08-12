@@ -6,10 +6,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.*
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider.DefaultStorageLayout
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider.SingleEntryStorageLayout
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
+import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.PagedFileStorage
 import com.intellij.util.io.StorageLockContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -42,7 +41,7 @@ class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
   internal class DefaultStorageLayout<K, V>(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
     private val storageLockContext = newStorageLockContext()
 
-    private val forwardIndexAccessor = MapForwardIndexAccessor(InputMapExternalizer(extension))
+    private val forwardIndexAccessor = MapForwardIndexAccessor(defaultMapExternalizerFor(extension))
 
     private val forwardIndexRef: StorageRef<ForwardIndex, IOException> = StorageRef(
       "ForwardIndex[${extension.name}",
@@ -126,6 +125,16 @@ class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
       deleteIndexDirectory(extension)
     }
   }
+
+}
+
+fun <K, V> defaultMapExternalizerFor(extension: IndexExtension<K, V, *>): DataExternalizer<Map<K, V>> {
+  if (extension is ScalarIndexExtension<K>) {
+    val inputMapExternalizer = ValueLessInputMapExternalizer<K>(extension)
+    @Suppress("UNCHECKED_CAST")
+    return inputMapExternalizer as DataExternalizer<Map<K, V>>
+  }
+  return InputMapExternalizer(extension)
 }
 
 private fun deleteIndexDirectory(extension: FileBasedIndexExtension<*, *>) {
