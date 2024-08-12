@@ -89,9 +89,6 @@
     <action id="RunDashboard.AddConfiguration" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationAction">
       <add-to-group group-id="ServiceView.AddService"/>
     </action>
-    <action id="RunDashboard.AddType" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationTypeAction">
-      <add-to-group group-id="ServiceView.AddService"/>
-    </action>
     <reference id="RunDashboard.RestoreHiddenConfigurations">
       <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddType"/>
     </reference>
