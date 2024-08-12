@@ -52,15 +52,6 @@ public final class FileStatusMap implements Disposable {
     markAllFilesDirty("FileStatusMap dispose");
   }
 
-  @ApiStatus.Internal
-  public void disposeDirtyDocumentRangeStorage(@NotNull Document document) {
-    RangeMarker marker = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
-    if (marker != null) {
-      marker.dispose();
-      document.putUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, null);
-    }
-  }
-
   /**
    * @deprecated use {@link #getDirtyTextRange(Document, PsiFile, int)} instead
    */
@@ -399,8 +390,12 @@ public final class FileStatusMap implements Disposable {
   void addDocumentDirtyRange(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
     RangeMarker oldRange = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
+    if (oldRange != WHOLE_FILE_DIRTY_MARKER && oldRange != null && oldRange.isValid() && oldRange.getTextRange().containsRange(event.getOffset(), event.getOffset()+event.getNewLength())) {
+      // optimisation: the change is inside the RangeMarker which should take care of the change by itself
+      return;
+    }
     int textLength = document.getTextLength();
-    RangeMarker combined = FileStatus.combineScopes(oldRange, new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getOldLength(), textLength)), textLength, document);
+    RangeMarker combined = FileStatus.combineScopes(oldRange, new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getNewLength(), textLength)), textLength, document);
     if (combined != WHOLE_FILE_DIRTY_MARKER) {
       combined.setGreedyToRight(true);
       combined.setGreedyToLeft(true);
@@ -412,8 +407,17 @@ public final class FileStatusMap implements Disposable {
   @NotNull
   TextRange getCompositeDocumentDirtyRange(@NotNull Document document) {
     RangeMarker change = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
-    return change == null || !change.isValid() ? TextRange.EMPTY_RANGE :
-           change == WHOLE_FILE_DIRTY_MARKER ? new TextRange(0, document.getTextLength()) :
+    return change == WHOLE_FILE_DIRTY_MARKER ? new TextRange(0, document.getTextLength()) :
+           change == null || !change.isValid() ? TextRange.EMPTY_RANGE :
            change.getTextRange();
   }
+  @ApiStatus.Internal
+  public void disposeDirtyDocumentRangeStorage(@NotNull Document document) {
+    RangeMarker marker = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
+    if (marker != null) {
+      marker.dispose();
+      document.putUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, null);
+    }
+  }
+
 }
