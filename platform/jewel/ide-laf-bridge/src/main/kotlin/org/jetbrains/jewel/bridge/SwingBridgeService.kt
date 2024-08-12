@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.jewel.bridge.theme.createBridgeComponentStyling
 import org.jetbrains.jewel.bridge.theme.createBridgeThemeDefinition
@@ -20,9 +20,13 @@ import kotlin.time.Duration.Companion.milliseconds
 @Service(Level.APP)
 internal class SwingBridgeService(scope: CoroutineScope) {
     internal val currentBridgeThemeData: StateFlow<BridgeThemeData> =
-        IntelliJApplication.lookAndFeelChangedFlow(scope)
-            .mapLatest { tryGettingThemeData() }
-            .stateIn(scope, SharingStarted.Eagerly, BridgeThemeData.DEFAULT)
+        combine(
+            IntelliJApplication.lookAndFeelChangedFlow(scope),
+            MacScrollbarHelper.scrollbarVisibilityStyleFlow,
+            MacScrollbarHelper.trackClickBehaviorFlow,
+        ) { _, _, _ ->
+            tryGettingThemeData()
+        }.stateIn(scope, SharingStarted.Eagerly, BridgeThemeData.DEFAULT)
 
     private suspend fun tryGettingThemeData(): BridgeThemeData {
         var counter = 0

@@ -94,9 +94,9 @@ public fun ScrollbarVisibility.WhenScrolling.Companion.defaults(
     )
 
 public fun ScrollbarColors.Companion.macOsLight(
-    thumbBackground: Color = Color(0x00000000),
-    thumbBackgroundHovered: Color = Color(0x80000000),
-    thumbBackgroundPressed: Color = thumbBackgroundHovered,
+    thumbBackground: Color = Color(0xFFBBBBBA),
+    thumbBackgroundHovered: Color = Color(0xFF7D7D7C),
+    thumbBackgroundPressed: Color = Color(0xFF7D7D7C),
     thumbBorder: Color = Color(0x33000000),
     thumbBorderHovered: Color = Color(0x80000000),
     thumbBorderPressed: Color = thumbBorderHovered,

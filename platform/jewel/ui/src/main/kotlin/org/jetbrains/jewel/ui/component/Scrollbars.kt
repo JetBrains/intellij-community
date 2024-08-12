@@ -140,7 +140,6 @@ private fun MyScrollbar(
     // Visibility, hover and fade out
     var visible by remember { mutableStateOf(scrollState.canScrollBackward) }
     val hovered = interactionSource.collectIsHoveredAsState().value
-    var trackIsVisible by remember { mutableStateOf(false) }
 
     val animatedAlpha by animateFloatAsState(
         targetValue = if (visible) 1.0f else 0f,
@@ -148,40 +147,13 @@ private fun MyScrollbar(
     )
 
     LaunchedEffect(scrollState.isScrollInProgress, hovered, style.scrollbarVisibility) {
-        when (style.scrollbarVisibility) {
-            AlwaysVisible -> {
-                visible = true
-                trackIsVisible = true
-            }
-
-            is WhenScrolling -> {
-                when {
-                    scrollState.isScrollInProgress -> visible = true
-                    hovered -> {
-                        visible = true
-                        trackIsVisible = true
-                    }
-
-                    !hovered -> {
-                        delay(style.scrollbarVisibility.lingerDuration)
-                        trackIsVisible = false
-                        visible = false
-                    }
-
-                    !scrollState.isScrollInProgress && !hovered -> {
-                        delay(style.scrollbarVisibility.lingerDuration)
-                        visible = false
-                    }
-                }
-            }
+        if(style.scrollbarVisibility is AlwaysVisible || scrollState.isScrollInProgress || hovered) {
+            visible = true
         }
 
-        when {
-            scrollState.isScrollInProgress -> visible = true
-            hovered -> {
-                visible = true
-                trackIsVisible = true
-            }
+        if (style.scrollbarVisibility is WhenScrolling && !hovered) {
+            delay(style.scrollbarVisibility.lingerDuration)
+            visible = false
         }
     }
 
@@ -194,9 +166,9 @@ private fun MyScrollbar(
             else -> error("Unsupported scroll state type: ${scrollState::class}")
         }
 
-    val thumbWidth = if (trackIsVisible) style.metrics.thumbThicknessExpanded else style.metrics.thumbThickness
-    val trackBackground = if (trackIsVisible) style.colors.trackBackground else Color.Transparent
-    val trackPadding = if (trackIsVisible) style.metrics.trackPaddingExpanded else style.metrics.trackPadding
+    val thumbWidth = if (visible) style.metrics.thumbThicknessExpanded else style.metrics.thumbThickness
+    val trackBackground = if (visible) style.colors.trackBackground else Color.Transparent
+    val trackPadding = if (visible) style.metrics.trackPaddingExpanded else style.metrics.trackPadding
     ScrollbarImpl(
         adapter = adapter,
         modifier =
