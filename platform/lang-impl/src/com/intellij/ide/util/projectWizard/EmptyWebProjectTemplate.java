@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.module.Module;
@@ -22,10 +22,8 @@ public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
     return Generators.EMPTY_WEB_PROJECT;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls @NotNull String getName() {
     return ProjectBundle.message("item.text.empty.project");
   }
 
@@ -39,13 +37,11 @@ public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
     //ignore
   }
 
-  @NotNull
   @Override
-  public ProjectGeneratorPeer<Object> createPeer() {
+  public @NotNull ProjectGeneratorPeer<Object> createPeer() {
     return new ProjectGeneratorPeer<>() {
-      @NotNull
       @Override
-      public JComponent getComponent() {
+      public @NotNull JComponent getComponent() {
         return new JPanel();
       }
 
@@ -54,15 +50,13 @@ public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
         settingsStep.addSettingsComponent(getComponent());
       }
 
-      @NotNull
       @Override
-      public Object getSettings() {
+      public @NotNull Object getSettings() {
         return new Object();
       }
 
-      @Nullable
       @Override
-      public ValidationInfo validate() {
+      public @Nullable ValidationInfo validate() {
         return null;
       }
 

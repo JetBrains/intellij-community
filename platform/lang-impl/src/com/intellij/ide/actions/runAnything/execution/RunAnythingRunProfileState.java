@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -37,8 +37,7 @@ public final class RunAnythingRunProfileState extends CommandLineState {
     }
   }
 
-  @NotNull
-  private RunAnythingRunProfile getRunProfile() {
+  private @NotNull RunAnythingRunProfile getRunProfile() {
     RunProfile runProfile = getEnvironment().getRunProfile();
     if (!(runProfile instanceof RunAnythingRunProfile)) {
       throw new IllegalStateException("Got " + runProfile + " instead of RunAnything profile");
@@ -46,9 +45,8 @@ public final class RunAnythingRunProfileState extends CommandLineState {
     return (RunAnythingRunProfile)runProfile;
   }
 
-  @NotNull
   @Override
-  protected ProcessHandler startProcess() throws ExecutionException {
+  protected @NotNull ProcessHandler startProcess() throws ExecutionException {
     RunAnythingRunProfile runProfile = getRunProfile();
     GeneralCommandLine commandLine = runProfile.getCommandLine();
     String originalCommand = runProfile.getOriginalCommand();
@@ -91,8 +89,7 @@ public final class RunAnythingRunProfileState extends CommandLineState {
         if (console != null) console.print(message, consoleViewContentType);
       }
 
-      @Nullable
-      private ConsoleView getConsoleView() {
+      private @Nullable ConsoleView getConsoleView() {
         RunContentDescriptor contentDescriptor = RunContentManager.getInstance(getEnvironment().getProject())
           .findContentDescriptor(getEnvironment().getExecutor(), this);
 

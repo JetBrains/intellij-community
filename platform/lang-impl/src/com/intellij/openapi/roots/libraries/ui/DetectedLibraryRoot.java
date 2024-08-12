@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries.ui;
 
 import com.intellij.openapi.roots.OrderRootType;
@@ -22,13 +22,11 @@ public final class DetectedLibraryRoot {
     myTypes = types;
   }
 
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public List<LibraryRootType> getTypes() {
+  public @NotNull List<LibraryRootType> getTypes() {
     return myTypes;
   }
 }

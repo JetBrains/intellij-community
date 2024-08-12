@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IconProvider;
@@ -19,9 +19,8 @@ public final class CompoundIconProvider extends IconProvider {
   private static final IconProvider INSTANCE = new CompoundIconProvider();
   private static final Logger LOG = Logger.getInstance(CompoundIconProvider.class);
 
-  @Nullable
   @Override
-  public Icon getIcon(@NotNull PsiElement element, int flags) {
+  public @Nullable Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element.isValid()) {
       for (IconProvider provider : EXTENSION_POINT_NAME.getIterable()) {
         ProgressManager.checkCanceled();
@@ -47,8 +46,7 @@ public final class CompoundIconProvider extends IconProvider {
     return null;
   }
 
-  @Nullable
-  public static Icon findIcon(@Nullable PsiElement element, int flags) {
+  public static @Nullable Icon findIcon(@Nullable PsiElement element, int flags) {
     return element == null ? null : INSTANCE.getIcon(element, flags);
   }
 }

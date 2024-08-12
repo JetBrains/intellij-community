@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.*;
@@ -22,9 +22,8 @@ public class ParameterHintsPassFactory implements TextEditorHighlightingPassFact
     registrar.registerTextEditorHighlightingPass(this, ghl, null, false, -1);
   }
 
-  @Nullable
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     if (editor.isOneLineMode()) return null;
     long currentStamp = getCurrentModificationStamp(file);
     Long savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP);

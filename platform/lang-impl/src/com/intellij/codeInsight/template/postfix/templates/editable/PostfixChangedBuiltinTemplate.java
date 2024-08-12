@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
@@ -11,16 +11,14 @@ import java.util.Objects;
  * It's considered as builtin template: cannot be deleted via UI but can be restored to its initial state.
  */
 public final class PostfixChangedBuiltinTemplate extends PostfixTemplateWrapper {
-  @NotNull
-  private final PostfixTemplate myBuiltinTemplate;
+  private final @NotNull PostfixTemplate myBuiltinTemplate;
 
   public PostfixChangedBuiltinTemplate(@NotNull PostfixTemplate template, @NotNull PostfixTemplate builtin) {
     super(template);
     myBuiltinTemplate = builtin;
   }
 
-  @NotNull
-  public PostfixTemplate getBuiltinTemplate() {
+  public @NotNull PostfixTemplate getBuiltinTemplate() {
     return myBuiltinTemplate;
   }
 

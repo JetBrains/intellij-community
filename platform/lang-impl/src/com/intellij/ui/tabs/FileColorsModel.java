@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -35,8 +35,7 @@ public final class FileColorsModel implements Cloneable {
   private final Map<String, String> myPredefinedScopeNameToPropertyKey = new HashMap<>();
   private final Map<String, String> myPredefinedScopeNameToColor = new HashMap<>();
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   FileColorsModel(@NotNull Project project) {
     myProject = project;
@@ -178,8 +177,7 @@ public final class FileColorsModel implements Cloneable {
     add(new FileColorConfiguration(scopeName, colorName), isProjectLevel);
   }
 
-  @Nullable
-  private FileColorConfiguration findConfiguration(@NotNull String scopeName, boolean isProjectLevel) {
+  private @Nullable FileColorConfiguration findConfiguration(@NotNull String scopeName, boolean isProjectLevel) {
     List<FileColorConfiguration> configurations = isProjectLevel ? myProjectLevelConfigurations : myApplicationLevelConfigurations;
     for (FileColorConfiguration configuration : configurations) {
       if (scopeName.equals(configuration.getScopeName())) {
@@ -193,8 +191,7 @@ public final class FileColorsModel implements Cloneable {
     return findConfiguration(scopeName, true) != null;
   }
 
-  @Nullable
-  public String getColor(@NotNull PsiFile psiFile) {
+  public @Nullable String getColor(@NotNull PsiFile psiFile) {
     if (!psiFile.isValid()) {
       return null;
     }
@@ -202,8 +199,7 @@ public final class FileColorsModel implements Cloneable {
     return virtualFile == null ? null : getColor(virtualFile, psiFile.getProject());
   }
 
-  @Nullable
-  public String getColor(@NotNull VirtualFile file, Project project) {
+  public @Nullable String getColor(@NotNull VirtualFile file, Project project) {
     if (!file.isValid()) {
       return null;
     }
@@ -217,8 +213,7 @@ public final class FileColorsModel implements Cloneable {
     });
   }
 
-  @Nullable
-  public String getScopeColor(@NotNull String scopeName, Project project) {
+  public @Nullable String getScopeColor(@NotNull String scopeName, Project project) {
     FileColorConfiguration configuration = null;
     Iterator<FileColorConfiguration> iterator = getConfigurations();
     while (iterator.hasNext()) {
@@ -234,8 +229,7 @@ public final class FileColorsModel implements Cloneable {
     return null;
   }
 
-  @Nullable
-  private FileColorConfiguration findConfiguration(@NotNull final VirtualFile colored) {
+  private @Nullable FileColorConfiguration findConfiguration(final @NotNull VirtualFile colored) {
     Iterator<FileColorConfiguration> iterator = getConfigurations();
     while(iterator.hasNext()) {
       var configuration = iterator.next();
@@ -251,8 +245,7 @@ public final class FileColorsModel implements Cloneable {
     return null;
   }
 
-  @NotNull
-  private Iterator<FileColorConfiguration> getConfigurations() {
+  private @NotNull Iterator<FileColorConfiguration> getConfigurations() {
     return ContainerUtil.concatIterators(myApplicationLevelConfigurations.iterator(), myProjectLevelConfigurations.iterator());
   }
 
@@ -290,8 +283,7 @@ public final class FileColorsModel implements Cloneable {
     return new ArrayList<>(myApplicationLevelConfigurations);
   }
 
-  @NotNull
-  public List<FileColorConfiguration> getProjectLevelConfigurations() {
+  public @NotNull List<FileColorConfiguration> getProjectLevelConfigurations() {
     return new ArrayList<>(myProjectLevelConfigurations);
   }
 }

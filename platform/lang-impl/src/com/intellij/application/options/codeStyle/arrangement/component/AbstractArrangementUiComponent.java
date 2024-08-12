@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -18,7 +18,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class AbstractArrangementUiComponent implements ArrangementUiComponent {
-  @NotNull private final NotNullLazyValue<JComponent> myComponent = NotNullLazyValue.lazy(() -> {
+  private final @NotNull Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
+  private @Nullable Listener  myListener;
+  private @Nullable Rectangle myScreenBounds;
+  private final @NotNull NotNullLazyValue<JComponent> myComponent = NotNullLazyValue.lazy(() -> {
     JPanel result = new JPanel(new GridBagLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
@@ -61,11 +64,6 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
     return result;
   });
 
-  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
-
-  @Nullable private Listener  myListener;
-  @Nullable private Rectangle myScreenBounds;
-
   private boolean myEnabled = true;
 
   protected AbstractArrangementUiComponent(ArrangementSettingsToken @NotNull ... availableTokens) {
@@ -76,15 +74,13 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
     myAvailableTokens.addAll(availableTokens);
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getAvailableTokens() {
+  public @NotNull Set<ArrangementSettingsToken> getAvailableTokens() {
     return myAvailableTokens;
   }
 
-  @NotNull
   @Override
-  public final JComponent getUiComponent() {
+  public final @NotNull JComponent getUiComponent() {
     return myComponent.getValue();
   }
 
@@ -100,9 +96,8 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
     myListener = listener;
   }
 
-  @Nullable
   @Override
-  public Rectangle getScreenBounds() {
+  public @Nullable Rectangle getScreenBounds() {
     return myScreenBounds;
   }
 
@@ -116,9 +111,8 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
     myEnabled = enabled;
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseMove(@NotNull MouseEvent event) {
+  public @Nullable Rectangle onMouseMove(@NotNull MouseEvent event) {
     return null;
   }
 
@@ -126,15 +120,13 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
   public void onMouseRelease(@NotNull MouseEvent event) {
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseExited() {
+  public @Nullable Rectangle onMouseExited() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseEntered(@NotNull MouseEvent e) {
+  public @Nullable Rectangle onMouseEntered(@NotNull MouseEvent e) {
     return null;
   }
 

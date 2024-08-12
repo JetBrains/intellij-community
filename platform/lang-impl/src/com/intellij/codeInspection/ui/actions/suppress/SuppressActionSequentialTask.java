@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions.suppress;
 
 import com.intellij.codeInspection.*;
@@ -28,8 +28,8 @@ public final class SuppressActionSequentialTask implements SequentialTask {
   private static final Logger LOG = Logger.getInstance(SuppressActionSequentialTask.class);
 
   private final SuppressableInspectionTreeNode[] myNodesToSuppress;
-  @NotNull private final SuppressIntentionAction mySuppressAction;
-  @NotNull private final InspectionToolWrapper myWrapper;
+  private final @NotNull SuppressIntentionAction mySuppressAction;
+  private final @NotNull InspectionToolWrapper myWrapper;
   private int myCount = 0;
 
   public SuppressActionSequentialTask(SuppressableInspectionTreeNode @NotNull [] nodesToSuppress,
@@ -71,11 +71,11 @@ public final class SuppressActionSequentialTask implements SequentialTask {
     }
   }
 
-  private void suppress(@NotNull final PsiElement element,
-                        @Nullable final CommonProblemDescriptor descriptor,
-                        @NotNull final SuppressIntentionAction action,
+  private void suppress(final @NotNull PsiElement element,
+                        final @Nullable CommonProblemDescriptor descriptor,
+                        final @NotNull SuppressIntentionAction action,
                         @NotNull InspectionToolWrapper wrapper,
-                        @NotNull final SuppressableInspectionTreeNode node) {
+                        final @NotNull SuppressableInspectionTreeNode node) {
     if (action instanceof SuppressIntentionActionFromFix && !(descriptor instanceof ProblemDescriptor)) {
       LOG.info("local suppression fix for specific problem descriptor:  " + wrapper.getTool().getClass().getName());
     }

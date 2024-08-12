@@ -388,12 +388,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     addProblemsToView(globalSimpleTools);
   }
 
-  @NotNull
-  private Processor<VirtualFile> buildProcessor(@NotNull AnalysisScope scope,
-                                                EnabledInspectionsProvider enabledInspectionsProvider,
-                                                SearchScope searchScope,
-                                                InspectionManager inspectionManager,
-                                                Map<String, InspectionToolWrapper<?, ?>> map) {
+  private @NotNull Processor<VirtualFile> buildProcessor(@NotNull AnalysisScope scope,
+                                                         EnabledInspectionsProvider enabledInspectionsProvider,
+                                                         SearchScope searchScope,
+                                                         InspectionManager inspectionManager,
+                                                         Map<String, InspectionToolWrapper<?, ?>> map) {
     PsiManager psiManager = PsiManager.getInstance(getProject());
     boolean inspectInjectedPsi = Registry.is("idea.batch.inspections.inspect.injected.psi", true);
 
@@ -478,9 +477,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                                                                         @NotNull List<? extends Tools> globalSimpleTools,
                                                                         @NotNull Project project) {
     return new EnabledInspectionsProvider() {
-      @NotNull
       @Override
-      public ToolWrappers getEnabledTools(@Nullable PsiFile psiFile, boolean includeDoNotShow) {
+      public @NotNull ToolWrappers getEnabledTools(@Nullable PsiFile psiFile, boolean includeDoNotShow) {
         return new ToolWrappers(
           localTools.stream()
             .map(tool -> tool.getEnabledTool(psiFile, includeDoNotShow))

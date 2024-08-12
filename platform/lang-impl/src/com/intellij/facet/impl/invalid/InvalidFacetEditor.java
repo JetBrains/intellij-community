@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.ui.FacetEditorContext;
@@ -26,9 +26,8 @@ public final class InvalidFacetEditor extends FacetEditorTab {
     myInvalidFacetManager = InvalidFacetManager.getInstance(context.getProject());
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return "";
   }
 
@@ -36,9 +35,8 @@ public final class InvalidFacetEditor extends FacetEditorTab {
     return myIgnoreCheckBox;
   }
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     myIconLabel.setIcon(AllIcons.General.BalloonError);
     myDescriptionLabel.setText(myErrorMessage);
     return myMainPanel;

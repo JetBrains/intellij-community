@@ -83,9 +83,8 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     }
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MoveMultipleElementsViewDescriptor(PsiUtilCore.toPsiFileArray(getPsiFiles()), getTargetName());
   }
 
@@ -124,7 +123,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   }
 
   @Override
-  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance()
       .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> collectConflicts(conflicts, refUsages)), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
@@ -227,23 +226,20 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     return false;
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return "refactoring.move";
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @Nullable RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElements(myDirectories);
     return data;
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myTargetDirectory);
     return data;
@@ -286,14 +282,12 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     }
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return RefactoringBundle.message("moving.directories.command");
   }
 
-  @NotNull
-  public TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
+  public @NotNull TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
     return new TargetDirectoryWrapper(myTargetDirectory);
   }
 
@@ -334,8 +328,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       return myTargetDirectory;
     }
 
-    @Nullable
-    public PsiDirectory getTargetDirectory() {
+    public @Nullable PsiDirectory getTargetDirectory() {
       return myTargetDirectory;
     }
 
@@ -355,16 +348,14 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       }
     }
 
-    @NotNull
-    public PsiDirectory getRootDirectory() {
+    public @NotNull PsiDirectory getRootDirectory() {
       if (myTargetDirectory == null) {
         return myParentDirectory.getRootDirectory();
       }
       return myTargetDirectory;
     }
 
-    @NotNull
-    public String getRelativePathFromRoot() {
+    public @NotNull String getRelativePathFromRoot() {
       if (myTargetDirectory != null) {
         return "";
       }

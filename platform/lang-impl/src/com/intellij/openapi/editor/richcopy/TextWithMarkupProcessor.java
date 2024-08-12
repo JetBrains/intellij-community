@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
@@ -46,9 +46,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
 
   private List<RawTextWithMarkup> myResult;
 
-  @NotNull
   @Override
-  public List<RawTextWithMarkup> collectTransferableData(@NotNull PsiFile file, @NotNull Editor editor, int @NotNull [] startOffsets, int @NotNull [] endOffsets) {
+  public @NotNull List<RawTextWithMarkup> collectTransferableData(@NotNull PsiFile file, @NotNull Editor editor, int @NotNull [] startOffsets, int @NotNull [] endOffsets) {
     if (!RichCopySettings.getInstance().isEnabled()) {
       return Collections.emptyList();
     }
@@ -218,23 +217,21 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     return Pair.create(startOffsetToUse, maximumCommonIndent);
   }
 
-  final static class RawTextSetter implements CopyPastePreProcessor {
+  static final class RawTextSetter implements CopyPastePreProcessor {
     private final TextWithMarkupProcessor myProcessor;
 
     RawTextSetter() {
       myProcessor = CopyPastePostProcessor.EP_NAME.findExtensionOrFail(TextWithMarkupProcessor.class);
     }
 
-    @Nullable
     @Override
-    public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+    public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
       myProcessor.setRawText(text);
       return null;
     }
 
-    @NotNull
     @Override
-    public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+    public @NotNull String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
       return text;
     }
 

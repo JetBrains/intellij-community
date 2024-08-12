@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.offlineViewer;
 
@@ -23,9 +23,8 @@ public final class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     myOfflineDescriptor = offlineDescriptor;
   }
 
-  @NotNull
   @Override
-  protected String calculatePresentableName() {
+  protected @NotNull String calculatePresentableName() {
     String presentableName = super.calculatePresentableName();
     return presentableName.isEmpty() && getDescriptor() == null
            ? ProblemDescriptorUtil.unescapeTags(StringUtil.notNullize(myOfflineDescriptor.getDescription())).trim()

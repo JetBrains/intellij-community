@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
@@ -96,8 +96,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   private final Map<String,TreeState> myReadTreeState = new HashMap<>();
   private final AtomicBoolean myTreeStateRestored = new AtomicBoolean();
   private String mySubId;
-  @NonNls private static final String ELEMENT_SUB_PANE = "subPane";
-  @NonNls private static final String ATTRIBUTE_SUB_ID = "subId";
+  private static final @NonNls String ELEMENT_SUB_PANE = "subPane";
+  private static final @NonNls String ATTRIBUTE_SUB_ID = "subId";
 
   private DnDTarget myDropTarget;
   private DnDSource myDragSource;
@@ -189,18 +189,15 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
-  @NotNull
-  public @NlsSafe String getPresentableSubIdName(@NotNull @NonNls String subId) {
+  public @NotNull @NlsSafe String getPresentableSubIdName(@NotNull @NonNls String subId) {
     throw new IllegalStateException("should not call");
   }
 
-  @NotNull
-  public Icon getPresentableSubIdIcon(@NotNull String subId) {
+  public @NotNull Icon getPresentableSubIdIcon(@NotNull String subId) {
     return getIcon();
   }
 
-  @NotNull
-  public abstract JComponent createComponent();
+  public abstract @NotNull JComponent createComponent();
 
   public JComponent getComponentToFocus() {
     return myTree;
@@ -220,8 +217,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     myTreeStructure = null;
   }
 
-  @NotNull
-  public abstract ActionCallback updateFromRoot(boolean restoreExpandedPaths);
+  public abstract @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths);
 
   public void updateFrom(Object element, boolean forceResort, boolean updateStructure) {
     if (element instanceof PsiElement) {
@@ -356,8 +352,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   // used for sorting tabs in the tabbed pane
   public abstract int getWeight();
 
-  @NotNull
-  public abstract SelectInTarget createSelectInTarget();
+  public abstract @NotNull SelectInTarget createSelectInTarget();
 
   /** @see TreeUtil#getLastUserObject */
   public final @Nullable TreePath getSelectedPath() {
@@ -501,8 +496,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return ContainerUtil.getFirstItem(getElementsFromNode(node));
   }
 
-  @NotNull
-  public List<PsiElement> getElementsFromNode(@Nullable Object node) {
+  public @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object value = getValueFromNode(node);
     JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile || value instanceof PsiAwareObject ? JBIterable.of(value) :
                        value instanceof Object[] ? JBIterable.of((Object[])value) :
@@ -519,8 +513,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       .toList();
   }
 
-  @Nullable
-  protected Module getNodeModule(@Nullable final Object element) {
+  protected @Nullable Module getNodeModule(final @Nullable Object element) {
     if (element instanceof PsiElement psiElement) {
       return ModuleUtilCore.findModuleForPsiElement(psiElement);
     }
@@ -546,13 +539,11 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return ArrayUtil.toObjectArray(list);
   }
 
-  @Nullable
-  public Object getValueFromNode(@Nullable Object node) {
+  public @Nullable Object getValueFromNode(@Nullable Object node) {
     return extractValueFromNode(node);
   }
 
-  @Nullable
-  public static Object extractValueFromNode(@Nullable Object node) {
+  public static @Nullable Object extractValueFromNode(@Nullable Object node) {
     Object userObject = TreeUtil.getUserObject(node);
     Object element = null;
     if (userObject instanceof AbstractTreeNode<?> descriptor) {
@@ -820,15 +811,13 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myDropTarget = new ProjectViewDropTarget(myTree, myProject) {
-        @Nullable
         @Override
-        protected PsiElement getPsiElement(@NotNull TreePath path) {
+        protected @Nullable PsiElement getPsiElement(@NotNull TreePath path) {
           return getFirstElementFromNode(path.getLastPathComponent());
         }
 
-        @Nullable
         @Override
-        protected Module getModule(@NotNull PsiElement element) {
+        protected @Nullable Module getModule(@NotNull PsiElement element) {
           return getNodeModule(element);
         }
 
@@ -919,8 +908,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     };
   }
 
-  @NotNull
-   private static Color getFileForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
+  private static @NotNull Color getFileForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
     FileEditorManager manager = FileEditorManager.getInstance(project);
     if (manager instanceof FileEditorManagerImpl) {
       return ((FileEditorManagerImpl)manager).getFileColor(file);
@@ -976,9 +964,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       });
     }
 
-    @Nullable
     @Override
-    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
+    public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
       try {
         ProjectViewRendererKt.setGrayedTextPaintingEnabled(false);
         final TreePath[] paths = getSelectionPaths();
@@ -993,8 +980,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       }
     }
 
-    @NotNull
-    private static ArrayList<DragImageRow> createDragImageRows(@NotNull JTree tree, @Nullable TreePath @NotNull [] paths) {
+    private static @NotNull ArrayList<DragImageRow> createDragImageRows(@NotNull JTree tree, @Nullable TreePath @NotNull [] paths) {
       var count = 0;
       int maxItemsToShow = paths.length < 20 ? paths.length : 10;
       var dragImageRows = new ArrayList<DragImageRow>();
@@ -1009,8 +995,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       return dragImageRows;
     }
 
-    @NotNull
-    private static BufferedImage paintDragImageRows(@NotNull JTree tree, @NotNull ArrayList<DragImageRow> dragImageRows) {
+    private static @NotNull BufferedImage paintDragImageRows(@NotNull JTree tree, @NotNull ArrayList<DragImageRow> dragImageRows) {
       var totalHeight = 0;
       var maxWidth = 0;
       for (var row : dragImageRows) {
@@ -1101,9 +1086,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     }
   }
 
-  @NotNull
   @Override
-  public ActionCallback getReady(@NotNull Object requestor) {
+  public @NotNull ActionCallback getReady(@NotNull Object requestor) {
     return ActionCallback.DONE;
   }
 
@@ -1112,8 +1096,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
    */
   @TestOnly
   @Deprecated(forRemoval = true)
-  @NotNull
-  public Promise<TreePath> promisePathToElement(@NotNull Object element) {
+  public @NotNull Promise<TreePath> promisePathToElement(@NotNull Object element) {
     TreeVisitor visitor = createVisitor(element);
     if (visitor == null || myTree == null) return Promises.rejectedPromise();
     return TreeUtil.promiseVisit(myTree, visitor);
@@ -1152,13 +1135,11 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     }
   };
 
-  @NotNull
-  static List<TreeVisitor> createVisitors(Object @NotNull ... objects) {
+  static @NotNull List<TreeVisitor> createVisitors(Object @NotNull ... objects) {
     return StreamEx.of(objects).map(AbstractProjectViewPane::createVisitor).nonNull().toImmutableList();
   }
 
-  @Nullable
-  public static TreeVisitor createVisitor(@NotNull Object object) {
+  public static @Nullable TreeVisitor createVisitor(@NotNull Object object) {
     if (object instanceof AbstractTreeNode<?> node) {
       if (node.getEqualityObject() instanceof SmartPsiElementPointer<?> ptr) {
         return new ProjectViewNodeVisitor(ptr);
@@ -1174,23 +1155,19 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return null;
   }
 
-  @NotNull
-  public static TreeVisitor createVisitor(@NotNull VirtualFile file) {
+  public static @NotNull TreeVisitor createVisitor(@NotNull VirtualFile file) {
     return createVisitor(null, file);
   }
 
-  @Nullable
-  public static TreeVisitor createVisitor(@NotNull PsiElement element) {
+  public static @Nullable TreeVisitor createVisitor(@NotNull PsiElement element) {
     return createVisitor(element, null);
   }
 
-  @Nullable
-  public static TreeVisitor createVisitor(@Nullable PsiElement element, @Nullable VirtualFile file) {
+  public static @Nullable TreeVisitor createVisitor(@Nullable PsiElement element, @Nullable VirtualFile file) {
     return createVisitor(element, file, null);
   }
 
-  @Nullable
-  static TreeVisitor createVisitor(@Nullable PsiElement element, @Nullable VirtualFile file, @Nullable List<? super TreePath> collector) {
+  static @Nullable TreeVisitor createVisitor(@Nullable PsiElement element, @Nullable VirtualFile file, @Nullable List<? super TreePath> collector) {
     Predicate<? super TreePath> predicate = collector == null ? null : path -> {
       collector.add(path);
       return false;
@@ -1201,9 +1178,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return null;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public static TreeVisitor createVisitorByPointer(@Nullable SmartPsiElementPointer<PsiElement> pointer, @Nullable VirtualFile file) {
+  public static @Nullable TreeVisitor createVisitorByPointer(@Nullable SmartPsiElementPointer<PsiElement> pointer, @Nullable VirtualFile file) {
     if (pointer != null) return new ProjectViewNodeVisitor(pointer, file, null);
     if (file != null) return new ProjectViewFileVisitor(file, null);
     LOG.warn("cannot create visitor without element and/or file");

@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class HighlightUsagesHandler extends HighlightHandlerBase {
-  public static void invoke(@NotNull final Project project, @NotNull final Editor editor, @Nullable PsiFile file) {
+  public static void invoke(final @NotNull Project project, final @NotNull Editor editor, @Nullable PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -90,8 +90,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     selectionModel.removeSelection();
   }
 
-  @Nullable
-  public static <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor, @NotNull PsiFile file) {
+  public static @Nullable <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor, @NotNull PsiFile file) {
     ThreadingAssertions.assertEventDispatchThread();
     ProperTextRange visibleRange = editor.calculateVisibleRange();
     return createCustomHandler(editor, file, visibleRange);
@@ -100,8 +99,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
   /**
    * @see HighlightUsagesHandlerFactory#createHighlightUsagesHandler(Editor, PsiFile, ProperTextRange)
    */
-  @Nullable
-  public static <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor,
+  public static @Nullable <T extends PsiElement> HighlightUsagesHandlerBase<T> createCustomHandler(@NotNull Editor editor,
                                                                                          @NotNull PsiFile file,
                                                                                          @NotNull ProperTextRange visibleRange) {
     DumbService dumbService = DumbService.getInstance(file.getProject());
@@ -146,8 +144,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
 
   public static final class DoHighlightRunnable implements Runnable {
     private final List<? extends PsiReference> myRefs;
-    @NotNull
-    private final Project myProject;
+    private final @NotNull Project myProject;
     private final PsiElement myTarget;
     private final Editor myEditor;
     private final PsiFile myFile;
@@ -228,8 +225,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
   /**
    * @return range (in the host file) to be highlighted by {@link com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass} for this element
    */
-  @Nullable
-  public static TextRange getNameIdentifierRange(@NotNull PsiFile file, @NotNull PsiElement element) {
+  public static @Nullable TextRange getNameIdentifierRange(@NotNull PsiFile file, @NotNull PsiElement element) {
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(file.getProject());
     Pair<PsiElement, TextRange> pair = getNameIdentifierRangeInCurrentRoot(file, element);
     if (pair == null) return null;
@@ -240,8 +236,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
    * @return range (in the current containing file) to be highlighted by {@link com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass} for this element,
    * and the context element for this range
    */
-  @Nullable
-  public static Pair<PsiElement, TextRange> getNameIdentifierRangeInCurrentRoot(@NotNull PsiFile file, @NotNull PsiElement element) {
+  public static @Nullable Pair<PsiElement, TextRange> getNameIdentifierRangeInCurrentRoot(@NotNull PsiFile file, @NotNull PsiElement element) {
     if (element instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)element).getTarget();
       if (target instanceof PsiDeclaredTarget declaredTarget) {
@@ -371,8 +366,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   // NB don't deprecate this method while PsiSymbolReference is @Experimental
-  @NotNull
-  public static List<TextRange> collectRangesToHighlight(@NotNull PsiReference ref, @NotNull List<TextRange> result) {
+  public static @NotNull List<TextRange> collectRangesToHighlight(@NotNull PsiReference ref, @NotNull List<TextRange> result) {
     collectHighlightRanges(ref, result);
     return result;
   }
@@ -391,8 +385,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     result.add(InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range));
   }
 
-  @NotNull
-  private static TextRange safeCut(@NotNull TextRange range, @NotNull TextRange relative) {
+  private static @NotNull TextRange safeCut(@NotNull TextRange range, @NotNull TextRange relative) {
     int start = Math.min(range.getEndOffset(), range.getStartOffset() + relative.getStartOffset());
     int end = Math.min(range.getEndOffset(), range.getStartOffset() + relative.getEndOffset());
     return new TextRange(start, end);
@@ -416,13 +409,11 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
   }
 
-  @NotNull
-  private static String getElementName(@NotNull PsiElement element) {
+  private static @NotNull String getElementName(@NotNull PsiElement element) {
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
 
-  @NotNull
-  public static String getShortcutText() {
+  public static @NotNull String getShortcutText() {
     final Shortcut[] shortcuts = ActionManager.getInstance()
       .getAction(IdeActions.ACTION_HIGHLIGHT_USAGES_IN_FILE)
       .getShortcutSet()

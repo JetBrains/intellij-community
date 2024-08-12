@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -55,7 +55,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     setValueAt(aValue, rowIndex, columnIndex, false);
   }
 
-  protected static abstract class ColumnInfoBase<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>, Aspect>
+  protected abstract static class ColumnInfoBase<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>, Aspect>
     extends ColumnInfo<TableItem, Aspect> {
     private TableCellRenderer myRenderer;
     private TableCellEditor myEditor;

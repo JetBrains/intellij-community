@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
@@ -66,11 +66,11 @@ public final class EditScopesDialog extends SettingsDialog {
   }
 
 
-  public static EditScopesDialog showDialog(final Project project, @Nullable final String scopeToSelect) {
+  public static EditScopesDialog showDialog(final Project project, final @Nullable String scopeToSelect) {
     return showDialog(project, scopeToSelect, false);
   }
 
-  public static EditScopesDialog showDialog(final Project project, @Nullable final String scopeToSelect, final boolean checkShared) {
+  public static EditScopesDialog showDialog(final Project project, final @Nullable String scopeToSelect, final boolean checkShared) {
     final ScopeChooserConfigurable configurable = new ScopeChooserConfigurable(project);
     final EditScopesDialog dialog = new EditScopesDialog(project, configurable, checkShared);
     if (scopeToSelect != null) {

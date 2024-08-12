@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -14,12 +14,11 @@ import java.util.List;
 
 public final class DefaultArrangementUiComponentFactory implements ArrangementUiComponent.Factory {
 
-  @Nullable
   @Override
-  public ArrangementUiComponent build(@NotNull StdArrangementTokenUiRole role,
-                                      @NotNull List<? extends ArrangementSettingsToken> tokens,
-                                      @NotNull ArrangementColorsProvider colorsProvider,
-                                      @NotNull ArrangementStandardSettingsManager settingsManager)
+  public @Nullable ArrangementUiComponent build(@NotNull StdArrangementTokenUiRole role,
+                                                @NotNull List<? extends ArrangementSettingsToken> tokens,
+                                                @NotNull ArrangementColorsProvider colorsProvider,
+                                                @NotNull ArrangementStandardSettingsManager settingsManager)
   {
     switch (role) {
       case CHECKBOX -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -19,29 +19,25 @@ public final class TreeFileChooserFactoryImpl extends TreeFileChooserFactory {
   }
 
   @Override
-  @NotNull
-  public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter) {
+  public @NotNull TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter) {
     return createFileChooser(title, initialFile, fileType, filter, false);
   }
 
   @Override
-  @NotNull
-  public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter,
-                                           boolean disableStructureProviders) {
+  public @NotNull TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter,
+                                                    boolean disableStructureProviders) {
     return createFileChooser(title, initialFile, fileType, filter, disableStructureProviders, false);
   }
 
   @Override
-  @NotNull
-  public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter,
-                                           boolean disableStructureProviders,
-                                           boolean showLibraryContents) {
+  public @NotNull TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType, @Nullable TreeFileChooser.PsiFileFilter filter,
+                                                    boolean disableStructureProviders,
+                                                    boolean showLibraryContents) {
     return createFileChooser(title, initialFile, fileType, filter, null, disableStructureProviders, showLibraryContents);
   }
 
   @Override
-  @NotNull
-  public TreeFileChooser createFileChooser(@NotNull String title,
+  public @NotNull TreeFileChooser createFileChooser(@NotNull String title,
                                                     @Nullable PsiFile initialFile,
                                                     @Nullable FileType fileType,
                                                     TreeFileChooser.@Nullable PsiFileFilter filter,

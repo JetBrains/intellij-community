@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -14,7 +14,7 @@ public final class ChooseByNameFactoryImpl extends ChooseByNameFactory {
   }
 
   @Override
-  public ChooseByNamePopup createChooseByNamePopupComponent(@NotNull final ChooseByNameModel model) {
+  public ChooseByNamePopup createChooseByNamePopupComponent(final @NotNull ChooseByNameModel model) {
     return ChooseByNamePopup.createPopup(myProject, model, GotoActionBase.getPsiContext(myProject));  
   }
 }

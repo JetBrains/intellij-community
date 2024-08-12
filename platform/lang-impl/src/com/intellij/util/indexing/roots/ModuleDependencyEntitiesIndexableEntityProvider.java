@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
@@ -48,8 +48,7 @@ public final class ModuleDependencyEntitiesIndexableEntityProvider implements In
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static Collection<? extends IndexableIteratorBuilder> createIteratorBuildersForDependency(@NotNull ModuleDependencyItem dependency) {
+  private static @NotNull Collection<? extends IndexableIteratorBuilder> createIteratorBuildersForDependency(@NotNull ModuleDependencyItem dependency) {
     if (dependency instanceof SdkDependency) {
       return IndexableIteratorBuilders.INSTANCE.forSdk(((SdkDependency)dependency).getSdk().getName(),
                                                        ((SdkDependency)dependency).getSdk().getType());

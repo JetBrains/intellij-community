@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.WriteAction;
@@ -24,9 +24,9 @@ import java.util.function.Supplier;
 final class UnknownMissingSdkFix implements UnknownSdkFix {
   private static final Logger LOG = Logger.getInstance(UnknownMissingSdkFix.class);
 
-  @Nullable private final Project myProject;
-  @NotNull private final UnknownSdk mySdk;
-  @Nullable private final UnknownSdkFixAction myAction;
+  private final @Nullable Project myProject;
+  private final @NotNull UnknownSdk mySdk;
+  private final @Nullable UnknownSdkFixAction myAction;
 
   UnknownMissingSdkFix(@Nullable Project project,
                        @NotNull UnknownSdk unknownSdk,
@@ -100,9 +100,8 @@ final class UnknownMissingSdkFix implements UnknownSdkFix {
     return "SdkFixInfo {" + mySdk + ", " + myAction + "}";
   }
 
-  @NotNull
-  static Sdk createNewSdk(@NotNull UnknownSdk unknownSdk,
-                          @NotNull Supplier<@NotNull String> suggestedSdkName) {
+  static @NotNull Sdk createNewSdk(@NotNull UnknownSdk unknownSdk,
+                                   @NotNull Supplier<@NotNull String> suggestedSdkName) {
     var actualSdkName = unknownSdk.getSdkName();
     if (actualSdkName == null) {
       actualSdkName = suggestedSdkName.get();

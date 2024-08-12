@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy.view;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,10 +17,9 @@ public abstract class AbstractSyntaxAwareReader extends Reader {
   private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareReader.class);
 
   protected String myRawText;
-  @NotNull
-  protected final SyntaxInfo mySyntaxInfo;
+  protected final @NotNull SyntaxInfo mySyntaxInfo;
 
-  @Nullable private transient Reader myDelegate;
+  private transient @Nullable Reader myDelegate;
 
   public AbstractSyntaxAwareReader(@NotNull SyntaxInfo syntaxInfo) {
     mySyntaxInfo = syntaxInfo;
@@ -59,8 +44,7 @@ public abstract class AbstractSyntaxAwareReader extends Reader {
     myRawText = rawText;
   }
   
-  @NotNull
-  private Reader getDelegate() {
+  private @NotNull Reader getDelegate() {
     if (myDelegate != null) {
       return myDelegate;
     }
@@ -69,8 +53,7 @@ public abstract class AbstractSyntaxAwareReader extends Reader {
     return myDelegate;
   }
 
-  @NotNull
-  public final CharSequence getBuffer() {
+  public final @NotNull CharSequence getBuffer() {
     final StringBuilder buffer = new StringBuilder();
     try {
       build(buffer, Registry.intValue("editor.richcopy.max.size.megabytes") * FileUtilRt.MEGABYTE);

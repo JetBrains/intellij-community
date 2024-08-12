@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
@@ -26,28 +26,25 @@ import java.awt.*;
 import static com.intellij.ui.SimpleTextAttributes.*;
 
 public class RunAnythingItemBase extends RunAnythingItem {
-  @NotNull private final @NlsSafe String myCommand;
-  @Nullable protected final Icon myIcon;
+  private final @NotNull @NlsSafe String myCommand;
+  protected final @Nullable Icon myIcon;
 
   public RunAnythingItemBase(@NotNull @NlsSafe String command, @Nullable Icon icon) {
     myCommand = command;
     myIcon = icon;
   }
 
-  @NotNull
   @Override
-  public String getCommand() {
+  public @NotNull String getCommand() {
     return myCommand;
   }
 
-  @Nullable
-  public @Nls String getDescription() {
+  public @Nullable @Nls String getDescription() {
     return null;
   }
 
-  @NotNull
   @Override
-  public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
+  public @NotNull Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
     JPanel component = new JPanel(new BorderLayout());
     Color background = UIUtil.getListBackground(isSelected, true);
     component.setBackground(background);
@@ -116,8 +113,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
     }
   }
 
-  @NotNull
-  private static SimpleTextAttributes getDescriptionAttributes(boolean isSelected) {
+  private static @NotNull SimpleTextAttributes getDescriptionAttributes(boolean isSelected) {
     return new SimpleTextAttributes(STYLE_PLAIN, isSelected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
   }
 }

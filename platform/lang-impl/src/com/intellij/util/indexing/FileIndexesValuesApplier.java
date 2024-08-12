@@ -40,8 +40,7 @@ public final class FileIndexesValuesApplier {
   private final boolean removeDataFromIndicesForFile;
   private final boolean shouldMarkFileAsIndexed;
   private final long fileStatusLockObject;
-  @NotNull
-  public final FileIndexingStatistics stats;
+  public final @NotNull FileIndexingStatistics stats;
 
   // Use getApplicationMode() instead
   private final ApplicationMode _initialApplicationMode;
@@ -72,8 +71,7 @@ public final class FileIndexesValuesApplier {
     stats = createStats(file, appliers, removers, fileType, logEmptyProvidedIndexes);
   }
 
-  @NotNull
-  public ApplicationMode getApplicationMode() {
+  public @NotNull ApplicationMode getApplicationMode() {
     if (wasForcedToApplyOnTheSameThread && _initialApplicationMode == ApplicationMode.AnotherThread) {
       //it's usually too late to try to apply under the same read lock
       return ApplicationMode.SameThreadOutsideReadLock;

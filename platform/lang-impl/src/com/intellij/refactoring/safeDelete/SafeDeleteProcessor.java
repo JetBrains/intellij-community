@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -62,8 +62,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new SafeDeleteUsageViewDescriptor(myElements);
   }
 
@@ -409,9 +408,8 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private @Command String myCachedCommandName;
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     if (myCachedCommandName == null) {
       myCachedCommandName = calcCommandName();
     }

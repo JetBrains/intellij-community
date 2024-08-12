@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
@@ -22,8 +22,7 @@ import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public abstract class RunAnythingSearchListModel extends CollectionListModel<Object> {
-  @NotNull
-  protected abstract List<RunAnythingGroup> getGroups();
+  protected abstract @NotNull List<RunAnythingGroup> getGroups();
 
   @Nullable
   RunAnythingGroup findGroupByMoreIndex(int index) {
@@ -74,16 +73,15 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
   }
 
   static final class RunAnythingMainListModel extends RunAnythingSearchListModel {
-    @NotNull private final List<RunAnythingGroup> myGroups = new ArrayList<>();
+    private final @NotNull List<RunAnythingGroup> myGroups = new ArrayList<>();
 
     RunAnythingMainListModel() {
       myGroups.add(new RunAnythingRecentGroup());
       myGroups.addAll(RunAnythingCompletionGroup.createCompletionGroups());
     }
 
-    @NotNull
     @Override
-    public List<RunAnythingGroup> getGroups() {
+    public @NotNull List<RunAnythingGroup> getGroups() {
       return myGroups;
     }
   }
@@ -102,9 +100,8 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
       RunAnythingHelpGroup.EP_NAME.getExtensionList());
     }
 
-    @NotNull
     @Override
-    protected List<RunAnythingGroup> getGroups() {
+    protected @NotNull List<RunAnythingGroup> getGroups() {
       return myGroups;
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.openapi.project.Project;
@@ -19,8 +19,7 @@ public final class SliceRootNode extends SliceNode {
     myRootUsage = usage;
   }
 
-  @NotNull
-  private static SliceUsage createContainingFileNode(@NotNull Project project, @NotNull SliceUsage usage) {
+  private static @NotNull SliceUsage createContainingFileNode(@NotNull Project project, @NotNull SliceUsage usage) {
     PsiElement element = usage.getElement();
     PsiFile file;
     if (element == null) {
@@ -38,9 +37,8 @@ public final class SliceRootNode extends SliceNode {
     myCachedChildren = Collections.singletonList(node);
   }
 
-  @NotNull
   @Override
-  public SliceRootNode copy() {
+  public @NotNull SliceRootNode copy() {
     SliceUsage newUsage = Objects.requireNonNull(getValue()).copy();
     SliceRootNode newNode = new SliceRootNode(getProject(), new DuplicateMap(), newUsage);
     newNode.dupNodeCalculated = dupNodeCalculated;
@@ -49,8 +47,7 @@ public final class SliceRootNode extends SliceNode {
   }
 
   @Override
-  @NotNull
-  public Collection<SliceNode> getChildren() {
+  public @NotNull Collection<SliceNode> getChildren() {
     if (myCachedChildren == null) {
       switchToAllLeavesTogether(myRootUsage);
     }
@@ -69,8 +66,7 @@ public final class SliceRootNode extends SliceNode {
                                     boolean hasFocus) {
   }
 
-  @NotNull
-  public SliceUsage getRootUsage() {
+  public @NotNull SliceUsage getRootUsage() {
     return myRootUsage;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -39,7 +39,7 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
   static final @NonNls String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
   static final @NonNls String TEMPLATE_META_XML = "template-meta.xml";
   static final String META_TEMPLATE_DESCRIPTOR_PATH = Project.DIRECTORY_STORE_FOLDER + "/"+TEMPLATE_META_XML;
-  public static @NonNls final String UNENCODED_ATTRIBUTE = "unencoded";
+  public static final @NonNls String UNENCODED_ATTRIBUTE = "unencoded";
   static final @NonNls String ROOT_FILE_NAME = "root";
 
   private final URL myArchivePath;
@@ -145,8 +145,7 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
     return myEscaped;
   }
 
-  @Nullable @NlsSafe
-  private String readEntry(@NotNull final String endsWith) {
+  private @Nullable @NlsSafe String readEntry(final @NotNull String endsWith) {
     try {
       return processStream(new StreamProcessor<>() {
         @Override
@@ -166,8 +165,7 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
     }
   }
 
-  @NotNull
-  private static ModuleType<?> computeModuleType(LocalArchivedTemplate template) {
+  private static @NotNull ModuleType<?> computeModuleType(LocalArchivedTemplate template) {
     String iml = template.readEntry(".iml");
     if (iml == null) return ModuleType.EMPTY;
     try {
@@ -255,8 +253,7 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
       element.addContent(rootsElement);
     }
 
-    @Nullable
-    static List<RootDescription> readRoots(Element element) {
+    static @Nullable List<RootDescription> readRoots(Element element) {
       Element modulesElement = element.getChild(ROOTS_ELEMENT);
       if (modulesElement != null) {
         return read(modulesElement);

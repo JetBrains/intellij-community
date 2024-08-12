@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.application.PathManager;
@@ -105,13 +105,11 @@ final class VelocityWrapper {
     }
   }
 
-  @NotNull
-  private static RuntimeInstance getOrThrow() {
+  private static @NotNull RuntimeInstance getOrThrow() {
     return Objects.requireNonNull(ri, "Velocity not initialized");
   }
 
-  @NotNull
-  static SimpleNode parse(@NotNull Reader reader) throws ParseException {
+  static @NotNull SimpleNode parse(@NotNull Reader reader) throws ParseException {
     return getOrThrow().parse(reader, new Template());
   }
 

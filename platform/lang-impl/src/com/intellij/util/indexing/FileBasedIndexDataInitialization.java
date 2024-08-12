@@ -42,17 +42,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
 
   private boolean myCurrentVersionCorrupted;
 
-  @NotNull
-  private final FileBasedIndexImpl myFileBasedIndex;
-  @NotNull
-  private final RegisteredIndexes myRegisteredIndexes;
-  @NotNull
-  private final IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
+  private final @NotNull FileBasedIndexImpl myFileBasedIndex;
+  private final @NotNull RegisteredIndexes myRegisteredIndexes;
+  private final @NotNull IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
   private volatile OrphanDirtyFilesQueue myOrphanDirtyFilesQueue;
-  @NotNull
-  private final IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
-  @NotNull
-  private final IndexConfiguration myState = new IndexConfiguration();
+  private final @NotNull IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
+  private final @NotNull IndexConfiguration myState = new IndexConfiguration();
 
   FileBasedIndexDataInitialization(@NotNull FileBasedIndexImpl index, @NotNull RegisteredIndexes registeredIndexes) {
     super("file based index");
@@ -220,9 +215,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
       .notify(null);
   }
 
-  @NotNull
   @Override
-  protected String getInitializationFinishedMessage(@NotNull FileBasedIndexDataInitializationResult initializationResult) {
+  protected @NotNull String getInitializationFinishedMessage(@NotNull FileBasedIndexDataInitializationResult initializationResult) {
     return "Initialized indexes: " + initializationResult.myState.getIndexIDs() + ".";
   }
 

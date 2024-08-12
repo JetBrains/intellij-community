@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.CommonBundle;
@@ -80,8 +80,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected static final Key<Boolean> ONLY_DIRECTORIES = KeyWithDefaultValue.create("ONLY_DIRECTORIES", Boolean.FALSE);
   protected static final Key<Boolean> SORT_VALUES = KeyWithDefaultValue.create("SORT_VALUES", Boolean.TRUE);
 
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
   protected final PerFileMappingsEx<T> myMappings;
 
   /** @noinspection FieldCanBeLocal */
@@ -109,13 +108,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getDisplayName();
   }
 
-  @Nullable
-  protected abstract <S> Object getParameter(@NotNull Key<S> key);
+  protected abstract @Nullable <S> Object getParameter(@NotNull Key<S> key);
 
   protected @NotNull List<Mapping<T>> getDefaultMappings() {
     return ContainerUtil.emptyList();
@@ -144,9 +141,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return s;
   }
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     ThreadingAssertions.assertEventDispatchThread();
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
     myPanel = new JPanel(new BorderLayout());
@@ -189,14 +185,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return myPanel;
   }
 
-  @NlsContexts.Tooltip
-  @Nullable
-  protected String getToolTipFor(@Nullable T value) {
+  protected @NlsContexts.Tooltip @Nullable String getToolTipFor(@Nullable T value) {
     return null;
   }
 
-  @Nullable
-  protected JComponent createDefaultMappingComponent() {
+  protected @Nullable JComponent createDefaultMappingComponent() {
     myDefaultProps.addAll(getDefaultMappings());
     if (myMappings instanceof LanguagePerFileMappings && param(ADD_PROJECT_MAPPING)) {
      myDefaultProps.add(myProjectMapping);
@@ -302,8 +295,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
   }
 
-  @Nullable
-  public T getNewMapping(@Nullable VirtualFile file) {
+  public @Nullable T getNewMapping(@Nullable VirtualFile file) {
     for (Pair<Object, T> p : ContainerUtil.reverse(myModel.data)) {
       if (keyMatches(p.first, file, false) && p.second != null) return p.second;
     }
@@ -317,8 +309,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return getDefaultNewMapping(file);
   }
 
-  @Nullable
-  protected T getDefaultNewMapping(@Nullable VirtualFile file) {
+  protected @Nullable T getDefaultNewMapping(@Nullable VirtualFile file) {
     return myMappings.getDefaultMapping(file);
   }
 
@@ -596,13 +587,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     });
   }
 
-  @NotNull
-  protected JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value) {
+  protected @NotNull JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value) {
     return createActionPanel(target, value, false);
   }
 
-  @NotNull
-  private JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value, boolean editor) {
+  private @NotNull JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value, boolean editor) {
     AnAction changeAction = createValueAction(target, value);
     return createActionPanel(editor, changeAction);
   }
@@ -712,37 +701,33 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
   }
 
-  @NotNull
-  protected final AnAction createValueAction(@Nullable Object target, @NotNull Value<T> value) {
+  protected final @NotNull AnAction createValueAction(@Nullable Object target, @NotNull Value<T> value) {
     return new PerFileConfigurableComboBoxAction(value, target, StringUtil.notNullize(getNullValueText(target)));
   }
 
-  @NotNull
-  protected JBPopup createValueEditorPopup(@Nullable Object target,
-                                           @Nullable T value,
-                                           @Nullable Runnable onDispose,
-                                           @NotNull DataContext dataContext,
-                                           @NotNull Consumer<? super T> onChosen,
-                                           @NotNull Runnable onCommit) {
+  protected @NotNull JBPopup createValueEditorPopup(@Nullable Object target,
+                                                    @Nullable T value,
+                                                    @Nullable Runnable onDispose,
+                                                    @NotNull DataContext dataContext,
+                                                    @NotNull Consumer<? super T> onChosen,
+                                                    @NotNull Runnable onCommit) {
     return createValueEditorActionListPopup(target, onDispose, dataContext, chosen -> {
       onChosen.consume(chosen);
       onCommit.run();
     });
   }
 
-  @NotNull
-  protected final JBPopup createValueEditorActionListPopup(@Nullable Object target,
-                                                           @Nullable Runnable onDispose,
-                                                           @NotNull DataContext dataContext,
-                                                           @NotNull Consumer<? super T> onChosen) {
+  protected final @NotNull JBPopup createValueEditorActionListPopup(@Nullable Object target,
+                                                                    @Nullable Runnable onDispose,
+                                                                    @NotNull DataContext dataContext,
+                                                                    @NotNull Consumer<? super T> onChosen) {
     ActionGroup group = createActionListGroup(target, onChosen);
     return JBPopupFactory.getInstance().createActionGroupPopup(
       null, group, dataContext, false, false, false,
       onDispose, 30, null);
   }
 
-  @Nullable
-  protected Icon getActionListIcon(@Nullable Object target, T t) {
+  protected @Nullable Icon getActionListIcon(@Nullable Object target, T t) {
     return null;
   }
 
@@ -754,14 +739,12 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return param(NULL_TEXT);
   }
 
-  @NotNull
-  protected Collection<T> getValueVariants(@Nullable Object target) {
+  protected @NotNull Collection<T> getValueVariants(@Nullable Object target) {
     if (myMappings instanceof PerFileMappingsBase) return ((PerFileMappingsBase<T>)myMappings).getAvailableValues();
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super T> onChosen) {
+  protected @NotNull ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super T> onChosen) {
     DefaultActionGroup group = new DefaultActionGroup();
     String clearText = getClearValueText(target);
     Function<T, AnAction> choseAction = t -> {
@@ -852,7 +835,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   public final class PerFileConfigurableComboBoxAction extends ComboBoxAction {
     private final @NotNull Value<T> myValue;
-    private @Nullable final Object myTarget;
+    private final @Nullable Object myTarget;
     private final @NlsActions.ActionText @NotNull String myNullValue;
 
     public PerFileConfigurableComboBoxAction(@NotNull Value<T> value,
@@ -891,9 +874,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
           return popup;
         }
 
-        @Nullable
         @Override
-        public String getToolTipText() {
+        public @Nullable String getToolTipText() {
           boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
           return cellEditor ? null : getToolTipFor(myValue.get());
         }

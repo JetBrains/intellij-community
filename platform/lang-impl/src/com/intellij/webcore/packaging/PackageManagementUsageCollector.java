@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webcore.packaging;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -55,8 +55,7 @@ public final class PackageManagementUsageCollector extends CounterUsagesCollecto
     }
   }
 
-  @Nullable
-  private static String toKnownServiceName(@Nullable PackageManagementService service) {
+  private static @Nullable String toKnownServiceName(@Nullable PackageManagementService service) {
     if (service == null) return null;
     PluginInfo info = PluginInfoDetectorKt.getPluginInfo(service.getClass());
     return info.isSafeToReport() ? service.getID() : null;

@@ -159,8 +159,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     return false;
   }
 
-  @Nullable
-  private static PsiElement findElementAtRange(PsiFile psiFile, TextRange declarationRange) {
+  private static @Nullable PsiElement findElementAtRange(PsiFile psiFile, TextRange declarationRange) {
     PsiElement element = psiFile.findElementAt(declarationRange.getStartOffset());
     while (element != null && !element.getTextRange().contains(declarationRange)) {
       element = element.getParent();
@@ -359,8 +358,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     return true;
   }
 
-  @Nullable
-  private static Editor getEditor(@NotNull Project project, @Nullable Editor editor, @NotNull VirtualFile file) {
+  private static @Nullable Editor getEditor(@NotNull Project project, @Nullable Editor editor, @NotNull VirtualFile file) {
     if (editor == null) return getEditor(project, file);
     VirtualFile editorVirtualFile = editor.getVirtualFile(); // EditorComboBox and similar components might provide no virtual file
     if (editorVirtualFile != null &&

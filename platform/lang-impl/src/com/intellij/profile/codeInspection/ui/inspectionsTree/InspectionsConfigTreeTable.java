@@ -112,9 +112,8 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     }.installOn(this);
 
     setTransferHandler(new TransferHandler() {
-      @Nullable
       @Override
-      protected Transferable createTransferable(JComponent c) {
+      protected @Nullable Transferable createTransferable(JComponent c) {
         final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
         if (path != null) {
           return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(),
@@ -145,16 +144,14 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     getEmptyText().setText(AnalysisBundle.message("inspections.settings.empty.text"));
   }
 
-  @Nullable
-  public InspectionConfigTreeNode.Tool getStrictlySelectedToolNode() {
+  public @Nullable InspectionConfigTreeNode.Tool getStrictlySelectedToolNode() {
     TreePath[] paths = getTree().getSelectionPaths();
     return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Tool
            ? (InspectionConfigTreeNode.Tool)paths[0].getLastPathComponent()
            : null;
   }
 
-  @Nullable
-  public InspectionConfigTreeNode.Group getStrictlySelectedGroupNode() {
+  public @Nullable InspectionConfigTreeNode.Group getStrictlySelectedGroupNode() {
     TreePath[] paths = getTree().getSelectionPaths();
     return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Group
            ? (InspectionConfigTreeNode.Group)paths[0].getLastPathComponent()
@@ -180,18 +177,15 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       myProject = project;
     }
 
-    @NotNull
-    public TreeNode getRoot() {
+    public @NotNull TreeNode getRoot() {
       return myRoot;
     }
 
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
-    @NotNull
-    protected abstract InspectionProfileImpl getInspectionProfile();
+    protected abstract @NotNull InspectionProfileImpl getInspectionProfile();
 
     protected abstract void onChanged(@NotNull InspectionConfigTreeNode node);
 
@@ -221,9 +215,8 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       return 3;
     }
 
-    @Nullable
     @Override
-    public String getColumnName(final int column) {
+    public @Nullable String getColumnName(final int column) {
       return null;
     }
 
@@ -237,9 +230,8 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       };
     }
 
-    @Nullable
     @Override
-    public Object getValueAt(final Object node, final int column) {
+    public @Nullable Object getValueAt(final Object node, final int column) {
       if (column == TREE_COLUMN) {
         return null;
       }
@@ -267,8 +259,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       throw new IllegalArgumentException();
     }
 
-    @Nullable
-    private Boolean isEnabled(@NotNull List<HighlightDisplayKey> selectedInspectionsNodes) {
+    private @Nullable Boolean isEnabled(@NotNull List<HighlightDisplayKey> selectedInspectionsNodes) {
       return selectedInspectionsNodes
         .stream()
         .map(key -> mySettings.getInspectionProfile().getTools(key.getShortName(), mySettings.getProject()))
@@ -393,8 +384,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       return myOccurrences.size();
     }
 
-    @NotNull
-    public Map<String, HighlightSeverity> getOccurrences() {
+    public @NotNull Map<String, HighlightSeverity> getOccurrences() {
       return myOccurrences;
     }
   }
@@ -437,8 +427,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       }
     }
 
-    @Nullable
-    private Map<String, HighlightSeverity> computeSeverities() {
+    private @Nullable Map<String, HighlightSeverity> computeSeverities() {
       if (myScopeToAverageSeverityMap.isEmpty()) {
         return null;
       }
@@ -494,7 +483,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       return result;
     }
 
-    public void put(@NotNull final ScopeToolState defaultState, @NotNull final List<? extends ScopeToolState> nonDefault) {
+    public void put(final @NotNull ScopeToolState defaultState, final @NotNull List<? extends ScopeToolState> nonDefault) {
       putOne(defaultState);
       if (myDefaultScopeName == null) {
         myDefaultScopeName = defaultState.getScopeName();

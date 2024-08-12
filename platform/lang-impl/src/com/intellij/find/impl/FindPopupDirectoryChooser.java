@@ -43,10 +43,10 @@ import java.util.List;
 @SuppressWarnings("WeakerAccess")
 @ApiStatus.Internal
 public final class FindPopupDirectoryChooser extends JPanel {
-  @NotNull private final FindUIHelper myHelper;
-  @NotNull private final Project myProject;
-  @NotNull private final FindPopupPanel myFindPopupPanel;
-  @NotNull private final ComboBox<String> myDirectoryComboBox;
+  private final @NotNull FindUIHelper myHelper;
+  private final @NotNull Project myProject;
+  private final @NotNull FindPopupPanel myFindPopupPanel;
+  private final @NotNull ComboBox<String> myDirectoryComboBox;
 
   @SuppressWarnings("WeakerAccess")
   public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
@@ -132,18 +132,15 @@ public final class FindPopupDirectoryChooser extends JPanel {
     }
   }
 
-  @NotNull
-  public ComboBox getComboBox() {
+  public @NotNull ComboBox getComboBox() {
     return myDirectoryComboBox;
   }
 
-  @NotNull
-  public String getDirectory() {
+  public @NotNull String getDirectory() {
     return (String)myDirectoryComboBox.getEditor().getItem();
   }
 
-  @Nullable
-  public ValidationInfo validate(@NotNull FindModel model) {
+  public @Nullable ValidationInfo validate(@NotNull FindModel model) {
     VirtualFile directory = FindInProjectUtil.getDirectory(model);
     if (directory == null) {
       return new ValidationInfo(FindBundle.message("find.directory.not.found.error"), myDirectoryComboBox);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl.actions;
 
@@ -16,7 +16,7 @@ public final class CollapseRegionAction extends EditorAction implements ActionRe
   public CollapseRegionAction() {
     super(new BaseFoldingHandler() {
       @Override
-      public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void doExecute(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         final int[] lines = editor.getCaretModel().getAllCarets().stream()
           .map(Caret::getLogicalPosition)
           .mapToInt(it -> it.line)

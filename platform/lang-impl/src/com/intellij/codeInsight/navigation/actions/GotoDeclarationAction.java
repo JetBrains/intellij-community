@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -83,9 +83,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return Objects.requireNonNull(ourCurrentEventData);
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new GotoDeclarationOrUsageHandler2(null);
   }
 
@@ -159,8 +158,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     }).navigate(editor, null, element -> processor.execute(element));
   }
 
-  @PopupTitle
-  private static String getTitle(@PopupTitle @NotNull String titlePattern, Collection<PsiElement> elements, PsiReference reference) {
+  private static @PopupTitle String getTitle(@PopupTitle @NotNull String titlePattern, Collection<PsiElement> elements, PsiReference reference) {
     if (reference == null) {
       return titlePattern;
     }
@@ -172,17 +170,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return MessageFormat.format(titlePattern, refText);
   }
 
-  @NotNull
-  private static Collection<PsiElement> suggestCandidates(@Nullable PsiReference reference) {
+  private static @NotNull Collection<PsiElement> suggestCandidates(@Nullable PsiReference reference) {
     if (reference == null) {
       return Collections.emptyList();
     }
     return TargetElementUtil.getInstance().getTargetCandidates(reference);
   }
 
-  @Nullable
   @TestOnly
-  public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
+  public static @Nullable PsiElement findTargetElement(Project project, Editor editor, int offset) {
     final PsiElement[] targets = findAllTargetElements(project, editor, offset);
     return targets.length == 1 ? targets[0] : null;
   }
@@ -235,7 +231,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(final @NotNull AnActionEvent event) {
     InputEvent inputEvent = event.getInputEvent();
     boolean isMouseShortcut = inputEvent instanceof MouseEvent && ActionPlaces.MOUSE_SHORTCUT.equals(event.getPlace());
 

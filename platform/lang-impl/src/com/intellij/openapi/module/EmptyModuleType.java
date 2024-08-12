@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public final class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
-  @NonNls public static final String EMPTY_MODULE = "EMPTY_MODULE";
+  public static final @NonNls String EMPTY_MODULE = "EMPTY_MODULE";
   //private static final EmptyModuleType ourInstance = new EmptyModuleType();
 
   public static EmptyModuleType getInstance() {
@@ -26,27 +26,23 @@ public final class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
     super(id);
   }
 
-  @NotNull
   @Override
-  public EmptyModuleBuilder createModuleBuilder() {
+  public @NotNull EmptyModuleBuilder createModuleBuilder() {
     return new EmptyModuleBuilder();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return ProjectBundle.message("module.type.empty.name");
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return ProjectBundle.message("module.type.empty.description");
   }
 
-  @NotNull
   @Override
-  public Icon getNodeIcon(boolean isOpened) {
+  public @NotNull Icon getNodeIcon(boolean isOpened) {
     return AllIcons.Nodes.Module;
   }
 }

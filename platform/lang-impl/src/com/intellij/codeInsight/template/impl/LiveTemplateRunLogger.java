@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -46,8 +46,7 @@ final class LiveTemplateRunLogger extends CounterUsagesCollector {
     }
   }
 
-  @Nullable
-  static Triple<String, String, PluginInfo> getKeyGroupPluginToLog(@NotNull TemplateImpl template) {
+  static @Nullable Triple<String, String, PluginInfo> getKeyGroupPluginToLog(@NotNull TemplateImpl template) {
     String key = template.getKey();
     String groupName = template.getGroupName();
     if (isCreatedProgrammatically(key, groupName)) return null;
@@ -64,8 +63,7 @@ final class LiveTemplateRunLogger extends CounterUsagesCollector {
     return new Triple<>(key, groupName, plugin);
   }
 
-  @Nullable
-  static List<EventPair<?>> createTemplateData(@NotNull TemplateImpl template, @NotNull Language language) {
+  static @Nullable List<EventPair<?>> createTemplateData(@NotNull TemplateImpl template, @NotNull Language language) {
     Triple<String, String, PluginInfo> keyGroupPluginToLog = getKeyGroupPluginToLog(template);
     if (keyGroupPluginToLog == null) {
       return null;
@@ -88,9 +86,8 @@ final class LiveTemplateRunLogger extends CounterUsagesCollector {
   }
 
   public static class LiveTemplateValidator extends CustomValidationRule {
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "live_template";
     }
 
@@ -99,9 +96,8 @@ final class LiveTemplateRunLogger extends CounterUsagesCollector {
       return getRuleId().equals(ruleId) || "live_template_group".equals(ruleId) ;
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       final String key = getEventDataField(context, "key");
       final String group = getEventDataField(context, "group");
       if (key == null || group == null || !isKeyOrGroup(data, key, group)) {
@@ -110,8 +106,7 @@ final class LiveTemplateRunLogger extends CounterUsagesCollector {
       return validateKeyGroup(key, group);
     }
 
-    @NotNull
-    public static ValidationResultType validateKeyGroup(String key, Object group) {
+    public static @NotNull ValidationResultType validateKeyGroup(String key, Object group) {
       if (group == null) return ValidationResultType.REJECTED;
       if ("user.defined.template".equals(key) && "user.defined.group".equals(group)) return ValidationResultType.ACCEPTED;
       if ("custom.plugin.template".equals(key) && "custom.plugin.group".equals(group)) return ValidationResultType.ACCEPTED;

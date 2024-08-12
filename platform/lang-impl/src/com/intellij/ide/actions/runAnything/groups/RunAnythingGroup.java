@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.groups;
 
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
@@ -41,8 +41,7 @@ public abstract class RunAnythingGroup {
   /**
    * @return Current group title in the main list.
    */
-  @NotNull
-  public abstract @NlsContexts.PopupTitle String getTitle();
+  public abstract @NotNull @NlsContexts.PopupTitle String getTitle();
 
   /**
    * @return Current group maximum number of items to be shown.
@@ -91,8 +90,7 @@ public abstract class RunAnythingGroup {
    *
    * @return group title if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
-  @Nullable
-  public static @NlsContexts.PopupTitle String getTitle(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
+  public static @Nullable @NlsContexts.PopupTitle String getTitle(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
     return Optional.ofNullable(findGroup(groups, titleIndex)).map(RunAnythingGroup::getTitle).orElse(null);
   }
 
@@ -101,16 +99,14 @@ public abstract class RunAnythingGroup {
    *
    * @return group if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
-  @Nullable
-  public static RunAnythingGroup findGroup(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
+  public static @Nullable RunAnythingGroup findGroup(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
     return groups.stream().filter(runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex).findFirst().orElse(null);
   }
 
   /**
    * Finds group {@code itemIndex} belongs to.
    */
-  @Nullable
-  public static RunAnythingGroup findItemGroup(@NotNull List<? extends RunAnythingGroup> groups, int itemIndex) {
+  public static @Nullable RunAnythingGroup findItemGroup(@NotNull List<? extends RunAnythingGroup> groups, int itemIndex) {
     RunAnythingGroup runAnythingGroup = null;
     for (RunAnythingGroup group : groups) {
       if (group.myTitleIndex == -1) {
@@ -166,16 +162,14 @@ public abstract class RunAnythingGroup {
   /**
    * Finds matched by {@link #myMoreIndex} group.
    */
-  @Nullable
-  public static RunAnythingGroup findGroupByMoreIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int moreIndex) {
+  public static @Nullable RunAnythingGroup findGroupByMoreIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int moreIndex) {
     return ContainerUtil.find(groups, runAnythingGroup -> moreIndex == runAnythingGroup.myMoreIndex);
   }
 
   /**
    * Finds group matched by {@link #myTitleIndex}.
    */
-  @Nullable
-  public static RunAnythingGroup findGroupByTitleIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
+  public static @Nullable RunAnythingGroup findGroupByTitleIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
     return ContainerUtil.find(groups, runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex);
   }
 

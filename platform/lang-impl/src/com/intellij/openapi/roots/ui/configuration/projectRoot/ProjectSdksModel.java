@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.execution.wsl.WslPath;
@@ -51,9 +51,8 @@ public class ProjectSdksModel implements SdkModel {
   private Sdk myProjectSdk;
   private boolean myInitialized;
 
-  @NotNull
   @Override
-  public Listener getMulticaster() {
+  public @NotNull Listener getMulticaster() {
     return mySdkEventsDispatcher.getMulticaster();
   }
 
@@ -63,8 +62,7 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   @Override
-  @Nullable
-  public Sdk findSdk(@NotNull String sdkName) {
+  public @Nullable Sdk findSdk(@NotNull String sdkName) {
     for (Sdk projectJdk : myProjectSdks.values()) {
       if (sdkName.equals(projectJdk.getName())) return projectJdk;
     }
@@ -130,8 +128,7 @@ public class ProjectSdksModel implements SdkModel {
     myInitialized = false;
   }
 
-  @NotNull
-  public HashMap<Sdk, Sdk> getProjectSdks() {
+  public @NotNull HashMap<Sdk, Sdk> getProjectSdks() {
     return myProjectSdks;
   }
 
@@ -299,16 +296,16 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
-  public static abstract class NewSdkAction extends DumbAwareAction {
+  public abstract static class NewSdkAction extends DumbAwareAction {
     private final SdkType mySdkType;
 
     private Sdk mySelectedSdkOverride;
     private JComponent myParentOverride;
     private java.util.function.Consumer<? super Sdk> myCallbackOverride;
 
-    @NotNull @ListItem private final String myListItemText;
+    private final @NotNull @ListItem String myListItemText;
     /** this is the text that is shown for the item in the nested list pop-up of SdkPopup **/
-    @NotNull @ListItem private final String myListSubItemText;
+    private final @NotNull @ListItem String myListSubItemText;
 
     private NewSdkAction(@NotNull SdkType sdkType,
                          @NotNull @ActionText String actionText,
@@ -321,15 +318,11 @@ public class ProjectSdksModel implements SdkModel {
       mySdkType = sdkType;
     }
 
-    @NotNull
-    @ListItem
-    public final String getListItemText() {
+    public final @NotNull @ListItem String getListItemText() {
       return myListItemText;
     }
 
-    @NotNull
-    @ListItem
-    public final String getListSubItemText() {
+    public final @NotNull @ListItem String getListSubItemText() {
       return myListSubItemText;
     }
 
@@ -343,8 +336,7 @@ public class ProjectSdksModel implements SdkModel {
       return this;
     }
 
-    @NotNull
-    public final SdkType getSdkType() {
+    public final @NotNull SdkType getSdkType() {
       return mySdkType;
     }
 
@@ -425,7 +417,7 @@ public class ProjectSdksModel implements SdkModel {
     return result;
   }
 
-  public void doAdd(@NotNull JComponent parent, @NotNull final SdkType type, @NotNull final Consumer<? super Sdk> callback) {
+  public void doAdd(@NotNull JComponent parent, final @NotNull SdkType type, final @NotNull Consumer<? super Sdk> callback) {
     doAdd(parent, null, type, callback);
   }
 
@@ -440,7 +432,7 @@ public class ProjectSdksModel implements SdkModel {
     downloadExtension.showDownloadUI(type, this, parent, null, selectedSdk, null, sdk -> setupInstallableSdk(type, sdk, callback));
   }
 
-  public void doAdd(@NotNull JComponent parent, @Nullable final Sdk selectedSdk, @NotNull final SdkType type, @NotNull final Consumer<? super Sdk> callback) {
+  public void doAdd(@NotNull JComponent parent, final @Nullable Sdk selectedSdk, final @NotNull SdkType type, final @NotNull Consumer<? super Sdk> callback) {
     myModified = true;
     if (type.supportsCustomCreateUI()) {
       type.showCustomCreateUI(this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
@@ -455,22 +447,19 @@ public class ProjectSdksModel implements SdkModel {
     setupSdk(newJdk, callback);
   }
 
-  @NotNull
-  public Sdk createSdk(@NotNull SdkType type, @NotNull String home) {
+  public @NotNull Sdk createSdk(@NotNull SdkType type, @NotNull String home) {
     String newSdkName = SdkConfigurationUtil.createUniqueSdkName(type, home, myProjectSdks.values());
     return createSdkInternal(type, newSdkName, home);
   }
 
-  @NotNull
-  public Sdk createSdk(@NotNull SdkType type, @NotNull String suggestedName, @NotNull String home) {
+  public @NotNull Sdk createSdk(@NotNull SdkType type, @NotNull String suggestedName, @NotNull String home) {
     String newSdkName = SdkConfigurationUtil.createUniqueSdkName(suggestedName, myProjectSdks.values());
     return createSdkInternal(type, newSdkName, home);
   }
 
-  @NotNull
-  private static Sdk createSdkInternal(@NotNull SdkType type,
-                                       @NotNull String newSdkName,
-                                       @NotNull String home) {
+  private static @NotNull Sdk createSdkInternal(@NotNull SdkType type,
+                                                @NotNull String newSdkName,
+                                                @NotNull String home) {
     final Sdk newJdk = ProjectJdkTable.getInstance().createSdk(newSdkName, type);
     SdkModificator sdkModificator = newJdk.getSdkModificator();
     sdkModificator.setHomePath(home);
@@ -566,8 +555,7 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
-  @Nullable
-  public Sdk findSdk(@Nullable final Sdk modelJdk) {
+  public @Nullable Sdk findSdk(final @Nullable Sdk modelJdk) {
     for (Map.Entry<Sdk, Sdk> entry : myProjectSdks.entrySet()) {
       Sdk jdk = entry.getKey();
       if (Comparing.equal(entry.getValue(), modelJdk)) {
@@ -577,8 +565,7 @@ public class ProjectSdksModel implements SdkModel {
     return null;
   }
 
-  @Nullable
-  public Sdk getProjectSdk() {
+  public @Nullable Sdk getProjectSdk() {
     if (!myProjectSdks.containsValue(myProjectSdk)) return null;
     return myProjectSdk;
   }

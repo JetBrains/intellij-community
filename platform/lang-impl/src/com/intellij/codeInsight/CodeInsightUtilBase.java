@@ -25,7 +25,7 @@ public final class CodeInsightUtilBase extends CodeInsightUtilCore {
   }
 
   @Override
-  public boolean prepareFileForWrite(@Nullable final PsiFile psiFile) {
+  public boolean prepareFileForWrite(final @Nullable PsiFile psiFile) {
     if (psiFile == null) return false;
     final VirtualFile file = psiFile.getVirtualFile();
     final Project project = psiFile.getProject();

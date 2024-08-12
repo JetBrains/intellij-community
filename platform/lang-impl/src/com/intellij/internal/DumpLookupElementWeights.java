@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.internal;
 
@@ -24,7 +24,7 @@ public final class DumpLookupElementWeights extends AnAction implements DumbAwar
   private static final Logger LOG = Logger.getInstance(DumpLookupElementWeights.class);
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     dumpLookupElementWeights((LookupImpl)LookupManager.getActiveLookup(editor));
   }
@@ -35,7 +35,7 @@ public final class DumpLookupElementWeights extends AnAction implements DumbAwar
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     presentation.setEnabled(editor != null && LookupManager.getActiveLookup(editor) != null);

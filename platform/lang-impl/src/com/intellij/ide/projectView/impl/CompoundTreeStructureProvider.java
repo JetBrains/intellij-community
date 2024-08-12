@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -27,8 +27,7 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
   /**
    * @return a shared instance for the specified project
    */
-  @Nullable
-  public static TreeStructureProvider get(@Nullable Project project) {
+  public static @Nullable TreeStructureProvider get(@Nullable Project project) {
     if (project == null || project.isDisposed() || project.isDefault()) return null;
     TreeStructureProvider provider = project.getUserData(KEY);
     if (provider != null) return provider;
@@ -41,11 +40,10 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
-                                                @NotNull Collection<AbstractTreeNode<?>> children,
-                                                ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                                         @NotNull Collection<AbstractTreeNode<?>> children,
+                                                         ViewSettings settings) {
     if (myProject.isDisposed()) return children;
     for (TreeStructureProvider provider : EP.getExtensions(myProject)) {
       try {
@@ -69,9 +67,8 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
     return children;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selection, @NotNull String dataId) {
+  public @Nullable Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selection, @NotNull String dataId) {
     if (!myProject.isDisposed() && !selection.isEmpty()) {
       for (TreeStructureProvider provider : EP.getExtensions(myProject)) {
         try {

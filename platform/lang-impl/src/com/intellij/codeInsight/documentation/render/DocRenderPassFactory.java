@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeHighlighting.*;
@@ -38,9 +38,8 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
     registrar.registerTextEditorHighlightingPass(this, TextEditorHighlightingPassRegistrar.Anchor.AFTER, Pass.UPDATE_FOLDING, false, false);
   }
 
-  @Nullable
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     long current = PsiModificationTracker.getInstance(file.getProject()).getModificationCount();
     boolean iconsEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     Long existing = editor.getUserData(MODIFICATION_STAMP);
@@ -75,14 +74,12 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
     }
   }
 
-  @NotNull
-  public static Items calculateItemsToRender(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+  public static @NotNull Items calculateItemsToRender(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     boolean enabled = DocRenderManager.isDocRenderingEnabled(editor);
     return calculateItemsToRender(editor.getDocument(), psiFile, enabled);
   }
 
-  @NotNull
-  static Items calculateItemsToRender(@NotNull Document document, @NotNull PsiFile psiFile, boolean enabled) {
+  static @NotNull Items calculateItemsToRender(@NotNull Document document, @NotNull PsiFile psiFile, boolean enabled) {
     Items items = new Items();
     for (InlineDocumentation documentation : inlineDocumentationItems(psiFile)) {
       TextRange range = documentation.getDocumentationRange();
@@ -164,9 +161,8 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
       return myItems.remove(TextRange.create(textRange));
     }
 
-    @NotNull
     @Override
-    public Iterator<Item> iterator() {
+    public @NotNull Iterator<Item> iterator() {
       return myItems.values().iterator();
     }
 

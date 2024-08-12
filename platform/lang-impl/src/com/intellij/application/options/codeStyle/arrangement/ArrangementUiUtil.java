@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -14,11 +14,10 @@ public final class ArrangementUiUtil {
   private ArrangementUiUtil() {
   }
 
-  @NotNull
-  public static ArrangementUiComponent buildUiComponent(@NotNull StdArrangementTokenUiRole role,
-                                                        @NotNull List<? extends ArrangementSettingsToken> tokens,
-                                                        @NotNull ArrangementColorsProvider colorsProvider,
-                                                        @NotNull ArrangementStandardSettingsManager settingsManager)
+  public static @NotNull ArrangementUiComponent buildUiComponent(@NotNull StdArrangementTokenUiRole role,
+                                                                 @NotNull List<? extends ArrangementSettingsToken> tokens,
+                                                                 @NotNull ArrangementColorsProvider colorsProvider,
+                                                                 @NotNull ArrangementStandardSettingsManager settingsManager)
     throws IllegalArgumentException
   {
     for (ArrangementUiComponent.Factory factory : ArrangementUiComponent.Factory.EP_NAME.getExtensionList()) {

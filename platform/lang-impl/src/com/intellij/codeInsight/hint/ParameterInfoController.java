@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -506,12 +506,11 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
       myEditor = editor;
     }
 
-    @NotNull
-    private Pair<Point, Short> getBestPointPosition(LightweightHint hint,
-                                                    PsiElement list,
-                                                    int offset,
-                                                    VisualPosition pos,
-                                                    short preferredPosition) {
+    private @NotNull Pair<Point, Short> getBestPointPosition(LightweightHint hint,
+                                                             PsiElement list,
+                                                             int offset,
+                                                             VisualPosition pos,
+                                                             short preferredPosition) {
       if (list != null) {
         TextRange range = list.getTextRange();
         TextRange rangeWithoutParens = TextRange.from(range.getStartOffset() + 1, Math.max(range.getLength() - 2, 0));

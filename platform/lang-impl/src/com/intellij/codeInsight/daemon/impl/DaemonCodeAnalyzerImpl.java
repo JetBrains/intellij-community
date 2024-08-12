@@ -167,8 +167,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, null, null, coroutineScope);
   }
 
-  @NotNull
-  private FileEditorManager getFileEditorManager() {
+  private @NotNull FileEditorManager getFileEditorManager() {
     FileEditorManager result = fileEditorManager;
     if (result == null) {
       result = FileEditorManager.getInstance(myProject);
@@ -177,8 +176,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return result;
   }
 
-  @NotNull
-  private PsiDocumentManager getPsiDocumentManager() {
+  private @NotNull PsiDocumentManager getPsiDocumentManager() {
     PsiDocumentManager result = psiDocumentManager;
     if (result == null) {
       result = PsiDocumentManager.getInstance(myProject);

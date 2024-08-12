@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -21,12 +21,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class ExternalLibrariesWorkspaceModelNode extends ProjectViewNode<Unit> {
-  @NotNull
-  private final Collection<VirtualFile> myRoots;
-  @NotNull
-  private final Collection<VirtualFile> myExcludedRoots;
-  @NotNull
-  private final ItemPresentation myItemPresentation;
+  private final @NotNull Collection<VirtualFile> myRoots;
+  private final @NotNull Collection<VirtualFile> myExcludedRoots;
+  private final @NotNull ItemPresentation myItemPresentation;
 
   public ExternalLibrariesWorkspaceModelNode(@NotNull Project project,
                                              @NotNull Collection<VirtualFile> roots,
@@ -77,9 +74,8 @@ public class ExternalLibrariesWorkspaceModelNode extends ProjectViewNode<Unit> {
     return VfsUtilCore.isUnderFiles(file, myRoots) && !VfsUtilCore.isUnderFiles(file, myExcludedRoots);
   }
 
-  @NotNull
   @Override
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     Project project = Objects.requireNonNull(getProject());
     List<VirtualFile> children = ContainerUtil.filter(myRoots, file -> file.isValid() && !myExcludedRoots.contains(file));
     return ProjectViewDirectoryHelper.getInstance(project).createFileAndDirectoryNodes(children, getSettings());

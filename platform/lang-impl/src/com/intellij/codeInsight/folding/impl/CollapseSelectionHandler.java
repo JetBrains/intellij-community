@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -20,7 +20,7 @@ public final class CollapseSelectionHandler implements CodeInsightActionHandler 
   private static final Logger LOG = Logger.getInstance(CollapseSelectionHandler.class);
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
     editor.getFoldingModel().runBatchFoldingOperation(
       () -> {
         final EditorFoldingInfo info = EditorFoldingInfo.get(editor);

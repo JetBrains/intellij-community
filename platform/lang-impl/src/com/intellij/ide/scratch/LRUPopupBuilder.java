@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -47,11 +47,10 @@ public abstract class LRUPopupBuilder<T> {
   private JBIterable<T> myBottomValues = JBIterable.empty();
   private Function<? super T, String> myExtraSpeedSearchNamer;
 
-  @NotNull
-  public static ListPopup forFileLanguages(@NotNull Project project,
-                                           @NotNull @PopupTitle String title,
-                                           @Nullable Language selection,
-                                           @NotNull Consumer<? super Language> onChosen) {
+  public static @NotNull ListPopup forFileLanguages(@NotNull Project project,
+                                                    @NotNull @PopupTitle String title,
+                                                    @Nullable Language selection,
+                                                    @NotNull Consumer<? super Language> onChosen) {
     return languagePopupBuilder(project, title, null).
       forValues(LanguageUtil.getFileLanguages()).
       withSelection(selection).
@@ -59,10 +58,9 @@ public abstract class LRUPopupBuilder<T> {
       buildPopup();
   }
 
-  @NotNull
-  public static LRUPopupBuilder<Language> languagePopupBuilder(@NotNull Project project,
-                                                               @NotNull @PopupTitle String title,
-                                                               @Nullable Function<? super Language, ? extends Icon> iconProvider) {
+  public static @NotNull LRUPopupBuilder<Language> languagePopupBuilder(@NotNull Project project,
+                                                                        @NotNull @PopupTitle String title,
+                                                                        @Nullable Function<? super Language, ? extends Icon> iconProvider) {
     return new LRUPopupBuilder<Language>(project, title) {
       @Override
       public String getDisplayName(Language language) {
@@ -93,59 +91,50 @@ public abstract class LRUPopupBuilder<T> {
   public abstract String getStorageId(T t);
   public abstract Icon getIcon(T t);
 
-  @NotNull
-  public LRUPopupBuilder<T> forValues(@Nullable Iterable<? extends T> items) {
+  public @NotNull LRUPopupBuilder<T> forValues(@Nullable Iterable<? extends T> items) {
     myValues = items;
     return this;
   }
 
-  @NotNull
-  public LRUPopupBuilder<T> withSelection(@Nullable T t) {
+  public @NotNull LRUPopupBuilder<T> withSelection(@Nullable T t) {
     mySelection = t;
     return this;
   }
 
-  @NotNull
-  public LRUPopupBuilder<T> withExtraTopValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
+  public @NotNull LRUPopupBuilder<T> withExtraTopValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
     myTopValues = myTopValues.append(extra);
     myPresentations.put(extra, Pair.create(displayName, icon));
     return this;
   }
 
-  @NotNull
-  public LRUPopupBuilder<T> withExtraMiddleValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
+  public @NotNull LRUPopupBuilder<T> withExtraMiddleValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
     myMiddleValues = myMiddleValues.append(extra);
     myPresentations.put(extra, Pair.create(displayName, icon));
     return this;
   }
 
-  @NotNull
-  public LRUPopupBuilder<T> withExtraBottomValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
+  public @NotNull LRUPopupBuilder<T> withExtraBottomValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
     myBottomValues = myBottomValues.append(extra);
     myPresentations.put(extra, Pair.create(displayName, icon));
     return this;
   }
 
-  @NotNull
-  public LRUPopupBuilder<T> onChosen(@Nullable Consumer<? super T> consumer) {
+  public @NotNull LRUPopupBuilder<T> onChosen(@Nullable Consumer<? super T> consumer) {
     myOnChosen = consumer;
     return this;
   }
 
-  @NotNull
-  public LRUPopupBuilder<T> withComparator(@Nullable Comparator<? super T> comparator) {
+  public @NotNull LRUPopupBuilder<T> withComparator(@Nullable Comparator<? super T> comparator) {
     myComparator = comparator;
     return this;
   }
 
-  @NotNull
-  public LRUPopupBuilder<T> withExtraSpeedSearchNamer(@Nullable Function<? super T, String> function) {
+  public @NotNull LRUPopupBuilder<T> withExtraSpeedSearchNamer(@Nullable Function<? super T, String> function) {
     myExtraSpeedSearchNamer = function;
     return this;
   }
 
-  @NotNull
-  public ListPopup buildPopup() {
+  public @NotNull ListPopup buildPopup() {
     List<String> ids = new ArrayList<>(restoreLRUItems());
     if (mySelection != null) {
       ids.add(getStorageId(mySelection));
@@ -170,9 +159,8 @@ public abstract class LRUPopupBuilder<T> {
 
     BaseListPopupStep<T> step =
       new BaseListPopupStep<>(myTitle, combinedItems) {
-        @NotNull
         @Override
-        public String getTextFor(T t) {
+        public @NotNull String getTextFor(T t) {
           return t == null ? "" : getPresentation(t).first;
         }
 
@@ -204,9 +192,8 @@ public abstract class LRUPopupBuilder<T> {
           return null;
         }
 
-        @Nullable
         @Override
-        public ListSeparator getSeparatorAbove(T value) {
+        public @Nullable ListSeparator getSeparatorAbove(T value) {
           return value == sep1 || value == sep2 ? new ListSeparator() : null;
         }
       };
@@ -216,15 +203,13 @@ public abstract class LRUPopupBuilder<T> {
     return tweakSizeToPreferred(JBPopupFactory.getInstance().createListPopup(step));
   }
 
-  @NotNull
-  private Pair<@Nls String, Icon> getPresentation(T t) {
+  private @NotNull Pair<@Nls String, Icon> getPresentation(T t) {
     Pair<String, Icon> p = myPresentations.get(t);
     if (p == null) myPresentations.put(t, p = Pair.create(getDisplayName(t), getIcon(t)));
     return p;
   }
 
-  @NotNull
-  private static ListPopup tweakSizeToPreferred(@NotNull ListPopup popup) {
+  private static @NotNull ListPopup tweakSizeToPreferred(@NotNull ListPopup popup) {
     int nameLen = 0;
     ListPopupStep step = popup.getListStep();
     List values = step.getValues();
@@ -263,8 +248,7 @@ public abstract class LRUPopupBuilder<T> {
   }
 
 
-  @NotNull
-  private String getLRUKey() {
+  private @NotNull String getLRUKey() {
     return getClass().getName() + "/" + myTitle;
   }
 }

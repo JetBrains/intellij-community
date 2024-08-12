@@ -109,12 +109,11 @@ final class LineMarkersUtil {
     info.highlighter = highlighter;
   }
 
-  @NotNull
-  private static Consumer<RangeHighlighterEx> changeAttributes(@NotNull LineMarkerInfo<?> info,
-                                                               boolean rendererChanged,
-                                                               LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer,
-                                                               boolean lineSeparatorColorChanged,
-                                                               boolean lineSeparatorPlacementChanged) {
+  private static @NotNull Consumer<RangeHighlighterEx> changeAttributes(@NotNull LineMarkerInfo<?> info,
+                                                                        boolean rendererChanged,
+                                                                        LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer,
+                                                                        boolean lineSeparatorColorChanged,
+                                                                        boolean lineSeparatorPlacementChanged) {
     return markerEx -> {
       if (rendererChanged) {
         markerEx.setGutterIconRenderer(newRenderer);

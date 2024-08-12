@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -51,7 +51,7 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInRea
 
 public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   implements GutterIconNavigationHandler<PsiElement>, DumbAware {
-  private final static Logger LOG = Logger.getInstance(NavigationGutterIconRenderer.class);
+  private static final Logger LOG = Logger.getInstance(NavigationGutterIconRenderer.class);
   protected final @PopupTitle String myPopupTitle;
   private final @PopupContent String myEmptyText;
   protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;

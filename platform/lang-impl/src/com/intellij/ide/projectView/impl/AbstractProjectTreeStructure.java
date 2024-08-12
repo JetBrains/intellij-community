@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -23,9 +23,8 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
     return new ProjectViewProjectNode(myProject, this);
   }
 
-  @NotNull
   @Override
-  public final Object getRootElement() {
+  public final @NotNull Object getRootElement() {
     return myRoot;
   }
 
@@ -34,9 +33,8 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
-  @NotNull
   @Override
-  public ActionCallback asyncCommit() {
+  public @NotNull ActionCallback asyncCommit() {
     return asyncCommitDocuments(myProject);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,33 +18,27 @@ import java.util.Collections;
  * </p>
  */
 public abstract class ProjectConverter {
-  @Nullable
-  public ConversionProcessor<ComponentManagerSettings> createProjectFileConverter() {
+  public @Nullable ConversionProcessor<ComponentManagerSettings> createProjectFileConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<ModuleSettings> createModuleFileConverter() {
+  public @Nullable ConversionProcessor<ModuleSettings> createModuleFileConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<WorkspaceSettings> createWorkspaceFileConverter() {
+  public @Nullable ConversionProcessor<WorkspaceSettings> createWorkspaceFileConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<RunManagerSettings> createRunConfigurationsConverter() {
+  public @Nullable ConversionProcessor<RunManagerSettings> createRunConfigurationsConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<ProjectLibrariesSettings> createProjectLibrariesConverter() {
+  public @Nullable ConversionProcessor<ProjectLibrariesSettings> createProjectLibrariesConverter() {
     return null;
   }
 
-  @Nullable
-  public ConversionProcessor<ArtifactsSettings> createArtifactsConverter() {
+  public @Nullable ConversionProcessor<ArtifactsSettings> createArtifactsConverter() {
     return null;
   }
 

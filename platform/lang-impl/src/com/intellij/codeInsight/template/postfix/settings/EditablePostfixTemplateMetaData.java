@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -39,9 +39,8 @@ public final class EditablePostfixTemplateMetaData implements BeforeAfterMetaDat
     return new TextDescriptor[]{new PlainTextDescriptor(myAfterText, "after.txt")};
   }
 
-  @NotNull
   @Override
-  public TextDescriptor getDescription() {
+  public @NotNull TextDescriptor getDescription() {
     return new PlainTextDescriptor(CodeInsightBundle.message("templates.postfix.editable.description"), "description.txt");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,8 +23,7 @@ public interface UnknownSdkFixAction {
    * A suggestion can be using another already registered {@link Sdk} as prototype,
    * The callee may use this to avoid creating duplicates
    */
-  @Nullable
-  default Sdk getRegisteredSdkPrototype() {
+  default @Nullable Sdk getRegisteredSdkPrototype() {
     return null;
   }
 
@@ -53,7 +52,7 @@ public interface UnknownSdkFixAction {
    */
   default boolean supportsSdkChoice() { return false; }
 
-  @NotNull default @Nls String getChoiceActionText() { return getActionShortText(); }
+  default @NotNull @Nls String getChoiceActionText() { return getActionShortText(); }
 
   /**
    * Shows UI to pick one of the possible SDK fixes.

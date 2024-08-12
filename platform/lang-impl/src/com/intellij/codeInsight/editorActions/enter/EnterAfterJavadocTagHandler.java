@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -99,8 +99,7 @@ public final class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapt
    * @param offset        interested offset
    * @return              object that encapsulates information about javadoc tags within the given text and offset
    */
-  @NotNull
-  static Context parse(@NotNull CharSequence text, int startOffset, int endOffset, int offset) {
+  static @NotNull Context parse(@NotNull CharSequence text, int startOffset, int endOffset, int offset) {
     int asteriskOffset = StringUtil.indexOf(text, '*', startOffset, endOffset);
     if (asteriskOffset < 0) {
       return NOT_MATCHED_CONTEXT;
@@ -180,7 +179,7 @@ public final class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapt
     public final int endTagStartOffset;
     public final @Nullable String startTag;
 
-    @Nullable private final CharSequence myText;
+    private final @Nullable CharSequence myText;
     private final int          myOffset;
 
     Context() {

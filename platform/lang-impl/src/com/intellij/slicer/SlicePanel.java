@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
@@ -69,11 +69,11 @@ public abstract class SlicePanel extends JPanel implements UiDataProvider, Dispo
   private final ToolWindow myToolWindow;
   private final SliceLanguageSupportProvider myProvider;
 
-  protected SlicePanel(@NotNull final Project project,
+  protected SlicePanel(final @NotNull Project project,
                        boolean dataFlowToThis,
                        @NotNull SliceNode rootNode,
                        boolean splitByLeafExpressions,
-                       @NotNull final ToolWindow toolWindow) {
+                       final @NotNull ToolWindow toolWindow) {
     super(new BorderLayout());
     myProvider = rootNode.getProvider();
     myToolWindow = toolWindow;
@@ -153,19 +153,16 @@ public abstract class SlicePanel extends JPanel implements UiDataProvider, Dispo
   }
 
   static final class MultiLanguageTreeCellRenderer implements TreeCellRenderer {
-    @NotNull
-    private final SliceUsageCellRendererBase rootRenderer;
+    private final @NotNull SliceUsageCellRendererBase rootRenderer;
 
-    @NotNull
-    private final Map<SliceLanguageSupportProvider, SliceUsageCellRendererBase> providersToRenderers = new HashMap<>();
+    private final @NotNull Map<SliceLanguageSupportProvider, SliceUsageCellRendererBase> providersToRenderers = new HashMap<>();
 
     MultiLanguageTreeCellRenderer(@NotNull SliceUsageCellRendererBase rootRenderer) {
       this.rootRenderer = rootRenderer;
       rootRenderer.setOpaque(false);
     }
 
-    @NotNull
-    private SliceUsageCellRendererBase getRenderer(Object value) {
+    private @NotNull SliceUsageCellRendererBase getRenderer(Object value) {
       if (!(value instanceof DefaultMutableTreeNode)) return rootRenderer;
 
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
@@ -195,8 +192,7 @@ public abstract class SlicePanel extends JPanel implements UiDataProvider, Dispo
     }
   }
 
-  @NotNull
-  private JTree createTree() {
+  private @NotNull JTree createTree() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     final Tree tree = new Tree(new DefaultTreeModel(root))/* {
       @Override
@@ -285,8 +281,7 @@ public abstract class SlicePanel extends JPanel implements UiDataProvider, Dispo
    return null;
   }
 
-  @Nullable
-  private List<UsageInfo> getSelectedUsageInfos() {
+  private @Nullable List<UsageInfo> getSelectedUsageInfos() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return null;
     final ArrayList<UsageInfo> result = new ArrayList<>();
@@ -311,8 +306,7 @@ public abstract class SlicePanel extends JPanel implements UiDataProvider, Dispo
     sink.set(PlatformDataKeys.TREE_EXPANDER, new DefaultTreeExpander(myTree));
   }
 
-  @NotNull
-  private List<Navigatable> getNavigatables() {
+  private @NotNull List<Navigatable> getNavigatables() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return Collections.emptyList();
     final ArrayList<Navigatable> navigatables = new ArrayList<>();
@@ -331,8 +325,7 @@ public abstract class SlicePanel extends JPanel implements UiDataProvider, Dispo
     return navigatables;
   }
 
-  @NotNull
-  private ActionToolbar createToolbar() {
+  private @NotNull ActionToolbar createToolbar() {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new MyRefreshAction(myTree));
     if (isToShowAutoScrollButton()) {
@@ -392,14 +385,14 @@ public abstract class SlicePanel extends JPanel implements UiDataProvider, Dispo
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       SliceNode rootNode = myBuilder.getRootSliceNode();
       rootNode.setChanged();
       myStructureTreeModel.invalidateAsync();
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent event) {
+    public void update(final @NotNull AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(true);
     }

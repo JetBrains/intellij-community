@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -62,8 +62,7 @@ public final class ViewStructureAction extends DumbAwareAction {
     popup.show();
   }
 
-  @Nullable
-  public static FileStructurePopup createPopup(@NotNull Project project, @NotNull FileEditor fileEditor) {
+  public static @Nullable FileStructurePopup createPopup(@NotNull Project project, @NotNull FileEditor fileEditor) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     StructureViewBuilder builder = fileEditor.getStructureViewBuilder();
     if (builder == null) return null;
@@ -110,10 +109,9 @@ public final class ViewStructureAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull
-  public static StructureViewModel createStructureViewModel(@NotNull Project project,
-                                                            @NotNull FileEditor fileEditor,
-                                                            @NotNull StructureView structureView) {
+  public static @NotNull StructureViewModel createStructureViewModel(@NotNull Project project,
+                                                                     @NotNull FileEditor fileEditor,
+                                                                     @NotNull StructureView structureView) {
     StructureViewModel treeModel;
     VirtualFile virtualFile = fileEditor.getFile();
     if (structureView instanceof StructureViewComposite && virtualFile != null) {

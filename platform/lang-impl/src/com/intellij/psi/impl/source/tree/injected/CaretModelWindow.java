@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -179,8 +179,7 @@ final class CaretModelWindow implements CaretModel {
     return position == null ? null : myEditorWindow.hostToInjected(position);
   }
 
-  @NotNull
-  private InjectedCaret createInjectedCaret(@NotNull Caret caret) {
+  private @NotNull InjectedCaret createInjectedCaret(@NotNull Caret caret) {
     synchronized (myInjectedCaretMap) {
       return myInjectedCaretMap.computeIfAbsent(caret, c->new InjectedCaret(myEditorWindow, c));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -78,9 +78,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     showDialogAdvertisement("RenameElement");
   }
 
-  @NotNull
   @Override
-  protected VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
+  protected @NotNull VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
     return new MemberInplaceRenamer(variable, getSubstituted(), editor, initialName, myOldName);
   }
 
@@ -318,8 +317,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
   }
 
-  @Nullable
-  public PsiElement getSubstituted() {
+  public @Nullable PsiElement getSubstituted() {
     if (mySubstituted != null && mySubstituted.isValid()){
       if (mySubstituted instanceof PsiNameIdentifierOwner) {
         if (Comparing.strEqual(myOldName, ((PsiNameIdentifierOwner)mySubstituted).getName())) return mySubstituted;
@@ -372,9 +370,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             elementProcessor.isToSearchForTextOccurrences(element) && TextOccurrencesUtil.isSearchTextOccurrencesEnabled(element));
     }
 
-    @Nullable
     @Override
-    protected String getRefactoringId() {
+    protected @Nullable String getRefactoringId() {
       return "refactoring.inplace.rename";
     }
 

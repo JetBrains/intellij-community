@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -38,7 +38,7 @@ public final class CopyHandler extends EditorActionHandler implements CopyAction
   }
 
   @Override
-  public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext) {
+  public void doExecute(final @NotNull Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'copy' operation for specific caret is not supported";
     Project project = editor.getProject();
     PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

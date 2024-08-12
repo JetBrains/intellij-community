@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -19,14 +19,11 @@ import java.lang.reflect.InvocationTargetException;
 public abstract class UnknownSdkFixActionDownloadBase extends UnknownSdkFixActionBase {
   private static final Logger LOG = Logger.getInstance(UnknownSdkFixActionDownloadBase.class);
 
-  @NotNull
-  protected abstract UnknownSdkDownloadTask createTask();
+  protected abstract @NotNull UnknownSdkDownloadTask createTask();
 
-  @NotNull
-  protected abstract String getDownloadDescription();
+  protected abstract @NotNull String getDownloadDescription();
 
-  @Nullable
-  protected String getSdkLookupReason() { return null; }
+  protected @Nullable String getSdkLookupReason() { return null; }
 
   @Override
   public final void applySuggestionAsync(@Nullable Project project) {
@@ -95,9 +92,8 @@ public abstract class UnknownSdkFixActionDownloadBase extends UnknownSdkFixActio
     }
   }
 
-  @NotNull
   @Override
-  public final Sdk applySuggestionBlocking(@NotNull ProgressIndicator indicator) {
+  public final @NotNull Sdk applySuggestionBlocking(@NotNull ProgressIndicator indicator) {
     return createTask().withListener(getMulticaster()).runBlocking(indicator);
   }
 }

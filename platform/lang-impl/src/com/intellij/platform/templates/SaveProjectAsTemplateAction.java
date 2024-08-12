@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
@@ -93,7 +93,7 @@ public final class SaveProjectAsTemplateAction extends AnAction implements DumbA
 
       ProgressManager.getInstance().run(new Task.Backgroundable(project, LangBundle.message("progress.title.saving.project.as.template"), true) {
         @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
+        public void run(final @NotNull ProgressIndicator indicator) {
           saveProject(project, file, moduleToSave, description, dialog.isReplaceParameters(), indicator, shouldEscape());
         }
 
@@ -288,8 +288,7 @@ public final class SaveProjectAsTemplateAction extends AnAction implements DumbA
     }
   }
 
-  @NotNull
-  private static List<LocalArchivedTemplate.RootDescription> collectStructure(Project project, Module moduleToSave) {
+  private static @NotNull List<LocalArchivedTemplate.RootDescription> collectStructure(Project project, Module moduleToSave) {
     List<LocalArchivedTemplate.RootDescription> result = new ArrayList<>();
     if (moduleToSave != null) {
       PathMacroManager macroManager = PathMacroManager.getInstance(moduleToSave);

@@ -91,8 +91,7 @@ public final class EditSettingsAction extends InspectionViewActionBase implement
     }
   }
 
-  @NotNull
-  private static InspectionToolWrapper getSingleTool(InspectionResultsView view) {
+  private static @NotNull InspectionToolWrapper getSingleTool(InspectionResultsView view) {
     InspectionProfileImpl profile = view.getCurrentProfile();
     return Objects.requireNonNull(profile.getInspectionTool(Objects.requireNonNull(profile.getSingleTool()), view.getProject()));
   }

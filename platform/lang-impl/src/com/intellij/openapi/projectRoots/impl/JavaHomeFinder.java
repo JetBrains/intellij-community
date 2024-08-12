@@ -24,23 +24,19 @@ import java.util.List;
 @ApiStatus.Internal
 public abstract class JavaHomeFinder {
   public static class SystemInfoProvider {
-    @Nullable
-    public String getEnvironmentVariable(@NotNull String name) {
+    public @Nullable String getEnvironmentVariable(@NotNull String name) {
       return EnvironmentUtil.getValue(name);
     }
 
-    @NotNull
-    public Path getPath(String path, String... more) {
+    public @NotNull Path getPath(String path, String... more) {
       return Path.of(path, more);
     }
 
-    @Nullable
-    public Path getUserHome() {
+    public @Nullable Path getUserHome() {
       return Path.of(SystemProperties.getUserHome());
     }
 
-    @NotNull
-    public Collection<@NotNull Path> getFsRoots() {
+    public @NotNull Collection<@NotNull Path> getFsRoots() {
       Iterable<Path> rootDirectories = FileSystems.getDefault().getRootDirectories();
       return rootDirectories != null ? ContainerUtil.newArrayList(rootDirectories) : Collections.emptyList();
     }

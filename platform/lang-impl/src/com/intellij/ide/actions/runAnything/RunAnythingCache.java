@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
@@ -54,9 +54,8 @@ public final class RunAnythingCache implements PersistentStateComponent<RunAnyth
     mySettings.myKeys.put(key, visible);
   }
 
-  @NotNull
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return mySettings;
   }
 
@@ -79,18 +78,15 @@ public final class RunAnythingCache implements PersistentStateComponent<RunAnyth
   }
 
   public static final class State {
-    @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag")
-    @NotNull private final Map<String, Boolean> myKeys =
+    @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag") private final @NotNull Map<String, Boolean> myKeys =
       StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
               .filter(provider -> provider.getCompletionGroupTitle() != null)
               .distinct(RunAnythingProvider::getCompletionGroupTitle)
               .collect(Collectors.toMap(RunAnythingProvider::getCompletionGroupTitle, group -> true));
 
-    @XCollection(elementName = "command")
-    @NotNull private final List<String> myCommands = new ArrayList<>();
+    @XCollection(elementName = "command") private final @NotNull List<String> myCommands = new ArrayList<>();
 
-    @NotNull
-    public List<String> getCommands() {
+    public @NotNull List<String> getCommands() {
       return myCommands;
     }
   }

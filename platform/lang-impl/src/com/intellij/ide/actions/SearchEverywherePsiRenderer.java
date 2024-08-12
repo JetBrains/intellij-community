@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManagerListener;
@@ -59,15 +59,13 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     return PSIRenderingUtils.getPSIElementText(element);
   }
 
-  @Nullable
   @Override
-  protected String getContainerText(PsiElement element, String name) {
+  protected @Nullable String getContainerText(PsiElement element, String name) {
     return getContainerTextForLeftComponent(element, name, -1, null);
   }
 
-  @Nullable
   @Override
-  protected String getContainerTextForLeftComponent(PsiElement element, String name, int maxWidth, FontMetrics fm) {
+  protected @Nullable String getContainerTextForLeftComponent(PsiElement element, String name, int maxWidth, FontMetrics fm) {
     String presentablePath = PSIRenderingUtils.extractPresentablePath(element);
     String text = ObjectUtils.chooseNotNull(presentablePath, SymbolPresentationUtil.getSymbolContainerText(element));
     if (text == null || text.equals(name)) return null;

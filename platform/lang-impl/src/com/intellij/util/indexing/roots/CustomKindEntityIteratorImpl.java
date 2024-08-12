@@ -24,9 +24,8 @@ public final class CustomKindEntityIteratorImpl extends RootHolderIteratorBase {
           true);
   }
 
-  @NotNull
   @Override
-  public CustomKindEntityOrigin getOrigin() {
+  public @NotNull CustomKindEntityOrigin getOrigin() {
     return new CustomKindEntityOriginImpl(myEntityPointer, roots);
   }
 }

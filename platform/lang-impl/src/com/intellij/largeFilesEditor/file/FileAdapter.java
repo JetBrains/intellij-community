@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.file;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +26,7 @@ final class FileAdapter {
   private final int pageSize; // in bytes
   private final int maxPageBorderShift; // in bytes
 
-  volatile private long cashedFileSize = UNDEFINED; // in bytes
+  private volatile long cashedFileSize = UNDEFINED; // in bytes
 
   FileAdapter(int pageSize, int maxPageBorderShift, @NotNull VirtualFile vFile) throws FileNotFoundException {
     this.pageSize = pageSize;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move;
 
@@ -168,8 +168,7 @@ public final class MoveHandler implements RefactoringActionHandler {
     }
   }
 
-  @Nullable
-  private static MoveHandlerDelegate findDelegate(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
+  private static @Nullable MoveHandlerDelegate findDelegate(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(elements, targetContainer, reference)) {
         return delegate;
@@ -179,8 +178,7 @@ public final class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  @Nullable
-  public static @NlsActions.ActionText String getActionName(@NotNull DataContext dataContext) {
+  public static @Nullable @NlsActions.ActionText String getActionName(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       Project project = dataContext.getData(CommonDataKeys.PROJECT);
@@ -224,8 +222,7 @@ public final class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  @NotNull
-  private static List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
+  private static @NotNull List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
     return ContainerUtil.filter(MoveHandlerDelegate.EP_NAME.getExtensionList(),
                                 (delegate) -> delegate.supportsLanguage(element.getLanguage()));
   }

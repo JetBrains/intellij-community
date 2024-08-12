@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
@@ -30,8 +30,7 @@ public abstract class FilePathMacroBase extends Macro {
     return null;
   }
 
-  @Nullable
-  protected TextResult calculateResult(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+  protected @Nullable TextResult calculateResult(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     return new TextResult(virtualFile.getName());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -19,8 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 
 final class FileSeparatorProvider {
-  @NotNull
-  static List<LineMarkerInfo<?>> getFileSeparators(@NotNull PsiFile file, @NotNull Document document) {
+  static @NotNull List<LineMarkerInfo<?>> getFileSeparators(@NotNull PsiFile file, @NotNull Document document) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     List<LineMarkerInfo<?>> result = new ArrayList<>();

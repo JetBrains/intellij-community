@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -89,8 +89,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINES_SETTINGS;
   }
 
-  @NotNull
-  private List<IntOption> getOptions(@NotNull @NlsContexts.BorderTitle String groupName, @NotNull List<? extends CodeStyleSettingPresentation> settings) {
+  private @NotNull List<IntOption> getOptions(@NotNull @NlsContexts.BorderTitle String groupName, @NotNull List<? extends CodeStyleSettingPresentation> settings) {
     final List<IntOption> groupOptions = new SmartList<>();
     for (CodeStyleSettingPresentation setting: settings) {
       if (myAllOptionsAllowed || myAllowedOptions.contains(setting.getFieldName())) {

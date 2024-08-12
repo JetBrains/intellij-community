@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.application.options.CodeStyle;
@@ -131,8 +131,7 @@ public final class FileInEditorProcessor {
                instanceof CoreFormattingService);
   }
 
-  @NotNull
-  private AbstractLayoutCodeProcessor mixWithCleanupProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
+  private @NotNull AbstractLayoutCodeProcessor mixWithCleanupProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
     if (myProcessSelectedText) {
       processor = new CodeCleanupCodeProcessor(processor, myEditor.getSelectionModel());
     }
@@ -152,8 +151,7 @@ public final class FileInEditorProcessor {
     return processor;
   }
 
-  @NotNull
-  private AbstractLayoutCodeProcessor mixWithReformatProcessor(@Nullable AbstractLayoutCodeProcessor processor) {
+  private @NotNull AbstractLayoutCodeProcessor mixWithReformatProcessor(@Nullable AbstractLayoutCodeProcessor processor) {
     ReformatCodeProcessor reformatCodeProcessor;
     if (processor != null) {
       if (myProcessSelectedText) {
@@ -177,8 +175,7 @@ public final class FileInEditorProcessor {
     return reformatCodeProcessor;
   }
 
-  @NotNull
-  private static String joinWithCommaAndCapitalize(String reformatNotification, String rearrangeNotification) {
+  private static @NotNull String joinWithCommaAndCapitalize(String reformatNotification, String rearrangeNotification) {
     String firstNotificationLine = reformatNotification != null ? reformatNotification : rearrangeNotification;
     if (reformatNotification != null && rearrangeNotification != null) {
       firstNotificationLine += ", " + rearrangeNotification;
@@ -244,10 +241,24 @@ public final class FileInEditorProcessor {
     return application.isUnitTestMode() || application.isHeadlessEnvironment();
   }
 
+  private abstract static class MessageBuilder {
+    public abstract @NlsContexts.HintText String getMessage();
+
+    public abstract @NotNull Runnable getHyperlinkRunnable();
+
+    public final HyperlinkListener createHyperlinkListener() {
+      return new HyperlinkAdapter() {
+        @Override
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+          getHyperlinkRunnable().run();
+        }
+      };
+    }
+  }
+
   private final class DisabledFormattingMessageBuilder extends MessageBuilder {
-    @NotNull
     @Override
-    public String getMessage() {
+    public @NotNull String getMessage() {
       VirtualFile virtualFile = myFile.getVirtualFile();
       String message = virtualFile == null ? LangBundle.message("formatter.unavailable.message")
                                            : LangBundle.message("formatter.unavailable.for.0.message", virtualFile.getName());
@@ -266,10 +277,27 @@ public final class FileInEditorProcessor {
     }
   }
 
+  private static final class ShowReformatDialogRunnable implements Runnable {
+    private final Editor myEditor;
+
+    private ShowReformatDialogRunnable(Editor editor) {
+      myEditor = editor;
+    }
+
+    @Override
+    public void run() {
+      AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
+      DataManager manager = DataManager.getInstance();
+      if (manager != null) {
+        DataContext context = manager.getDataContext(myEditor.getContentComponent());
+        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
+      }
+    }
+  }
+
   private final class FormattedMessageBuilder extends MessageBuilder {
     @Override
-    @NotNull
-    public String getMessage() {
+    public @NotNull String getMessage() {
       HtmlBuilder builder = new HtmlBuilder();
       LayoutCodeInfoCollector notifications = myProcessor.getInfoCollector();
       LOG.assertTrue(notifications != null);
@@ -323,40 +351,6 @@ public final class FileInEditorProcessor {
     @Override
     public @NotNull Runnable getHyperlinkRunnable() {
       return new ShowReformatDialogRunnable(myEditor);
-    }
-  }
-
-  private static final class ShowReformatDialogRunnable implements Runnable {
-    private final Editor myEditor;
-
-    private ShowReformatDialogRunnable(Editor editor) {
-      myEditor = editor;
-    }
-
-    @Override
-    public void run() {
-      AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
-      DataManager manager = DataManager.getInstance();
-      if (manager != null) {
-        DataContext context = manager.getDataContext(myEditor.getContentComponent());
-        action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
-      }
-    }
-  }
-
-  private abstract static class MessageBuilder {
-    public abstract @NlsContexts.HintText String getMessage();
-
-    @NotNull
-    public abstract Runnable getHyperlinkRunnable();
-
-    public final HyperlinkListener createHyperlinkListener() {
-      return new HyperlinkAdapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-          getHyperlinkRunnable().run();
-        }
-      };
     }
   }
 }

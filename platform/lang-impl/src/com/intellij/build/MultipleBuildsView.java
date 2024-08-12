@@ -54,7 +54,7 @@ import java.util.stream.IntStream;
 @ApiStatus.Experimental
 public final class MultipleBuildsView implements BuildProgressListener, Disposable {
   private static final Logger LOG = Logger.getInstance(MultipleBuildsView.class);
-  @NonNls private static final String SPLITTER_PROPERTY = "MultipleBuildsView.Splitter.Proportion";
+  private static final @NonNls String SPLITTER_PROPERTY = "MultipleBuildsView.Splitter.Proportion";
 
   private final Project myProject;
   private final BuildContentManager myBuildContentManager;

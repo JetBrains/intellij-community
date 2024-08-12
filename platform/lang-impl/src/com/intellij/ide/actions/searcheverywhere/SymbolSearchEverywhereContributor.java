@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -30,9 +30,8 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     myFilter = ClassSearchEverywhereContributor.createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT));
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
+  public @NotNull String getGroupName() {
     return IdeBundle.message("search.everywhere.group.name.symbols");
   }
 
@@ -46,9 +45,8 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     return createPsiExtendedInfo();
   }
 
-  @NotNull
   @Override
-  protected FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
+  protected @NotNull FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
     GotoSymbolModel2 model = new GotoSymbolModel2(project, this);
     if (myFilter != null) {
       model.setFilterItems(myFilter.getSelectedElements());
@@ -56,16 +54,14 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     return model;
   }
 
-  @NotNull
   @Override
-  public List<AnAction> getActions(@NotNull Runnable onChanged) {
+  public @NotNull List<AnAction> getActions(@NotNull Runnable onChanged) {
     return doGetActions(myFilter, new LangFilterCollector(), onChanged);
   }
 
   public static final class Factory implements SearchEverywhereContributorFactory<Object> {
-    @NotNull
     @Override
-    public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
       return PSIPresentationBgRendererWrapper.wrapIfNecessary(new SymbolSearchEverywhereContributor(initEvent));
     }
   }

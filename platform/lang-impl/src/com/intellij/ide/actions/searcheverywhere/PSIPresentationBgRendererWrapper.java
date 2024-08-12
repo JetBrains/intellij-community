@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
@@ -66,9 +66,8 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     return EssentialContributor.checkEssential(myDelegate);
   }
 
-  @NotNull
   @Override
-  public SearchEverywhereContributor<?> getEffectiveContributor() {
+  public @NotNull SearchEverywhereContributor<?> getEffectiveContributor() {
     return myDelegate;
   }
 

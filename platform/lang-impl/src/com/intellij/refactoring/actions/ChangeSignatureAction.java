@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.ContextAwareActionHandler;
@@ -40,7 +40,7 @@ public final class ChangeSignatureAction extends BasePlatformRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(final @NotNull PsiElement element, final @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     PsiElement targetMember = findTargetMember(element);
     if (targetMember == null) {
       final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(element);
@@ -54,8 +54,7 @@ public final class ChangeSignatureAction extends BasePlatformRefactoringAction {
     return true;
   }
 
-  @Nullable
-  private static PsiElement findTargetMember(@Nullable PsiElement element) {
+  private static @Nullable PsiElement findTargetMember(@Nullable PsiElement element) {
     if (element == null) return null;
     final ChangeSignatureHandler fileHandler = getChangeSignatureHandler(element);
     if (fileHandler != null) {
@@ -72,15 +71,13 @@ public final class ChangeSignatureAction extends BasePlatformRefactoringAction {
     return null;
   }
 
-  @Nullable
   @Override
-  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
+  protected @Nullable RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return provider.getChangeSignatureHandler();
   }
 
-  @Nullable
   @Override
-  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, final PsiElement element) {
+  protected @Nullable RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, final PsiElement element) {
     abstract class ContextAwareChangeSignatureHandler implements RefactoringActionHandler, ContextAwareActionHandler {}
 
     return new ContextAwareChangeSignatureHandler() {
@@ -121,8 +118,7 @@ public final class ChangeSignatureAction extends BasePlatformRefactoringAction {
     };
   }
 
-  @Nullable
-  public static ChangeSignatureHandler getChangeSignatureHandler(@NotNull PsiElement language) {
+  public static @Nullable ChangeSignatureHandler getChangeSignatureHandler(@NotNull PsiElement language) {
     RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forContext(language);
     return provider != null ? provider.getChangeSignatureHandler() : null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -11,9 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class SliceForwardAction extends CodeInsightAction {
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return SliceHandler.create(false);
   }
 

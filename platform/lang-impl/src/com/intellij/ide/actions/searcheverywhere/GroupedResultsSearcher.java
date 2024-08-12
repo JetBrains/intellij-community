@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -29,9 +29,9 @@ final class GroupedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(GroupedResultsSearcher.class);
 
-  @NotNull private final SearchListener myListener;
-  @NotNull private final Executor myNotificationExecutor;
-  @NotNull private final SEResultsEqualityProvider myEqualityProvider;
+  private final @NotNull SearchListener myListener;
+  private final @NotNull Executor myNotificationExecutor;
+  private final @NotNull SEResultsEqualityProvider myEqualityProvider;
 
   /**
    * Creates MultiThreadSearcher with search results {@link SearchListener} and specifies executor which going to be used to call listener methods.
@@ -121,12 +121,11 @@ final class GroupedResultsSearcher implements SESearcher {
     return indicator;
   }
 
-  @NotNull
-  private static Runnable createSearchTask(String pattern,
-                                           ResultsAccumulator accumulator,
-                                           ProgressIndicator indicator,
-                                           SearchEverywhereContributor<?> contributor,
-                                           Runnable finalCallback) {
+  private static @NotNull Runnable createSearchTask(String pattern,
+                                                    ResultsAccumulator accumulator,
+                                                    ProgressIndicator indicator,
+                                                    SearchEverywhereContributor<?> contributor,
+                                                    Runnable finalCallback) {
     //noinspection unchecked
     ContributorSearchTask<?> task = new ContributorSearchTask<>(
       (SearchEverywhereContributor<Object>)contributor, pattern,
@@ -231,7 +230,7 @@ final class GroupedResultsSearcher implements SESearcher {
     }
   }
 
-  private static abstract class ResultsAccumulator {
+  private abstract static class ResultsAccumulator {
     protected final Map<SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> sections;
     protected final SearchListener myListener;
     protected final Executor myNotificationExecutor;

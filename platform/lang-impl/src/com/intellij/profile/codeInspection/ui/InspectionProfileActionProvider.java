@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -25,16 +25,14 @@ public abstract class InspectionProfileActionProvider {
   /**
    * @return additional actions to render in the given inspection profile panel.
    */
-  @NotNull
-  public List<AnAction> getActions(@NotNull SingleInspectionProfilePanel panel) {
+  public @NotNull List<AnAction> getActions(@NotNull SingleInspectionProfilePanel panel) {
     return List.of();
   }
 
   /**
    * @return actions to add custom inspections in the given inspection profile panel.
    */
-  @Nullable
-  public ActionGroup getAddActions(@NotNull SingleInspectionProfilePanel panel) {
+  public @Nullable ActionGroup getAddActions(@NotNull SingleInspectionProfilePanel panel) {
     return null;
   }
 

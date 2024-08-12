@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
@@ -105,8 +105,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
     return GROUP;
   }
 
-  @NotNull
-  public static String getReportableContributorID(@NotNull SearchEverywhereContributor<?> contributor) {
+  public static @NotNull String getReportableContributorID(@NotNull SearchEverywhereContributor<?> contributor) {
     Class<? extends SearchEverywhereContributor> clazz = contributor.getClass();
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
     return pluginInfo.isDevelopedByJetBrains() ? contributor.getSearchProviderId() : NOT_REPORTABLE_CONTRIBUTOR_ID;

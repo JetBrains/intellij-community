@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -148,9 +148,8 @@ public final class ViewOfflineResultsAction extends AnAction {
       profile = null;
     }
     final InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
-      @NotNull
       @Override
-      public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
+      public @NotNull HighlightDisplayLevel getErrorLevel(final @NotNull HighlightDisplayKey key, PsiElement element) {
         return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
       }
     };
@@ -171,11 +170,10 @@ public final class ViewOfflineResultsAction extends AnAction {
     return showOfflineView(project, resMap, inspectionProfile, title);
   }
 
-  @NotNull
-  public static InspectionResultsView showOfflineView(@NotNull Project project,
-                                                      @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
-                                                      @NotNull InspectionProfileImpl inspectionProfile,
-                                                      @NotNull @NlsContexts.TabTitle String title) {
+  public static @NotNull InspectionResultsView showOfflineView(@NotNull Project project,
+                                                               @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+                                                               @NotNull InspectionProfileImpl inspectionProfile,
+                                                               @NotNull @NlsContexts.TabTitle String title) {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();

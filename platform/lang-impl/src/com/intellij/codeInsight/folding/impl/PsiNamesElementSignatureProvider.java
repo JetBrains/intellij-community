@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +25,7 @@ public final class PsiNamesElementSignatureProvider extends AbstractElementSigna
   @Override
   protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
                                                 @NotNull PsiElement parent,
-                                                @NotNull final String type,
+                                                final @NotNull String type,
                                                 @NotNull StringTokenizer tokenizer,
                                                 @Nullable StringBuilder processingInfoStorage)
   {
@@ -114,7 +114,7 @@ public final class PsiNamesElementSignatureProvider extends AbstractElementSigna
   }
 
   @Override
-  public String getSignature(@NotNull final PsiElement element) {
+  public String getSignature(final @NotNull PsiElement element) {
     StringBuilder buffer = null;
     for (PsiElement current = element; current != null && !(current instanceof PsiFile); current = current.getParent()) {
       int length = buffer == null ? 0 : buffer.length();
@@ -168,8 +168,7 @@ public final class PsiNamesElementSignatureProvider extends AbstractElementSigna
    * @return         buffer that contains signature of the given element if it was produced;
    *                 {@code null} as an indication that signature for the given element was not produced
    */
-  @Nullable
-  private static StringBuilder getSignature(@NotNull PsiElement element, @Nullable StringBuilder buffer) {
+  private static @Nullable StringBuilder getSignature(@NotNull PsiElement element, @Nullable StringBuilder buffer) {
     if (element instanceof PsiNamedElement named) {
       final String name = named.getName();
       if (StringUtil.isEmpty(name)) {

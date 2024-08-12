@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.impl;
 
@@ -21,14 +21,12 @@ public final class DefaultFacetsProvider implements FacetsProvider {
   }
 
   @Override
-  @NotNull
-  public <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
+  public @NotNull <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
     return FacetManager.getInstance(module).getFacetsByType(type);
   }
 
   @Override
-  @Nullable
-  public <F extends Facet> F findFacet(Module module, FacetTypeId<F> type, String name) {
+  public @Nullable <F extends Facet> F findFacet(Module module, FacetTypeId<F> type, String name) {
     return FacetManager.getInstance(module).findFacet(type, name);
   }
 }

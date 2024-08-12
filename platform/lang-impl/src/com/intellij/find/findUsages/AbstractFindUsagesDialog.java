@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
@@ -131,8 +131,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  public final FindUsagesOptions calcFindUsagesOptions() {
+  public final @NotNull FindUsagesOptions calcFindUsagesOptions() {
     calcFindUsagesOptions(myFindUsagesOptions);
     if (myFindUsagesOptions instanceof PersistentFindUsagesOptions) {
       ((PersistentFindUsagesOptions)myFindUsagesOptions).storeDefaults(myProject);
@@ -205,8 +204,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return cb != null && cb.getParent() != null && cb.isSelected();
   }
 
-  @NotNull
-  protected StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, @NotNull JPanel panel, boolean toUpdate) {
+  protected @NotNull StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, @NotNull JPanel panel, boolean toUpdate) {
     StateRestoringCheckBox cb = createCheckbox(name, toSelect, toUpdate);
     JComponent decoratedCheckbox = new ComponentPanelBuilder(cb).createPanel();
     decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -216,8 +214,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return cb;
   }
 
-  @NotNull
-  protected StateRestoringCheckBox createCheckbox(@NlsContexts.Checkbox String name, boolean toSelect, boolean toUpdate) {
+  protected @NotNull StateRestoringCheckBox createCheckbox(@NlsContexts.Checkbox String name, boolean toSelect, boolean toUpdate) {
     StateRestoringCheckBox cb = new StateRestoringCheckBox(name);
     cb.setSelected(toSelect);
     cb.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -260,8 +257,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return findWhatPanel;
   }
 
-  @Nullable
-  protected JPanel createFindWhatPanel() {
+  protected @Nullable JPanel createFindWhatPanel() {
     if (mySearchForTextOccurrencesAvailable || myIsShowInNewTabVisible) {
       JPanel findWhatPanel = new JPanel();
       findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
@@ -282,8 +278,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private JComponent createSearchScopePanel() {
+  private @Nullable JComponent createSearchScopePanel() {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
     String scope = FindSettings.getInstance().getDefaultScopeName();
@@ -301,8 +296,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return optionsPanel;
   }
 
-  @Nullable
-  protected JComponent getPreferredFocusedControl() {
+  protected @Nullable JComponent getPreferredFocusedControl() {
     return null;
   }
 

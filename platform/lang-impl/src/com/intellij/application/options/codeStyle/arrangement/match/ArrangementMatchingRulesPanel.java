@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -27,7 +27,7 @@ import java.util.List;
 
 public final class ArrangementMatchingRulesPanel extends JPanel implements UiDataProvider {
 
-  @NotNull private final ArrangementSectionRulesControl myControl;
+  private final @NotNull ArrangementSectionRulesControl myControl;
 
   public ArrangementMatchingRulesPanel(@NotNull Language language,
                                        @NotNull ArrangementStandardSettingsManager settingsManager,
@@ -81,8 +81,7 @@ public final class ArrangementMatchingRulesPanel extends JPanel implements UiDat
     return new ArrangementSectionRulesControl(language, settingsManager, colorsProvider, callback);
   }
 
-  @NotNull
-  public List<ArrangementSectionRule> getSections() {
+  public @NotNull List<ArrangementSectionRule> getSections() {
     return myControl.getSections();
   }
 
@@ -90,8 +89,7 @@ public final class ArrangementMatchingRulesPanel extends JPanel implements UiDat
     myControl.setSections(rules);
   }
 
-  @Nullable
-  public Collection<StdArrangementRuleAliasToken> getRulesAliases() {
+  public @Nullable Collection<StdArrangementRuleAliasToken> getRulesAliases() {
     return myControl.getRulesAliases();
   }
 

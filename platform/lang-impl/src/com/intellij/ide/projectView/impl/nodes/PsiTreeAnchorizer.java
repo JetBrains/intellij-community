@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.util.treeView.TreeAnchorizer;
@@ -12,9 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PsiTreeAnchorizer extends TreeAnchorizer {
-  @NotNull
   @Override
-  public Object createAnchor(@NotNull Object element) {
+  public @NotNull Object createAnchor(@NotNull Object element) {
     if (element instanceof PsiElement psi) {
       return ReadAction.compute(() -> {
         if (!psi.isValid()) return psi;
@@ -24,8 +23,7 @@ public final class PsiTreeAnchorizer extends TreeAnchorizer {
     return super.createAnchor(element);
   }
   @Override
-  @Nullable
-  public Object retrieveElement(@NotNull final Object pointer) {
+  public @Nullable Object retrieveElement(final @NotNull Object pointer) {
     if (pointer instanceof SmartPsiElementPointer) {
       return ReadAction.compute(() -> ((SmartPsiElementPointer<?>)pointer).getElement());
     }

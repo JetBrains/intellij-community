@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -47,13 +47,11 @@ public final class LocalQuickFixWrapper extends QuickFixAction {
     return true;
   }
 
-  @NotNull
-  public QuickFix<?> getFix() {
+  public @NotNull QuickFix<?> getFix() {
     return myFix;
   }
 
-  @Nullable
-  private QuickFix<?> getWorkingQuickFix(QuickFix<?> @NotNull [] fixes) {
+  private @Nullable QuickFix<?> getWorkingQuickFix(QuickFix<?> @NotNull [] fixes) {
     for (QuickFix<?> fix : fixes) {
       if (fix.getFamilyName().equals(myFix.getFamilyName())) {
         return fix;
@@ -68,10 +66,10 @@ public final class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Override
-  protected @NotNull BatchExecutionResult applyFix(@NotNull final Project project,
-                                                   @NotNull final GlobalInspectionContextImpl context,
+  protected @NotNull BatchExecutionResult applyFix(final @NotNull Project project,
+                                                   final @NotNull GlobalInspectionContextImpl context,
                                                    final CommonProblemDescriptor @NotNull [] descriptors,
-                                                   @NotNull final Set<? super PsiElement> ignoredElements) {
+                                                   final @NotNull Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
       final List<PsiElement> collectedElementsToIgnore = new ArrayList<>();
       final Runnable refreshViews = () -> {

@@ -189,28 +189,23 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       myProject = project;
     }
 
-    @NotNull
-    public List<HighlightDisplayKey> getKeys() {
+    public @NotNull List<HighlightDisplayKey> getKeys() {
       return myKeys;
     }
 
-    @NotNull
-    public List<String> getKeyNames() {
+    public @NotNull List<String> getKeyNames() {
       return myKeyNames;
     }
 
-    @NotNull
-    public Collection<InspectionConfigTreeNode.Tool> getNodes() {
+    public @NotNull Collection<InspectionConfigTreeNode.Tool> getNodes() {
       return myNodes;
     }
 
-    @NotNull
-    public InspectionProfileImpl getInspectionProfile() {
+    public @NotNull InspectionProfileImpl getInspectionProfile() {
       return myInspectionProfile;
     }
 
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
@@ -220,13 +215,12 @@ public final class ScopesAndSeveritiesTable extends JBTable {
 
     protected abstract void onScopeRemoved(final int scopesCount);
 
-    protected abstract void onScopeChosen(@NotNull final ScopeToolState scopeToolState);
+    protected abstract void onScopeChosen(final @NotNull ScopeToolState scopeToolState);
 
     protected abstract void onSettingsChanged();
   }
 
-  @NotNull
-  public static HighlightSeverity getSeverity(final @NotNull List<? extends ScopeToolState> scopeToolStates) {
+  public static @NotNull HighlightSeverity getSeverity(final @NotNull List<? extends ScopeToolState> scopeToolStates) {
     HighlightSeverity previousValue = null;
     for (final ScopeToolState scopeToolState : scopeToolStates) {
       final HighlightSeverity currentValue = scopeToolState.getLevel().getSeverity();
@@ -240,8 +234,7 @@ public final class ScopesAndSeveritiesTable extends JBTable {
     return previousValue;
   }
 
-  @NotNull
-  public static TextAttributesKey getEditorAttributesKey(final @NotNull List<? extends ScopeToolState> scopeToolStates, @NotNull Project project) {
+  public static @NotNull TextAttributesKey getEditorAttributesKey(final @NotNull List<? extends ScopeToolState> scopeToolStates, @NotNull Project project) {
     TextAttributesKey previousValue = null;
     final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(project);
     for (final ScopeToolState scopeToolState : scopeToolStates) {
@@ -277,11 +270,9 @@ public final class ScopesAndSeveritiesTable extends JBTable {
   }
 
   private static final class MyTableModel extends AbstractTableModel implements EditableModel {
-    @NotNull
-    private final InspectionProfileImpl myInspectionProfile;
+    private final @NotNull InspectionProfileImpl myInspectionProfile;
     private final List<String> myKeyNames;
-    @NotNull
-    private final Project myProject;
+    private final @NotNull Project myProject;
     private final TableSettings myTableSettings;
     private final List<HighlightDisplayKey> myKeys;
     private final Comparator<String> myScopeComparator;
@@ -325,9 +316,8 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       return lastRowIndex() + 1;
     }
 
-    @Nullable
     @Override
-    public String getColumnName(final int column) {
+    public @Nullable String getColumnName(final int column) {
       return switch (column) {
         case SCOPE_NAME_COLUMN -> LangBundle.message("scopes.chooser.scope.column");
         case SEVERITY_COLUMN -> LangBundle.message("scopes.chooser.scope.severity");
@@ -380,8 +370,7 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       return getScopeToolState(rowIndex).getExistedStates().get(0).getScopeName();
     }
 
-    @NotNull
-    private HighlightSeverity getSeverityState(final int rowIndex) {
+    private @NotNull HighlightSeverity getSeverityState(final int rowIndex) {
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
         return MIXED_FAKE_SEVERITY;
@@ -397,8 +386,7 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       return getEditorAttributesKey(existedScopesStatesAndNonExistNames.myExistedStates, myProject);
     }
 
-    @Nullable
-    private Boolean isEnabled(final int rowIndex) {
+    private @Nullable Boolean isEnabled(final int rowIndex) {
       Boolean previousValue = null;
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       for (final ScopeToolState scopeToolState : existedScopesStatesAndNonExistNames.getExistedStates()) {
@@ -429,8 +417,7 @@ public final class ScopesAndSeveritiesTable extends JBTable {
       return new ExistedScopesStatesAndNonExistNames(existedStates, nonExistNames);
     }
 
-    @Nullable
-    private ScopeToolState getScopeToolState(final String keyName, final int rowIndex) {
+    private @Nullable ScopeToolState getScopeToolState(final String keyName, final int rowIndex) {
       if (rowIndex == lastRowIndex()) {
         return myInspectionProfile.getToolDefaultState(keyName, myProject);
       }

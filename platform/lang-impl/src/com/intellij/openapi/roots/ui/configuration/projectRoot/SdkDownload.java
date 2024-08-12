@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.icons.AllIcons;
@@ -37,8 +37,7 @@ public interface SdkDownload {
    * {@link #supportsDownload(SdkTypeId)} test
    * Invoked in the EDT thread
    */
-  @NotNull
-  default Icon getIconForDownloadAction(@NotNull SdkTypeId sdkTypeId) {
+  default @NotNull Icon getIconForDownloadAction(@NotNull SdkTypeId sdkTypeId) {
     return AllIcons.Actions.Download;
   }
 
@@ -92,8 +91,7 @@ public interface SdkDownload {
    *
    * @return The selected {@link SdkDownloadTask}
    */
-  @Nullable
-  default SdkDownloadTask pickSdk(@NotNull SdkTypeId sdkTypeId,
+  default @Nullable SdkDownloadTask pickSdk(@NotNull SdkTypeId sdkTypeId,
                                   @NotNull SdkModel sdkModel,
                                   @NotNull JComponent parentComponent,
                                   @Nullable Sdk selectedSdk) {

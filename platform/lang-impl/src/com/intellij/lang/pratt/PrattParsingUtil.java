@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.pratt;
 
 import com.intellij.psi.tree.IElementType;
@@ -28,8 +28,7 @@ public final class PrattParsingUtil {
     return !builder.isEof();
   }
 
-  @Nullable
-  public static IElementType parseOption(final PrattBuilder builder, int rightPriority) {
+  public static @Nullable IElementType parseOption(final PrattBuilder builder, int rightPriority) {
     final MutableMarker marker = builder.mark();
     final IElementType type = builder.createChildBuilder(rightPriority).parse();
     if (type == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.wizard.Step;
@@ -55,9 +55,8 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     setTitle(AbstractNewProjectStep.EP_NAME.hasAnyExtensions() ? ProjectBundle.message("dialog.title.new.project")
                                                                   : ProjectBundle.message("dialog.title.create.project"));
     DefaultActionGroup root = createRootStep();
@@ -99,21 +98,18 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     return wizardContext;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return FlatWelcomeFrame.getPreferredFocusedComponent(myPair);
   }
 
-  @Nullable
   @Override
-  protected JComponent createSouthPanel() {
+  protected @Nullable JComponent createSouthPanel() {
     return null;
   }
 
-  @NotNull
   @Override
-  protected DialogStyle getStyle() {
+  protected @NotNull DialogStyle getStyle() {
     return DialogStyle.COMPACT;
   }
 

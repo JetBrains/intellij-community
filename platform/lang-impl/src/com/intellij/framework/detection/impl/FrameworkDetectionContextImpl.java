@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.facet.Facet;
@@ -30,16 +30,14 @@ public final class FrameworkDetectionContextImpl extends FrameworkDetectionConte
     myProject = project;
   }
 
-  @Nullable
   @Override
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
-  @NotNull
   @Override
-  public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
-                                                                                                                                      @NotNull Collection<? extends VirtualFile> files) {
+  public @NotNull <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
+                                                                                                                                               @NotNull Collection<? extends VirtualFile> files) {
     MultiMap<Module, VirtualFile> filesByModule = MultiMap.createSet();
     for (VirtualFile file : files) {
       final Module module = ModuleUtilCore.findModuleForFile(file, myProject);

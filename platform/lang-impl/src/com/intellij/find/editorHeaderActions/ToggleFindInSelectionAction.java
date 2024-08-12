@@ -47,9 +47,8 @@ public final class ToggleFindInSelectionAction extends ToggleAction implements C
     }
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut(@NotNull DataContext context) {
+  public @Nullable ShortcutSet getShortcut(@NotNull DataContext context) {
     if (KeymapUtil.isEmacsKeymap()) return null;
     SearchSession search = context.getData(SearchSession.KEY);
     if (search != null) {

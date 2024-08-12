@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
@@ -238,8 +238,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     ApplicationManager.getApplication().runWriteAction(() -> myCodeEditor.setText(text == null ? "" : text));
   }
 
-  @Nullable
-  private VirtualFile pathToFile() {
+  private @Nullable VirtualFile pathToFile() {
     if (myState.currentScript.isEmpty()) {
       return null;
     }
@@ -418,11 +417,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   @Override
-  public void message(@Nullable final PlaybackContext context, final String text, final Type type) {
+  public void message(final @Nullable PlaybackContext context, final String text, final Type type) {
     message(context, text, context != null ? context.getCurrentLine() : -1, type, false);
   }
 
-  private void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {
+  private void message(final @Nullable PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {
     final int depth = context != null ? context.getCurrentStageDepth() : 0;
 
     UIUtil.invokeLaterIfNeeded(() -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates.github;
 
 import com.intellij.lang.LangBundle;
@@ -49,9 +49,9 @@ public final class ZipUtil {
   public static void unzipWithProgressSynchronously(
     @Nullable Project project,
     @NotNull @NlsContexts.ProgressTitle String progressTitle,
-    @NotNull final File zipArchive,
-    @NotNull final File extractToDir,
-    @Nullable final NullableFunction<? super String, String> pathConvertor,
+    final @NotNull File zipArchive,
+    final @NotNull File extractToDir,
+    final @Nullable NullableFunction<? super String, String> pathConvertor,
     final boolean unwrapSingleTopLevelFolder) throws GeneratorException
   {
     final Outcome<Boolean> outcome = DownloadUtil.provideDataWithProgressSynchronously(
@@ -158,8 +158,8 @@ public final class ZipUtil {
   }
 
   private static void unzipEntryToDir(@Nullable ProgressIndicator progress,
-                                      @NotNull final ZipEntry zipEntry,
-                                      @NotNull final InputStream entryContentStream,
+                                      final @NotNull ZipEntry zipEntry,
+                                      final @NotNull InputStream entryContentStream,
                                       @NotNull Path extractToDir,
                                       @Nullable NullableFunction<? super String, String> pathConvertor,
                                       @Nullable ContentProcessor contentProcessor) throws IOException {
@@ -194,8 +194,7 @@ public final class ZipUtil {
     LOG.info("Extract: " + relativeExtractPath);
   }
 
-  @NotNull
-  private static String createRelativeExtractPath(@NotNull ZipEntry zipEntry) {
+  private static @NotNull String createRelativeExtractPath(@NotNull ZipEntry zipEntry) {
     String name = StringUtil.trimStart(zipEntry.getName(), "/");
     return StringUtil.trimEnd(name, "/");
   }

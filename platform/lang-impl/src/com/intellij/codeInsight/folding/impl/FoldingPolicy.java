@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -28,8 +28,7 @@ public final class FoldingPolicy {
     }
   }
 
-  @Nullable
-  public static String getSignature(@NotNull PsiElement element) {
+  public static @Nullable String getSignature(@NotNull PsiElement element) {
     for(ElementSignatureProvider provider: ElementSignatureProvider.EP_NAME.getExtensionList()) {
       String signature = provider.getSignature(element);
       if (signature != null) return signature;
@@ -37,8 +36,7 @@ public final class FoldingPolicy {
     return GENERIC_PROVIDER.getSignature(element);
   }
 
-  @Nullable
-  public static PsiElement restoreBySignature(@NotNull PsiFile file, @NotNull String signature) {
+  public static @Nullable PsiElement restoreBySignature(@NotNull PsiFile file, @NotNull String signature) {
     return restoreBySignature(file, signature, null);
   }
 
@@ -51,8 +49,7 @@ public final class FoldingPolicy {
    * @return                       PSI element from the given PSI file that corresponds to the given signature (if found)
    *                               {@code null} otherwise
    */
-  @Nullable
-  public static PsiElement restoreBySignature(@NotNull PsiFile file,
+  public static @Nullable PsiElement restoreBySignature(@NotNull PsiFile file,
                                               @NotNull String signature,
                                               @Nullable StringBuilder processingInfoStorage)
   {

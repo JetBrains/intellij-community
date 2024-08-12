@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
@@ -29,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull Ref<Integer> caretOffsetRef,
-                                final @NotNull Ref<Integer> caretAdvanceRef, @NotNull final DataContext dataContext,
+  public Result preprocessEnter(final @NotNull PsiFile file, final @NotNull Editor editor, @NotNull Ref<Integer> caretOffsetRef,
+                                final @NotNull Ref<Integer> caretAdvanceRef, final @NotNull DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
     final Language language = EnterHandler.getLanguage(dataContext);
     if (language == null) return Result.Continue;
@@ -106,8 +106,7 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
     return caretOffset;
   }
 
-  @Nullable
-  protected JavaLikeQuoteHandler getJavaLikeQuoteHandler(@NotNull Editor editor, @NotNull PsiElement psiAtOffset) {
+  protected @Nullable JavaLikeQuoteHandler getJavaLikeQuoteHandler(@NotNull Editor editor, @NotNull PsiElement psiAtOffset) {
     final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile(), editor);
     return fileTypeQuoteHandler instanceof JavaLikeQuoteHandler
            ? (JavaLikeQuoteHandler)fileTypeQuoteHandler

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -43,18 +43,18 @@ final class DocumentFoldingInfo implements CodeFoldingState {
   private static final Logger LOG = Logger.getInstance(DocumentFoldingInfo.class);
   private static final Key<FoldingInfo> FOLDING_INFO_KEY = Key.create("FOLDING_INFO");
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final VirtualFile file;
 
-  @NotNull private final List<Info> myInfos = ContainerUtil.createLockFreeCopyOnWriteList();
-  @NotNull private final List<RangeMarker> myRangeMarkers = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull List<Info> myInfos = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull List<RangeMarker> myRangeMarkers = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final String DEFAULT_PLACEHOLDER = "...";
-  @NonNls private static final String ELEMENT_TAG = "element";
-  @NonNls private static final String SIGNATURE_ATT = "signature";
-  @NonNls private static final String EXPANDED_ATT = "expanded";
-  @NonNls private static final String MARKER_TAG = "marker";
-  @NonNls private static final String DATE_ATT = "date";
-  @NonNls private static final String PLACEHOLDER_ATT = "ph";
+  private static final @NonNls String ELEMENT_TAG = "element";
+  private static final @NonNls String SIGNATURE_ATT = "signature";
+  private static final @NonNls String EXPANDED_ATT = "expanded";
+  private static final @NonNls String MARKER_TAG = "marker";
+  private static final @NonNls String DATE_ATT = "date";
+  private static final @NonNls String PLACEHOLDER_ATT = "ph";
 
   DocumentFoldingInfo(@NotNull Project project, @NotNull Document document) {
     myProject = project;
@@ -93,7 +93,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
   }
 
   @Override
-  public void setToEditor(@NotNull final Editor editor) {
+  public void setToEditor(final @NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (psiManager.isDisposed()) return;
@@ -143,8 +143,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
     }
   }
 
-  @NotNull
-  private static Map<PsiElement, FoldingDescriptor> buildRanges(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+  private static @NotNull Map<PsiElement, FoldingDescriptor> buildRanges(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiFile.getLanguage());
     final ASTNode node = psiFile.getNode();
     if (node == null) return Collections.emptyMap();

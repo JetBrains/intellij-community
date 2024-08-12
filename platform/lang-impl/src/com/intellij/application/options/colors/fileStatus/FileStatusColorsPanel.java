@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -101,14 +101,12 @@ public final class FileStatusColorsPanel {
     myFileStatusColorsTable = new FileStatusColorsTable();
   }
 
-  @NotNull
-  private static EditorColorsScheme getCurrentScheme() {
-    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+  public @NotNull FileStatusColorsTableModel getModel() {
+    return myModel;
   }
 
-  @NotNull
-  public FileStatusColorsTableModel getModel() {
-    return myModel;
+  private static @NotNull EditorColorsScheme getCurrentScheme() {
+    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
   }
 
   private void updateColorPanel(@Nullable FileStatusColorDescriptor descriptor) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.CodeStyleBundle;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 public final class ExcludedGlobPatternsPanel extends ExcludedFilesPanelBase {
 
-  private final static String PATTERN_SEPARATOR = ";";
+  private static final String PATTERN_SEPARATOR = ";";
 
   private final ExpandableTextField myPatternsField;
   private final JComponent          myConversionMessage;
@@ -93,8 +93,7 @@ public final class ExcludedGlobPatternsPanel extends ExcludedFilesPanelBase {
     return StringUtil.join(patterns, PATTERN_SEPARATOR);
   }
 
-  @NotNull
-  private static List<String> getConvertedPatterns(@NotNull CodeStyleSettings settings) {
+  private static @NotNull List<String> getConvertedPatterns(@NotNull CodeStyleSettings settings) {
     return settings.getExcludedFiles().getDescriptors(NamedScopeDescriptor.NAMED_SCOPE_TYPE).stream()
                    .map(descriptor -> NamedScopeToGlobConverter.convert((NamedScopeDescriptor)descriptor))
                    .filter(descriptor -> descriptor != null)

@@ -43,9 +43,8 @@ public final class SelectAllAction extends OccurrenceAction {
     }
   }
 
-  @NotNull
   @Override
-  public ShortcutSet getShortcut() {
+  public @NotNull ShortcutSet getShortcut() {
     List<Shortcut> shortcuts = new ArrayList<>();
     AnAction selectAllOccurrences = ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL_OCCURRENCES);
     if (selectAllOccurrences != null) {

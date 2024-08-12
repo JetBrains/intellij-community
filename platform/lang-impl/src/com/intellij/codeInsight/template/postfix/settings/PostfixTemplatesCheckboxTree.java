@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
@@ -50,10 +50,8 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     return compare != 0 ? compare : Comparing.compare(template1.getId(), template2.getId());
   });
 
-  @NotNull
-  private final CheckedTreeNode myRoot;
-  @NotNull
-  private final DefaultTreeModel myModel;
+  private final @NotNull CheckedTreeNode myRoot;
+  private final @NotNull DefaultTreeModel myModel;
 
   public PostfixTemplatesCheckboxTree() {
     super(getRenderer(), new CheckedTreeNode(null));
@@ -98,8 +96,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     UIUtil.dispose(this);
   }
 
-  @NotNull
-  private static CheckboxTreeCellRenderer getRenderer() {
+  private static @NotNull CheckboxTreeCellRenderer getRenderer() {
     return new CheckboxTreeCellRenderer() {
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -154,22 +151,19 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     TreeUtil.expandAll(this);
   }
 
-  @Nullable
-  public PostfixTemplate getSelectedTemplate() {
+  public @Nullable PostfixTemplate getSelectedTemplate() {
     TreePath path = getSelectionModel().getSelectionPath();
     return getTemplateFromPath(path);
   }
 
-  @Nullable
-  private static PostfixTemplate getTemplateFromPath(@Nullable TreePath path) {
+  private static @Nullable PostfixTemplate getTemplateFromPath(@Nullable TreePath path) {
     if (path == null || !(path.getLastPathComponent() instanceof PostfixTemplateCheckedTreeNode)) {
       return null;
     }
     return ((PostfixTemplateCheckedTreeNode)path.getLastPathComponent()).getTemplate();
   }
 
-  @NotNull
-  public MultiMap<PostfixTemplateProvider, PostfixTemplate> getEditableTemplates() {
+  public @NotNull MultiMap<PostfixTemplateProvider, PostfixTemplate> getEditableTemplates() {
     MultiMap<PostfixTemplateProvider, PostfixTemplate> result = MultiMap.createSet();
     visitTemplateNodes(node -> {
       PostfixTemplate template = node.getTemplate();
@@ -181,8 +175,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     return result;
   }
 
-  @NotNull
-  public Map<String, Set<String>> getDisabledTemplatesState() {
+  public @NotNull Map<String, Set<String>> getDisabledTemplatesState() {
     final Map<String, Set<String>> result = new HashMap<>();
     visitTemplateNodes(template -> {
       if (!template.isChecked()) {
@@ -194,7 +187,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     return result;
   }
 
-  public void setDisabledTemplatesState(@NotNull final Map<String, Set<String>> providerToDisabledTemplates) {
+  public void setDisabledTemplatesState(final @NotNull Map<String, Set<String>> providerToDisabledTemplates) {
     TreeState treeState = TreeState.createOn(this, myRoot);
     visitTemplateNodes(template -> {
       Set<String> disabledTemplates = providerToDisabledTemplates.get(template.getTemplateProvider().getId());
@@ -212,7 +205,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     TreeUtil.expandAll(this);
   }
 
-  public void selectTemplate(@NotNull final PostfixTemplate postfixTemplate, @NotNull final PostfixTemplateProvider provider) {
+  public void selectTemplate(final @NotNull PostfixTemplate postfixTemplate, final @NotNull PostfixTemplateProvider provider) {
     visitTemplateNodes(template -> {
       if (provider.getId().equals(template.getTemplateProvider().getId()) &&
           postfixTemplate.getKey().equals(template.getTemplate().getKey())) {
@@ -404,8 +397,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     return template != null && template.isEditable() && template.getKey().startsWith(".");
   }
 
-  @NotNull
-  private DefaultMutableTreeNode findOrCreateLanguageNode(String languageId) {
+  private @NotNull DefaultMutableTreeNode findOrCreateLanguageNode(String languageId) {
     DefaultMutableTreeNode find = TreeUtil.findNode(myRoot, n ->
       n instanceof LangTreeNode && languageId.equals(((LangTreeNode)n).getLanguageId()));
     if (find != null) {
@@ -419,8 +411,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     return languageNode;
   }
 
-  @NotNull
-  private static Map<PostfixTemplateProvider, String> getProvidersToLanguages() {
+  private static @NotNull Map<PostfixTemplateProvider, String> getProvidersToLanguages() {
     Map<PostfixTemplateProvider, String> myProviderToLanguage = new HashMap<>();
     for (LanguageExtensionPoint<?> extension : LanguagePostfixTemplate.EP_NAME.getExtensionList()) {
       PostfixTemplateProvider provider = (PostfixTemplateProvider)extension.getInstance();
@@ -431,15 +422,14 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   }
 
   private static final class LangTreeNode extends CheckedTreeNode {
-    @NotNull private final String myLanguageId;
+    private final @NotNull String myLanguageId;
 
     LangTreeNode(@NotNull String languageName, @NotNull String languageId) {
       super(languageName);
       myLanguageId = languageId;
     }
 
-    @NotNull
-    public String getLanguageId() {
+    public @NotNull String getLanguageId() {
       return myLanguageId;
     }
   }

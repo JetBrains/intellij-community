@@ -95,8 +95,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(finder);
   }
 
-  @NotNull
-  public final Set<String> findExistingJdks() {
+  public final @NotNull Set<String> findExistingJdks() {
     Set<String> result = new TreeSet<>();
 
     for (Supplier<? extends Set<String>> action : myFinders) {
@@ -215,8 +214,7 @@ public class JavaHomeFinderBasic {
     }
   }
 
-  @NotNull
-  protected List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
+  protected @NotNull List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
     return Collections.singletonList(path);
   }
 
@@ -264,8 +262,7 @@ public class JavaHomeFinderBasic {
       .collect(Collectors.toSet());
   }
 
-  @Nullable
-  private Path findSdkManCandidatesDir() {
+  private @Nullable Path findSdkManCandidatesDir() {
     // first, try the special environment variable
     String candidatesPath = mySystemInfo.getEnvironmentVariable("SDKMAN_CANDIDATES_DIR");
     if (candidatesPath != null) {
@@ -370,8 +367,7 @@ public class JavaHomeFinderBasic {
     return safeIsDirectory(javasDir) ? scanAll(javasDir, true) : Collections.emptySet();
   }
 
-  @Nullable
-  private Path findAsdfInstallsDir() {
+  private @Nullable Path findAsdfInstallsDir() {
     // try to use environment variable for custom data directory
     // https://asdf-vm.com/#/core-configuration?id=environment-variables
     String dataDir = mySystemInfo.getEnvironmentVariable("ASDF_DATA_DIR");

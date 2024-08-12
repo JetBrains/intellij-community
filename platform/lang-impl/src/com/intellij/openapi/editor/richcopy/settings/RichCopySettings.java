@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -15,18 +15,16 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "EditorRichCopySettings", storages = @Storage("editor.rich.copy.xml"), category = SettingsCategory.UI)
 public final class RichCopySettings implements PersistentStateComponent<RichCopySettings> {
 
-  @NotNull public static final String ACTIVE_GLOBAL_SCHEME_MARKER = "__ACTIVE_GLOBAL_SCHEME__";
+  public static final @NotNull String ACTIVE_GLOBAL_SCHEME_MARKER = "__ACTIVE_GLOBAL_SCHEME__";
 
   private boolean myEnabled = true;
   private String  mySchemeName = ACTIVE_GLOBAL_SCHEME_MARKER;
 
-  @NotNull
-  public static RichCopySettings getInstance() {
+  public static @NotNull RichCopySettings getInstance() {
     return ApplicationManager.getApplication().getService(RichCopySettings.class);
   }
 
-  @NotNull
-  public EditorColorsScheme getColorsScheme(@NotNull EditorColorsScheme editorColorsScheme) {
+  public @NotNull EditorColorsScheme getColorsScheme(@NotNull EditorColorsScheme editorColorsScheme) {
     EditorColorsScheme result = null;
     if (mySchemeName != null && !ACTIVE_GLOBAL_SCHEME_MARKER.equals(mySchemeName)) {
       result = EditorColorsManager.getInstance().getScheme(mySchemeName);
@@ -34,9 +32,8 @@ public final class RichCopySettings implements PersistentStateComponent<RichCopy
     return result == null ? editorColorsScheme : result;
   }
 
-  @Nullable
   @Override
-  public RichCopySettings getState() {
+  public @Nullable RichCopySettings getState() {
     return this;
   }
 
@@ -45,8 +42,7 @@ public final class RichCopySettings implements PersistentStateComponent<RichCopy
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  @NotNull
-  public String getSchemeName() {
+  public @NotNull String getSchemeName() {
     return mySchemeName == null ? ACTIVE_GLOBAL_SCHEME_MARKER : mySchemeName;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.IdeBundle;
@@ -141,8 +141,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     return false;
   }
 
-  @Nullable
-  private SafeDeleteProcessorDelegate getDelegate() {
+  private @Nullable SafeDeleteProcessorDelegate getDelegate() {
     if (myElements.length == 1) {
       for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(myElements[0])) {

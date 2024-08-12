@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.IdeBundle;
@@ -19,9 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class RunAnythingAnActionProvider<V extends AnAction> extends RunAnythingProviderBase<V> {
-  @NotNull
   @Override
-  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value) {
+  public @NotNull RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value) {
     return new RunAnythingActionItem<>(value, getCommand(value), value.getTemplatePresentation().getIcon());
   }
 
@@ -30,9 +29,8 @@ public abstract class RunAnythingAnActionProvider<V extends AnAction> extends Ru
     performRunAnythingAction(value, dataContext);
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(@NotNull V value) {
+  public @Nullable Icon getIcon(@NotNull V value) {
     return value.getTemplatePresentation().getIcon();
   }
 
@@ -48,9 +46,8 @@ public abstract class RunAnythingAnActionProvider<V extends AnAction> extends Ru
     ActionUtil.performActionDumbAwareWithCallbacks(action, event);
   }
 
-  @Nullable
   @Override
-  public String getAdText() {
+  public @Nullable String getAdText() {
     return IdeBundle.message("run.anything.ad.run.action.with.default.settings", RunAnythingUtil.SHIFT_SHORTCUT_TEXT);
   }
 }

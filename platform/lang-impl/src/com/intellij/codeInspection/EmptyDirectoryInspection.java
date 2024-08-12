@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -77,8 +77,7 @@ public final class EmptyDirectoryInspection extends GlobalInspectionTool {
     }, globalSearchScope);
   }
 
-  @Nullable
-  private static String getPathRelativeToModule(VirtualFile file, Project project) {
+  private static @Nullable String getPathRelativeToModule(VirtualFile file, Project project) {
     final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
     final VirtualFile[] contentRoots = rootManager.getContentRootsFromAllModules();
     for (VirtualFile otherRoot : contentRoots) {
@@ -99,16 +98,14 @@ public final class EmptyDirectoryInspection extends GlobalInspectionTool {
       this.name = name;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return LangBundle.message(
         "empty.directories.delete.quickfix", name);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return LangBundle.message("empty.directories.delete.quickfix", "");
     }
 

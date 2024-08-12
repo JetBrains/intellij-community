@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.structureView.StructureView;
@@ -32,9 +32,8 @@ import java.util.*;
 
 public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStructureViewBuilder {
 
-  @NotNull
-  public static TemplateLanguageStructureViewBuilder create(@NotNull PsiFile psiFile,
-                                                            @Nullable PairFunction<? super PsiFile, ? super Editor, ? extends StructureViewModel> modelFactory) {
+  public static @NotNull TemplateLanguageStructureViewBuilder create(@NotNull PsiFile psiFile,
+                                                                     @Nullable PairFunction<? super PsiFile, ? super Editor, ? extends StructureViewModel> modelFactory) {
     return new TemplateLanguageStructureViewBuilder(psiFile) {
       @Override
       protected TreeBasedStructureViewBuilder createMainBuilder(@NotNull PsiFile psi) {
@@ -44,9 +43,8 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
             return false;
           }
 
-          @NotNull
           @Override
-          public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+          public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
             return modelFactory.fun(psi, editor);
           }
         };
@@ -80,8 +78,7 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
   }
 
   @Override
-  @NotNull
-  public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
+  public @NotNull StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
     for (Language language : myLanguageToBuilderMap.keySet()) {
       StructureViewBuilder builder = myLanguageToBuilderMap.get(language);
@@ -104,8 +101,7 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
   }
 
   @Override
-  @NotNull
-  public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+  public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
     for (Language language : myLanguageToBuilderMap.keySet()) {
       StructureViewBuilder builder = myLanguageToBuilderMap.get(language);
@@ -119,8 +115,7 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
     return new StructureViewCompositeModel(psiFile, editor, viewDescriptors);
   }
 
-  @NotNull
-  private JBIterable<Language> getLanguages(@Nullable PsiFile psiFile) {
+  private @NotNull JBIterable<Language> getLanguages(@Nullable PsiFile psiFile) {
     if (psiFile == null) return JBIterable.empty();
     FileViewProvider viewProvider = psiFile.getViewProvider();
 
@@ -137,8 +132,7 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
       });
   }
 
-  @Nullable
-  private StructureViewBuilder getBuilder(@NotNull PsiFile psiFile, @NotNull Language language) {
+  private @Nullable StructureViewBuilder getBuilder(@NotNull PsiFile psiFile, @NotNull Language language) {
     FileViewProvider viewProvider = psiFile.getViewProvider();
     Language baseLanguage = viewProvider.getBaseLanguage();
     PsiFile psi = viewProvider.getPsi(language);
@@ -152,6 +146,5 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
     return true;
   }
 
-  @Nullable
-  protected abstract TreeBasedStructureViewBuilder createMainBuilder(@NotNull PsiFile psi);
+  protected abstract @Nullable TreeBasedStructureViewBuilder createMainBuilder(@NotNull PsiFile psi);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.bookmark.BookmarksListener;
@@ -32,7 +32,7 @@ import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 })
 @Deprecated(forRemoval = true)
 public final class FavoritesManager implements PersistentStateComponent<Element> {
-  private final static Logger LOG = Logger.getInstance(FavoritesManager.class);
+  private static final Logger LOG = Logger.getInstance(FavoritesManager.class);
   // fav list name -> list of (root: root url, root class)
   private final Map<String, List<TreeItem<Pair<AbstractUrl, String>>>> myName2FavoritesRoots = new TreeMap<>();
   private final List<String> myFavoritesRootsOrder = new ArrayList<>();
@@ -74,8 +74,7 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
     });
   }
 
-  @NotNull
-  public List<String> getAvailableFavoritesListNames() {
+  public @NotNull List<String> getAvailableFavoritesListNames() {
     return new ArrayList<>(myFavoritesRootsOrder);
   }
 
@@ -91,18 +90,16 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
    * The {@code null}-node can be used to rebuild the whole BookmarksView.
    */
   @Deprecated
-  public synchronized void fireListeners(@NotNull final String listName) {
+  public synchronized void fireListeners(final @NotNull String listName) {
     myProject.getMessageBus().syncPublisher(BookmarksListener.TOPIC).structureChanged(null);
     rootsChanged();
   }
 
-  @NotNull
-  public FavoritesViewSettings getViewSettings() {
+  public @NotNull FavoritesViewSettings getViewSettings() {
     return myViewSettings;
   }
 
-  @NotNull
-  public List<TreeItem<Pair<AbstractUrl, String>>> getFavoritesListRootUrls(@NotNull String name) {
+  public @NotNull List<TreeItem<Pair<AbstractUrl, String>>> getFavoritesListRootUrls(@NotNull String name) {
     final List<TreeItem<Pair<AbstractUrl, String>>> pairs = myName2FavoritesRoots.get(name);
     return pairs == null ? new ArrayList<>() : pairs;
   }
@@ -128,10 +125,10 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
     LOG.info("no state loaded for old favorites");
   }
 
-  @NonNls private static final String CLASS_NAME = "klass";
-  @NonNls private static final String FAVORITES_ROOT = "favorite_root";
-  @NonNls private static final String ELEMENT_FAVORITES_LIST = "favorites_list";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String CLASS_NAME = "klass";
+  private static final @NonNls String FAVORITES_ROOT = "favorite_root";
+  private static final @NonNls String ELEMENT_FAVORITES_LIST = "favorites_list";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
 
   private static List<TreeItem<Pair<AbstractUrl, String>>> readRoots(final Element list, Project project) {
     List<TreeItem<Pair<AbstractUrl, String>>> result = new ArrayList<>();
@@ -164,12 +161,11 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
     ourAbstractUrlProviders.add(new NamedLibraryUrl(null, null));
   }
 
-  @NonNls private static final String ATTRIBUTE_TYPE = "type";
-  @NonNls private static final String ATTRIBUTE_URL = "url";
-  @NonNls private static final String ATTRIBUTE_MODULE = "module";
+  private static final @NonNls String ATTRIBUTE_TYPE = "type";
+  private static final @NonNls String ATTRIBUTE_URL = "url";
+  private static final @NonNls String ATTRIBUTE_MODULE = "module";
 
-  @Nullable
-  private static AbstractUrl readUrlFromElement(Element element, Project project) {
+  private static @Nullable AbstractUrl readUrlFromElement(Element element, Project project) {
     final String type = element.getAttributeValue(ATTRIBUTE_TYPE);
     final String urlValue = element.getAttributeValue(ATTRIBUTE_URL);
     final String moduleName = element.getAttributeValue(ATTRIBUTE_MODULE);

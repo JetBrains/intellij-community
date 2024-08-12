@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
@@ -31,29 +31,25 @@ public final class BuildableRootsChangeRescanningInfoImpl extends BuildableRoots
   }
 
   @Override
-  @NotNull
-  public BuildableRootsChangeRescanningInfo addModule(@NotNull com.intellij.openapi.module.Module module) {
+  public @NotNull BuildableRootsChangeRescanningInfo addModule(@NotNull com.intellij.openapi.module.Module module) {
     modules.add(new ModuleId(module.getName()));
     return this;
   }
 
   @Override
-  @NotNull
-  public BuildableRootsChangeRescanningInfo addInheritedSdk() {
+  public @NotNull BuildableRootsChangeRescanningInfo addInheritedSdk() {
     hasInheritedSdk = true;
     return this;
   }
 
   @Override
-  @NotNull
-  public BuildableRootsChangeRescanningInfo addSdk(@NotNull Sdk sdk) {
+  public @NotNull BuildableRootsChangeRescanningInfo addSdk(@NotNull Sdk sdk) {
     sdks.add(new Pair<>(sdk.getName(), sdk.getSdkType().getName()));
     return this;
   }
 
   @Override
-  @NotNull
-  public BuildableRootsChangeRescanningInfo addLibrary(@NotNull Library library) {
+  public @NotNull BuildableRootsChangeRescanningInfo addLibrary(@NotNull Library library) {
     LibraryId libraryId;
     if (library instanceof LibraryBridge) {
       libraryId = ((LibraryBridge)library).getLibraryId();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.ide.IdeBundle;
@@ -40,7 +40,7 @@ public final class RenameLibraryHandler implements RenameHandler, TitledHandler 
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, @NotNull DataContext dataContext) {
+  public void invoke(final @NotNull Project project, PsiElement @NotNull [] elements, @NotNull DataContext dataContext) {
     final Library library = LangDataKeys.LIBRARY.getData(dataContext);
     LOG.assertTrue(library != null);
     Messages.showInputDialog(project,
@@ -57,10 +57,8 @@ public final class RenameLibraryHandler implements RenameHandler, TitledHandler 
   }
 
   private static final class MyInputValidator implements InputValidator {
-    @NotNull
-    private final Project myProject;
-    @NotNull
-    private final Library myLibrary;
+    private final @NotNull Project myProject;
+    private final @NotNull Library myLibrary;
     MyInputValidator(@NotNull Project project, @NotNull Library library) {
       myProject = project;
       myLibrary = library;
@@ -96,8 +94,7 @@ public final class RenameLibraryHandler implements RenameHandler, TitledHandler 
       return success.get().booleanValue();
     }
 
-    @NotNull
-    private Library.ModifiableModel renameLibrary(String inputString) {
+    private @NotNull Library.ModifiableModel renameLibrary(String inputString) {
       final Library.ModifiableModel modifiableModel = myLibrary.getModifiableModel();
       modifiableModel.setName(inputString);
       return modifiableModel;

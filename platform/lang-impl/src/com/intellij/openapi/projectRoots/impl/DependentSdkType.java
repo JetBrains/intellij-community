@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.ProjectBundle;
@@ -35,8 +35,7 @@ public abstract class DependentSdkType extends SdkType {
 
   protected abstract boolean isValidDependency(@NotNull Sdk sdk);
 
-  @NotNull
-  public abstract @NlsContexts.DialogMessage String getUnsatisfiedDependencyMessage();
+  public abstract @NotNull @NlsContexts.DialogMessage String getUnsatisfiedDependencyMessage();
 
   @Override
   public boolean supportsCustomCreateUI() {
@@ -60,8 +59,7 @@ public abstract class DependentSdkType extends SdkType {
   }
 
   @Override
-  @NotNull
-  public abstract SdkType getDependencyType();
+  public abstract @NotNull SdkType getDependencyType();
 
   protected Sdk fixDependency(@NotNull SdkModel sdkModel, @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     return createSdkOfType(sdkModel, getDependencyType(), sdkCreatedCallback);

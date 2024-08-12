@@ -81,26 +81,20 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
   private static final Key<Boolean> PREVIEW_EDITOR_IS_REUSED_KEY = Key.create("inspection.tool.window.preview.editor.is.reused");
 
-  @NotNull
-  private final InspectionTree myTree;
+  private final @NotNull InspectionTree myTree;
   private volatile InspectionProfileImpl myInspectionProfile;
   private final boolean mySettingsEnabled;
-  @NotNull
-  private final AnalysisScope myScope;
-  @NonNls
-  public static final String HELP_ID = "reference.toolWindows.inspections";
+  private final @NotNull AnalysisScope myScope;
+  public static final @NonNls String HELP_ID = "reference.toolWindows.inspections";
 
   private final Splitter mySplitter;
-  @NotNull
-  private final GlobalInspectionContextImpl myGlobalInspectionContext;
+  private final @NotNull GlobalInspectionContextImpl myGlobalInspectionContext;
   private boolean myRerun;
   private volatile boolean myDisposed;
   private boolean myApplyingFix; //accessed only in edt
 
-  @NotNull
-  private final InspectionRVContentProvider myProvider;
-  @NotNull
-  private final ExclusionHandler<InspectionTreeNode> myExclusionHandler;
+  private final @NotNull InspectionRVContentProvider myProvider;
+  private final @NotNull ExclusionHandler<InspectionTreeNode> myExclusionHandler;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final Alarm myLoadingProgressPreviewAlarm = new Alarm(this);
@@ -324,15 +318,13 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return myTree.getOccurenceNavigator().goPreviousOccurence();
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return myTree.getOccurenceNavigator().getNextOccurenceActionName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return myTree.getOccurenceNavigator().getPreviousOccurenceActionName();
   }
 
@@ -453,7 +445,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     }
   }
 
-  private void showInRightPanel(@Nullable final RefEntity refEntity) {
+  private void showInRightPanel(final @Nullable RefEntity refEntity) {
     final JPanel editorPanel = new JPanel();
     editorPanel.setLayout(new BorderLayout());
     final JPanel actionsPanel = new JPanel(new BorderLayout());
@@ -578,7 +570,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return myPreviewEditor != null && !myPreviewEditor.isDisposed() && myPreviewEditor.getDocument() == document;
   }
 
-  private void addTool(@NotNull final InspectionToolWrapper<?,?> toolWrapper,
+  private void addTool(final @NotNull InspectionToolWrapper<?,?> toolWrapper,
                        HighlightDisplayLevel errorLevel,
                        boolean groupedBySeverity,
                        boolean isSingleInspectionRun) {
@@ -606,8 +598,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return mySuppressActionHolder;
   }
 
-  @Nullable
-  private String getCurrentProfileName() {
+  private @Nullable String getCurrentProfileName() {
     return myInspectionProfile == null ? null : myInspectionProfile.getDisplayName();
   }
 
@@ -708,8 +699,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
 
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myGlobalInspectionContext.getProject();
   }
 
@@ -792,15 +782,13 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return myFixesAvailable;
   }
 
-  @Nullable
-  static Navigatable getSelectedNavigatable(final CommonProblemDescriptor descriptor) {
+  static @Nullable Navigatable getSelectedNavigatable(final CommonProblemDescriptor descriptor) {
     return getSelectedNavigatable(
       descriptor, descriptor instanceof ProblemDescriptor o ? o.getPsiElement() : null);
   }
 
-  @Nullable
-  private static Navigatable getSelectedNavigatable(@Nullable CommonProblemDescriptor descriptor,
-                                                    @Nullable PsiElement psiElement) {
+  private static @Nullable Navigatable getSelectedNavigatable(@Nullable CommonProblemDescriptor descriptor,
+                                                              @Nullable PsiElement psiElement) {
     if (descriptor instanceof ProblemDescriptorBase problem) {
       Navigatable navigatable = problem.getNavigatable();
       if (navigatable != null) {
@@ -827,18 +815,15 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     return PsiNavigationSupport.getInstance().createNavigatable(psiElement.getProject(), virtualFile, startOffset);
   }
 
-  @NotNull
-  public InspectionTree getTree() {
+  public @NotNull InspectionTree getTree() {
     return myTree;
   }
 
-  @NotNull
-  public GlobalInspectionContextImpl getGlobalInspectionContext() {
+  public @NotNull GlobalInspectionContextImpl getGlobalInspectionContext() {
     return myGlobalInspectionContext;
   }
 
-  @NotNull
-  public InspectionRVContentProvider getProvider() {
+  public @NotNull InspectionRVContentProvider getProvider() {
     return myProvider;
   }
 
@@ -866,8 +851,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     }
   }
 
-  @NotNull
-  public AnalysisScope getScope() {
+  public @NotNull AnalysisScope getScope() {
     return myScope;
   }
 

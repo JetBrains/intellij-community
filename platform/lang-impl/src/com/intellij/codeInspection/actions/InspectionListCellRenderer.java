@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -125,8 +125,7 @@ public final class InspectionListCellRenderer extends DefaultListCellRenderer {
     return result;
   }
 
-  @NotNull
-  private static Icon getIcon(@NotNull InspectionToolWrapper tool) {
+  private static @NotNull Icon getIcon(@NotNull InspectionToolWrapper tool) {
     Icon icon = null;
     final Language language = Language.findLanguageByID(tool.getLanguage());
     if (language != null) {

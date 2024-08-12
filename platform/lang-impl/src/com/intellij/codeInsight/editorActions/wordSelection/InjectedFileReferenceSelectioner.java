@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.wordSelection;
 
@@ -75,8 +75,7 @@ public final class InjectedFileReferenceSelectioner extends AbstractWordSelectio
     return segments;
   }
 
-  @NotNull
-  private static PsiElement findValueElement(@NotNull PsiElement host, @NotNull TextRange valueRange) {
+  private static @NotNull PsiElement findValueElement(@NotNull PsiElement host, @NotNull TextRange valueRange) {
     return notNull(
       PsiTreeUtil.findFirstParent(
         host.getContainingFile().findElementAt(valueRange.getStartOffset()), false,
@@ -84,12 +83,11 @@ public final class InjectedFileReferenceSelectioner extends AbstractWordSelectio
       host);
   }
 
-  @NotNull
-  private static List<TextRange> buildSegments(@NotNull CharSequence editorText,
-                                               final int cursorOffset,
-                                               @NotNull TextRange range,
-                                               @NotNull BitSet charEscapeLocations,
-                                               @NotNull BitSet compositeIndexes) {
+  private static @NotNull List<TextRange> buildSegments(@NotNull CharSequence editorText,
+                                                        final int cursorOffset,
+                                                        @NotNull TextRange range,
+                                                        @NotNull BitSet charEscapeLocations,
+                                                        @NotNull BitSet compositeIndexes) {
     if (range.getLength() == 0) {
       return Collections.emptyList();
     }
@@ -152,8 +150,7 @@ public final class InjectedFileReferenceSelectioner extends AbstractWordSelectio
     return segments;
   }
 
-  @NotNull
-  private static BitSet createCompositeIndexesSet(@NotNull PsiElement valueElement, int indexesOffset) {
+  private static @NotNull BitSet createCompositeIndexesSet(@NotNull PsiElement valueElement, int indexesOffset) {
     return StreamEx.of(valueElement.getChildren())
       .filter(child -> !(child instanceof LeafPsiElement))
       .map(PsiElement::getTextRange)
@@ -163,8 +160,7 @@ public final class InjectedFileReferenceSelectioner extends AbstractWordSelectio
       .toBitSet();
   }
 
-  @NotNull
-  private static TextRange limitToCurrentLineAndStripWhiteSpace(@NotNull CharSequence text, int cursor, @NotNull TextRange range) {
+  private static @NotNull TextRange limitToCurrentLineAndStripWhiteSpace(@NotNull CharSequence text, int cursor, @NotNull TextRange range) {
 
     int subsequenceOffset = range.getStartOffset();
     CharSequence rangeText = new CharSequenceSubSequence(text, subsequenceOffset, range.getEndOffset());

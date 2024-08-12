@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.symbol;
 
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
@@ -51,15 +51,13 @@ public final class DelegatingPsiElementWithSymbolPointer implements PsiElement, 
 
   @Override
   @Contract(pure = true)
-  @NotNull
-  public Project getProject() throws PsiInvalidElementAccessException {
+  public @NotNull Project getProject() throws PsiInvalidElementAccessException {
     return myDeclarationElement.getProject();
   }
 
   @Override
   @Contract(pure = true)
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myDeclarationElement.getLanguage();
   }
 
@@ -119,8 +117,7 @@ public final class DelegatingPsiElementWithSymbolPointer implements PsiElement, 
 
   @Override
   @Contract(pure = true)
-  @NotNull
-  public TextRange getTextRangeInParent() {
+  public @NotNull TextRange getTextRangeInParent() {
     return myDeclarationElement.getTextRangeInParent();
   }
 
@@ -138,15 +135,13 @@ public final class DelegatingPsiElementWithSymbolPointer implements PsiElement, 
 
   @Override
   @Contract(pure = true)
-  @Nullable
-  public PsiElement findElementAt(int offset) {
+  public @Nullable PsiElement findElementAt(int offset) {
     return myDeclarationElement.findElementAt(offset);
   }
 
   @Override
   @Contract(pure = true)
-  @Nullable
-  public PsiReference findReferenceAt(int offset) {
+  public @Nullable PsiReference findReferenceAt(int offset) {
     return myDeclarationElement.findReferenceAt(offset);
   }
 
@@ -157,9 +152,8 @@ public final class DelegatingPsiElementWithSymbolPointer implements PsiElement, 
   }
 
   @Override
-  @NlsSafe
   @Contract(pure = true)
-  public String getText() {
+  public @NlsSafe String getText() {
     return myDeclarationElement.getText();
   }
 
@@ -298,8 +292,7 @@ public final class DelegatingPsiElementWithSymbolPointer implements PsiElement, 
 
   @Override
   @Contract(pure = true)
-  @Nullable
-  public PsiReference getReference() {
+  public @Nullable PsiReference getReference() {
     return myDeclarationElement.getReference();
   }
 
@@ -330,8 +323,7 @@ public final class DelegatingPsiElementWithSymbolPointer implements PsiElement, 
 
   @Override
   @Contract(pure = true)
-  @Nullable
-  public PsiElement getContext() {
+  public @Nullable PsiElement getContext() {
     return myDeclarationElement.getContext();
   }
 
@@ -343,15 +335,13 @@ public final class DelegatingPsiElementWithSymbolPointer implements PsiElement, 
 
   @Override
   @Contract(pure = true)
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return myDeclarationElement.getResolveScope();
   }
 
   @Override
   @Contract(pure = true)
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return myDeclarationElement.getUseScope();
   }
 
@@ -363,8 +353,7 @@ public final class DelegatingPsiElementWithSymbolPointer implements PsiElement, 
 
   @Override
   @Contract(pure = true)
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return myDeclarationElement.toString();
   }
 

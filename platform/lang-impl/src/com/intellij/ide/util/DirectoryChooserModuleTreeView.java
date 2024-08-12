@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -174,8 +174,7 @@ public final class DirectoryChooserModuleTreeView implements DirectoryChooserVie
   }
 
   @Override
-  @Nullable
-  public DirectoryChooser.ItemWrapper getSelectedItem() {
+  public @Nullable DirectoryChooser.ItemWrapper getSelectedItem() {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath == null) return null;
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();

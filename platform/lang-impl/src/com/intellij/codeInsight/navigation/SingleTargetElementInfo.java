@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -32,8 +32,7 @@ public final class SingleTargetElementInfo  {
     return result;
   }
 
-  @Nullable
-  private static @Nls String doGenerateInfo(@NotNull PsiElement element) {
+  private static @Nullable @Nls String doGenerateInfo(@NotNull PsiElement element) {
     if (element instanceof PsiFile) {
       final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       if (virtualFile != null) {
@@ -61,7 +60,7 @@ public final class SingleTargetElementInfo  {
     if (StringUtil.isEmpty(name)) return null;
     final String typeName = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
     final PsiFile file = element.getContainingFile();
-    @Nls final StringBuilder sb = new StringBuilder();
+    final @Nls StringBuilder sb = new StringBuilder();
     if (StringUtil.isNotEmpty(typeName)) sb.append(typeName).append(" ");
     sb.append("\"").append(name).append("\"");
     if (file != null && file.isPhysical()) {

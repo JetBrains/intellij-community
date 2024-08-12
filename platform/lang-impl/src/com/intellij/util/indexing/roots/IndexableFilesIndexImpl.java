@@ -42,12 +42,10 @@ import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
-  @NotNull
-  private final Project project;
+  private final @NotNull Project project;
   private final AdditionalIndexableFileSet filesFromIndexableSetContributors;
 
-  @NotNull
-  public static IndexableFilesIndexImpl getInstanceImpl(@NotNull Project project) {
+  public static @NotNull IndexableFilesIndexImpl getInstanceImpl(@NotNull Project project) {
     return (IndexableFilesIndexImpl)IndexableFilesIndex.getInstance(project);
   }
 
@@ -80,8 +78,7 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     return ReadAction.nonBlocking(this::doGetIndexingIterators).expireWith(project).executeSynchronously();
   }
 
-  @NotNull
-  private List<IndexableFilesIterator> doGetIndexingIterators() {
+  private @NotNull List<IndexableFilesIterator> doGetIndexingIterators() {
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     List<IndexableFilesIterator> iterators = new ArrayList<>();
 

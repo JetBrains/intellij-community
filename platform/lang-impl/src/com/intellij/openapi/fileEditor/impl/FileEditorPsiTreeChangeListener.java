@@ -31,7 +31,7 @@ public final class FileEditorPsiTreeChangeListener extends PsiTreeChangeAdapter 
   }
 
   @Override
-  public void propertyChanged(@NotNull final PsiTreeChangeEvent e) {
+  public void propertyChanged(final @NotNull PsiTreeChangeEvent e) {
     if (PsiTreeChangeEvent.PROP_ROOTS.equals(e.getPropertyName())) {
       ApplicationManager.getApplication().assertWriteIntentLockAcquired();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);

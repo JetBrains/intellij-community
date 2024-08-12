@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.lang.LangBundle;
@@ -29,9 +29,8 @@ public final class ProjectTemplateExportable implements PersistentStateComponent
 
   public static class NameGetter extends State.NameGetter {
 
-    @Nls
     @Override
-    public String get() {
+    public @Nls String get() {
       return LangBundle.message("project.template.presentable.name");
     }
   }

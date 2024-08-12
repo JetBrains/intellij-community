@@ -104,8 +104,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   @Override
-  @NotNull
-  public AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+  public @NotNull AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     boolean shouldCleanup = ContainerUtil.exists(events, ChangedFilesCollector::memoryStorageCleaningNeeded);
     ChangeApplier superApplier = super.prepareChange(events);
 
@@ -127,8 +126,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     };
   }
 
-  @NotNull
-  public DirtyFiles getDirtyFiles() {
+  public @NotNull DirtyFiles getDirtyFiles() {
     return myDirtyFiles;
   }
 

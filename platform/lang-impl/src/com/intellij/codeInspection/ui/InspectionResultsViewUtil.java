@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -33,8 +33,7 @@ public final class InspectionResultsViewUtil {
     }
   }
 
-  @Nullable
-  static Navigatable getNavigatableForInvalidNode(ProblemDescriptionNode node) {
+  static @Nullable Navigatable getNavigatableForInvalidNode(ProblemDescriptionNode node) {
     RefEntity element = node.getElement();
     while (element != null && !element.isValid()) {
       element = element.getOwner();
@@ -57,13 +56,11 @@ public final class InspectionResultsViewUtil {
     return (Navigatable)containingElement;
   }
 
-  @NotNull
-  static JLabel getNothingToShowTextLabel() {
+  static @NotNull JLabel getNothingToShowTextLabel() {
     return createLabelForText(InspectionViewNavigationPanel.getTitleText(false));
   }
 
-  @NotNull
-  static JComponent getInvalidEntityLabel(@NotNull RefEntity entity) {
+  static @NotNull JComponent getInvalidEntityLabel(@NotNull RefEntity entity) {
     final String name = entity.getName();
     return createLabelForText(InspectionsBundle.message("inspections.view.invalid.label", name));
   }
@@ -73,13 +70,11 @@ public final class InspectionResultsViewUtil {
     return createLabelForText(InspectionsBundle.message("inspections.view.no.preview.label", name));
   }
 
-  @NotNull
-  static JComponent getApplyingFixLabel(@NotNull InspectionToolWrapper wrapper) {
+  static @NotNull JComponent getApplyingFixLabel(@NotNull InspectionToolWrapper wrapper) {
     return createLabelForText(InspectionsBundle.message("inspections.view.applying.quick.label", wrapper.getDisplayName()));
   }
 
-  @NotNull
-  static JLabel createLabelForText(@Nls String text) {
+  static @NotNull JLabel createLabelForText(@Nls String text) {
     final JLabel multipleSelectionLabel = new JBLabel(text);
     multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
     multipleSelectionLabel.setBorder(JBUI.Borders.empty(16, 12, 0, 0));

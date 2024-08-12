@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.openapi.application.ModalityState;
@@ -38,7 +38,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
 
   private boolean myActionEnabled;
 
-  public LargeFileEncodingWidget(@NotNull final Project project) {
+  public LargeFileEncodingWidget(final @NotNull Project project) {
     super(project);
     myComponent = LazyInitializer.create(() -> {
       var result = new TextPanel.WithIconAndArrows();
@@ -48,14 +48,12 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   }
 
   @Override
-  @NotNull
-  public StatusBarWidget copy() {
+  public @NotNull StatusBarWidget copy() {
     return new LargeFileEncodingWidget(getProject());
   }
 
   @Override
-  @NotNull
-  public String ID() {
+  public @NotNull String ID() {
     return WIDGET_ID;
   }
 

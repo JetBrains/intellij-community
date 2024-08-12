@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.highlighter.custom.impl;
 
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class StandardFileTypeRegistrar implements FileTypeRegistrar {
   @Override
-  public void initFileType(@NotNull final FileType fileType) {
+  public void initFileType(final @NotNull FileType fileType) {
     if (fileType instanceof AbstractFileType) {
       init((AbstractFileType)fileType);
     }

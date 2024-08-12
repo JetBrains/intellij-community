@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
@@ -42,9 +42,9 @@ public class LiveTemplateDocumentationProvider extends AbstractDocumentationProv
   }
 
   private static class LiveTemplateElement extends FakePsiElement {
-    @NotNull private final TemplateImpl myTemplate;
-    @NotNull private final PsiManager myPsiManager;
-    @NotNull private final DummyHolder myDummyHolder;
+    private final @NotNull TemplateImpl myTemplate;
+    private final @NotNull PsiManager myPsiManager;
+    private final @NotNull DummyHolder myDummyHolder;
 
     LiveTemplateElement(@NotNull TemplateImpl template, @NotNull PsiManager psiManager) {
       myTemplate = template;
@@ -52,8 +52,7 @@ public class LiveTemplateDocumentationProvider extends AbstractDocumentationProv
       myDummyHolder = DummyHolderFactory.createHolder(myPsiManager, null);
     }
 
-    @NotNull
-    public TemplateImpl getTemplate() {
+    public @NotNull TemplateImpl getTemplate() {
       return myTemplate;
     }
 
@@ -65,15 +64,13 @@ public class LiveTemplateDocumentationProvider extends AbstractDocumentationProv
     @Override
     public ItemPresentation getPresentation() {
       return new ItemPresentation() {
-        @Nullable
         @Override
-        public String getPresentableText() {
+        public @Nullable String getPresentableText() {
           return myTemplate.getKey();
         }
 
-        @Nullable
         @Override
-        public Icon getIcon(boolean unused) {
+        public @Nullable Icon getIcon(boolean unused) {
           return null;
         }
       };

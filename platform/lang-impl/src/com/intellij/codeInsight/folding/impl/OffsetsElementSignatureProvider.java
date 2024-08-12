@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.Language;
@@ -108,8 +108,7 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     return null;
   }
 
-  @Nullable
-  private PsiElement findElement(int start, int end, int index, @NotNull PsiElement element, @Nullable StringBuilder processingInfoStorage) {
+  private @Nullable PsiElement findElement(int start, int end, int index, @NotNull PsiElement element, @Nullable StringBuilder processingInfoStorage) {
     TextRange range = element.getTextRange();
     if (processingInfoStorage != null) {
       processingInfoStorage.append(String.format("Starting processing from element '%s'. It's range is %s%n", element, range));

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
@@ -133,13 +133,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
   }
 
-  @NotNull
-  public static String getSanitizedPattern(@NotNull String pattern, @NotNull GotoFileModel model) {
+  public static @NotNull String getSanitizedPattern(@NotNull String pattern, @NotNull GotoFileModel model) {
     return removeSlashes(StringUtil.replace(ChooseByNamePopup.getTransformedPattern(pattern, model), "\\", "/"));
   }
 
-  @NotNull
-  public static MinusculeMatcher getQualifiedNameMatcher(@NotNull String pattern) {
+  public static @NotNull MinusculeMatcher getQualifiedNameMatcher(@NotNull String pattern) {
     pattern = "*" + StringUtil.replace(StringUtil.replace(pattern, "\\", "*\\*"), "/", "*/*");
 
     return NameUtil.buildMatcher(pattern)
@@ -148,13 +146,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       .build();
   }
 
-  @NotNull
-  private static String removeSlashes(@NotNull String s) {
+  private static @NotNull String removeSlashes(@NotNull String s) {
     return UriUtil.trimLeadingSlashes(UriUtil.trimTrailingSlashes(s));
   }
 
-  @Nullable
-  private PsiFileSystemItem getFileByAbsolutePath(@NotNull String pattern) {
+  private @Nullable PsiFileSystemItem getFileByAbsolutePath(@NotNull String pattern) {
     if (pattern.contains("/") || pattern.contains("\\")) {
       String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, myModel));
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
@@ -186,10 +182,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return prefix.append(filePathStr).toString();
   }
 
-  @NotNull
-  private Iterable<FoundItemDescriptor<PsiFileSystemItem>> matchQualifiers(@NotNull MinusculeMatcher qualifierMatcher,
-                                                                           JBIterable<? extends FoundItemDescriptor<PsiFileSystemItem>> iterable,
-                                                                           @NotNull String completePattern) {
+  private @NotNull Iterable<FoundItemDescriptor<PsiFileSystemItem>> matchQualifiers(@NotNull MinusculeMatcher qualifierMatcher,
+                                                                                    JBIterable<? extends FoundItemDescriptor<PsiFileSystemItem>> iterable,
+                                                                                    @NotNull String completePattern) {
     List<FoundItemDescriptor<PsiFileSystemItem>> matching = new ArrayList<>();
     for (FoundItemDescriptor<PsiFileSystemItem> descriptor : iterable) {
       PsiFileSystemItem item = descriptor.getItem();
@@ -227,14 +222,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return path.endsWith(subpath);
   }
 
-  @Nullable
-  private String getParentPath(@NotNull PsiFileSystemItem item) {
+  private @Nullable String getParentPath(@NotNull PsiFileSystemItem item) {
     String fullName = myModel.getFullName(item);
     return fullName == null ? null : StringUtil.getPackageName(FileUtilRt.toSystemIndependentName(fullName), '/') + '/';
   }
 
-  @NotNull
-  private static JBIterable<FoundItemDescriptor<PsiFileSystemItem>> moveDirectoriesToEnd(@NotNull Iterable<? extends FoundItemDescriptor<PsiFileSystemItem>> iterable) {
+  private static @NotNull JBIterable<FoundItemDescriptor<PsiFileSystemItem>> moveDirectoriesToEnd(@NotNull Iterable<? extends FoundItemDescriptor<PsiFileSystemItem>> iterable) {
     List<FoundItemDescriptor<PsiFileSystemItem>> dirs = new ArrayList<>();
     return JBIterable.<FoundItemDescriptor<PsiFileSystemItem>>from(iterable).filter(res -> {
       if (res.getItem() instanceof PsiDirectory) {
@@ -245,10 +238,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }).append(dirs);
   }
 
-  @NotNull
-  private Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
-                                                                            @NotNull List<? extends MatchResult> matchResults,
-                                                                            @NotNull Function<? super String, Object[]> indexResult) {
+  private @NotNull Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
+                                                                                     @NotNull List<? extends MatchResult> matchResults,
+                                                                                     @NotNull Function<? super String, Object[]> indexResult) {
     List<PsiFileSystemItem> group = new ArrayList<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
     Map<PsiFileSystemItem, Integer> matchDegrees = new HashMap<>();
@@ -304,7 +296,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     private final String namePattern;
     private final char[] NAME_PATTERN; // upper cased namePattern
     private final char[] name_pattern; // lower cased namePattern
-    @NotNull private final ProgressIndicator indicator;
+    private final @NotNull ProgressIndicator indicator;
 
     /** Names placed into buckets where the index of bucket == {@link #findMatchStartingPosition} */
     private final List<List<String>> candidateNames;
@@ -371,8 +363,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return "SuffixMatches{" +
              "patternSuffix='" + patternSuffix + '\'' +
              ", matchingNames=" + matchingNames +

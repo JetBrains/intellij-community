@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.lang.Language;
@@ -29,10 +29,8 @@ import java.util.Set;
  * @author Dennis.Ushakov
  */
 public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
-  @NotNull
-  private final NotNullLazyValue<TokenSet> myTemplateExpressionEdgeTokens;
-  @NotNull
-  private final Class<?> myTemplateFileViewProviderClass;
+  private final @NotNull NotNullLazyValue<TokenSet> myTemplateExpressionEdgeTokens;
+  private final @NotNull Class<?> myTemplateFileViewProviderClass;
 
   private final Set<String> knownLanguageIdSet = new HashSet<>();
 
@@ -146,8 +144,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     return false;
   }
 
-  @Nullable
-  private static PsiElement findBaseLanguageElement(FileViewProvider viewProvider, int offset) {
+  private static @Nullable PsiElement findBaseLanguageElement(FileViewProvider viewProvider, int offset) {
     return viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
   }
 
@@ -158,7 +155,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
   /**
    * @return whether errors in PSI with the given language should be considered for suppression
    */
-  protected boolean isKnownSubLanguage(@NotNull final Language language) {
+  protected boolean isKnownSubLanguage(final @NotNull Language language) {
     for (String knownLanguageId : knownLanguageIdSet) {
       Language knownLanguage = Language.findLanguageByID(knownLanguageId);
       if (knownLanguage != null && (language.is(knownLanguage) || knownLanguage.getDialects().contains(language))) {

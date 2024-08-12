@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,8 +55,7 @@ public final class UnindexedFilesUpdater {
   /**
    * Scanning activity can be scaled well across number of threads, so we're trying to use all available resources to do it faster.
    */
-  @Range(from = 1, to = Integer.MAX_VALUE)
-  public static int getNumberOfScanningThreads() {
+  public static @Range(from = 1, to = Integer.MAX_VALUE) int getNumberOfScanningThreads() {
     int scanningThreadCount = Registry.intValue("caches.scanningThreadsCount");
     if (scanningThreadCount > 0) return scanningThreadCount;
     int maxBackgroundThreadCount = getMaxBackgroundThreadCount();

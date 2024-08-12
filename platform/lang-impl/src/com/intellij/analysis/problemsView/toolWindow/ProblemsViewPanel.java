@@ -418,10 +418,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     }
   }
 
-  @NotNull
   @Override
-  @NonNls
-  public String getTabId() {
+  public @NotNull @NonNls String getTabId() {
     return myId;
   }
 
@@ -499,8 +497,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     return isNotNullAndSelected(getShowPreview()) ? null : myOpenInPreviewTab;
   }
 
-  @Nullable
-  public Option getShowPreview() {
+  public @Nullable Option getShowPreview() {
     return myShowPreview;
   }
 
@@ -514,13 +511,11 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, U
     return null; // TODO:malenkov - support file hierarchy & mySortFoldersFirst;
   }
 
-  @Nullable
-  protected Option getSortBySeverity() {
+  protected @Nullable Option getSortBySeverity() {
     return null;
   }
 
-  @Nullable
-  protected Option getSortByName() {
+  protected @Nullable Option getSortByName() {
     return mySortByName;
   }
 

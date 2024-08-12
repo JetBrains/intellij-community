@@ -43,8 +43,7 @@ public final class InspectionViewSuppressActionHolder {
     });
   }
 
-  @NotNull
-  public synchronized Set<SuppressIntentionAction> getSuppressActions(@NotNull InspectionToolWrapper wrapper) {
+  public synchronized @NotNull Set<SuppressIntentionAction> getSuppressActions(@NotNull InspectionToolWrapper wrapper) {
     return mySuppressActions.get(wrapper.getShortName()).values().stream().flatMap(Arrays::stream).collect(Collectors.toSet());
   }
 
@@ -55,14 +54,10 @@ public final class InspectionViewSuppressActionHolder {
   }
 
   private static final class ContextDescriptor {
-    @NotNull
-    private final Language myElementLanguage;
-    @NotNull
-    private final Language myFileBaseLanguage;
-    @NotNull
-    private final Set<Language> myFileLanguages;
-    @Nullable
-    private final ContextDescriptor myInjectionDescriptor;
+    private final @NotNull Language myElementLanguage;
+    private final @NotNull Language myFileBaseLanguage;
+    private final @NotNull Set<Language> myFileLanguages;
+    private final @Nullable ContextDescriptor myInjectionDescriptor;
 
     private static ContextDescriptor from(@NotNull PsiElement element) {
       return from(element, true);

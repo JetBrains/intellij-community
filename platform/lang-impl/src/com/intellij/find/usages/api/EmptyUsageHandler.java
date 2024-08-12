@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.api;
 
 import com.intellij.find.FindBundle;
@@ -16,10 +16,8 @@ final class EmptyUsageHandler implements UsageHandler {
     myTargetName = targetName;
   }
 
-  @Nls(capitalization = Title)
-  @NotNull
   @Override
-  public String getSearchString(@NotNull UsageOptions options) {
+  public @Nls(capitalization = Title) @NotNull String getSearchString(@NotNull UsageOptions options) {
     return FindBundle.message("usages.search.title.default", myTargetName);
   }
 }

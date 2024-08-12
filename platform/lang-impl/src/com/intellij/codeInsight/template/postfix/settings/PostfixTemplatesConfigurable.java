@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
@@ -42,14 +42,11 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
                                                            Configurable.WithEpDependencies {
   public static final Comparator<PostfixTemplate> TEMPLATE_COMPARATOR = Comparator.comparing(PostfixTemplate::getKey);
 
-  @Nullable
-  private PostfixTemplatesCheckboxTree myCheckboxTree;
+  private @Nullable PostfixTemplatesCheckboxTree myCheckboxTree;
 
-  @NotNull
-  private final PostfixTemplatesSettings myTemplatesSettings;
+  private final @NotNull PostfixTemplatesSettings myTemplatesSettings;
 
-  @Nullable
-  private PostfixDescriptionPanel myInnerPostfixDescriptionPanel;
+  private @Nullable PostfixDescriptionPanel myInnerPostfixDescriptionPanel;
 
   private final PostfixTemplatesConfigurableUi myUi = new PostfixTemplatesConfigurableUi();
   private final Alarm myUpdateDescriptionPanelAlarm = new Alarm();
@@ -69,14 +66,12 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     myUi.getDescriptionPanel().setLayout(new BorderLayout());
   }
 
-  @NotNull
   @Override
-  public Collection<BaseExtensionPointName<?>> getDependencies() {
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
     return Collections.singleton(LanguagePostfixTemplate.EP_NAME);
   }
 
-  @NotNull
-  private static List<PostfixTemplateProvider> getProviders() {
+  private static @NotNull List<PostfixTemplateProvider> getProviders() {
     List<LanguageExtensionPoint> list = LanguagePostfixTemplate.EP_NAME.getExtensionList();
     return ContainerUtil.map(list, el -> (PostfixTemplateProvider)el.getInstance());
   }
@@ -138,32 +133,27 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     }
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "reference.settingsdialog.IDE.editor.postfix.templates";
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return getId();
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return CodeInsightBundle.message("configurable.PostfixTemplatesConfigurable.display.name");
   }
 
-  @Nullable
-  public PostfixTemplatesCheckboxTree getTemplatesTree() {
+  public @Nullable PostfixTemplatesCheckboxTree getTemplatesTree() {
     return myCheckboxTree;
   }
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     if (null == myInnerPostfixDescriptionPanel) {
       myInnerPostfixDescriptionPanel = new PostfixDescriptionPanel();
       myUi.getDescriptionPanel().add(myInnerPostfixDescriptionPanel.getComponent());
@@ -205,8 +195,7 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     }
   }
 
-  @NotNull
-  private static MultiMap<PostfixTemplateProvider, PostfixTemplate> getProviderToTemplatesMap() {
+  private static @NotNull MultiMap<PostfixTemplateProvider, PostfixTemplate> getProviderToTemplatesMap() {
     MultiMap<PostfixTemplateProvider, PostfixTemplate> templatesMap = MultiMap.create();
 
     for (LanguageExtensionPoint<?> extension : LanguagePostfixTemplate.EP_NAME.getExtensionList()) {

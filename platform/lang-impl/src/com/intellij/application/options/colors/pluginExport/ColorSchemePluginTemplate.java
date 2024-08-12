@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.pluginExport;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -18,7 +18,7 @@ public final class ColorSchemePluginTemplate {
   public static final String SINCE_BUILD = "%SINCE_BUILD%";
 
   public static final String SCHEME_NAME = "$SCHEME_NAME";
-  private final static String TEMPLATE_TEXT =
+  private static final String TEMPLATE_TEXT =
     "<idea-plugin>\n" +
     "  <id>" + PLUGIN_ID + "</id>\n" +
     "  <name>" + DISPLAY_NAME + "</name>\n" +

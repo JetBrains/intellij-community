@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -52,8 +52,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   }
 
   @Override
-  @Nullable
-  public GotoData getSourceAndTargetElements(@NotNull Editor editor, PsiFile file) {
+  public @Nullable GotoData getSourceAndTargetElements(@NotNull Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) {
@@ -145,8 +144,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
   }
 
   @Override
-  @NotNull
-  protected String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
+  protected @NotNull String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
     ItemPresentation presentation = ((NavigationItem)sourceElement).getPresentation();
     String fullName;
     if (presentation == null) {
@@ -162,15 +160,13 @@ public class GotoImplementationHandler extends GotoTargetHandler {
                                      fullName == null ? "unnamed element" : StringUtil.escapeXmlEntities(fullName), length, finished ? "" : " so far");
   }
 
-  @NotNull
   @Override
-  protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
+  protected @NotNull String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.implementation.findUsages.title", StringUtil.escapeXmlEntities(name), length);
   }
 
-  @NotNull
   @Override
-  protected String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected @NotNull String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }
 
@@ -230,7 +226,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     }
 
     @Override
-    public void run(@NotNull final ProgressIndicator indicator) {
+    public void run(final @NotNull ProgressIndicator indicator) {
       super.run(indicator);
       for (ItemWithPresentation item : myGotoData.getItems()) {
         if (!updateComponent(item)) {
@@ -275,8 +271,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return projectContentComparator.thenComparing(presentationComparator).thenComparing(positionComparator);
   }
 
-  @NotNull
-  private static Comparator<ItemWithPresentation> wrapPsiComparator(Comparator<PsiElement> result) {
+  private static @NotNull Comparator<ItemWithPresentation> wrapPsiComparator(Comparator<PsiElement> result) {
     Comparator<ItemWithPresentation> comparator = (o1, o2) -> {
       if (o1.getItem() instanceof SmartPsiElementPointer<?> && o2.getItem() instanceof SmartPsiElementPointer<?>) {
         return ReadAction.compute(() -> result.compare(((SmartPsiElementPointer<?>)o1.getItem()).getElement(), ((SmartPsiElementPointer<?>)o2.getItem()).getElement()));

@@ -65,8 +65,7 @@ public class EditorSearchSession implements SearchSession,
   private final Editor myEditor;
   private final LivePreviewController myLivePreviewController;
   private final SearchResults mySearchResults;
-  @NotNull
-  private final FindModel myFindModel;
+  private final @NotNull FindModel myFindModel;
   private final SearchReplaceComponent myComponent;
   private RangeMarker myStartSessionSelectionMarker;
   private RangeMarker myStartSessionCaretMarker;
@@ -83,7 +82,7 @@ public class EditorSearchSession implements SearchSession,
     this(editor, project, createDefaultFindModel(project, editor));
   }
 
-  public EditorSearchSession(@NotNull final Editor editor, @NotNull Project project, @NotNull FindModel findModel) {
+  public EditorSearchSession(final @NotNull Editor editor, @NotNull Project project, @NotNull FindModel findModel) {
     assert !editor.isDisposed();
 
     myClickToHighlightLabel.setVisible(false);
@@ -264,30 +263,26 @@ public class EditorSearchSession implements SearchSession,
     return myEditor;
   }
 
-  @Nullable
-  public static EditorSearchSession get(@Nullable Editor editor) {
+  public static @Nullable EditorSearchSession get(@Nullable Editor editor) {
     JComponent headerComponent = editor != null ? editor.getHeaderComponent() : null;
     SearchSession session = headerComponent instanceof SearchReplaceComponent o ? o.getSearchSession() : null;
     return session instanceof EditorSearchSession o ? o : null;
   }
 
-  @NotNull
-  public static EditorSearchSession start(@NotNull Editor editor, @NotNull Project project) {
+  public static @NotNull EditorSearchSession start(@NotNull Editor editor, @NotNull Project project) {
     EditorSearchSession session = new EditorSearchSession(editor, project);
     editor.setHeaderComponent(session.getComponent());
     return session;
   }
 
-  @NotNull
-  public static EditorSearchSession start(@NotNull Editor editor, @NotNull FindModel findModel, @NotNull Project project) {
+  public static @NotNull EditorSearchSession start(@NotNull Editor editor, @NotNull FindModel findModel, @NotNull Project project) {
     EditorSearchSession session = new EditorSearchSession(editor, project, findModel);
     editor.setHeaderComponent(session.getComponent());
     return session;
   }
 
-  @NotNull
   @Override
-  public SearchReplaceComponent getComponent() {
+  public @NotNull SearchReplaceComponent getComponent() {
     return myComponent;
   }
 
@@ -295,8 +290,7 @@ public class EditorSearchSession implements SearchSession,
     return myComponent.getProject();
   }
 
-  @NotNull
-  public static FindModel createDefaultFindModel(@NotNull Project project, @NotNull Editor editor) {
+  public static @NotNull FindModel createDefaultFindModel(@NotNull Project project, @NotNull Editor editor) {
     FindModel findModel = new FindModel();
     findModel.copyFrom(FindManager.getInstance(project).getFindInFileModel());
     if (editor.getSelectionModel().hasSelection()) {
@@ -389,9 +383,8 @@ public class EditorSearchSession implements SearchSession,
     myFindModel.setReplaceState(!myFindModel.isReplaceState());
   }
 
-  @NotNull
   @Override
-  public FindModel getFindModel() {
+  public @NotNull FindModel getFindModel() {
     return myFindModel;
   }
 
@@ -458,8 +451,7 @@ public class EditorSearchSession implements SearchSession,
     if (state) chosenOptions.add(StringUtil.toLowerCase(FindBundle.message(key).replace(BundleBase.MNEMONIC_STRING, "")));
   }
 
-  @NotNull
-  public static @NlsContexts.StatusText String getEmptyText(@NotNull FindModel findModel, @Nullable Editor editor) {
+  public static @NotNull @NlsContexts.StatusText String getEmptyText(@NotNull FindModel findModel, @Nullable Editor editor) {
     if (!findModel.getStringToFind().isEmpty()) return "";
     if (findModel.isGlobal()) {
       SmartList<String> chosenOptions = new SmartList<>();
@@ -672,9 +664,8 @@ public class EditorSearchSession implements SearchSession,
       return ActionUpdateThread.EDT;
     }
 
-    @NotNull
     @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       JButton button = new FindReplaceActionButton(myTitle, myMnemonic);
       button.addActionListener(this);
       return button;

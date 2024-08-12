@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -106,9 +106,19 @@ public abstract class MultiCaretCodeInsightAction extends AnAction implements Pe
     presentation.setEnabled(enabled.get());
   }
 
-  private static void iterateOverCarets(@NotNull final Project project,
-                                 @NotNull final Editor hostEditor,
-                                 @NotNull final MultiCaretCodeInsightActionHandler handler) {
+  protected abstract @NotNull MultiCaretCodeInsightActionHandler getHandler();
+
+  /**
+   * During action status update this method is invoked for each caret in editor. If at least for a single caret it returns
+   * {@code true}, action is considered enabled.
+   */
+  protected boolean isValidFor(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
+    return true;
+  }
+
+  private static void iterateOverCarets(final @NotNull Project project,
+                                        final @NotNull Editor hostEditor,
+                                        final @NotNull MultiCaretCodeInsightActionHandler handler) {
     PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.getDocument());
 
     hostEditor.getCaretModel().runForEachCaret(caret -> {
@@ -126,17 +136,6 @@ public abstract class MultiCaretCodeInsightAction extends AnAction implements Pe
       }
     });
   }
-
-  /**
-   * During action status update this method is invoked for each caret in editor. If at least for a single caret it returns
-   * {@code true}, action is considered enabled.
-   */
-  protected boolean isValidFor(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
-    return true;
-  }
-
-  @NotNull
-  protected abstract MultiCaretCodeInsightActionHandler getHandler();
 
   protected @NlsContexts.Command String getCommandName() {
     String text = getTemplatePresentation().getText();

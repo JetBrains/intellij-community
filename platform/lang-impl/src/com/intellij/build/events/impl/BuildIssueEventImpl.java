@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
 import com.intellij.build.events.BuildIssueEvent;
@@ -27,33 +27,28 @@ public final class BuildIssueEventImpl extends AbstractBuildEvent implements Bui
     myKind = kind;
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return myIssue.getDescription();
   }
 
-  @NotNull
   @Override
-  public BuildIssue getIssue() {
+  public @NotNull BuildIssue getIssue() {
     return myIssue;
   }
 
-  @NotNull
   @Override
-  public Kind getKind() {
+  public @NotNull Kind getKind() {
     return myKind;
   }
 
-  @NotNull
   @Override
-  public String getGroup() {
+  public @NotNull String getGroup() {
     return LangBundle.message("build.event.title.build.issues");
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable(@NotNull Project project) {
+  public @Nullable Navigatable getNavigatable(@NotNull Project project) {
     return myIssue.getNavigatable(project);
   }
 
@@ -65,9 +60,8 @@ public final class BuildIssueEventImpl extends AbstractBuildEvent implements Bui
         return myKind;
       }
 
-      @NotNull
       @Override
-      public String getDetails() {
+      public @NotNull String getDetails() {
         return myIssue.getDescription();
       }
     };

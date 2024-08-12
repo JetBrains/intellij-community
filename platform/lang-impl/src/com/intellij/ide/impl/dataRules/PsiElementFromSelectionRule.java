@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.impl.dataRules;
 
@@ -41,8 +41,7 @@ public final class PsiElementFromSelectionRule implements GetDataRule {
     return element != null && element.isValid() ? element : null;
   }
 
-  @Nullable
-  static PsiElement getElement(Pointer<?> item) {
+  static @Nullable PsiElement getElement(Pointer<?> item) {
     Object o = item.dereference();
     return o instanceof PsiElement ? (PsiElement)o : null;
   }

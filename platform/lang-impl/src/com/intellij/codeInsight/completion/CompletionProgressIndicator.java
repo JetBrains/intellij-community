@@ -79,9 +79,8 @@ import java.util.function.Supplier;
 public final class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
   private static final Logger LOG = Logger.getInstance(CompletionProgressIndicator.class);
   private final Editor myEditor;
-  @NotNull
-  private final Caret myCaret;
-  @Nullable private CompletionParameters myParameters;
+  private final @NotNull Caret myCaret;
+  private @Nullable CompletionParameters myParameters;
   private final CodeCompletionHandlerBase handler;
   private final CompletionLookupArrangerImpl myArranger;
   private final CompletionType myCompletionType;
@@ -98,11 +97,11 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   };
   private final Semaphore freezeSemaphore = new Semaphore(1);
   private final Semaphore finishSemaphore = new Semaphore(1);
-  @NotNull private final OffsetMap myOffsetMap;
+  private final @NotNull OffsetMap myOffsetMap;
   private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ConcurrentHashMap.newKeySet();
   private final LookupListener myLookupListener = new LookupListener() {
     @Override
-    public void lookupCanceled(@NotNull final LookupEvent event) {
+    public void lookupCanceled(final @NotNull LookupEvent event) {
       finishCompletionProcess(true);
     }
   };
@@ -209,15 +208,13 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   @Override
-  @NotNull
   @SuppressWarnings("WeakerAccess")
-  public OffsetMap getOffsetMap() {
+  public @NotNull OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
-  @NotNull
   @Override
-  public OffsetsInFile getHostOffsets() {
+  public @NotNull OffsetsInFile getHostOffsets() {
     return myHostOffsets;
   }
 
@@ -369,8 +366,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     CommandProcessor.getInstance().setCurrentCommandGroupId(getCompletionCommandName());
   }
 
-  @NonNls
-  private String getCompletionCommandName() {
+  private @NonNls String getCompletionCommandName() {
     return "Completion" + hashCode();
   }
 
@@ -380,8 +376,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   // non-null when running generators and adding elements to lookup
   @Override
-  @Nullable
-  public CompletionParameters getParameters() {
+  public @Nullable CompletionParameters getParameters() {
     return myParameters;
   }
 
@@ -391,8 +386,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   @Override
-  @NotNull
-  public LookupImpl getLookup() {
+  public @NotNull LookupImpl getLookup() {
     return lookup;
   }
 
@@ -763,14 +757,12 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   @Override
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
   @Override
-  @NotNull
-  public Caret getCaret() {
+  public @NotNull Caret getCaret() {
     return myCaret;
   }
 
@@ -796,8 +788,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return Objects.requireNonNull(myEditor.getProject());
   }
 
@@ -900,8 +891,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
   }
 
-  @HintText
-  private String getNoSuggestionsMessage(CompletionParameters parameters) {
+  private @HintText String getNoSuggestionsMessage(CompletionParameters parameters) {
     return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return CompletionContributor.forParameters(parameters)
         .stream()

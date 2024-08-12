@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.lang.LangBundle;
@@ -36,14 +36,12 @@ public final class SliceTooComplexDFAUsage extends SliceUsage {
   }
 
   @Override
-  @NotNull
-  protected SliceUsage copy() {
+  protected @NotNull SliceUsage copy() {
     return new SliceTooComplexDFAUsage(getUsageInfo().getElement(), getParent());
   }
 
-  @NotNull
   @Override
-  public UsagePresentation getPresentation() {
+  public @NotNull UsagePresentation getPresentation() {
     final UsagePresentation presentation = super.getPresentation();
     return new UsagePresentation() {
       @Override
@@ -54,8 +52,7 @@ public final class SliceTooComplexDFAUsage extends SliceUsage {
       }
 
       @Override
-      @NotNull
-      public String getPlainText() {
+      public @NotNull String getPlainText() {
         return presentation.getPlainText();
       }
 
@@ -64,9 +61,8 @@ public final class SliceTooComplexDFAUsage extends SliceUsage {
         return presentation.getIcon();
       }
 
-      @NlsContexts.Tooltip
       @Override
-      public String getTooltipText() {
+      public @NlsContexts.Tooltip String getTooltipText() {
         return LangBundle.message("tooltip.too.complex.to.analyze.analysis.stopped.here");
       }
     };

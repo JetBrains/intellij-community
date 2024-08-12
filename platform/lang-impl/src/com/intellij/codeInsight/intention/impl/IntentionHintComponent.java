@@ -214,8 +214,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   @TestOnly
-  @Nullable
-  public IntentionContainer getCachedIntentions() {
+  public @Nullable IntentionContainer getCachedIntentions() {
     return myPopup instanceof IntentionPopup popupImpl ? popupImpl.myCachedIntentions : null;
   }
 

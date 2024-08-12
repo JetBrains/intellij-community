@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl.actions;
 
@@ -22,7 +22,7 @@ public final class ExpandRegionAction extends EditorAction implements ActionRemo
     });
   }
 
-  private static void expandRegionAtCaret(@Nullable final Editor editor) {
+  private static void expandRegionAtCaret(final @Nullable Editor editor) {
     if (editor == null) return;
 
     final int[] offsets = editor.getCaretModel().getAllCarets().stream()
@@ -31,11 +31,11 @@ public final class ExpandRegionAction extends EditorAction implements ActionRemo
     expandRegionAtOffsets(editor, offsets);
   }
 
-  public static void expandRegionAtOffset(@NotNull final Editor editor, final int offset) {
+  public static void expandRegionAtOffset(final @NotNull Editor editor, final int offset) {
     expandRegionAtOffsets(editor, new int[]{offset});
   }
 
-  public static void expandRegionAtOffsets(@NotNull final Editor editor, final int[] offsets) {
+  public static void expandRegionAtOffsets(final @NotNull Editor editor, final int[] offsets) {
     Runnable processor = () -> {
       for (int offset : offsets) {
         final int line = editor.getDocument().getLineNumber(offset);

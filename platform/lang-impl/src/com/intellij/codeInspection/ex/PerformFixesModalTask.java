@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -32,8 +32,7 @@ import static com.intellij.modcommand.ModCommandExecutor.Result;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public abstract class PerformFixesModalTask implements SequentialTask {
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
   private final List<CommonProblemDescriptor[]> myDescriptorPacks;
   private final PsiDocumentManager myDocumentManager;
   private final PostprocessReformattingAspect myReformattingAspect;

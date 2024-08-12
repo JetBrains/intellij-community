@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -49,8 +49,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
   private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
-  @NotNull
-  private final ApplyDefaultStateMode myApplyDefaultState;
+  private final @NotNull ApplyDefaultStateMode myApplyDefaultState;
   private final FoldingMap myElementsToFoldMap = new FoldingMap();
   private final Set<FoldingUpdate.RegionInfo> myRegionInfos = new LinkedHashSet<>();
   private final MultiMap<FoldingGroup, FoldingUpdate.RegionInfo> myGroupedRegionInfos = new MultiMap<>();
@@ -379,9 +378,8 @@ final class UpdateFoldRegionsOperation implements Runnable {
       super(new TreeMap<>(COMPARE_BY_OFFSET_REVERSED));
     }
 
-    @NotNull
     @Override
-    protected Collection<FoldingUpdate.RegionInfo> createCollection() {
+    protected @NotNull Collection<FoldingUpdate.RegionInfo> createCollection() {
       return new ArrayList<>();
     }
   }

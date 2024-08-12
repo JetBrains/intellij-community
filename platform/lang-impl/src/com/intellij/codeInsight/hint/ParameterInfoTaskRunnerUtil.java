@@ -99,11 +99,10 @@ public final class ParameterInfoTaskRunnerUtil {
     return IdeFocusManager.getInstance(project).getFocusOwner();
   }
 
-  @NotNull
-  private static Consumer<Boolean> startProgressAndCreateStopAction(Project project,
-                                                                    @NlsContexts.ProgressTitle String progressTitle,
-                                                                    AtomicReference<? extends CancellablePromise<?>> promiseRef,
-                                                                    Editor editor) {
+  private static @NotNull Consumer<Boolean> startProgressAndCreateStopAction(Project project,
+                                                                             @NlsContexts.ProgressTitle String progressTitle,
+                                                                             AtomicReference<? extends CancellablePromise<?>> promiseRef,
+                                                                             Editor editor) {
     AtomicReference<Consumer<Boolean>> stopActionRef = new AtomicReference<>();
 
     Consumer<Boolean> originalStopAction = (cancel) -> {

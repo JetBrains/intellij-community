@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.module.Module;
@@ -15,20 +15,17 @@ import java.util.Collection;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public abstract class SafeDeleteProcessorDelegateBase implements SafeDeleteProcessorDelegate {
-  @Nullable
-  public abstract Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @Nullable Module module, @NotNull Collection<? extends PsiElement> allElementsToDelete);
+  public abstract @Nullable Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @Nullable Module module, @NotNull Collection<? extends PsiElement> allElementsToDelete);
   @Override
   public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element, @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     return getElementsToSearch(element, null, allElementsToDelete);
   }
 
-  @Nullable
-  public UsageView showUsages(UsageInfo @NotNull [] usages, @NotNull UsageViewPresentation presentation, @NotNull UsageViewManager manager, PsiElement @NotNull [] elements) {
+  public @Nullable UsageView showUsages(UsageInfo @NotNull [] usages, @NotNull UsageViewPresentation presentation, @NotNull UsageViewManager manager, PsiElement @NotNull [] elements) {
     return null;
   }
 
-  @Nullable
-  public Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] elements, UsageInfo @NotNull [] usages) {
+  public @Nullable Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] elements, UsageInfo @NotNull [] usages) {
     return findConflicts(element, elements);
   }
 }

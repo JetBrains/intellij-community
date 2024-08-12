@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
@@ -30,8 +30,7 @@ public final class SubstringBeforeMacro extends MacroBase {
     return null;
   }
 
-  @Nullable
-  private static String getTextResult(@NotNull Expression param, ExpressionContext context) {
+  private static @Nullable String getTextResult(@NotNull Expression param, ExpressionContext context) {
     Result result = param.calculateResult(context);
     return result != null ? result.toString() : null;
   }

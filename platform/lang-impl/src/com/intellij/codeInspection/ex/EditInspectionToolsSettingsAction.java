@@ -30,14 +30,12 @@ public final class EditInspectionToolsSettingsAction implements IntentionAction,
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.text");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.family");
   }
 

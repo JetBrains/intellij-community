@@ -196,9 +196,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return true;
   }
 
-  @NotNull
   @Override
-  protected AnAction createRestorePopupAction() {
+  protected @NotNull AnAction createRestorePopupAction() {
     myRestorePopupAction = super.createRestorePopupAction();
     return myRestorePopupAction;
   }
@@ -898,13 +897,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return Pair.create(element, originalElement);
   }
 
-  @Nullable
-  public PsiElement findTargetElement(@NotNull Editor editor, @Nullable PsiFile file, PsiElement contextElement) {
+  public @Nullable PsiElement findTargetElement(@NotNull Editor editor, @Nullable PsiFile file, PsiElement contextElement) {
     return findTargetElement(editor, editor.getCaretModel().getOffset(), file, contextElement);
   }
 
-  @Nullable
-  public PsiElement findTargetElement(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
+  public @Nullable PsiElement findTargetElement(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
     try {
       return findTargetElementUnsafe(editor, offset, file, contextElement);
     }
@@ -917,8 +914,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   /**
    * in case index is not ready will throw IndexNotReadyException
    */
-  @Nullable
-  private PsiElement findTargetElementUnsafe(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
+  private @Nullable PsiElement findTargetElementUnsafe(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
     if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
       return assertSameProject(getElementFromLookup(editor, file));
     }
@@ -1003,8 +999,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     element.putUserData(IS_FROM_LOOKUP, value ? true : null);
   }
 
-  @Nullable
-  public PsiElement getElementFromLookup(Editor editor, @Nullable PsiFile file) {
+  public @Nullable PsiElement getElementFromLookup(Editor editor, @Nullable PsiFile file) {
     Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
 
     if (activeLookup != null) {
@@ -1047,8 +1042,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return new MyCollector(myProject, element, originalElement, null, onHover, false).getDocumentation();
   }
 
-  @Nullable
-  public JBPopup getDocInfoHint() {
+  public @Nullable JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
     JBPopup hint = myDocInfoHintRef.get();
     if (hint == null || !hint.isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -1198,13 +1192,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return callback;
   }
 
-  @NotNull
-  public static DocumentationProvider getProviderFromElement(PsiElement element) {
+  public static @NotNull DocumentationProvider getProviderFromElement(PsiElement element) {
     return getProviderFromElement(element, null);
   }
 
-  @NotNull
-  public static DocumentationProvider getProviderFromElement(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
+  public static @NotNull DocumentationProvider getProviderFromElement(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
     if (element != null && !element.isValid()) {
       element = null;
     }
@@ -1251,8 +1243,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return CompositeDocumentationProvider.wrapProviders(result);
   }
 
-  @Nullable
-  public static PsiElement getOriginalElement(PsiElement element) {
+  public static @Nullable PsiElement getOriginalElement(PsiElement element) {
     SmartPsiElementPointer<?> originalElementPointer = element != null ? element.getUserData(ORIGINAL_ELEMENT_KEY) : null;
     return originalElementPointer != null ? originalElementPointer.getElement() : null;
   }
@@ -1553,8 +1544,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return myEditor;
   }
 
-  @NotNull
-  private ActionCallback createActionCallback() {
+  private @NotNull ActionCallback createActionCallback() {
     ActionCallback callback = new ActionCallback();
     myLastAction = callback;
     return callback;
@@ -1610,8 +1600,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       this.onAutoUpdate = onAutoUpdate;
     }
 
-    @Nullable
-    public PsiElement getElement(boolean wait) {
+    public @Nullable PsiElement getElement(boolean wait) {
       try {
         return wait ? myElementFuture.get() : myElementFuture.getNow(null);
       }
@@ -1621,8 +1610,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
 
-    @Nullable
-    abstract @Nls String getDocumentation() throws Exception;
+    abstract @Nullable @Nls String getDocumentation() throws Exception;
   }
 
   private static final class MyCollector extends DocumentationCollector {
@@ -1663,8 +1651,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     @Override
-    @Nullable
-    public @Nls String getDocumentation() {
+    public @Nullable @Nls String getDocumentation() {
       PsiElement element = getElement(true);
       if (element == null) {
         return null;
@@ -1698,8 +1685,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return ReadAction.nonBlocking(() -> doGetDocumentation(element)).executeSynchronously();
     }
 
-    @Nullable
-    private @Nls String doGetDocumentation(@NotNull PsiElement element) {
+    private @Nullable @Nls String doGetDocumentation(@NotNull PsiElement element) {
       if (!element.isValid()) return null;
       SmartPsiElementPointer<?> originalPointer = element.getUserData(ORIGINAL_ELEMENT_KEY);
       PsiElement originalPsi = originalPointer != null ? originalPointer.getElement() : null;

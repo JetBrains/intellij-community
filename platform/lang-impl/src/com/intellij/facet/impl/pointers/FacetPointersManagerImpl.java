@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.pointers;
 
 import com.intellij.facet.Facet;
@@ -21,7 +21,7 @@ import java.util.Map;
 public final class FacetPointersManagerImpl extends FacetPointersManager {
   private final Map<String, FacetPointerImpl> myPointers = new HashMap<>();
   private final Map<Class<? extends Facet>, EventDispatcher<FacetPointerListener>> myDispatchers = new HashMap<>();
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public FacetPointersManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -136,8 +136,7 @@ public final class FacetPointersManagerImpl extends FacetPointersManager {
     }
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 }

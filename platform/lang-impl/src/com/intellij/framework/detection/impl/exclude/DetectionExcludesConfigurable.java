@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
@@ -51,10 +51,8 @@ public final class DetectionExcludesConfigurable implements Configurable {
     myModel = new SortedListModel<>(ExcludeListItem.COMPARATOR);
   }
 
-  @Nls
   @Override
-  @NotNull
-  public JComponent createComponent() {
+  public @Nls @NotNull JComponent createComponent() {
     myEnabledDetectionCheckBox = new JCheckBox(ProjectBundle.message("checkbox.text.enable.framework.detection"));
     myEnabledDetectionCheckBox.setBorder(new EmptyBorder(10, 10, 0, 0));
     final JBList<ExcludeListItem> excludesList = new JBList<>(myModel);
@@ -134,9 +132,8 @@ public final class DetectionExcludesConfigurable implements Configurable {
         return value != null ? value.getIcon() : null;
       }
 
-      @NotNull
       @Override
-      public String getTextFor(FrameworkType value) {
+      public @NotNull String getTextFor(FrameworkType value) {
         return value != null ? value.getPresentableName() : ProjectBundle.message("list.item.all.frameworks");
       }
 
@@ -271,9 +268,8 @@ public final class DetectionExcludesConfigurable implements Configurable {
     }
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return ProjectBundle.message("configurable.DetectionExcludesConfigurable.display.name");
   }
 }

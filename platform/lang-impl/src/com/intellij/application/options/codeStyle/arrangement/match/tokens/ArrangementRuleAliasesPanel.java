@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -25,7 +25,7 @@ import java.util.List;
  * @author Svetlana.Zemlyanskaya
  */
 public final class ArrangementRuleAliasesPanel extends JPanel implements UiDataProvider {
-  @NotNull private final ArrangementRuleAliasControl myControl;
+  private final @NotNull ArrangementRuleAliasControl myControl;
 
   public ArrangementRuleAliasesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
                                      @NotNull ArrangementColorsProvider colorsProvider) {
@@ -68,8 +68,7 @@ public final class ArrangementRuleAliasesPanel extends JPanel implements UiDataP
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
-  @NotNull
-  public List<StdArrangementMatchRule> getRuleSequences() {
+  public @NotNull List<StdArrangementMatchRule> getRuleSequences() {
     return myControl.getRuleSequences();
   }
 

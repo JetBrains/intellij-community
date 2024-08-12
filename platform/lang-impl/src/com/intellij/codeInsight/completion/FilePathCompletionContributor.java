@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -67,14 +67,14 @@ public final class FilePathCompletionContributor extends CompletionContributor {
 
     CompletionProvider<CompletionParameters> provider = new CompletionProvider<>() {
       @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters,
+      protected void addCompletions(final @NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
-                                    @NotNull final CompletionResultSet _result) {
+                                    final @NotNull CompletionResultSet _result) {
         if (!parameters.isExtendedCompletion()) {
           return;
         }
 
-        @NotNull final CompletionResultSet result = _result.caseInsensitive();
+        final @NotNull CompletionResultSet result = _result.caseInsensitive();
         final PsiElement e = parameters.getPosition();
         final Project project = e.getProject();
 
@@ -222,9 +222,9 @@ public final class FilePathCompletionContributor extends CompletionContributor {
     return path.substring(0, index);
   }
 
-  private static boolean fileMatchesPathPrefix(@Nullable final PsiFileSystemItem file,
+  private static boolean fileMatchesPathPrefix(final @Nullable PsiFileSystemItem file,
                                                @Nullable VirtualFile stopParent,
-                                               @NotNull final List<String> pathPrefix) {
+                                               final @NotNull List<String> pathPrefix) {
     if (file == null) return false;
 
     final List<String> contextParts = new ArrayList<>();
@@ -239,7 +239,7 @@ public final class FilePathCompletionContributor extends CompletionContributor {
     final String path = StringUtil.join(contextParts, "/");
 
     int nextIndex = 0;
-    for (@NonNls final String s : pathPrefix) {
+    for (final @NonNls String s : pathPrefix) {
       if ((nextIndex = path.indexOf(StringUtil.toLowerCase(s), nextIndex)) == -1) return false;
     }
 
@@ -265,8 +265,7 @@ public final class FilePathCompletionContributor extends CompletionContributor {
     }
   }
 
-  @Nullable
-  private static Pair<FileReference, Boolean> getReference(final PsiReference original) {
+  private static @Nullable Pair<FileReference, Boolean> getReference(final PsiReference original) {
     if (original == null) {
       return null;
     }
@@ -300,7 +299,7 @@ public final class FilePathCompletionContributor extends CompletionContributor {
     private final PsiFile myFile;
     private final List<? extends FileReferenceHelper> myHelpers;
 
-    public FilePathLookupItem(@NotNull final PsiFile file, @NotNull final List<? extends FileReferenceHelper> helpers) {
+    public FilePathLookupItem(final @NotNull PsiFile file, final @NotNull List<? extends FileReferenceHelper> helpers) {
       myName = file.getName();
       myPath = file.getVirtualFile().getPath();
 
@@ -317,15 +316,13 @@ public final class FilePathCompletionContributor extends CompletionContributor {
       return String.format("%s%s", myName, myInfo == null ? "" : " (" + myInfo + ")");
     }
 
-    @NotNull
     @Override
-    public Object getObject() {
+    public @NotNull Object getObject() {
       return myFile;
     }
 
     @Override
-    @NotNull
-    public String getLookupString() {
+    public @NotNull String getLookupString() {
       return myName;
     }
 
@@ -380,8 +377,7 @@ public final class FilePathCompletionContributor extends CompletionContributor {
       presentation.setIcon(myIcon);
     }
 
-    @Nullable
-    private String getRelativePath() {
+    private @Nullable String getRelativePath() {
       final VirtualFile virtualFile = myFile.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
       for (FileReferenceHelper helper : myHelpers) {

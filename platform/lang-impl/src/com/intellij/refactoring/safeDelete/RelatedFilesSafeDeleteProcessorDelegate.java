@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.projectView.impl.NestingTreeStructureProvider;
@@ -36,7 +36,7 @@ public final class RelatedFilesSafeDeleteProcessorDelegate implements SafeDelete
   }
 
   @Override
-  public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element,
+  public Collection<PsiElement> getAdditionalElementsToDelete(final @NotNull PsiElement element,
                                                               final @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     if (!askUser || !(element instanceof PsiFile)) return Collections.emptyList();

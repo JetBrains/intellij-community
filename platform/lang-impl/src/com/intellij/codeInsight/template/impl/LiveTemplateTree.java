@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.LiveTemplateContextService;
@@ -151,9 +151,8 @@ class LiveTemplateTree extends CheckboxTree implements UiDataProvider, CopyProvi
       return matchingFragments(pattern, text) != null ? 1 : 0;
     }
 
-    @Nullable
     @Override
-    public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
+    public @Nullable Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
       int index = StringUtil.indexOfIgnoreCase(text, pattern, 0);
       return index >= 0 ? Collections.singleton(TextRange.from(index, pattern.length())) : null;
     }

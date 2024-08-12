@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -96,8 +96,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     showDialogAdvertisement(getActionName());
   }
 
-  @Nullable
-  protected String getExpressionText(E expr) {
+  protected @Nullable String getExpressionText(E expr) {
     return expr != null ? expr.getText() : null;
   }
 
@@ -135,8 +134,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
    * @param names      the suggested names for the declaration
    * @return the declaration
    */
-  @Nullable
-  protected abstract V createFieldToStartTemplateOn(boolean replaceAll, String @NotNull [] names);
+  protected abstract @Nullable V createFieldToStartTemplateOn(boolean replaceAll, String @NotNull [] names);
 
   /**
    * Returns the suggested names for the introduced element.
@@ -153,13 +151,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   public abstract boolean isReplaceAllOccurrences();
   public abstract void setReplaceAllOccurrences(boolean allOccurrences);
   @Override
-  @Nullable
-  protected abstract JComponent getComponent();
+  protected abstract @Nullable JComponent getComponent();
 
   protected abstract void saveSettings(@NotNull V variable);
   @Override
-  @Nullable
-  protected abstract V getVariable();
+  protected abstract @Nullable V getVariable();
 
   public abstract E restoreExpression(@NotNull PsiFile containingFile, @NotNull V variable, @NotNull RangeMarker marker, @Nullable String exprText);
 
@@ -444,7 +440,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     return offset;
   }
 
-  protected void restoreState(@NotNull final V psiField) {
+  protected void restoreState(final @NotNull V psiField) {
     if (!ReadonlyStatusHandler.ensureDocumentWritable(myProject, InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getDocument())) return;
     PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(
       () -> ApplicationManager.getApplication().runWriteAction(() -> doRestoreState(psiField)));
@@ -631,8 +627,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     return isRestart();
   }
 
-  @Nullable
-  public static AbstractInplaceIntroducer<?, ?> getActiveIntroducer(@Nullable Editor editor) {
+  public static @Nullable AbstractInplaceIntroducer<?, ?> getActiveIntroducer(@Nullable Editor editor) {
     if (editor == null) return null;
     return editor.getUserData(ACTIVE_INTRODUCE);
   }

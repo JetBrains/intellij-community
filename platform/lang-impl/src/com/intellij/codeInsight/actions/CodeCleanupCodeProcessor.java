@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -37,9 +37,8 @@ public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor 
   }
 
 
-  @NotNull
   @Override
-  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile file, final boolean processChangedTextOnly) {
     return new FutureTask<>(() -> {
       if (!file.isValid()) return false;
       Collection<TextRange> ranges = getRanges(file, processChangedTextOnly);

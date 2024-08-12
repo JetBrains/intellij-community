@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
@@ -26,14 +26,13 @@ import java.util.List;
 
 
 public class BaseAnalysisActionDialog extends DialogWrapper {
-  private final static Logger LOG = Logger.getInstance(BaseAnalysisActionDialog.class);
+  private static final Logger LOG = Logger.getInstance(BaseAnalysisActionDialog.class);
 
-  @NotNull private final AnalysisUIOptions myOptions;
+  private final @NotNull AnalysisUIOptions myOptions;
   private final boolean myRememberScope;
   private final boolean myShowInspectTestSource;
   private final @NlsContexts.Separator String myScopeTitle;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final ArrayList<JRadioButton> radioButtons = new ArrayList<>();
   private final JCheckBox myInspectTestSource = new JCheckBox();
   private final JCheckBox myAnalyzeInjectedCode = new JCheckBox();
@@ -44,25 +43,19 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
    */
   @Deprecated
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                   @NotNull @NlsContexts.Separator String scopeTitle,
-                                   @NotNull Project project,
-                                   @NotNull final AnalysisScope scope,
-                                   final String moduleName,
-                                   final boolean rememberScope,
-                                   @NotNull AnalysisUIOptions analysisUIOptions,
-                                   @Nullable PsiElement context) {
+                                  @NotNull @NlsContexts.Separator String scopeTitle,
+                                  @NotNull Project project,
+                                  final @NotNull AnalysisScope scope,
+                                  final String moduleName,
+                                  final boolean rememberScope,
+                                  @NotNull AnalysisUIOptions analysisUIOptions,
+                                  @Nullable PsiElement context) {
     this(title, scopeTitle, project, standardItems(project, scope, moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null, context),
          analysisUIOptions, rememberScope);
   }
 
-  @NotNull
-  public static List<ModelScopeItem> standardItems(@NotNull Project project,
-                                                   @NotNull AnalysisScope scope,
-                                                   @Nullable Module module,
-                                                   @Nullable PsiElement context) {
-    return ContainerUtil.mapNotNull(
-      ModelScopeItemPresenter.EP_NAME.getExtensionList(),
-      presenter -> presenter.tryCreate(project, scope, module, context));
+  protected @Nullable JComponent getAdditionalActionSettings(@NotNull Project project) {
+    return null;
   }
 
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
@@ -228,13 +221,16 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return scope;
   }
 
-  @Nullable
-  protected JComponent getAdditionalActionSettings(@NotNull Project project) {
-    return null;
+  public @NotNull @Nls String getOKButtonText() {
+    return CodeInsightBundle.message("action.analyze.verb");
   }
 
-  @NotNull
-  public @Nls String getOKButtonText() {
-    return CodeInsightBundle.message("action.analyze.verb");
+  public static @NotNull List<ModelScopeItem> standardItems(@NotNull Project project,
+                                                            @NotNull AnalysisScope scope,
+                                                            @Nullable Module module,
+                                                            @Nullable PsiElement context) {
+    return ContainerUtil.mapNotNull(
+      ModelScopeItemPresenter.EP_NAME.getExtensionList(),
+      presenter -> presenter.tryCreate(project, scope, module, context));
   }
 }

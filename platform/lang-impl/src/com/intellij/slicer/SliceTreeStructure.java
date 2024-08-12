@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -22,9 +22,8 @@ public final class SliceTreeStructure extends AbstractTreeStructureBase {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public SliceRootNode getRootElement() {
+  public @NotNull SliceRootNode getRootElement() {
     return myRoot;
   }
 
@@ -39,7 +38,7 @@ public final class SliceTreeStructure extends AbstractTreeStructureBase {
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
+  public boolean isToBuildChildrenInBackground(final @NotNull Object element) {
     return true;//!ApplicationManager.getApplication().isUnitTestMode();
   }
 }

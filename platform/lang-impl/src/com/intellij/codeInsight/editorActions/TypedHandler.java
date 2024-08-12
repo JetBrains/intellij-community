@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -71,8 +71,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     super(originalHandler);
   }
 
-  @Nullable
-  public static QuoteHandler getQuoteHandler(@NotNull PsiFile file, @NotNull Editor editor) {
+  public static @Nullable QuoteHandler getQuoteHandler(@NotNull PsiFile file, @NotNull Editor editor) {
     FileType fileType = getFileType(file, editor);
     QuoteHandler quoteHandler = getQuoteHandlerForType(fileType);
     if (quoteHandler == null) {
@@ -91,8 +90,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     return LanguageQuoteHandling.INSTANCE.forLanguage(baseLanguage);
   }
 
-  @NotNull
-  private static FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
+  private static @NotNull FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
     FileType fileType = file.getFileType();
     Language language = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
     if (language != null && language != PlainTextLanguage.INSTANCE) {
@@ -133,7 +131,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   @Override
-  public void execute(@NotNull final Editor originalEditor, final char charTyped, @NotNull final DataContext dataContext) {
+  public void execute(final @NotNull Editor originalEditor, final char charTyped, final @NotNull DataContext dataContext) {
     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       doExecute(originalEditor, charTyped, dataContext);
     }
@@ -363,13 +361,11 @@ public final class TypedHandler extends TypedActionHandlerBase {
     return false;
   }
 
-  @NotNull
-  public static Editor injectedEditorIfCharTypedIsSignificant(final char charTyped, @NotNull Editor editor, @NotNull PsiFile oldFile) {
+  public static @NotNull Editor injectedEditorIfCharTypedIsSignificant(final char charTyped, @NotNull Editor editor, @NotNull PsiFile oldFile) {
     return injectedEditorIfCharTypedIsSignificant((int)charTyped, editor, oldFile);
   }
 
-  @NotNull
-  static Editor injectedEditorIfCharTypedIsSignificant(final int charTyped, @NotNull Editor editor, @NotNull PsiFile oldFile) {
+  static @NotNull Editor injectedEditorIfCharTypedIsSignificant(final int charTyped, @NotNull Editor editor, @NotNull PsiFile oldFile) {
     int offset = editor.getCaretModel().getOffset();
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change
@@ -570,8 +566,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     return quoteHandler.isClosingQuote(iterator,offset);
   }
 
-  @Nullable
-  private static HighlighterIterator createIteratorAndCheckNotAtEnd(@NotNull Editor editor, int offset) {
+  private static @Nullable HighlighterIterator createIteratorAndCheckNotAtEnd(@NotNull Editor editor, int offset) {
     HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) {
       LOG.error("Iterator " + iterator + " ended unexpectedly right after creation");
@@ -580,8 +575,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     return iterator;
   }
 
-  @Nullable
-  private static CharSequence getClosingQuote(@NotNull Editor editor, @NotNull MultiCharQuoteHandler quoteHandler, int offset) {
+  private static @Nullable CharSequence getClosingQuote(@NotNull Editor editor, @NotNull MultiCharQuoteHandler quoteHandler, int offset) {
     HighlighterIterator iterator = createIteratorAndCheckNotAtEnd(editor, offset);
     if (iterator == null) {
       return null;
@@ -643,7 +637,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     indentBrace(project, editor, ')');
   }
 
-  public static void indentBrace(@NotNull final Project project, @NotNull final Editor editor, final char braceChar) {
+  public static void indentBrace(final @NotNull Project project, final @NotNull Editor editor, final char braceChar) {
     final int offset = editor.getCaretModel().getOffset() - 1;
     final Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();

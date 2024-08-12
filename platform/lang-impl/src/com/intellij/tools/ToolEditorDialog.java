@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.execution.filters.RegexpFilter;
@@ -53,25 +53,23 @@ public class ToolEditorDialog extends DialogWrapper {
     return "preferences.externalToolsEdit";
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  protected JPanel createCenterPanel() {
+  protected @NotNull JPanel createCenterPanel() {
     fillAdditionalOptionsPanel(content.additionalOptionsPanel);
     return content.panel;
   }
 
-  protected void fillAdditionalOptionsPanel(@NotNull final JPanel panel) {}
+  protected void fillAdditionalOptionsPanel(final @NotNull JPanel panel) {}
 
-  protected void addWorkingDirectoryBrowseAction(@NotNull final TextFieldWithBrowseButton workingDirField) {
+  protected void addWorkingDirectoryBrowseAction(final @NotNull TextFieldWithBrowseButton workingDirField) {
     workingDirField.addBrowseFolderListener(null, null, myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
   }
 
-  protected void addProgramBrowseAction(@NotNull final TextFieldWithBrowseButton programField) {
+  protected void addProgramBrowseAction(final @NotNull TextFieldWithBrowseButton programField) {
     programField.addBrowseFolderListener(
       new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor(), myProject) {
         @Override
@@ -98,9 +96,8 @@ public class ToolEditorDialog extends DialogWrapper {
     MacrosDialog.addTextFieldExtension((ExtendableTextField)content.workingDirField.getTextField());
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     if (content.nameField.getText().trim().isEmpty()) {
       return new ValidationInfo(ToolsBundle.message("dialog.message.specify.the.tool.name"), content.nameField);
     }

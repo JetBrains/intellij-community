@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.customizingIteration;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -13,21 +13,18 @@ import org.jetbrains.annotations.NotNull;
  */
 @Deprecated(forRemoval = true)
 public interface ModuleAwareContentEntityIterator extends IndexableFilesIterator {
-  @NonNls
   @Override
-  default String getDebugName() {
+  default @NonNls String getDebugName() {
     return "Module aware content roots from entity";
   }
 
-  @NlsContexts.ProgressText
   @Override
-  default String getIndexingProgressText() {
+  default @NlsContexts.ProgressText String getIndexingProgressText() {
     return IndexingBundle.message("indexable.files.provider.indexing.content");
   }
 
-  @NlsContexts.ProgressText
   @Override
-  default String getRootsScanningProgressText() {
+  default @NlsContexts.ProgressText String getRootsScanningProgressText() {
     return IndexingBundle.message("indexable.files.provider.scanning.content");
   }
 

@@ -191,8 +191,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public ClientProjectSession getSession() {
+  public @NotNull ClientProjectSession getSession() {
     return mySession;
   }
 

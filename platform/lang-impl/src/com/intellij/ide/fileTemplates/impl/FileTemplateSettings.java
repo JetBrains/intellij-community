@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -35,9 +35,8 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
     super(project);
   }
 
-  @NotNull
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element element = new Element("fileTemplateSettings");
 
     for (FTManager manager : getAllManagers()) {
@@ -72,8 +71,7 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
     return shouldSave || ContainerUtil.or(template.getChildren(), child -> shouldSave((FileTemplateBase)child));
   }
 
-  @NotNull
-  private static Element saveTemplate(FileTemplateBase template) {
+  private static @NotNull Element saveTemplate(FileTemplateBase template) {
     final Element templateElement = new Element(ELEMENT_TEMPLATE);
     templateElement.setAttribute(ATTRIBUTE_NAME, template.getQualifiedName());
     if (!template.getFileName().isEmpty()) {

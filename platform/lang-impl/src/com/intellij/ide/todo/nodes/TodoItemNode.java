@@ -75,8 +75,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     return Collections.emptyList();
   }
 
@@ -202,8 +201,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     return 5;
   }
 
-  @NotNull
-  public List<HighlightedRegionProvider> getAdditionalLines() {
+  public @NotNull List<HighlightedRegionProvider> getAdditionalLines() {
     return Collections.unmodifiableList(((TodoItemNodePresentationData)getPresentation()).getAdditionalLines());
   }
 

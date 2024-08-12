@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -92,11 +92,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   private static final Logger LOG = Logger.getInstance(ChooseByNameBase.class);
 
-  @Nullable
-  protected final Project myProject;
+  protected final @Nullable Project myProject;
   protected final ChooseByNameModel myModel;
-  @NotNull
-  protected ChooseByNameItemProvider myProvider;
+  protected @NotNull ChooseByNameItemProvider myProvider;
   final @NlsSafe String myInitialText;
   private boolean mySearchInAnyPlace;
 
@@ -129,10 +127,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private volatile CalcElementsThread myCalcElementsThread;
   private int myListSizeIncreasing = 30;
   private int myMaximumListSizeLimit = 30;
-  @NonNls private static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
-  @NonNls private static final String NOT_FOUND_CARD = "nfound";
-  @NonNls private static final String CHECK_BOX_CARD = "chkbox";
-  @NonNls private static final String SEARCHING_CARD = "searching";
+  private static final @NonNls String NOT_FOUND_IN_PROJECT_CARD = "syslib";
+  private static final @NonNls String NOT_FOUND_CARD = "nfound";
+  private static final @NonNls String CHECK_BOX_CARD = "chkbox";
+  private static final @NonNls String SEARCHING_CARD = "searching";
   private final int myRebuildDelay;
 
   private final Alarm myHideAlarm = new Alarm();
@@ -144,7 +142,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   final int myInitialIndex;
 
   private Function<Set<Object>, Object> myInitialSelection;
-  @Nls private String myFindUsagesTitle;
+  private @Nls String myFindUsagesTitle;
   private ShortcutSet myCheckBoxShortcut;
   private final boolean myInitIsDone;
   private boolean myAlwaysHasMore;
@@ -204,9 +202,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myInitIsDone = true;
   }
 
-  @Nullable
   @Override
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
@@ -249,9 +246,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     initUI(callback, modalityState, allowMultipleSelection);
   }
 
-  @NotNull
   @Override
-  public ChooseByNameModel getModel() {
+  public @NotNull ChooseByNameModel getModel() {
     return myModel;
   }
 
@@ -328,8 +324,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }
 
-    @Nullable
-    public JBPopup getHint() {
+    public @Nullable JBPopup getHint() {
       return myHint;
     }
 
@@ -470,7 +465,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     if (isCloseByFocusLost()) {
       myTextField.addFocusListener(new FocusAdapter() {
         @Override
-        public void focusLost(@NotNull final FocusEvent e) {
+        public void focusLost(final @NotNull FocusEvent e) {
           if (Registry.is("focus.follows.mouse.workarounds")) {
             if (myFocusPoint != null) {
               PointerInfo pointerInfo = MouseInfo.getPointerInfo();
@@ -674,8 +669,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myCheckBoxShortcut = shortcutSet;
   }
 
-  @NotNull
-  private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
+  private static @NotNull Set<KeyStroke> getShortcuts(@NotNull String actionId) {
     Set<KeyStroke> result = new HashSet<>();
     for (Shortcut shortcut : KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts()) {
       if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
@@ -716,9 +710,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  @NotNull
   @Override
-  public String transformPattern(@NotNull String pattern) {
+  public @NotNull String transformPattern(@NotNull String pattern) {
     return pattern;
   }
 
@@ -748,9 +741,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  @NotNull
-  @NlsSafe
-  public String getTrimmedText() {
+  public @NotNull @NlsSafe String getTrimmedText() {
     return StringUtil.trimLeading(StringUtil.notNullize(myTextField.getText()));
   }
 
@@ -787,8 +778,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  @NotNull
-  protected Set<Object> filter(@NotNull Set<Object> elements) {
+  protected @NotNull Set<Object> filter(@NotNull Set<Object> elements) {
     return elements;
   }
 
@@ -865,8 +855,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   void rebuildList(@NotNull SelectionPolicy pos,
                    final int delay,
-                   @NotNull final ModalityState modalityState,
-                   @Nullable final Runnable postRunnable) {
+                   final @NotNull ModalityState modalityState,
+                   final @Nullable Runnable postRunnable) {
     ThreadingAssertions.assertEventDispatchThread();
     if (!myInitialized) {
       return;
@@ -1042,14 +1032,12 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   protected abstract void close(boolean isOk);
 
-  @Nullable
-  public Object getChosenElement() {
+  public @Nullable Object getChosenElement() {
     final List<Object> elements = getChosenElements();
     return elements.size() == 1 ? elements.get(0) : null;
   }
 
-  @NotNull
-  protected List<Object> getChosenElements() {
+  protected @NotNull List<Object> getChosenElements() {
     return ContainerUtil.filter(myList.getSelectedValuesList(), o -> o != null && !isSpecialElement(o));
   }
 
@@ -1090,8 +1078,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       });
     }
 
-    @Nullable
-    private static KeyStroke getShortcut(@NotNull String actionCodeCompletion) {
+    private static @Nullable KeyStroke getShortcut(@NotNull String actionCodeCompletion) {
       final Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionCodeCompletion).getShortcuts();
       for (final Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut) {
@@ -1165,7 +1152,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
     }
 
-    private void fillInCommonPrefix(@NotNull final String pattern) {
+    private void fillInCommonPrefix(final @NotNull String pattern) {
       final List<String> list = myProvider.filterNames(ChooseByNameBase.this, getNames(myCheckBox.isSelected()), pattern);
       if (list.isEmpty()) return;
 
@@ -1212,7 +1199,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       rebuildList(false);
     }
 
-    private boolean isComplexPattern(@NotNull final String pattern) {
+    private boolean isComplexPattern(final @NotNull String pattern) {
       if (pattern.indexOf('*') >= 0) return true;
       for (String s : myModel.getSeparators()) {
         if (pattern.contains(s)) return true;
@@ -1222,13 +1209,12 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    @NotNull
-    public Point getBestPopupPosition() {
+    public @NotNull Point getBestPopupPosition() {
       return new Point(myTextFieldPanel.getWidth(), getHeight());
     }
 
     @Override
-    protected void paintComponent(@NotNull final Graphics g) {
+    protected void paintComponent(final @NotNull Graphics g) {
       GraphicsUtil.setupAntialiasing(g);
       super.paintComponent(g);
     }
@@ -1238,8 +1224,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  @NotNull
-  public ChooseByNameItemProvider getProvider() {
+  public @NotNull ChooseByNameItemProvider getProvider() {
     return myProvider;
   }
 
@@ -1272,13 +1257,11 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   public static final String EXTRA_ELEM = "...";
 
   private class CalcElementsThread extends ReadTask {
-    @NotNull
-    private final String myPattern;
+    private final @NotNull String myPattern;
     private final boolean myCheckboxState;
-    @NotNull
-    private final Consumer<? super Set<?>> myCallback;
+    private final @NotNull Consumer<? super Set<?>> myCallback;
     private final ModalityState myModalityState;
-    @NotNull private SelectionPolicy mySelectionPolicy;
+    private @NotNull SelectionPolicy mySelectionPolicy;
 
     private final ProgressIndicator myProgress = new ProgressIndicatorBase();
 
@@ -1305,15 +1288,14 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
+    public Continuation runBackgroundProcess(final @NotNull ProgressIndicator indicator) {
       if (myProject == null || DumbService.isDumbAware(myModel)) return super.runBackgroundProcess(indicator);
 
       return DumbService.getInstance(myProject).runReadActionInSmartMode(() -> performInReadAction(indicator));
     }
 
-    @Nullable
     @Override
-    public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+    public @Nullable Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
       if (isProjectDisposed()) return null;
 
       Set<Object> elements = Collections.synchronizedSet(new LinkedHashSet<>());
@@ -1402,8 +1384,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     private void addElementsByPattern(@NotNull String pattern,
-                                      @NotNull final Set<Object> elements,
-                                      @NotNull final ProgressIndicator indicator,
+                                      final @NotNull Set<Object> elements,
+                                      final @NotNull ProgressIndicator indicator,
                                       boolean everywhere) {
       long start = System.currentTimeMillis();
       myProvider.filterElements(
@@ -1458,9 +1440,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return myProject != null && myProject.isDisposed();
   }
 
-  @NotNull
-  @NlsSafe
-  private static String patternToLowerCase(@NotNull @NlsSafe String pattern) {
+  private static @NotNull @NlsSafe String patternToLowerCase(@NotNull @NlsSafe String pattern) {
     return StringUtil.toLowerCase(pattern);
   }
 
@@ -1473,8 +1453,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return myTextField.isCompletionKeyStroke();
   }
 
-  @NotNull
-  private static Matcher buildPatternMatcher(@NotNull String pattern) {
+  private static @NotNull Matcher buildPatternMatcher(@NotNull String pattern) {
     return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
@@ -1513,7 +1492,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       cancelListUpdater();
 
       final UsageViewPresentation presentation = new UsageViewPresentation();
@@ -1534,7 +1513,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
         ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true) {
           private ChooseByNameBase.CalcElementsThread myCalcUsagesThread;
           @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
+          public void run(final @NotNull ProgressIndicator indicator) {
             ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
             final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
@@ -1657,8 +1636,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  @NotNull
-  public JTextField getTextField() {
+  public @NotNull JTextField getTextField() {
     return myTextField;
   }
 

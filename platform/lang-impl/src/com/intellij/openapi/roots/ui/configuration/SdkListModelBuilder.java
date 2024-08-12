@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
@@ -35,15 +35,15 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public final class SdkListModelBuilder {
-  @Nullable private final Project myProject;
-  @NotNull private final ProjectSdksModel mySdkModel;
-  @NotNull private final Condition<? super Sdk> mySdkFilter;
-  @NotNull private final Condition<? super SdkTypeId> mySdkTypeFilter;
-  @NotNull private final Condition<? super SdkTypeId> mySdkTypeCreationFilter;
-  @NotNull private final Condition<? super SuggestedItem> mySuggestedItemsFilter;
-  @NotNull private final Condition<? super ActionRole> myActionRoleFilter;
+  private final @Nullable Project myProject;
+  private final @NotNull ProjectSdksModel mySdkModel;
+  private final @NotNull Condition<? super Sdk> mySdkFilter;
+  private final @NotNull Condition<? super SdkTypeId> mySdkTypeFilter;
+  private final @NotNull Condition<? super SdkTypeId> mySdkTypeCreationFilter;
+  private final @NotNull Condition<? super SuggestedItem> mySuggestedItemsFilter;
+  private final @NotNull Condition<? super ActionRole> myActionRoleFilter;
 
-  @NotNull private final EventDispatcher<ModelListener> myModelListener = EventDispatcher.create(ModelListener.class);
+  private final @NotNull EventDispatcher<ModelListener> myModelListener = EventDispatcher.create(ModelListener.class);
 
   private boolean mySuggestedItemsConnected = false;
   private boolean myIsSdkDetectorInProgress = false;
@@ -116,11 +116,10 @@ public final class SdkListModelBuilder {
     myModelListener.removeListener(listener);
   }
 
-  @NotNull
-  public SdkReferenceItem addSdkReferenceItem(@NotNull SdkType type,
-                                              @NotNull String name,
-                                              @Nullable String versionString,
-                                              boolean isValid) {
+  public @NotNull SdkReferenceItem addSdkReferenceItem(@NotNull SdkType type,
+                                                       @NotNull String name,
+                                                       @Nullable String versionString,
+                                                       boolean isValid) {
     SdkReferenceItem element = new SdkReferenceItem(type, name, versionString, isValid);
     //similar element might already be included!
     removeSdkReferenceItem(element);
@@ -147,15 +146,13 @@ public final class SdkListModelBuilder {
     syncModel();
   }
 
-  @NotNull
-  private SdkListModel syncModel() {
+  private @NotNull SdkListModel syncModel() {
     SdkListModel model = buildModel();
     myModelListener.getMulticaster().syncModel(model);
     return model;
   }
 
-  @NotNull
-  public SdkListModel buildModel() {
+  public @NotNull SdkListModel buildModel() {
     ImmutableList.Builder<SdkListItem> newModel = ImmutableList.builder();
 
 
@@ -205,8 +202,7 @@ public final class SdkListModelBuilder {
     return true;
   }
 
-  @NotNull
-  public SdkListItem showProjectSdkItem() {
+  public @NotNull SdkListItem showProjectSdkItem() {
     ProjectSdkItem projectSdkItem = new ProjectSdkItem();
     if (Objects.equals(myProjectSdkItem, projectSdkItem)) return myProjectSdkItem;
     myProjectSdkItem = projectSdkItem;
@@ -214,8 +210,7 @@ public final class SdkListModelBuilder {
     return myProjectSdkItem;
   }
 
-  @NotNull
-  public SdkListItem showNoneSdkItem() {
+  public @NotNull SdkListItem showNoneSdkItem() {
     NoneSdkItem noneSdkItem = new NoneSdkItem();
     if (Objects.equals(myNoneSdkItem, noneSdkItem)) return myNoneSdkItem;
     myNoneSdkItem = noneSdkItem;
@@ -223,8 +218,7 @@ public final class SdkListModelBuilder {
     return myNoneSdkItem;
   }
 
-  @NotNull
-  public SdkListItem showInvalidSdkItem(@NotNull String name) {
+  public @NotNull SdkListItem showInvalidSdkItem(@NotNull String name) {
     InvalidSdkItem invalidItem = new InvalidSdkItem(name);
     if (Objects.equals(myInvalidItem, invalidItem)) return myInvalidItem;
     myInvalidItem = invalidItem;
@@ -244,8 +238,7 @@ public final class SdkListModelBuilder {
     syncModel();
   }
 
-  @NotNull
-  private SdkItem newSdkItem(@NotNull Sdk sdk) {
+  private @NotNull SdkItem newSdkItem(@NotNull Sdk sdk) {
     return new SdkItem(sdk) {
       @Override
       boolean hasSameSdk(@NotNull Sdk value) {
@@ -376,9 +369,8 @@ public final class SdkListModelBuilder {
     });
   }
 
-  @NotNull
-  private ImmutableList<ActionItem> createActions(@NotNull ActionRole role,
-                                                  @NotNull Map<SdkType, NewSdkAction> actions) {
+  private @NotNull ImmutableList<ActionItem> createActions(@NotNull ActionRole role,
+                                                           @NotNull Map<SdkType, NewSdkAction> actions) {
     if (!myActionRoleFilter.value(role)) return ImmutableList.of();
     ImmutableList.Builder<ActionItem> builder = ImmutableList.builder();
     for (NewSdkAction action : actions.values()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.navigation.actions;
 
@@ -18,16 +18,15 @@ import org.jetbrains.annotations.NotNull;
 
 public final class GotoSuperAction extends PresentableActionHandlerBasedAction implements CodeInsightActionHandler, DumbAware {
 
-  @NonNls public static final String FEATURE_ID = "navigation.goto.super";
+  public static final @NonNls String FEATURE_ID = "navigation.goto.super";
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return this;
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     final Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
 
@@ -42,9 +41,8 @@ public final class GotoSuperAction extends PresentableActionHandlerBasedAction i
     return false;
   }
 
-  @NotNull
   @Override
-  protected LanguageExtension<CodeInsightActionHandler> getLanguageExtension() {
+  protected @NotNull LanguageExtension<CodeInsightActionHandler> getLanguageExtension() {
     return CodeInsightActions.GOTO_SUPER;
   }
 }

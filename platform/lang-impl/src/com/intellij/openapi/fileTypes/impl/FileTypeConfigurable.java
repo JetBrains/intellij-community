@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
@@ -154,8 +154,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myRecognizedFileType.setFileTypes(types);
   }
 
-  @NotNull
-  private Set<FileTypeManagerImpl.FileTypeWithDescriptor> getRegisteredFilesTypes() {
+  private @NotNull Set<FileTypeManagerImpl.FileTypeWithDescriptor> getRegisteredFilesTypes() {
     return new HashSet<>(myFileTypeManager.getRegisteredFileTypeWithDescriptors());
   }
 
@@ -515,9 +514,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         return false;
       }
 
-      @Nullable
       @Override
-      protected String getElementText(Object element) {
+      protected @Nullable String getElementText(Object element) {
         throw new IllegalStateException();
       }
 

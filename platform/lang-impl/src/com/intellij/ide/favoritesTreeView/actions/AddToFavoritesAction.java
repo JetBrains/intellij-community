@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.favoritesTreeView.actions;
 
@@ -41,8 +41,7 @@ public class AddToFavoritesAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
   }
 
-  @NotNull
-  public static Collection<AbstractTreeNode<?>> getNodesToAdd(final DataContext dataContext, final boolean inProjectView) {
+  public static @NotNull Collection<AbstractTreeNode<?>> getNodesToAdd(final DataContext dataContext, final boolean inProjectView) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     if (project == null) return Collections.emptyList();

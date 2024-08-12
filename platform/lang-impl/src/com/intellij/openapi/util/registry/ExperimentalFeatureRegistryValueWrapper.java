@@ -25,9 +25,8 @@ final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
     return asString();
   }
 
-  @NotNull
   @Override
-  public String asString() {
+  public @NotNull String asString() {
     return Boolean.toString(asBoolean());
   }
 
@@ -57,9 +56,8 @@ final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
     Experiments.getInstance().setFeatureEnabled(feature.id, enable);
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return StringUtil.notNullize(feature.description);
   }
 }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
@@ -26,9 +24,8 @@ public abstract class CommentMacro extends MacroBase {
     myCommenterFunction = commenterFunction;
   }
 
-  @Nullable
   @Override
-  protected Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
+  protected @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
     Editor editor = context.getEditor();
     Language language = editor == null ? null : PsiUtilBase.getLanguageInEditor(editor, context.getProject());
     Commenter commenter = language == null ? null : LanguageCommenters.INSTANCE.forLanguage(language);

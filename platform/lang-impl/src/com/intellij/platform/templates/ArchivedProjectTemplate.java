@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.frameworks.beans.Artifact;
@@ -32,12 +32,12 @@ import java.util.zip.ZipInputStream;
  */
 @Tag("template")
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
-  @NonNls public static final String INPUT_FIELD = "input-field";
-  @NonNls public static final String TEMPLATE = "template";
-  @NonNls public static final String INPUT_DEFAULT = "default";
+  public static final @NonNls String INPUT_FIELD = "input-field";
+  public static final @NonNls String TEMPLATE = "template";
+  public static final @NonNls String INPUT_DEFAULT = "default";
 
   protected final @NlsContexts.Label String myDisplayName;
-  @Nullable private final String myCategory;
+  private final @Nullable String myCategory;
 
   private List<WizardInputField<?>> myInputFields = Collections.emptyList();
   private List<String> myFrameworks = new ArrayList<>();
@@ -48,9 +48,8 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myCategory = category;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myDisplayName;
   }
 
@@ -61,14 +60,12 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
 
   protected abstract ModuleType<?> getModuleType();
 
-  @NotNull
   @Override
-  public ModuleBuilder createModuleBuilder() {
+  public @NotNull ModuleBuilder createModuleBuilder() {
     return new TemplateModuleBuilder(this, null, null);
   }
 
-  @NotNull
-  public List<WizardInputField<?>> getInputFields() {
+  public @NotNull List<WizardInputField<?>> getInputFields() {
     return myInputFields;
   }
 
@@ -82,10 +79,9 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myArtifacts = artifacts;
   }
 
-  @NotNull
   @Property(surroundWithTag = false)
   @XCollection(elementName = "framework", valueAttributeName = "")
-  public List<String> getFrameworks() {
+  public @NotNull List<String> getFrameworks() {
     return myFrameworks;
   }
 
@@ -93,9 +89,8 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myFrameworks = frameworks;
   }
 
-  @Nullable
   @Override
-  public ValidationInfo validateSettings() {
+  public @Nullable ValidationInfo validateSettings() {
     return null;
   }
 
@@ -103,14 +98,13 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     filesToRefresh.add(dir);
   }
 
-  public static abstract class StreamProcessor<T> {
+  public abstract static class StreamProcessor<T> {
     public abstract T consume(@NotNull ZipInputStream stream) throws IOException;
   }
 
   public abstract <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException;
 
-  @Nullable
-  public String getCategory() {
+  public @Nullable String getCategory() {
     return myCategory;
   }
 

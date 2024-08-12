@@ -22,8 +22,8 @@ import java.util.List;
 
 
 public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implements PossiblyDumbAware {
-  @NotNull protected final Editor myEditor;
-  @NotNull protected final PsiFile myFile;
+  protected final @NotNull Editor myEditor;
+  protected final @NotNull PsiFile myFile;
 
   protected final List<TextRange> myReadUsages = new ArrayList<>();
   protected final List<TextRange> myWriteUsages = new ArrayList<>();
@@ -73,11 +73,9 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
     }
   }
 
-  @NotNull
-  public abstract List<T> getTargets();
+  public abstract @NotNull List<T> getTargets();
 
-  @Nullable
-  public String getFeatureId() {
+  public @Nullable String getFeatureId() {
     return null;
   }
 

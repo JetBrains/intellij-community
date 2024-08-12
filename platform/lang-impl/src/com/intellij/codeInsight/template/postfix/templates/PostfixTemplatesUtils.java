@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -48,8 +48,7 @@ public final class PostfixTemplatesUtils {
   /**
    * @return all templates registered in the given provider, including the edited templates and builtin templates in their current state.
    */
-  @NotNull
-  public static Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
+  public static @NotNull Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
     Set<PostfixTemplate> result = new HashSet<>(provider.getTemplates());
     for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates(provider)) {
       if (template instanceof PostfixChangedBuiltinTemplate) {
@@ -65,8 +64,7 @@ public final class PostfixTemplatesUtils {
    * May execute asynchronously and return null (in this case, the selection/caret will be updated automatically).
    * @return range to select/position the caret
    */
-  @Nullable
-  public static TextRange surround(@NotNull Surrounder surrounder,
+  public static @Nullable TextRange surround(@NotNull Surrounder surrounder,
                                    @NotNull Editor editor,
                                    @NotNull PsiElement expr) {
     Project project = expr.getProject();
@@ -107,8 +105,7 @@ public final class PostfixTemplatesUtils {
   /**
    * Generates a unique in the scope of a given provider template ID.
    */
-  @NotNull
-  public static String generateTemplateId(@NotNull String templateKey, @NotNull PostfixTemplateProvider provider) {
+  public static @NotNull String generateTemplateId(@NotNull String templateKey, @NotNull PostfixTemplateProvider provider) {
     Set<String> usedIds = new HashSet<>();
     for (PostfixTemplate builtinTemplate : provider.getTemplates()) {
       usedIds.add(builtinTemplate.getId());
@@ -148,9 +145,8 @@ public final class PostfixTemplatesUtils {
     parentElement.addContent(templateTag);
   }
 
-  @NotNull
-  public static <T extends PostfixTemplateExpressionCondition> Set<T> readExternalConditions(@NotNull Element template,
-                                                                                             @NotNull Function<? super Element, ? extends T> conditionFactory) {
+  public static @NotNull <T extends PostfixTemplateExpressionCondition> Set<T> readExternalConditions(@NotNull Element template,
+                                                                                                      @NotNull Function<? super Element, ? extends T> conditionFactory) {
     Element conditionsElement = template.getChild(CONDITIONS_TAG);
     if (conditionsElement != null) {
       Set<T> conditions = new LinkedHashSet<>();
@@ -167,8 +163,7 @@ public final class PostfixTemplatesUtils {
     return Collections.emptySet();
   }
 
-  @Nullable
-  public static TemplateImpl readExternalLiveTemplate(@NotNull Element template, @NotNull PostfixTemplateProvider provider) {
+  public static @Nullable TemplateImpl readExternalLiveTemplate(@NotNull Element template, @NotNull PostfixTemplateProvider provider) {
     Element templateChild = template.getChild(TemplateSettings.TEMPLATE);
     if (templateChild == null) return null;
 

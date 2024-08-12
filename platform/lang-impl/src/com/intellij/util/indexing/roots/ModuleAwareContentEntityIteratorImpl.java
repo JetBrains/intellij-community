@@ -25,9 +25,8 @@ public final class ModuleAwareContentEntityIteratorImpl extends RootHolderIterat
     this.module = module;
   }
 
-  @NotNull
   @Override
-  public ModuleAwareContentEntityOrigin getOrigin() {
+  public @NotNull ModuleAwareContentEntityOrigin getOrigin() {
     return new ModuleAwareContentEntityOriginImpl(module, myEntityPointer, roots);
   }
 }

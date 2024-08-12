@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -38,8 +39,7 @@ public final class TestEditorSplitter {
     myActiveTabGroupName = tabGroup;
   }
 
-  @Nullable
-  public FileEditor getFocusedFileEditor() {
+  public @Nullable FileEditor getFocusedFileEditor() {
     Pair<FileEditor, FileEditorProvider> openedEditor = getActiveTabGroup().getOpenedEditor();
     if(openedEditor == null)
       return null;
@@ -47,8 +47,7 @@ public final class TestEditorSplitter {
     return openedEditor.first;
   }
 
-  @Nullable
-  public FileEditorProvider getProviderFromFocused() {
+  public @Nullable FileEditorProvider getProviderFromFocused() {
     Pair<FileEditor, FileEditorProvider> openedEditor = getActiveTabGroup().getOpenedEditor();
     if(openedEditor == null)
       return null;
@@ -88,8 +87,7 @@ public final class TestEditorSplitter {
       myTabGroups.remove(key);
   }
 
-  @Nullable
-  public Pair<FileEditor, FileEditorProvider> getEditorAndProvider(VirtualFile file) {
+  public @Nullable Pair<FileEditor, FileEditorProvider> getEditorAndProvider(VirtualFile file) {
     return getActiveTabGroup().getEditorAndProvider(file);
   }
 }

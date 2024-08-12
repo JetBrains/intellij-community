@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.diagnostic.CoreAttachmentFactory;
@@ -50,8 +50,7 @@ public final class FoldingUpdate {
   private FoldingUpdate() {
   }
 
-  @Nullable
-  static Runnable updateFoldRegions(@NotNull Editor editor, @NotNull PsiFile file, boolean applyDefaultState, boolean quick) {
+  static @Nullable Runnable updateFoldRegions(@NotNull Editor editor, @NotNull PsiFile file, boolean applyDefaultState, boolean quick) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Project project = file.getProject();
@@ -124,14 +123,12 @@ public final class FoldingUpdate {
               "  vFile.length=" + (vFile.isValid() ? vFile.getLength() : -1));
   }
 
-  @NotNull
-  private static UpdateFoldRegionsOperation.ApplyDefaultStateMode applyDefaultStateMode(boolean applyDefaultState) {
+  private static @NotNull UpdateFoldRegionsOperation.ApplyDefaultStateMode applyDefaultStateMode(boolean applyDefaultState) {
     return applyDefaultState ? UpdateFoldRegionsOperation.ApplyDefaultStateMode.EXCEPT_CARET_REGION : UpdateFoldRegionsOperation.ApplyDefaultStateMode.NO;
   }
 
   private static final Key<Object> LAST_UPDATE_INJECTED_STAMP_KEY = Key.create("LAST_UPDATE_INJECTED_STAMP_KEY");
-  @Nullable
-  static Runnable updateInjectedFoldRegions(@NotNull Editor editor, @NotNull PsiFile file, boolean applyDefaultState) {
+  static @Nullable Runnable updateInjectedFoldRegions(@NotNull Editor editor, @NotNull PsiFile file, boolean applyDefaultState) {
     if (file instanceof PsiCompiledElement) return null;
     boolean codeFoldingForInjectedEnabled = editor.getUserData(INJECTED_CODE_FOLDING_ENABLED) != Boolean.FALSE;
 
@@ -333,8 +330,7 @@ public final class FoldingUpdate {
   }
 
   static final class RegionInfo {
-    @NotNull
-    final FoldingDescriptor descriptor;
+    final @NotNull FoldingDescriptor descriptor;
     final PsiElement element;
     final String signature;
     final boolean collapsedByDefault;

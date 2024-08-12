@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class PostfixTemplateWrapper extends PostfixTemplate {
-  @NotNull private final PostfixTemplate myDelegate;
+  private final @NotNull PostfixTemplate myDelegate;
 
   public PostfixTemplateWrapper(@NotNull PostfixTemplate template) {
     this(template.getId(), template.getPresentableName(), template.getKey(), template, template.getProvider());
@@ -27,14 +27,12 @@ public class PostfixTemplateWrapper extends PostfixTemplate {
     myDelegate = template;
   }
 
-  @NotNull
-  public PostfixTemplate getDelegate() {
+  public @NotNull PostfixTemplate getDelegate() {
     return myDelegate;
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return myDelegate.getDescription();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -89,9 +89,8 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return nodes;
   }
 
-  @NotNull
   @Override
-  protected AbstractTreeNode<?> createModuleGroup(@NotNull final Module module) {
+  protected @NotNull AbstractTreeNode<?> createModuleGroup(final @NotNull Module module) {
     List<VirtualFile> roots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelModuleRoots(module, getSettings());
     if (roots.size() == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots.get(0));
@@ -116,9 +115,8 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return new ProjectViewUnloadedModuleNode(getProject(), moduleDescription, getSettings());
   }
 
-  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroupNode(@NotNull final ModuleGroup moduleGroup) {
+  protected @NotNull AbstractTreeNode createModuleGroupNode(final @NotNull ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
   }
 }

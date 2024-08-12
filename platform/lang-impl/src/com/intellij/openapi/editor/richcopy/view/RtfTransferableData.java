@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy.view;
 
 import com.intellij.openapi.editor.richcopy.FontMapper;
@@ -31,7 +31,7 @@ public final class RtfTransferableData extends AbstractSyntaxAwareInputStreamTra
   }
 
   @Override
-  protected void build(@NotNull final StringBuilder holder, final int maxLength) {
+  protected void build(final @NotNull StringBuilder holder, final int maxLength) {
     holder.append(HEADER_PREFIX);
 
     holder.append("{\\colortbl;");
@@ -88,9 +88,8 @@ public final class RtfTransferableData extends AbstractSyntaxAwareInputStreamTra
     return (int)(component * 255 + 0.5f);
   }
 
-  @NotNull
   @Override
-  protected String getCharset() {
+  protected @NotNull String getCharset() {
     return "US-ASCII";
   }
 
@@ -104,8 +103,8 @@ public final class RtfTransferableData extends AbstractSyntaxAwareInputStreamTra
   }
 
   private static final class MyVisitor implements MarkupHandler {
-    @NotNull private final StringBuilder myBuffer;
-    @NotNull private final String        myRawText;
+    private final @NotNull StringBuilder myBuffer;
+    private final @NotNull String        myRawText;
     private final int myMaxLength;
     private final int myDefaultBackgroundId;
     private final float myFontSize;

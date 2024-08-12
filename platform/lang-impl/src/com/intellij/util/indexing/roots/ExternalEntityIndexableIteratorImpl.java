@@ -23,9 +23,8 @@ public final class ExternalEntityIndexableIteratorImpl extends SourceRootHolderI
                                                                            "indexable.files.provider.scanning.additional.dependencies")));
   }
 
-  @NotNull
   @Override
-  public ExternalEntityOrigin getOrigin() {
+  public @NotNull ExternalEntityOrigin getOrigin() {
     return new ExternalEntityOriginImpl(myEntityPointer, roots);
   }
 }

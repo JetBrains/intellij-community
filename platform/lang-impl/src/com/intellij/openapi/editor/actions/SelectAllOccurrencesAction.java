@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.find.FindManager;
@@ -35,7 +35,7 @@ public final class SelectAllOccurrencesAction extends EditorAction implements Ac
     }
 
     @Override
-    public void doExecute(@NotNull final Editor editor, @Nullable Caret c, DataContext dataContext) {
+    public void doExecute(final @NotNull Editor editor, @Nullable Caret c, DataContext dataContext) {
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
 
       boolean wholeWordsSearch = false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -26,8 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   @Override
-  @Nullable
-  public String getPresentableText(final Object object) {
+  public @Nullable String getPresentableText(final Object object) {
     if (object instanceof Project) {
       return ((Project)object).getName();
     }
@@ -55,7 +54,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   }
 
   @Override
-  public PsiElement adjustElement(@NotNull final PsiElement psiElement) {
+  public PsiElement adjustElement(final @NotNull PsiElement psiElement) {
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) return containingFile;
     return psiElement;
@@ -139,9 +138,8 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
     }));
   }
 
-  @Nullable
   @Override
-  public PsiElement getParent(PsiElement psiElement) {
+  public @Nullable PsiElement getParent(PsiElement psiElement) {
     PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) {
       PsiDirectory containingDirectory = containingFile.getContainingDirectory();

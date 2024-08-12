@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * Instances of this class are not safe for use by multiple concurrent threads, just as {@link Matcher} instances are.
  */
 public final class RegExReplacementBuilder {
-  @NotNull private final MatchGroupContainer myMatcher;
+  private final @NotNull MatchGroupContainer myMatcher;
 
   private String myTemplate;
   private int myCursor;

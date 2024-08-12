@@ -23,9 +23,8 @@ public final class GenericContentEntityIteratorImpl extends RootHolderIteratorBa
                                     IndexingBundle.message("indexable.files.provider.scanning.content")));
   }
 
-  @NotNull
   @Override
-  public GenericContentEntityOrigin getOrigin() {
+  public @NotNull GenericContentEntityOrigin getOrigin() {
     return new GenericContentEntityOriginImpl(myEntityPointer, roots);
   }
 }

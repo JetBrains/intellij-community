@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -21,9 +21,8 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     super(rootType);
   }
 
-  @NotNull
   @Override
-  public Icon getRootIcon(@NotNull JavaSourceRootProperties properties) {
+  public @NotNull Icon getRootIcon(@NotNull JavaSourceRootProperties properties) {
     return properties.isForGeneratedSources() ? getGeneratedRootIcon() : getRootIcon();
   }
 
@@ -32,12 +31,10 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     return AllIcons.Modules.SourceRootFileLayer;
   }
 
-  @NotNull
-  protected abstract Icon getGeneratedRootIcon();
+  protected abstract @NotNull Icon getGeneratedRootIcon();
 
-  @Nullable
   @Override
-  public String getPropertiesString(@NotNull JavaSourceRootProperties properties) {
+  public @Nullable String getPropertiesString(@NotNull JavaSourceRootProperties properties) {
     StringBuilder buffer = new StringBuilder();
     if (properties.isForGeneratedSources()) {
       buffer.append(" [generated]");
@@ -49,11 +46,10 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     return buffer.length() > 0 ? buffer.toString() : null;
   }
 
-  @Nullable
   @Override
-  public JComponent createPropertiesEditor(@NotNull final SourceFolder folder,
-                                           @NotNull final JComponent parentComponent,
-                                           @NotNull final ContentRootPanel.ActionCallback callback) {
+  public @Nullable JComponent createPropertiesEditor(final @NotNull SourceFolder folder,
+                                                     final @NotNull JComponent parentComponent,
+                                                     final @NotNull ContentRootPanel.ActionCallback callback) {
     final IconActionComponent iconComponent = new IconActionComponent(AllIcons.General.Inline_edit,
                                                                       AllIcons.General.Inline_edit_hovered,
                                                                       ProjectBundle.message("module.paths.edit.properties.tooltip"), () -> {
@@ -75,7 +71,7 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     private final JTextField myPackagePrefixField;
     private final JCheckBox myIsGeneratedCheckBox;
     private final JPanel myMainPanel;
-    @NotNull private final JavaSourceRootProperties myProperties;
+    private final @NotNull JavaSourceRootProperties myProperties;
 
     private SourceRootPropertiesDialog(@NotNull JComponent parentComponent, @NotNull JavaSourceRootProperties properties) {
       super(parentComponent, true);
@@ -93,9 +89,8 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
       init();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myPackagePrefixField;
     }
 
@@ -106,9 +101,8 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
       super.doOKAction();
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myMainPanel;
     }
   }

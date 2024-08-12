@@ -46,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class InteractiveTemplateStateProcessor implements TemplateStateProcessor {
-  @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
+  private static final @NonNls String DUMMY_IDENTIFIER = "xxx";
 
   private boolean myLookupShown;
 
@@ -80,8 +80,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
     return doFindWhiteSpaceNode(file, offset).first;
   }
 
-  @NotNull
-  private static Pair<PsiElement, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
+  private static @NotNull Pair<PsiElement, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
     ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(file);
     if (!(astNode instanceof FileElement)) {
       return new Pair<>(null, null);
@@ -234,8 +233,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
    * @return            text range that points to the newly inserted dummy text if any; {@code null} otherwise
    * @throws IncorrectOperationException  if given file is read-only
    */
-  @Nullable
-  private static TextRange doInsertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) {
+  private static @Nullable TextRange doInsertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) {
     CharSequence text = document.getImmutableCharSequence();
     if (offset <= 0 || offset >= text.length() || !isWhiteSpaceSymbol(text.charAt(offset))) {
       return null;
@@ -288,8 +286,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
 
   private static final class MyBasicUndoableAction extends BasicUndoableAction implements Disposable {
     private final Project myProject;
-    @Nullable
-    private TemplateState myTemplateState;
+    private @Nullable TemplateState myTemplateState;
 
     private MyBasicUndoableAction(@NotNull TemplateState templateState, Project project, @Nullable Document document) {
       super(document != null ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(document)} : null);

@@ -69,9 +69,8 @@ public abstract class RefactoringDialog extends DialogWrapper implements Possibl
         return selected;
       }
 
-      @NotNull
       @Override
-      public String getDoNotShowMessage() {
+      public @NotNull String getDoNotShowMessage() {
         return RefactoringBundle.message("open.in.editor.label");
       }
     });
@@ -81,9 +80,7 @@ public abstract class RefactoringDialog extends DialogWrapper implements Possibl
     return true;
   }
 
-  @NonNls
-  @NotNull
-  protected String getRefactoringId() {
+  protected @NonNls @NotNull String getRefactoringId() {
     return getClass().getName();
   }
 

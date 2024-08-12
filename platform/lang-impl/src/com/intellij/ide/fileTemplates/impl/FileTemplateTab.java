@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -24,8 +24,7 @@ abstract class FileTemplateTab {
 
   public abstract JComponent getComponent();
 
-  @Nullable
-  public abstract FileTemplate getSelectedTemplate();
+  public abstract @Nullable FileTemplate getSelectedTemplate();
 
   public abstract void selectTemplate(FileTemplate template);
 

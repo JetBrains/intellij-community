@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.Disposable;
@@ -136,25 +136,21 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return initPromise;
   }
 
-  @NotNull
-  private ListCellRenderer<ScopeDescriptor> createRenderer() {
+  private @NotNull ListCellRenderer<ScopeDescriptor> createRenderer() {
     return new GroupedComboBoxRenderer<>(this) {
-      @NotNull
       @Override
-      public @NlsContexts.ListItem String getText(ScopeDescriptor item) {
+      public @NotNull @NlsContexts.ListItem String getText(ScopeDescriptor item) {
         String text = item.getDisplayName();
         return text == null ? super.getText(item) : text;
       }
 
-      @Nullable
       @Override
-      public Icon getIcon(ScopeDescriptor item) {
+      public @Nullable Icon getIcon(ScopeDescriptor item) {
         return item.getIcon();
       }
 
-      @Nullable
       @Override
-      public ListSeparator separatorFor(ScopeDescriptor value) {
+      public @Nullable ListSeparator separatorFor(ScopeDescriptor value) {
         if (scopes != null) return scopes.getSeparatorFor(value);
         return null;
       }
@@ -264,8 +260,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     setModelOption(ScopeOption.EMPTY_SCOPES, showEmptyScopes);
   }
 
-  @Nullable
-  public SearchScope getSelectedScope() {
+  public @Nullable SearchScope getSelectedScope() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
     return item == null ? preselectedScope : item.getScope();
   }

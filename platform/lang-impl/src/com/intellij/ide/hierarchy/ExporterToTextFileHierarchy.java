@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.ExporterToTextFile;
@@ -18,9 +18,8 @@ final class ExporterToTextFileHierarchy implements ExporterToTextFile {
     myHierarchyBrowserBase = hierarchyBrowserBase;
   }
 
-  @NotNull
   @Override
-  public String getReportText() {
+  public @NotNull String getReportText() {
     StringBuilder buf = new StringBuilder();
     StructureTreeModel currentBuilder = myHierarchyBrowserBase.getCurrentBuilder();
     LOG.assertTrue(currentBuilder != null);
@@ -48,9 +47,8 @@ final class ExporterToTextFileHierarchy implements ExporterToTextFile {
     }
   }
   
-  @NotNull
   @Override
-  public String getDefaultFilePath() {
+  public @NotNull String getDefaultFilePath() {
     HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
     return state != null && state.EXPORT_FILE_PATH != null ? state.EXPORT_FILE_PATH : "";
   }

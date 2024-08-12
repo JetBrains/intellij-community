@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.Disposable;
@@ -27,8 +27,7 @@ import java.util.function.Consumer;
 public class SdkDetector {
   private static final Logger LOG = Logger.getInstance(SdkDetector.class);
 
-  @NotNull
-  public static SdkDetector getInstance() {
+  public static @NotNull SdkDetector getInstance() {
     return ApplicationManager.getApplication().getService(SdkDetector.class);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
@@ -105,13 +105,11 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     }
   }
 
-  @NotNull
-  protected @NlsContexts.Label String getLabelText() {
+  protected @NotNull @NlsContexts.Label String getLabelText() {
     return RefactoringBundle.message("rename.0.and.its.usages.to", getFullName());
   }
 
-  @NotNull
-  public PsiElement getPsiElement() {
+  public @NotNull PsiElement getPsiElement() {
     return myPsiElement;
   }
 
@@ -191,13 +189,11 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     return ArrayUtilRt.toStringArray(result);
   }
 
-  @NotNull
-  public String getNewName() {
+  public @NotNull String getNewName() {
     return myNameSuggestionsField.getEnteredName().trim();
   }
 
-  @NotNull
-  public SearchScope getRefactoringScope() {
+  public @NotNull SearchScope getRefactoringScope() {
     SearchScope scope = myScopeCombo.getSelectedScope();
     return scope != null ? scope : GlobalSearchScope.projectScope(myProject);
   }
@@ -316,8 +312,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     }
   }
 
-  @Nullable
-  protected JComponent createSearchScopePanel() {
+  protected @Nullable JComponent createSearchScopePanel() {
     var scopeService = RenameScopeService.getInstance(myProject);
     var preselectedScopeName = scopeService.load();
     myScopeCombo = new ScopeChooserCombo();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.project.Project;
@@ -27,7 +27,7 @@ import java.util.function.Predicate;
 
 public abstract class InlineOptionsDialog extends RefactoringDialog implements InlineOptions {
   protected JRadioButton myRbInlineAll;
-  @Nullable protected JRadioButton myKeepTheDeclaration;
+  protected @Nullable JRadioButton myKeepTheDeclaration;
   protected JRadioButton myRbInlineThisOnly;
   protected boolean myInvokedOnReference;
   protected final PsiElement myElement;
@@ -57,9 +57,8 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     return false;
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel();
     optionsPanel.setBorder(new EmptyBorder(JBUIScale.scale(10), 0, 0, 0));
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
@@ -146,19 +145,14 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     return myElement.isWritable();
   }
 
-  @Label
-  protected abstract String getNameLabelText();
-  @BorderTitle
-  protected abstract String getBorderTitle();
-  @RadioButton
-  protected abstract String getInlineAllText();
-  @RadioButton
-  protected String getKeepTheDeclarationText() {return null;}
+  protected abstract @Label String getNameLabelText();
+  protected abstract @BorderTitle String getBorderTitle();
+  protected abstract @RadioButton String getInlineAllText();
+  protected @RadioButton String getKeepTheDeclarationText() {return null;}
   protected boolean isKeepTheDeclarationByDefault() {
     return false;
   }
-  @RadioButton
-  protected abstract String getInlineThisText();
+  protected abstract @RadioButton String getInlineThisText();
   protected abstract boolean isInlineThis();
   protected boolean canInlineThisOnly() {
     return false;

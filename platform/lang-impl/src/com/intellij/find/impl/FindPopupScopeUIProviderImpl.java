@@ -4,9 +4,8 @@ package com.intellij.find.impl;
 import org.jetbrains.annotations.NotNull;
 
 final class FindPopupScopeUIProviderImpl implements FindPopupScopeUIProvider {
-  @NotNull
   @Override
-  public FindPopupScopeUI create(@NotNull FindPopupPanel findPopupPanel) {
+  public @NotNull FindPopupScopeUI create(@NotNull FindPopupPanel findPopupPanel) {
     return new FindPopupScopeUIImpl(findPopupPanel);
   }
 }

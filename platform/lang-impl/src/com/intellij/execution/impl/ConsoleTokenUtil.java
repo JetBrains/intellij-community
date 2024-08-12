@@ -99,8 +99,7 @@ public final class ConsoleTokenUtil {
     return StringUtil.countChars(text, BACKSPACE, 0, true);
   }
 
-  @Nullable
-  public static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
+  public static @Nullable ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
     return m.getUserData(CONTENT_TYPE);
   }
 
@@ -165,8 +164,7 @@ public final class ConsoleTokenUtil {
     }
   }
 
-  @NotNull
-  static CharSequence computeTextToSend(@NotNull Editor editor, @NotNull Project project) {
+  static @NotNull CharSequence computeTextToSend(@NotNull Editor editor, @NotNull Project project) {
     StringBuilder textToSend = new StringBuilder();
     // compute text input from the console contents:
     // all range markers beginning from the caret offset backwards, marked as user input and not marked as already sent

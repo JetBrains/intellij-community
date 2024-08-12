@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -34,11 +34,10 @@ import java.util.List;
 public final class ScopesOrderDialog extends DialogWrapper {
   private final ScopesOrderTable myOptionsTable;
   private final InspectionProfileImpl myInspectionProfile;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final JPanel myPanel;
 
-  ScopesOrderDialog(@NotNull final Component parent,
+  ScopesOrderDialog(final @NotNull Component parent,
                     @NotNull InspectionProfileImpl inspectionProfile,
                     @NotNull Project project) {
     super(parent, true);
@@ -99,9 +98,8 @@ public final class ScopesOrderDialog extends DialogWrapper {
     myOptionsTable.updateItems(scopes);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPanel;
   }
 

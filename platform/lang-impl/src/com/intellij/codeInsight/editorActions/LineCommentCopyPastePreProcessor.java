@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -18,15 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class LineCommentCopyPastePreProcessor implements CopyPastePreProcessor {
-  @Nullable
   @Override
-  public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+  public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
     return null;
   }
 
-  @NotNull
   @Override
-  public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+  public @NotNull String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     Language language = file.getLanguage();
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     if (commenter == null) return text;

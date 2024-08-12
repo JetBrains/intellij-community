@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.openapi.project.Project;
@@ -13,9 +13,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 public final class ScratchResolveScopeEnlarger extends ResolveScopeEnlarger{
-  @Nullable
   @Override
-  public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
+  public @Nullable SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     return ScratchUtil.isScratch(file)? GlobalSearchScope.fileScope(project, file) : null;
   }
 }

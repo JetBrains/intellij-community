@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -16,7 +16,7 @@ import java.util.List;
  * @author Svetlana.Zemlyanskaya
  */
 public final class ArrangementRuleAliasControl extends ArrangementMatchingRulesControl {
-  @NotNull public static final DataKey<ArrangementRuleAliasControl> KEY = DataKey.create("Arrangement.Alias.Rule.Control");
+  public static final @NotNull DataKey<ArrangementRuleAliasControl> KEY = DataKey.create("Arrangement.Alias.Rule.Control");
 
   public ArrangementRuleAliasControl(@NotNull ArrangementStandardSettingsManager settingsManager,
                                      @NotNull ArrangementColorsProvider colorsProvider,

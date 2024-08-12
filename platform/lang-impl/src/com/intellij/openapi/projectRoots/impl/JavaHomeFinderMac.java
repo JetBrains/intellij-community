@@ -56,9 +56,8 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
     return null;
   }
 
-  @NotNull
   @Override
-  protected List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
+  protected @NotNull List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
     return Arrays.asList(path, path.resolve("Home"), path.resolve("Contents/Home"));
   }
 

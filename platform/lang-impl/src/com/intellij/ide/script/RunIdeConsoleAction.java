@@ -202,8 +202,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     ensureOutputIsRedirected(engine, descriptor);
   }
 
-  @Nullable
-  private static String getProfileText(@NotNull VirtualFile file) {
+  private static @Nullable String getProfileText(@NotNull VirtualFile file) {
     try {
       VirtualFile folder = file.getParent();
       VirtualFile profileChild = folder == null ? null : folder.findChild(".profile." + file.getExtension());
@@ -214,8 +213,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     return null;
   }
 
-  @NotNull
-  private static String getCommandText(@NotNull Project project, @NotNull Editor editor) {
+  private static @NotNull String getCommandText(@NotNull Project project, @NotNull Editor editor) {
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
     Document document = editor.getDocument();
     if (!selectedRange.isEmpty()) {
@@ -251,10 +249,9 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     RunContentManager.getInstance(consoleView.getProject()).toFrontRunContent(executor, descriptor);
   }
 
-  @NotNull
-  private static RunContentDescriptor getConsoleView(@NotNull Project project,
-                                                     @NotNull VirtualFile file,
-                                                     @NotNull IdeScriptEngineManager.EngineInfo engineInfo) {
+  private static @NotNull RunContentDescriptor getConsoleView(@NotNull Project project,
+                                                              @NotNull VirtualFile file,
+                                                              @NotNull IdeScriptEngineManager.EngineInfo engineInfo) {
     for (RunContentDescriptor existing : RunContentManager.getInstance(project).getAllDescriptors()) {
       Content content = existing.getAttachedContent();
       if (content == null) continue;
@@ -367,8 +364,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
       myAnsiEscapeDecoder = new AnsiEscapeDecoder();
     }
 
-    @Nullable
-    public RunContentDescriptor getDescriptor() {
+    public @Nullable RunContentDescriptor getDescriptor() {
       return myDescriptor.get();
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
@@ -42,8 +42,7 @@ public final class ToggleShowImportPopupsAction extends ToggleAction {
     super.update(e);
   }
 
-  @Nullable
-  private static PsiFile getFile(@NotNull AnActionEvent e) {
+  private static @Nullable PsiFile getFile(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return editor == null ? null : e.getData(CommonDataKeys.PSI_FILE);
   }

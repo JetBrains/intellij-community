@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
@@ -48,9 +48,9 @@ import java.util.List;
 public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements DumbAware {
   public static final int MAX_PATH_LENGTH = 70;
 
-  @NonNls private static final String COPY = "Copy";
-  @NonNls private static final String COPY_OPEN_IN_EDITOR = "Copy.OpenInEditor";
-  @NonNls private static final String RECENT_KEYS = "CopyFile.RECENT_KEYS";
+  private static final @NonNls String COPY = "Copy";
+  private static final @NonNls String COPY_OPEN_IN_EDITOR = "Copy.OpenInEditor";
+  private static final @NonNls String RECENT_KEYS = "CopyFile.RECENT_KEYS";
 
   public static String shortenPath(@NotNull VirtualFile file) {
     return StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), MAX_PATH_LENGTH);

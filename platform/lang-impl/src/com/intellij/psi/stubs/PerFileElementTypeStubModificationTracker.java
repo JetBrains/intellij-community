@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -311,8 +311,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
   }
 
-  @NotNull
-  private static List<Pair<String, @Nullable PluginId>> describeStubFileElementTypes(List<StubFileElementType<?>> types) {
+  private static @NotNull List<Pair<String, @Nullable PluginId>> describeStubFileElementTypes(List<StubFileElementType<?>> types) {
     return ContainerUtil.map(types, (elemType) -> {
       var plugin = PluginManager.getPluginByClass(elemType.getClass());
       var pluginId = plugin == null ? null : plugin.getPluginId();

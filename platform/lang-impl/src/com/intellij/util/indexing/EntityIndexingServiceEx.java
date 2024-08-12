@@ -23,8 +23,7 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface EntityIndexingServiceEx extends EntityIndexingService {
 
-  @NotNull
-  static EntityIndexingServiceEx getInstanceEx() {
+  static @NotNull EntityIndexingServiceEx getInstanceEx() {
     return (EntityIndexingServiceEx)EntityIndexingService.getInstance();
   }
 

@@ -11,15 +11,13 @@ import org.jetbrains.annotations.NotNull;
 
 public final class OverrideMethodsAction extends PresentableActionHandlerBasedAction implements DumbAware {
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new OverrideMethodsHandler();
   }
 
-  @NotNull
   @Override
-  protected LanguageExtension<LanguageCodeInsightActionHandler> getLanguageExtension() {
+  protected @NotNull LanguageExtension<LanguageCodeInsightActionHandler> getLanguageExtension() {
     return CodeInsightActions.OVERRIDE_METHOD;
   }
 }

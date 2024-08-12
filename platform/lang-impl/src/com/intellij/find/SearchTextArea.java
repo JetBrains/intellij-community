@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.Utils;
@@ -316,8 +316,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     updateIconsLayout();
   }
 
-  @NotNull
-  public JTextArea getTextArea() {
+  public @NotNull JTextArea getTextArea() {
     return myTextArea;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.actions;
 
@@ -35,9 +35,8 @@ public final class SaveAsTemplateAction extends AnAction {
 
   private static final Logger LOG = Logger.getInstance(SaveAsTemplateAction.class);
 
-  @NotNull
   @VisibleForTesting
-  public static String suggestTemplateText(@NotNull Editor editor, @Nullable PsiFile file, @NotNull Project project) {
+  public static @NotNull String suggestTemplateText(@NotNull Editor editor, @Nullable PsiFile file, @NotNull Project project) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     TextRange selection = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());

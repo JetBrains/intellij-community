@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -127,17 +127,14 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     return new PsiElement[]{file};
   }
 
-  @NotNull
-  public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory parent, @NotNull String subdirName) {
+  public static @NotNull PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory parent, @NotNull String subdirName) {
     final PsiDirectory sub = parent.findSubdirectory(subdirName);
     return sub == null ? WriteAction.compute(() -> parent.createSubdirectory(subdirName)) : sub;
   }
 
   public static final class MkDirs {
-    @NotNull
-    public final String newName;
-    @NotNull
-    public final PsiDirectory directory;
+    public final @NotNull String newName;
+    public final @NotNull PsiDirectory directory;
 
     public MkDirs(@NotNull String newName, @NotNull PsiDirectory directory) {
       if (SystemInfo.isWindows) {
@@ -190,8 +187,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     return newName + "." + getDefaultExtension();
   }
 
-  @Nullable
-  protected String getDefaultExtension() {
+  protected @Nullable String getDefaultExtension() {
     return null;
   }
 

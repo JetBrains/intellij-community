@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.lang.LangBundle;
@@ -36,8 +36,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
     if (text != null) e.getPresentation().setText(text);
   }
 
-  @Nullable
-  protected @ActionText String getActionText(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
+  protected @Nullable @ActionText String getActionText(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
     Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = getHandlersForSelectedRoots(selection);
 
     if (!selectedRootHandlers.isEmpty()) {
@@ -53,8 +52,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
     return null;
   }
 
-  @NotNull
-  private static Set<ModuleSourceRootEditHandler<?>> getHandlersForSelectedRoots(@NotNull RootsSelection selection) {
+  private static @NotNull Set<ModuleSourceRootEditHandler<?>> getHandlersForSelectedRoots(@NotNull RootsSelection selection) {
     Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = new HashSet<>();
     for (SourceFolder root : selection.mySelectedRoots) {
       ContainerUtil.addIfNotNull(selectedRootHandlers, ModuleSourceRootEditHandler.getEditHandler(root.getRootType()));

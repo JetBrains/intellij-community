@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.macro;
 
@@ -15,15 +15,12 @@ public abstract class SimpleMacro extends Macro {
   }
 
   @Override
-  @NonNls
-  public String getName() {
+  public @NonNls String getName() {
     return myName;
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getDefaultValue() {
+  public @NotNull @NonNls String getDefaultValue() {
     return "11.11.1111";
   }
 

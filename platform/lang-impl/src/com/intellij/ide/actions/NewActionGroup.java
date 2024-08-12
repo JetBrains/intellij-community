@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -16,7 +16,7 @@ import java.util.function.Predicate;
  * @author Dmitry Avdeev
  */
 public final class NewActionGroup extends ActionGroup {
-  @NonNls private static final String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
+  private static final @NonNls String PROJECT_OR_MODULE_GROUP_ID = "NewProjectOrModuleGroup";
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
@@ -55,9 +55,8 @@ public final class PSIRenderingUtils {
     return attributes;
   }
 
-  @Nullable
   @Contract("!null, _, _ -> !null")
-  public static String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
+  public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
     if (text == null) return null;
 
     if (text.startsWith("(") && text.endsWith(")")) {
@@ -92,8 +91,7 @@ public final class PSIRenderingUtils {
     return StringUtil.trimMiddle(adjustedText, adjustedWidth);
   }
 
-  @NotNull
-  public static String normalizePsiElementContainerText(PsiElement element, String text, String presentablePath) {
+  public static @NotNull String normalizePsiElementContainerText(PsiElement element, String text, String presentablePath) {
     if (text.startsWith("(") && text.endsWith(")")) {
       text = text.substring(1, text.length() - 1);
     }
@@ -124,8 +122,7 @@ public final class PSIRenderingUtils {
     return text;
   }
 
-  @NotNull
-  public static String getPSIElementText(PsiElement element) {
+  public static @NotNull String getPSIElementText(PsiElement element) {
     VirtualFile file = element instanceof PsiFile ? PsiUtilCore.getVirtualFile(element) :
                        element instanceof VirtualFile ? (VirtualFile)element : null;
     if (file != null) {
@@ -143,8 +140,7 @@ public final class PSIRenderingUtils {
     return StringUtil.notNullize(name, "<unnamed>");
   }
 
-  @Nullable
-  public static String extractPresentablePath(@Nullable PsiElement element) {
+  public static @Nullable String extractPresentablePath(@Nullable PsiElement element) {
     if (element == null) return null;
 
     PsiFile file = element.getContainingFile();

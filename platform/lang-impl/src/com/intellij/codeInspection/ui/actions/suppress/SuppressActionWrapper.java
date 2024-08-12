@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui.actions.suppress;
 
@@ -32,7 +32,7 @@ import java.util.*;
 import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.getView;
 
 public final class SuppressActionWrapper extends ActionGroup {
-  private final static Logger LOG = Logger.getInstance(SuppressActionWrapper.class);
+  private static final Logger LOG = Logger.getInstance(SuppressActionWrapper.class);
 
   public SuppressActionWrapper() {
     super(InspectionsBundle.messagePointer("suppress.inspection.problem"), false);
@@ -45,7 +45,7 @@ public final class SuppressActionWrapper extends ActionGroup {
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(final @Nullable AnActionEvent e) {
     final InspectionResultsView view = getView(e);
     if (view == null) return AnAction.EMPTY_ARRAY;
     final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
@@ -65,8 +65,7 @@ public final class SuppressActionWrapper extends ActionGroup {
   }
 
   public static final class SuppressTreeAction extends KeyAwareInspectionViewAction {
-    @NotNull
-    private final SuppressIntentionAction mySuppressAction;
+    private final @NotNull SuppressIntentionAction mySuppressAction;
 
     public SuppressTreeAction(final @NotNull SuppressIntentionAction suppressAction) {
       super(suppressAction.getText());

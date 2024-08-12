@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui.tabs;
 
@@ -36,8 +36,7 @@ final class FileColorConfiguration implements Cloneable {
     myScopeName = scopeName;
   }
 
-  @NonNls
-  public String getColorID() {
+  public @NonNls String getColorID() {
     return myColorID;
   }
 
@@ -52,7 +51,7 @@ final class FileColorConfiguration implements Cloneable {
     return project == null || NamedScopesHolder.getScope(project, myScopeName) != null;
   }
 
-  public void save(@NotNull final Element e) {
+  public void save(final @NotNull Element e) {
     if (!isValid(null)) {
       return;
     }
@@ -95,8 +94,7 @@ final class FileColorConfiguration implements Cloneable {
     return result;
   }
 
-  @Nullable
-  public static FileColorConfiguration load(@NotNull final Element e) {
+  public static @Nullable FileColorConfiguration load(final @NotNull Element e) {
     final String path = e.getAttributeValue(SCOPE_NAME);
     if (path == null) {
       return null;

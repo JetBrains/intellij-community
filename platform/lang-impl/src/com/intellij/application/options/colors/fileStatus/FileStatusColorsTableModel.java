@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -23,7 +23,7 @@ public final class FileStatusColorsTableModel extends AbstractTableModel {
   private final EditorColorsScheme myScheme;
   private final List<FileStatusColorDescriptor> myDescriptors;
 
-  private final static ColumnInfo[] COLUMNS_INFO = {
+  private static final ColumnInfo[] COLUMNS_INFO = {
     new ColumnInfo(Boolean.class, descriptor -> descriptor.isDefault()),
     new ColumnInfo(String.class, descriptor -> descriptor.getStatus().getText())
   };

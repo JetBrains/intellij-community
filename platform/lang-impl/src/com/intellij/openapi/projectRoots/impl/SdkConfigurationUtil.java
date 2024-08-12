@@ -47,7 +47,7 @@ public final class SdkConfigurationUtil {
 
   private SdkConfigurationUtil() { }
 
-  public static void createSdk(@Nullable final Project project,
+  public static void createSdk(final @Nullable Project project,
                                Sdk @NotNull [] existingSdks,
                                @NotNull NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
@@ -91,15 +91,14 @@ public final class SdkConfigurationUtil {
     });
   }
 
-  public static void createSdk(@Nullable final Project project,
+  public static void createSdk(final @Nullable Project project,
                                Sdk @NotNull [] existingSdks,
                                @NotNull NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                SdkType @NotNull ... sdkTypes) {
     createSdk(project, existingSdks, onSdkCreatedCallBack, true, sdkTypes);
   }
 
-  @NotNull
-  private static FileChooserDescriptor createCompositeDescriptor(SdkType @NotNull ... sdkTypes) {
+  private static @NotNull FileChooserDescriptor createCompositeDescriptor(SdkType @NotNull ... sdkTypes) {
     return new FileChooserDescriptor(sdkTypes[0].getHomeChooserDescriptor()) {
       @Override
       public void validateSelectedFiles(final VirtualFile @NotNull [] files) throws Exception {
@@ -117,7 +116,7 @@ public final class SdkConfigurationUtil {
     };
   }
 
-  public static void addSdk(@NotNull final Sdk sdk) {
+  public static void addSdk(final @NotNull Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
   }
 
@@ -129,13 +128,12 @@ public final class SdkConfigurationUtil {
    * Same as {@link #setupSdk(Sdk[], VirtualFile, SdkType, boolean, SdkAdditionalData, String)}
    * but doesn't catch exceptions
    */
-  @NotNull
   @ApiStatus.Internal
-  public static Sdk setupSdk(@NotNull Sdk @NotNull []allSdks,
+  public static @NotNull Sdk setupSdk(@NotNull Sdk @NotNull []allSdks,
                              @NotNull VirtualFile homeDir,
                              @NotNull SdkType sdkType,
-                             @Nullable final SdkAdditionalData additionalData,
-                             @Nullable final String customSdkSuggestedName) {
+                             final @Nullable SdkAdditionalData additionalData,
+                             final @Nullable String customSdkSuggestedName) {
     Sdk sdk = createSdk(Arrays.asList(allSdks), homeDir, sdkType, additionalData, customSdkSuggestedName);
     sdkType.setupSdkPaths(sdk);
     return sdk;
@@ -145,13 +143,12 @@ public final class SdkConfigurationUtil {
    * Creates SDK, catches any error, logs it, and shows error if not `silent`.
    * @see #setupSdk(Sdk[], VirtualFile, SdkType, SdkAdditionalData, String)
    */
-  @Nullable
-  public static Sdk setupSdk(Sdk @NotNull [] allSdks,
+  public static @Nullable Sdk setupSdk(Sdk @NotNull [] allSdks,
                              @NotNull VirtualFile homeDir,
                              @NotNull SdkType sdkType,
                              final boolean silent,
-                             @Nullable final SdkAdditionalData additionalData,
-                             @Nullable final String customSdkSuggestedName) {
+                             final @Nullable SdkAdditionalData additionalData,
+                             final @Nullable String customSdkSuggestedName) {
     Sdk sdk = null;
     try {
       sdk = setupSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
@@ -183,21 +180,19 @@ public final class SdkConfigurationUtil {
     return sdk;
   }
 
-  @NotNull
-  public static Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
-                              @NotNull VirtualFile homeDir,
-                              @NotNull SdkType sdkType,
-                              @Nullable SdkAdditionalData additionalData,
-                              @Nullable String customSdkSuggestedName) {
+  public static @NotNull Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
+                                       @NotNull VirtualFile homeDir,
+                                       @NotNull SdkType sdkType,
+                                       @Nullable SdkAdditionalData additionalData,
+                                       @Nullable String customSdkSuggestedName) {
     return createSdk(allSdks, sdkType.sdkPath(homeDir), sdkType, additionalData, customSdkSuggestedName);
   }
 
-  @NotNull
-  public static Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
-                              @NotNull String homePath,
-                              @NotNull SdkType sdkType,
-                              @Nullable SdkAdditionalData additionalData,
-                              @Nullable String customSdkSuggestedName) {
+  public static @NotNull Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
+                                       @NotNull String homePath,
+                                       @NotNull SdkType sdkType,
+                                       @Nullable SdkAdditionalData additionalData,
+                                       @Nullable String customSdkSuggestedName) {
     final String sdkName = customSdkSuggestedName == null
                            ? createUniqueSdkName(sdkType, homePath, allSdks)
                            : createUniqueSdkName(customSdkSuggestedName, allSdks);
@@ -226,7 +221,7 @@ public final class SdkConfigurationUtil {
     return sdk;
   }
 
-  public static void setDirectoryProjectSdk(@NotNull final Project project, @Nullable final Sdk sdk) {
+  public static void setDirectoryProjectSdk(final @NotNull Project project, final @Nullable Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectRootManager.getInstance(project).setProjectSdk(sdk);
       final Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -250,8 +245,7 @@ public final class SdkConfigurationUtil {
     }
   }
 
-  @Nullable
-  public static Sdk findOrCreateSdk(@Nullable Comparator<? super Sdk> comparator, SdkType @NotNull ... sdkTypes) {
+  public static @Nullable Sdk findOrCreateSdk(@Nullable Comparator<? super Sdk> comparator, SdkType @NotNull ... sdkTypes) {
     final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     if (sdk != null && ArrayUtil.contains(sdk.getSdkType(), sdkTypes)) {
@@ -285,8 +279,7 @@ public final class SdkConfigurationUtil {
    * @param path identifies the SDK
    * @return newly created SDK, or null.
    */
-  @Nullable
-  public static Sdk createAndAddSDK(@NotNull String path, @NotNull SdkType sdkType) {
+  public static @Nullable Sdk createAndAddSDK(@NotNull String path, @NotNull SdkType sdkType) {
     VirtualFile sdkHome = WriteAction.compute(() -> {
       return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
     });
@@ -300,19 +293,17 @@ public final class SdkConfigurationUtil {
     return null;
   }
 
-  @NotNull
-  public static String createUniqueSdkName(@NotNull SdkType type, @NotNull String home, final Collection<? extends Sdk> sdks) {
+  public static @NotNull String createUniqueSdkName(@NotNull SdkType type, @NotNull String home, final Collection<? extends Sdk> sdks) {
     return createUniqueSdkName(type.suggestSdkName(null, home), sdks);
   }
 
-  @NotNull
-  public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<? extends Sdk> sdks) {
+  public static @NotNull String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<? extends Sdk> sdks) {
     Set<String> nameList = sdks.stream().map(jdk -> jdk.getName()).collect(Collectors.toSet());
 
     return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !nameList.contains(o));
   }
 
-  public static void selectSdkHome(@NotNull final SdkType sdkType, @NotNull final Consumer<? super String> consumer) {
+  public static void selectSdkHome(final @NotNull SdkType sdkType, final @NotNull Consumer<? super String> consumer) {
     selectSdkHome(sdkType, null, consumer);
   }
 
@@ -326,9 +317,9 @@ public final class SdkConfigurationUtil {
     return false;
   }
 
-  public static void selectSdkHome(@NotNull final SdkType sdkType,
+  public static void selectSdkHome(final @NotNull SdkType sdkType,
                                    @Nullable Component component,
-                                   @NotNull final Consumer<? super String> consumer) {
+                                   final @NotNull Consumer<? super String> consumer) {
     if (selectSdkHomeForTests(sdkType, consumer)) return;
 
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
@@ -356,14 +347,12 @@ public final class SdkConfigurationUtil {
     });
   }
 
-  @Nullable
-  public static VirtualFile getSuggestedSdkRoot(@NotNull SdkType sdkType) {
+  public static @Nullable VirtualFile getSuggestedSdkRoot(@NotNull SdkType sdkType) {
     final String homePath = sdkType.suggestHomePath();
     return homePath == null ? null : LocalFileSystem.getInstance().findFileByPath(homePath);
   }
 
-  @NotNull
-  public static List<String> filterExistingPaths(@NotNull SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
+  public static @NotNull List<String> filterExistingPaths(@NotNull SdkType sdkType, Collection<String> sdkHomes, final Sdk[] sdks) {
     List<String> result = new ArrayList<>();
     for (String sdkHome : sdkHomes) {
       if (findByPath(sdkType, sdks, sdkHome) == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.NodeSortOrder;
@@ -68,8 +68,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     myFilter = original.getFilter();
   }
 
-  @Nullable
-  public PsiFileSystemItemFilter getFilter() {
+  public @Nullable PsiFileSystemItemFilter getFilter() {
     return myFilter;
   }
 
@@ -245,8 +244,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   /**
    * @return a virtual file that identifies the given element
    */
-  @Nullable
-  private static VirtualFile getVirtualFile(Object element) {
+  private static @Nullable VirtualFile getVirtualFile(Object element) {
     if (element instanceof PsiDirectory directory) {
       return directory.getVirtualFile();
     }

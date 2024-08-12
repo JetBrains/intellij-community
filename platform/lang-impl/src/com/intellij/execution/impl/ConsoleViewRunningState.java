@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -79,8 +79,7 @@ public final class ConsoleViewRunningState extends ConsoleState {
   }
 
   @Override
-  @NotNull
-  public ConsoleState dispose() {
+  public @NotNull ConsoleState dispose() {
     if (myProcessHandler != null) {
       myProcessHandler.removeProcessListener(myProcessListener);
     }
@@ -123,9 +122,8 @@ public final class ConsoleViewRunningState extends ConsoleState {
     return LF;
   }
 
-  @NotNull
   @Override
-  public ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
+  public @NotNull ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }
 

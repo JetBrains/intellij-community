@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.scopeChooser;
 
@@ -78,28 +78,23 @@ public final class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     return id;
   }
 
-  @NotNull
-  public NamedScopesHolder getHolder() {
+  public @NotNull NamedScopesHolder getHolder() {
     return getHolder(mySharedCheckbox.isSelected());
   }
 
-  @NotNull
-  private NamedScopesHolder getHolder(boolean local) {
+  private @NotNull NamedScopesHolder getHolder(boolean local) {
     return (local
             ? DependencyValidationManager.getInstance(myProject)
             : NamedScopeManager.getInstance(myProject));
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return "project.scopes";
   }
 
-  @Nullable
   @Override
-  protected JComponent createTopRightComponent() {
+  protected @Nullable JComponent createTopRightComponent() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(BorderLayout.WEST, mySharedCheckbox);
     panel.add(BorderLayout.EAST, mySharedContextHelp);
@@ -168,9 +163,8 @@ public final class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     }
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     return myIcon;
   }
 }

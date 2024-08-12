@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -92,8 +92,7 @@ public final class PasteReferenceProvider implements PasteProvider {
     }), IdeBundle.message("command.pasting.reference"), null);
   }
 
-  @Nullable
-  private static String getCopiedFqn(final DataContext context) {
+  private static @Nullable String getCopiedFqn(final DataContext context) {
     Producer<Transferable> producer = PasteAction.TRANSFERABLE_PROVIDER.getData(context);
 
     if (producer != null) {

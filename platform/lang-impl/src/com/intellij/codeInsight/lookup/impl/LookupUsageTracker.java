@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -297,8 +297,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       return data;
     }
 
-    @Nullable
-    private static Language getLanguageAtCaret(@NotNull LookupImpl lookup) {
+    private static @Nullable Language getLanguageAtCaret(@NotNull LookupImpl lookup) {
       PsiFile psiFile = lookup.getPsiFile();
       if (psiFile != null) {
         return PsiUtilCore.getLanguageAtOffset(psiFile, lookup.getEditor().getCaretModel().getOffset());

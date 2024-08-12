@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.intention.impl.config.BeforeAfterActionMetaData;
@@ -23,8 +23,7 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
   public static final PostfixTemplateMetaData EMPTY_METADATA = new PostfixTemplateMetaData();
   private static final String DESCRIPTION_FOLDER = "postfixTemplates";
 
-  @NotNull
-  public static BeforeAfterMetaData createMetaData(@Nullable PostfixTemplate template) {
+  public static @NotNull BeforeAfterMetaData createMetaData(@Nullable PostfixTemplate template) {
     if (template == null) return EMPTY_METADATA;
     if (template instanceof PostfixTemplateWrapper) {
       return new PostfixTemplateWrapperMetaData((PostfixTemplateWrapper)template);
@@ -64,15 +63,13 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
     List<TextDescriptor> list = new ArrayList<>(before.length);
     for (final TextDescriptor descriptor : before) {
       list.add(new TextDescriptor() {
-        @NotNull
         @Override
-        public String getText() throws IOException {
+        public @NotNull String getText() throws IOException {
           return StringUtil.replace(descriptor.getText(), KEY, key);
         }
 
-        @NotNull
         @Override
-        public String getFileName() {
+        public @NotNull String getFileName() {
           return descriptor.getFileName();
         }
       });

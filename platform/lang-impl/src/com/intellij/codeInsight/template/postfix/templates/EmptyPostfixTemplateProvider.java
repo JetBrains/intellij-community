@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.openapi.editor.Editor;
@@ -12,15 +12,13 @@ public final class EmptyPostfixTemplateProvider implements PostfixTemplateProvid
 
   private final HashSet<PostfixTemplate> myTemplates = new HashSet<>();
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "builtin.empty";
   }
 
-  @NotNull
   @Override
-  public Set<PostfixTemplate> getTemplates() {
+  public @NotNull Set<PostfixTemplate> getTemplates() {
     return myTemplates;
   }
 
@@ -39,9 +37,8 @@ public final class EmptyPostfixTemplateProvider implements PostfixTemplateProvid
 
   }
 
-  @NotNull
   @Override
-  public PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset) {
+  public @NotNull PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset) {
     return copyFile;
   }
 }

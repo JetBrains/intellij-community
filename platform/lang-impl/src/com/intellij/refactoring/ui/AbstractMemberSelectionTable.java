@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
@@ -132,15 +132,13 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     TableSpeedSearch.installOn(this);
   }
 
-  @NotNull
-  private CancellablePromise<List<MemberInfoData>> updatePresentation() {
+  private @NotNull CancellablePromise<List<MemberInfoData>> updatePresentation() {
     return ReadAction.nonBlocking(() -> ContainerUtil.map(myMemberInfos, this::calculateMemberInfoData))
       .submit(AppExecutorUtil.getAppExecutorService())
       .onSuccess(data -> SwingUtilities.invokeLater(() -> repaint()));
   }
 
-  @NotNull
-  private MemberInfoData calculateMemberInfoData(M memberInfo) {
+  private @NotNull MemberInfoData calculateMemberInfoData(M memberInfo) {
     RowIcon icon = IconManager.getInstance().createRowIcon(3);
     icon.setIcon(getMemberIcon(memberInfo, 0), MEMBER_ICON_POSITION);
     setVisibilityIcon(memberInfo, icon);
@@ -252,8 +250,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     myCancellablePromise.cancel();
   }
 
-  @Nullable
-  protected abstract Object getAbstractColumnValue(M memberInfo);
+  protected abstract @Nullable Object getAbstractColumnValue(M memberInfo);
 
   protected abstract boolean isAbstractColumnEditable(int rowIndex);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.util.ProperTextRange;
@@ -25,8 +25,7 @@ public class MoveDirectoryUsageInfo extends UsageInfo {
   }
 
   @Override
-  @Nullable
-  public PsiReference getReference() {
+  public @Nullable PsiReference getReference() {
     PsiElement element = getElement();
     if (element == null) return null;
     final ProperTextRange rangeInElement = getRangeInElement();
@@ -34,13 +33,11 @@ public class MoveDirectoryUsageInfo extends UsageInfo {
     return reference != null && reference.getRangeInElement().equals(rangeInElement) ? reference : null;
   }
 
-  @Nullable
-  public PsiDirectory getSourceDirectory() {
+  public @Nullable PsiDirectory getSourceDirectory() {
     return ObjectUtils.tryCast(getElement(), PsiDirectory.class);
   }
 
-  @NotNull
-  public PsiFileSystemItem getTargetFileItem() {
+  public @NotNull PsiFileSystemItem getTargetFileItem() {
     return myTargetFileItem;
   }
 }

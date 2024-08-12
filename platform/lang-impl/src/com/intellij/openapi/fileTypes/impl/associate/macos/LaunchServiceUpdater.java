@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.macos;
 
 import com.intellij.ide.file.PListBuddyWrapper;
@@ -23,10 +23,10 @@ import java.util.*;
  * </a>
  */
 final class LaunchServiceUpdater {
-  private final static String UPDATE_FAILURE_MSG = "Launch services PList updated failed, the error is logged.";
+  private static final String UPDATE_FAILURE_MSG = "Launch services PList updated failed, the error is logged.";
 
-  private final static Logger LOG = Logger.getInstance(LaunchServiceUpdater.class);
-  private final static String launchServicesPlistPath =
+  private static final Logger LOG = Logger.getInstance(LaunchServiceUpdater.class);
+  private static final String launchServicesPlistPath =
     SystemProperties.getUserHome() + "/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist";
 
   private final String myBundleId;
@@ -97,8 +97,7 @@ final class LaunchServiceUpdater {
     return entryList.toArray(new Node[0]);
   }
 
-  @Nullable
-  private static Node getTopArrayNode(@NotNull Document document) {
+  private static @Nullable Node getTopArrayNode(@NotNull Document document) {
     NodeList arrayNodes = document.getElementsByTagName("array");
     for (int i = 0; i < arrayNodes.getLength(); i ++) {
       Node child = arrayNodes.item(i);
@@ -110,8 +109,7 @@ final class LaunchServiceUpdater {
     return null;
   }
 
-  @Nullable
-  private static String extractUri(@NotNull Node dictNode) {
+  private static @Nullable String extractUri(@NotNull Node dictNode) {
     NodeList children = dictNode.getChildNodes();
     for (int i = 0; i < children.getLength(); i ++) {
       Node child = children.item(i);

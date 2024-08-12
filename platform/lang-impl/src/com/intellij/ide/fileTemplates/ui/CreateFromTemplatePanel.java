@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.ui;
 
@@ -40,7 +40,7 @@ public final class CreateFromTemplatePanel {
   private final AttributesDefaults myAttributesDefaults;
 
   public CreateFromTemplatePanel(final String[] unsetAttributes, final boolean mustEnterName,
-                                 @Nullable final AttributesDefaults attributesDefaults){
+                                 final @Nullable AttributesDefaults attributesDefaults){
     myMustEnterName = mustEnterName;
     myUnsetAttributes = unsetAttributes;
     myAttributesDefaults = attributesDefaults;
@@ -182,8 +182,7 @@ public final class CreateFromTemplatePanel {
     myMainPanel.revalidate();
   }
 
-  @Nullable
-  public String getFileName(){
+  public @Nullable String getFileName(){
     if (myFilenameField!=null) {
       String fileName = myFilenameField.getText();
       return fileName == null ? "" : fileName;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,12 +13,12 @@ import java.util.function.Supplier;
 final
 class SingleIndexValueApplier<FileIndexMetaData> {
   private final FileBasedIndexImpl myIndex;
-  @NotNull final ID<?, ?> indexId;
+  final @NotNull ID<?, ?> indexId;
   final int inputId;
   private final @Nullable FileIndexMetaData myFileIndexMetaData;
   final long evaluatingIndexValueApplierTime;
-  @NotNull final Supplier<Boolean> storageUpdate;
-  @NotNull private final String fileInfo;
+  final @NotNull Supplier<Boolean> storageUpdate;
+  private final @NotNull String fileInfo;
   private final boolean isMock;
 
   SingleIndexValueApplier(@NotNull FileBasedIndexImpl index,

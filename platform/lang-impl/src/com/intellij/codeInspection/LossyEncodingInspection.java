@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.ide.DataManager;
@@ -44,16 +44,12 @@ import java.util.Set;
 
 public final class LossyEncodingInspection extends LocalInspectionTool {
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return "LossyEncoding";
   }
 
@@ -111,10 +107,8 @@ public final class LossyEncodingInspection extends LocalInspectionTool {
     if (!goodCharsets.isEmpty()) {
       Charset goodCharset = goodCharsets.get(0);
       fixes.add(new LocalQuickFix() {
-        @Nls
-        @NotNull
         @Override
-        public String getFamilyName() {
+        public @Nls @NotNull String getFamilyName() {
           return InspectionsBundle.message("reload.file.encoding.family.name", goodCharset.displayName());
         }
 
@@ -133,10 +127,8 @@ public final class LossyEncodingInspection extends LocalInspectionTool {
         }
       });
       fixes.add(new LocalQuickFix() {
-        @Nls
-        @NotNull
         @Override
-        public String getFamilyName() {
+        public @Nls @NotNull String getFamilyName() {
           return InspectionsBundle.message("set.project.encoding.family.name", goodCharset.displayName());
         }
 
@@ -278,9 +270,8 @@ public final class LossyEncodingInspection extends LocalInspectionTool {
       super(file);
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return InspectionsBundle.message("reload.in.another.encoding.text");
     }
 
@@ -305,15 +296,13 @@ public final class LossyEncodingInspection extends LocalInspectionTool {
       return false;
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return getFamilyName();
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionsBundle.message("change.encoding.fix.family.name");
     }
 

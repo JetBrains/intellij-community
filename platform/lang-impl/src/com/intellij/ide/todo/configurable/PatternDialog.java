@@ -122,9 +122,8 @@ final class PatternDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  @NotNull
   @Override
-  protected List<ValidationInfo> doValidateAll() {
+  protected @NotNull List<ValidationInfo> doValidateAll() {
     String patternString = myPatternStringField.getText().trim();
     if (patternString.isEmpty()) {
       return Collections.singletonList(new ValidationInfo(IdeBundle.message("error.pattern.should.be.specified"), myPatternStringField));

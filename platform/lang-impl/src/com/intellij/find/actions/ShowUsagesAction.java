@@ -501,9 +501,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     showElementUsagesWithResult(parameters, actionHandler);
   }
 
-  @NotNull
-  private static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
-                                                                       @NotNull ShowUsagesActionHandler actionHandler) {
+  private static @NotNull Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
+                                                                                @NotNull ShowUsagesActionHandler actionHandler) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = parameters.project;
     UsageViewImpl usageView = actionHandler.createUsageView(project);

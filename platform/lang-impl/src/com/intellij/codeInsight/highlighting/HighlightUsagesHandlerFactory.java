@@ -26,8 +26,7 @@ public interface HighlightUsagesHandlerFactory extends PossiblyDumbAware {
    *                      However, some handlers require the editor visible range, which must be calculated in EDT,
    *                      so it's passed externally
    */
-  @Nullable
-  default HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull ProperTextRange visibleRange) {
+  default @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull ProperTextRange visibleRange) {
     return createHighlightUsagesHandler(editor, file);
   }
 }

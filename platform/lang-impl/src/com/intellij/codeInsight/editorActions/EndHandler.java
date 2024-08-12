@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -24,7 +24,7 @@ public final class EndHandler extends EditorActionHandler.ForEachCaret {
   }
 
   @Override
-  protected void doExecute(@NotNull final Editor editor, @NotNull Caret caret, DataContext dataContext) {
+  protected void doExecute(final @NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.SMART_END_ACTION) {
       if (myOriginalHandler != null) {

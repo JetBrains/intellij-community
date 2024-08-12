@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
@@ -14,11 +14,10 @@ import org.jetbrains.annotations.NotNull;
 
 public final class RangeSearchCreatorImpl implements RangeSearchCreator {
 
-  @NotNull
   @Override
-  public RangeSearch createContent(Project project,
-                                   VirtualFile virtualFile,
-                                   String titleName) {
+  public @NotNull RangeSearch createContent(Project project,
+                                            VirtualFile virtualFile,
+                                            String titleName) {
     RangeSearchCallback rangeSearchCallback = new RangeSearchCallbackImpl();
     RangeSearch rangeSearch = new RangeSearch(virtualFile, project, rangeSearchCallback);
     Content content = UsageViewContentManager.getInstance(project).addContent(

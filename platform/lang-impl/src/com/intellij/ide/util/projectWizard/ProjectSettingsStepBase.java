@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.BundleBase;
@@ -82,14 +82,12 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     checkWebProjectValid();
   }
 
-  @NotNull
   @Override
-  public JButton getActionButton() {
+  public @NotNull JButton getActionButton() {
     return myCreateButton;
   }
 
-  @NotNull
-  protected NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+  protected @NotNull NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
     return myProjectGenerator.createLazyPeer();
   }
 
@@ -136,8 +134,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     return button;
   }
 
-  @NotNull
-  protected final ActionListener createCloseActionListener() {
+  protected final @NotNull ActionListener createCloseActionListener() {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -301,8 +298,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     myErrorLabel.setIcon(StringUtil.isEmpty(text) ? null : AllIcons.Actions.Lightning);
   }
 
-  @Nullable
-  protected JPanel createAdvancedSettings() {
+  protected @Nullable JPanel createAdvancedSettings() {
     final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
     jPanel.add(getPeer().getComponent(myLocationField, () -> checkValid()));
     return jPanel;
@@ -316,7 +312,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     return FileUtil.expandUserHome(FileUtil.toSystemIndependentName(myLocationField.getText()));
   }
 
-  public final void setLocation(@NotNull final String location) {
+  public final void setLocation(final @NotNull String location) {
     myLocationField.setText(getPresentablePath(location));
   }
 
@@ -339,8 +335,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
                                    BorderLayout.WEST);
   }
 
-  @NotNull
-  protected File findSequentNonExistingUntitled() {
+  protected @NotNull File findSequentNonExistingUntitled() {
     return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
   }
 

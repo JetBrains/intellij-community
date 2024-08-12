@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy.model;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -12,8 +12,8 @@ import java.io.IOException;
 public final class SyntaxInfo {
   private final int myOutputInfoCount;
   private final byte[] myOutputInfosSerialized;
-  @NotNull private final ColorRegistry myColorRegistry;
-  @NotNull private final FontNameRegistry myFontNameRegistry;
+  private final @NotNull ColorRegistry myColorRegistry;
+  private final @NotNull FontNameRegistry myFontNameRegistry;
 
   private final int myDefaultForeground;
   private final int myDefaultBackground;
@@ -35,13 +35,11 @@ public final class SyntaxInfo {
     myColorRegistry = colorRegistry;
   }
 
-  @NotNull
-  public ColorRegistry getColorRegistry() {
+  public @NotNull ColorRegistry getColorRegistry() {
     return myColorRegistry;
   }
 
-  @NotNull
-  public FontNameRegistry getFontNameRegistry() {
+  public @NotNull FontNameRegistry getFontNameRegistry() {
     return myFontNameRegistry;
   }
 

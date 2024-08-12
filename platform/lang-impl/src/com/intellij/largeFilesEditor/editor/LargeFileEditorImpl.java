@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.largeFilesEditor.PlatformActionsReplacer;
@@ -100,21 +100,18 @@ public final class LargeFileEditorImpl extends UserDataHolderBase implements Lar
     return searchManager;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return editorModel.getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return editorModel.getEditor().getContentComponent();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return EditorBundle.message("large.file.editor.title");
   }
 
@@ -126,9 +123,8 @@ public final class LargeFileEditorImpl extends UserDataHolderBase implements Lar
     }
   }
 
-  @NotNull
   @Override
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     LargeFileEditorState state = new LargeFileEditorState();
     state.caretPageNumber = editorModel.getCaretPageNumber();
     state.caretSymbolOffsetInPage = editorModel.getCaretPageOffset();
@@ -205,15 +201,13 @@ public final class LargeFileEditorImpl extends UserDataHolderBase implements Lar
   @Override
   public LargeFileEditorAccess createAccessForEncodingWidget() {
     return new LargeFileEditorAccess() {
-      @NotNull
       @Override
-      public VirtualFile getVirtualFile() {
+      public @NotNull VirtualFile getVirtualFile() {
         return getFile();
       }
 
-      @NotNull
       @Override
-      public Editor getEditor() {
+      public @NotNull Editor getEditor() {
         return LargeFileEditorImpl.this.getEditor();
       }
 
@@ -250,9 +244,8 @@ public final class LargeFileEditorImpl extends UserDataHolderBase implements Lar
     return fileManager.getFileDataProviderForSearch();
   }
 
-  @NotNull
   @Override
-  public EditorModel getEditorModel() {
+  public @NotNull EditorModel getEditorModel() {
     return editorModel;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.impl;
 
@@ -63,7 +63,7 @@ public final class ShowRecentFindUsagesGroup extends ActionGroup {
       String text = usageTarget.getLongDescriptiveName();
       AnAction action = new AnAction(text, description, null) {
         @Override
-        public void actionPerformed(@NotNull final AnActionEvent e) {
+        public void actionPerformed(final @NotNull AnActionEvent e) {
           findUsagesManager.rerunAndRecallFromHistory(usageTarget);
         }
       };

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
@@ -83,7 +83,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final Project myProject;
   private final JComponent myTargetComponent;
   private final SearchSession mySearchSession;
-  @Nullable private OnePixelSplitter mySplitter;
+  private @Nullable OnePixelSplitter mySplitter;
 
   private final Runnable myCloseRunnable;
   private final Runnable myReplaceRunnable;
@@ -96,26 +96,24 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final boolean myAddSearchResultsToGlobalSearch;
   private final SearchComponentMode myMode;
 
-  @NotNull private @NlsContexts.Label String myStatusText = "";
-  @NotNull private Color myStatusColor = ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground();
+  private @NotNull @NlsContexts.Label String myStatusText = "";
+  private @NotNull Color myStatusColor = ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground();
   private final AnAction modeAction = new ModeAction();
 
-  @Nullable private final ShortcutSet findActionShortcutSet;
-  @Nullable private final ShortcutSet replaceActionShortcutSet;
+  private final @Nullable ShortcutSet findActionShortcutSet;
+  private final @Nullable ShortcutSet replaceActionShortcutSet;
 
   private final CloseAction myCloseAction = new CloseAction();
 
-  @NotNull
-  public static Builder buildFor(@Nullable Project project,
-                                 @NotNull JComponent component,
-                                 @Nullable SearchSession session) {
+  public static @NotNull Builder buildFor(@Nullable Project project,
+                                          @NotNull JComponent component,
+                                          @Nullable SearchSession session) {
     return new Builder(project, component, session);
   }
 
   /** @deprecated Use {@link #buildFor(Project, JComponent, SearchSession)} instead */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static Builder buildFor(@Nullable Project project, @NotNull JComponent component) {
+  public static @NotNull Builder buildFor(@Nullable Project project, @NotNull JComponent component) {
     return new Builder(project, component, null);
   }
 
@@ -371,13 +369,11 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myStatusText = status;
   }
 
-  @NotNull
-  public @NlsContexts.Label String getStatusText() {
+  public @NotNull @NlsContexts.Label String getStatusText() {
     return myStatusText;
   }
 
-  @NotNull
-  public Color getStatusColor() {
+  public @NotNull Color getStatusColor() {
     return myStatusColor;
   }
 
@@ -435,13 +431,11 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
   }
 
-  @NotNull
-  public JTextComponent getSearchTextComponent() {
+  public @NotNull JTextComponent getSearchTextComponent() {
     return mySearchTextComponent;
   }
 
-  @NotNull
-  public JTextComponent getReplaceTextComponent() {
+  public @NotNull JTextComponent getReplaceTextComponent() {
     return myReplaceTextComponent;
   }
 
@@ -730,16 +724,14 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
 
-  @NotNull
-  private ActionToolbarImpl createReplaceToolbar1(@NotNull DefaultActionGroup group) {
+  private @NotNull ActionToolbarImpl createReplaceToolbar1(@NotNull DefaultActionGroup group) {
     ActionToolbarImpl toolbar = createToolbar(group);
     toolbar.setForceMinimumSize(true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     return toolbar;
   }
 
-  @NotNull
-  private ActionToolbarImpl createToolbar(@NotNull ActionGroup group) {
+  private @NotNull ActionToolbarImpl createToolbar(@NotNull ActionGroup group) {
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY);
@@ -796,82 +788,69 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
     /** @deprecated Use searchSession and {@link SearchReplaceComponent#buildFor(Project, JComponent, SearchSession)} */
     @Deprecated(forRemoval = true)
-    @NotNull
-    public Builder withDataProvider(@NotNull DataProvider provider) {
+    public @NotNull Builder withDataProvider(@NotNull DataProvider provider) {
       myDataProvider = provider;
       return this;
     }
 
-    @NotNull
-    public Builder withReplaceAction(@NotNull Runnable action) {
+    public @NotNull Builder withReplaceAction(@NotNull Runnable action) {
       myReplaceAction = action;
       return this;
     }
 
-    @NotNull
-    public Builder withCloseAction(@NotNull Runnable action) {
+    public @NotNull Builder withCloseAction(@NotNull Runnable action) {
       myCloseAction = action;
       return this;
     }
 
-    @NotNull
-    public Builder addSearchFieldActions(AnAction @NotNull ... actions) {
+    public @NotNull Builder addSearchFieldActions(AnAction @NotNull ... actions) {
       mySearchFieldActions.addAll(actions);
       return this;
     }
 
-    @NotNull
-    public Builder addReplaceFieldActions(AnAction @NotNull ... actions) {
+    public @NotNull Builder addReplaceFieldActions(AnAction @NotNull ... actions) {
       myReplaceFieldActions.addAll(actions);
       return this;
     }
 
-    @NotNull
-    public Builder addPrimarySearchActions(AnAction @NotNull ... actions) {
+    public @NotNull Builder addPrimarySearchActions(AnAction @NotNull ... actions) {
       mySearchActions.addAll(actions);
       return this;
     }
 
-    @NotNull
-    public Builder addSecondarySearchActions(AnAction @NotNull ... actions) {
+    public @NotNull Builder addSecondarySearchActions(AnAction @NotNull ... actions) {
       for (AnAction action : actions) {
         mySearchActions.addAction(action).setAsSecondary(true);
       }
       return this;
     }
 
-    @NotNull
-    public Builder addExtraSearchActions(AnAction @NotNull ... actions) {
+    public @NotNull Builder addExtraSearchActions(AnAction @NotNull ... actions) {
       myExtraSearchActions.addAll(actions);
       return this;
     }
 
-    @NotNull
-    public Builder addPrimaryReplaceActions(AnAction @NotNull ... actions) {
+    public @NotNull Builder addPrimaryReplaceActions(AnAction @NotNull ... actions) {
       myReplaceActions.addAll(actions);
       return this;
     }
 
-    @NotNull
-    public Builder addExtraReplaceAction(AnAction @NotNull ... actions) {
+    public @NotNull Builder addExtraReplaceAction(AnAction @NotNull ... actions) {
       myExtraReplaceActions.addAll(actions);
       return this;
     }
 
-    @NotNull
-    public Builder withShowOnlySearchPanel() {
+    public @NotNull Builder withShowOnlySearchPanel() {
       myShowOnlySearchPanel = true;
       return this;
     }
 
-    @NotNull
-    public Builder withMaximizeLeftPanelOnResize() {
+    public @NotNull Builder withMaximizeLeftPanelOnResize() {
       myMaximizeLeftPanelOnResize = true;
       return this;
     }
 
-    @NotNull
-    public SearchReplaceComponent build() {
+    public @NotNull SearchReplaceComponent build() {
       return new SearchReplaceComponent(myProject,
                                         myTargetComponent,
                                         mySearchSession,
@@ -893,20 +872,17 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                         myShowSeparator);
     }
 
-    @NotNull
-    public Builder withMultilineEnabled(boolean b) {
+    public @NotNull Builder withMultilineEnabled(boolean b) {
       myMultilineEnabled = b;
       return this;
     }
 
-    @NotNull
-    public Builder withNewLineButton(boolean b) {
+    public @NotNull Builder withNewLineButton(boolean b) {
       myShowNewLineButton = b;
       return this;
     }
 
-    @NotNull
-    public Builder withAddSearchResultsToGlobalSearch(boolean b) {
+    public @NotNull Builder withAddSearchResultsToGlobalSearch(boolean b) {
       myAddSearchResultsToGlobalSearch = b;
       return this;
     }
@@ -914,20 +890,17 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     /**
      * @deprecated use {@link #withUseSearchField(boolean, boolean)} instead to specify explicitly search field look and features
      */
-    @NotNull
     @Deprecated(forRemoval = true)
-    public Builder withUseSearchField(boolean b) {
+    public @NotNull Builder withUseSearchField(boolean b) {
       return withUseSearchField(true, true);
     }
 
-    @NotNull
-    public Builder withUseSearchField(boolean enableSearchHistory, boolean enableClearSearchAction) {
+    public @NotNull Builder withUseSearchField(boolean enableSearchHistory, boolean enableClearSearchAction) {
       myMode = new SearchTextFieldMode(enableSearchHistory, enableClearSearchAction);
       return this;
     }
 
-    @NotNull
-    public Builder withoutSeparator() {
+    public @NotNull Builder withoutSeparator() {
       myShowSeparator = false;
       return this;
     }
@@ -946,14 +919,12 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   private static class MyTextComponentWrapper extends Wrapper {
-    @Nullable
-    public JTextComponent getTextComponent() {
+    public @Nullable JTextComponent getTextComponent() {
       JComponent wrapped = getTargetComponent();
       return wrapped != null ? unwrapTextComponent(wrapped) : null;
     }
 
-    @NotNull
-    protected static JTextComponent unwrapTextComponent(@NotNull JComponent wrapped) {
+    protected static @NotNull JTextComponent unwrapTextComponent(@NotNull JComponent wrapped) {
       if (wrapped instanceof SearchTextField) {
         return ((SearchTextField)wrapped).getTextEditor();
       }

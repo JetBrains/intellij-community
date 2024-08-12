@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.navigation.ChooseByNameContributor;
@@ -36,8 +36,7 @@ public abstract class FilteringGotoByModel<T> extends ContributorsBasedGotoByMod
   /**
    * @return get file types
    */
-  @Nullable
-  protected synchronized Collection<T> getFilterItems() {
+  protected synchronized @Nullable Collection<T> getFilterItems() {
     // get and set method are called from different threads
     return myFilterItems;
   }
@@ -52,6 +51,5 @@ public abstract class FilteringGotoByModel<T> extends ContributorsBasedGotoByMod
     return true;
   }
 
-  @Nullable
-  protected abstract T filterValueFor(NavigationItem item);
+  protected abstract @Nullable T filterValueFor(NavigationItem item);
 }

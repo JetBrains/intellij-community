@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.linux;
 
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -14,12 +14,12 @@ import java.util.List;
 import java.util.Map;
 
 final class MimeTypeDescription implements Comparable<MimeTypeDescription> {
-  private final static String TYPE_PREFIX = "application/x-" + PlatformUtils.getPlatformPrefix() + "-";
+  private static final String TYPE_PREFIX = "application/x-" + PlatformUtils.getPlatformPrefix() + "-";
 
   /**
    * See <a href="https://www.freedesktop.org/wiki/Specifications/shared-mime-info-spec">FreeDesktop Shared Mime Info</a>.
    */
-  private final static Map<String, String> OS_MIME_TYPES = Map.ofEntries(
+  private static final Map<String, String> OS_MIME_TYPES = Map.ofEntries(
     // @formatter:off
     Map.entry("ASP",            "application/x-asp"),
     Map.entry("CMakeLists.txt", "text/x-cmake"),

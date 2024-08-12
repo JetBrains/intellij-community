@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -51,8 +51,7 @@ final class MixedListFactory extends SEResultsListFactory {
     return mixedModel;
   }
 
-  @NotNull
-  public Map<String, Integer> getContributorsPriorities() {
+  public @NotNull Map<String, Integer> getContributorsPriorities() {
     Map<String, Integer> priorities = new HashMap<>();
     for (int i = 0; i < prioritizedContributors.size(); i++) {
       priorities.put(prioritizedContributors.get(i), prioritizedContributors.size() - i);

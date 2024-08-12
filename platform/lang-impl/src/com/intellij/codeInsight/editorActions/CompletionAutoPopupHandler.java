@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -21,9 +21,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(CompletionAutoPopupHandler.class);
   public static final Key<Boolean> ourTestingAutopopup = Key.create("TestingAutopopup");
 
-  @NotNull
   @Override
-  public Result checkAutoPopup(char charTyped, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public @NotNull Result checkAutoPopup(char charTyped, final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();

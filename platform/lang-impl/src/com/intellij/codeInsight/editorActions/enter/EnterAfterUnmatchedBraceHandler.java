@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
@@ -49,11 +35,11 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
   private static final Logger LOG = Logger.getInstance(EnterAfterUnmatchedBraceHandler.class);
 
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file,
-                                @NotNull final Editor editor,
-                                @NotNull final Ref<Integer> caretOffsetRef,
+  public Result preprocessEnter(final @NotNull PsiFile file,
+                                final @NotNull Editor editor,
+                                final @NotNull Ref<Integer> caretOffsetRef,
                                 final @NotNull Ref<Integer> caretAdvance,
-                                @NotNull final DataContext dataContext,
+                                final @NotNull DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
 
     int caretOffset = caretOffsetRef.get();
@@ -93,7 +79,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @param caretOffset target caret offset
    * @return maximum number of '}' that can be inserted by handler, {@code 0} or less to switch to default implementation
    */
-  protected int getMaxRBraceCount(@NotNull final PsiFile file, @NotNull final Editor editor, int caretOffset) {
+  protected int getMaxRBraceCount(final @NotNull PsiFile file, final @NotNull Editor editor, int caretOffset) {
     if (!CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER) {
       return 0;
     }
@@ -109,8 +95,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @param maxRBraceCount the maximum number of '}' for insert at position, it always positive
    * @return the string of '}' that has to be inserted by handler, it must have at least one '}'
    */
-  @NotNull
-  protected String generateStringToInsert(@NotNull final Editor editor, int caretOffset, int maxRBraceCount) {
+  protected @NotNull String generateStringToInsert(final @NotNull Editor editor, int caretOffset, int maxRBraceCount) {
     assert maxRBraceCount > 0;
 
     CharSequence text = editor.getDocument().getCharsSequence();
@@ -146,7 +131,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @param caretOffset target caret offset
    * @return the position between {@code caretOffset} and the end of file
    */
-  protected int getRBraceOffset(@NotNull final PsiFile file, @NotNull final Editor editor, int caretOffset) {
+  protected int getRBraceOffset(final @NotNull PsiFile file, final @NotNull Editor editor, int caretOffset) {
     CharSequence text = editor.getDocument().getCharsSequence();
     int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
     final int fileLength = text.length();

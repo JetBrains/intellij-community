@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.CommonBundle;
@@ -127,8 +127,7 @@ public class ConsoleHistoryController implements Disposable {
   public void dispose() {
   }
 
-  @Nullable
-  public static ConsoleHistoryController getController(@NotNull LanguageConsoleView console) {
+  public static @Nullable ConsoleHistoryController getController(@NotNull LanguageConsoleView console) {
     return ApplicationManager.getApplication().getService(ControllerRegistry.class).controllers.get(console);
   }
 
@@ -147,8 +146,7 @@ public class ConsoleHistoryController implements Disposable {
     return !getModel().isEmpty();
   }
 
-  @NotNull
-  private static String fixNullPersistenceId(@Nullable String persistenceId, @NotNull LanguageConsoleView console) {
+  private static @NotNull String fixNullPersistenceId(@Nullable String persistenceId, @NotNull LanguageConsoleView console) {
     if (StringUtil.isNotEmpty(persistenceId)) return persistenceId;
     String url = console.getProject().getPresentableUrl();
     return StringUtil.isNotEmpty(url) ? url : "default";
@@ -300,8 +298,7 @@ public class ConsoleHistoryController implements Disposable {
   private final class MyAction extends DumbAwareAction {
     private final boolean myNext;
 
-    @NotNull
-    private final Collection<KeyStroke> myUpDownKeystrokes;
+    private final @NotNull Collection<KeyStroke> myUpDownKeystrokes;
 
     MyAction(final boolean next, @NotNull Collection<KeyStroke> upDownKeystrokes) {
       myNext = next;
@@ -309,7 +306,7 @@ public class ConsoleHistoryController implements Disposable {
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       boolean hasHistory = getModel().hasHistory(); // need to check before next line's side effect
       Entry command = myNext ? getModel().getHistoryNext() : getModel().getHistoryPrev();
       if (!myMultiline && command == null || !hasHistory && !myNext) return;
@@ -321,7 +318,7 @@ public class ConsoleHistoryController implements Disposable {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       boolean enabled = myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext);
       //enabled &= getModel().hasHistory(myNext);
       e.getPresentation().setEnabled(enabled);
@@ -400,9 +397,8 @@ public class ConsoleHistoryController implements Disposable {
           return content;
         }
 
-        @NotNull
         @Override
-        protected List<String> getContents() {
+        protected @NotNull List<String> getContents() {
           return getModel().getEntries();
         }
 
@@ -441,9 +437,7 @@ public class ConsoleHistoryController implements Disposable {
     }
 
 
-    @NotNull
-    @NlsContexts.DialogTitle
-    protected String getTitle() {
+    protected @NotNull @NlsContexts.DialogTitle String getTitle() {
       return LangBundle.message("dialog.title.history", myConsole.getTitle());
     }
   }
@@ -533,24 +527,21 @@ public class ConsoleHistoryController implements Disposable {
     }
   }
 
-  @NotNull
-  private static String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String fileExtension, @NotNull String id) {
+  private static @NotNull String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String fileExtension, @NotNull String id) {
     return rootType.getConsoleTypeId() + "/" +
            PathUtil.makeFileName(rootType.getHistoryPathName(id), fileExtension);
   }
 
-  @Nullable
-  public static VirtualFile getContentFile(@NotNull final ConsoleRootType rootType,
-                                           @NotNull String id,
-                                           @NotNull ScratchFileService.Option option) {
+  public static @Nullable VirtualFile getContentFile(final @NotNull ConsoleRootType rootType,
+                                                     @NotNull String id,
+                                                     @NotNull ScratchFileService.Option option) {
     return getContentFile(rootType, rootType.getDefaultFileExtension(), id, option);
   }
 
-  @Nullable
-  protected static VirtualFile getContentFile(@NotNull final ConsoleRootType rootType,
-                                              @NotNull String fileExtension,
-                                              @NotNull String id,
-                                              @NotNull ScratchFileService.Option option) {
+  protected static @Nullable VirtualFile getContentFile(final @NotNull ConsoleRootType rootType,
+                                                        @NotNull String fileExtension,
+                                                        @NotNull String id,
+                                                        @NotNull ScratchFileService.Option option) {
     final String pathName = PathUtil.makeFileName(rootType.getContentPathName(id), fileExtension);
     try {
       return rootType.findFile(null, pathName, option);

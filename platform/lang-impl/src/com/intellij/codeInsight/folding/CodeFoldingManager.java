@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding;
 
 import com.intellij.openapi.editor.Document;
@@ -19,11 +19,9 @@ public abstract class CodeFoldingManager {
 
   public abstract void updateFoldRegions(@NotNull Editor editor);
 
-  @Nullable
-  public abstract Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime);
+  public abstract @Nullable Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime);
 
-  @Nullable
-  public abstract FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset);
+  public abstract @Nullable FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset);
 
   public abstract FoldRegion[] getFoldRegionsAtOffset(@NotNull Editor editor, int offset);
 
@@ -44,16 +42,14 @@ public abstract class CodeFoldingManager {
   @Deprecated
   public abstract void buildInitialFoldings(@NotNull Editor editor);
 
-  @Nullable
   @RequiresBackgroundThread
-  public abstract CodeFoldingState buildInitialFoldings(@NotNull Document document);
+  public abstract @Nullable CodeFoldingState buildInitialFoldings(@NotNull Document document);
 
   /**
    * For auto-generated regions (created by {@link com.intellij.lang.folding.FoldingBuilder}s), returns their 'collapsed by default'
    * status, for other regions returns {@code null}.
    */
-  @Nullable
-  public abstract Boolean isCollapsedByDefault(@NotNull FoldRegion region);
+  public abstract @Nullable Boolean isCollapsedByDefault(@NotNull FoldRegion region);
 
   /**
    * Schedules recalculation of foldings in editor (see {@link com.intellij.codeInsight.folding.impl.CodeFoldingPass CodeFoldingPass}),

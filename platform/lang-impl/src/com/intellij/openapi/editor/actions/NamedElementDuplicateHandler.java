@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -52,8 +52,7 @@ public final class NamedElementDuplicateHandler extends EditorWriteActionHandler
     return myOriginal;
   }
 
-  @Nullable
-  private static PsiElement findNameIdentifier(Editor editor, PsiFile file, TextRange toDuplicate) {
+  private static @Nullable PsiElement findNameIdentifier(Editor editor, PsiFile file, TextRange toDuplicate) {
     int nonWs = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), toDuplicate.getStartOffset(), "\n\t ");
     PsiElement psi = file.findElementAt(nonWs);
     PsiElement named = null;

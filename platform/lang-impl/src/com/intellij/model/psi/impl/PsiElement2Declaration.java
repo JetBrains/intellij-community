@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.Symbol;
@@ -25,21 +25,18 @@ final class PsiElement2Declaration implements PsiSymbolDeclaration {
     myDeclarationRange = range;
   }
 
-  @NotNull
   @Override
-  public Symbol getSymbol() {
+  public @NotNull Symbol getSymbol() {
     return PsiSymbolService.getInstance().asSymbol(myTargetElement);
   }
 
-  @NotNull
   @Override
-  public PsiElement getDeclaringElement() {
+  public @NotNull PsiElement getDeclaringElement() {
     return myDeclaringElement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInDeclaringElement() {
+  public @NotNull TextRange getRangeInDeclaringElement() {
     return myDeclarationRange;
   }
 
@@ -48,8 +45,7 @@ final class PsiElement2Declaration implements PsiSymbolDeclaration {
    * E.g. when searching for declarations of a {@link Psi2Symbol PsiElement symbol} we lose info about origin,
    * because the symbol could be obtained from reference or another declaration or any other old code.
    */
-  @Nullable
-  static PsiSymbolDeclaration createFromTargetPsiElement(@NotNull PsiElement targetElement) {
+  static @Nullable PsiSymbolDeclaration createFromTargetPsiElement(@NotNull PsiElement targetElement) {
     PsiElement identifyingElement = getIdentifyingElement(targetElement);
     if (identifyingElement != null) {
       return new PsiElement2Declaration(targetElement, identifyingElement, rangeOf(identifyingElement));
@@ -81,8 +77,7 @@ final class PsiElement2Declaration implements PsiSymbolDeclaration {
     return identifyingRange;
   }
 
-  @Nullable
-  static PsiSymbolDeclaration createFromPom(@NotNull PomTarget target, @NotNull PsiElement declaringElement) {
+  static @Nullable PsiSymbolDeclaration createFromPom(@NotNull PomTarget target, @NotNull PsiElement declaringElement) {
     TextRange declarationRange = getDeclarationRangeFromPom(target, declaringElement);
     if (declarationRange == null) {
       return null;
@@ -94,8 +89,7 @@ final class PsiElement2Declaration implements PsiSymbolDeclaration {
     );
   }
 
-  @Nullable
-  private static TextRange getDeclarationRangeFromPom(@NotNull PomTarget target, @NotNull PsiElement declaringElement) {
+  private static @Nullable TextRange getDeclarationRangeFromPom(@NotNull PomTarget target, @NotNull PsiElement declaringElement) {
     if (target instanceof PsiDeclaredTarget declaredTarget) {
       TextRange nameIdentifierRange = declaredTarget.getNameIdentifierRange();
       if (nameIdentifierRange != null) {
@@ -106,16 +100,14 @@ final class PsiElement2Declaration implements PsiSymbolDeclaration {
     return rangeOf(declaringElement);
   }
 
-  @Nullable
-  private static PsiElement getIdentifyingElement(@NotNull PsiElement targetElement) {
+  private static @Nullable PsiElement getIdentifyingElement(@NotNull PsiElement targetElement) {
     if (targetElement instanceof PsiNameIdentifierOwner) {
       return getIdentifyingElement((PsiNameIdentifierOwner)targetElement);
     }
     return null;
   }
 
-  @Nullable
-  private static PsiElement getIdentifyingElement(@NotNull PsiNameIdentifierOwner nameIdentifierOwner) {
+  private static @Nullable PsiElement getIdentifyingElement(@NotNull PsiNameIdentifierOwner nameIdentifierOwner) {
     PsiElement identifyingElement = nameIdentifierOwner.getNameIdentifier();
     if (identifyingElement == null) {
       return null;
@@ -131,8 +123,7 @@ final class PsiElement2Declaration implements PsiSymbolDeclaration {
    * @return range in identifying element relative to range of declaring element,
    * or {@code null} if the elements are from different files
    */
-  @Nullable
-  private static TextRange relateRange(@NotNull PsiElement identifyingElement,
+  private static @Nullable TextRange relateRange(@NotNull PsiElement identifyingElement,
                                        @NotNull TextRange rangeInIdentifyingElement,
                                        @NotNull PsiElement declaringElement) {
     if (identifyingElement == declaringElement) {
@@ -156,8 +147,7 @@ final class PsiElement2Declaration implements PsiSymbolDeclaration {
   /**
    * @return range of {@code element} relative to itself
    */
-  @NotNull
-  private static TextRange rangeOf(@NotNull PsiElement element) {
+  private static @NotNull TextRange rangeOf(@NotNull PsiElement element) {
     return TextRange.from(0, element.getTextLength());
   }
 

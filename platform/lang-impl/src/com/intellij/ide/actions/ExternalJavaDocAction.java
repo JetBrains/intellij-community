@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -122,17 +122,15 @@ public final class ExternalJavaDocAction extends AnAction {
 
   }
 
-  @Nullable
-  private static PsiElement getOriginalElement(@NotNull DataContext dataContext, @Nullable Editor editor) {
+  private static @Nullable PsiElement getOriginalElement(@NotNull DataContext dataContext, @Nullable Editor editor) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     return (file != null && editor != null) ? file.findElementAt(editor.getCaretModel().getOffset())
                                             : null;
   }
 
-  @Nullable
-  private static PsiElement getElement(@NotNull DataContext dataContext,
-                                       @Nullable Editor editor,
-                                       @Nullable PsiElement originalElement) {
+  private static @Nullable PsiElement getElement(@NotNull DataContext dataContext,
+                                                 @Nullable Editor editor,
+                                                 @Nullable PsiElement originalElement) {
     return editor == null || originalElement == null
                      ? CommonDataKeys.PSI_ELEMENT.getData(dataContext)
                      : DocumentationManager.getInstance(originalElement.getProject())

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates.github;
 
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +16,7 @@ public final class Outcome<V> {
     myException = exception;
   }
 
-  @Nullable
-  public V get() {
+  public @Nullable V get() {
     return myData;
   }
 
@@ -25,23 +24,19 @@ public final class Outcome<V> {
     return myCancelled;
   }
 
-  @Nullable
-  public Exception getException() {
+  public @Nullable Exception getException() {
     return myException;
   }
 
-  @NotNull
-  public static <V> Outcome<V> createAsCancelled() {
+  public static @NotNull <V> Outcome<V> createAsCancelled() {
     return new Outcome<>(null, true, null);
   }
 
-  @NotNull
-  public static <V> Outcome<V> createAsException(@NotNull Exception ex) {
+  public static @NotNull <V> Outcome<V> createAsException(@NotNull Exception ex) {
     return new Outcome<>(null, false, ex);
   }
 
-  @NotNull
-  public static <V> Outcome<V> createNormal(@NotNull V data) {
+  public static @NotNull <V> Outcome<V> createNormal(@NotNull V data) {
     return new Outcome<>(data, false, null);
   }
 

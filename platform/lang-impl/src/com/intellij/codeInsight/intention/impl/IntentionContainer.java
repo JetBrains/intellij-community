@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -33,8 +33,7 @@ public interface IntentionContainer {
   /**
    * @return inspection (warning) fixes
    */
-  @NotNull
-  default Set<IntentionActionWithTextCaching> getInspectionFixes() {
+  default @NotNull Set<IntentionActionWithTextCaching> getInspectionFixes() {
     return Set.of();
   }
 

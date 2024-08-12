@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.BundleBase;
@@ -76,9 +76,8 @@ public final class GithubProjectGeneratorPeer implements WebProjectGenerator.Gen
         return !oldTags.equals(newTags);
       }
 
-      @NotNull
       @Override
-      protected JComboBox<GithubTagInfo> createValuesComboBox() {
+      protected @NotNull JComboBox<GithubTagInfo> createValuesComboBox() {
         JComboBox<GithubTagInfo> box = super.createValuesComboBox();
         box.setRenderer(SimpleListCellRenderer.create((label, tag, index) -> {
           final String text;
@@ -135,12 +134,11 @@ public final class GithubProjectGeneratorPeer implements WebProjectGenerator.Gen
     myReloadableComboBoxPanel.onUpdateValues(tags);
   }
 
-  void onTagsUpdateError(@NotNull final @NlsContexts.DialogMessage String errorMessage) {
+  void onTagsUpdateError(final @NotNull @NlsContexts.DialogMessage String errorMessage) {
     myReloadableComboBoxPanel.onValuesUpdateError(errorMessage);
   }
 
-  @NotNull
-  private static List<GithubTagInfo> createSortedTagList(@NotNull Collection<? extends GithubTagInfo> tags) {
+  private static @NotNull List<GithubTagInfo> createSortedTagList(@NotNull Collection<? extends GithubTagInfo> tags) {
     List<GithubTagInfo> sortedTags = new ArrayList<>(tags);
     sortedTags.sort((tag1, tag2) -> {
       GithubTagInfo.Version v1 = tag1.getVersion();
@@ -157,9 +155,8 @@ public final class GithubProjectGeneratorPeer implements WebProjectGenerator.Gen
   }
 
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 
@@ -169,9 +166,8 @@ public final class GithubProjectGeneratorPeer implements WebProjectGenerator.Gen
     settingsStep.addSettingsComponent(myReloadableComboBoxPanel.getErrorComponent());
   }
 
-  @NotNull
   @Override
-  public GithubTagInfo getSettings() {
+  public @NotNull GithubTagInfo getSettings() {
     GithubTagInfo tag = myReloadableComboBoxPanel.getSelectedValue();
     if (tag == null) {
       throw new RuntimeException("[internal error] No versions available.");
@@ -180,8 +176,7 @@ public final class GithubProjectGeneratorPeer implements WebProjectGenerator.Gen
   }
 
   @Override
-  @Nullable
-  public ValidationInfo validate() {
+  public @Nullable ValidationInfo validate() {
     GithubTagInfo tag = myReloadableComboBoxPanel.getSelectedValue();
     if (tag != null) {
       return null;

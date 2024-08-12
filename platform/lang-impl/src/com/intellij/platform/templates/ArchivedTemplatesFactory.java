@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.icons.AllIcons;
@@ -26,12 +26,11 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public final class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
-  private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);
+  private static final Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);
 
   static final String ZIP = ".zip";
 
-  @NotNull
-  private static URL getCustomTemplatesURL() {
+  private static @NotNull URL getCustomTemplatesURL() {
     try {
       return new File(getCustomTemplatesPath()).toURI().toURL();
     }
@@ -40,13 +39,11 @@ public final class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
     }
   }
 
-  @NotNull
-  static String getCustomTemplatesPath() {
+  static @NotNull String getCustomTemplatesPath() {
     return PathManager.getConfigPath() + "/projectTemplates"; //NON-NLS
   }
 
-  @NotNull
-  public static Path getTemplateFile(String name) {
+  public static @NotNull Path getTemplateFile(String name) {
     return Paths.get(getCustomTemplatesPath(), name + ".zip");
   }
 

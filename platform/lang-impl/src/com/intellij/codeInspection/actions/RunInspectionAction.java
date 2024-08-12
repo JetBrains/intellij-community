@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.CommonBundle;
@@ -72,7 +72,7 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
   }
 
   @Override
-  protected void gotoActionPerformed(@NotNull final AnActionEvent e) {
+  protected void gotoActionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
@@ -98,9 +98,8 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
     }, false);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     return PlatformDataKeys.PREDEFINED_TEXT.is(dataId) ? myPredefinedText : null;
   }
 
@@ -188,9 +187,8 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
         return panel;
       }
 
-      @NotNull
       @Override
-      public AnalysisScope getScope(@NotNull AnalysisScope defaultScope) {
+      public @NotNull AnalysisScope getScope(@NotNull AnalysisScope defaultScope) {
         final AnalysisScope scope = super.getScope(defaultScope);
         final GlobalSearchScope filterScope = fileFilterPanel.getSearchScope();
         if (filterScope == null) {
@@ -250,13 +248,12 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
     dialog.showAndGet();
   }
 
-  @Nullable
-  private static Module findModuleForFiles(@NotNull Project project, VirtualFile @NotNull [] files) {
+  private static @Nullable Module findModuleForFiles(@NotNull Project project, VirtualFile @NotNull [] files) {
     Set<Module> modules = ContainerUtil.map2Set(files, f -> ModuleUtilCore.findModuleForFile(f, project));
     return ContainerUtil.getFirstItem(modules);
   }
 
-  private static InspectionToolWrapper<?, ?> copyToolWithSettings(@NotNull final InspectionToolWrapper tool) {
+  private static InspectionToolWrapper<?, ?> copyToolWithSettings(final @NotNull InspectionToolWrapper tool) {
     final Element options = new Element("copy");
     tool.getTool().writeSettings(options);
     final InspectionToolWrapper<?, ?> copiedTool = tool.createCopy();

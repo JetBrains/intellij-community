@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
@@ -30,15 +30,13 @@ public final class RecentFilesSEContributor extends FileSearchEverywhereContribu
     super(event);
   }
 
-  @NotNull
   @Override
-  public String getSearchProviderId() {
+  public @NotNull String getSearchProviderId() {
     return RecentFilesSEContributor.class.getSimpleName();
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
+  public @NotNull String getGroupName() {
     return IdeBundle.message("search.everywhere.group.name.recent.files");
   }
 

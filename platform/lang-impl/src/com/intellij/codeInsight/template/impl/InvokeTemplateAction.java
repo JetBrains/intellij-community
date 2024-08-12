@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -32,7 +32,7 @@ public final class InvokeTemplateAction extends DefaultActionGroup {
   private final TemplateImpl myTemplate;
   private final Editor myEditor;
   private final Project myProject;
-  @Nullable private final Runnable myCallback;
+  private final @Nullable Runnable myCallback;
 
   public InvokeTemplateAction(TemplateImpl template,
                               Editor editor,

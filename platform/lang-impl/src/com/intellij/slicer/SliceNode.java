@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -38,8 +38,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     this.targetEqualUsages = targetEqualUsages;
   }
 
-  @NotNull
-  public SliceNode copy() {
+  public @NotNull SliceNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages);
     newNode.dupNodeCalculated = dupNodeCalculated;
@@ -48,8 +47,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @Override
-  @NotNull
-  public Collection<SliceNode> getChildren() {
+  public @NotNull Collection<SliceNode> getChildren() {
     if (isUpToDate()) return myCachedChildren == null ? Collections.emptyList() : myCachedChildren;
     try {
       List<SliceNode> nodes;
@@ -116,9 +114,8 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     return false;
   }
 
-  @NotNull
   @Override
-  protected PresentationData createPresentation() {
+  protected @NotNull PresentationData createPresentation() {
     return new PresentationData(){
       @Override
       public Object @NotNull [] getEqualityObjects() {
@@ -194,8 +191,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     changed = true;
   }
 
-  @Nullable
-  public SliceLanguageSupportProvider getProvider() {
+  public @Nullable SliceLanguageSupportProvider getProvider() {
     AbstractTreeNode<SliceUsage> element = getElement();
     if (element == null) {
       return null;

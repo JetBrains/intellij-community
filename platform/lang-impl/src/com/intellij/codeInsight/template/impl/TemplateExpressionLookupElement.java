@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -55,7 +55,7 @@ final class TemplateExpressionLookupElement extends LookupElementDecorator<Looku
   }
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context) {
+  public void handleInsert(final @NotNull InsertionContext context) {
     doHandleInsert(context);
     handleCompletionChar(context);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,16 +19,14 @@ final class MoveLineHandler extends BaseMoveHandler {
     super(down);
   }
 
-  @Nullable
   @Override
-  protected PsiFile getPsiFile(@NotNull Project project, @NotNull Editor editor) {
+  protected @Nullable PsiFile getPsiFile(@NotNull Project project, @NotNull Editor editor) {
     // "Move line" performs simple textual change, and doesn't use PsiFile at all, there's no need to commit the document.
     return null;
   }
 
   @Override
-  @Nullable
-  protected MoverWrapper getSuitableMover(@NotNull final Editor editor, @Nullable final PsiFile file) {
+  protected @Nullable MoverWrapper getSuitableMover(final @NotNull Editor editor, final @Nullable PsiFile file) {
     final StatementUpDownMover.MoveInfo info = new StatementUpDownMover.MoveInfo();
     info.indentTarget = false;
     if (LineMover.checkLineMoverAvailable(editor, info, isDown)) {

@@ -61,7 +61,7 @@ public class ProjectSettingsService {
     return false;
   }
 
-  public void openLibraryOrSdkSettings(@NotNull final OrderEntry orderEntry) {
+  public void openLibraryOrSdkSettings(final @NotNull OrderEntry orderEntry) {
     Configurable additionalSettingsConfigurable = getLibrarySettingsConfigurable(orderEntry);
     if (additionalSettingsConfigurable != null) {
       ShowSettingsUtil.getInstance().showSettingsDialog(orderEntry.getOwnerModule().getProject(),
@@ -73,8 +73,7 @@ public class ProjectSettingsService {
     return getLibrarySettingsConfigurable(orderEntry) != null;
   }
 
-  @Nullable
-  private static Configurable getLibrarySettingsConfigurable(OrderEntry orderEntry) {
+  private static @Nullable Configurable getLibrarySettingsConfigurable(OrderEntry orderEntry) {
     if (!(orderEntry instanceof LibraryOrderEntry libOrderEntry)) return null;
     Library lib = libOrderEntry.getLibrary();
     if (lib instanceof LibraryEx) {
@@ -87,7 +86,7 @@ public class ProjectSettingsService {
     return null;
   }
 
-  public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {
+  public boolean processModulesMoved(final Module[] modules, final @Nullable ModuleGroup targetGroup) {
     return false;
   }
 
@@ -104,9 +103,8 @@ public class ProjectSettingsService {
    * the second call may return a chosen SDK from the first call (only once). This is the way to
    * avoid breaking the older code scenarios.
    */
-  @Nullable
   @Deprecated
-  public Sdk chooseAndSetSdk() {
+  public @Nullable Sdk chooseAndSetSdk() {
     Logger.getInstance(getClass()).warn("Call to the deprecated ProjectSettingsService#chooseAndSetSdk method. Please use new API instead");
     return null;
   }

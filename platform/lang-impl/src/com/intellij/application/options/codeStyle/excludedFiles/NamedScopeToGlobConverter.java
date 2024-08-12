@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,14 +13,13 @@ import java.util.List;
  * Supports only trivial cases like "file:*.js||file:*.java"
  */
 public final class NamedScopeToGlobConverter {
-  private final static String FILE_PREFIX = "file:";
-  private final static String OR_SEPARATOR = "\\|\\|";
+  private static final String FILE_PREFIX = "file:";
+  private static final String OR_SEPARATOR = "\\|\\|";
 
   private NamedScopeToGlobConverter() {
   }
 
-  @Nullable
-  public static GlobPatternDescriptor convert(@NotNull NamedScopeDescriptor descriptor) {
+  public static @Nullable GlobPatternDescriptor convert(@NotNull NamedScopeDescriptor descriptor) {
     String pattern = descriptor.getPattern();
     List<String> globPatterns = new ArrayList<>();
     if (pattern != null) {
@@ -44,8 +43,7 @@ public final class NamedScopeToGlobConverter {
     }
   }
 
-  @Nullable
-  static String convertSinglePattern(@NotNull final String rawPattern) {
+  static @Nullable String convertSinglePattern(final @NotNull String rawPattern) {
     final String filePattern = StringUtil.trimStart(rawPattern, FILE_PREFIX);
     String sampleName = filePattern.replaceAll("\\*", "ab");
     if (PathUtil.isValidFileName(sampleName)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.execution.runners.ExecutionUtil;
@@ -114,18 +114,17 @@ public abstract class ChooseByNameFilter<T> {
    * @param model a model to update
    * @return a created file chooser
    */
-  @NotNull
-  protected ElementsChooser<T> createChooser(@NotNull final FilteringGotoByModel<T> model,
-                                             @NotNull final ChooseByNameFilterConfiguration<? super T> filterConfiguration) {
+  protected @NotNull ElementsChooser<T> createChooser(final @NotNull FilteringGotoByModel<T> model,
+                                             final @NotNull ChooseByNameFilterConfiguration<? super T> filterConfiguration) {
     List<T> elements = new ArrayList<>(getAllFilterValues());
     final ElementsChooser<T> chooser = new ElementsChooser<>(elements, true) {
       @Override
-      protected String getItemText(@NotNull final T value) {
+      protected String getItemText(final @NotNull T value) {
         return textForFilterValue(value);
       }
 
       @Override
-      protected Icon getItemIcon(@NotNull final T value) {
+      protected Icon getItemIcon(final @NotNull T value) {
         return iconForFilterValue(value);
       }
     };
@@ -145,14 +144,11 @@ public abstract class ChooseByNameFilter<T> {
     return chooser;
   }
 
-  @NlsSafe
-  protected abstract String textForFilterValue(@NotNull T value);
+  protected abstract @NlsSafe String textForFilterValue(@NotNull T value);
 
-  @Nullable
-  protected abstract Icon iconForFilterValue(@NotNull T value);
+  protected abstract @Nullable Icon iconForFilterValue(@NotNull T value);
 
-  @NotNull
-  protected abstract Collection<T> getAllFilterValues();
+  protected abstract @NotNull Collection<T> getAllFilterValues();
 
   /**
    * Update model basing on the chooser state
@@ -201,7 +197,7 @@ public abstract class ChooseByNameFilter<T> {
     }
 
     @Override
-    public boolean isSelected(@NotNull final AnActionEvent e) {
+    public boolean isSelected(final @NotNull AnActionEvent e) {
       return myPopup != null;
     }
 
@@ -211,7 +207,7 @@ public abstract class ChooseByNameFilter<T> {
     }
 
     @Override
-    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
+    public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
       if (state) {
         createPopup();
       }

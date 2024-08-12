@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -36,7 +36,10 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.MouseMovementTracker;
@@ -320,12 +323,11 @@ public class EditorMouseHoverPopupManager implements Disposable {
     return -1;
   }
 
-  @Nullable
-  private static Context createContext(@NotNull Editor editor,
-                                       int offset,
-                                       long startTimestamp,
-                                       boolean showImmediately,
-                                       boolean showDocumentation) {
+  private static @Nullable Context createContext(@NotNull Editor editor,
+                                                 int offset,
+                                                 long startTimestamp,
+                                                 boolean showImmediately,
+                                                 boolean showDocumentation) {
     Project project = Objects.requireNonNull(editor.getProject());
 
     HighlightInfo info = null;
@@ -549,8 +551,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  @NotNull
-  public static EditorMouseHoverPopupManager getInstance() {
+  public static @NotNull EditorMouseHoverPopupManager getInstance() {
     return ApplicationManager.getApplication().getService(EditorMouseHoverPopupManager.class);
   }
 
@@ -558,8 +559,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
    * @deprecated Returns `null` in v2 implementation.
    */
   @Deprecated
-  @Nullable
-  public DocumentationComponent getDocumentationComponent() {
+  public @Nullable DocumentationComponent getDocumentationComponent() {
     AbstractPopup hint = getCurrentHint();
     return hint == null ? null : UIUtil.findComponentOfType(hint.getComponent(), DocumentationComponent.class);
   }

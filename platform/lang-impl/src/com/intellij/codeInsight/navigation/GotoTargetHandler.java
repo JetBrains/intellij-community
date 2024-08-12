@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -91,16 +91,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<? super GotoData> successCallback) { }
 
-  @NonNls
-  @Nullable
-  protected abstract String getFeatureUsedKey();
+  protected abstract @NonNls @Nullable String getFeatureUsedKey();
 
   protected boolean useEditorFont() {
     return true;
   }
 
-  @Nullable
-  protected abstract GotoData getSourceAndTargetElements(Editor editor, PsiFile file);
+  protected abstract @Nullable GotoData getSourceAndTargetElements(Editor editor, PsiFile file);
 
   protected void show(@NotNull Project project,
                       @NotNull Editor editor,
@@ -231,8 +228,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
   }
 
-  @NotNull
-  protected Comparator<ItemWithPresentation> createComparator(@NotNull GotoData gotoData) {
+  protected @NotNull Comparator<ItemWithPresentation> createComparator(@NotNull GotoData gotoData) {
     return Comparator.comparing(gotoData::getComparingObject);
   }
 
@@ -256,8 +252,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     return ourDefaultTargetElementRenderer.computePresentation(element);
   }
 
-  @Nullable
-  private static TargetPresentation getTargetPresentationFromRenderers(@NotNull PsiElement element, boolean hasDifferentNames) {
+  private static @Nullable TargetPresentation getTargetPresentationFromRenderers(@NotNull PsiElement element, boolean hasDifferentNames) {
     GotoData dummyData = new GotoData(element, PsiElement.EMPTY_ARRAY, Collections.emptyList());
     dummyData.hasDifferentNames = hasDifferentNames;
     PsiElementListCellRenderer<?> renderer = createRenderer(dummyData, element);
@@ -300,27 +295,22 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
    * @deprecated use getChooserTitle(PsiElement, String, int, boolean) instead
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  protected @NlsContexts.PopupTitle String getChooserTitle(PsiElement sourceElement, String name, int length) {
+  protected @NotNull @NlsContexts.PopupTitle String getChooserTitle(PsiElement sourceElement, String name, int length) {
     LOG.warn("Please override getChooserTitle(PsiElement, String, int, boolean) instead");
     return "";
   }
 
-  @NotNull
-  protected @NlsContexts.PopupTitle String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
+  protected @NotNull @NlsContexts.PopupTitle String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
     return getChooserTitle(sourceElement, name, length);
   }
 
-  @NotNull
-  protected @NlsContexts.TabTitle String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
+  protected @NotNull @NlsContexts.TabTitle String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     return getChooserTitle(sourceElement, name, length, true);
   }
 
-  @NotNull
-  protected abstract @NlsContexts.HintText String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  protected abstract @NotNull @NlsContexts.HintText String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
 
-  @Nullable
-  protected @NlsContexts.PopupAdvertisement String getAdText(PsiElement source, int length) {
+  protected @Nullable @NlsContexts.PopupAdvertisement String getAdText(PsiElement source, int length) {
     return null;
   }
 
@@ -333,7 +323,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   public static final class GotoData {
-    @NotNull public final PsiElement source;
+    public final @NotNull PsiElement source;
     public PsiElement[] targets;
     public final List<AdditionalAction> additionalActions;
     public boolean isCanceled;

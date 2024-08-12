@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -55,8 +55,7 @@ public final class PlatformPackageUtil {
    * This is an internal function, plugins must use {@link com.intellij.openapi.roots.PackageIndex#getDirsByPackageName} instead.
    */
   @ApiStatus.Internal
-  @NotNull
-  public static Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources, @NotNull Project project) {
+  public static @NotNull Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources, @NotNull Project project) {
     return DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
@@ -70,8 +69,7 @@ public final class PlatformPackageUtil {
   }
 
 
-  @Nullable
-  private static String findLongestExistingPackage(Project project, String packageName, GlobalSearchScope scope) {
+  private static @Nullable String findLongestExistingPackage(Project project, String packageName, GlobalSearchScope scope) {
     final PsiManager manager = PsiManager.getInstance(project);
     String nameToMatch = packageName;
     while (true) {
@@ -89,10 +87,9 @@ public final class PlatformPackageUtil {
     }
   }
 
-  @Nullable
-  private static PsiDirectory getWritableModuleDirectory(@NotNull Query<? extends VirtualFile> vFiles,
-                                                         GlobalSearchScope scope,
-                                                         PsiManager manager) {
+  private static @Nullable PsiDirectory getWritableModuleDirectory(@NotNull Query<? extends VirtualFile> vFiles,
+                                                                   GlobalSearchScope scope,
+                                                                   PsiManager manager) {
     for (VirtualFile vFile : vFiles) {
       if (!scope.contains(vFile)) continue;
       PsiDirectory directory = manager.findDirectory(vFile);
@@ -103,14 +100,13 @@ public final class PlatformPackageUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiDirectory findOrCreateDirectoryForPackage(@NotNull final Project project,
-                                                             @Nullable Module module,
-                                                             GlobalSearchScope scope,
-                                                             String packageName,
-                                                             PsiDirectory baseDir,
-                                                             boolean askUserToCreate,
-                                                             ThreeState chooseFlag) throws IncorrectOperationException {
+  public static @Nullable PsiDirectory findOrCreateDirectoryForPackage(final @NotNull Project project,
+                                                                       @Nullable Module module,
+                                                                       GlobalSearchScope scope,
+                                                                       String packageName,
+                                                                       PsiDirectory baseDir,
+                                                                       boolean askUserToCreate,
+                                                                       ThreeState chooseFlag) throws IncorrectOperationException {
     PsiDirectory psiDirectory = null;
     if (chooseFlag == ThreeState.UNSURE && StringUtil.isNotEmpty(packageName)) {
       String rootPackage = findLongestExistingPackage(project, packageName, scope);
@@ -244,8 +240,7 @@ public final class PlatformPackageUtil {
     return index > -1 ? packageName.substring(index + 1) : "";
   }
 
-  @Nullable
-  public static PsiDirectory getDirectory(@Nullable PsiElement element) {
+  public static @Nullable PsiDirectory getDirectory(@Nullable PsiElement element) {
     if (element == null) return null;
     // handle injection and fragment editor
     PsiFile file = FileContextUtil.getContextFile(element);

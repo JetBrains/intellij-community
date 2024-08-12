@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tools;
 
@@ -45,13 +45,13 @@ import java.util.Objects;
 public class Tool implements SchemeElement {
   private static final Logger LOG = Logger.getInstance(Tool.class);
 
-  @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
+  public static final @NonNls String ACTION_ID_PREFIX = "Tool_";
 
   public static final @Nls String DEFAULT_GROUP_NAME = ToolsBundle.message("external.tools");
   protected static final ProcessEvent NOT_STARTED_EVENT = new ProcessEvent(new NopProcessHandler(), -1);
   private @NlsSafe String myName;
   private String myDescription;
-  @NotNull private String myGroup = DEFAULT_GROUP_NAME;
+  private @NotNull String myGroup = DEFAULT_GROUP_NAME;
 
   // These 4 fields and everything related are effectively not used anymore, see IDEA-190856.
   // Let's keep them for a while for compatibility in case we have to reconsider.
@@ -84,9 +84,7 @@ public class Tool implements SchemeElement {
     return myDescription;
   }
 
-  @NlsSafe
-  @NotNull
-  public String getGroup() {
+  public @NlsSafe @NotNull String getGroup() {
     return myGroup;
   }
 
@@ -256,8 +254,7 @@ public class Tool implements SchemeElement {
       Comparing.equal(myOutputFilters, source.myOutputFilters);
   }
 
-  @NotNull
-  public String getActionId() {
+  public @NotNull String getActionId() {
     StringBuilder name = new StringBuilder(getActionIdPrefix());
     name.append(myGroup);
     name.append('_');
@@ -271,7 +268,7 @@ public class Tool implements SchemeElement {
     if (listener != null) listener.processTerminated(NOT_STARTED_EVENT);
   }
 
-  public void execute(AnActionEvent event, DataContext dataContext, long executionId, @Nullable final ProcessListener processListener) {
+  public void execute(AnActionEvent event, DataContext dataContext, long executionId, final @Nullable ProcessListener processListener) {
     if (!executeIfPossible(event, dataContext, executionId, processListener)) {
       notifyCouldNotStart(processListener);
     }
@@ -280,7 +277,7 @@ public class Tool implements SchemeElement {
   public boolean executeIfPossible(AnActionEvent event,
                                    DataContext dataContext,
                                    long executionId,
-                                   @Nullable final ProcessListener processListener) {
+                                   final @Nullable ProcessListener processListener) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
@@ -338,8 +335,7 @@ public class Tool implements SchemeElement {
     return true;
   }
 
-  @Nullable
-  public GeneralCommandLine createCommandLine(DataContext dataContext) {
+  public @Nullable GeneralCommandLine createCommandLine(DataContext dataContext) {
     if (StringUtil.isEmpty(getWorkingDirectory())) {
       setWorkingDirectory("$ProjectFileDir$");
     }
@@ -394,7 +390,7 @@ public class Tool implements SchemeElement {
   }
 
   @Override
-  public void setGroupName(@NotNull final String name) {
+  public void setGroupName(final @NotNull String name) {
     setGroup(name);
   }
 
@@ -403,9 +399,8 @@ public class Tool implements SchemeElement {
     return getName();
   }
 
-  @NotNull
   @Override
-  public SchemeElement copy() {
+  public @NotNull SchemeElement copy() {
     Tool copy = new Tool();
     copy.copyFrom(this);
     return copy;
@@ -420,12 +415,11 @@ public class Tool implements SchemeElement {
     return ACTION_ID_PREFIX;
   }
 
-  @NotNull
-  public static GeneralCommandLine createWslCommandLine(@Nullable Project project,
-                                                        @NotNull WSLDistribution wsl,
-                                                        @NotNull GeneralCommandLine cmd,
-                                                        @Nullable String linuxWorkingDir,
-                                                        @NotNull String linuxExePath) throws ExecutionException {
+  public static @NotNull GeneralCommandLine createWslCommandLine(@Nullable Project project,
+                                                                 @NotNull WSLDistribution wsl,
+                                                                 @NotNull GeneralCommandLine cmd,
+                                                                 @Nullable String linuxWorkingDir,
+                                                                 @NotNull String linuxExePath) throws ExecutionException {
     cmd.setExePath(linuxExePath);
     WSLCommandLineOptions wslOptions = new WSLCommandLineOptions();
     if (StringUtil.isNotEmpty(linuxWorkingDir)) {

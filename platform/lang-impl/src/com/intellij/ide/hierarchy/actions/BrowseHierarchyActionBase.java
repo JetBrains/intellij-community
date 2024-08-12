@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy.actions;
 
@@ -55,10 +55,9 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     createAndAddToPanel(project, provider, target);
   }
 
-  @NotNull
-  public static HierarchyBrowser createAndAddToPanel(@NotNull Project project,
-                                                     @NotNull HierarchyProvider provider,
-                                                     @NotNull PsiElement target) {
+  public static @NotNull HierarchyBrowser createAndAddToPanel(@NotNull Project project,
+                                                              @NotNull HierarchyProvider provider,
+                                                              @NotNull PsiElement target) {
     HierarchyBrowser hierarchyBrowser = provider.createHierarchyBrowser(target);
 
     HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(project);
@@ -126,16 +125,14 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     return target != null;
   }
 
-  @Nullable
-  private HierarchyProvider getProvider(@NotNull AnActionEvent e) {
+  private @Nullable HierarchyProvider getProvider(@NotNull AnActionEvent e) {
     return findProvider(myExtension, e.getData(CommonDataKeys.PSI_ELEMENT), e.getData(CommonDataKeys.PSI_FILE), e.getDataContext());
   }
 
-  @Nullable
-  public static HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
-                                               @Nullable PsiElement psiElement,
-                                               @Nullable PsiFile psiFile,
-                                               @NotNull DataContext dataContext) {
+  public static @Nullable HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
+                                                         @Nullable PsiElement psiElement,
+                                                         @Nullable PsiFile psiFile,
+                                                         @NotNull DataContext dataContext) {
     HierarchyProvider provider = findBestHierarchyProvider(extension, psiElement, dataContext);
     if (provider == null) {
       return findBestHierarchyProvider(extension, psiFile, dataContext);
@@ -143,10 +140,9 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     return provider;
   }
 
-  @Nullable
-  public static HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
-                                                            @Nullable PsiElement element,
-                                                            DataContext dataContext) {
+  public static @Nullable HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
+                                                                      @Nullable PsiElement element,
+                                                                      DataContext dataContext) {
     if (element == null) return null;
     List<HierarchyProvider> providers = extension.allForLanguage(element.getLanguage());
     for (HierarchyProvider provider : providers) {

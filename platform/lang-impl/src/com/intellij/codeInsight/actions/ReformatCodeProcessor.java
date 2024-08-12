@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
@@ -119,8 +119,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @Override
-  @NotNull
-  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
     Pair<PsiFile, Runnable> fileToFormatAndCommitActionIfNeed = ReadAction.compute(() -> {
@@ -262,8 +261,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
            myRanges.equals(previous.third);
   }
 
-  @Nullable
-  private static PsiFile ensureValid(@NotNull PsiFile file) {
+  private static @Nullable PsiFile ensureValid(@NotNull PsiFile file) {
     if (file.isValid()) return file;
 
     VirtualFile virtualFile = file.getVirtualFile();
@@ -285,8 +283,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
-  @NotNull
-  private List<TextRange> getRangesToFormat(@NotNull PsiFile file, boolean processChangedTextOnly) {
+  private @NotNull List<TextRange> getRangesToFormat(@NotNull PsiFile file, boolean processChangedTextOnly) {
     if (processChangedTextOnly) {
       ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(file);
       return info != null ? info.allChangedRanges : Collections.emptyList();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.openapi.editor.CustomFoldRegion;
@@ -97,12 +97,11 @@ final class DocRenderMouseEventBridge implements EditorMouseListener, EditorMous
     }
   }
 
-  @Nullable
-  private static DocRenderer.EditorInlineHtmlPane redispatchEvent(@NotNull EditorMouseEvent event,
-                                                                  // we need a separately passed eventId because EditorImpl dispatches MOUSE_RELEASED
-                                                                  // events to both 'mouseReleased' and 'mouseClicked' methods in listeners
-                                                                  int eventId,
-                                                                  @Nullable DocRenderer.EditorInlineHtmlPane targetPane) {
+  private static @Nullable DocRenderer.EditorInlineHtmlPane redispatchEvent(@NotNull EditorMouseEvent event,
+                                                                            // we need a separately passed eventId because EditorImpl dispatches MOUSE_RELEASED
+                                                                            // events to both 'mouseReleased' and 'mouseClicked' methods in listeners
+                                                                            int eventId,
+                                                                            @Nullable DocRenderer.EditorInlineHtmlPane targetPane) {
     MouseEvent mouseEvent = event.getMouseEvent();
     Point mousePoint = mouseEvent.getPoint();
     Editor editor = event.getEditor();

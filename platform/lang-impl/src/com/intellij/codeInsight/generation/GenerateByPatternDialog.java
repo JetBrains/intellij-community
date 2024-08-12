@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -58,15 +58,14 @@ public final class GenerateByPatternDialog extends DialogWrapper {
     };
     myTree.setRootVisible(false);
     myTree.setCellRenderer(new DefaultTreeCellRenderer() {
-      @NotNull
       @Override
-      public Component getTreeCellRendererComponent(@NotNull JTree tree,
-                                                    Object value,
-                                                    boolean sel,
-                                                    boolean expanded,
-                                                    boolean leaf,
-                                                    int row,
-                                                    boolean hasFocus) {
+      public @NotNull Component getTreeCellRendererComponent(@NotNull JTree tree,
+                                                             Object value,
+                                                             boolean sel,
+                                                             boolean expanded,
+                                                             boolean leaf,
+                                                             int row,
+                                                             boolean hasFocus) {
         Component component = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row,
 
                                                                            hasFocus);
@@ -142,9 +141,8 @@ public final class GenerateByPatternDialog extends DialogWrapper {
 
   private DefaultMutableTreeNode createNode(@Nullable PatternDescriptor descriptor) {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(descriptor) {
-      @NotNull
       @Override
-      public String toString() {
+      public @NotNull String toString() {
         Object object = getUserObject();
         return object == null ? "" : ((PatternDescriptor)object).getName();
       }

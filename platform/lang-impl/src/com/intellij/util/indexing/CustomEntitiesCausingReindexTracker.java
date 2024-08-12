@@ -21,8 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class CustomEntitiesCausingReindexTracker {
-  @NotNull
-  private Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;
+  private @NotNull Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;
 
   CustomEntitiesCausingReindexTracker() {
     ExtensionPointListener<?> listener =

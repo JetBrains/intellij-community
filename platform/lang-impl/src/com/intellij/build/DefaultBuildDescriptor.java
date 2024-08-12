@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -102,9 +88,8 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     }
   }
 
-  @NotNull
   @Override
-  public Object getId() {
+  public @NotNull Object getId() {
     return myId;
   }
 
@@ -113,15 +98,13 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     return myGroupId;
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return myTitle;
   }
 
-  @NotNull
   @Override
-  public String getWorkingDir() {
+  public @NotNull String getWorkingDir() {
     return myWorkingDir;
   }
 
@@ -131,26 +114,22 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public List<AnAction> getActions() {
+  public @NotNull List<AnAction> getActions() {
     return Collections.unmodifiableList(myActions);
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public List<AnAction> getRestartActions() {
+  public @NotNull List<AnAction> getRestartActions() {
     return Collections.unmodifiableList(myRestartActions);
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public List<AnAction> getContextActions(@NotNull ExecutionNode node) {
+  public @NotNull List<AnAction> getContextActions(@NotNull ExecutionNode node) {
     return ContainerUtil.map(myContextActions, function -> function.apply(node));
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public List<Filter> getExecutionFilters() {
+  public @NotNull List<Filter> getExecutionFilters() {
     return Collections.unmodifiableList(myExecutionFilters);
   }
 
@@ -192,18 +171,15 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     myAutoFocusContent = autoFocusContent;
   }
 
-  @Nullable
-  public BuildProcessHandler getProcessHandler() {
+  public @Nullable BuildProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
 
-  @Nullable
-  public ExecutionEnvironment getExecutionEnvironment() {
+  public @Nullable ExecutionEnvironment getExecutionEnvironment() {
     return myExecutionEnvironment;
   }
 
-  @Nullable
-  public Supplier<? extends RunContentDescriptor> getContentDescriptorSupplier() {
+  public @Nullable Supplier<? extends RunContentDescriptor> getContentDescriptorSupplier() {
     return myContentDescriptorSupplier;
   }
 

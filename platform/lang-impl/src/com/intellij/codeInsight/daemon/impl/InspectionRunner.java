@@ -233,8 +233,7 @@ class InspectionRunner {
     InspectionUsageFUSStorage.getInstance(myPsiFile.getProject()).reportInspectionsWhichReportedProblems(inspectionIdsReportedProblems);
   }
 
-  @NotNull
-  private static TextRange finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
+  private static @NotNull TextRange finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
     long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.get(0).priorityRange();
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
@@ -504,11 +503,10 @@ class InspectionRunner {
   static final class InspectionProblemHolder extends ProblemsHolder {
     final @NotNull LocalInspectionToolWrapper myToolWrapper;
     private final InspectionProfileWrapper myProfileWrapper;
-    @NotNull
-    private final ApplyIncrementallyCallback applyIncrementallyCallback;
-    @NotNull final AtomicInteger toolWasProcessed;
+    private final @NotNull ApplyIncrementallyCallback applyIncrementallyCallback;
+    final @NotNull AtomicInteger toolWasProcessed;
     // has to ignore duplicates which can sometimes appear due to high-concurrent process/retry in processQueueAsync
-    @NotNull final Collection<HighlightInfo> toolInfos = new HashSetQueue<>(); // guarded by toolInfos
+    final @NotNull Collection<HighlightInfo> toolInfos = new HashSetQueue<>(); // guarded by toolInfos
     private int resultCount;
     final ToolStampInfo toolStamps;
 

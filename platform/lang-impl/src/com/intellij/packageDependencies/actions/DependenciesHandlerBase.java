@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -10,8 +10,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -29,8 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class DependenciesHandlerBase {
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
   private final List<? extends AnalysisScope> myScopes;
   private final Set<PsiFile> myExcluded;
 
@@ -47,7 +46,7 @@ public abstract class DependenciesHandlerBase {
     if (canStartInBackground()) {
       task = new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
         @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
+        public void run(final @NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(false);
           perform(result, indicator);
         }
@@ -74,8 +73,7 @@ public abstract class DependenciesHandlerBase {
     ProgressManager.getInstance().run(task);
   }
 
-  @NotNull
-  protected DependencyAnalysisResult createAnalysisResult() {
+  protected @NotNull DependencyAnalysisResult createAnalysisResult() {
     return new DependencyAnalysisResult();
   }
 

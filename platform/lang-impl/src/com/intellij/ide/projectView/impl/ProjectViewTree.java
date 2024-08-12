@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
@@ -127,8 +127,7 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
   /**
    * @return custom renderer for tree nodes
    */
-  @NotNull
-  protected TreeCellRenderer createCellRenderer() {
+  protected @NotNull TreeCellRenderer createCellRenderer() {
     return new ProjectViewRenderer();
   }
 
@@ -165,9 +164,8 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
     return enabled;
   }
 
-  @Nullable
   @Override
-  public Color getFileColorFor(Object object) {
+  public @Nullable Color getFileColorFor(Object object) {
     if (object instanceof DefaultMutableTreeNode node) {
       object = node.getUserObject();
     }
@@ -177,8 +175,7 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
     return null;
   }
 
-  @Nullable
-  public static Color getColorForElement(@Nullable PsiElement psi) {
+  public static @Nullable Color getColorForElement(@Nullable PsiElement psi) {
     if (psi == null || !psi.isValid()) {
       return null;
     }

@@ -29,15 +29,13 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
     myToolId = key.getShortName();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return getNameText();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getNameText();
   }
 

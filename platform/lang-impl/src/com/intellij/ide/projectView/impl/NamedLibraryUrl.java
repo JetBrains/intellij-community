@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls;
 
 public final class NamedLibraryUrl extends AbstractUrl {
 
-  @NonNls private static final String ELEMENT_TYPE = "namedLibrary";
+  private static final @NonNls String ELEMENT_TYPE = "namedLibrary";
 
   public NamedLibraryUrl(String url, String moduleName) {
     super(url, moduleName, ELEMENT_TYPE);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
@@ -46,13 +46,11 @@ public final class PostfixTemplateStorage extends SimpleModificationTracker impl
     }
   }
 
-  @NotNull
-  public static PostfixTemplateStorage getInstance() {
+  public static @NotNull PostfixTemplateStorage getInstance() {
     return ApplicationManager.getApplication().getService(PostfixTemplateStorage.class);
   }
 
-  @NotNull
-  public Set<PostfixTemplate> getTemplates(@NotNull PostfixTemplateProvider provider) {
+  public @NotNull Set<PostfixTemplate> getTemplates(@NotNull PostfixTemplateProvider provider) {
     return new HashSet<>(myTemplates.get(provider.getId()));
   }
 
@@ -65,7 +63,7 @@ public final class PostfixTemplateStorage extends SimpleModificationTracker impl
   }
 
   @Override
-  public void loadState(@NotNull final Element state) {
+  public void loadState(final @NotNull Element state) {
     myTemplates.clear();
     for (Element templateElement : state.getChildren(TEMPLATE_TAG)) {
       PostfixTemplateProvider provider = myTemplateProviders.get(templateElement.getAttributeValue(PROVIDER_ATTR_NAME, ""));
@@ -96,8 +94,7 @@ public final class PostfixTemplateStorage extends SimpleModificationTracker impl
     }
   }
 
-  @Nullable
-  private static PostfixTemplate findBuiltinTemplate(@Nullable @NonNls String id, @NotNull PostfixTemplateProvider provider) {
+  private static @Nullable PostfixTemplate findBuiltinTemplate(@Nullable @NonNls String id, @NotNull PostfixTemplateProvider provider) {
     return ContainerUtil.find(provider.getTemplates(), p -> p.getId().equals(id));
   }
 

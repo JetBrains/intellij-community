@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.CollapseBlockHandler;
@@ -17,7 +17,7 @@ public abstract class CollapseBlockHandlerImpl implements CollapseBlockHandler {
   Logger LOG = Logger.getInstance(CollapseBlockHandler.class);
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     int[] targetCaretOffset = {-1};
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       final EditorFoldingInfo info = EditorFoldingInfo.get(editor);
@@ -75,16 +75,13 @@ public abstract class CollapseBlockHandlerImpl implements CollapseBlockHandler {
     if (targetCaretOffset[0] >= 0) editor.getCaretModel().moveToOffset(targetCaretOffset[0]);
   }
 
-  @Nullable
-  protected abstract PsiElement findParentBlock(@Nullable PsiElement element);
+  protected abstract @Nullable PsiElement findParentBlock(@Nullable PsiElement element);
 
   protected abstract boolean isEndBlockToken(@Nullable PsiElement element);
 
-  @NotNull
-  protected String getPlaceholderText() { return "{...}"; }
+  protected @NotNull String getPlaceholderText() { return "{...}"; }
 
-  @NotNull
-  protected TextRange getFoldingRange(@NotNull PsiElement element) {
+  protected @NotNull TextRange getFoldingRange(@NotNull PsiElement element) {
     return element.getTextRange();
   }
 }

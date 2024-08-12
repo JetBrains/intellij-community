@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -51,7 +51,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   protected static final String WHITESPACE = " \t";
 
   protected final Project myProject;
-  @NotNull protected final Editor myEditor;
+  protected final @NotNull Editor myEditor;
 
   protected final RangeMarker myLbraceMarker;
   private final CaretListener myEditorCaretListener;
@@ -183,8 +183,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     myParameterInfoControllerData.getHandler().syncUpdateOnCaretMove(new MyLazyUpdateParameterInfoContext());
   }
 
-  @NotNull
-  protected ParameterInfoControllerData createParameterInfoControllerData(@NotNull ParameterInfoHandler<PsiElement, Object> handler) {
+  protected @NotNull ParameterInfoControllerData createParameterInfoControllerData(@NotNull ParameterInfoHandler<PsiElement, Object> handler) {
     return new ParameterInfoControllerData(handler);
   }
 
@@ -312,8 +311,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     return offset > rangeStart ? offset : CharArrayUtil.shiftForward(text, rangeEnd, WHITESPACE);
   }
 
-  @Nullable
-  public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset) {
+  public static @Nullable <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset) {
     if (file == null) return null;
     ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(file.getProject(), PsiUtilCore.getLanguageAtOffset(file, offset), file.getViewProvider().getBaseLanguage());
 
@@ -369,16 +367,15 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
            !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   }
 
-  @NotNull
-  public static ParameterInfoControllerBase createParameterInfoController(@NotNull Project project,
-                                                                          @NotNull Editor editor,
-                                                                          int lbraceOffset,
-                                                                          Object[] descriptors,
-                                                                          Object highlighted,
-                                                                          PsiElement parameterOwner,
-                                                                          @NotNull ParameterInfoHandler handler,
-                                                                          boolean showHint,
-                                                                          boolean requestFocus) {
+  public static @NotNull ParameterInfoControllerBase createParameterInfoController(@NotNull Project project,
+                                                                                   @NotNull Editor editor,
+                                                                                   int lbraceOffset,
+                                                                                   Object[] descriptors,
+                                                                                   Object highlighted,
+                                                                                   PsiElement parameterOwner,
+                                                                                   @NotNull ParameterInfoHandler handler,
+                                                                                   boolean showHint,
+                                                                                   boolean requestFocus) {
     for (ParameterInfoControllerProvider provider : ParameterInfoControllerProvider.EP_NAME.getExtensions()) {
       ParameterInfoControllerBase controller = provider.create(project, editor, lbraceOffset,
                                                                descriptors, highlighted, parameterOwner,
@@ -427,8 +424,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
 
     @Override
-    @NotNull
-    public Editor getEditor() {
+    public @NotNull Editor getEditor() {
       return myEditor;
     }
 

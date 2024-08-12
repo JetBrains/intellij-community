@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +21,7 @@ public final class IntObjectMap<V> {
     myData = new Object[initialCapacity];
   }
 
-  @Nullable
-  public V get(int key) {
+  public @Nullable V get(int key) {
     if (key < 0 || key >= myData.length) {
       return null;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ReadAction;
@@ -52,9 +52,9 @@ final class UnindexedFilesFinder {
     long timeProcessingUpToDateFiles = 0;
     long timeUpdatingContentLessIndexes = 0;
     long timeIndexingWithoutContentViaInfrastructureExtension = 0;
-    @NotNull private List<SingleIndexValueApplier<?>> appliers = Collections.emptyList();
-    @NotNull private List<SingleIndexValueRemover> removers = Collections.emptyList();
-    @NotNull final FileIndexesValuesApplier.ApplicationMode applicationMode;
+    private @NotNull List<SingleIndexValueApplier<?>> appliers = Collections.emptyList();
+    private @NotNull List<SingleIndexValueRemover> removers = Collections.emptyList();
+    final @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode;
     boolean indexInfrastructureExtensionInvalidated = false;
     boolean mayMarkFileIndexed = true;
     @Nullable ArrayList<Pair<FileIndexingState, ID<?, ?>>> unindexedStates;
@@ -110,8 +110,7 @@ final class UnindexedFilesFinder {
       return !appliers.isEmpty() || !removers.isEmpty();
     }
 
-    @NotNull
-    private String getAppliersAndRemoversLogString(IndexedFile indexedFile) {
+    private @NotNull String getAppliersAndRemoversLogString(IndexedFile indexedFile) {
       return "Scanner has updated file " + indexedFile.getFileName() +
              " with appliers: " + appliers +
              " and removers: " + removers + "; ";
@@ -160,8 +159,7 @@ final class UnindexedFilesFinder {
     this.indexingRequest = indexingRequest;
   }
 
-  @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)")
-  public UnindexedFileStatus getFileStatus(@NotNull VirtualFile file) {
+  public @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)") UnindexedFileStatus getFileStatus(@NotNull VirtualFile file) {
     ProgressManager.checkCanceled(); // give a chance to suspend indexing
     if (!file.isValid() || !(file instanceof VirtualFileWithId)) {
       return null;

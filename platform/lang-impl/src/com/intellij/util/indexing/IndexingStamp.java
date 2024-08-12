@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -39,8 +39,7 @@ public final class IndexingStamp {
 
   private IndexingStamp() { }
 
-  @NotNull
-  public static FileIndexingState isFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> indexName) {
+  public static @NotNull FileIndexingState isFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> indexName) {
     try {
       long stamp = getIndexStamp(fileId, indexName);
       if (stamp == HAS_NO_INDEXED_DATA_STAMP) return FileIndexingState.NOT_INDEXED;
@@ -112,8 +111,7 @@ public final class IndexingStamp {
     storage.invoke().writeTimestamps(fileId, TimestampsImmutable.EMPTY);
   }
 
-  @NotNull
-  private static Timestamps createOrGetTimeStamp(int id) {
+  private static @NotNull Timestamps createOrGetTimeStamp(int id) {
     return getTimestamp(id, true);
   }
 

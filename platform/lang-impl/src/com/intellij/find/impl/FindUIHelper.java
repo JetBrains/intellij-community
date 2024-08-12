@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
@@ -17,10 +17,10 @@ import javax.swing.*;
 
 @SuppressWarnings("WeakerAccess")
 public final class FindUIHelper implements Disposable {
-  @NotNull private final Project myProject;
-  @NotNull private FindModel myModel;
+  private final @NotNull Project myProject;
+  private @NotNull FindModel myModel;
   FindModel myPreviousModel;
-  @NotNull private Runnable myOkHandler;
+  private @NotNull Runnable myOkHandler;
 
   FindUI myUI;
 
@@ -71,13 +71,11 @@ public final class FindUIHelper implements Disposable {
   }
 
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public FindModel getModel() {
+  public @NotNull FindModel getModel() {
     return myModel;
   }
 
@@ -161,8 +159,7 @@ public final class FindUIHelper implements Disposable {
     return myModel.isReplaceState();
   }
 
-  @NotNull
-  public Runnable getOkHandler() {
+  public @NotNull Runnable getOkHandler() {
     return myOkHandler;
   }
 

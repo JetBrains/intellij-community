@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -13,7 +13,6 @@ import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,9 +60,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
     installMemoryModeListener();
   }
 
-  @NotNull
   @Override
-  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
+  protected @NotNull InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
     if (myInMemoryMode.get()) {
       Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
       if (keysAndValues != null) {
@@ -88,8 +86,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   }
 
   @Override
-  @Nullable
-  protected Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
+  protected @Nullable Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
     if (myInMemoryMode.get()) {
       Map<Key, Value> map = myInMemoryKeysAndValues.get(fileId);
       if (map != null) return map;

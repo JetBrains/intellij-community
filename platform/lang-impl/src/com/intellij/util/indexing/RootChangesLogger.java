@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,12 +14,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 final class RootChangesLogger {
-  private final static int BATCH_CAPACITY = 10;
-  @NotNull
-  private static final Logger myLogger = Logger.getInstance(RootChangesLogger.class);
+  private static final int BATCH_CAPACITY = 10;
+  private static final @NotNull Logger myLogger = Logger.getInstance(RootChangesLogger.class);
 
-  @NotNull
-  private final IntOpenHashSet myReportedHashes = new IntOpenHashSet();
+  private final @NotNull IntOpenHashSet myReportedHashes = new IntOpenHashSet();
   private final List<Report> myReports = new ArrayList<>(BATCH_CAPACITY);
 
   void info(@NotNull Project project, boolean fullReindex) {

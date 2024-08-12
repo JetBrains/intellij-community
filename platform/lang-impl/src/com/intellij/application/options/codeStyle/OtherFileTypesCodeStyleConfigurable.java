@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -26,8 +26,7 @@ public final class OtherFileTypesCodeStyleConfigurable extends CodeStyleAbstract
         return "settings.editor.codeStyle.other";
       }
 
-  @Nls
-  public static String getDisplayNameText() {
+  public static @Nls String getDisplayNameText() {
     return ApplicationBundle.message("code.style.other.file.types");
   }
 }

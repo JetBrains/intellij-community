@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.inline;
 
@@ -45,7 +45,7 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);

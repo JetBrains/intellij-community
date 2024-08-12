@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -106,8 +106,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return 0;
   }
 
-  @NotNull
-  public static List<TextRange> expandToWholeLine(@NotNull CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
+  public static @NotNull List<TextRange> expandToWholeLine(@NotNull CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
     List<TextRange> result = new ArrayList<>();
 
     if (range == null) {
@@ -128,8 +127,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return result;
   }
 
-  @Nullable
-  private static TextRange getExpandedRange(@NotNull CharSequence text, @NotNull TextRange range, boolean isSymmetric) {
+  private static @Nullable TextRange getExpandedRange(@NotNull CharSequence text, @NotNull TextRange range, boolean isSymmetric) {
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     int index1 = CharArrayUtil.shiftBackward(text, startOffset - 1, " \t");
@@ -169,8 +167,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return null;
   }
 
-  @NotNull
-  public static List<TextRange> expandToWholeLinesWithBlanks(@NotNull CharSequence text, @NotNull TextRange range) {
+  public static @NotNull List<TextRange> expandToWholeLinesWithBlanks(@NotNull CharSequence text, @NotNull TextRange range) {
     List<TextRange> result = new ArrayList<>();
     result.addAll(expandToWholeLine(text, range, true));
 
@@ -200,8 +197,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     return result;
   }
 
-  @NotNull
-  public static List<TextRange> expandToWholeLine(@NotNull CharSequence text, @Nullable TextRange range) {
+  public static @NotNull List<TextRange> expandToWholeLine(@NotNull CharSequence text, @Nullable TextRange range) {
     return expandToWholeLine(text, range, true);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -22,9 +22,8 @@ public final class FileNavigatable implements Navigatable {
     myProject = project;
     myFilePosition = filePosition;
     myValue = new NullableLazyValue<>() {
-      @Nullable
       @Override
-      protected OpenFileDescriptor compute() {
+      protected @Nullable OpenFileDescriptor compute() {
         return createDescriptor();
       }
     };
@@ -56,18 +55,15 @@ public final class FileNavigatable implements Navigatable {
     return false;
   }
 
-  @Nullable
-  public OpenFileDescriptor getFileDescriptor() {
+  public @Nullable OpenFileDescriptor getFileDescriptor() {
     return myValue.getValue();
   }
 
-  @NotNull
-  public FilePosition getFilePosition() {
+  public @NotNull FilePosition getFilePosition() {
     return myFilePosition;
   }
 
-  @Nullable
-  private OpenFileDescriptor createDescriptor() {
+  private @Nullable OpenFileDescriptor createDescriptor() {
     OpenFileDescriptor descriptor = null;
     VirtualFile file = VfsUtil.findFileByIoFile(myFilePosition.getFile(), false);
     if (file != null) {

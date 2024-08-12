@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.rename.inplace;
 
@@ -54,7 +54,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     if (element == null) {
       if (LookupManager.getActiveLookup(editor) != null) {
@@ -111,8 +111,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   /**
    * @param dataContext for {@code null} datacontext, modal rename won't replace failed inplace rename 
    */
-  @Nullable
-  public InplaceRefactoring doRename(@NotNull PsiElement elementToRename,
+  public @Nullable InplaceRefactoring doRename(@NotNull PsiElement elementToRename,
                                      @NotNull Editor editor,
                                      @Nullable DataContext dataContext) {
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
@@ -140,14 +139,12 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     }
   }
   
-  @Nullable
-  public static String getInitialName() {
+  public static @Nullable String getInitialName() {
     final String str = ourPreventInlineRenameFlag.get();
     return StringUtil.isEmpty(str) ? null : str;
   }
 
-  @Nullable
-  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, @NotNull Editor editor) {
+  protected @Nullable VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, @NotNull Editor editor) {
     return new VariableInplaceRenamer((PsiNamedElement)elementToRename, editor);
   }
 }

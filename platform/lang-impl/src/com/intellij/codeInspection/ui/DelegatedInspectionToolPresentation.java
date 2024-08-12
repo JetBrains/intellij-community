@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class DelegatedInspectionToolPresentation extends DefaultInspectionToolPresentation {
 
-  @NotNull
-  private final InspectionProblemConsumer myDelegate;
+  private final @NotNull InspectionProblemConsumer myDelegate;
 
   public DelegatedInspectionToolPresentation(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                                              @NotNull GlobalInspectionContextImpl context,

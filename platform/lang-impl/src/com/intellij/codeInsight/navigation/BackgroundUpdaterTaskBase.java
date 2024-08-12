@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ModalityState;
@@ -46,11 +46,9 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     myUsageView = usageView;
   }
 
-  @Nullable
-  public abstract @PopupTitle String getCaption(int size);
+  public abstract @Nullable @PopupTitle String getCaption(int size);
 
-  @Nullable
-  protected abstract Usage createUsage(@NotNull T element);
+  protected abstract @Nullable Usage createUsage(@NotNull T element);
 
   protected void replaceModel(@NotNull List<? extends T> data) {
     myUpdater.replaceModel(data);
@@ -169,8 +167,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     myFinished = true;
   }
 
-  @Nullable
-  protected T getTheOnlyOneElement() {
+  protected @Nullable T getTheOnlyOneElement() {
     synchronized (lock) {
       if (myData.size() == 1) {
         return myData.iterator().next();

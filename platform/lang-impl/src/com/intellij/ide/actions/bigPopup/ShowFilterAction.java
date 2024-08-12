@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.bigPopup;
 
 import com.intellij.icons.AllIcons;
@@ -35,12 +35,12 @@ public abstract class ShowFilterAction extends ToggleAction implements DumbAware
   }
 
   @Override
-  public boolean isSelected(@NotNull final AnActionEvent e) {
+  public boolean isSelected(final @NotNull AnActionEvent e) {
     return myFilterPopup != null && !myFilterPopup.isDisposed();
   }
 
   @Override
-  public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
+  public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
     if (state) {
       showPopup(e.getRequiredData(CommonDataKeys.PROJECT), e.getInputEvent().getComponent());
     }
@@ -96,9 +96,7 @@ public abstract class ShowFilterAction extends ToggleAction implements DumbAware
     myFilterPopup.showUnderneathOf(anchor);
   }
 
-  @NotNull
-  @NonNls
-  public String getDimensionServiceKey() {
+  public @NotNull @NonNls String getDimensionServiceKey() {
     return "ShowFilterAction_Filter_Popup";
   }
 

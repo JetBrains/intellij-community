@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,12 +28,11 @@ import java.util.List;
 
 
 public final class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTransferableData> {
-  @NotNull
   @Override
-  public List<IndentTransferableData> collectTransferableData(@NotNull PsiFile file,
-                                                              @NotNull Editor editor,
-                                                              int @NotNull [] startOffsets,
-                                                              int @NotNull [] endOffsets) {
+  public @NotNull List<IndentTransferableData> collectTransferableData(@NotNull PsiFile file,
+                                                                       @NotNull Editor editor,
+                                                                       int @NotNull [] startOffsets,
+                                                                       int @NotNull [] endOffsets) {
     if (!acceptFileType(file.getFileType())) {
       return Collections.emptyList();
     }
@@ -45,9 +44,8 @@ public final class CopyPasteIndentProcessor extends CopyPastePostProcessor<Inden
       .anyMatch(bean -> fileType.getName().equals(bean.fileType));
   }
 
-  @NotNull
   @Override
-  public List<IndentTransferableData> extractTransferableData(@NotNull Transferable content) {
+  public @NotNull List<IndentTransferableData> extractTransferableData(@NotNull Transferable content) {
     IndentTransferableData indentData = new IndentTransferableData(-1);
     try {
       final DataFlavor flavor = IndentTransferableData.getDataFlavorStatic();

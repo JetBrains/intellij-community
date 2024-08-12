@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.customFolding;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -24,7 +24,7 @@ import java.util.Set;
 
 public final class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (Boolean.TRUE.equals(e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT))) {
@@ -68,8 +68,7 @@ public final class GotoCustomRegionAction extends AnAction implements DumbAware,
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull
-  private static Collection<FoldingDescriptor> getCustomFoldingDescriptors(@NotNull Editor editor, @NotNull Project project) {
+  private static @NotNull Collection<FoldingDescriptor> getCustomFoldingDescriptors(@NotNull Editor editor, @NotNull Project project) {
     Set<FoldingDescriptor> foldingDescriptors = new HashSet<>();
     final Document document = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -94,8 +93,7 @@ public final class GotoCustomRegionAction extends AnAction implements DumbAware,
     return foldingDescriptors;
   }
 
-  @Nullable
-  private static CustomFoldingBuilder getCustomFoldingBuilder(FoldingBuilder builder, FoldingDescriptor descriptor) {
+  private static @Nullable CustomFoldingBuilder getCustomFoldingBuilder(FoldingBuilder builder, FoldingDescriptor descriptor) {
     if (builder instanceof CustomFoldingBuilder) return (CustomFoldingBuilder)builder;
     FoldingBuilder originalBuilder = CompositeFoldingBuilder.getOriginalBuilder(descriptor);
     if (originalBuilder instanceof CustomFoldingBuilder) return (CustomFoldingBuilder)originalBuilder;

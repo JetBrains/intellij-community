@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.ide.util.gotoByName.ModelDiff;
@@ -191,8 +191,7 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
            || usage == USAGES_FILTERED_OUT_SEPARATOR;
   }
 
-  @Nullable
-  private static PsiElement getPsiElementForHint(Object selectedValue) {
+  private static @Nullable PsiElement getPsiElementForHint(Object selectedValue) {
     if (selectedValue instanceof UsageNode) {
       final Usage usage = ((UsageNode)selectedValue).getUsage();
       if (usage instanceof UsageInfo2UsageAdapter) {
@@ -211,7 +210,7 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
   }
 
   @NotNull
-  MyModel setTableModel(@NotNull final List<UsageNode> data) {
+  MyModel setTableModel(final @NotNull List<UsageNode> data) {
     ThreadingAssertions.assertEventDispatchThread();
     final int columnCount = calcColumnCount(data);
     MyModel model = getModel() instanceof MyModel ? (MyModel)getModel() : null;
@@ -292,9 +291,8 @@ public final class ShowUsagesTable extends JBTable implements UiDataProvider {
 
     private static ColumnInfo<UsageNode, UsageNode> @NotNull [] cols(int cols) {
       ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<>("") {
-        @Nullable
         @Override
-        public UsageNode valueOf(UsageNode node) {
+        public @Nullable UsageNode valueOf(UsageNode node) {
           return node;
         }
       };

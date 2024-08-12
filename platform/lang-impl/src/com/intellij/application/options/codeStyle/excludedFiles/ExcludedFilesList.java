@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -77,8 +77,7 @@ public final class ExcludedFilesList extends JBList<FileSetDescriptor> {
     settings.getExcludedFiles().setDescriptors(NamedScopeDescriptor.NAMED_SCOPE_TYPE, getDescriptors());
   }
 
-  @NotNull
-  private List<FileSetDescriptor> getDescriptors() {
+  private @NotNull List<FileSetDescriptor> getDescriptors() {
     List<FileSetDescriptor> descriptors = new ArrayList<>();
     for (int i = 0; i < myModel.getSize(); i++) {
       descriptors.add(myModel.get(i));
@@ -177,7 +176,7 @@ public final class ExcludedFilesList extends JBList<FileSetDescriptor> {
     mySchemesModel = schemesModel;
   }
 
-  public void editScope(@Nullable final String selectedName) {
+  public void editScope(final @Nullable String selectedName) {
     assert mySchemesModel != null;
     EditScopesDialog scopesDialog = EditScopesDialog.showDialog(getScopeHolderProject(), selectedName);
     if (scopesDialog.isOK()) {
@@ -231,8 +230,7 @@ public final class ExcludedFilesList extends JBList<FileSetDescriptor> {
     return mySchemesModel.isProjectScheme(scheme) ? mySchemesModel.getProject() : ProjectManager.getInstance().getDefaultProject();
   }
 
-  @Nullable
-  private FileSetDescriptor findDescriptor(@NotNull String name) {
+  private @Nullable FileSetDescriptor findDescriptor(@NotNull String name) {
     for (int i = 0; i < myModel.size(); i++) {
       if (name.equals(myModel.get(i).getName())) return myModel.get(i);
     }

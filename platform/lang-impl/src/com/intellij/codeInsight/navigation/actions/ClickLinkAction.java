@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -28,8 +28,7 @@ public final class ClickLinkAction extends DumbAwareAction {
     hyperlink.navigate(project);
   }
 
-  @Nullable
-  private static HyperlinkInfo getLink(@Nullable Editor editor, @Nullable Project project) {
+  private static @Nullable HyperlinkInfo getLink(@Nullable Editor editor, @Nullable Project project) {
     if (editor != null && project != null) {
       int offset = editor.getCaretModel().getOffset();
       return EditorHyperlinkSupport.get(editor).getHyperlinkAt(offset);

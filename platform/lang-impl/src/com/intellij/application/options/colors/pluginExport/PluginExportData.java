@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.pluginExport;
 
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
@@ -9,11 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Properties;
 
 public final class PluginExportData {
-  private final static String DESCRIPTION_PROPERTY = "description";
-  private final static String VENDOR_NAME_PROPERTY = "vendorName";
-  private final static String VENDOR_MAIL_PROPERTY = "vendorMail";
-  private final static String VENDOR_URL_PROPERTY = "vendorUrl";
-  private final static String VERSION_PROPERTY = "version";
+  private static final String DESCRIPTION_PROPERTY = "description";
+  private static final String VENDOR_NAME_PROPERTY = "vendorName";
+  private static final String VENDOR_MAIL_PROPERTY = "vendorMail";
+  private static final String VENDOR_URL_PROPERTY = "vendorUrl";
+  private static final String VERSION_PROPERTY = "version";
 
   private String myDescription;
   private String myVendorName;

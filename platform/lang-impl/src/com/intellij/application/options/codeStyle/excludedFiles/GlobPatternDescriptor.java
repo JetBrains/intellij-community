@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.regex.PatternSyntaxException;
 
 public final class GlobPatternDescriptor implements FileSetDescriptor {
-  public final static String TYPE = "globPattern";
+  public static final String TYPE = "globPattern";
 
   private String myPattern;
 

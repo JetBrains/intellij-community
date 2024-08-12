@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.ProjectBundle;
@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class UnknownInvalidSdkFixDownload extends UnknownSdkFixActionDownloadBase implements UnknownSdkFixAction {
-  private @NotNull final UnknownInvalidSdk mySdk;
-  private @NotNull final UnknownSdkDownloadableSdkFix myFix;
+  private final @NotNull UnknownInvalidSdk mySdk;
+  private final @NotNull UnknownSdkDownloadableSdkFix myFix;
 
   UnknownInvalidSdkFixDownload(@NotNull UnknownInvalidSdk sdk,
                                @NotNull UnknownSdkDownloadableSdkFix fix) {

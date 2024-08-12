@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -25,13 +25,13 @@ import java.util.*;
 import static com.intellij.application.options.codeStyle.arrangement.match.ArrangementSectionRuleManager.ArrangementSectionRuleData;
 
 public final class ArrangementSectionRulesControl extends ArrangementMatchingRulesControl {
-  @NotNull public static final DataKey<ArrangementSectionRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");
-  @NotNull private static final Logger LOG = Logger.getInstance(ArrangementSectionRulesControl.class);
-  @NotNull private final ArrangementColorsProvider myColorsProvider;
-  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
+  public static final @NotNull DataKey<ArrangementSectionRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");
+  private static final @NotNull Logger LOG = Logger.getInstance(ArrangementSectionRulesControl.class);
+  private final @NotNull ArrangementColorsProvider myColorsProvider;
+  private final @NotNull ArrangementStandardSettingsManager mySettingsManager;
 
-  @Nullable private final ArrangementSectionRuleManager mySectionRuleManager;
-  @Nullable private ArrangementStandardSettingsManager myExtendedSettingsManager;
+  private final @Nullable ArrangementSectionRuleManager mySectionRuleManager;
+  private @Nullable ArrangementStandardSettingsManager myExtendedSettingsManager;
 
   public ArrangementSectionRulesControl(@NotNull Language language,
                                         @NotNull ArrangementStandardSettingsManager settingsManager,
@@ -67,14 +67,12 @@ public final class ArrangementSectionRulesControl extends ArrangementMatchingRul
     return new MatchingRulesRenderer();
   }
 
-  @NotNull
   @Override
-  protected ArrangementMatchingRulesValidator createValidator() {
+  protected @NotNull ArrangementMatchingRulesValidator createValidator() {
     return new ArrangementSectionRulesValidator(getModel(), mySectionRuleManager);
   }
 
-  @Nullable
-  public ArrangementSectionRuleManager getSectionRuleManager() {
+  public @Nullable ArrangementSectionRuleManager getSectionRuleManager() {
     return mySectionRuleManager;
   }
 
@@ -138,8 +136,7 @@ public final class ArrangementSectionRulesControl extends ArrangementMatchingRul
     }
   }
 
-  @Nullable
-  public Collection<StdArrangementRuleAliasToken> getRulesAliases() {
+  public @Nullable Collection<StdArrangementRuleAliasToken> getRulesAliases() {
     return myExtendedSettingsManager == null ? null : myExtendedSettingsManager.getRuleAliases();
   }
 
@@ -160,8 +157,7 @@ public final class ArrangementSectionRulesControl extends ArrangementMatchingRul
     }
   }
 
-  @NotNull
-  public ArrangementRuleAliasDialog createRuleAliasEditDialog() {
+  public @NotNull ArrangementRuleAliasDialog createRuleAliasEditDialog() {
     final Set<String> tokenIds = new HashSet<>();
     final List<ArrangementSectionRule> sections = getSections();
     for (ArrangementSectionRule section : sections) {

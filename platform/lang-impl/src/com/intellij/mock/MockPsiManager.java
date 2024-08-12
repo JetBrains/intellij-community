@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.mock;
 
@@ -36,8 +36,7 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -47,8 +46,7 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  @Nullable
-  public
+  public @Nullable
   FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     return null;
   }
@@ -80,8 +78,7 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  @NotNull
-  public PsiModificationTracker getModificationTracker() {
+  public @NotNull PsiModificationTracker getModificationTracker() {
     if (myPsiModificationTracker == null) {
       myPsiModificationTracker = new PsiModificationTrackerImpl(myProject);
     }
@@ -156,8 +153,7 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  @NotNull
-  public FileManager getFileManager() {
+  public @NotNull FileManager getFileManager() {
     if (myMockFileManager == null) {
       myMockFileManager = new MockFileManager(this);
     }
@@ -165,11 +161,11 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  public void beforeChildRemoval(@NotNull final PsiTreeChangeEventImpl event) {
+  public void beforeChildRemoval(final @NotNull PsiTreeChangeEventImpl event) {
   }
 
   @Override
-  public void beforeChildReplacement(@NotNull final PsiTreeChangeEventImpl event) {
+  public void beforeChildReplacement(final @NotNull PsiTreeChangeEventImpl event) {
   }
 
   @Override

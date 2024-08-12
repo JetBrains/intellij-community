@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import java.util.Objects;
 
 public abstract class CompletionThreadingBase implements CompletionThreading {
-  protected final static ThreadLocal<Boolean> isInBatchUpdate = ThreadLocal.withInitial(() -> Boolean.FALSE);
+  protected static final ThreadLocal<Boolean> isInBatchUpdate = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   public static void withBatchUpdate(Runnable runnable, CompletionProcess process) {
     if (isInBatchUpdate.get().booleanValue() || !(process instanceof CompletionProgressIndicator)) {

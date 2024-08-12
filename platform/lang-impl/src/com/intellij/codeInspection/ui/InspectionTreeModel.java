@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -73,8 +73,7 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     return myRoot;
   }
 
-  @Nullable
-  public InspectionTreeNode getParent(InspectionTreeNode node) {
+  public @Nullable InspectionTreeNode getParent(InspectionTreeNode node) {
     return node.myParent;
   }
 
@@ -131,13 +130,11 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     }
   }
 
-  @NotNull
-  public InspectionModuleNode createModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
+  public @NotNull InspectionModuleNode createModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
     return getOrAdd(module, parent, () -> new InspectionModuleNode(module, parent));
   }
 
-  @NotNull
-  public InspectionPackageNode createPackageNode(String packageName, @NotNull InspectionTreeNode parent) {
+  public @NotNull InspectionPackageNode createPackageNode(String packageName, @NotNull InspectionTreeNode parent) {
     return getOrAdd(packageName, parent, () -> new InspectionPackageNode(packageName, parent));
   }
 
@@ -153,10 +150,9 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     return getOrAdd(level, parent, () -> new InspectionSeverityGroupNode(severityRegistrar, level, parent));
   }
 
-  @NotNull
-  public RefElementNode createRefElementNode(@Nullable RefEntity entity,
-                                             @NotNull Supplier<? extends RefElementNode> supplier,
-                                             @NotNull InspectionTreeNode parent) {
+  public @NotNull RefElementNode createRefElementNode(@Nullable RefEntity entity,
+                                                      @NotNull Supplier<? extends RefElementNode> supplier,
+                                                      @NotNull InspectionTreeNode parent) {
     return getOrAdd(entity, parent, () -> ReadAction.compute(supplier::get));
   }
 
@@ -230,9 +226,8 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     return (T)node;
   }
 
-  @NotNull
   @Override
-  public Invoker getInvoker() {
+  public @NotNull Invoker getInvoker() {
     return myInvoker;
   }
 }

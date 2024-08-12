@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -52,8 +52,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     return "(" + path + ")";
   }
 
-  @Nullable
-  public static String getRelativePath(final VirtualFile virtualFile, final Project project) {
+  public static @Nullable String getRelativePath(final VirtualFile virtualFile, final Project project) {
     if (project == null) {
       return virtualFile.getPresentableUrl();
     }
@@ -75,8 +74,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     return url;
   }
 
-  @Nullable
-  public static VirtualFile getAnyRoot(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+  public static @Nullable VirtualFile getAnyRoot(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     VirtualFile root = index.getContentRootForFile(virtualFile);
     if (root == null) root = index.getClassRootForFile(virtualFile);
@@ -88,8 +86,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     return root;
   }
 
-  @NotNull
-  static String getRelativePathFromRoot(@NotNull VirtualFile file, @NotNull VirtualFile root) {
+  static @NotNull String getRelativePathFromRoot(@NotNull VirtualFile file, @NotNull VirtualFile root) {
     return root.getName() + File.separatorChar + VfsUtilCore.getRelativePath(file, root, File.separatorChar);
   }
 

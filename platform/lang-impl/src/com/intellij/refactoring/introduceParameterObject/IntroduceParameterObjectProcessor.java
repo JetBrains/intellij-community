@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -144,9 +144,8 @@ public final class IntroduceParameterObjectProcessor<M extends PsiNamedElement, 
     return showConflicts(conflicts, usageInfos);
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new IntroduceParameterObjectUsageViewDescriptor(myMethod);
   }
 
@@ -168,8 +167,7 @@ public final class IntroduceParameterObjectProcessor<M extends PsiNamedElement, 
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return RefactoringBundle
       .message("refactoring.introduce.parameter.object.command.name", myClassDescriptor.getClassName(), myMethod.getName());
   }

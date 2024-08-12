@@ -32,9 +32,9 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
   private static final StringEventField INSPECTION_ID_FIELD =
     EventFields.StringValidatedByCustomRule("inspection_id", InspectionUsageFUSCollector.InspectionToolValidator.class);
 
-  private final static EventLogGroup GROUP = new EventLogGroup("intentions", 63);
+  private static final EventLogGroup GROUP = new EventLogGroup("intentions", 63);
 
-  private final static VarargEventId CALLED =
+  private static final VarargEventId CALLED =
     GROUP.registerVarargEvent("called",
                               ID_FIELD,
                               EventFields.PluginInfo,
@@ -42,7 +42,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
                               DISTANCE_FIELD,
                               DUMB_MODE_FIELD);
 
-  private final static VarargEventId SHOWN =
+  private static final VarargEventId SHOWN =
     GROUP.registerVarargEvent("shown",
                               ID_FIELD,
                               EventFields.PluginInfo,
@@ -80,8 +80,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
     FeatureUsageTracker.getInstance().triggerFeatureUsedByIntention(clazz);
   }
 
-  @NotNull
-  private static Class<?> getOriginalHandlerClass(@NotNull CommonIntentionAction action) {
+  private static @NotNull Class<?> getOriginalHandlerClass(@NotNull CommonIntentionAction action) {
     return ReportingClassSubstitutor.getClassToReport(action);
   }
 

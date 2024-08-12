@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -88,8 +88,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     myTarget = new OpenFileDescriptor(project, file, line, -1, true);
   }
 
-  @NotNull
-  public static Font getBookmarkFont() {
+  public static @NotNull Font getBookmarkFont() {
     return EditorFontType.getGlobalPlainFont();
   }
 
@@ -187,8 +186,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     myMnemonic = Character.toUpperCase(mnemonic);
   }
 
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myTarget.getFile();
   }
 
@@ -244,8 +242,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return myTarget.getLine() >= 0;
   }
 
-  @NotNull
-  private OpenFileDescriptor getTarget() {
+  private @NotNull OpenFileDescriptor getTarget() {
     int line = getLine();
     if (line != myTarget.getLine()) {
       myTarget = new OpenFileDescriptor(myTarget.getProject(), myTarget.getFile(), line, -1, true);
@@ -264,8 +261,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return result.toString();
   }
 
-  @NotNull
-  public String getQualifiedName() {
+  public @NotNull String getQualifiedName() {
     String presentableUrl = myTarget.getFile().getPresentableUrl();
     if (myTarget.getFile().isDirectory()) {
       return presentableUrl;
@@ -296,9 +292,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return BookmarkBundle.message("bookmark.file.X.line.Y", presentableUrl, getLine() + 1);
   }
 
-  @NotNull
-  @NlsContexts.Tooltip
-  private String getBookmarkTooltip() {
+  private @NotNull @NlsContexts.Tooltip String getBookmarkTooltip() {
     StringBuilder result = new StringBuilder(BookmarkBundle.message("bookmark.text"));
     if (myMnemonic != 0) {
       result.append(" ").append(myMnemonic);
@@ -350,20 +344,17 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
 
     @Override
-    @NotNull
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return myBookmark.getType().getGutterIcon();
     }
 
     @Override
-    @NotNull
-    public String getTooltipText() {
+    public @NotNull String getTooltipText() {
       return myBookmark.getBookmarkTooltip();
     }
 
-    @NotNull
     @Override
-    public GutterDraggableObject getDraggableObject() {
+    public @NotNull GutterDraggableObject getDraggableObject() {
       return new GutterDraggableObject() {
         @Override
         public boolean copy(int line, VirtualFile file, int actionId) {
@@ -374,9 +365,8 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       };
     }
 
-    @NotNull
     @Override
-    public String getAccessibleName() {
+    public @NotNull String getAccessibleName() {
       return BookmarkBundle.message("accessible.name.icon.bookmark.0", myBookmark.myMnemonic);
     }
 
@@ -392,9 +382,8 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
       return getIcon().hashCode();
     }
 
-    @Nullable
     @Override
-    public ActionGroup getPopupMenuActions() {
+    public @Nullable ActionGroup getPopupMenuActions() {
       return (ActionGroup)ActionManager.getInstance().getAction("popup@BookmarkContextMenu");
     }
   }

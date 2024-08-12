@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.CommonBundle;
@@ -63,8 +63,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     );
   }
 
-  @NotNull
-  private String getProjectName() {
+  private @NotNull String getProjectName() {
     Project project = ProjectUtil.guessCurrentProject(getSchemesPanel());
     return project.getName();
   }
@@ -104,8 +103,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     }
   }
 
-  @Nullable
-  private CodeStyleScheme importExternalCodeStyle(@NotNull SchemeImporter<CodeStyleScheme> importer, @NotNull CodeStyleScheme currentScheme)
+  private @Nullable CodeStyleScheme importExternalCodeStyle(@NotNull SchemeImporter<CodeStyleScheme> importer, @NotNull CodeStyleScheme currentScheme)
     throws SchemeImportException {
     final VirtualFile selectedFile = SchemeImportUtil
       .selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), CodeStyleSchemesUIConfiguration.Util.getRecentImportFile(), null);
@@ -135,31 +133,14 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     return null;
   }
 
-  private final class SchemeCreator implements SchemeFactory<CodeStyleScheme> {
-    private CodeStyleScheme myCreatedScheme = null;
-
-    @NotNull
-    @Override
-    public CodeStyleScheme createNewScheme(@Nullable String targetName) {
-      if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
-      myCreatedScheme = getModel().createNewScheme(targetName, getCurrentScheme());
-      getModel().addScheme(myCreatedScheme, true);
-      return myCreatedScheme;
-    }
-
-    boolean isSchemeWasCreated() {
-      return myCreatedScheme != null;
-    }
-
-    CodeStyleScheme getCreatedScheme() {
-      return myCreatedScheme;
-    }
+  @Override
+  protected @NotNull Class<CodeStyleScheme> getSchemeType() {
+    return CodeStyleScheme.class;
   }
 
-  @NotNull
   @Override
-  protected Class<CodeStyleScheme> getSchemeType() {
-    return CodeStyleScheme.class;
+  protected @NotNull CodeStyleSchemesModel getModel() {
+    return (CodeStyleSchemesModel)super.getModel();
   }
 
   @Override
@@ -173,10 +154,24 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
     }
   }
 
-  @NotNull
-  @Override
-  protected CodeStyleSchemesModel getModel() {
-    return (CodeStyleSchemesModel)super.getModel();
+  private final class SchemeCreator implements SchemeFactory<CodeStyleScheme> {
+    private CodeStyleScheme myCreatedScheme = null;
+
+    @Override
+    public @NotNull CodeStyleScheme createNewScheme(@Nullable String targetName) {
+      if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
+      myCreatedScheme = getModel().createNewScheme(targetName, getCurrentScheme());
+      getModel().addScheme(myCreatedScheme, true);
+      return myCreatedScheme;
+    }
+
+    boolean isSchemeWasCreated() {
+      return myCreatedScheme != null;
+    }
+
+    CodeStyleScheme getCreatedScheme() {
+      return myCreatedScheme;
+    }
   }
 
   private static String getSharedImportSource() {

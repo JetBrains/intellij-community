@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.progress;
 
 import com.intellij.build.BuildBundle;
@@ -20,15 +20,13 @@ public final class BuildRootProgressImpl extends BuildProgressImpl {
     myListener = buildProgressListener;
   }
 
-  @NotNull
   @Override
-  public Object getId() {
+  public @NotNull Object getId() {
     return getBuildId();
   }
 
   @Override
-  @NotNull
-  protected StartEvent createStartEvent(BuildProgressDescriptor descriptor) {
+  protected @NotNull StartEvent createStartEvent(BuildProgressDescriptor descriptor) {
     return new StartBuildEventImpl(descriptor.getBuildDescriptor(), BuildBundle.message("build.status.running"));
   }
 
@@ -37,39 +35,34 @@ public final class BuildRootProgressImpl extends BuildProgressImpl {
     return finish(System.currentTimeMillis(), false, BuildBundle.message("build.status.finished"));
   }
 
-  @NotNull
   @Override
-  public BuildProgress<BuildProgressDescriptor> finish(long timeStamp, boolean isUpToDate, @NotNull @BuildEventsNls.Message String message) {
+  public @NotNull BuildProgress<BuildProgressDescriptor> finish(long timeStamp, boolean isUpToDate, @NotNull @BuildEventsNls.Message String message) {
     assertStarted();
     FinishEvent event = new FinishBuildEventImpl(getId(), null, timeStamp, message, new SuccessResultImpl(isUpToDate));
     myListener.onEvent(getBuildId(), event);
     return this;
   }
 
-  @NotNull
   @Override
-  public BuildProgress<BuildProgressDescriptor> fail() {
+  public @NotNull BuildProgress<BuildProgressDescriptor> fail() {
     return fail(System.currentTimeMillis(), BuildBundle.message("build.status.failed"));
   }
 
-  @NotNull
   @Override
-  public BuildRootProgressImpl fail(long timeStamp, @NotNull @BuildEventsNls.Message String message) {
+  public @NotNull BuildRootProgressImpl fail(long timeStamp, @NotNull @BuildEventsNls.Message String message) {
     assertStarted();
     FinishBuildEvent event = new FinishBuildEventImpl(getId(), null, timeStamp, message, new FailureResultImpl());
     myListener.onEvent(getBuildId(), event);
     return this;
   }
 
-  @NotNull
   @Override
-  public BuildProgress<BuildProgressDescriptor> cancel() {
+  public @NotNull BuildProgress<BuildProgressDescriptor> cancel() {
     return cancel(System.currentTimeMillis(), BuildBundle.message("build.status.cancelled"));
   }
 
-  @NotNull
   @Override
-  public BuildRootProgressImpl cancel(long timeStamp, @NotNull String message) {
+  public @NotNull BuildRootProgressImpl cancel(long timeStamp, @NotNull String message) {
     assertStarted();
     FinishBuildEventImpl event = new FinishBuildEventImpl(getId(), null, timeStamp, message, new SkippedResultImpl());
     myListener.onEvent(getBuildId(), event);

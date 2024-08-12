@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -1113,10 +1113,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 }
 
 final class FileStructurePopupTimeTracker extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 2);
-  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", EventFields.DurationMs);
-  private final static EventId1<Long> SHOW = GROUP.registerEvent("data.shown", EventFields.DurationMs);
-  private final static EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", EventFields.DurationMs);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 2);
+  private static final EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", EventFields.DurationMs);
+  private static final EventId1<Long> SHOW = GROUP.registerEvent("data.shown", EventFields.DurationMs);
+  private static final EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", EventFields.DurationMs);
 
   static void logRebuildTime(long elapsedTimeNanos) {
     long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);

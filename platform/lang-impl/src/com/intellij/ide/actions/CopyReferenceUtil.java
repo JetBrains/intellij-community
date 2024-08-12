@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -48,8 +48,7 @@ public final class CopyReferenceUtil extends FqnUtil {
     }
   }
 
-  @NotNull
-  static List<PsiElement> getElementsToCopy(@Nullable final Editor editor, final DataContext dataContext) {
+  static @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
     List<PsiElement> elements = new ArrayList<>();
     if (editor != null) {
       PsiReference reference = TargetElementUtil.findReference(editor);

@@ -76,8 +76,7 @@ public final class ConsoleExecutionEditor implements Disposable {
     myConsolePromptDecorator.update();
   }
 
-  @NotNull
-  public VirtualFile getVirtualFile() {
+  public @NotNull VirtualFile getVirtualFile() {
     return myHelper.virtualFile;
   }
 
@@ -85,8 +84,7 @@ public final class ConsoleExecutionEditor implements Disposable {
     return myConsoleEditor;
   }
 
-  @NotNull
-  public EditorEx getCurrentEditor() {
+  public @NotNull EditorEx getCurrentEditor() {
     return ObjectUtils.notNull(myCurrentEditor, myConsoleEditor);
   }
 
@@ -98,8 +96,7 @@ public final class ConsoleExecutionEditor implements Disposable {
     return myConsoleEditor.getComponent();
   }
 
-  @NotNull
-  public ConsolePromptDecorator getConsolePromptDecorator() {
+  public @NotNull ConsolePromptDecorator getConsolePromptDecorator() {
     return myConsolePromptDecorator;
   }
 
@@ -148,7 +145,7 @@ public final class ConsoleExecutionEditor implements Disposable {
   }
 
 
-  private void setPromptInner(@Nullable final String prompt) {
+  private void setPromptInner(final @Nullable String prompt) {
     if (!myConsoleEditor.isDisposed()) {
       myConsolePromptDecorator.setMainPrompt(prompt != null ? prompt : "");
     }
@@ -205,7 +202,7 @@ public final class ConsoleExecutionEditor implements Disposable {
 
   }
 
-  public void setInputText(@NotNull final String query) {
+  public void setInputText(final @NotNull String query) {
     DocumentUtil.writeInRunUndoTransparentAction(() -> myConsoleEditor.getDocument().setText(StringUtil.convertLineSeparators(query)));
   }
 }

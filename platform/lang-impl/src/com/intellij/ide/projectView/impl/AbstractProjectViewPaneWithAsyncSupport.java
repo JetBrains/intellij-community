@@ -54,9 +54,8 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     super(project);
   }
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     if (myComponent != null) {
       SwingUtilities.updateComponentTreeUI(myComponent);
       return myComponent;
@@ -182,9 +181,8 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     }
   }
 
-  @NotNull
   @Override
-  public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
+  public @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     Runnable afterUpdate;
     final ActionCallback cb = new ActionCallback();
     afterUpdate = cb.createSetDoneRunnable();
@@ -202,8 +200,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     selectCB(element, file, requestFocus);
   }
 
-  @NotNull
-  public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
+  public @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
       if (myAsyncSupport != null) {
         return myAsyncSupport.select(myTree, element, file);
@@ -212,15 +209,12 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     return ActionCallback.DONE;
   }
 
-  @NotNull
-  protected abstract AbstractTreeStructureBase createStructure();
+  protected abstract @NotNull AbstractTreeStructureBase createStructure();
 
-  @NotNull
-  protected abstract DnDAwareTree createTree(@NotNull DefaultTreeModel treeModel);
+  protected abstract @NotNull DnDAwareTree createTree(@NotNull DefaultTreeModel treeModel);
 
   @ApiStatus.Internal
-  @Nullable
-  protected JComponent createPromoter() {
+  protected @Nullable JComponent createPromoter() {
     return null;
   }
 
@@ -247,8 +241,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public AsyncProjectViewSupport createAsyncSupport(@NotNull Disposable parent, @NotNull Comparator<NodeDescriptor<?>> comparator) {
+  public @NotNull AsyncProjectViewSupport createAsyncSupport(@NotNull Disposable parent, @NotNull Comparator<NodeDescriptor<?>> comparator) {
     return new AsyncProjectViewSupport(parent, myProject, createStructure(), comparator);
   }
 }

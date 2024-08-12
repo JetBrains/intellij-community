@@ -89,7 +89,7 @@ import java.util.*;
 
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(SingleInspectionProfilePanel.class);
-  @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
+  private static final @NonNls String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
   private static final int SECTION_GAP = 20;
@@ -99,8 +99,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private final List<InspectionTreeAdvertiser.CustomGroup> myCustomGroups = new ArrayList<>();
   private final Alarm myAlarm = new Alarm();
   private final ProjectInspectionProfileManager myProjectProfileManager;
-  @NotNull
-  private final InspectionProfileModifiableModel myProfile;
+  private final @NotNull InspectionProfileModifiableModel myProfile;
   private DescriptionEditorPane myDescription;
   private JBLabel myOptionsLabel;
   private JPanel myOptionsPanel;
@@ -159,8 +158,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myRoot.dropCache();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProjectProfileManager.getProject();
   }
 
@@ -187,8 +185,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return null;
   }
 
-  @Nullable
-  private static InspectionConfigTreeNode findNodeByKey(String name, InspectionConfigTreeNode root) {
+  private static @Nullable InspectionConfigTreeNode findNodeByKey(String name, InspectionConfigTreeNode root) {
     for (int i = 0; i < root.getChildCount(); i++) {
       final InspectionConfigTreeNode child = (InspectionConfigTreeNode)root.getChildAt(i);
       if (child instanceof InspectionConfigTreeNode.Tool) {
@@ -584,7 +581,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     };
     myTreeTable = InspectionsConfigTreeTable.create(new InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings(myRoot, getProject()) {
       @Override
-      protected void onChanged(@NotNull final InspectionConfigTreeNode node) {
+      protected void onChanged(final @NotNull InspectionConfigTreeNode node) {
         InspectionConfigTreeNode.updateUpHierarchy(node);
       }
 
@@ -594,8 +591,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       @Override
-      @NotNull
-      public InspectionProfileImpl getInspectionProfile() {
+      public @NotNull InspectionProfileImpl getInspectionProfile() {
         return myProfile;
       }
     }, myDisposable);
@@ -919,7 +915,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
         final var tableSettings = new ScopesAndSeveritiesTable.TableSettings(nodes, myProfile, project) {
           @Override
-          protected void onScopeChosen(@NotNull final ScopeToolState state) {
+          protected void onScopeChosen(final @NotNull ScopeToolState state) {
             setConfigPanel(configPanelAnchor, state);
             configPanelAnchor.revalidate();
             configPanelAnchor.repaint();
@@ -1061,8 +1057,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel.repaint();
   }
 
-  @NotNull
-  public InspectionProfileModifiableModel getProfile() {
+  public @NotNull InspectionProfileModifiableModel getProfile() {
     return myProfile;
   }
 
@@ -1411,8 +1406,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private final class ToolOptionsSeparator extends JPanel {
     private final ActionLink myResetLink;
-    @Nullable
-    private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
+    private final @Nullable ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
 
     ToolOptionsSeparator(@Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;

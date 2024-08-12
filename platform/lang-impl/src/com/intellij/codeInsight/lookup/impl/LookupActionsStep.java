@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -60,9 +60,8 @@ public final class LookupActionsStep extends BaseListPopupStep<LookupElementActi
     return LookupCellRenderer.augmentIcon(myLookup.getEditor(), aValue.getIcon(), myEmptyIcon);
   }
 
-  @NotNull
   @Override
-  public String getTextFor(LookupElementAction value) {
+  public @NotNull String getTextFor(LookupElementAction value) {
     return value.getText();
   }
 }

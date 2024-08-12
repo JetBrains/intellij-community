@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -265,8 +265,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     return new UnindexedFilesIndexer(myProject, mergedQueue, mergedReason);
   }
 
-  @NotNull
-  private String mergeReasons(@NotNull UnindexedFilesIndexer otherIndexingTask) {
+  private @NotNull String mergeReasons(@NotNull UnindexedFilesIndexer otherIndexingTask) {
     String trimmedReason = StringUtil.trimStart(indexingReason, "Merged ");
     String trimmedOtherReason = StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
     if (otherIndexingTask.files.isEmpty() && trimmedReason.endsWith(trimmedOtherReason)) {

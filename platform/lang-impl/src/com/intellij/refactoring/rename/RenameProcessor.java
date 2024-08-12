@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -130,7 +130,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     super.doRun();
   }
 
-  public void prepareRenaming(@NotNull final PsiElement element, final String newName, final LinkedHashMap<PsiElement, String> allRenames) {
+  public void prepareRenaming(final @NotNull PsiElement element, final String newName, final LinkedHashMap<PsiElement, String> allRenames) {
     final List<RenamePsiElementProcessor> processors = RenamePsiElementProcessor.allForElement(element);
     myForceShowPreview = false;
     for (RenamePsiElementProcessor processor : processors) {
@@ -139,13 +139,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @Nullable
-  private String getHelpID() {
+  private @Nullable String getHelpID() {
     return RenamePsiElementProcessor.forElement(myPrimaryElement).getHelpID(myPrimaryElement);
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  public boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
 
@@ -285,8 +284,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new RenameViewDescriptor(myAllRenames);
   }
 
@@ -352,23 +350,20 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return myForceShowPreview || super.isPreviewUsages(usages) || UsageViewUtil.reportNonRegularUsages(usages, myProject);
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return "refactoring.rename";
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @Nullable RefactoringEventData getBeforeData() {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(myPrimaryElement);
     return data;
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(myPrimaryElement);
     return data;
@@ -470,9 +465,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return myCommandName;
   }
 

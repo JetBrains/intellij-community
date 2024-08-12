@@ -41,8 +41,7 @@ public class FilesToUpdateCollector {
     myFilesToUpdate.put(fileId, request);
   }
 
-  @NotNull
-  public DirtyFiles getDirtyFiles() {
+  public @NotNull DirtyFiles getDirtyFiles() {
     return myDirtyFiles;
   }
 

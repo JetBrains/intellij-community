@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.lang.Language;
@@ -14,16 +14,15 @@ import javax.swing.*;
  * {@link EditorCustomization customizations} if necessary.
  */
 public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
-  @NotNull
   @Override
-  public EditorTextField getEditorField(@NotNull Language language, @NotNull Project project,
-                                        @NotNull final Iterable<? extends EditorCustomization> features) {
+  public @NotNull EditorTextField getEditorField(@NotNull Language language, @NotNull Project project,
+                                                 final @NotNull Iterable<? extends EditorCustomization> features) {
     return new MyEditorTextField(language, project, features);
   }
 
   private static final class MyEditorTextField extends LanguageTextField {
 
-    @NotNull private final Iterable<? extends EditorCustomization> myCustomizations;
+    private final @NotNull Iterable<? extends EditorCustomization> myCustomizations;
 
     MyEditorTextField(@NotNull Language language, @NotNull Project project, @NotNull Iterable<? extends EditorCustomization> customizations) {
       super(language, project, "", false);

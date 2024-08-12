@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public abstract class RenameChooser {
-  @NonNls private static final String CODE_OCCURRENCES = "rename.string.select.code.occurrences";
-  @NonNls private static final String ALL_OCCURRENCES = "rename.string.select.all.occurrences";
+  private static final @NonNls String CODE_OCCURRENCES = "rename.string.select.code.occurrences";
+  private static final @NonNls String ALL_OCCURRENCES = "rename.string.select.all.occurrences";
   public static final Key<Boolean> CHOOSE_ALL_OCCURRENCES_IN_TEST = Key.create("RenameChooser.CHOOSE_ALL_OCCURRENCES_IN_TEST");
   private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<>();
   private final Editor myEditor;

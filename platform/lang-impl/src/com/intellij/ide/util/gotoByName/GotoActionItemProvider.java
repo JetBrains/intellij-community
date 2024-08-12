@@ -55,18 +55,17 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     myIntentions = ClearableLazyValue.create(() -> ReadAction.nonBlocking(() -> myModel.getAvailableIntentions()).executeSynchronously());
   }
 
-  @NotNull
   @Override
-  public List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
+  public @NotNull List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
     return Collections.emptyList(); // no common prefix insertion in goto action
   }
 
   @Override
   public boolean filterElements(final @NotNull ChooseByNameViewModel base,
-                                @NotNull final String pattern,
+                                final @NotNull String pattern,
                                 boolean everywhere,
                                 @NotNull ProgressIndicator cancelled,
-                                @NotNull final Processor<Object> consumer) {
+                                final @NotNull Processor<Object> consumer) {
     return filterElementsWithWeights(base, pattern, everywhere, cancelled, descriptor -> consumer.process(descriptor.getItem()));
   }
 
@@ -107,9 +106,8 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         ActionWrapper wrapper = wrapAnAction(action);
         int degree = matcher.matchingDegree(pattern);
         return new MatchedValue(wrapper, pattern, degree, MatchedValueType.ABBREVIATION) {
-          @NotNull
           @Override
-          public String getValueText() {
+          public @NotNull String getValueText() {
             return pattern;
           }
         };
@@ -269,8 +267,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     return processItems(pattern, MatchedValueType.INTENTION, intentions, consumer);
   }
 
-  @NotNull
-  private ActionWrapper wrapAnAction(@NotNull AnAction action) {
+  private @NotNull ActionWrapper wrapAnAction(@NotNull AnAction action) {
     return createActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, myModel);
   }
 

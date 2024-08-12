@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.groups;
 
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
@@ -12,11 +12,9 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class RunAnythingGroupBase extends RunAnythingGroup {
-  @NotNull
-  public abstract Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern);
+  public abstract @NotNull Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern);
 
-  @Nullable
-  protected Matcher getMatcher(@NotNull DataContext dataContext, @NotNull String pattern) {
+  protected @Nullable Matcher getMatcher(@NotNull DataContext dataContext, @NotNull String pattern) {
     return null;
   }
 

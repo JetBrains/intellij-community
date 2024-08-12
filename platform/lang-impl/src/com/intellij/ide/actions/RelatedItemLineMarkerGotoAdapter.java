@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
@@ -16,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public final class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
-  @NotNull
   @Override
-  public List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {
+  public @NotNull List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {
     List<PsiElement> parents = new ArrayList<>();
     PsiElement current = context;
     Set<Language> languages = new HashSet<>();

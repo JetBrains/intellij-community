@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
@@ -61,8 +61,7 @@ final class JavaModuleSettingsIndexableEntityProvider implements IndexableEntity
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getSymbolicId(), newRootUrls, oldRootUrls);
   }
 
-  @NotNull
-  private static List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
+  private static @NotNull List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
     return ContainerUtil.map(newContentRoots, o -> o.getUrl());
   }
 }

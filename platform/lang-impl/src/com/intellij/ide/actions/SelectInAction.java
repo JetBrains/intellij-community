@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.*;
@@ -61,8 +61,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     popup.showInBestPositionFor(dataContext);
   }
 
-  @NotNull
-  private static ListPopup createLegacyPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
+  private static @NotNull ListPopup createLegacyPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
     ListPopup popup;
     if (targetVector.isEmpty()) {
       DefaultActionGroup group = new DefaultActionGroup();
@@ -76,8 +75,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     return popup;
   }
 
-  @NotNull
-  private static ListPopup createActionPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
+  private static @NotNull ListPopup createActionPopup(@NotNull DataContext dataContext, @NotNull SelectInContext context, List<SelectInTarget> targetVector) {
     DefaultActionGroup group = new DefaultActionGroup();
     if (targetVector.isEmpty()) {
       group.add(new NoTargetsAction());
@@ -108,8 +106,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
       init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, icons);
     }
 
-    @NotNull
-    private static List<Icon> fillInIcons(@NotNull Collection<? extends SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
+    private static @NotNull List<Icon> fillInIcons(@NotNull Collection<? extends SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(selectInContext.getProject());
       List<Icon> list = new ArrayList<>();
       for (SelectInTarget target : targets) {
@@ -122,8 +119,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     }
 
     @Override
-    @NotNull
-    public String getTextFor(final SelectInTarget value) {
+    public @NotNull String getTextFor(final SelectInTarget value) {
       String text = value.toString();
       String id = value.getMinorViewId() == null ? value.getToolWindowId() : null;
       ToolWindow toolWindow = id == null ? null : ToolWindowManager.getInstance(mySelectInContext.getProject()).getToolWindow(id);

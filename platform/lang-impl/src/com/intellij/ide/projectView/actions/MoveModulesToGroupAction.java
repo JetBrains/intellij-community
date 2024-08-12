@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.actions;
 
@@ -53,7 +53,7 @@ public class MoveModulesToGroupAction extends AnAction {
     doMove(modules, myModuleGroup, e.getDataContext());
   }
 
-  public static void doMove(final Module @NotNull [] modules, final ModuleGroup group, @Nullable final DataContext dataContext) {
+  public static void doMove(final Module @NotNull [] modules, final ModuleGroup group, final @Nullable DataContext dataContext) {
     Project project = modules[0].getProject();
     ModifiableModuleModel modifiableModuleModel = dataContext != null
                                   ? LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext)

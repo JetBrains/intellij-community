@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.icons.AllIcons;
@@ -33,7 +33,7 @@ import javax.swing.*;
 import java.util.Set;
 
 public final class ProjectPatternProvider extends PatternDialectProvider {
-  @NonNls public static final String FILE = "file";
+  public static final @NonNls String FILE = "file";
 
   private static final Logger LOG = Logger.getInstance(ProjectPatternProvider.class);
 
@@ -55,8 +55,7 @@ public final class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return FILE;
   }
 
@@ -69,8 +68,7 @@ public final class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  @Nullable
-  public PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
+  public @Nullable PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
     if (node instanceof ModuleGroupNode) {
       if (!recursively) return null;
       return new FilePatternPackageSet(getGroupModulePattern((ModuleGroupNode)node), "*//*");
@@ -139,9 +137,8 @@ public final class ProjectPatternProvider extends PatternDialectProvider {
     return AllIcons.General.ProjectTab;
   }
 
-  @Nls
   @Override
-  public @NotNull String getHintMessage() {
+  public @Nls @NotNull String getHintMessage() {
     return LangBundle.message("package.pattern.provider.hint.label");
   }
 

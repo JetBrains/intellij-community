@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.notification.impl.ui.StickyButton;
@@ -17,7 +17,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public abstract class ColorButtonBase extends StickyButton {
-  @Nullable protected Color myColor;
+  protected @Nullable Color myColor;
 
   protected ColorButtonBase(@NotNull @NlsContexts.Button String text, @NotNull Color color) {
     super(FileColorManagerImpl.getAlias(text));
@@ -74,7 +74,7 @@ public abstract class ColorButtonBase extends StickyButton {
   protected static class ColorButtonUI extends StickyButtonUI<ColorButtonBase> {
 
     @Override
-    protected Color getBackgroundColor(@NotNull final ColorButtonBase button) {
+    protected Color getBackgroundColor(final @NotNull ColorButtonBase button) {
       return button.getColor();
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.unwrap;
 
@@ -50,8 +50,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     selectOption(options, editor, file);
   }
 
-  @NotNull
-  private static List<MyUnwrapAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  private static @NotNull List<MyUnwrapAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     List<MyUnwrapAction> result = new ArrayList<>();
 
     UnwrapDescriptor descriptor = getUnwrapDescription(file);
@@ -134,8 +133,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     private final Project myProject;
     private final Editor myEditor;
     private final Unwrapper myUnwrapper;
-    @NotNull
-    private final PsiElement myElement;
+    private final @NotNull PsiElement myElement;
 
     MyUnwrapAction(@NotNull Project project, @NotNull Editor editor, @NotNull Unwrapper unwrapper, @NotNull PsiElement element) {
       super(unwrapper.getDescription(element));

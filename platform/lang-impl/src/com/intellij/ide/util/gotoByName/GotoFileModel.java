@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
@@ -63,9 +63,8 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     return true;
   }
 
-  @NotNull
   @Override
-  public ChooseByNameItemProvider getItemProvider(@Nullable PsiElement context) {
+  public @NotNull ChooseByNameItemProvider getItemProvider(@Nullable PsiElement context) {
     for (GotoFileCustomizer customizer : GotoFileCustomizer.EP_NAME.getExtensionList()) {
       GotoFileItemProvider provider = customizer.createItemProvider(myProject, context, this);
       if (provider != null) return provider;
@@ -98,9 +97,8 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     }
   }
 
-  @Nullable
   @Override
-  protected FileTypeRef filterValueFor(NavigationItem item) {
+  protected @Nullable FileTypeRef filterValueFor(NavigationItem item) {
     return item instanceof PsiFile ? FileTypeRef.forFileType(((PsiFile) item).getFileType()) : null;
   }
 
@@ -117,15 +115,13 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.files");
   }
 
-  @NotNull
   @Override
-  public String getNotInMessage() {
+  public @NotNull String getNotInMessage() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getNotFoundMessage() {
+  public @NotNull String getNotFoundMessage() {
     return IdeBundle.message("label.no.files.found");
   }
 
@@ -144,13 +140,11 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     }
   }
 
-  @NotNull
   @Override
-  public PsiElementListCellRenderer getListCellRenderer() {
+  public @NotNull PsiElementListCellRenderer getListCellRenderer() {
     return new GotoFileCellRenderer(myMaxSize) {
-      @NotNull
       @Override
-      public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+      public @NotNull ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
         ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
         if (!(value instanceof PsiFileSystemItem)) return defaultMatchers;
 
@@ -160,20 +154,17 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
   }
 
   @Override
-  @Nullable
-  public String getFullName(@NotNull final Object element) {
+  public @Nullable String getFullName(final @NotNull Object element) {
     return element instanceof PsiFileSystemItem ? getFullName(((PsiFileSystemItem)element).getVirtualFile()) : getElementName(element);
   }
 
-  @Nullable
-  public String getFullName(@NotNull VirtualFile file) {
+  public @Nullable String getFullName(@NotNull VirtualFile file) {
     VirtualFile root = getTopLevelRoot(file);
     return root != null ? GotoFileCellRenderer.getRelativePathFromRoot(file, root)
                         : GotoFileCellRenderer.getRelativePath(file, myProject);
   }
 
-  @Nullable
-  public VirtualFile getTopLevelRoot(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile getTopLevelRoot(@NotNull VirtualFile file) {
     VirtualFile root = getContentRoot(file);
     return root == null ? null : JBIterable.generate(root, r -> getContentRoot(r.getParent())).last();
   }
@@ -197,9 +188,8 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     return true;
   }
 
-  @NotNull
   @Override
-  public String removeModelSpecificMarkup(@NotNull String pattern) {
+  public @NotNull String removeModelSpecificMarkup(@NotNull String pattern) {
     if (pattern.endsWith("/") || pattern.endsWith("\\")) {
       return pattern.substring(0, pattern.length() - 1);
     }
@@ -212,10 +202,9 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
     return 0;
   }
 
-  @NotNull
-  public static PsiElementListCellRenderer.ItemMatchers convertToFileItemMatchers(@NotNull PsiElementListCellRenderer.ItemMatchers defaultMatchers,
-                                                                                  @NotNull PsiFileSystemItem value,
-                                                                                  @NotNull GotoFileModel model) {
+  public static @NotNull PsiElementListCellRenderer.ItemMatchers convertToFileItemMatchers(@NotNull PsiElementListCellRenderer.ItemMatchers defaultMatchers,
+                                                                                           @NotNull PsiFileSystemItem value,
+                                                                                           @NotNull GotoFileModel model) {
     String shortName = model.getElementName(value);
     if (shortName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
       String sanitized = GotoFileItemProvider

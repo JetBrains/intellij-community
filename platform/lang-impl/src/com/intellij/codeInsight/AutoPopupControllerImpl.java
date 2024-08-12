@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
@@ -66,17 +66,17 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<? super PsiFile> condition){
+  public void autoPopupMemberLookup(final Editor editor, final @Nullable Condition<? super PsiFile> condition){
     autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
   }
 
   @Override
-  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<? super PsiFile> condition){
+  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, final @Nullable Condition<? super PsiFile> condition){
     scheduleAutoPopup(editor, completionType, condition);
   }
 
   @Override
-  public void scheduleAutoPopup(@NotNull Editor editor, @NotNull CompletionType completionType, @Nullable final Condition<? super PsiFile> condition) {
+  public void scheduleAutoPopup(@NotNull Editor editor, @NotNull CompletionType completionType, final @Nullable Condition<? super PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       return;
     }
@@ -112,7 +112,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod) {
+  public void autoPopupParameterInfo(final @NotNull Editor editor, final @Nullable PsiElement highlightedMethod) {
     if (PowerSaveMode.isEnabled()) return;
 
     ThreadingAssertions.assertEventDispatchThread();

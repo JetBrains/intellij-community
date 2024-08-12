@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -83,8 +83,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
     getTemplatePresentation().setText(name);
   }
 
-  @NotNull
-  public static @Nls String stripColorOptionCategory(@NotNull @Nls String displayName) {
+  public static @NotNull @Nls String stripColorOptionCategory(@NotNull @Nls String displayName) {
     final int separatorPos = displayName.indexOf("//");
     final @Nls String name = separatorPos == -1 ? displayName
                                                 : displayName.substring(separatorPos + 2);

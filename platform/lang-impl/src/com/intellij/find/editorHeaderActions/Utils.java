@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -106,13 +106,11 @@ public final class Utils {
     }
   }
 
-  @NotNull
-  public static CustomShortcutSet shortcutSetOf(@NotNull List<Shortcut> shortcuts) {
+  public static @NotNull CustomShortcutSet shortcutSetOf(@NotNull List<Shortcut> shortcuts) {
     return new CustomShortcutSet(shortcuts.toArray(Shortcut.EMPTY_ARRAY));
   }
 
-  @NotNull
-  public static List<Shortcut> shortcutsOf(@NotNull String actionId) {
+  public static @NotNull List<Shortcut> shortcutsOf(@NotNull String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     return action == null ? ContainerUtil.emptyList() : List.of(action.getShortcutSet().getShortcuts());
   }

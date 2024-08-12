@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.pluginExport;
 
 import com.intellij.lang.LangBundle;
@@ -30,9 +30,8 @@ public final class PluginInfoDialog extends DialogWrapper {
     myForm.apply(myExportData);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     myForm = new PluginInfoForm();
     return myForm.getTopPanel();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -235,8 +235,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     return popup;
   }
 
-  @NotNull
-  protected List<CompletionItem> collectSuggestedDirectories(@NotNull PsiDirectory directory) {
+  protected @NotNull List<CompletionItem> collectSuggestedDirectories(@NotNull PsiDirectory directory) {
     List<CompletionItem> variants = new ArrayList<>();
 
     VirtualFile vDir = directory.getVirtualFile();
@@ -277,9 +276,8 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     return variants;
   }
 
-  @Nullable
-  private static List<PsiElement> createDirectories(List<? extends Pair<String, JpsModuleSourceRootType<?>>> toCreate,
-                                                    CreateGroupHandler validator) {
+  private static @Nullable List<PsiElement> createDirectories(List<? extends Pair<String, JpsModuleSourceRootType<?>>> toCreate,
+                                                              CreateGroupHandler validator) {
     List<PsiElement> createdDirectories = new ArrayList<>(toCreate.size());
 
     // first, check that we can create all requested directories
@@ -335,13 +333,13 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   protected static final class CompletionItem {
-    @NotNull final CreateDirectoryCompletionContributor contributor;
+    final @NotNull CreateDirectoryCompletionContributor contributor;
 
-    @NotNull final String relativePath;
-    @Nullable final JpsModuleSourceRootType<?> rootType;
+    final @NotNull String relativePath;
+    final @Nullable JpsModuleSourceRootType<?> rootType;
 
-    @NlsContexts.ListItem @NotNull final String displayText;
-    @Nullable final Icon icon;
+    final @NlsContexts.ListItem @NotNull String displayText;
+    final @Nullable Icon icon;
 
     private CompletionItem(@NotNull CreateDirectoryCompletionContributor contributor,
                            @NotNull String relativePath,
@@ -375,7 +373,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   private static final class DirectoriesWithCompletionPopupPanel extends NewItemWithTemplatesPopupPanel<CompletionItem> {
-    final static private SimpleTextAttributes MATCHED = new SimpleTextAttributes(UIUtil.getListBackground(),
+    private static final SimpleTextAttributes MATCHED = new SimpleTextAttributes(UIUtil.getListBackground(),
                                                                                  UIUtil.getListForeground(),
                                                                                  null,
                                                                                  SimpleTextAttributes.STYLE_SEARCH_MATCH);

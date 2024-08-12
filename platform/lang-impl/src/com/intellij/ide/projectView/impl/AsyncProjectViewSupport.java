@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.CopyPasteUtil;
@@ -314,9 +314,8 @@ public final class AsyncProjectViewSupport {
     SmartList<TreePath> structures = new SmartList<>();
     SmartList<TreePath> presentations = new SmartList<>();
     myAsyncTreeModel.accept(new ProjectViewFileVisitor(file, structures::add) {
-      @NotNull
       @Override
-      protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull VirtualFile element) {
+      protected @NotNull Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull VirtualFile element) {
         Action action = super.visit(path, node, element);
         if (action == Action.CONTINUE) presentations.add(path);
         return action;
@@ -330,9 +329,8 @@ public final class AsyncProjectViewSupport {
   private void updateAllPresentations() {
     SmartList<TreePath> list = new SmartList<>();
     acceptAndUpdate(new TreeVisitor() {
-      @NotNull
       @Override
-      public Action visit(@NotNull TreePath path) {
+      public @NotNull Action visit(@NotNull TreePath path) {
         list.add(path);
         return Action.CONTINUE;
       }

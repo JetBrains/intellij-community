@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -26,16 +26,13 @@ public final class TemplateProjectDirectoryGenerator<T> extends DirectoryProject
     myModuleBuilder = myTemplate.createModuleBuilder();
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls @NotNull String getName() {
     return myTemplate.getName();
   }
 
-  @Nullable
   @Override
-  public Icon getLogo() {
+  public @Nullable Icon getLogo() {
     return myTemplate.getIcon();
   }
 
@@ -56,9 +53,8 @@ public final class TemplateProjectDirectoryGenerator<T> extends DirectoryProject
     }
   }
 
-  @NotNull
   @Override
-  public ValidationResult validate(@NotNull String baseDirPath) {
+  public @NotNull ValidationResult validate(@NotNull String baseDirPath) {
     String message = LangBundle.message("dialog.message.invalid.settings");
     for (WizardInputField field : myTemplate.getInputFields()) {
       try {

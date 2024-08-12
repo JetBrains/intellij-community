@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeEventQueue;
@@ -16,7 +16,7 @@ import static com.intellij.ide.actions.GotoActionBase.getInitialText;
 public abstract class SearchEverywhereBaseAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(final @NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);

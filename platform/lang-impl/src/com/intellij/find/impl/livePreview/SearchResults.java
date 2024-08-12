@@ -74,17 +74,14 @@ public class SearchResults implements DocumentListener, CaretListener {
 
   private final List<SearchResultsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @Nullable private FindResult myCursor;
+  private @Nullable FindResult myCursor;
 
-  @NotNull
-  private List<FindResult> myOccurrences = new ArrayList<>();
+  private @NotNull List<FindResult> myOccurrences = new ArrayList<>();
 
   private final Set<RangeMarker> myExcluded = new HashSet<>();
 
-  @NotNull
-  private final Editor myEditor;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Editor myEditor;
+  private final @NotNull Project myProject;
   private FindModel myFindModel;
 
   private int myMatchesLimit = 100;
@@ -188,8 +185,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     myMatchesLimit = matchesLimit;
   }
 
-  @Nullable
-  public FindResult getCursor() {
+  public @Nullable FindResult getCursor() {
     return myCursor;
   }
 
@@ -197,18 +193,15 @@ public class SearchResults implements DocumentListener, CaretListener {
     return myCursor != null ? myOccurrences.indexOf(myCursor) + 1 : -1;
   }
 
-  @NotNull
-  public List<FindResult> getOccurrences() {
+  public @NotNull List<FindResult> getOccurrences() {
     return myOccurrences;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
@@ -547,8 +540,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     return false;
   }
 
-  @Nullable
-  private FindResult findOccurrenceEqualTo(FindResult occurrence) {
+  private @Nullable FindResult findOccurrenceEqualTo(FindResult occurrence) {
     for (FindResult findResult : myOccurrences) {
       if (findResult.equals(occurrence)) {
         return findResult;
@@ -557,8 +549,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     return null;
   }
 
-  @Nullable
-  protected FindResult firstOccurrenceAtOrAfterCaret() {
+  protected @Nullable FindResult firstOccurrenceAtOrAfterCaret() {
     FindResult occurrence = getOccurrenceAtCaret();
     if (occurrence != null) return occurrence;
     occurrence = getFirstOccurrenceInSelection();
@@ -566,14 +557,12 @@ public class SearchResults implements DocumentListener, CaretListener {
     return firstOccurrenceAfterCaret();
   }
 
-  @Nullable
-  public FindResult getOccurrenceAtCaret() {
+  public @Nullable FindResult getOccurrenceAtCaret() {
     int offset = getEditor().getCaretModel().getOffset();
     return ContainerUtil.find(myOccurrences, occurrence -> occurrence.containsOffset(offset));
   }
 
-  @Nullable
-  private FindResult getFirstOccurrenceInSelection() {
+  private @Nullable FindResult getFirstOccurrenceInSelection() {
     TextRange selection = getEditor().getCaretModel().getCurrentCaret().getSelectionRange();
     return ContainerUtil.find(myOccurrences, occurrence -> selection.contains(occurrence));
   }
@@ -593,14 +582,12 @@ public class SearchResults implements DocumentListener, CaretListener {
     return visibleArea.contains(point);
   }
 
-  @Nullable
-  public FindResult firstOccurrenceBeforeCaret() {
+  public @Nullable FindResult firstOccurrenceBeforeCaret() {
     int offset = getEditor().getCaretModel().getOffset();
     return firstOccurrenceBeforeOffset(offset);
   }
 
-  @Nullable
-  private FindResult firstOccurrenceBeforeOffset(int offset) {
+  private @Nullable FindResult firstOccurrenceBeforeOffset(int offset) {
     for (int i = getOccurrences().size()-1; i >= 0; --i) {
       if (getOccurrences().get(i).getEndOffset() < offset) {
         return getOccurrences().get(i);
@@ -609,14 +596,12 @@ public class SearchResults implements DocumentListener, CaretListener {
     return null;
   }
 
-  @Nullable
-  public FindResult firstOccurrenceAfterCaret() {
+  public @Nullable FindResult firstOccurrenceAfterCaret() {
     int caret = myEditor.getCaretModel().getOffset();
     return firstOccurrenceAfterOffset(caret);
   }
 
-  @Nullable
-  private FindResult firstOccurrenceAfterOffset(int offset) {
+  private @Nullable FindResult firstOccurrenceAfterOffset(int offset) {
     FindResult afterCaret = null;
     for (FindResult occurrence : getOccurrences()) {
       if (offset <= occurrence.getStartOffset() && (afterCaret == null || occurrence.getStartOffset() < afterCaret.getStartOffset())) {
@@ -644,8 +629,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     return false;
   }
 
-  @Nullable
-  private FindResult prevOccurrence(TextRange range) {
+  private @Nullable FindResult prevOccurrence(TextRange range) {
     for (int i = getOccurrences().size() - 1; i >= 0; --i) {
       FindResult occurrence = getOccurrences().get(i);
       if (occurrence.getEndOffset() <= range.getStartOffset())  {
@@ -655,8 +639,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     return null;
   }
 
-  @Nullable
-  private FindResult nextOccurrence(TextRange range) {
+  private @Nullable FindResult nextOccurrence(TextRange range) {
     for (FindResult occurrence : getOccurrences()) {
       if (occurrence.getStartOffset() >= range.getEndOffset()) {
         return occurrence;

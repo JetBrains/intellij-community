@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
@@ -45,8 +45,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   private ToolWindow myToolWindow;
   private ContentManager myContentManager;
   private TodoPanel myAllTodos;
-  @Nullable
-  private TodoPanel myChangeListTodosPanel;
+  private @Nullable TodoPanel myChangeListTodosPanel;
   private CurrentFileTodosPanel myCurrentFileTodosPanel;
   private ScopeBasedTodosPanel myScopeBasedTodosPanel;
   private final List<TodoPanel> myPanels = new ArrayList<>();
@@ -290,10 +289,9 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     return CompletableFuture.allOf(futures);
   }
 
-  @Nullable
-  public Content addCustomTodoView(@NotNull TodoTreeBuilderFactory factory,
-                                   @NlsContexts.TabTitle String title,
-                                   @NotNull TodoPanelSettings settings) {
+  public @Nullable Content addCustomTodoView(@NotNull TodoTreeBuilderFactory factory,
+                                             @NlsContexts.TabTitle String title,
+                                             @NotNull TodoPanelSettings settings) {
     Content content = ContentFactory.getInstance().createContent(null, title, true);
     final TodoPanel panel = myChangesSupport.createPanel(this, settings, content, factory);
     if (panel == null) return null;

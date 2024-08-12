@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
@@ -27,11 +27,11 @@ public final class EnterInBlockCommentHandler extends EnterHandlerDelegateAdapte
   private static final String WHITESPACE = " \t";
 
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file,
-                                @NotNull final Editor editor,
-                                @NotNull final Ref<Integer> caretOffsetRef,
+  public Result preprocessEnter(final @NotNull PsiFile file,
+                                final @NotNull Editor editor,
+                                final @NotNull Ref<Integer> caretOffsetRef,
                                 final @NotNull Ref<Integer> caretAdvance,
-                                @NotNull final DataContext dataContext,
+                                final @NotNull DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
     CodeDocumentationAwareCommenter commenter = EnterInCommentUtil.getDocumentationAwareCommenter(dataContext);
     if (commenter == null) return Result.Continue;

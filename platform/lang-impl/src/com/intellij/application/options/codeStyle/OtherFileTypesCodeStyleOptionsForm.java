@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -37,21 +37,18 @@ public final class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractP
     return 0;
   }
 
-  @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
+  protected @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
-  @NotNull
   @Override
-  protected FileType getFileType() {
+  protected @NotNull FileType getFileType() {
     return FileTypes.PLAIN_TEXT;
   }
 
-  @Nullable
   @Override
-  protected String getPreviewText() {
+  protected @Nullable String getPreviewText() {
     return null;
   }
 
@@ -65,9 +62,8 @@ public final class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractP
     return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
-  @Nullable
   @Override
-  public JComponent getPanel() {
+  public @Nullable JComponent getPanel() {
     return myTopPanel;
   }
 

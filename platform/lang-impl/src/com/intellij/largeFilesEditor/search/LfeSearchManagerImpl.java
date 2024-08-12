@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -116,9 +116,8 @@ public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearch
     mySearchReplaceComponent.getSearchTextComponent().selectAll();
   }
 
-  @NotNull
   @Override
-  public LargeFileEditor getLargeFileEditor() {
+  public @NotNull LargeFileEditor getLargeFileEditor() {
     return largeFileEditor;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.FrameworkType;
@@ -94,8 +94,7 @@ final class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
     renderer.append(" (" + (path.isEmpty() ? "/" : path) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
-  @NotNull
-  private @NlsSafe String getRelativePath(@NotNull VirtualFile file) {
+  private @NotNull @NlsSafe String getRelativePath(@NotNull VirtualFile file) {
     final VirtualFile dir = myContext.getBaseDir();
     if (dir != null) {
       final String path = VfsUtilCore.getRelativePath(dir, file, File.separatorChar);

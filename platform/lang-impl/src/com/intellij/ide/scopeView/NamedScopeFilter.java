@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scopeView;
 
 import com.intellij.ide.scratch.ScratchesNamedScope;
@@ -31,19 +31,16 @@ public final class NamedScopeFilter implements VirtualFileFilter {
     this.string = scope + "; " + scope.getClass();
   }
 
-  @NotNull
-  public NamedScopesHolder getHolder() {
+  public @NotNull NamedScopesHolder getHolder() {
     return holder;
   }
 
-  @NotNull
-  public NamedScope getScope() {
+  public @NotNull NamedScope getScope() {
     return scope;
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return string;
   }
 
@@ -64,8 +61,7 @@ public final class NamedScopeFilter implements VirtualFileFilter {
     return !(scope instanceof NonProjectFilesScope || scope == getAllScope());
   }
 
-  @NotNull
-  static List<NamedScopeFilter> list(NamedScopesHolder... holders) {
+  static @NotNull List<NamedScopeFilter> list(NamedScopesHolder... holders) {
     List<NamedScopeFilter> list = new ArrayList<>();
     NamedScope scratchesScope = null;
     for (NamedScopesHolder holder : holders) {

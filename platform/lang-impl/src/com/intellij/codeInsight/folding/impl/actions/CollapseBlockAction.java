@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -14,12 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public final class CollapseBlockAction extends BaseCodeInsightAction {
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       @Override
-      public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
         executor(project, editor, file, true);
       }
     };
@@ -30,7 +29,7 @@ public final class CollapseBlockAction extends BaseCodeInsightAction {
     return executor(project, editor, file, false);
   }
 
-  private static boolean executor(@NotNull final Project project,
+  private static boolean executor(final @NotNull Project project,
                                   @NotNull Editor editor,
                                   @NotNull PsiFile file,
                                   boolean executeAction) {

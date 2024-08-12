@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.impl;
 
@@ -28,7 +28,7 @@ public final class ShowRecentFindUsagesAction extends AnAction implements Action
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabled(e.getData(UsageView.USAGE_VIEW_KEY) != null &&
                                    project != null &&
@@ -61,8 +61,7 @@ public final class ShowRecentFindUsagesAction extends AnAction implements Action
         }
 
         @Override
-        @NotNull
-        public String getTextFor(final ConfigurableUsageTarget data) {
+        public @NotNull String getTextFor(final ConfigurableUsageTarget data) {
           if (data == null) {
             return FindBundle.message("recent.find.usages.action.nothing");
           }

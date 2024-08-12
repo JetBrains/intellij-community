@@ -216,8 +216,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     setToolbar(toolbar.getComponent());
   }
 
-  @NotNull
-  protected DefaultActionGroup createGroupByActionGroup() {
+  protected @NotNull DefaultActionGroup createGroupByActionGroup() {
     ActionManager actionManager = ActionManager.getInstance();
     return (DefaultActionGroup) actionManager.getAction("TodoViewGroupByGroup");
   }
@@ -313,20 +312,17 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   }
 
   @Override
-  @Nullable
-  public OccurenceInfo goPreviousOccurence() {
+  public @Nullable OccurenceInfo goPreviousOccurence() {
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
   @Override
-  @Nullable
-  public OccurenceInfo goNextOccurence() {
+  public @Nullable OccurenceInfo goNextOccurence() {
     return myOccurenceNavigator.goNextOccurence();
   }
 
@@ -335,9 +331,8 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     return myOccurenceNavigator.hasNextOccurence();
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();
   }
 
@@ -416,31 +411,26 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
 
     @Override
-    @Nullable
-    public OccurenceInfo goNextOccurence() {
+    public @Nullable OccurenceInfo goNextOccurence() {
       return goToPointer(getNextPointer());
     }
 
     @Override
-    @Nullable
-    public OccurenceInfo goPreviousOccurence() {
+    public @Nullable OccurenceInfo goPreviousOccurence() {
       return goToPointer(getPreviousPointer());
     }
 
-    @NotNull
     @Override
-    public String getNextOccurenceActionName() {
+    public @NotNull String getNextOccurenceActionName() {
       return IdeBundle.message("action.next.todo");
     }
 
-    @NotNull
     @Override
-    public String getPreviousOccurenceActionName() {
+    public @NotNull String getPreviousOccurenceActionName() {
       return IdeBundle.message("action.previous.todo");
     }
 
-    @Nullable
-    private OccurenceInfo goToPointer(TodoItemNode pointer) {
+    private @Nullable OccurenceInfo goToPointer(TodoItemNode pointer) {
       if (pointer == null) return null;
       myTodoTreeBuilder.select(pointer);
       return new OccurenceInfo(
@@ -452,8 +442,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       );
     }
 
-    @Nullable
-    private TodoItemNode getNextPointer() {
+    private @Nullable TodoItemNode getNextPointer() {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
         return null;
@@ -474,8 +463,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       return pointer;
     }
 
-    @Nullable
-    private TodoItemNode getPreviousPointer() {
+    private @Nullable TodoItemNode getPreviousPointer() {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
         return null;

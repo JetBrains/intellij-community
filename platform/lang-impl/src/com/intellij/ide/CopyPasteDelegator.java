@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide;
 
@@ -169,8 +169,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       return target;
     }
 
-    @Nullable
-    private static PsiDirectory getTargetDirectory(@Nullable Module module, @Nullable PsiElement target) {
+    private static @Nullable PsiDirectory getTargetDirectory(@Nullable Module module, @Nullable PsiElement target) {
       PsiDirectory targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
       if (targetDirectory == null && target instanceof PsiDirectoryContainer) {
         final PsiDirectory[] directories = module == null ? ((PsiDirectoryContainer)target).getDirectories()

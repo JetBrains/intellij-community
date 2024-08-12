@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -33,8 +33,7 @@ import java.util.Set;
  */
 public abstract class ScopesChooser extends ComboBoxAction implements DumbAware {
   private final List<? extends Descriptor> myDefaultDescriptors;
-  @NotNull
-  private final InspectionProfileImpl myInspectionProfile;
+  private final @NotNull InspectionProfileImpl myInspectionProfile;
   private final Project myProject;
   private final Set<String> myExcludedScopeNames;
 
@@ -50,9 +49,8 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
     getTemplatePresentation().setText(InspectionsBundle.messagePointer("action.presentation.ScopesChooser.text"));
   }
 
-  @NotNull
   @Override
-  public DefaultActionGroup createPopupActionGroup(@NotNull JComponent component, @NotNull DataContext context) {
+  public @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent component, @NotNull DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
 
     final List<NamedScope> predefinedScopes = new ArrayList<>();
@@ -76,7 +74,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
     group.addSeparator();
     group.add(new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.edit.scopes.order")) {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         final ScopesOrderDialog dlg = new ScopesOrderDialog(component, myInspectionProfile, myProject);
         if (dlg.showAndGet()) {
           onScopesOrderChanged();
@@ -103,7 +101,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
       }
       group.add(new DumbAwareAction(scope.getPresentableName()) {
         @Override
-        public void actionPerformed(@NotNull final AnActionEvent e) {
+        public void actionPerformed(final @NotNull AnActionEvent e) {
           for (final Descriptor defaultDescriptor : defaultDescriptors) {
             InspectionToolWrapper wrapper = defaultDescriptor.getToolWrapper().createCopy();
             wrapper.getTool().readSettings(Descriptor.createConfigElement(defaultDescriptor.getToolWrapper()));

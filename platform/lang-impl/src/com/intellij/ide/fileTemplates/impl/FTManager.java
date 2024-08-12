@@ -290,8 +290,7 @@ final class FTManager {
     return true;
   }
 
-  @NotNull
-  private @NonNls String getSpec(String fileName) {
+  private @NotNull @NonNls String getSpec(String fileName) {
     return FileUtil.toSystemIndependentName(templatePath.resolve(fileName).toString());
   }
 

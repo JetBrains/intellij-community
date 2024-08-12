@@ -22,8 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode {
-  @NotNull
-  private final InspectionToolPresentation myPresentation;
+  private final @NotNull InspectionToolPresentation myPresentation;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
   private volatile @Nls String myPresentableName;
   private volatile Boolean myValid;
@@ -46,8 +45,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     return true;
   }
 
-  @NotNull
-  public InspectionToolPresentation getPresentation() {
+  public @NotNull InspectionToolPresentation getPresentation() {
     return myPresentation;
   }
 
@@ -68,8 +66,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     }
   }
 
-  @NotNull
-  public synchronized Set<SuppressIntentionAction> getAvailableSuppressActions() {
+  public synchronized @NotNull Set<SuppressIntentionAction> getAvailableSuppressActions() {
     if (myAvailableSuppressActions == null) {
       updateAvailableSuppressActions();
     }
@@ -84,8 +81,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     myAvailableSuppressActions.remove(action);
   }
 
-  @Nullable
-  public abstract RefEntity getElement();
+  public abstract @Nullable RefEntity getElement();
 
   @Override
   public final synchronized boolean isValid() {
@@ -107,9 +103,8 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     return name;
   }
 
-  @Nullable
   @Override
-  public String getTailText() {
+  public @Nullable String getTailText() {
     if (isQuickFixAppliedFromView()) {
       return "";
     }
@@ -119,18 +114,15 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     return !isValid() ? LangBundle.message("no.longer.valid") : null;
   }
 
-  @NotNull
-  private Set<SuppressIntentionAction> calculateAvailableSuppressActions() {
+  private @NotNull Set<SuppressIntentionAction> calculateAvailableSuppressActions() {
     return getElement() == null
                                  ? Collections.emptySet()
                                  : calculateAvailableSuppressActions(myPresentation.getContext().getProject());
   }
 
-  @NotNull
-  public abstract Pair<PsiElement, CommonProblemDescriptor> getSuppressContent();
+  public abstract @NotNull Pair<PsiElement, CommonProblemDescriptor> getSuppressContent();
 
-  @NotNull
-  private Set<SuppressIntentionAction> calculateAvailableSuppressActions(@NotNull Project project) {
+  private @NotNull Set<SuppressIntentionAction> calculateAvailableSuppressActions(@NotNull Project project) {
     if (myPresentation.isDummy()) return Collections.emptySet();
     final Pair<PsiElement, CommonProblemDescriptor> suppressContent = getSuppressContent();
     PsiElement element = suppressContent.getFirst();
@@ -145,8 +137,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       .collect(Collectors.toCollection(() -> ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.identity()))));
   }
 
-  @Nls
-  protected abstract String calculatePresentableName();
+  protected abstract @Nls String calculatePresentableName();
 
   protected abstract boolean calculateIsValid();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.lang.LangBundle;
@@ -16,9 +16,8 @@ public final class EmptyCompileScopeBuildTaskImpl extends AbstractBuildTask impl
     super(isIncrementalBuild);
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return LangBundle.message("project.task.name.empty.compilation.scope.build.task");
   }
 }

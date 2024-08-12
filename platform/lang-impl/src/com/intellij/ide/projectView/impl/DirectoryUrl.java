@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -14,7 +14,7 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NonNls;
 
 public final class DirectoryUrl extends AbstractUrl {
-  @NonNls private static final String ELEMENT_TYPE = "directory";
+  private static final @NonNls String ELEMENT_TYPE = "directory";
 
   public DirectoryUrl(String url, String moduleName) {
     super(url, moduleName, ELEMENT_TYPE);

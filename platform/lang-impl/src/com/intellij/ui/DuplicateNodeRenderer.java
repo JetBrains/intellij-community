@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -56,8 +56,7 @@ public final class DuplicateNodeRenderer {
     g.setColor(old);
   }
 
-  @NotNull
-  private static Rectangle union(Rectangle r1, Rectangle r2) {
+  private static @NotNull Rectangle union(Rectangle r1, Rectangle r2) {
     if (r1 == null) return r2;
     if (r2 == null) return r1;
     return r1.union(r2);

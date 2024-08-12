@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,29 +20,26 @@ import java.util.List;
 public final class UnknownInvalidSdk implements UnknownSdk {
   private static final Logger LOG = Logger.getInstance(UnknownInvalidSdk.class);
 
-  @NotNull final Sdk mySdk;
-  @NotNull final SdkType mySdkType;
+  final @NotNull Sdk mySdk;
+  final @NotNull SdkType mySdkType;
 
   UnknownInvalidSdk(@NotNull Sdk sdk, @NotNull SdkType sdkType) {
     mySdk = sdk;
     mySdkType = sdkType;
   }
 
-  @NotNull
   @Override
-  public SdkType getSdkType() {
+  public @NotNull SdkType getSdkType() {
     return mySdkType;
   }
 
   @Override
-  @NotNull
-  public String getSdkName() {
+  public @NotNull String getSdkName() {
     return mySdk.getName();
   }
 
   @Override
-  @Nullable
-  public String getExpectedVersionString() {
+  public @Nullable String getExpectedVersionString() {
     return mySdk.getVersionString();
   }
 
@@ -58,8 +55,7 @@ public final class UnknownInvalidSdk implements UnknownSdk {
     });
   }
 
-  @NotNull
-  static List<UnknownInvalidSdk> resolveInvalidSdks(@NotNull List<? extends Sdk> usedSdks) {
+  static @NotNull List<UnknownInvalidSdk> resolveInvalidSdks(@NotNull List<? extends Sdk> usedSdks) {
     List<UnknownInvalidSdk> result = new ArrayList<>();
     for (Sdk sdk : usedSdks) {
       if (SdkDownloadTracker.getInstance().isDownloading(sdk)) continue;
@@ -72,8 +68,7 @@ public final class UnknownInvalidSdk implements UnknownSdk {
     return result;
   }
 
-  @Nullable
-  private static UnknownInvalidSdk resolveInvalidSdk(@NotNull Sdk sdk) {
+  private static @Nullable UnknownInvalidSdk resolveInvalidSdk(@NotNull Sdk sdk) {
     SdkTypeId type = sdk.getSdkType();
     if (!(type instanceof SdkType sdkType)) return null;
 
@@ -100,10 +95,9 @@ public final class UnknownInvalidSdk implements UnknownSdk {
     return new UnknownInvalidSdk(sdk, sdkType);
   }
 
-  @NotNull
-  public UnknownInvalidSdkFix buildFix(@NotNull Project project,
-                                       @Nullable UnknownSdkLocalSdkFix localSdkFix,
-                                       @Nullable UnknownSdkDownloadableSdkFix downloadableSdkFix) {
+  public @NotNull UnknownInvalidSdkFix buildFix(@NotNull Project project,
+                                                @Nullable UnknownSdkLocalSdkFix localSdkFix,
+                                                @Nullable UnknownSdkDownloadableSdkFix downloadableSdkFix) {
     UnknownSdkFixAction action = null;
     if (localSdkFix != null) {
       action = new UnknownInvalidSdkFixLocal(this, localSdkFix);

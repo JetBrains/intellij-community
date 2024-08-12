@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.ui.FacetEditor;
@@ -64,7 +64,7 @@ public final class MultipleFacetEditorHelperImpl implements MultipleFacetEditorH
     myBindings.clear();
   }
 
-  private static abstract class AbstractBinding {
+  private abstract static class AbstractBinding {
     public abstract void unbind();
   }
 
@@ -145,7 +145,7 @@ public final class MultipleFacetEditorHelperImpl implements MultipleFacetEditorH
 
       myListener = new DocumentAdapter() {
         @Override
-        protected void textChanged(@NotNull final DocumentEvent e) {
+        protected void textChanged(final @NotNull DocumentEvent e) {
           TextFieldBinding.this.textChanged();
         }
       };

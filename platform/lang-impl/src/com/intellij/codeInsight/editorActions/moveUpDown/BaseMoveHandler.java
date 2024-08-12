@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -45,9 +45,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler.ForEachCa
     return true;
   }
 
-  @Nullable
-  protected abstract PsiFile getPsiFile(@NotNull Project project, @NotNull Editor editor);
+  protected abstract @Nullable PsiFile getPsiFile(@NotNull Project project, @NotNull Editor editor);
 
-  @Nullable
-  protected abstract MoverWrapper getSuitableMover(@NotNull Editor editor, @Nullable PsiFile file);
+  protected abstract @Nullable MoverWrapper getSuitableMover(@NotNull Editor editor, @Nullable PsiFile file);
 }

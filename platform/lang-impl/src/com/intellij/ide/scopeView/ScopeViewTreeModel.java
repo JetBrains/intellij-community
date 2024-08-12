@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
@@ -188,8 +188,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     return root.filter;
   }
 
-  @Nullable
-  public Object getContent(Object object) {
+  public @Nullable Object getContent(Object object) {
     if (object instanceof GroupNode node) {
       object = node.getSingleRoot();
     }
@@ -219,9 +218,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     return model.getUpdater();
   }
 
-  @NotNull
   @Override
-  public Invoker getInvoker() {
+  public @NotNull Invoker getInvoker() {
     return model.getInvoker();
   }
 
@@ -370,9 +368,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     return 0;
   }
 
-  @NotNull
   @Override
-  public List<AbstractTreeNode<?>> getChildren(Object object) {
+  public @NotNull List<AbstractTreeNode<?>> getChildren(Object object) {
     if (object instanceof AbstractTreeNode<?> parent && model.isValidThread()) {
       Collection<?> children = parent.getChildren();
       if (!children.isEmpty()) {
@@ -470,12 +467,10 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return status.getColor();
     }
 
-    @NotNull
-    abstract Collection<AbstractTreeNode<?>> createChildren(@NotNull Collection<? extends AbstractTreeNode<?>> old);
+    abstract @NotNull Collection<AbstractTreeNode<?>> createChildren(@NotNull Collection<? extends AbstractTreeNode<?>> old);
 
-    @NotNull
     @Override
-    public final Collection<AbstractTreeNode<?>> getChildren() {
+    public final @NotNull Collection<AbstractTreeNode<?>> getChildren() {
       if (childrenValid) {
         return children;
       }
@@ -507,14 +502,12 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       if (decorator != null) decorator.decorate(this, presentation);
     }
 
-    @NotNull
-    static Icon getFolderIcon(@Nullable PsiElement element) {
+    static @NotNull Icon getFolderIcon(@Nullable PsiElement element) {
       Icon icon = CompoundIconProvider.findIcon(element, 0);
       return icon != null ? icon : AllIcons.Nodes.Folder;
     }
 
-    @Nullable
-    final PsiFileSystemItem findFileSystemItem(@NotNull VirtualFile file) {
+    final @Nullable PsiFileSystemItem findFileSystemItem(@NotNull VirtualFile file) {
       return PsiUtilCore.findFileSystemItem(getProject(), file);
     }
 
@@ -642,8 +635,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       if (!empty.get() || !middle.get()) consumer.consume(parent);
     }
 
-    @Nullable
-    private ProjectFileNode getSingleDirectory(ProjectFileNode parent) {
+    private @Nullable ProjectFileNode getSingleDirectory(ProjectFileNode parent) {
       List<ProjectFileNode> children = model.getChildren(parent);
       ProjectFileNode child = children.size() != 1 ? null : children.get(0);
       return child != null && child.getVirtualFile().isDirectory() ? child : null;
@@ -660,9 +652,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return NodeSortOrder.PROJECT_ROOT;
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       Project project = getProject();
       return project == null || project.isDisposed() ? "DISPOSED PROJECT" : project.getName();
     }
@@ -734,9 +725,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return manager == null ? FileStatus.NOT_CHANGED : manager.getRecursiveStatus(getVirtualFile());
     }
 
-    @NotNull
     @Override
-    public VirtualFile getVirtualFile() {
+    public @NotNull VirtualFile getVirtualFile() {
       return node.getVirtualFile();
     }
 
@@ -760,13 +750,11 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return 20; // see PsiFileNode.getWeight
     }
 
-    @NotNull
-    protected String getNodeName() {
+    protected @NotNull String getNodeName() {
       return getNodeName(getPackageName());
     }
 
-    @NotNull
-    private String getNodeName(@Nullable String name) {
+    private @NotNull String getNodeName(@Nullable String name) {
       if (name != null) {
         AbstractTreeNode<?> parent = getParent();
         FileNode node = parent instanceof FileNode ? (FileNode)parent : null;
@@ -788,8 +776,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return getVirtualFile().getName();
     }
 
-    @Nullable
-    private String getPackageName() {
+    private @Nullable String getPackageName() {
       PsiElement element = !isPackage(getIcon()) ? null : findFileSystemItem(getVirtualFile());
       if (element instanceof PsiDirectory && element.isValid()) {
         PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(element.getProject());
@@ -819,21 +806,17 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return scratch ? NodeSortOrder.SCRATCH_ROOT : super.getSortOrder(settings);
     }
 
-    @NotNull
     @Override
-    public String getTitle() {
+    public @NotNull String getTitle() {
       return getLocation(false);
     }
 
-    @NotNull
     @Override
-    protected String getNodeName() {
+    protected @NotNull String getNodeName() {
       return getLocation(true);
     }
 
-    @NotNull
-    @NlsSafe
-    private String getLocation(boolean allowEmpty) {
+    private @NotNull @NlsSafe String getLocation(boolean allowEmpty) {
       VirtualFile dir = ProjectFileNode.findBaseDir(getProject());
       String location = dir == null ? null : VfsUtilCore.getRelativePath(getVirtualFile(), dir);
       if (location != null && (allowEmpty || !location.isEmpty())) return location;
@@ -905,9 +888,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return group == null ? null : group.getSingleRoot();
     }
 
-    @Nullable
     @Override
-    public VirtualFile getVirtualFile() {
+    public @Nullable VirtualFile getVirtualFile() {
       RootNode node = getSingleRoot();
       return node == null ? null : node.getVirtualFile();
     }
@@ -978,9 +960,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return System.identityHashCode(this);
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return prefix != null ? prefix + name : name;
     }
   }
@@ -1081,8 +1062,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return node;
     }
 
-    @Nullable
-    private Group getSingleGroup() {
+    private @Nullable Group getSingleGroup() {
       if (!roots.isEmpty() || groups.size() != 1) return null;
       return groups.values().stream().findFirst().orElse(null);
     }
@@ -1156,38 +1136,31 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
   }
 
 
-  @Nullable
-  private static WolfTheProblemSolver getWolfTheProblemSolver(@Nullable Project project) {
+  private static @Nullable WolfTheProblemSolver getWolfTheProblemSolver(@Nullable Project project) {
     return project == null || project.isDisposed() ? null : WolfTheProblemSolver.getInstance(project);
   }
 
-  @Nullable
-  private static FileStatusManager getFileStatusManager(@Nullable Project project) {
+  private static @Nullable FileStatusManager getFileStatusManager(@Nullable Project project) {
     return project == null || project.isDisposed() ? null : FileStatusManager.getInstance(project);
   }
 
-  @Nullable
-  private static ModuleManager getModuleManager(@Nullable Project project) {
+  private static @Nullable ModuleManager getModuleManager(@Nullable Project project) {
     return project == null || project.isDisposed() ? null : ModuleManager.getInstance(project);
   }
 
-  @Nullable
-  private static ProjectFileIndex getProjectFileIndex(@Nullable Project project) {
+  private static @Nullable ProjectFileIndex getProjectFileIndex(@Nullable Project project) {
     return project == null || project.isDisposed() ? null : ProjectFileIndex.getInstance(project);
   }
 
-  @Nullable
-  private static ModuleRootManager getModuleRootManager(@Nullable Module module) {
+  private static @Nullable ModuleRootManager getModuleRootManager(@Nullable Module module) {
     return module == null || module.isDisposed() ? null : ModuleRootManager.getInstance(module);
   }
 
-  @Nullable
-  private static ProjectSettingsService getProjectSettingsService(@Nullable Project project) {
+  private static @Nullable ProjectSettingsService getProjectSettingsService(@Nullable Project project) {
     return project == null || project.isDisposed() ? null : ProjectSettingsService.getInstance(project);
   }
 
-  @Nullable
-  private static Module getModule(@NotNull VirtualFile file, @Nullable Project project) {
+  private static @Nullable Module getModule(@NotNull VirtualFile file, @Nullable Project project) {
     ProjectFileIndex index = getProjectFileIndex(project);
     return index == null ? null : index.getModuleForFile(file);
   }
@@ -1198,8 +1171,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     return manager != null && manager.hasModuleGroups();
   }
 
-  @NotNull
-  private static List<String> getModuleNameAsList(@NotNull Module module, boolean split) {
+  private static @NotNull List<String> getModuleNameAsList(@NotNull Module module, boolean split) {
     String name = module.getName();
     Project project = module.isDisposed() ? null : module.getProject();
     ModuleManager manager = getModuleManager(project);
@@ -1219,8 +1191,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     return new SmartList<>(name);
   }
 
-  @Nullable
-  private static List<VirtualFile> getCompactedFolders(@Nullable VirtualFile ancestor, @NotNull VirtualFile file) {
+  private static @Nullable List<VirtualFile> getCompactedFolders(@Nullable VirtualFile ancestor, @NotNull VirtualFile file) {
     if (ancestor == null || !VfsUtilCore.isAncestor(ancestor, file, true)) return null;
     ArrayDeque<VirtualFile> deque = new ArrayDeque<>();
     while (true) {

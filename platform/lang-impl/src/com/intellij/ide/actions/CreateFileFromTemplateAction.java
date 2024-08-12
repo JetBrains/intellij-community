@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -64,33 +50,30 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
     return createFileFromTemplate(name, template, dir, getDefaultTemplateProperty(), true);
   }
 
-  @Nullable
-  public static PsiFile createFileFromTemplate(@Nullable String name,
-                                               @NotNull FileTemplate template,
-                                               @NotNull PsiDirectory dir,
-                                               @Nullable String defaultTemplateProperty,
-                                               boolean openFile) {
+  public static @Nullable PsiFile createFileFromTemplate(@Nullable String name,
+                                                         @NotNull FileTemplate template,
+                                                         @NotNull PsiDirectory dir,
+                                                         @Nullable String defaultTemplateProperty,
+                                                         boolean openFile) {
     return createFileFromTemplate(name, template, dir, defaultTemplateProperty, openFile, Collections.emptyMap());
   }
 
-  @Nullable
-  public static PsiFile createFileFromTemplate(@Nullable String name,
-                                               @NotNull FileTemplate template,
-                                               @NotNull PsiDirectory dir,
-                                               @Nullable String defaultTemplateProperty,
-                                               boolean openFile,
-                                               @NotNull Map<String, String> liveTemplateDefaultValues) {
+  public static @Nullable PsiFile createFileFromTemplate(@Nullable String name,
+                                                         @NotNull FileTemplate template,
+                                                         @NotNull PsiDirectory dir,
+                                                         @Nullable String defaultTemplateProperty,
+                                                         boolean openFile,
+                                                         @NotNull Map<String, String> liveTemplateDefaultValues) {
     return createFileFromTemplate(name, template, dir, defaultTemplateProperty, openFile, liveTemplateDefaultValues, Collections.emptyMap());
   }
 
-  @Nullable
-  public static PsiFile createFileFromTemplate(@Nullable String name,
-                                               @NotNull FileTemplate template,
-                                               @NotNull PsiDirectory dir,
-                                               @Nullable String defaultTemplateProperty,
-                                               boolean openFile,
-                                               @NotNull Map<String, String> liveTemplateDefaultValues,
-                                               @NotNull Map<String, String> extraTemplateProperties) {
+  public static @Nullable PsiFile createFileFromTemplate(@Nullable String name,
+                                                         @NotNull FileTemplate template,
+                                                         @NotNull PsiDirectory dir,
+                                                         @Nullable String defaultTemplateProperty,
+                                                         boolean openFile,
+                                                         @NotNull Map<String, String> liveTemplateDefaultValues,
+                                                         @NotNull Map<String, String> extraTemplateProperties) {
     if (name != null) {
       CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(name, dir);
       name = mkdirs.newName;

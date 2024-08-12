@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -19,7 +19,7 @@ import java.util.List;
 
 public final class ArrangementGroupingRulesPanel extends JPanel implements UiDataProvider {
 
-  @NotNull private final ArrangementGroupingRulesControl myControl;
+  private final @NotNull ArrangementGroupingRulesControl myControl;
 
   public ArrangementGroupingRulesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
                                        @NotNull ArrangementColorsProvider colorsProvider)
@@ -43,8 +43,7 @@ public final class ArrangementGroupingRulesPanel extends JPanel implements UiDat
     myControl.setRules(rules);
   }
   
-  @NotNull
-  public List<ArrangementGroupingRule> getRules() {
+  public @NotNull List<ArrangementGroupingRule> getRules() {
     return myControl.getRules();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
@@ -32,16 +32,15 @@ public abstract class SplitWordsMacro extends MacroBase {
     return NameUtil.splitWords(text, mySeparator, this::convertCase);
   }
 
-  @NotNull protected abstract String convertCase(@NotNull String word);
+  protected abstract @NotNull String convertCase(@NotNull String word);
 
   public static final class SnakeCaseMacro extends SplitWordsMacro {
     public SnakeCaseMacro() {
       super("snakeCase", "snakeCase(String)", '_');
     }
 
-    @NotNull
     @Override
-    protected String convertCase(@NotNull String word) {
+    protected @NotNull String convertCase(@NotNull String word) {
       return StringUtil.toLowerCase(word);
     }
   }
@@ -51,9 +50,8 @@ public abstract class SplitWordsMacro extends MacroBase {
       super("lowercaseAndDash", "lowercaseAndDash(String)", '-');
     }
 
-    @NotNull
     @Override
-    protected String convertCase(@NotNull String word) {
+    protected @NotNull String convertCase(@NotNull String word) {
       return StringUtil.toLowerCase(word);
     }
   }
@@ -63,9 +61,8 @@ public abstract class SplitWordsMacro extends MacroBase {
       super("spaceSeparated", "spaceSeparated(String)", ' ');
     }
 
-    @NotNull
     @Override
-    protected String convertCase(@NotNull String word) {
+    protected @NotNull String convertCase(@NotNull String word) {
       return word;
     }
   }
