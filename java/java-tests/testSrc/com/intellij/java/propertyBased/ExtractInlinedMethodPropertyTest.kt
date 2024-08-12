@@ -12,12 +12,14 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.inline.InlineMethodHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.propertyBased.MadTestingUtil
 import com.intellij.testFramework.propertyBased.RandomActivityInterceptor
+import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.intellij.ui.UiInterceptors
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
@@ -76,6 +78,7 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
           val range = TextRange(rangeToExtract.startOffset, rangeToExtract.endOffset)
           env.logMessage("Extract inlined lines: ${editor.document.getText(range)}")
           MethodExtractor().doExtract(file, range)
+          waitCoroutinesBlocking(ExtractMethodService.getInstance(file.project).scope)
           require(numberOfMethods != countMethodsInsideFile(file)) { "Method is not extracted" }
           PsiDocumentManager.getInstance(myProject).commitAllDocuments()
 
