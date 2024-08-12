@@ -807,6 +807,7 @@
     },
     "runConfigurations": {
       "application.svg": [
+        "nodes/project.svg",
         "runConfigurations/application.svg",
         "runConfigurations/applet.svg"
       ],

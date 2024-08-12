@@ -1016,7 +1016,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon PpWeb = load("expui/nodes/ppWeb.svg", "nodes/ppWeb.svg", -1732456971, 0);
     /** 16x16 */ public static final @NotNull Icon Private = load("expui/nodes/accessPrivate.svg", "nodes/private.svg", -1342521175, 0);
     /** 16x16 */ public static final @NotNull Icon ProcessMark = load("expui/nodes/processMark.svg", "nodes/processMark.svg", -1538708812, 2);
-    /** 16x16 */ public static final @NotNull Icon Project = load("nodes/project.svg", -1691051087, 0);
+    /** 16x16 */ public static final @NotNull Icon Project = load("expui/runConfigurations/application.svg", "nodes/project.svg", -1691051087, 0);
     /** 16x16 */ public static final @NotNull Icon Property = load("expui/nodes/property.svg", "nodes/property.svg", 2074391394, 0);
     /** 16x16 */ public static final @NotNull Icon PropertyRead = load("expui/nodes/property.svg", "nodes/propertyRead.svg", -1755987461, 0);
     /** 16x16 */ public static final @NotNull Icon PropertyReadStatic = load("expui/nodes/property.svg", "nodes/propertyReadStatic.svg", 505197717, 0);
