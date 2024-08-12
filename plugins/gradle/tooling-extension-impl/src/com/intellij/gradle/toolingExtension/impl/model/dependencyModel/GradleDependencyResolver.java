@@ -111,7 +111,7 @@ public final class GradleDependencyResolver {
         }
       }
     }
-    Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap = buildAuxiliaryArtifactsMap(configuration, resolvedArtifacts);
+    Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap = resolveAuxiliaryArtifacts(configuration, resolvedArtifacts);
     Set<String> resolvedFiles = new HashSet<>();
     Collection<ExternalDependency> artifactDependencies = resolveArtifactDependencies(
       resolvedFiles, resolvedArtifacts, auxiliaryArtifactsMap, transformedProjectDependenciesResultMap
@@ -317,10 +317,15 @@ public final class GradleDependencyResolver {
     return projectDependency;
   }
 
-  private @NotNull Map<ComponentIdentifier, ComponentArtifactsResult> buildAuxiliaryArtifactsMap(
+  private @NotNull Map<ComponentIdentifier, ComponentArtifactsResult> resolveAuxiliaryArtifacts(
     @NotNull Configuration configuration,
     @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts
   ) {
+    boolean downloadSources = myDownloadPolicy.isDownloadSources();
+    boolean downloadJavadoc = myDownloadPolicy.isDownloadJavadoc();
+    if (!(downloadSources || downloadJavadoc)) {
+      return Collections.emptyMap();
+    }
     List<ComponentIdentifier> components = new ArrayList<>();
     for (Collection<ResolvedArtifact> artifacts : resolvedArtifacts.values()) {
       for (ResolvedArtifact artifact : artifacts) {
@@ -329,16 +334,14 @@ public final class GradleDependencyResolver {
         components.add(DefaultModuleComponentIdentifier.create(id));
       }
     }
-
     if (components.isEmpty()) {
       return Collections.emptyMap();
     }
-
     List<Class<? extends Artifact>> artifactTypes = new ArrayList<>(2);
-    if (myDownloadPolicy.isDownloadSources()) {
+    if (downloadSources) {
       artifactTypes.add(SourcesArtifact.class);
     }
-    if (myDownloadPolicy.isDownloadJavadoc()) {
+    if (downloadJavadoc) {
       artifactTypes.add(JavadocArtifact.class);
     }
 
