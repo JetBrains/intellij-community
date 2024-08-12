@@ -1,3 +1,6 @@
+- name: lib/client/json-frontend.jar
+  modules:
+  - name: intellij.json.frontend
 - name: lib/json-split.jar
   modules:
   - name: intellij.json.split
