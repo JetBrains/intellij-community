@@ -1190,11 +1190,15 @@ public class PyStubsTest extends PyTestCase {
   private static void doTestTypeParameterStub(@NotNull PyTypeParameterListOwner parameterListOwner, @NotNull PyFile file) {
     PyTypeParameter firstTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(0);
     PyTypeParameter secondTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(1);
-    PyTypeParameter typeVarTupleTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(2);
-    PyTypeParameter paramSpecTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(3);
+    PyTypeParameter thirdTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(2);
+    PyTypeParameter fourthTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(3);
+    PyTypeParameter typeVarTupleTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(4);
+    PyTypeParameter paramSpecTypeParameter = parameterListOwner.getTypeParameterList().getTypeParameters().get(5);
 
     assertNotNull(firstTypeParameter);
     assertNotNull(secondTypeParameter);
+    assertNotNull(thirdTypeParameter);
+    assertNotNull(fourthTypeParameter);
     assertNotNull(typeVarTupleTypeParameter);
     assertNotNull(paramSpecTypeParameter);
 
@@ -1202,13 +1206,20 @@ public class PyStubsTest extends PyTestCase {
     assertEquals(PyTypeParameter.Kind.TypeVar, firstTypeParameter.getKind());
     assertEquals("U", secondTypeParameter.getName());
     assertEquals(PyTypeParameter.Kind.TypeVar, secondTypeParameter.getKind());
+    assertEquals("M", thirdTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.TypeVar, thirdTypeParameter.getKind());
+    assertEquals("N", fourthTypeParameter.getName());
+    assertEquals(PyTypeParameter.Kind.TypeVar, fourthTypeParameter.getKind());
     assertEquals("Ts", typeVarTupleTypeParameter.getName());
     assertEquals(PyTypeParameter.Kind.TypeVarTuple, typeVarTupleTypeParameter.getKind());
     assertEquals("P", paramSpecTypeParameter.getName());
     assertEquals(PyTypeParameter.Kind.ParamSpec, paramSpecTypeParameter.getKind());
 
     assertNull(firstTypeParameter.getBoundExpressionText());
-    assertEquals(secondTypeParameter.getBoundExpressionText(), "str");
+    assertEquals("str", secondTypeParameter.getBoundExpressionText());
+    assertEquals("int", thirdTypeParameter.getDefaultExpressionText());
+    assertEquals("list", fourthTypeParameter.getDefaultExpressionText());
+    assertEquals("float", fourthTypeParameter.getBoundExpressionText());
 
     assertNotParsed(file);
   }

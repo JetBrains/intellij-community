@@ -1056,12 +1056,18 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         nextToken();
       }
 
-      if (!parseIdentifierOrSkip(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA, PyTokenTypes.COLON)) {
+      if (!parseIdentifierOrSkip(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA, PyTokenTypes.COLON, PyTokenTypes.EQ)) {
         typeParamMarker.drop();
         return false;
       }
 
       if (matchToken(PyTokenTypes.COLON)) {
+        if (!myContext.getExpressionParser().parseSingleExpression(false)) {
+          myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
+        }
+      }
+
+      if (matchToken(PyTokenTypes.EQ)) {
         if (!myContext.getExpressionParser().parseSingleExpression(false)) {
           myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
         }

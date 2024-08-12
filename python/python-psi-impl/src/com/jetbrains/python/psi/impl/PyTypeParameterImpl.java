@@ -59,6 +59,16 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
+  public @Nullable String getDefaultExpressionText() {
+    PyTypeParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getDefaultExpressionText();
+    }
+
+    return PyTypeParameter.super.getDefaultExpressionText();
+  }
+
+  @Override
   @NotNull
   public PyTypeParameter.Kind getKind() {
     PyTypeParameterStub stub = getStub();

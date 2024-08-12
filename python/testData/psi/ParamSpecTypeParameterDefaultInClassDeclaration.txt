@@ -1,0 +1,33 @@
+PyFile:ParamSpecTypeParameterDefaultInClassDeclaration.py
+  PyClass: Baz
+    PsiElement(Py:CLASS_KEYWORD)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('Baz')
+    PyTypeParameterList
+      PsiElement(Py:LBRACKET)('[')
+      PyTypeParameter
+        PsiElement(Py:EXP)('**')
+        PsiElement(Py:IDENTIFIER)('P')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:EQ)('=')
+        PsiWhiteSpace(' ')
+        PyListLiteralExpression
+          PsiElement(Py:LBRACKET)('[')
+          PyReferenceExpression: int
+            PsiElement(Py:IDENTIFIER)('int')
+          PsiElement(Py:COMMA)(',')
+          PsiWhiteSpace(' ')
+          PyReferenceExpression: str
+            PsiElement(Py:IDENTIFIER)('str')
+          PsiElement(Py:RBRACKET)(']')
+      PsiElement(Py:RBRACKET)(']')
+    PyArgumentList
+      <empty list>
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace(' ')
+    PyStatementList
+      PyExpressionStatement
+        PyNoneLiteralExpression
+          PsiElement(Py:DOT)('.')
+          PsiElement(Py:DOT)('.')
+          PsiElement(Py:DOT)('.')

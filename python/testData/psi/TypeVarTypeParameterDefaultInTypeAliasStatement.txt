@@ -1,0 +1,25 @@
+PyFile:TypeVarTypeParameterDefaultInTypeAliasStatement.py
+  PyTypeAliasStatement
+    PsiElement(Py:TYPE_KEYWORD)('type')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('Foo')
+    PyTypeParameterList
+      PsiElement(Py:LBRACKET)('[')
+      PyTypeParameter
+        PsiElement(Py:IDENTIFIER)('T')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:EQ)('=')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: str
+          PsiElement(Py:IDENTIFIER)('str')
+      PsiElement(Py:RBRACKET)(']')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PySubscriptionExpression
+      PyReferenceExpression: Bar
+        PsiElement(Py:IDENTIFIER)('Bar')
+      PsiElement(Py:LBRACKET)('[')
+      PyReferenceExpression: T
+        PsiElement(Py:IDENTIFIER)('T')
+      PsiElement(Py:RBRACKET)(']')

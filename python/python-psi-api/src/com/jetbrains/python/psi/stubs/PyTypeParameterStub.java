@@ -11,6 +11,9 @@ public interface PyTypeParameterStub extends NamedStub<PyTypeParameter> {
   @Nullable
   String getBoundExpressionText();
 
+  @Nullable
+  String getDefaultExpressionText();
+
   @NotNull
   PyTypeParameter.Kind getKind();
 }
