@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.ui.getUserData
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -18,6 +20,13 @@ private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBCol
 
 @ApiStatus.NonExtendable
 abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToolbarComponent, Disposable.Default {
+
+  @ApiStatus.Internal
+  companion object {
+    @JvmField
+    @ApiStatus.Internal
+    val CUSTOM_OPACITY_KEY = Key.create<Float>("FloatingToolbarComponentCustomOpacity")
+  }
 
   private val _parentDisposable: Disposable?
   private val parentDisposable: Disposable
@@ -84,7 +93,8 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     val graphics = g.create()
     try {
       if (graphics is Graphics2D) {
-        val opacity = transparentComponent.getOpacity() * BACKGROUND_ALPHA
+        val opacityMultiplier = getUserData(CUSTOM_OPACITY_KEY) ?: BACKGROUND_ALPHA
+        val opacity = transparentComponent.getOpacity() * opacityMultiplier
         graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity)
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       }

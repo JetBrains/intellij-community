@@ -8,10 +8,12 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
@@ -122,6 +124,9 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
     val instance = HotSwapSessionManager.getInstance(project)
 
+    if (component is AbstractFloatingToolbarComponent) {
+      component.putUserData(AbstractFloatingToolbarComponent.CUSTOM_OPACITY_KEY, 0.9f)
+    }
     instance.addListener(ChangesListener(component, project), parentDisposable)
   }
 
