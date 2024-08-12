@@ -17,6 +17,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class InlineCompletionLogsContainer {
 
+
+  /**
+   * Describes phase of the ML session
+   */
   enum class Phase(val description: String) {
     INLINE_API_STARTING("Execution inside inline completion API"),
     CONTEXT_COLLECTION("During context collecting"),
@@ -45,10 +49,10 @@ class InlineCompletionLogsContainer {
    * If you have to launch expensive computation and don't want to pause your main execution (especially if you are on EDT) use [addAsync].
    */
   fun add(value: EventPair<*>) {
-    val stepName = requireNotNull(InlineCompletionLogs.Session.eventFieldNameToPhase[value.field.name]) {
-      "Cannot find step for ${value.field.name}"
+    val phase = requireNotNull(InlineCompletionLogs.Session.eventFieldNameToPhase[value.field.name]) {
+      "Cannot find phase for ${value.field.name}"
     }
-    logs[stepName]!!.add(value)
+    logs[phase]!!.add(value)
   }
 
   /**
@@ -67,8 +71,8 @@ class InlineCompletionLogsContainer {
   suspend fun log() {
     waitForAsyncAdds()
     InlineCompletionLogs.Session.SESSION_EVENT.log(
-      logs.map { (step, events) ->
-        InlineCompletionLogs.Session.stepToPhaseField[step]!!.with(ObjectEventData(events.toList()))
+      logs.map { (phase, events) ->
+        InlineCompletionLogs.Session.logsToPhase[phase]!!.with(ObjectEventData(events.toList()))
       }
     )
   }

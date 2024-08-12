@@ -40,8 +40,9 @@ internal object InlineCompletionLogs : CounterUsagesCollector() {
       fields
     }
 
-    val stepToPhaseField: Map<Phase, ObjectEventField> = Phase.entries.associateWith { step ->
-      ObjectEventField(step.name, step.description, *phaseToFieldList.filter { step == it.first }.map { it.second }.toTypedArray())
+    // describes which logs relate to a certain Phase
+    val logsToPhase: Map<Phase, ObjectEventField> = Phase.entries.associateWith { phase ->
+      ObjectEventField(phase.name, phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second }.toTypedArray())
     }
 
     val eventFieldNameToPhase: Map<String, Phase> = phaseToFieldList.associate { it.second.name to it.first }
@@ -49,7 +50,7 @@ internal object InlineCompletionLogs : CounterUsagesCollector() {
     val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
       "session",
       description = "The whole inline completion session",
-      *stepToPhaseField.values.toTypedArray(),
+      *logsToPhase.values.toTypedArray(),
     )
   }
 
