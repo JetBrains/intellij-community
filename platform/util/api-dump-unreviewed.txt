@@ -1487,7 +1487,6 @@ c:com.intellij.openapi.util.registry.RegistryValue
 - f:asInteger():I
 - f:asOptions():java.util.List
 - asString():java.lang.String
-- get(java.lang.String,java.lang.String,Z):java.lang.String
 - getDescription():java.lang.String
 - f:getKey():java.lang.String
 - f:getPluginId():java.lang.String

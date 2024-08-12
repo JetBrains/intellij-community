@@ -134,15 +134,15 @@ class Registry {
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun doubleValue(key: @NonNls String): Double = get(key).asDouble()
+    fun doubleValue(key: @NonNls String): Double = getInstance().resolveValue(key).asDouble()
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun stringValue(key: @NonNls String): String = get(key).asString()
+    fun stringValue(key: @NonNls String): String = getInstance().resolveValue(key).asString()
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun getColor(key: @NonNls String, defaultValue: Color?): Color? = get(key).asColor(defaultValue)
+    fun getColor(key: @NonNls String, defaultValue: Color?): Color? = getInstance().resolveValue(key).asColor(defaultValue)
 
     @Throws(IOException::class)
     private fun loadFromBundledConfig(): Map<String, String>? {
@@ -150,7 +150,7 @@ class Registry {
         return it
       }
 
-      val map: MutableMap<String, String> = LinkedHashMap(1800)
+      val map = LinkedHashMap<String, String>(1800)
       val mainFound = loadFromResource("misc/registry.properties", map)
       val overrideFound = loadFromResource("misc/registry.override.properties", map)
       if (!mainFound && !overrideFound) {
@@ -208,7 +208,7 @@ class Registry {
       val keysToProcess = HashSet(userProperties.keys)
       for ((key, value) in map) {
         val registryValue = registry.resolveValue(key)
-        val currentValue = registryValue.get(key, null, false)
+        val currentValue = registryValue.resolveNotRequiredValue(key = key, defaultValue = null)
         // currentValue == null means value is not in the bundle. Ignore it
         if (currentValue != null && currentValue != value) {
           registryValue.setValue(value)
