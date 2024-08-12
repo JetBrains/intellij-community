@@ -1338,6 +1338,7 @@
                                           implementationClass="org.jetbrains.plugins.groovy.refactoring.introduceParameterObject.GroovyIntroduceParameterObjectDelegate"/>
     <documentationDelegateProvider implementation="org.jetbrains.plugins.groovy.lang.documentation.GrLightDocumentationDelegateProvider"/>
     <breadcrumbsInfoProvider implementation="org.jetbrains.plugins.groovy.editor.GroovyBreadcrumbsInfoProvider"/>
+    <navbar implementation="org.jetbrains.plugins.groovy.editor.GroovyNavBarExtension"/>
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.plugins.groovy.editor.GroovyStripTrailingSpacesFilterFactory"/>
     <generateAccessorProvider implementation="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateAccessorProvider"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.groovy.execution.filters.GrCompilationErrorsFilterProvider"/>

@@ -17,7 +17,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
-class GroovyBreadcrumbsInfoProvider : BreadcrumbsProvider {
+internal class GroovyBreadcrumbsInfoProvider : BreadcrumbsProvider {
+  override fun isShownByDefault(): Boolean = false
+
   override fun getLanguages(): Array<Language> = arrayOf(GroovyLanguage)
 
   override fun acceptElement(e: PsiElement): Boolean = when (e) {
