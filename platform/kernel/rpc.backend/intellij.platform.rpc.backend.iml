@@ -12,5 +12,34 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.extensions" />
     <orderEntry type="module" module-name="intellij.platform.rpc" exported="" />
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.fleet.rpc.server" type="repository">
+        <properties maven-id="org.jetbrains.fleet:rpc-server:1.33.0-temporaryHack.6">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc-server/1.33.0-temporaryHack.6/rpc-server-1.33.0-temporaryHack.6.jar">
+              <sha256sum>26639fd5a150c0d46ad91b83a3d8c872946c4a6e79b115e5453e62d6a7257ab0</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.jetbrains.fleet:rpc" />
+            <dependency maven-id="org.jetbrains.fleet:reporting-api" />
+            <dependency maven-id="org.jetbrains.fleet:util-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc-server/1.33.0-temporaryHack.6/rpc-server-1.33.0-temporaryHack.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc-server/1.33.0-temporaryHack.6/rpc-server-1.33.0-temporaryHack.6-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="RUNTIME" name="io.lacuna:bifurcan" level="project" />
   </component>
 </module>
