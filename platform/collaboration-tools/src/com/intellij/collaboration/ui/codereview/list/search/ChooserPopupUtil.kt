@@ -119,10 +119,10 @@ object ChooserPopupUtil {
     point: RelativePoint,
     presenter: (T) -> PopupItemPresentation,
     popupConfig: PopupConfig = PopupConfig.DEFAULT,
+    renderer: ListCellRenderer<T> = SimplePopupItemRenderer.create(presenter),
     configure: CoroutineScope.(JBPopup, JBList<T>, CollectionListModel<T>, JScrollPane) -> Unit,
   ): T? = coroutineScope {
     val listModel = CollectionListModel<T>()
-    val renderer = SimplePopupItemRenderer.create(presenter)
     val list = createList(listModel, renderer)
     fun filteringMapper(item: T) = presenter(item).shortText
 
