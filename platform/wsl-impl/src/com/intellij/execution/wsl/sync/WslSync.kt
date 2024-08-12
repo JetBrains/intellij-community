@@ -4,16 +4,14 @@ package com.intellij.execution.wsl.sync
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.wsl.AbstractWslDistribution
 import com.intellij.execution.wsl.sync.WslHashFilters.Companion.EMPTY_FILTERS
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.blockingContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executor
 import java.util.concurrent.Future
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -69,6 +67,9 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
     }
   }
 
+  @Service
+  private class CoroutineScopeService(coroutineScope: CoroutineScope) : CoroutineScope by coroutineScope
+
   init {
     if (dest.isEmpty()) { //Shortcut: no need to sync anything, just copy everything
       LOGGER.info("Destination folder is empty, will copy all files")
@@ -102,23 +103,17 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
     dest.removeFiles(stubsToRemove)
   }
 
-  private fun <T> supplyAsync(body: () -> T, executor: Executor): CompletableFuture<T> =
-    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()
-      .async(executor.asCoroutineDispatcher()) {
-        blockingContext { body() }
+  private fun syncFoldersInternal() {
+    val sourceSyncDataFuture = service<CoroutineScopeService>()
+      .async(ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
+        source.calculateSyncData(filters, false, useStubs)
       }
       .asCompletableFuture()
-
-  private inline fun runAsync(crossinline body: () -> Unit, executor: Executor): CompletableFuture<Unit> =
-    supplyAsync({ body() }, executor)
-
-  private fun syncFoldersInternal() {
-    val sourceSyncDataFuture = supplyAsync({
-                                             source.calculateSyncData(filters, false, useStubs)
-                                           }, ProcessIOExecutorService.INSTANCE)
-    val destSyncDataFuture = supplyAsync({
-                                           dest.calculateSyncData(filters, false, useStubs)
-                                         }, ProcessIOExecutorService.INSTANCE)
+    val destSyncDataFuture = service<CoroutineScopeService>()
+      .async(ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
+        dest.calculateSyncData(filters, false, useStubs)
+      }
+      .asCompletableFuture()
 
     val sourceSyncData = sourceSyncDataFuture.get()
     val sourceHashes = sourceSyncData.hashes.associateBy { it.fileLowerCase }.toMutableMap()
@@ -167,9 +162,11 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
       LOGGER.info("Split to $parts chunks")
       val futures = ArrayList<Future<*>>(parts)
       for (chunk in filesToCopy.chunked(chunkSize)) {
-        futures += runAsync({
-                              copyFilesToOtherSide(chunk)
-                            }, ProcessIOExecutorService.INSTANCE)
+        futures += service<CoroutineScopeService>()
+          .async(ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
+            copyFilesToOtherSide(chunk)
+          }
+          .asCompletableFuture()
       }
       futures.forEach { it.get() }
     }
