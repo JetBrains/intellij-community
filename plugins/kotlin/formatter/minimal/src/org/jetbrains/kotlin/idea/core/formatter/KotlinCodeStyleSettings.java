@@ -29,6 +29,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
     public static final int DEFAULT_NAME_COUNT_TO_USE_STAR_IMPORT = 5;
     public static final int DEFAULT_NAME_COUNT_TO_USE_STAR_IMPORT_FOR_MEMBERS = 3;
 
+    public boolean SPACE_AROUND_ELVIS = true;
     public boolean SPACE_AROUND_RANGE = false;
     public boolean SPACE_BEFORE_TYPE_COLON = false;
     public boolean SPACE_AFTER_TYPE_COLON = true;

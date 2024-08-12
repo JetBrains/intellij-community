@@ -88,6 +88,7 @@
       "space_before_while_parentheses": true,
       "spaces_around_additive_operators": true,
       "spaces_around_assignment_operators": true,
+      "spaces_around_elvis": true,
       "spaces_around_equality_operators": true,
       "spaces_around_function_type_arrow": true,
       "spaces_around_logical_operators": true,

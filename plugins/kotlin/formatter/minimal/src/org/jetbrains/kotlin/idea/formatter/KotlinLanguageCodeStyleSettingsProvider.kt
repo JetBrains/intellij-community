@@ -86,6 +86,12 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                 )
 
                 showCustomOption(
+                    KotlinCodeStyleSettings::SPACE_AROUND_ELVIS,
+                    KotlinBundle.message("formatter.title.elvis.operator"),
+                    codeStyleSettingsCustomizableOptions.SPACES_AROUND_OPERATORS
+                )
+
+                showCustomOption(
                     KotlinCodeStyleSettings::SPACE_BEFORE_TYPE_COLON,
                     KotlinBundle.message("formatter.title.before.colon.after.declaration.name"),
                     codeStyleSettingsCustomizableOptions.SPACES_OTHER
@@ -451,7 +457,8 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
         else -> """open class Some {
                        private val f: (Int)->Int = { a: Int -> a * 2 }
                        fun foo(): Int {
-                           val test: Int = 12
+                           val bar: Int? = 5
+                           val test: Int = bar ?: 12
                            for (i in 10..<42) {
                                println (when {
                                    i < test -> -1

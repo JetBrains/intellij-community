@@ -14,10 +14,6 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.TextRangeUtil
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.formatter.afterInside
-import org.jetbrains.kotlin.idea.formatter.beforeInside
-import org.jetbrains.kotlin.idea.formatter.createSpaceBeforeRBrace
-import org.jetbrains.kotlin.idea.formatter.startOfDeclaration
 import org.jetbrains.kotlin.idea.util.requireNode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -344,8 +340,11 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         around(
           TokenSet.create(KtTokens.PLUSPLUS, KtTokens.MINUSMINUS, KtTokens.EXCLEXCL, KtTokens.MINUS, KtTokens.PLUS, KtTokens.EXCL)
         ).spaceIf(kotlinCommonSettings.SPACE_AROUND_UNARY_OPERATOR)
-        before(KtTokens.ELVIS).spaces(1)
-        after(KtTokens.ELVIS).spacesNoLineBreak(1)
+
+        val spacesAroundElvis = if (kotlinCustomSettings.SPACE_AROUND_ELVIS) 1 else 0
+        before(KtTokens.ELVIS).spaceIf(kotlinCustomSettings.SPACE_AROUND_ELVIS)
+        after(KtTokens.ELVIS).spacesNoLineBreak(spacesAroundElvis)
+
         around(KtTokens.RANGE).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
         around(KtTokens.RANGE_UNTIL).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
 
