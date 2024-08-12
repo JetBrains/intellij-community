@@ -14,11 +14,12 @@ interface RunContentManager {
 @Remote("com.intellij.execution.ui.RunContentDescriptor")
 interface RunContentDescriptorRef {
   fun getDisplayName(): String
-  fun getProcessHandler(): ProcessHandlerRef
+  fun getProcessHandler(): ProcessHandlerRef?
 }
 
 @Remote("com.intellij.execution.process.ProcessHandler")
 interface ProcessHandlerRef {
   fun isProcessTerminated(): Boolean
   fun isProcessTerminating(): Boolean
+  fun waitFor(millis: Long): Boolean
 }
