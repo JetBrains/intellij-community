@@ -149,7 +149,7 @@ public class RegistryTest {
     Registry.Companion.loadState(registryElementFromMap(secondMap), null);
     assertEquals(secondValue, Registry.get(key).asString());
     RegistryValue newRegistryValue = Registry.get(newKey);
-    String loadedNewValue = newRegistryValue.resolveNotRequiredValue(newRegistryValue.getKey(), null);
+    String loadedNewValue = newRegistryValue.resolveNotRequiredValue(newRegistryValue.getKey());
     assertNull(loadedNewValue);
     assertThat(changedPairs).hasSize(1);
   }

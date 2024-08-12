@@ -59,11 +59,11 @@ internal class RegistryManagerImpl(coroutineScope: CoroutineScope) : PersistentS
   override fun stringValue(key: String): @NlsSafe String = Registry._getWithoutStateCheck(key).asString()
 
   override fun intValue(key: String, defaultValue: Int): Int {
-    return try {
-      Registry._getWithoutStateCheck(key).asInteger()
+    try {
+      return Registry._getWithoutStateCheck(key).asInteger()
     }
     catch (ignore: MissingResourceException) {
-      defaultValue
+      return defaultValue
     }
   }
 
@@ -76,11 +76,11 @@ internal class RegistryManagerImpl(coroutineScope: CoroutineScope) : PersistentS
   override fun getState(): Element = Registry.getInstance().getState()
 
   override fun noStateLoaded() {
-    Registry.loadState(/* state = */ null, /* earlyAccess = */ EarlyAccessRegistryManager.getOrLoadMap())
+    Registry.loadState(state = null, earlyAccess = EarlyAccessRegistryManager.getOrLoadMap())
   }
 
   override fun loadState(state: Element) {
-    log(Registry.loadState(/* state = */ state, /* earlyAccess = */ EarlyAccessRegistryManager.getOrLoadMap()))
+    log(Registry.loadState(state = state, earlyAccess = EarlyAccessRegistryManager.getOrLoadMap()))
   }
 
   private fun log(userProperties: Map<String, String>) {
@@ -89,13 +89,12 @@ internal class RegistryManagerImpl(coroutineScope: CoroutineScope) : PersistentS
     }
 
     val keys = ArrayUtilRt.toStringArray(userProperties.keys)
-    Arrays.sort(keys)
+    keys.sort()
     val builder = StringBuilder("Registry values changed by user: ")
     for (key in keys) {
-      if ("ide.firstStartup" == key) {
-        continue
+      if ("ide.firstStartup" != key) {
+        builder.append(key).append(" = ").append(userProperties[key]).append(", ")
       }
-      builder.append(key).append(" = ").append(userProperties[key]).append(", ")
     }
     logger<RegistryManager>().info(builder.substring(0, builder.length - 2))
   }

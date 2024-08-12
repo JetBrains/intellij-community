@@ -1493,7 +1493,6 @@ c:com.intellij.openapi.util.registry.RegistryValue
 - f:getSelectedOption():java.lang.String
 - isBoolean():Z
 - isChangedFromDefault():Z
-- f:isChangedFromDefault(java.lang.String,com.intellij.openapi.util.registry.Registry):Z
 - f:isChangedSinceAppStart():Z
 - f:isMultiValue():Z
 - f:isOptionEnabled(java.lang.String):Z

@@ -120,7 +120,7 @@ open class RegistryValue @Internal constructor(
   }
 
   private fun computeDouble(): Double {
-    return resolveNotRequiredValue(key = key, defaultValue = null)?.toDoubleOrNull()
+    return resolveNotRequiredValue(key)?.toDoubleOrNull()
            ?: keyDescriptor?.defaultValue?.toDouble()
            ?: registry.getBundleValueOrNull(key)?.toDouble()
            ?: 0.0
@@ -145,33 +145,33 @@ open class RegistryValue @Internal constructor(
   }
 
   open val description: @NlsSafe String
-    get() = keyDescriptor?.description ?: resolveNotRequiredValue(key = "$key.description", defaultValue = "")!!
+    get() = keyDescriptor?.description ?: resolveNotRequiredValue(key = "$key.description") ?: ""
 
   open fun isRestartRequired(): Boolean {
-    if (keyDescriptor != null) {
+    if (keyDescriptor == null) {
+      return resolveNotRequiredValue(key = "$key.restartRequired").toBoolean()
+    }
+    else {
       return keyDescriptor.isRestartRequired
     }
-    return resolveNotRequiredValue(key = "$key.restartRequired", defaultValue = "false").toBoolean()
   }
 
-  open fun isChangedFromDefault(): Boolean = isChangedFromDefault(asString(), registry)
+  open fun isChangedFromDefault(): Boolean {
+    return (stringCachedValue ?: resolveNotRequiredValue(key)) != registry.getBundleValueOrNull(key)
+  }
 
   val pluginId: String?
     get() = keyDescriptor?.pluginId
 
-  fun isChangedFromDefault(newValue: String, registry: Registry): Boolean {
-    return newValue != registry.getBundleValueOrNull(key)
-  }
-
   private fun getAsValue(key: @NonNls String): String? {
     if (stringCachedValue == null) {
-      stringCachedValue = resolveNotRequiredValue(key = key, defaultValue = null)
+      stringCachedValue = resolveNotRequiredValue(key)
     }
     return stringCachedValue?.takeIf { it.isNotEmpty() }
   }
 
   @Internal
-  fun resolveNotRequiredValue(key: @NonNls String, defaultValue: String?): String? {
+  fun resolveNotRequiredValue(key: @NonNls String): String? {
     registry.getUserProperties().get(key)?.let {
       return it
     }
@@ -181,7 +181,7 @@ open class RegistryValue @Internal constructor(
     }
 
     checkIsLoaded(key)
-    return registry.getBundleValueOrNull(key) ?: defaultValue
+    return registry.getBundleValueOrNull(key)
   }
 
   @Throws(MissingResourceException::class)
@@ -236,7 +236,7 @@ open class RegistryValue @Internal constructor(
       listener.afterValueChanged(this)
     }
 
-    if (!isRestartRequired() && resolveNotRequiredValue(key = key, defaultValue = null) == registry.getBundleValueOrNull(key)) {
+    if (!isRestartRequired() && resolveNotRequiredValue(key) == registry.getBundleValueOrNull(key)) {
       registry.getUserProperties().remove(key)
     }
 

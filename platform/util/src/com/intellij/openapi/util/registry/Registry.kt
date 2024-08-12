@@ -208,7 +208,7 @@ class Registry {
       val keysToProcess = HashSet(userProperties.keys)
       for ((key, value) in map) {
         val registryValue = registry.resolveValue(key)
-        val currentValue = registryValue.resolveNotRequiredValue(key = key, defaultValue = null)
+        val currentValue = registryValue.resolveNotRequiredValue(key)
         // currentValue == null means value is not in the bundle. Ignore it
         if (currentValue != null && currentValue != value) {
           registryValue.setValue(value)
@@ -259,17 +259,17 @@ class Registry {
       val keys = bundle?.keys ?: emptySet()
       val result = ArrayList<RegistryValue>()
       // don't use getInstance here - https://youtrack.jetbrains.com/issue/IDEA-271748
-      val instance = registry
-      val contributedKeys = instance.contributedKeys
+      val registry = registry
+      val contributedKeys = registry.contributedKeys
       for (key in keys) {
         if (key.endsWith(".description") || key.endsWith(".restartRequired") || contributedKeys.containsKey(key)) {
           continue
         }
-        result.add(instance.resolveValue(key))
+        result.add(registry.resolveValue(key))
       }
 
       for (key in contributedKeys.keys) {
-        result.add(instance.resolveValue(key))
+        result.add(registry.resolveValue(key))
       }
 
       return result
@@ -317,7 +317,7 @@ class Registry {
         val map = fromState(state)
         for ((key, value) in map) {
           val registryValue = registry.resolveValue(key)
-          if (registryValue.isChangedFromDefault(value, registry)) {
+          if (value != registry.getBundleValueOrNull(registryValue.key)) {
             userProperties.put(key, value)
             registryValue.resetCache()
           }
@@ -328,6 +328,7 @@ class Registry {
         // yes, earlyAccess overrides user properties
         userProperties.putAll(earlyAccess)
       }
+
       registry.isLoaded = true
       registry.loadFuture.complete(null)
       return userProperties
