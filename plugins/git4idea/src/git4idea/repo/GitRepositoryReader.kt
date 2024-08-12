@@ -1,313 +1,279 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.repo;
+package git4idea.repo
 
-import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.repo.RepoStateException;
-import com.intellij.dvcs.repo.Repository;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import git4idea.GitBranch;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.GitUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import static git4idea.GitBranch.REFS_HEADS_PREFIX;
-import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
-import static git4idea.GitReference.BRANCH_NAME_HASHING_STRATEGY;
-import static git4idea.repo.GitRefUtil.*;
-import static java.util.Collections.emptyMap;
+import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.repo.RepoStateException
+import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.LineTokenizer
+import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.vcs.log.Hash
+import git4idea.GitBranch
+import git4idea.GitLocalBranch
+import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import git4idea.GitUtil
+import org.jetbrains.annotations.NonNls
+import java.io.File
+import java.util.HashMap
 
 /**
- * <p>Reads information about the Git repository from Git service files located in the {@code .git} folder.</p>
- * <p>NB: works with {@link File}, i.e. reads from disk. Consider using caching.
- * Throws a {@link RepoStateException} in the case of incorrect Git file format.</p>
+ *
+ * Reads information about the Git repository from Git service files located in the `.git` folder.
+ *
+ * NB: works with [File], i.e. reads from disk. Consider using caching.
+ * Throws a [RepoStateException] in the case of incorrect Git file format.
  */
-public class GitRepositoryReader {
+internal class GitRepositoryReader(private val project: Project, private val gitFiles: GitRepositoryFiles) {
 
-  private static final Logger LOG = Logger.getInstance(GitRepositoryReader.class);
+  fun readState(remotes: Collection<GitRemote>): GitBranchState {
+    val branches = readBranches(remotes)
+    val localBranches = branches.localBranches
 
-  private static final String DETACHED_HEAD = "detached HEAD";
+    val headInfo = readHead()
+    val state = readRepositoryState(headInfo.isBranch)
 
-  private final @NotNull Project myProject;
-  private final @NotNull GitRepositoryFiles myGitFiles;
-
-  private final @NotNull File myHeadFile;       // .git/HEAD
-  private final @NotNull File myRefsHeadsDir;   // .git/refs/heads/
-  private final @NotNull File myRefsRemotesDir; // .git/refs/remotes/
-  private final @NotNull File myPackedRefsFile; // .git/packed-refs
-
-  GitRepositoryReader(@NotNull Project project, @NotNull GitRepositoryFiles gitFiles) {
-    myProject = project;
-    myGitFiles = gitFiles;
-    myHeadFile = gitFiles.getHeadFile();
-    myRefsHeadsDir = gitFiles.getRefsHeadsFile();
-    myRefsRemotesDir = gitFiles.getRefsRemotesFile();
-    myPackedRefsFile = gitFiles.getPackedRefsPath();
-  }
-
-  @NotNull
-  GitBranchState readState(@NotNull Collection<GitRemote> remotes) {
-    GitBranches branches = readBranches(remotes);
-    Map<GitLocalBranch, Hash> localBranches = branches.localBranches;
-
-    HeadInfo headInfo = readHead();
-    Repository.State state = readRepositoryState(headInfo.isBranch);
-
-    GitLocalBranch currentBranch;
-    String currentRevision;
+    var currentBranch: GitLocalBranch?
+    var currentRevision: String?
     if (!headInfo.isBranch || !localBranches.isEmpty()) {
-      currentBranch = findCurrentBranch(headInfo, state, localBranches.keySet());
-      currentRevision = getCurrentRevision(headInfo, currentBranch == null ? null : localBranches.get(currentBranch));
+      currentBranch = findCurrentBranch(headInfo, state, localBranches.keys)
+      currentRevision = getCurrentRevision(headInfo, if (currentBranch == null) null else localBranches[currentBranch])
     }
     else if (headInfo.content != null) {
-      currentBranch = new GitLocalBranch(headInfo.content);
-      currentRevision = null;
+      currentBranch = GitLocalBranch(headInfo.content)
+      currentRevision = null
     }
     else {
-      currentBranch = null;
-      currentRevision = null;
+      currentBranch = null
+      currentRevision = null
     }
     if (currentBranch == null && currentRevision == null) {
-      LOG.warn("Couldn't identify neither current branch nor current revision. Ref specified in .git/HEAD: [" + headInfo.content + "]");
-      LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled());
-      logDebugAllRefsFiles(myGitFiles);
+      LOG.warn("Couldn't identify neither current branch nor current revision. Ref specified in .git/HEAD: [" + headInfo.content + "]")
+      LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled())
+      GitRefUtil.logDebugAllRefsFiles(gitFiles)
     }
-    return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.remoteBranches);
+    return GitBranchState(currentRevision, currentBranch, state, localBranches, branches.remoteBranches)
   }
 
-  @NotNull
-  GitHooksInfo readHooksInfo() {
-    boolean hasCommitHook = isExistingExecutableFile(myGitFiles.getPreCommitHookFile()) ||
-                            isExistingExecutableFile(myGitFiles.getCommitMsgHookFile());
-    boolean hasPushHook = isExistingExecutableFile(myGitFiles.getPrePushHookFile());
-    return new GitHooksInfo(hasCommitHook, hasPushHook);
+  fun readHooksInfo(): GitHooksInfo {
+    val hasCommitHook = isExistingExecutableFile(gitFiles.preCommitHookFile) ||
+                        isExistingExecutableFile(gitFiles.commitMsgHookFile)
+    val hasPushHook: Boolean = isExistingExecutableFile(gitFiles.prePushHookFile)
+    return GitHooksInfo(hasCommitHook, hasPushHook)
   }
 
-  private static boolean isExistingExecutableFile(@NotNull File file) {
-    return file.exists() && file.canExecute();
-  }
-
-  boolean hasShallowCommits() {
-    File shallowFile = myGitFiles.getShallowFile();
+  fun hasShallowCommits(): Boolean {
+    val shallowFile = gitFiles.shallowFile
     if (!shallowFile.exists()) {
-      return false;
+      return false
     }
 
-    return shallowFile.length() > 0;
+    return shallowFile.length() > 0
   }
 
-  private static @Nullable String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable Hash currentBranchHash) {
-    String currentRevision;
-    if (!headInfo.isBranch) {
-      currentRevision = headInfo.content;
+  private fun findCurrentBranch(
+    headInfo: HeadInfo,
+    state: Repository.State,
+    localBranches: Set<GitLocalBranch>,
+  ): GitLocalBranch? {
+    val currentBranchName = findCurrentBranchName(state, headInfo) ?: return null
+    val currentBranch = localBranches.find { branch ->
+      GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(branch.fullName, currentBranchName)
     }
-    else if (currentBranchHash == null) {
-      currentRevision = null;
-    }
-    else {
-      currentRevision = currentBranchHash.asString();
-    }
-    return currentRevision;
+    return currentBranch ?: GitLocalBranch(currentBranchName)
   }
 
-  private @Nullable GitLocalBranch findCurrentBranch(@NotNull HeadInfo headInfo,
-                                                     @NotNull Repository.State state,
-                                                     @NotNull Set<GitLocalBranch> localBranches) {
-    final String currentBranchName = findCurrentBranchName(state, headInfo);
-    if (currentBranchName == null) {
-      return null;
-    }
-    final GitLocalBranch currentBranch =
-      ContainerUtil.find(localBranches, branch -> BRANCH_NAME_HASHING_STRATEGY.equals(branch.getFullName(), currentBranchName));
-    return currentBranch == null ? new GitLocalBranch(currentBranchName) : currentBranch;
-  }
-
-  private @NotNull Repository.State readRepositoryState(boolean isOnBranch) {
+  private fun readRepositoryState(isOnBranch: Boolean): Repository.State {
     if (isMergeInProgress()) {
-      return Repository.State.MERGING;
+      return Repository.State.MERGING
     }
     if (isRebaseInProgress()) {
-      return Repository.State.REBASING;
+      return Repository.State.REBASING
     }
     if (!isOnBranch) {
-      return Repository.State.DETACHED;
+      return Repository.State.DETACHED
     }
     if (isCherryPickInProgress()) {
-      return Repository.State.GRAFTING;
+      return Repository.State.GRAFTING
     }
     if (isRevertInProgress()) {
-      return Repository.State.REVERTING;
+      return Repository.State.REVERTING
     }
-    return Repository.State.NORMAL;
+    return Repository.State.NORMAL
   }
 
-  private @Nullable String findCurrentBranchName(@NotNull Repository.State state, @NotNull HeadInfo headInfo) {
-    String currentBranch = null;
+  private fun findCurrentBranchName(state: Repository.State, headInfo: HeadInfo): String? {
+    var currentBranch: String? = null
     if (headInfo.isBranch) {
-      currentBranch = headInfo.content;
+      currentBranch = headInfo.content
     }
     else if (state == Repository.State.REBASING) {
-      currentBranch = tryFindRebaseBranch();
+      currentBranch = tryFindRebaseBranch()
     }
-    return addRefsHeadsPrefixIfNeeded(currentBranch);
+    return GitRefUtil.addRefsHeadsPrefixIfNeeded(currentBranch)
   }
 
-  private @Nullable String tryFindRebaseBranch() {
-    String currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseApplyDir());
+  private fun tryFindRebaseBranch(): String? {
+    var currentBranch: String? = readRebaseDirBranchFile(gitFiles.rebaseApplyDir)
     if (currentBranch == null) {
-      currentBranch = readRebaseDirBranchFile(myGitFiles.getRebaseMergeDir());
+      currentBranch = readRebaseDirBranchFile(gitFiles.rebaseMergeDir)
     }
-    return (currentBranch == null || currentBranch.equals(DETACHED_HEAD)) ? null : currentBranch;
+    return if (currentBranch == null || currentBranch == DETACHED_HEAD) null else currentBranch
   }
 
-  private static @Nullable String readRebaseDirBranchFile(@NonNls File rebaseDir) {
-    if (rebaseDir.exists()) {
-      File headName = new File(rebaseDir, "head-name");
-      if (headName.exists()) {
-        return DvcsUtil.tryLoadFileOrReturn(headName, null, CharsetToolkit.UTF8);
-      }
-    }
-    return null;
-  }
+  private fun isMergeInProgress(): Boolean = gitFiles.mergeHeadFile.exists()
 
-  private boolean isMergeInProgress() {
-    return myGitFiles.getMergeHeadFile().exists();
-  }
+  private fun isRebaseInProgress(): Boolean = gitFiles.rebaseApplyDir.exists() || gitFiles.rebaseMergeDir.exists()
 
-  private boolean isRebaseInProgress() {
-    return myGitFiles.getRebaseApplyDir().exists() || myGitFiles.getRebaseMergeDir().exists();
-  }
+  private fun isCherryPickInProgress(): Boolean = gitFiles.cherryPickHead.exists()
 
-  private boolean isCherryPickInProgress() {
-    return myGitFiles.getCherryPickHead().exists();
-  }
+  private fun isRevertInProgress(): Boolean = gitFiles.revertHead.exists()
 
-  private boolean isRevertInProgress() {
-    return myGitFiles.getRevertHead().exists();
-  }
-
-  private @NotNull Map<String, String> readPackedBranches() {
-    if (!myPackedRefsFile.exists()) {
-      return emptyMap();
+  private fun readPackedBranches(): Map<String, String> {
+    val packedRefsFile = gitFiles.packedRefsPath
+    if (!packedRefsFile.exists()) {
+      return emptyMap()
     }
     try {
-      String content = DvcsUtil.tryLoadFile(myPackedRefsFile, CharsetToolkit.UTF8);
-      return ContainerUtil.map2MapNotNull(LineTokenizer.tokenize(content, false), GitRefUtil::parseBranchesLine);
+      val content = DvcsUtil.tryLoadFile(packedRefsFile, CharsetToolkit.UTF8)
+
+      val result = mutableMapOf<String, String>()
+      for (line in LineTokenizer.tokenize(content, false)) {
+        val pair = GitRefUtil.parseBranchesLine(line) ?: continue
+        result[pair.first] = pair.second
+      }
+      return result
     }
-    catch (RepoStateException e) {
-      return emptyMap();
+    catch (_: RepoStateException) {
+      return emptyMap()
     }
   }
 
-  private @NotNull GitBranches readBranches(@NotNull Collection<GitRemote> remotes) {
-    Map<String, String> data = readBranchRefsFromFiles();
-    Map<String, Hash> resolvedRefs = resolveRefs(data);
-    return createBranchesFromData(remotes, resolvedRefs);
+  private fun readBranches(remotes: Collection<GitRemote>): GitBranches {
+    val data = readBranchRefsFromFiles()
+    val resolvedRefs = GitRefUtil.resolveRefs(data)
+    return createBranchesFromData(remotes, resolvedRefs)
   }
 
-  private @NotNull Map<String, String> readBranchRefsFromFiles() {
+  private fun readBranchRefsFromFiles(): Map<String, String> {
     try {
       // reading from packed-refs first to overwrite values by values from unpacked refs
-      Map<String, String> result = new HashMap<>(readPackedBranches());
-      result.putAll(readFromRefsFiles(myRefsHeadsDir, REFS_HEADS_PREFIX, myGitFiles));
-      result.putAll(readFromRefsFiles(myRefsRemotesDir, REFS_REMOTES_PREFIX, myGitFiles));
-      result.remove(REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD);
-      return result;
+      val result: MutableMap<String, String> = HashMap<String, String>(readPackedBranches())
+      result.putAll(GitRefUtil.readFromRefsFiles(gitFiles.refsHeadsFile, GitBranch.REFS_HEADS_PREFIX, gitFiles))
+      result.putAll(GitRefUtil.readFromRefsFiles(gitFiles.refsRemotesFile, GitBranch.REFS_REMOTES_PREFIX, gitFiles))
+      result.remove(GitBranch.REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD)
+      return result
     }
-    catch (Throwable e) {
-      logDebugAllRefsFiles(myGitFiles);
-      LOG.warn("Error reading refs from files", e);
-      return emptyMap();
-    }
-  }
-
-  private static @NotNull GitBranches createBranchesFromData(@NotNull Collection<GitRemote> remotes,
-                                                             @NotNull Map<String, Hash> data) {
-    Map<GitLocalBranch, Hash> localBranches = new HashMap<>();
-    Map<GitRemoteBranch, Hash> remoteBranches = new HashMap<>();
-    for (Map.Entry<String, Hash> entry : data.entrySet()) {
-      String refName = entry.getKey();
-      Hash hash = entry.getValue();
-
-      GitBranch branch = parseBranchRef(remotes, refName);
-      if (branch instanceof GitLocalBranch) {
-        localBranches.put((GitLocalBranch)branch, hash);
-      }
-      else if (branch instanceof GitRemoteBranch) {
-        remoteBranches.put((GitRemoteBranch)branch, hash);
-      }
-      else {
-        LOG.warn(String.format("Unexpected ref format: %s, %s", refName, branch));
-      }
-    }
-    return new GitBranches(localBranches, remoteBranches);
-  }
-
-  public static @Nullable GitBranch parseBranchRef(@NotNull Collection<GitRemote> remotes, String refName) {
-    if (refName.startsWith(REFS_HEADS_PREFIX)) {
-      return new GitLocalBranch(refName);
-    }
-    else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
-      return GitUtil.parseRemoteBranch(refName, remotes);
-    }
-    else {
-      return null;
+    catch (e: Throwable) {
+      GitRefUtil.logDebugAllRefsFiles(gitFiles)
+      LOG.warn("Error reading refs from files", e)
+      return emptyMap()
     }
   }
 
-  private @NotNull HeadInfo readHead() {
-    String headContent;
+  private fun readHead(): HeadInfo {
+    val headContent: String
     try {
-      headContent = DvcsUtil.tryLoadFile(myHeadFile, CharsetToolkit.UTF8);
+      headContent = DvcsUtil.tryLoadFile(gitFiles.headFile, CharsetToolkit.UTF8)
     }
-    catch (RepoStateException e) {
-      LOG.warn(e);
-      return HeadInfo.UNKNOWN;
+    catch (e: RepoStateException) {
+      LOG.warn(e)
+      return HeadInfo.Companion.UNKNOWN
     }
 
-    Hash hash = parseHash(headContent);
+    val hash = GitRefUtil.parseHash(headContent)
     if (hash != null) {
-      return new HeadInfo(false, headContent);
+      return HeadInfo(false, headContent)
     }
 
-    String target = getTarget(headContent);
+    val target = GitRefUtil.getTarget(headContent)
     if (target != null) {
-      return new HeadInfo(true, target);
+      return HeadInfo(true, target)
     }
 
-    LOG.warn(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
-    return HeadInfo.UNKNOWN;
+    LOG.warn(RepoStateException("Invalid format of the .git/HEAD file: [$headContent]")) // including "refs/tags/v1"
+    return HeadInfo.Companion.UNKNOWN
   }
 
   /**
    * Container to hold two information items: refname from .git/HEAD and is Git on branch.
    */
-  private static class HeadInfo {
-    private final @Nullable String content;
-    private final boolean isBranch;
-
-    public static final HeadInfo UNKNOWN = new HeadInfo(false, null);
-
-    HeadInfo(boolean branch, @Nullable String content) {
-      isBranch = branch;
-      this.content = content;
+  private class HeadInfo(val isBranch: Boolean, val content: String?) {
+    companion object {
+      val UNKNOWN: HeadInfo = HeadInfo(false, null)
     }
   }
 
-  private record GitBranches(@NotNull Map<GitLocalBranch, Hash> localBranches,
-                             @NotNull Map<GitRemoteBranch, Hash> remoteBranches) {
+  private class GitBranches(
+    val localBranches: Map<GitLocalBranch, Hash>,
+    val remoteBranches: Map<GitRemoteBranch, Hash>,
+  )
+
+  companion object {
+    private val LOG = Logger.getInstance(GitRepositoryReader::class.java)
+
+    private const val DETACHED_HEAD = "detached HEAD"
+
+    private fun isExistingExecutableFile(file: File): Boolean {
+      return file.exists() && file.canExecute()
+    }
+
+    private fun getCurrentRevision(headInfo: HeadInfo, currentBranchHash: Hash?): String? {
+      var currentRevision: String?
+      if (!headInfo.isBranch) {
+        currentRevision = headInfo.content
+      }
+      else if (currentBranchHash == null) {
+        currentRevision = null
+      }
+      else {
+        currentRevision = currentBranchHash.asString()
+      }
+      return currentRevision
+    }
+
+    private fun readRebaseDirBranchFile(rebaseDir: @NonNls File): String? {
+      if (rebaseDir.exists()) {
+        val headName = File(rebaseDir, "head-name")
+        if (headName.exists()) {
+          return DvcsUtil.tryLoadFileOrReturn(headName, null, CharsetToolkit.UTF8)
+        }
+      }
+      return null
+    }
+
+    private fun createBranchesFromData(
+      remotes: Collection<GitRemote>,
+      data: Map<String, Hash>,
+    ): GitBranches {
+      val localBranches: MutableMap<GitLocalBranch, Hash> = HashMap()
+      val remoteBranches: MutableMap<GitRemoteBranch, Hash> = HashMap()
+      for ((refName, hash) in data.entries) {
+        val branch: GitBranch? = parseBranchRef(remotes, refName)
+        if (branch is GitLocalBranch) {
+          localBranches.put(branch, hash)
+        }
+        else if (branch is GitRemoteBranch) {
+          remoteBranches.put(branch, hash)
+        }
+        else {
+          LOG.warn(String.format("Unexpected ref format: %s, %s", refName, branch))
+        }
+      }
+      return GitBranches(localBranches, remoteBranches)
+    }
+
+    fun parseBranchRef(remotes: Collection<GitRemote>, refName: String): GitBranch? {
+      if (refName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
+        return GitLocalBranch(refName)
+      }
+      else if (refName.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
+        return GitUtil.parseRemoteBranch(refName, remotes)
+      }
+      else {
+        return null
+      }
+    }
   }
 }

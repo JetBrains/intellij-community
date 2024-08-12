@@ -40,7 +40,7 @@ public final class GitRefUtil {
   }
 
   /**
-   * @return only branches
+   * @return pairs [branchName, hash], only for local and remote branches
    * @see #parseRefsLine
    */
   @ApiStatus.Internal
