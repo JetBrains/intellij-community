@@ -93,6 +93,14 @@ fun KtElement.canAnalyze(): Boolean {
 val PsiClass.isEnumEntryLightClass: Boolean
     get() = (this as? KtLightClass)?.kotlinOrigin is KtEnumEntry
 
+internal fun PsiClass.isLocal(): Boolean {
+    val parent = parent
+    // A class in a field or method
+    if (parent is PsiField || parent is PsiMethod) return true
+    // In case of an inner-class
+    return if (parent is PsiClass) parent.isLocal() else false
+}
+
 val KtTypeReference.nameElement: PsiElement?
     get() = this.typeElement?.let {
         (it as? KtUserType)?.referenceExpression?.getReferencedNameElement() ?: it.navigationElement
