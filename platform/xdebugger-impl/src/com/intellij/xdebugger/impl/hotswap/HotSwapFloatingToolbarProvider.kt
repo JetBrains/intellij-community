@@ -36,9 +36,7 @@ private fun createHelpTooltip(): HelpTooltip =
     .setTitle(XDebuggerBundle.message("xdebugger.hotswap.tooltip.apply"))
     .setDescription(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
 
-internal class HotSwapModifiedFilesAction : AnAction(XDebuggerBundle.messagePointer("action.XDebugger.Hotswap.Modified.Files.text"),
-                                                     XDebuggerBundle.messagePointer("action.XDebugger.Hotswap.Modified.Files.description"),
-                                                     hotSwapIcon) {
+internal class HotSwapModifiedFilesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val session = findSessionIfReady(e.project) ?: return
     HotSwapWithRebuildAction.performHotSwap(e.dataContext, session)
@@ -47,6 +45,7 @@ internal class HotSwapModifiedFilesAction : AnAction(XDebuggerBundle.messagePoin
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = Registry.`is`("debugger.hotswap.floating.toolbar")
     e.presentation.isEnabled = findSessionIfReady(e.project) != null
+    e.presentation.icon = hotSwapIcon
   }
 
   private fun findSessionIfReady(project: Project?): HotSwapSession<*>? {
