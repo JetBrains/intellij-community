@@ -268,15 +268,6 @@ public class GitRepositoryReader {
     }
   }
 
-  private static @Nullable String loadHashFromBranchFile(@NotNull File branchFile) {
-    return DvcsUtil.tryLoadFileOrReturn(branchFile, null);
-  }
-
-
-  private static boolean isHidden(@NotNull File file) {
-    return file.getName().startsWith(".");
-  }
-
   private @NotNull HeadInfo readHead() {
     String headContent;
     try {
