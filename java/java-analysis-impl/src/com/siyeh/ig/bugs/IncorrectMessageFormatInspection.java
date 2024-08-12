@@ -75,6 +75,10 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
 
       private void checkIndexes(@NotNull PsiMethodCallExpression call,
                                 @NotNull List<MessageFormatUtil.MessageFormatPlaceholder> indexes) {
+        PsiExpressionList list = call.getArgumentList();
+        if (list.getExpressionCount() == 2 && list.getExpressions()[1].getType() instanceof PsiArrayType) {
+          return;
+        }
         PsiExpression[] expressions = call.getArgumentList().getExpressions();
         for (PsiExpression expression : expressions) {
           if (expression == null || expression instanceof PsiEmptyExpressionImpl) {
@@ -106,6 +110,7 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
           return;
         }
         PsiIdentifier identifier = identifiers[0];
+        //skip if arr
         if (!notFoundArguments.isEmpty()) {
           if (notFoundArguments.size() == 1) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.incorrect.message.format.not.found.argument",
