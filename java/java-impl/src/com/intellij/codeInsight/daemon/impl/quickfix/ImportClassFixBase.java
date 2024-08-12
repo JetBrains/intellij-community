@@ -85,7 +85,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return isStillAvailable() && !getClassesToImport(true).isEmpty();
   }
 
-  private boolean isStillAvailable() {
+  protected boolean isStillAvailable() {
     if (!isPsiModificationStampChanged()) {
       return true;
     }
