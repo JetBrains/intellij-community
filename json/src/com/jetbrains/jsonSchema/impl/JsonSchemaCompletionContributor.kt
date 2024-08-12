@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.parents
 import com.intellij.ui.IconManager.Companion.getInstance
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.ObjectUtils
@@ -209,11 +210,12 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         val metadata = schema.enumMetadata
         val isEnumOrderSensitive = schema.readChildNodeValue(X_INTELLIJ_ENUM_ORDER_SENSITIVE).toBoolean()
         val anEnum = schema.enum
+        val filtered = filteredByDefault + getEnumItemsToSkip()
         for (i in anEnum!!.indices) {
           val o = anEnum[i]
           if (insideStringLiteral && o !is String) continue
           val variant = o.toString()
-          if (!filtered.contains(variant)) {
+          if (!filtered.contains(variant) && !filtered.contains(StringUtil.unquoteString(variant))) {
             val valueMetadata = metadata?.get(StringUtil.unquoteString(variant))
             val description = valueMetadata?.get("description")
             val deprecated = valueMetadata?.get("deprecationMessage")
@@ -241,6 +243,19 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
           }
         }
       }
+    }
+
+    private fun getEnumItemsToSkip(): Set<String> {
+      // if the parent is an array, and it assumes unique items, we don't suggest the same enum items again
+      val position = psiWalker?.findPosition(psiWalker.findElementToCheck(completionPsiElement), false)
+      val containerSchema = position?.trimTail(1)?.let { JsonSchemaResolver(myProject, rootSchema, it, null) }?.resolve()?.singleOrNull()
+      return if (psiWalker != null && containerSchema?.isUniqueItems == true) {
+        val parentArray = completionPsiElement.parents(false).firstNotNullOfOrNull {
+          psiWalker.createValueAdapter(it)?.asArray
+        }
+        parentArray?.elements.orEmpty().map { StringUtil.unquoteString(it.delegate.text) }.toSet()
+      }
+      else emptySet()
     }
 
     fun suggestSpecialValues(type: JsonSchemaType?) {
@@ -528,7 +543,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     companion object {
       // some schemas provide an empty array or an empty object in enum values...
-      private val filtered = setOf("[]", "{}", "[ ]", "{ }")
+      private val filteredByDefault = setOf("[]", "{}", "[ ]", "{ }")
       private val commonAbbreviations = listOf("e.g.", "i.e.")
 
       private fun findFirstSentence(sentence: String): String {
