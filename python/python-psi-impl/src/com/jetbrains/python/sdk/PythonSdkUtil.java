@@ -15,12 +15,15 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
@@ -66,9 +69,6 @@ public final class PythonSdkUtil {
    */
   public static final OrderRootType BUILTIN_ROOT_TYPE = OrderRootType.CLASSES;
   static final String[] WINDOWS_EXECUTABLE_SUFFIXES = {"cmd", "exe", "bat", "com"};
-  private static final String[] DIRS_WITH_BINARY = {"", "bin", "Scripts", "net45"};
-  private static final String[] UNIX_BINARY_NAMES = {"jython", "pypy", "python", "python3"};
-  private static final String[] WIN_BINARY_NAMES = {"jython.bat", "ipy.exe", "pypy.exe", "python.exe", "python3.exe"};
   private static final Predicate<Sdk> REMOTE_SDK_PREDICATE = PythonSdkUtil::isRemote;
 
   private static final Key<PySkeletonHeader> CACHED_SKELETON_HEADER = Key.create("CACHED_SKELETON_HEADER");
@@ -316,66 +316,27 @@ public final class PythonSdkUtil {
     return getAllSdks().stream().filter(REMOTE_SDK_PREDICATE.negate()).collect(Collectors.toList());
   }
 
+  // It is only here for external plugins
   @Nullable
+  @RequiresBackgroundThread(generateAssertion = false)
   public static String getPythonExecutable(@NotNull String rootPath) {
-    final File rootFile = new File(rootPath);
-    if (rootFile.isFile()) {
-      return rootFile.getAbsolutePath();
-    }
-    for (String dir : DIRS_WITH_BINARY) {
-      final File subDir;
-      if (StringUtil.isEmpty(dir)) {
-        subDir = rootFile;
-      }
-      else {
-        subDir = new File(rootFile, dir);
-      }
-      if (!subDir.isDirectory()) {
-        continue;
-      }
-      for (String binaryName : getBinaryNames()) {
-        final File executable = new File(subDir, binaryName);
-        if (executable.isFile()) {
-          return executable.getAbsolutePath();
-        }
-      }
-    }
-    return null;
+    var python = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(rootPath));
+    return (python != null) ? python.toString() : null;
   }
 
+  /**
+   * @deprecated use {@link #getExecutablePath(Path, String)}
+   */
+  @Deprecated
   @Nullable
+  @RequiresBackgroundThread(generateAssertion = false)
   public static String getExecutablePath(@NotNull final String homeDirectory, @NotNull String name) {
-    File binPath = new File(homeDirectory);
-    File binDir = binPath.getParentFile();
-    if (binDir == null) return null;
-    VirtualFileSystem localVfs = StandardFileSystems.local();
-    File runner = new File(binDir, name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(binDir, "Scripts"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(binDir.getParentFile(), "Scripts"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(binDir.getParentFile(), "local"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(new File(binDir.getParentFile(), "local"), "bin"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-
-    // if interpreter is a symlink
-    if (FileSystemUtil.isSymLink(homeDirectory)) {
-      String resolvedPath = FileSystemUtil.resolveSymLink(homeDirectory);
-      if (resolvedPath != null) {
-        return getExecutablePath(resolvedPath, name);
-      }
-    }
-    // Search in standard unix path
-    runner = new File(new File("/usr", "bin"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    runner = new File(new File(new File("/usr", "local"), "bin"), name);
-    if (runner.exists()) return localVfs.extractPresentableUrl(runner.getPath());
-    return null;
+    Path path = getExecutablePath(Path.of(homeDirectory), name);
+    return (path != null) ? path.toString() : null;
   }
 
   @Nullable
+  @RequiresBackgroundThread(generateAssertion = false)
   public static Path getExecutablePath(@NotNull Path homeDirectory, @NotNull String name) {
     Path binDir = homeDirectory.getParent();
     if (binDir == null) return null;
@@ -459,14 +420,6 @@ public final class PythonSdkUtil {
     return null;
   }
 
-  private static String[] getBinaryNames() {
-    if (SystemInfo.isUnix) {
-      return UNIX_BINARY_NAMES;
-    }
-    else {
-      return WIN_BINARY_NAMES;
-    }
-  }
 
   @Nullable
   public static Sdk findSdkByKey(@NotNull String key) {

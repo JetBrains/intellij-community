@@ -14,6 +14,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
@@ -41,7 +42,7 @@ internal fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pa
                    inheritSitePackages = state.inheritSitePackages.get())
 
   if (targetEnvironmentConfiguration != null) error("Remote targets aren't supported")
-  val venvPython = PythonSdkUtil.getPythonExecutable(venvPathOnTarget)
+  val venvPython =  VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(venvPathOnTarget))?.toString()
 
   val homeFile = try {
     StandardFileSystems.local().refreshAndFindFileByPath(venvPython!!)!!

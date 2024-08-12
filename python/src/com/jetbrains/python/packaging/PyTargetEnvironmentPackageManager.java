@@ -37,11 +37,13 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.VirtualEnvReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -237,11 +239,11 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     // TODO [targets] Pass `parentDir = null`
     getPythonProcessResult(pythonExecution, false, true, targetEnvironmentRequest);
 
-    final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
+    final Path binary = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(destinationDir));
     final char separator = targetEnvironmentRequest.getTargetPlatform().getPlatform().fileSeparator;
     final String binaryFallback = destinationDir + separator + "bin" + separator + "python";
 
-    return (binary != null) ? binary : binaryFallback;
+    return (binary != null) ? binary.toString() : binaryFallback;
   }
 
   /**

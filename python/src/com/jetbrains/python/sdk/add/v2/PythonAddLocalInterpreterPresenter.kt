@@ -5,7 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.flavors.VirtualEnvReader
+import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import kotlinx.coroutines.Dispatchers

@@ -93,14 +93,14 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       return null
     }
 
-    val path = PythonSdkUtil.getPythonExecutable(pipEnv).also {
+    val path =  VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv)).also {
       if (it == null) {
         PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.NO_EXECUTABLE)
         LOGGER.warn("Python executable is not found: $pipEnv")
       }
     } ?: return null
 
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path).also {
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString()).also {
       if (it == null) {
         PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.NO_EXECUTABLE_FILE)
         LOGGER.warn("Python executable file is not found: $path")

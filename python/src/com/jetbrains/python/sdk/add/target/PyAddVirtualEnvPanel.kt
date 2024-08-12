@@ -5,7 +5,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -33,7 +32,7 @@ import com.jetbrains.python.sdk.configuration.createSdkForTarget
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.flavors.VirtualEnvReader.Companion.DEFAULT_VIRTUALENVS_DIR
+import com.jetbrains.python.sdk.VirtualEnvReader.Companion.DEFAULT_VIRTUALENVS_DIR
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.BorderLayout

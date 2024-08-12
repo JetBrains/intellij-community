@@ -20,7 +20,7 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.flavors.VirtualEnvReader
+import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry

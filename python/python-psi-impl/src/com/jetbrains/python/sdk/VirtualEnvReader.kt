@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.flavors
+package com.jetbrains.python.sdk
 
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.sdk.tryResolvePath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -19,7 +17,6 @@ import kotlin.io.path.*
 typealias PythonBinary = Path
 typealias Directory = Path
 
-@IntellijInternalApi
 @ApiStatus.Internal
 class VirtualEnvReader(
   private val envs: Map<@NonNls String, @NonNls String> = System.getenv(),
@@ -105,7 +102,7 @@ class VirtualEnvReader(
    * [dir] is root directory of python installation or virtualenv
    */
   @RequiresBackgroundThread
-  private fun findPythonInPythonRoot(dir: Directory): PythonBinary? {
+  fun findPythonInPythonRoot(dir: Directory): PythonBinary? {
     if (!dir.isDirectory()) {
       return null
     }

@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.jetbrains.python.sdk.VirtualEnvReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

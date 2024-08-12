@@ -210,4 +210,4 @@ inline fun <reified T> syncRunPoetry(
   }
 }
 
-fun getPythonExecutable(homePath: String): String = PythonSdkUtil.getPythonExecutable(homePath) ?: FileUtil.join(homePath, "bin", "python")
+fun getPythonExecutable(homePath: String): String =  VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(homePath))?.toString() ?: FileUtil.join(homePath, "bin", "python")

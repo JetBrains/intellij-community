@@ -91,13 +91,13 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
       return null
     }
 
-    val path = PythonSdkUtil.getPythonExecutable(poetry).also {
+    val path = VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(poetry)).also {
       if (it == null) {
         LOGGER.warn("Python executable is not found: $poetry")
       }
     } ?: return null
 
-    val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path).also {
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString()).also {
       if (it == null) {
         LOGGER.warn("Python executable file is not found: $path")
       }

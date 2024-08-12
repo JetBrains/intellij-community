@@ -9,6 +9,7 @@ import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyEnvTestSettings
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -37,9 +38,9 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
       .map { it.toPath() }
       .firstOrNull { typeMatchesEnv(it, *additionalTags) }
       ?.let { envDir ->
-        Result.success(pythonPathToEnvironment(Path.of(
-          PythonSdkUtil.getPythonExecutable(envDir.toString())
-          ?: error("Can't find python binary in $envDir")), envDir)) // This is a misconfiguration, hence an error
+        Result.success(pythonPathToEnvironment(
+           VirtualEnvReader.Instance.findPythonInPythonRoot(envDir)
+          ?: error("Can't find python binary in $envDir"), envDir)) // This is a misconfiguration, hence an error
       }
     ?: Result.failure(Throwable("No python found. See ${PyEnvTestSettings::class} class for more info"))
 

@@ -122,7 +122,7 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
     override fun compute(indicator: ProgressIndicator): String {
       indicator.isIndeterminate = true
       val pipEnv = setupPipEnv(FileUtil.toSystemDependentName(projectPath), python, installPackages)
-      return PythonSdkUtil.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
+      return  VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv))?.toString() ?: FileUtil.join(pipEnv, "bin", "python")
     }
   }
   return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath))?.apply {

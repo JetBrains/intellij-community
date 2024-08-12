@@ -9,11 +9,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.VirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
@@ -148,9 +150,9 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final ArrayList<String> parameters = Lists.newArrayList("create", "-p", destinationDir, "-y", "python=" + version);
 
     PyCondaRunKt.runConda(condaExecutable, parameters);
-    final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
+    final Path binary =  VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(destinationDir));
     final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
-    return (binary != null) ? binary : binaryFallback;
+    return (binary != null) ? binary.toString() : binaryFallback;
   }
 
   @Override

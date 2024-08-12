@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -193,10 +194,10 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       showSdkExecutionException(sdk, e, PySdkBundle.message("python.creating.venv.failed.title"));
     }
 
-    final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
+    final Path binary =  VirtualEnvReader.getInstance().findPythonInPythonRoot(Paths.get(destinationDir));
     final String binaryFallback = destinationDir + mySeparator + "bin" + mySeparator + "python";
 
-    return (binary != null) ? binary : binaryFallback;
+    return (binary != null) ? binary.toString() : binaryFallback;
   }
 
   /**
