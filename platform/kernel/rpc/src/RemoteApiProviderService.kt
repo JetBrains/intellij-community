@@ -6,6 +6,7 @@ import fleet.rpc.RemoteApi
 import kotlin.reflect.KClass
 
 interface RemoteApiProviderService {
+
   fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T
 
   companion object {
