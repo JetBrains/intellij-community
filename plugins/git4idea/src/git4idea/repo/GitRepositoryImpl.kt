@@ -34,7 +34,7 @@ class GitRepositoryImpl private constructor(
   project: Project,
   rootDir: VirtualFile,
   private val gitDir: VirtualFile,
-  parentDisposable: Disposable
+  parentDisposable: Disposable,
 ) : RepositoryImpl(project, rootDir, parentDisposable), GitRepository {
 
   private val vcs = GitVcs.getInstance(project)
@@ -208,9 +208,11 @@ class GitRepositoryImpl private constructor(
 
     @JvmStatic
     @Deprecated("Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.")
-    fun getInstance(root: VirtualFile,
-                    project: Project,
-                    listenToRepoChanges: Boolean): GitRepository {
+    fun getInstance(
+      root: VirtualFile,
+      project: Project,
+      listenToRepoChanges: Boolean,
+    ): GitRepository {
       val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root)
       return ObjectUtils.notNull(repository) { createInstance(root, project, GitDisposable.getInstance(project)) }
     }
@@ -219,10 +221,12 @@ class GitRepositoryImpl private constructor(
     @JvmStatic
     @ApiStatus.Internal
     @Deprecated("Use {@link #createInstance(VirtualFile, Project, Disposable)}")
-    fun createInstance(root: VirtualFile,
-                       project: Project,
-                       parentDisposable: Disposable,
-                       listenToRepoChanges: Boolean): GitRepository {
+    fun createInstance(
+      root: VirtualFile,
+      project: Project,
+      parentDisposable: Disposable,
+      listenToRepoChanges: Boolean,
+    ): GitRepository {
       return createInstance(root, project, parentDisposable)
     }
 
@@ -232,19 +236,23 @@ class GitRepositoryImpl private constructor(
      */
     @JvmStatic
     @ApiStatus.Internal
-    fun createInstance(root: VirtualFile,
-                       project: Project,
-                       parentDisposable: Disposable): GitRepository {
+    fun createInstance(
+      root: VirtualFile,
+      project: Project,
+      parentDisposable: Disposable,
+    ): GitRepository {
       val gitDir = Objects.requireNonNull(GitUtil.findGitDir(root))
       return createInstance(root, gitDir!!, project, parentDisposable)
     }
 
     @JvmStatic
     @ApiStatus.Internal
-    fun createInstance(root: VirtualFile,
-                       gitDir: VirtualFile,
-                       project: Project,
-                       parentDisposable: Disposable): GitRepository {
+    fun createInstance(
+      root: VirtualFile,
+      gitDir: VirtualFile,
+      project: Project,
+      parentDisposable: Disposable,
+    ): GitRepository {
       ProgressManager.checkCanceled()
 
       val repository = GitRepositoryImpl(project, root, gitDir, parentDisposable)
@@ -256,9 +264,11 @@ class GitRepositoryImpl private constructor(
       return repository
     }
 
-    private fun notifyIfRepoChanged(repository: GitRepository,
-                                    previousInfo: GitRepoInfo,
-                                    info: GitRepoInfo) {
+    private fun notifyIfRepoChanged(
+      repository: GitRepository,
+      previousInfo: GitRepoInfo,
+      info: GitRepoInfo,
+    ) {
       val project = repository.project
       if (!project.isDisposed && info != previousInfo) {
         GitRepositoryManager.getInstance(project).notifyListenersAsync(repository)
