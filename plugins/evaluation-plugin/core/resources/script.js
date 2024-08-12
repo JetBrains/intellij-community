@@ -136,7 +136,7 @@ function updatePopup(sessionDiv) {
   if (needAddFeatures) {
     addCommonFeatures(sessionDiv, popup, lookup)
   }
-  else if (needAddContext && !isCodeGeneration) {
+  else if (needAddContext && "cc_context" in lookup["additionalInfo"]) {
     addContexts(sessionDiv, popup, lookup)
   }
   else {
