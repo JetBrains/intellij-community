@@ -6,7 +6,6 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTypeParameter;
@@ -30,7 +29,9 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
   @Override
   @NotNull
   public PyTypeParameterStub createStub(@NotNull PyTypeParameter psi, StubElement<? extends PsiElement> parentStub) {
-    return new PyTypeParameterStubImpl(psi.getName(), psi.getKind(), psi.getBoundExpression() != null ? psi.getBoundExpression().getText() : null,
+    return new PyTypeParameterStubImpl(psi.getName(), psi.getKind(),
+                                       psi.getBoundExpression() != null ? psi.getBoundExpression().getText() : null,
+                                       psi.getDefaultExpression() != null ? psi.getDefaultExpression().getText() : null,
                                        parentStub, getStubElementType());
   }
 
@@ -39,6 +40,7 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
     dataStream.writeName(stub.getName());
     dataStream.writeVarInt(stub.getKind().getIndex());
     dataStream.writeName(stub.getBoundExpressionText());
+    dataStream.writeName(stub.getDefaultExpressionText());
   }
 
   @Override
@@ -47,9 +49,11 @@ public class PyTypeParameterElementType extends PyStubElementType<PyTypeParamete
     String name = dataStream.readNameString();
     PyTypeParameter.Kind kind = PyTypeParameter.Kind.fromIndex(dataStream.readVarInt());
     String boundExpressionText = dataStream.readNameString();
+    String defaultExpressionText = dataStream.readNameString();
     return new PyTypeParameterStubImpl(name,
                                        kind,
                                        boundExpressionText,
+                                       defaultExpressionText,
                                        parentStub, getStubElementType());
   }
 

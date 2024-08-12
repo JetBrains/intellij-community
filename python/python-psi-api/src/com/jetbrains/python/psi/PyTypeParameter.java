@@ -12,9 +12,16 @@ import org.jetbrains.annotations.Nullable;
  * For more information see <a href="https://peps.python.org/pep-0695/">PEP 695</a>
  */
 public interface PyTypeParameter extends PyAstTypeParameter, PyElement, PsiNameIdentifierOwner, PyTypedElement, StubBasedPsiElement<PyTypeParameterStub> {
+
   @Override
   @Nullable
   default PyExpression getBoundExpression() {
     return (PyExpression)PyAstTypeParameter.super.getBoundExpression();
+  }
+
+  @Override
+  @Nullable
+  default PyExpression getDefaultExpression() {
+    return (PyExpression)PyAstTypeParameter.super.getDefaultExpression();
   }
 }
