@@ -28,6 +28,17 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
 
   private val PLUGIN_EXCEPTIONS = setOf("com.intellij.ja", "com.intellij.ko", "com.intellij.zh")
 
+  // TODO: migrate to better solution in 2024.3.
+  // Other places where these are mentioned:
+  // * com.intellij.openapi.application.migrations.NotebooksMigration242/PythonProMigration242
+  // * com.intellij.ide.plugins.UpdatePluginsApp
+  private val PLUGIN_DEPENDENCIES: Map<PluginId, Set<Pair<PluginId, SettingsCategory>>> = mapOf(
+    PluginId.getId("Pythonid") to setOf(PluginId.getId("PythonCore") to SettingsCategory.PLUGINS),
+    PluginId.getId("intellij.jupyter") to setOf(PluginId.getId("com.intellij.notebooks.core") to SettingsCategory.PLUGINS),
+    PluginId.getId("R4Intellij") to setOf(PluginId.getId("com.intellij.notebooks.core") to SettingsCategory.PLUGINS),
+  )
+
+
   internal var state = SettingsSyncPluginsState(emptyMap())
     private set
 
@@ -194,6 +205,20 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
           if (pluginData.enabled &&
               isPluginSyncEnabled(pluginId, isBundled = false, pluginData.category) &&
               checkDependencies(pluginId, pluginData)) {
+            if (PLUGIN_DEPENDENCIES[pluginId] != null) {
+              for (depPluginPair in PLUGIN_DEPENDENCIES[pluginId]!!) {
+                val depPluginId = depPluginPair.first
+                if (PluginManagerProxy.getInstance().findPlugin(depPluginId) == null) {
+                  LOG.info("Installation of '$pluginId' requires '$depPluginId' that is not installed")
+                  if (isPluginSyncEnabled(depPluginId, isBundled = false, depPluginPair.second)) {
+                    pluginsToInstall += depPluginId
+                  } else {
+                    LOG.warn("Syncing of '$depPluginId' required of '$pluginId' is disabled! The plugin will fail to start")
+                  }
+                }
+              }
+            }
+            // just install the plugin
             pluginsToInstall += pluginId
           }
 
