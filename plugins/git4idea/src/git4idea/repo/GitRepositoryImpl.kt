@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.vcs.log.Hash
 import git4idea.*
 import git4idea.branch.GitBranchesCollection
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
@@ -169,22 +168,25 @@ class GitRepositoryImpl private constructor(
       val config = GitConfig.read(configFile)
       repositoryFiles.updateCustomPaths(config.parseCore())
 
-      val remotes = config.parseRemotes()
+      val remotes = LinkedHashSet(config.parseRemotes())
       val state = repositoryReader.readState(remotes)
       val isShallow = repositoryReader.hasShallowCommits()
-      val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
+
+      val remoteBranches = state.remoteBranches.toMap()
+      val localBranches = state.localBranches.toMap()
+      val trackInfos = LinkedHashSet(config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys))
+
       val hooksInfo = repositoryReader.readHooksInfo()
       val submoduleFile = File(VfsUtilCore.virtualToIoFile(root), ".gitmodules")
       val submodules = GitModulesFileReader().read(submoduleFile)
-      val localBranches: Map<GitLocalBranch, Hash> = HashMap(state.localBranches)
       recentCheckoutBranches = collectRecentCheckoutBranches(project, root) { branch: GitLocalBranch -> localBranches.containsKey(branch) }
       GitRepoInfo(currentBranch = state.currentBranch,
                   currentRevision = state.currentRevision,
                   state = state.state,
-                  remotes = LinkedHashSet(remotes),
+                  remotes = remotes,
                   localBranchesWithHashes = localBranches,
-                  remoteBranchesWithHashes = HashMap<GitRemoteBranch, Hash>(state.remoteBranches),
-                  branchTrackInfos = LinkedHashSet(trackInfos),
+                  remoteBranchesWithHashes = remoteBranches,
+                  branchTrackInfos = trackInfos,
                   submodules = submodules,
                   hooksInfo = hooksInfo,
                   isShallow = isShallow)
