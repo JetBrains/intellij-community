@@ -43,6 +43,8 @@ public interface BasicJavaDocElementType {
   IElementType BASIC_DOC_TYPE_HOLDER = new IJavaDocElementType("DOC_TYPE_HOLDER");
 
   IElementType BASIC_DOC_COMMENT = new IJavaDocElementType("DOC_COMMENT");
+  IElementType BASIC_DOC_MARKDOWN_CODE_BLOCK = new IJavaDocElementType("DOC_CODE_BLOCK");
+  IElementType BASIC_DOC_MARKDOWN_REFERENCE_LINK = new IJavaDocElementType("DOC_REFERENCE_LINK");
 
   ParentAwareTokenSet BASIC_ALL_JAVADOC_ELEMENTS = ParentAwareTokenSet.create(
     BASIC_DOC_TAG, BASIC_DOC_INLINE_TAG, BASIC_DOC_METHOD_OR_FIELD_REF, BASIC_DOC_PARAMETER_REF, BASIC_DOC_TAG_VALUE_ELEMENT,

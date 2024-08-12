@@ -56,6 +56,8 @@ public interface JavaDocElementType {
   IElementType DOC_SNIPPET_ATTRIBUTE_LIST =
     new JavaDocCompositeElementType("DOC_SNIPPET_ATTRIBUTE_LIST", () -> new PsiSnippetAttributeListImpl(), BasicJavaDocElementType.BASIC_DOC_SNIPPET_ATTRIBUTE_LIST);
   IElementType DOC_SNIPPET_ATTRIBUTE_VALUE = new JavaDocParentProviderElementType("DOC_SNIPPET_ATTRIBUTE_VALUE", BasicJavaDocElementType.BASIC_DOC_SNIPPET_ATTRIBUTE_VALUE);
+  IElementType DOC_MARKDOWN_CODE_BLOCK = new JavaDocCompositeElementType("DOC_CODE_BLOCK", () -> new PsiMarkdownCodeBlockImpl(), BasicJavaDocElementType.BASIC_DOC_MARKDOWN_CODE_BLOCK);
+  IElementType DOC_MARKDOWN_REFERENCE_LINK = new JavaDocCompositeElementType("DOC_REFERENCE_LINK", () -> new PsiMarkdownReferenceLinkImpl(), BasicJavaDocElementType.BASIC_DOC_MARKDOWN_REFERENCE_LINK);
 
   ILazyParseableElementType DOC_REFERENCE_HOLDER = new BasicJavaDocElementType.DocReferenceHolderElementType(
     () -> JavaParser.INSTANCE,

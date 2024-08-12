@@ -92,6 +92,11 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   }
 
   @Override
+  public boolean isMarkdownComment() {
+    return getFirstChildNode().getElementType() == DOC_COMMENT_LEADING_ASTERISKS;
+  }
+
+  @Override
   public @NotNull IElementType getTokenType() {
     return getElementType();
   }

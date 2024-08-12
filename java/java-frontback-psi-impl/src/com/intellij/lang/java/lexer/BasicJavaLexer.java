@@ -143,8 +143,22 @@ public class BasicJavaLexer extends LexerBase {
           int l1 = mySymbolLength;
           char nextChar = locateCharAt(myBufferIndex + l1);
           if (nextChar == '/') {
-            myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
-            myTokenEndOffset = getLineTerminator(myBufferIndex + l1 + mySymbolLength);
+            int l2 = mySymbolLength;
+            if (myBufferIndex + l1 + l2 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2) == '/') {
+              int l3 = mySymbolLength;
+              if(myBufferIndex + l1 + l2 + l3 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2 + l3) == '/') {
+                // Long end of line comment
+                myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
+                myTokenEndOffset = getLineTerminator(myBufferIndex + l1 + l2);
+              } else {
+                // Java 23 Markdown comments
+                myTokenType = myJavaDocElementTypeContainer.DOC_COMMENT;
+                myTokenEndOffset = getClosingMarkdownComment(myBufferIndex + l1 + l2);
+              }
+            } else {
+              myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
+              myTokenEndOffset = getLineTerminator(myBufferIndex + l1 + l2);
+            }
           }
           else if (nextChar == '*') {
             int l2 = mySymbolLength;
@@ -214,12 +228,28 @@ public class BasicJavaLexer extends LexerBase {
   }
 
   private int getWhitespaces(int offset) {
-    int pos = offset;
+    return getChars(offset, " \t\n\r\f");
+  }
 
+  private int getSimpleWhitespaces(int offset) {
+    return getChars(offset, " \t");
+  }
+
+  /** @return The new position if none of the chars were detected */
+  private int getChars(int offset, CharSequence charsToDetect) {
+    int pos = offset;
     while (pos < myBufferEndOffset) {
+      boolean detected = false;
       char c = locateCharAt(pos);
-      if (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != '\f') break;
-      pos += mySymbolLength;
+      for (int i= 0; i < charsToDetect.length(); i++) {
+        if (charsToDetect.charAt(i) == c) {
+          pos += mySymbolLength;
+          detected = true;
+          break;
+        }
+      }
+
+      if(!detected) break;
     }
 
     return pos;
@@ -288,6 +318,21 @@ public class BasicJavaLexer extends LexerBase {
     return false;
   }
 
+  private int getClosingMarkdownComment(int offset) {
+    int pos = offset;
+    while(pos < myBufferEndOffset) {
+      pos = getLineTerminator(pos);
+      // Account for whitespaces beforehand
+      int newPos = getSimpleWhitespaces(pos + mySymbolLength);
+
+      newPos = getCharSeqAt(newPos, "///");
+      if(newPos == -1) break;
+      pos = newPos;
+    }
+
+    return pos;
+  }
+
   private int getClosingComment(int offset) {
     int pos = offset;
 
@@ -310,6 +355,20 @@ public class BasicJavaLexer extends LexerBase {
     }
 
     return pos;
+  }
+
+  /** @return The position after of the last char, -1 otherwise */
+  private int getCharSeqAt(int offset, CharSequence charSequence) {
+    int pos = offset;
+    for(int i = 0; i < charSequence.length(); i++) {
+      if(!isLocatedCharAt(pos, charSequence.charAt(i))) return -1;
+      pos += mySymbolLength;
+    }
+    return pos;
+  }
+
+  private boolean isLocatedCharAt(int offset, char charToDetect) {
+    return (offset < myBufferEndOffset) && locateCharAt(offset) == charToDetect;
   }
 
   private char charAt(int offset) {

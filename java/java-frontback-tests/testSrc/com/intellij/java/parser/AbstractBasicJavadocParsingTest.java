@@ -101,4 +101,115 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testSnippetTag10() { doTest(true); }
   public void testSnippetTag11() { doTest(true); }
   public void testSnippetTag12() { doTest(true); }
+
+  // Markdown version, to ensure parity
+  public void testAdjacent01Markdown() { doTest(true); }
+
+  public void testCodeTagMarkdown() { doTest(true); }
+  public void testCodeTagWithBracesMarkdown() { doTest(true); }
+
+  public void testException0Markdown() { doTest(true); }
+  public void testIDEADEV_41403Markdown() { doTest(true); }
+
+  public void testInlineTag0Markdown() { doTest(true); }
+  public void testInlineTag1Markdown() { doTest(true); }
+  public void testInlineTag2Markdown() { doTest(true); }
+  public void testInlineTag3Markdown() { doTest(true); }
+  public void testInlineTagIndexMarkdown() { doTest(true); }
+  public void testInlineTagSummaryMarkdown() { doTest(true); }
+
+  public void testJavadoc0Markdown() { doTest(true); }
+  public void testJavadoc1Markdown() { doTest(true); }
+
+  public void testLinkPlainTag0Markdown() { doTest(true); }
+  public void testLinkPlainTag1Markdown() { doTest(true); }
+  public void testLinkPlainTag2Markdown() { doTest(true); }
+
+  public void testLinkTag0Markdown() { doTest(true); }
+  public void testLinkTag1Markdown() { doTest(true); }
+  public void testLinkTag2Markdown() { doTest(true); }
+  public void testLinkTag3Markdown() { doTest(true); }
+  public void testLinkTag4Markdown() { doTest(true); }
+  public void testLinkTag5Markdown() { doTest(true); }
+  public void testLinkTag6Markdown() { doTest(true); }
+
+  public void testLiteralTagMarkdown() { doTest(true); }
+  public void testMultilineCodeTagMarkdown() { doTest(true); }
+  public void testParamTag0Markdown() { doTest(true); }
+  public void testParamTag1Markdown() { doTest(true); }
+  public void testParameterlessTagMarkdown() { doTest(true); }
+  public void testProvidesTagMarkdown() { doTest(true); }
+
+  public void testSeeTag0Markdown() { doTest(true); }
+  public void testSeeTag1Markdown() { doTest(true); }
+  public void testSeeTag2Markdown() { doTest(true); }
+  public void testSeeTag3Markdown() { doTest(true); }
+  public void testSeeTag4Markdown() { doTest(true); }
+  public void testSeeTag5Markdown() { doTest(true); }
+  public void testSeeTag6Markdown() { doTest(true); }
+  public void testSeeTag7Markdown() { doTest(true); }
+  public void testSeeTag8Markdown() { doTest(true); }
+  public void testSeeTag9Markdown() { doTest(true); }
+  public void testSeeTag10Markdown() { doTest(true); }
+  public void testSeeTag11Markdown() { doTest(true); }
+  public void testSeeTag12Markdown() { doTest(true); }
+  public void testSeeTag13Markdown() { doTest(true); }
+  public void testSeeTag14Markdown() { doTest(true); }
+  public void testSeeTag15Markdown() { doTest(true); }
+  public void testSeeTag16Markdown() { doTest(true); }
+
+  public void testSeparated01Markdown() { doTest(true); }
+
+  public void testSnippetTag0Markdown() { doTest(true); }
+  public void testSnippetTag1Markdown() { doTest(true); }
+  public void testSnippetTag2Markdown() { doTest(true); }
+  public void testSnippetTag3Markdown() { doTest(true); }
+  public void testSnippetTag4Markdown() { doTest(true); }
+  public void testSnippetTag5Markdown() { doTest(true); }
+  public void testSnippetTag6Markdown() { doTest(true); }
+  public void testSnippetTag7Markdown() { doTest(true); }
+  public void testSnippetTag8Markdown() { doTest(true); }
+  public void testSnippetTag9Markdown() { doTest(true); }
+  public void testSnippetTag10Markdown() { doTest(true); }
+  public void testSnippetTag11Markdown() { doTest(true); }
+  public void testSnippetTag12Markdown() { doTest(true); }
+
+  public void testSymbols01Markdown() { doTest(true); }
+  public void testSymbols02Markdown() { doTest(true); }
+  public void testSymbols03Markdown() { doTest(true); }
+  public void testSymbols04Markdown() { doTest(true); }
+  public void testSymbols05Markdown() { doTest(true); }
+
+  public void testTag0Markdown() { doTest(true); }
+  public void testTag1Markdown() { doTest(true); }
+  public void testTag2Markdown() { doTest(true); }
+  public void testTag3Markdown() { doTest(true); }
+  public void testTag4Markdown() { doTest(true); }
+  public void testTag5Markdown() { doTest(true); }
+  public void testTag6Markdown() { doTest(true); }
+
+  public void testThrowsTagMarkdown() { doTest(true); }
+  public void testTypeParamMarkdown() { doTest(true); }
+  public void testUsesTagMarkdown() { doTest(true); }
+  public void testValueQualifiedMarkdown() { doTest(true); }
+  public void testValueUnqualifiedWithHashMarkdown() { doTest(true); }
+  public void testValueUnqualifiedWithoutHashMarkdown() { doTest(true); }
+
+  public void testCodeBlockMarkdown01() { doTest(true); }
+  public void testCodeBlockMarkdown02() { doTest(true); }
+  public void testCodeBlockMarkdown03() { doTest(true); }
+
+  public void testReferenceLinkMarkdown00() { doTest(true); }
+  public void testReferenceLinkMarkdown01() { doTest(true); }
+  public void testReferenceLinkMarkdown02() { doTest(true); }
+  public void testReferenceLinkMarkdown03() { doTest(true); }
+  public void testReferenceLinkMarkdown04() { doTest(true); }
+  public void testReferenceLinkMarkdown05() { doTest(true); }
+  public void testReferenceLinkMarkdown06() { doTest(true); }
+  public void testReferenceLinkMarkdown07() { doTest(true); }
+  public void testReferenceLinkMarkdown08() { doTest(true); }
+  public void testReferenceLinkMarkdown09() { doTest(true); }
+  public void testReferenceLinkMarkdown10() { doTest(true); }
+  public void testReferenceLinkMarkdown11() { doTest(true); }
+
 }

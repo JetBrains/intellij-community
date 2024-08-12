@@ -35,6 +35,10 @@ public abstract class AbstractBasicJavaDocElementTypeFactory {
 
     public  final IElementType DOC_PARAMETER_REF;
 
+    public final IElementType DOC_MARKDOWN_CODE_BLOCK;
+
+    public final IElementType DOC_MARKDOWN_REFERENCE_LINK;
+
     public JavaDocElementTypeContainer(IElementType DOC_TAG,
                                        IElementType DOC_COMMENT,
                                        IElementType DOC_SNIPPET_TAG,
@@ -48,7 +52,9 @@ public abstract class AbstractBasicJavaDocElementTypeFactory {
                                        IElementType DOC_SNIPPET_ATTRIBUTE,
                                        IElementType DOC_METHOD_OR_FIELD_REF,
                                        IElementType DOC_TYPE_HOLDER,
-                                       IElementType DOC_PARAMETER_REF) {
+                                       IElementType DOC_PARAMETER_REF,
+                                       IElementType DOC_MARKDOWN_CODE_BLOCK,
+                                       IElementType DOC_MARKDOWN_REFERENCE_LINK) {
       this.DOC_TAG = DOC_TAG;
       this.DOC_COMMENT = DOC_COMMENT;
       this.DOC_SNIPPET_TAG = DOC_SNIPPET_TAG;
@@ -63,6 +69,8 @@ public abstract class AbstractBasicJavaDocElementTypeFactory {
       this.DOC_METHOD_OR_FIELD_REF = DOC_METHOD_OR_FIELD_REF;
       this.DOC_TYPE_HOLDER = DOC_TYPE_HOLDER;
       this.DOC_PARAMETER_REF = DOC_PARAMETER_REF;
+      this.DOC_MARKDOWN_CODE_BLOCK = DOC_MARKDOWN_CODE_BLOCK;
+      this.DOC_MARKDOWN_REFERENCE_LINK = DOC_MARKDOWN_REFERENCE_LINK;
     }
   }
 
