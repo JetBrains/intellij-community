@@ -4,8 +4,10 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
@@ -143,7 +145,41 @@ class KotlinUFunctionCallExpression(
     }
 
     override fun getExpressionType(): PsiType? {
+        // KTIJ-17870: One-off handling for instantiation of local classes
+        if (classReference != null) {
+            // [classReference] is created only if this call expression is resolved to constructor.
+            // Its [resolve] will return the stored [PsiClass], hence no cost at all.
+            val resolvedClass = classReference!!.resolve() as PsiClass
+            if (
+                // local/anonymous class from Java source
+                PsiUtil.isLocalClass(resolvedClass) ||
+                // everything else
+                resolvedClass.isLocal()
+            ) {
+                val referenceType = super<KotlinUElementWithType>.getExpressionType()
+                when (referenceType) {
+                    is PsiClassReferenceType -> {
+                        // K2: returns [PsiClassReferenceType], which is correct yet not good for type resolution.
+                        // Instead, we create a new instance of [PsiClassReferenceType]
+                        // whose [resolve] is just overridden to return `resolvedClass`.
+                        return object : PsiClassReferenceType(referenceType.reference, referenceType.languageLevel) {
+                            override fun resolve(): PsiClass? {
+                                return resolvedClass
+                            }
+                        }
+                    }
+                    else -> {
+                        // K1: intentionally drop the type conversion of local/anonymous class (KT-15483)
+                        // This will be a thin wrapper, [PsiImmediateClassType]
+                        // whose [resolve] is already overridden to return the given `resolvedClass`.
+                        return PsiTypesUtil.getClassType(resolvedClass)
+                    }
+                }
+            }
+        }
+        // Regular [getExpressionType] that goes through resolve service.
         super<KotlinUElementWithType>.getExpressionType()?.let { return it }
+        // One more chance: multi-resolution
         for (resolveResult in multiResolve()) {
             val psiMethod = resolveResult.element
             when {

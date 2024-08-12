@@ -10,7 +10,6 @@ import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.replaceService
@@ -399,7 +398,52 @@ interface UastResolveApiFixtureTestBase {
         TestCase.assertEquals(PsiTypes.intType(), functionCall.getExpressionType())
     }
 
-    fun checkLocalResolve(myFixture: JavaCodeInsightTestFixture) {
+    fun checkLocalResolve_class(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                fun test() {
+                  class LocalClass(i: Int)
+                  
+                  val lc = LocalClass(42)
+                  
+                  class LocalClassWithImplicitConstructor
+                  
+                  val lcwic = LocalClassWithImplicitConstructor()
+                  
+                  class LocalClassWithGeneric<T>(t: T)
+                  
+                  val lgc = LocalClassWithGeneric<String>("hi")
+                }
+            """.trimIndent()
+        )
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+                    TestCase.assertTrue(resolved!!.isConstructor)
+
+                    val resolvedViaReference = node.classReference?.resolve()
+                    TestCase.assertNotNull(resolvedViaReference)
+                    TestCase.assertTrue(resolvedViaReference is PsiClass)
+                    TestCase.assertTrue((resolvedViaReference as PsiClass).name?.startsWith("LocalClass") == true)
+
+                    // KTIJ-17870
+                    val type = node.getExpressionType()
+                    TestCase.assertTrue(type is PsiClassType)
+                    TestCase.assertTrue((type as PsiClassType).name.startsWith("LocalClass"))
+                    val resolvedFromType = type.resolve()
+                    TestCase.assertNotNull(resolvedFromType)
+                    TestCase.assertTrue(resolvedFromType is PsiClass)
+                    TestCase.assertTrue((resolvedFromType as PsiClass).name?.startsWith("LocalClass") == true)
+
+                    return super.visitCallExpression(node)
+                }
+            }
+        )
+    }
+
+    fun checkLocalResolve_function(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
             fun foo() {
