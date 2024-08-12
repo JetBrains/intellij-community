@@ -28,6 +28,7 @@ import com.intellij.modcommand.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -75,6 +76,7 @@ public class InvokeIntention extends ActionOnFile {
     env.logMessage("Go to " + MadTestingUtil.getPositionDescription(offset, getDocument()));
 
     doInvokeIntention(offset, env);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   @Nullable
