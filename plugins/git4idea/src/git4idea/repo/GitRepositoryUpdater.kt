@@ -30,6 +30,7 @@ internal class GitRepositoryUpdater(
   private val remotesDir: VirtualFile?
   private val headsDir: VirtualFile?
   private val tagsDir: VirtualFile?
+  private val reftableDir: VirtualFile?
   private val watchRequests: Set<WatchRequest> = LocalFileSystem.getInstance().addRootsToWatch(rootDirs.map { it.path }, true)
 
   init {
@@ -37,6 +38,7 @@ internal class GitRepositoryUpdater(
     headsDir = VcsUtil.getVirtualFile(repositoryFiles.refsHeadsFile)
     remotesDir = VcsUtil.getVirtualFile(repositoryFiles.refsRemotesFile)
     tagsDir = VcsUtil.getVirtualFile(repositoryFiles.refsTagsFile)
+    reftableDir = VcsUtil.getVirtualFile(repositoryFiles.reftableFile)
 
     AsyncVfsEventsPostProcessor.getInstance().addListener(this, repository.coroutineScope)
   }
@@ -60,6 +62,7 @@ internal class GitRepositoryUpdater(
     var mergeFileChanged = false
     var externallyCommitted = false
     var tagChanged = false
+    var reftableChanged = false
     var gitignoreChanged = false
 
     val toReloadVfs = HashSet<VirtualFile>()
@@ -111,6 +114,10 @@ internal class GitRepositoryUpdater(
             tagChanged = true
             ContainerUtil.addIfNotNull(toReloadVfs, tagsDir)
           }
+          repositoryFiles.isReftableFile(filePath) -> {
+            reftableChanged = true
+            ContainerUtil.addIfNotNull(toReloadVfs, reftableDir)
+          }
           repositoryFiles.isExclude(filePath) -> {
             // TODO watch file stored in `core.excludesfile`
             gitignoreChanged = true
@@ -128,10 +135,11 @@ internal class GitRepositoryUpdater(
       VfsUtilCore.processFilesRecursively(dir, CommonProcessors.alwaysTrue())
     }
 
-    if (headChanged || configChanged || branchFileChanged || packedRefsChanged || rebaseFileChanged || mergeFileChanged) {
+    if (headChanged || configChanged || branchFileChanged || packedRefsChanged || reftableChanged ||
+        rebaseFileChanged || mergeFileChanged) {
       repository.update()
     }
-    if (tagChanged || packedRefsChanged) {
+    if (tagChanged || packedRefsChanged || reftableChanged) {
       repository.tagHolder.reload()
       BackgroundTaskUtil.syncPublisher(repository.project, GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository)
     }
