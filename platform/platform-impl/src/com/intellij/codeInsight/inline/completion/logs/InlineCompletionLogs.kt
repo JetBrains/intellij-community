@@ -33,15 +33,18 @@ internal object InlineCompletionLogs : CounterUsagesCollector() {
         // static initializer code of `object`, and any exception (namely, CancellationException)
         // breaks the object with ExceptionInInitializerError, and subsequent NoClassDefFoundError
         InlineCompletionSessionLogsEP.EP_NAME.extensionsIfPointIsRegistered
-      }.flatMap { it.fields }
+      }.flatMap { it.fields }.flatMap { phasedLogs ->
+        phasedLogs.fields.map { field -> phasedLogs.phase to field}
+      }
+
       fields.groupingBy { it.second.name }.eachCount().filter { it.value > 1 }.forEach {
         thisLogger().error("Log ${it.key} is registered multiple times: ${it.value}")
       }
       fields
     }
 
-    // describes which logs relate to a certain Phase
-    val logsToPhase: Map<Phase, ObjectEventField> = Phase.entries.associateWith { phase ->
+    // group logs to the phase so that each phase has its own object field
+    val phases: Map<Phase, ObjectEventField> = Phase.entries.associateWith { phase ->
       ObjectEventField(phase.name, phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second }.toTypedArray())
     }
 
@@ -50,7 +53,7 @@ internal object InlineCompletionLogs : CounterUsagesCollector() {
     val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
       "session",
       description = "The whole inline completion session",
-      *logsToPhase.values.toTypedArray(),
+      *phases.values.toTypedArray(),
     )
   }
 

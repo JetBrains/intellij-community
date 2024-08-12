@@ -17,9 +17,9 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class InlineCompletionLogsContainer {
 
-
   /**
-   * Describes phase of the ML session
+   * Describes phase of the ML session.
+   * Each phase can have multiple features (logs)
    */
   enum class Phase(val description: String) {
     INLINE_API_STARTING("Execution inside inline completion API"),
@@ -72,7 +72,7 @@ class InlineCompletionLogsContainer {
     waitForAsyncAdds()
     InlineCompletionLogs.Session.SESSION_EVENT.log(
       logs.map { (phase, events) ->
-        InlineCompletionLogs.Session.logsToPhase[phase]!!.with(ObjectEventData(events.toList()))
+        InlineCompletionLogs.Session.phases[phase]!!.with(ObjectEventData(events.toList()))
       }
     )
   }
