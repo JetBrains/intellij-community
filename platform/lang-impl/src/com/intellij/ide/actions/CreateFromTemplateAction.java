@@ -76,38 +76,41 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     buildDialog(project, dir, builder);
 
     final Ref<String> selectedTemplateName = Ref.create(null);
-    builder.show(getErrorTitle(), getDefaultTemplateName(dir),
-                 new CreateFileFromTemplateDialog.FileCreator<T>() {
+    builder.showAsync(
+      getErrorTitle(),
+      getDefaultTemplateName(dir),
+      new CreateFileFromTemplateDialog.FileCreator<T>() {
 
-                   @Override
-                   public T createFile(@NotNull String name, @NotNull String templateName) {
-                     selectedTemplateName.set(templateName);
-                     return CreateFromTemplateAction.this.createFile(name, templateName, adjustDirectory(dir));
-                   }
+        @Override
+        public T createFile(@NotNull String name, @NotNull String templateName) {
+          selectedTemplateName.set(templateName);
+          return CreateFromTemplateAction.this.createFile(name, templateName, adjustDirectory(dir));
+        }
 
-                   @Override
-                   public boolean startInWriteAction() {
-                     return CreateFromTemplateAction.this.startInWriteAction();
-                   }
+        @Override
+        public boolean startInWriteAction() {
+          return CreateFromTemplateAction.this.startInWriteAction();
+        }
 
-                   @Override
-                   public @NotNull String getActionName(@NotNull String name, @NotNull String templateName) {
-                     return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
-                   }
-                 },
-                 createdElement -> {
-                   if (createdElement != null) {
-                     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-                     int offset = getOffsetToPreserve(editor);
-                     view.selectElement(createdElement);
-                     if (offset != -1 && editor != null && !editor.isDisposed()) {
-                       editor.getCaretModel().moveToOffset(offset);
-                     }
-                     try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
-                       postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
-                     }
-                   }
-                 });
+        @Override
+        public @NotNull String getActionName(@NotNull String name, @NotNull String templateName) {
+          return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
+        }
+      },
+      createdElement -> {
+        if (createdElement != null) {
+          Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+          int offset = getOffsetToPreserve(editor);
+          view.selectElement(createdElement);
+          if (offset != -1 && editor != null && !editor.isDisposed()) {
+            editor.getCaretModel().moveToOffset(offset);
+          }
+          try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+            postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
+          }
+        }
+      }
+    );
   }
 
   protected PsiDirectory adjustDirectory(@NotNull PsiDirectory original) {

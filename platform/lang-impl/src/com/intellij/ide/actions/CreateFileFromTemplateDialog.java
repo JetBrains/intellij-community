@@ -21,7 +21,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -219,12 +221,16 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     }
 
     @Override
-    public <T extends PsiElement> void show(@NotNull String errorTitle,
-                                            @Nullable String selectedItem,
-                                            @NotNull FileCreator<T> creator,
-                                            Consumer<? super T> elementConsumer) {
+    public <T extends PsiElement> DialogInterface showAsync(
+      @NotNull String errorTitle,
+      @Nullable String selectedItem,
+      @NotNull FileCreator<T> creator,
+      NullableConsumer<? super T> elementConsumer
+    ) {
       T element = show(errorTitle, selectedItem, creator);
       elementConsumer.consume(element);
+      // Dialog shown modally - can't cancel.
+      return () -> {};
     }
 
     @Override
@@ -285,10 +291,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     }
 
     @Override
-    public <T extends PsiElement> void show(@NotNull String errorTitle,
-                                            @Nullable String selectedItem,
-                                            @NotNull FileCreator<T> fileCreator,
-                                            Consumer<? super T> elementConsumer) {
+    public <T extends PsiElement> DialogInterface showAsync(
+      @NotNull String errorTitle,
+      @Nullable String selectedItem,
+      @NotNull FileCreator<T> fileCreator,
+      NullableConsumer<? super T> elementConsumer
+    ) {
       CreateWithTemplatesDialogPanel contentPanel = new CreateWithTemplatesDialogPanel(selectedItem, myTemplatesList);
       ElementCreator elementCreator = new ElementCreator(myProject, errorTitle) {
 
@@ -324,12 +332,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         boolean isExtraValid = extraValidator == null || extraValidator.canClose(newElementName);
 
         if (isValid && isExtraValid) {
-          popup.closeOk(e);
           //noinspection unchecked
           T createdElement = (T)createElement(newElementName, elementCreator);
-          if (createdElement != null) {
+          popup.setFinalRunnable(() -> {
             elementConsumer.consume(createdElement);
-          }
+          });
+          popup.closeOk(e);
         }
         else {
           String errorMessage = Optional.ofNullable(!isValid ? myInputValidator : extraValidator)
@@ -340,11 +348,17 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         }
       });
 
+      popup.setFinalRunnable(() -> {
+        elementConsumer.consume(null);
+      });
+
       Disposer.register(popup, contentPanel);
       if (dialogOwner == null)
         popup.showCenteredInCurrentWindow(myProject);
       else
         popup.showInCenterOf(dialogOwner);
+
+      return popup::cancel;
     }
 
     @Override
@@ -378,10 +392,21 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
                                   @NonNls @Nullable String selectedItem,
                                   @NotNull FileCreator<T> creator);
 
-    <T extends PsiElement> void show(@DialogTitle @NotNull String errorTitle,
-                                     @NonNls @Nullable String selectedItem,
-                                     @NotNull FileCreator<T> creator,
-                                     Consumer<? super T> elementConsumer);
+    /** @deprecated Use {@link #showAsync} instead */
+    @Deprecated
+    default <T extends PsiElement> void show(
+      @DialogTitle @NotNull String errorTitle,
+      @NonNls @Nullable String selectedItem,
+      @NotNull FileCreator<T> creator,
+      Consumer<? super T> elementConsumer
+    ) {
+      showAsync(errorTitle, selectedItem, creator, elementConsumer::consume);
+    }
+
+    <T extends PsiElement> DialogInterface showAsync(@DialogTitle @NotNull String errorTitle,
+                                                     @NonNls @Nullable String selectedItem,
+                                                     @NotNull FileCreator<T> creator,
+                                                     NullableConsumer<? super T> elementConsumer);
 
     @Nullable
     Map<String,String> getCustomProperties();
@@ -397,5 +422,10 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     String getActionName(@NonNls @NotNull String name, @NonNls @NotNull String templateName);
 
     boolean startInWriteAction();
+  }
+
+  public interface DialogInterface {
+    @RequiresEdt
+    void cancel();
   }
 }
