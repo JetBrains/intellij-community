@@ -1646,6 +1646,9 @@
     <inspection_tool class="IteratorHasNextCallsIteratorNext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="IteratorNextDoesNotThrowNoSuchElementException" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="JBoss" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="JComponentDataProviderInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Tests" level="ERROR" enabled="false"/>
+    </inspection_tool>
     <inspection_tool class="JDBCExecuteWithNonConstantString" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="JDBCPrepareStatementWithNonConstantString" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="JDBCResource" enabled="false" level="WARNING" enabled_by_default="false">
