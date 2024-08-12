@@ -22,10 +22,10 @@ import org.jetbrains.annotations.Nls
 
 private const val PYCHARM_PRO_SUGGESTION_DISMISSED_KEY: String = "pycharm.pro.suggestion.dismissed"
 
-private val PACKAGES_TO_ADVERTISE = hashSetOf<String>("pytorch", "scikit-learn", "pandas",
+private val PACKAGES_TO_ADVERTISE = hashSetOf<String>("pytorch", "sklearn", "pandas",
                                                       "numpy", "tensorflow", "keras",
                                                       "torch", "matplotlib", "scipy",
-                                                      "opencv-python", "torchvision",
+                                                      "cv2", "torchvision",
                                                       "sqlalchemy", "seaborn", "django",
                                                       "flask", "fastapi")
 
