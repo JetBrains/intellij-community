@@ -136,13 +136,31 @@
     },
     "debugger": {
       "addToWatch.svg": "debugger/addToWatch.svg",
+      "classLevelWatch.svg": "debugger/classLevelWatch.svg",
       "dbArray.svg": "debugger/db_array.svg",
       "dbPrimitive.svg": "debugger/db_primitive.svg",
+      "evaluationResult.svg": "debugger/evaluationResult.svg",
       "frame.svg": "debugger/frame.svg",
+      "promptInput.svg": "debugger/promptInput.svg",
+      "promptInputHistory.svg": "debugger/promptInputHistory.svg",
       "selfReference.svg": "debugger/selfreference.svg",
-      "threads.svg": "debugger/threads.svg",
+      "threadAtBreakpoint.svg": "debugger/threadAtBreakpoint.svg",
+      "threadCurrent.svg": "debugger/threadCurrent.svg",
+      "threadFrozen.svg": "debugger/threadFrozen.svg",
+      "threadGroupCurrent.svg": "debugger/threadGroupCurrent.svg",
+      "threadRunning.svg": "debugger/threadRunning.svg",
+      "threads.svg": [
+        "debugger/threadGroup.svg",
+        "debugger/threads.svg",
+        "debugger/threadSuspended.svg"
+      ],
       "value.svg": "debugger/value.svg",
-      "watch.svg": "debugger/watch.svg"
+      "variablesTab.svg": "debugger/variablesTab.svg",
+      "watch.svg": [
+        "debugger/watch.svg",
+        "debugger/db_watch.svg"
+      ],
+      "watchLastReturnValue.svg": "debugger/watchLastReturnValue.svg"
     },
     "diff": {
       "applyNotConflicts.svg": "diff/applyNotConflicts.svg",
@@ -731,7 +749,10 @@
       "attachToProcess.svg": "debugger/attachToProcess.svg",
       "debug.svg": "actions/startDebugger.svg",
       "dumpThreads.svg": "actions/dump.svg",
-      "evaluateExpression.svg": "debugger/evaluateExpression.svg",
+      "evaluateExpression.svg": [
+        "debugger/evaluateExpression.svg",
+        "debugger/db_evaluateNode.svg"
+      ],
       "forceRunToCursor.svg": "icons/actions/force_run_to_cursor.svg",
       "forceStepInto.svg": "icons/actions/force_step_into.svg",
       "forceStepOver.svg": "icons/actions/force_step_over.svg",
