@@ -21,6 +21,8 @@ import java.util.Map;
  * Default externalizer for forward indexes: serializes Map[Key,Value] by using index extension
  * both {@link IndexExtension#getKeyDescriptor()} and {@link IndexExtension#getValueExternalizer()},
  * so that all forward indexes internally are [Key -> ByteArraySequence(serialized Map[Key,Value])]
+ *
+ * @see ValueLessInputMapExternalizer
  */
 @Internal
 public final class InputMapExternalizer<Key, Value> implements DataExternalizer<Map<Key, Value>> {
@@ -31,8 +33,8 @@ public final class InputMapExternalizer<Key, Value> implements DataExternalizer<
   public InputMapExternalizer(@NotNull IndexExtension<Key, Value, ?> extension) {
     myValueExternalizer = extension.getValueExternalizer();
     myKeysExternalizer = extension instanceof CustomInputsIndexFileBasedIndexExtension
-    ? ((CustomInputsIndexFileBasedIndexExtension<Key>)extension).createExternalizer()
-    : new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), ((IndexExtension<Key, ?, ?>)extension).getName());
+                         ? ((CustomInputsIndexFileBasedIndexExtension<Key>)extension).createExternalizer()
+                         : new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), extension.getName());
     myValuesAreNullAlways = extension instanceof ScalarIndexExtension;
   }
 

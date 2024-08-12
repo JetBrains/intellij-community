@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.IndexId;
@@ -11,8 +11,10 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
 
+//TODO RC: why we need this class -- why not use CollectionDataExternalizer directly?
 public final class InputIndexDataExternalizer<K> implements DataExternalizer<Collection<K>> {
   private final DataExternalizer<Collection<K>> myKeyCollectionExternalizer;
+  /** Only for debug logging */
   private final IndexId<K, ?> myIndexId;
 
   public InputIndexDataExternalizer(KeyDescriptor<K> keyDescriptor, IndexId<K, ?> indexId) {
