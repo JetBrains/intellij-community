@@ -14,7 +14,8 @@
   </extensions>
 
   <actions>
-    <action class="org.jetbrains.plugins.github.ai.assistedReview.GHPRAIReviewOpenAction">
+    <action class="org.jetbrains.plugins.github.ai.assistedReview.GHPRAIReviewOpenAction"
+            internal="true">
       <add-to-group group-id="Github.PullRequest.StatusChecks.AdditionalActions"/>
     </action>
   </actions>
