@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -41,14 +42,16 @@ public class GitRepositoryReader {
 
   private static final String DETACHED_HEAD = "detached HEAD";
 
+  private final @NotNull Project myProject;
+  private final @NotNull GitRepositoryFiles myGitFiles;
+
   private final @NotNull File myHeadFile;       // .git/HEAD
   private final @NotNull File myRefsHeadsDir;   // .git/refs/heads/
   private final @NotNull File myRefsRemotesDir; // .git/refs/remotes/
   private final @NotNull File myPackedRefsFile; // .git/packed-refs
-  private final @NotNull GitRepositoryFiles myGitFiles;
 
-
-  GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
+  GitRepositoryReader(@NotNull Project project, @NotNull GitRepositoryFiles gitFiles) {
+    myProject = project;
     myGitFiles = gitFiles;
     myHeadFile = gitFiles.getHeadFile();
     myRefsHeadsDir = gitFiles.getRefsHeadsFile();

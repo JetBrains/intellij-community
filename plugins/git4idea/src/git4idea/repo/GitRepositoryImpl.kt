@@ -36,7 +36,7 @@ class GitRepositoryImpl private constructor(
   private val vcs = GitVcs.getInstance(project)
 
   private val repositoryFiles = GitRepositoryFiles.createInstance(rootDir, gitDir)
-  private val repositoryReader = GitRepositoryReader(repositoryFiles)
+  private val repositoryReader = GitRepositoryReader(project, repositoryFiles)
 
   private val stagingAreaHolder: GitStagingAreaHolder
   private val untrackedFilesHolder: GitUntrackedFilesHolder

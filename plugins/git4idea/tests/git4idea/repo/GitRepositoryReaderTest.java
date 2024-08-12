@@ -86,7 +86,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     myRootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir);
     VirtualFile gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myGitDir);
     myRepoFiles = GitRepositoryFiles.createInstance(myRootDir, gitDir);
-    myRepositoryReader = new GitRepositoryReader(myRepoFiles);
+    myRepositoryReader = new GitRepositoryReader(myProject, myRepoFiles);
   }
 
   @NotNull

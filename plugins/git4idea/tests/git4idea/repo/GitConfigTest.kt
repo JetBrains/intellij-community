@@ -46,7 +46,7 @@ class GitConfigTest : GitPlatformTest() {
     val config = GitConfig.read(File(gitFile, "config"))
     val rootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile)
     val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitFile)
-    val reader = GitRepositoryReader(GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
+    val reader = GitRepositoryReader(myProject, GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
     val state = reader.readState(config.parseRemotes())
     val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
     assertTrue("Couldn't find correct a#branch tracking information among: [$trackInfos]",

@@ -160,6 +160,10 @@ public final class GitRepositoryFiles {
     return "/" + s;
   }
 
+  public @NotNull VirtualFile getRootDir() {
+    return myRootDir;
+  }
+
   /**
    * Returns subdirectories and paths of .git which we are interested in - they should be watched by VFS.
    */

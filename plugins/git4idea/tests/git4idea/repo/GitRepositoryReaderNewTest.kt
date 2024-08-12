@@ -17,10 +17,7 @@ package git4idea.repo
 
 import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Executor.append
 import com.intellij.openapi.vcs.Executor.rm
-import com.intellij.openapi.vfs.resolveFromRootOrRelative
 import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchUtil
 import git4idea.test.GitScenarios.conflict
@@ -182,7 +179,7 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
   private fun readState(): GitBranchState {
     val gitFiles = repo.repositoryFiles
     val config = GitConfig.read(gitFiles.configFile)
-    val reader = GitRepositoryReader(gitFiles)
+    val reader = GitRepositoryReader(myProject, gitFiles)
     val remotes = config.parseRemotes()
     return reader.readState(remotes)
   }
