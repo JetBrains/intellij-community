@@ -6,9 +6,9 @@ import com.intellij.psi.PsiFileSystemItem
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 sealed interface K2MoveSourceDescriptor<T : PsiElement> {
-    val elements: Iterable<T>
+    val elements: Collection<T>
 
-    class FileSource(override val elements: Iterable<PsiFileSystemItem>) : K2MoveSourceDescriptor<PsiFileSystemItem>
+    class FileSource(override val elements: Collection<PsiFileSystemItem>) : K2MoveSourceDescriptor<PsiFileSystemItem>
 
-    class ElementSource(override val elements: Iterable<KtNamedDeclaration>) : K2MoveSourceDescriptor<KtNamedDeclaration>
+    class ElementSource(override val elements: Collection<KtNamedDeclaration>) : K2MoveSourceDescriptor<KtNamedDeclaration>
 }

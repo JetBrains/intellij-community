@@ -280,6 +280,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveFunctionWithImportsRetained/moveFunctionWithImportsRetained.test");
     }
 
+    @TestMetadata("kotlin/moveMultipleWithComments/moveMultipleWithComments.test")
+    public void testKotlin_moveMultipleWithComments_MoveMultipleWithComments() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveMultipleWithComments/moveMultipleWithComments.test");
+    }
+
     @TestMetadata("kotlin/moveObjectToFile/moveObjectToFile.test")
     public void testKotlin_moveObjectToFile_MoveObjectToFile() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveObjectToFile/moveObjectToFile.test");

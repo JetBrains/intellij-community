@@ -87,7 +87,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         @RequiresReadLock
         fun Declarations(
             project: Project,
-            declarations: Iterable<KtNamedDeclaration>,
+            declarations: Collection<KtNamedDeclaration>,
             baseDir: PsiDirectory,
             fileName: String,
             pkgName: FqName,
