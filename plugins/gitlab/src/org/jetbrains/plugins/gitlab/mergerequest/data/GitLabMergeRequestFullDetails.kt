@@ -39,6 +39,7 @@ data class GitLabMergeRequestFullDetails(
   val diffRefs: GitLabDiffRefs?,
   val headPipeline: GitLabPipelineDTO?,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
+  val shouldRemoveSourceBranch: Boolean?,
   val shouldBeRebased: Boolean,
   val rebaseInProgress: Boolean
 ) {
@@ -71,6 +72,7 @@ data class GitLabMergeRequestFullDetails(
       headPipeline = dto.headPipeline,
       userPermissions = dto.userPermissions,
       detailedLabels = dto.labels,
+      shouldRemoveSourceBranch = dto.shouldRemoveSourceBranch,
       shouldBeRebased = dto.shouldBeRebased,
       rebaseInProgress = dto.rebaseInProgress
     )

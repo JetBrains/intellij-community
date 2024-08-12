@@ -194,14 +194,16 @@ suspend fun GitLabApi.GraphQL.mergeRequestAccept(
   mrIid: String,
   commitMessage: String,
   sha: String,
-  withSquash: Boolean
+  withSquash: Boolean,
+  shouldRemoveSourceBranch: Boolean
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
     "projectId" to project.projectPath.fullPath(),
     "mergeRequestId" to mrIid,
     "commitMessage" to commitMessage,
     "sha" to sha,
-    "withSquash" to withSquash
+    "withSquash" to withSquash,
+    "shouldRemoveSourceBranch" to shouldRemoveSourceBranch
   )
   val request = gitLabQuery(GitLabGQLQuery.MERGE_REQUEST_ACCEPT, parameters)
   return withErrorStats(GitLabGQLQuery.MERGE_REQUEST_ACCEPT) {
