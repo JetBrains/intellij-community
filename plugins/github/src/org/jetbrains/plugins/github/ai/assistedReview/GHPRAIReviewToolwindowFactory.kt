@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.ai.assistedReview
 
 import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -31,7 +32,8 @@ internal class GHPRAIReviewToolwindowFactory : ToolWindowFactory, DumbAware {
     project.service<GHPRAIReviewToolwindowController>().manageContent(toolWindow)
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean = true
+  override fun shouldBeAvailable(project: Project): Boolean =
+    ApplicationManager.getApplication().isInternal
 }
 
 
