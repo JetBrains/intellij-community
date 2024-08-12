@@ -41,6 +41,8 @@ private fun createHelpTooltip(): HelpTooltip =
     .setTitle(XDebuggerBundle.message("xdebugger.hotswap.tooltip.apply"))
     .setDescription(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
 
+private fun showFloatingToolbar(): Boolean = HotSwapUiExtension.computeSafeIfAvailable { it.showFloatingToolbar() } != false
+
 internal class HotSwapModifiedFilesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val session = findSessionIfReady(e.project) ?: return
@@ -78,6 +80,13 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
     return HotSwapToolbarComponent(this, presentation, place)
   }
 
+  override fun update(e: AnActionEvent) {
+    val project = e.project ?: return
+    if (e.presentation.isEnabledAndVisible) {
+      updateToolbarVisibility(project)
+    }
+  }
+
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     (component as HotSwapToolbarComponent).update(inProgress, presentation)
   }
@@ -113,6 +122,13 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
   }
 }
 
+private fun updateToolbarVisibility(project: Project) {
+  HotSwapSessionManager.getInstance(project).coroutineScope.launch(Dispatchers.Default) {
+    if (showFloatingToolbar()) return@launch
+    HotSwapSessionManager.getInstance(project).notifyUpdate()
+  }
+}
+
 internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   override val autoHideable: Boolean get() = false
   private val hotSwapAction by lazy { HotSwapWithRebuildAction() }
@@ -120,8 +136,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   override val actionGroup: ActionGroup by lazy { DefaultActionGroup(hotSwapAction, HideAction()) }
 
   override fun isApplicable(dataContext: DataContext): Boolean =
-    Registry.`is`("debugger.hotswap.floating.toolbar")
-    && isInsideMainEditor(dataContext)
+    isInsideMainEditor(dataContext)
     && dataContext.getData(CommonDataKeys.EDITOR)?.editorKind == EditorKind.MAIN_EDITOR
 
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
@@ -140,6 +155,11 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
       val manager = HotSwapSessionManager.getInstance(project)
       // We need to hide the button even if the coroutineScope is cancelled
       manager.coroutineScope.launch(Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
+        if (!showFloatingToolbar()) {
+          hotSwapAction.session = null
+          component.scheduleHide()
+          return@launch
+        }
         val session = manager.currentSession
         val status = forceStatus ?: session?.currentStatus
         if (status == HotSwapVisibleStatus.IN_PROGRESS) {
@@ -179,7 +199,7 @@ private enum class HotSwapButtonAction {
 private class HideAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    HotSwapSessionManager.getInstance(project).notifyHide()
+    HotSwapSessionManager.getInstance(project).notifyUpdate(HotSwapVisibleStatus.HIDDEN)
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT

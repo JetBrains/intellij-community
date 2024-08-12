@@ -80,6 +80,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
   public String RUN_HOTSWAP_AFTER_COMPILE = RUN_HOTSWAP_ASK;
   public boolean COMPILE_BEFORE_HOTSWAP = true;
   public boolean HOTSWAP_HANG_WARNING_ENABLED = false;
+  public boolean HOTSWAP_SHOW_FLOATING_BUTTON = true;
 
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;

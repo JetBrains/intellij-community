@@ -83,8 +83,8 @@ class HotSwapSessionManager private constructor(private val project: Project, in
     listeners.forEach { it.onStatusChanged(null) }
   }
 
-  internal fun notifyHide() {
-    listeners.forEach { it.onStatusChanged(HotSwapVisibleStatus.HIDDEN) }
+  internal fun notifyUpdate(forceStatus: HotSwapVisibleStatus? = null) {
+    listeners.forEach { it.onStatusChanged(forceStatus) }
   }
 
   companion object {
