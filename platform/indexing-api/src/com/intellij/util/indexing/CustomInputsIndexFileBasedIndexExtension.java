@@ -23,6 +23,8 @@ import java.util.Collection;
  * (Naturally, this interface should _extend_ {@link IndexExtension}, but {@link IndexExtension} is an abstract class,
  * not an interface)</p>
  *
+ * TODO RC: this interface is to be replaced with CustomInputMapIndexExtension, see it's docs for discussion
+ *
  * @see IndexExtension
  */
 @OverrideOnly

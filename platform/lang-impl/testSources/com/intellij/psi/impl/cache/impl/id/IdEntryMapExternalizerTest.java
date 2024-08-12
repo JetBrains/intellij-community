@@ -20,7 +20,11 @@ class IdEntryMapExternalizerTest {
   private static final IdIndexImpl INDEX_EXTENSION = new IdIndexImpl();
 
 
-  private final InputMapExternalizer<IdIndexEntry, Integer> defaultMapExternalizer = new InputMapExternalizer<>(INDEX_EXTENSION);
+  private final InputMapExternalizer<IdIndexEntry, Integer> defaultMapExternalizer = new InputMapExternalizer<>(
+    INDEX_EXTENSION.createExternalizer(),
+    INDEX_EXTENSION.getValueExternalizer(),
+    /*valueIsAbsent: */ false
+  );
   private final IdIndexEntryMapExternalizer optimizedMapExternalizer = new IdIndexEntryMapExternalizer(defaultMapExternalizer);
 
 

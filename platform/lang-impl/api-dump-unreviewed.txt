@@ -23190,6 +23190,7 @@ f:com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 - com.intellij.util.indexing.FileBasedIndexExtension
 - <init>():V
 - createExternalizer():com.intellij.util.io.DataExternalizer
+- createInputMapExternalizer():com.intellij.util.io.DataExternalizer
 f:com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding
 - sf:EDITOR_HIGHLIGHTER:com.intellij.openapi.util.Key
 - s:getTodoIndexer(com.intellij.openapi.fileTypes.FileType):com.intellij.util.indexing.DataIndexer

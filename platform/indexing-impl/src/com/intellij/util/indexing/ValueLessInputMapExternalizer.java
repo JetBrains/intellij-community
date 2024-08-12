@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.util.indexing.impl.InputIndexDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -28,14 +27,8 @@ import java.util.function.BiConsumer;
 public final class ValueLessInputMapExternalizer<Key> implements DataExternalizer<Map<Key, Void>> {
   private final DataExternalizer<Collection<Key>> keysExternalizer;
 
-  public ValueLessInputMapExternalizer(@NotNull ScalarIndexExtension<Key> extension) {
-    if (extension instanceof CustomInputsIndexFileBasedIndexExtension _extension) {
-      //noinspection unchecked
-      keysExternalizer = _extension.createExternalizer();
-    }
-    else {
-      keysExternalizer = new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), extension.getName());
-    }
+  public ValueLessInputMapExternalizer(@NotNull DataExternalizer<Collection<Key>> keysExternalizer) {
+    this.keysExternalizer = keysExternalizer;
   }
 
   @Override

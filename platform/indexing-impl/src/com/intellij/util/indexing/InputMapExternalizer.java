@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.util.SmartList;
-import com.intellij.util.indexing.impl.InputIndexDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -30,12 +29,12 @@ public final class InputMapExternalizer<Key, Value> implements DataExternalizer<
   private final DataExternalizer<Collection<Key>> myKeysExternalizer;
   private final boolean myValuesAreNullAlways;
 
-  public InputMapExternalizer(@NotNull IndexExtension<Key, Value, ?> extension) {
-    myValueExternalizer = extension.getValueExternalizer();
-    myKeysExternalizer = extension instanceof CustomInputsIndexFileBasedIndexExtension
-                         ? ((CustomInputsIndexFileBasedIndexExtension<Key>)extension).createExternalizer()
-                         : new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), extension.getName());
-    myValuesAreNullAlways = extension instanceof ScalarIndexExtension;
+  public InputMapExternalizer(@NotNull DataExternalizer<Collection<Key>> keysExternalizer,
+                              @NotNull DataExternalizer<Value> valueExternalizer,
+                              boolean valueIsAbsent) {
+    myKeysExternalizer = keysExternalizer;
+    myValueExternalizer = valueExternalizer;
+    myValuesAreNullAlways = valueIsAbsent;
   }
 
   @Override

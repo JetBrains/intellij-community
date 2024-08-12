@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
+import com.intellij.util.indexing.impl.InputIndexDataExternalizer
 import com.intellij.util.indexing.impl.forward.*
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
@@ -128,13 +129,29 @@ class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
 
 }
 
+@Internal
 fun <K, V> defaultMapExternalizerFor(extension: IndexExtension<K, V, *>): DataExternalizer<Map<K, V>> {
+  if (extension is CustomInputMapIndexExtension<*, *>) {
+    @Suppress("UNCHECKED_CAST")
+    return (extension as CustomInputMapIndexExtension<K, V>).createInputMapExternalizer()
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  val keysExternalizer = if (extension is CustomInputsIndexFileBasedIndexExtension<*>) {
+    (extension as CustomInputsIndexFileBasedIndexExtension<K>).createExternalizer()
+  }
+  else {
+    InputIndexDataExternalizer<K>(extension.getKeyDescriptor(), extension.getName())
+  }
+
   if (extension is ScalarIndexExtension<K>) {
-    val inputMapExternalizer = ValueLessInputMapExternalizer<K>(extension)
+    val inputMapExternalizer = ValueLessInputMapExternalizer<K>(keysExternalizer)
     @Suppress("UNCHECKED_CAST")
     return inputMapExternalizer as DataExternalizer<Map<K, V>>
   }
-  return InputMapExternalizer(extension)
+  else {
+    return InputMapExternalizer(keysExternalizer, extension.valueExternalizer, false)
+  }
 }
 
 private fun deleteIndexDirectory(extension: FileBasedIndexExtension<*, *>) {
