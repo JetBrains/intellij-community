@@ -1,11 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio.toggle
 
+import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslIjentAvailabilityService
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
@@ -14,7 +17,9 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.BufferedReader
 import java.nio.file.FileSystems
+import kotlin.io.path.bufferedReader
 
 /**
  * This service, along with listeners inside it, enables and disables access to WSL drives through IJent.
@@ -37,8 +42,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   val isAvailable: Boolean get() = strategy != null
 
   suspend fun enableForAllWslDistributions() {
-    strategy ?: error("Not available")
-    strategy.enableForAllWslDistributions()
+    strategy?.enableForAllWslDistributions()
   }
 
   @TestOnly
@@ -69,9 +73,27 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       }
 
       else -> {
-        logger<IjentWslNioFsToggler>().warn(
-          "The default filesystem ${FileSystems.getDefault()} is not ${MultiRoutingFileSystemProvider::class.java}"
-        )
+        val vmOptions = runCatching {
+          VMOptions.getUserOptionsFile()?.bufferedReader()?.use<BufferedReader, String> { it.readText() }
+          ?: "<null>"
+        }.getOrElse<String, String> { err -> err.stackTraceToString() }
+
+        val systemProperties = runCatching {
+          System.getProperties().entries.joinToString("\n") { (k, v) -> "$k=$v" }
+        }.getOrElse<String, String> { err -> err.stackTraceToString() }
+
+        val message = "The default filesystem ${FileSystems.getDefault()} is not ${MultiRoutingFileSystemProvider::class.java}"
+
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          logger<IjentWslNioFsToggler>().warn("$message\nVM Options:\n$vmOptions\nSystem properties:\n$systemProperties")
+        }
+        else {
+          logger<IjentWslNioFsToggler>().error(
+            message,
+            Attachment("user vmOptions.txt", vmOptions),
+            Attachment("system properties.txt", systemProperties),
+          )
+        }
         null
       }
     }
