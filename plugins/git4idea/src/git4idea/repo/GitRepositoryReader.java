@@ -6,7 +6,6 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,11 +60,11 @@ public class GitRepositoryReader {
 
   @NotNull
   GitBranchState readState(@NotNull Collection<GitRemote> remotes) {
-    Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> branches = readBranches(remotes);
-    Map<GitLocalBranch, Hash> localBranches = branches.first;
+    GitBranches branches = readBranches(remotes);
+    Map<GitLocalBranch, Hash> localBranches = branches.localBranches;
 
     HeadInfo headInfo = readHead();
-    Repository.State state = readRepositoryState(headInfo);
+    Repository.State state = readRepositoryState(headInfo.isBranch);
 
     GitLocalBranch currentBranch;
     String currentRevision;
@@ -86,7 +85,7 @@ public class GitRepositoryReader {
       LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled());
       logDebugAllRefsFiles(myGitFiles);
     }
-    return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
+    return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.remoteBranches);
   }
 
   @NotNull
@@ -136,14 +135,14 @@ public class GitRepositoryReader {
     return currentBranch == null ? new GitLocalBranch(currentBranchName) : currentBranch;
   }
 
-  private @NotNull Repository.State readRepositoryState(@NotNull HeadInfo headInfo) {
+  private @NotNull Repository.State readRepositoryState(boolean isOnBranch) {
     if (isMergeInProgress()) {
       return Repository.State.MERGING;
     }
     if (isRebaseInProgress()) {
       return Repository.State.REBASING;
     }
-    if (!headInfo.isBranch) {
+    if (!isOnBranch) {
       return Repository.State.DETACHED;
     }
     if (isCherryPickInProgress()) {
@@ -213,7 +212,7 @@ public class GitRepositoryReader {
     }
   }
 
-  private @NotNull Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> readBranches(@NotNull Collection<GitRemote> remotes) {
+  private @NotNull GitBranches readBranches(@NotNull Collection<GitRemote> remotes) {
     Map<String, String> data = readBranchRefsFromFiles();
     Map<String, Hash> resolvedRefs = resolveRefs(data);
     return createBranchesFromData(remotes, resolvedRefs);
@@ -235,8 +234,8 @@ public class GitRepositoryReader {
     }
   }
 
-  private static @NotNull Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> createBranchesFromData(@NotNull Collection<GitRemote> remotes,
-                                                                                                             @NotNull Map<String, Hash> data) {
+  private static @NotNull GitBranches createBranchesFromData(@NotNull Collection<GitRemote> remotes,
+                                                             @NotNull Map<String, Hash> data) {
     Map<GitLocalBranch, Hash> localBranches = new HashMap<>();
     Map<GitRemoteBranch, Hash> remoteBranches = new HashMap<>();
     for (Map.Entry<String, Hash> entry : data.entrySet()) {
@@ -254,7 +253,7 @@ public class GitRepositoryReader {
         LOG.warn(String.format("Unexpected ref format: %s, %s", refName, branch));
       }
     }
-    return Pair.create(localBranches, remoteBranches);
+    return new GitBranches(localBranches, remoteBranches);
   }
 
   public static @Nullable GitBranch parseBranchRef(@NotNull Collection<GitRemote> remotes, String refName) {
@@ -285,19 +284,21 @@ public class GitRepositoryReader {
     }
     catch (RepoStateException e) {
       LOG.warn(e);
-      return new HeadInfo(false, null);
+      return HeadInfo.UNKNOWN;
     }
 
     Hash hash = parseHash(headContent);
     if (hash != null) {
       return new HeadInfo(false, headContent);
     }
+
     String target = getTarget(headContent);
     if (target != null) {
       return new HeadInfo(true, target);
     }
+
     LOG.warn(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
-    return new HeadInfo(false, null);
+    return HeadInfo.UNKNOWN;
   }
 
   /**
@@ -307,9 +308,15 @@ public class GitRepositoryReader {
     private final @Nullable String content;
     private final boolean isBranch;
 
+    public static final HeadInfo UNKNOWN = new HeadInfo(false, null);
+
     HeadInfo(boolean branch, @Nullable String content) {
       isBranch = branch;
       this.content = content;
     }
+  }
+
+  private record GitBranches(@NotNull Map<GitLocalBranch, Hash> localBranches,
+                             @NotNull Map<GitRemoteBranch, Hash> remoteBranches) {
   }
 }
