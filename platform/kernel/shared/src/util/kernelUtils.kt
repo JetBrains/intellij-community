@@ -14,16 +14,14 @@ import fleet.kernel.rete.withRete
 import fleet.kernel.subscribe
 import fleet.rpc.core.Serialization
 import fleet.util.async.conflateReduce
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.modules.SerializersModule
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
 suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend () -> T) {
   val entityClasses = listOf(Kernel::class.java.classLoader).flatMap(::collectEntityClasses)
   fleet.kernel.withKernel(entityClasses, middleware = middleware) { currentKernel ->
