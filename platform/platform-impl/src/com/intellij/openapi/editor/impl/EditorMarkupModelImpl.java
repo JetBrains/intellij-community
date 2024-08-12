@@ -2009,7 +2009,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static class ExtraActionGroup extends DefaultActionGroup implements ActionWithMergeId {
   }
 
-  private static class StatusToolbarGroup extends DefaultActionGroup implements ActionWithMergeId {
+  @ApiStatus.Internal
+  public static class StatusToolbarGroup extends DefaultActionGroup {
 
     StatusToolbarGroup(AnAction @NotNull ... actions) {
       super(actions);
