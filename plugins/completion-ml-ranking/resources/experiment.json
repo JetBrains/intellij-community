@@ -211,6 +211,13 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 41,
+      "description": "Full Line - Rust filtered data",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
@@ -264,8 +271,8 @@
     },
     {
       "id": "rust",
-      "experimentBucketsCount": 2,
-      "includeGroups": [8, 22],
+      "experimentBucketsCount": 4,
+      "includeGroups": [8, 22, 28, 41],
       "shouldLogElementFeatures": true
     },
     {
