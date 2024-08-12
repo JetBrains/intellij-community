@@ -337,10 +337,15 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
                navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
     }
     if (myTreeStructure instanceof AbstractTreeStructureBase treeStructure) {
-      //noinspection unchecked
-      List<AbstractTreeNode<?>> selection = (List)ContainerUtil.filterIsInstance(
-        selectedUserObjects, AbstractTreeNode.class);
-      DataSink.uiDataSnapshot(sink, o -> treeStructure.getDataFromProviders(selection, o));
+      List<TreeStructureProvider> providers = treeStructure.getProviders();
+      if (providers != null && !providers.isEmpty()) {
+        //noinspection unchecked
+        List<AbstractTreeNode<?>> selection = (List)ContainerUtil.filterIsInstance(
+          selectedUserObjects, AbstractTreeNode.class);
+        for (TreeStructureProvider provider : ContainerUtil.reverse(providers)) {
+          provider.uiDataSnapshot(sink, selection);
+        }
+      }
     }
     sink.set(CommonDataKeys.PROJECT, myProject);
     sink.set(PlatformCoreDataKeys.SELECTED_ITEMS, selectedUserObjects);

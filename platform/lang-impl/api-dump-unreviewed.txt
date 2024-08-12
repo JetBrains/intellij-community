@@ -16016,8 +16016,8 @@ f:com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator
 f:com.intellij.ide.projectView.impl.CompoundTreeStructureProvider
 - com.intellij.ide.projectView.TreeStructureProvider
 - s:get(com.intellij.openapi.project.Project):com.intellij.ide.projectView.TreeStructureProvider
-- getData(java.util.Collection,java.lang.String):java.lang.Object
 - modify(com.intellij.ide.util.treeView.AbstractTreeNode,java.util.Collection,com.intellij.ide.projectView.ViewSettings):java.util.Collection
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.util.Collection):V
 f:com.intellij.ide.projectView.impl.DirectoryUrl
 - com.intellij.ide.projectView.impl.AbstractUrl
 - <init>(java.lang.String,java.lang.String):V

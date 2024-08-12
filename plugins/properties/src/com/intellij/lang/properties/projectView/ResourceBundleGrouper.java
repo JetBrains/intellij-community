@@ -7,8 +7,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbAware;
@@ -101,32 +100,25 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)slowId -> getSlowData(selected, slowId);
-    }
-    return null;
-  }
-
-  private static Object getSlowData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      for (AbstractTreeNode<?> selectedElement : selected) {
+  public void uiDataSnapshot(@NotNull DataSink sink, @NotNull Collection<? extends AbstractTreeNode<?>> selection) {
+    sink.lazy(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, () -> {
+      for (AbstractTreeNode<?> selectedElement : selection) {
         Object element = selectedElement.getValue();
         if (element instanceof ResourceBundle) {
           return new ResourceBundleDeleteProvider();
         }
       }
-    }
-    else if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
+      return null;
+    });
+    sink.lazy(ResourceBundle.ARRAY_DATA_KEY, () -> {
       List<ResourceBundle> selectedElements = new ArrayList<>();
-      for (AbstractTreeNode<?> node : selected) {
-        final Object value = node.getValue();
+      for (AbstractTreeNode<?> node : selection) {
+        Object value = node.getValue();
         if (value instanceof ResourceBundle) {
           selectedElements.add((ResourceBundle)value);
         }
       }
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new ResourceBundle[0]);
-    }
-    return null;
+    });
   }
 }

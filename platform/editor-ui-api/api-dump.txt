@@ -151,6 +151,7 @@ com.intellij.ide.projectView.TreeStructureProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - getData(java.util.Collection,java.lang.String):java.lang.Object
 - a:modify(com.intellij.ide.util.treeView.AbstractTreeNode,java.util.Collection,com.intellij.ide.projectView.ViewSettings):java.util.Collection
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink,java.util.Collection):V
 com.intellij.ide.projectView.ViewSettings
 - com.intellij.ide.util.treeView.NodeOptions
 - sf:DEFAULT:com.intellij.ide.projectView.ViewSettings

@@ -8,6 +8,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
@@ -375,7 +376,12 @@ public class CommanderPanel extends JPanel {
     sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteElementProvider);
 
     if (myProjectTreeStructure != null) {
-      DataSink.uiDataSnapshot(sink, dataId -> myProjectTreeStructure.getDataFromProviders(selection, dataId));
+      List<TreeStructureProvider> providers = myProjectTreeStructure.getProviders();
+      if (providers != null && !providers.isEmpty()) {
+        for (TreeStructureProvider provider : ContainerUtil.reverse(providers)) {
+          provider.uiDataSnapshot(sink, selection);
+        }
+      }
     }
     sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       return getNodeElement(ContainerUtil.getOnlyItem(selection));
