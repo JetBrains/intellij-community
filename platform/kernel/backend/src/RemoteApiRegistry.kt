@@ -4,7 +4,7 @@ package com.intellij.platform.kernel.backend
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.platform.kernel.backend.RemoteApiProvider.Companion.EP_NAME
-import com.intellij.platform.kernel.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.util.containers.ContainerUtil
 import fleet.rpc.RemoteApi
 import fleet.rpc.core.InstanceId

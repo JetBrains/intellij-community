@@ -11,7 +11,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.platform.kernel.rpc.RemoteApiProviderService"
+    <applicationService serviceInterface="com.intellij.platform.rpc.RemoteApiProviderService"
                         serviceImplementation="com.intellij.platform.kernel.backend.RemoteApiRegistry"/>
     <applicationService serviceInterface="com.intellij.platform.kernel.KernelService"
                         serviceImplementation="com.intellij.platform.kernel.backend.BackendKernelService"/>
