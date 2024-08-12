@@ -79,6 +79,8 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun getCaretLine() = caretPosition.getLine() + 1
   fun getCaretColumn() = caretPosition.getColumn() + 1
 
+  fun getFontSize() = editor.getColorsScheme().getEditorFontSize()
+
   fun clickOn(text: String, button: RemoteMouseButton) {
     val o = this.text.indexOf(text) + text.length / 2
     val point = interact {

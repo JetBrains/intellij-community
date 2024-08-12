@@ -19,6 +19,7 @@ interface Editor {
   fun offsetToVisualPosition(offset: Int): VisualPosition
   fun visualPositionToXY(visible: VisualPosition): Point
   fun getInlayModel(): InlayModel
+  fun getColorsScheme(): EditorColorsScheme
 }
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
@@ -90,6 +91,11 @@ interface FileEditor
 interface FileEditorManager {
   fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor>
   fun getSelectedTextEditor(): Editor?
+}
+
+@Remote("com.intellij.openapi.editor.colors.EditorColorsScheme")
+interface EditorColorsScheme {
+  fun getEditorFontSize(): Int
 }
 
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {

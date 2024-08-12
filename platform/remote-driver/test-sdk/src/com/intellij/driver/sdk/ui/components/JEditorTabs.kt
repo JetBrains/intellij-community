@@ -41,6 +41,8 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
   inner class Tab(private val data: TabInfoRef) {
     val text: String
       get() = data.getText()
+    val fontSize: Int
+      get() = data.getFontSize()
   }
 }
 
@@ -52,4 +54,5 @@ interface EditorTabsRef {
 @Remote("com.intellij.ui.tabs.TabInfo")
 interface TabInfoRef {
   fun getText(): String
+  fun getFontSize(): Int
 }

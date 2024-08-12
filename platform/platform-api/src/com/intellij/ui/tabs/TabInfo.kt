@@ -155,6 +155,16 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     return this
   }
 
+  @Internal
+  fun getFontSize(): Int {
+    if (tabLabel == null) {
+      return 0
+    }
+    else {
+      return tabLabel!!.font.size
+    }
+  }
+
   private fun getDefaultAttributes(): SimpleTextAttributes {
     if (defaultAttributes == null) {
       val style = ((if (defaultStyle == -1) SimpleTextAttributes.STYLE_PLAIN else defaultStyle)
