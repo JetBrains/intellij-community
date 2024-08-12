@@ -25,7 +25,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
-import java.util.*
 
 class GitRepositoryImpl private constructor(
   project: Project,
@@ -168,13 +167,13 @@ class GitRepositoryImpl private constructor(
       val config = GitConfig.read(configFile)
       repositoryFiles.updateCustomPaths(config.parseCore())
 
-      val remotes = LinkedHashSet(config.parseRemotes())
+      val remotes = config.parseRemotes()
       val state = repositoryReader.readState(remotes)
       val isShallow = repositoryReader.hasShallowCommits()
 
-      val remoteBranches = state.remoteBranches.toMap()
-      val localBranches = state.localBranches.toMap()
-      val trackInfos = LinkedHashSet(config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys))
+      val remoteBranches = state.remoteBranches
+      val localBranches = state.localBranches
+      val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
 
       val hooksInfo = repositoryReader.readHooksInfo()
       val submoduleFile = File(VfsUtilCore.virtualToIoFile(root), ".gitmodules")
