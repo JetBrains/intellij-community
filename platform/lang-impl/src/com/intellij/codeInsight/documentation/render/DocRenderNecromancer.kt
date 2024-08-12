@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.psi.PsiManager
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
@@ -69,6 +71,7 @@ private class DocRenderNecromancer(
           if (recipe.isValid()) {
             DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
             DocRenderPassFactory.forceRefreshOnNextPass(editor)
+            FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DOC_RENDER)
           }
         }
       }

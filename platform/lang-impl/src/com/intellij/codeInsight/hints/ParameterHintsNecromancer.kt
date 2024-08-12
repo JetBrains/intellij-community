@@ -13,6 +13,8 @@ import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.psi.PsiManager
 import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -76,6 +78,7 @@ private class ParameterHintsNecromancer(
               Int2ObjectOpenHashMap(0),
               true
             ).update()
+            FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.PARAMETER_HINTS)
           }
         }
       }

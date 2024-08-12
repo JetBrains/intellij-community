@@ -32,6 +32,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.util.CommonProcessors
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ConcurrentIntObjectMap
@@ -130,7 +131,7 @@ open class HighlightingNecromancer(
       zombieStatusMap.put(recipe.fileId, if (spawned == 0) Status.NO_ZOMBIE else Status.SPAWNED)
       logFusStatistic(recipe.file, MarkupGraveEvent.RESTORED, spawned)
       if (spawned != 0) {
-        FUSProjectHotStartUpMeasurer.markupRestored(recipe.file as VirtualFileWithId)
+        FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.HIGHLIGHTING)
       }
       LOG.debug { "spawned zombie with ${spawned}/${zombie.limbs().size} libs for ${fileName(recipe.file)}" }
     }

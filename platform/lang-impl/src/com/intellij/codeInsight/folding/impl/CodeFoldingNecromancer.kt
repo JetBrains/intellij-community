@@ -16,6 +16,8 @@ import com.intellij.openapi.fileEditor.impl.text.catchingExceptions
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.CoroutineScope
@@ -59,6 +61,7 @@ private class CodeFoldingNecromancer(
               editor.foldingModel.isFoldingEnabled &&
               !CodeFoldingManagerImpl.isFoldingsInitializedInEditor(editor)) {
             zombie.applyState(document, editor.foldingModel)
+            FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.CODE_FOLDING)
           }
         }
       }

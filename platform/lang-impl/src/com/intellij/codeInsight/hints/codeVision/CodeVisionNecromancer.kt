@@ -16,6 +16,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +74,7 @@ private class CodeVisionNecromancer(
         val editor = recipe.editorSupplier()
         withContext(Dispatchers.EDT) {
           if (recipe.isValid(editor)) {
+            FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.CODE_VISION)
             editor.lensContext?.setZombieResults(entries)
           }
         }

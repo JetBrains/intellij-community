@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -70,6 +72,7 @@ private class DeclarativeHintsNecromancer(
               DeclarativeInlayHintsPass.applyInlayData(editor, recipe.project, inlayDataList, sourceId)
             }
             DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
+            FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DECLARATIVE_HINTS)
           }
         }
       }
