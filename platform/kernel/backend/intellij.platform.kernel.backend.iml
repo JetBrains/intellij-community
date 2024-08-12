@@ -14,6 +14,7 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.kernel" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.backend" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>

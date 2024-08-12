@@ -1,0 +1,17 @@
+<idea-plugin package="com.intellij.platform.rpc.backend">
+  <dependencies>
+    <plugin id="com.intellij.platform.experimental.backend"/>
+    <!--<module name="intellij.platform.rpc"/>-->
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.rpc.backend.remoteApiProvider"
+                    interface="com.intellij.platform.rpc.backend.RemoteApiProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.rpc.RemoteApiProviderService"
+                        serviceImplementation="com.intellij.platform.rpc.backend.impl.RemoteApiRegistry"/>
+  </extensions>
+</idea-plugin>

@@ -1,22 +1,14 @@
 <idea-plugin package="com.intellij.platform.kernel.backend">
   <dependencies>
     <!--<module name="intellij.platform.kernel"/>-->
-    <plugin id="com.intellij.platform.experimental.backend"/>
+    <module name="intellij.platform.rpc.backend"/>
   </dependencies>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.platform.kernel.backend.remoteApiProvider"
-                    interface="com.intellij.platform.kernel.backend.RemoteApiProvider"
-                    dynamic="true"/>
-  </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.platform.rpc.RemoteApiProviderService"
-                        serviceImplementation="com.intellij.platform.kernel.backend.RemoteApiRegistry"/>
     <applicationService serviceInterface="com.intellij.platform.kernel.KernelService"
                         serviceImplementation="com.intellij.platform.kernel.backend.BackendKernelService"/>
   </extensions>
-  <extensions defaultExtensionNs="com.intellij.platform.kernel">
-    <backend.remoteApiProvider implementation="com.intellij.platform.kernel.backend.RemoteKernelProvider"/>
+  <extensions defaultExtensionNs="com.intellij.platform">
+    <rpc.backend.remoteApiProvider implementation="com.intellij.platform.kernel.backend.RemoteKernelProvider"/>
   </extensions>
 </idea-plugin>

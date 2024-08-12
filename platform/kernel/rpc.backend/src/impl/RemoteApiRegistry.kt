@@ -1,16 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.kernel.backend
+package com.intellij.platform.rpc.backend.impl
 
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.platform.kernel.backend.RemoteApiProvider.Companion.EP_NAME
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.platform.rpc.backend.RemoteApiProvider.Companion.EP_NAME
 import com.intellij.util.containers.ContainerUtil
 import fleet.rpc.RemoteApi
 import fleet.rpc.core.InstanceId
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.set
 import kotlin.reflect.KClass
 
 class RemoteApiRegistry(private val coroutineScope: CoroutineScope) : RemoteApiProviderService {

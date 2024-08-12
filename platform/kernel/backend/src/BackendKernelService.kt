@@ -5,11 +5,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.kernel.KernelService
-import com.intellij.platform.kernel.backend.RemoteApiProvider.RemoteApiDescriptor
 import com.intellij.platform.kernel.util.CommonInstructionSet
 import com.intellij.platform.kernel.util.KernelRpcSerialization
 import com.intellij.platform.kernel.util.ReadTracker
 import com.intellij.platform.kernel.util.withKernel
+import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.platform.rpc.backend.RemoteApiProvider.RemoteApiDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import fleet.kernel.Kernel
 import fleet.kernel.kernel
