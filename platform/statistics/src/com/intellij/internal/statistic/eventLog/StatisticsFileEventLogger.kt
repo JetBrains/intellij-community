@@ -92,26 +92,29 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   private fun logLastEvent() {
-    lastEvent?.let {
-      val event = it.validatedEvent.event
-      if (event.isEventGroup()) {
-        event.data["last"] = lastEventTime
-      }
-      event.data["created"] = lastEventCreatedTime
-      var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
-      event.data["system_event_id"] = systemEventId
-      systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
+    try {
+      lastEvent?.let {
+        val event = it.validatedEvent.event
+        if (event.isEventGroup()) {
+          event.data["last"] = lastEventTime
+        }
+        event.data["created"] = lastEventCreatedTime
+        var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
+        event.data["system_event_id"] = systemEventId
+        systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
 
-      if (headless) {
-        event.data["system_headless"] = true
+        if (headless) {
+          event.data["system_headless"] = true
+        }
+        ideMode?.let { event.data["ide_mode"] = ideMode }
+        productMode?.let { event.data["product_mode"] = productMode }
+        writer.log(it.validatedEvent)
+        ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
+          .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, false)
       }
-      ideMode?.let { event.data["ide_mode"] = ideMode }
-      productMode?.let { event.data["product_mode"] = productMode }
-      writer.log(it.validatedEvent)
-      ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
-        .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, false)
+    } finally {
+      lastEvent = null
     }
-    lastEvent = null
   }
 
   override fun getActiveLogFile(): EventLogFile? {
