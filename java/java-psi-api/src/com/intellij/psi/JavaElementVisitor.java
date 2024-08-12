@@ -249,6 +249,14 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitVariable(variable);
   }
 
+  public void visitMarkdownCodeBlock(@NotNull PsiMarkdownCodeBlock block) {
+    visitElement(block);
+  }
+
+  public void visitMarkdownReferenceLink(@NotNull PsiMarkdownReferenceLink referenceLink) {
+    visitElement(referenceLink);
+  }
+
   public void visitMethod(@NotNull PsiMethod method) {
     visitElement(method);
   }

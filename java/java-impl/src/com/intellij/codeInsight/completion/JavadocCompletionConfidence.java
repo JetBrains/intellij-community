@@ -7,6 +7,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.javadoc.PsiMarkdownReferenceLink;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,7 +20,8 @@ public final class JavadocCompletionConfidence extends CompletionConfidence {
 
   @Override
   public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (psiElement().inside(PsiDocTag.class).accepts(contextElement)) {
+    if (psiElement().inside(PsiDocTag.class).accepts(contextElement)
+      || psiElement().inside(PsiMarkdownReferenceLink.class).accepts(contextElement)) {
       if (hasKnownReference(psiFile, offset - 1)) {
         return ThreeState.NO;
       }

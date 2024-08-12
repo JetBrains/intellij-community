@@ -1,0 +1,5 @@
+///
+/// {@snippet "}
+///
+public class Main {
+}

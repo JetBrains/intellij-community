@@ -17,6 +17,7 @@ import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlight
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.markdown.utils.MarkdownToHtmlConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -124,6 +125,8 @@ public class JavaDocInfoGenerator {
     Pair.create("<pre><code>", "</code></pre>"),
     Pair.create("<blockquote><pre>", "</pre></blockquote>")
   );
+
+  private static final MarkdownToHtmlConverter ourMarkdownConverter = new MarkdownToHtmlConverter(new JavaDocMarkdownFlavourDescriptor());
 
   /**
    * Tags for which javadoc is known to be generated.
@@ -1804,15 +1807,22 @@ public class JavaDocInfoGenerator {
                              int startIndex,
                              InheritDocProvider<PsiElement[]> provider) {
     int predictOffset = startIndex < elements.length ? elements[startIndex].getTextOffset() + elements[startIndex].getText().length() : 0;
+    boolean wasMarkdown = false, isMarkdown = false;
+
+    // Secondary buffer to flush at each switch between (non-)markdown content
+    StringBuilder subBuffer = new StringBuilder();
+
     StringBuilder htmlCodeBlockContents = null;
     Pair<String, String> htmlCodeBlockDelimiters = null;
     for (int i = startIndex; i < elements.length; i++) {
+      isMarkdown = PsiUtil.isInMarkdownDocComment(elements[i]);
+
       if (elements[i].getTextOffset() > predictOffset) {
         if (htmlCodeBlockContents != null) {
           htmlCodeBlockContents.append(' ');
         }
         else {
-          buffer.append(' ');
+          subBuffer.append(' ');
         }
       }
       predictOffset = elements[i].getTextOffset() + elements[i].getText().length();
@@ -1828,32 +1838,39 @@ public class JavaDocInfoGenerator {
             continue;
           }
           else {
-            buffer.append(htmlCodeBlockDelimiters.first);
-            appendPlainText(buffer, htmlCodeBlockContents.toString());
+            subBuffer.append(htmlCodeBlockDelimiters.first);
+            appendPlainText(subBuffer, htmlCodeBlockContents.toString());
             htmlCodeBlockContents = null;
             htmlCodeBlockDelimiters = null;
           }
         }
         switch (tagName) {
-          case LINK_TAG -> generateLinkValue(tag, buffer, false);
-          case LITERAL_TAG -> generateLiteralValue(buffer, tag, true);
-          case CODE_TAG, SYSTEM_PROPERTY_TAG -> generateCodeValue(tag, buffer);
-          case LINKPLAIN_TAG -> generateLinkValue(tag, buffer, true);
+          case LINK_TAG -> generateLinkValue(tag, subBuffer, false);
+          case LITERAL_TAG -> generateLiteralValue(subBuffer, tag, true);
+          case CODE_TAG, SYSTEM_PROPERTY_TAG -> generateCodeValue(tag, subBuffer);
+          case LINKPLAIN_TAG -> generateLinkValue(tag, subBuffer, true);
           case INHERIT_DOC_TAG -> {
             if (provider == null) continue;
             Pair<PsiElement[], InheritDocProvider<PsiElement[]>> inheritInfo = provider.getInheritDoc();
             if (inheritInfo != null) {
-              generateValue(buffer, inheritInfo.first, inheritInfo.second);
+              isMarkdown = PsiUtil.isInMarkdownDocComment(inheritInfo.first[0]);
+              flushIfNecessary(buffer, subBuffer, wasMarkdown, isMarkdown);
+              wasMarkdown = isMarkdown;
+              generateValue(subBuffer, inheritInfo.first, inheritInfo.second);
             }
           }
-          case DOC_ROOT_TAG -> buffer.append(getDocRoot());
-          case VALUE_TAG -> generateValueValue(tag, buffer, element);
-          case INDEX_TAG -> generateIndexValue(buffer, tag);
-          case SUMMARY_TAG -> generateLiteralValue(buffer, tag, false);
-          case SNIPPET_TAG -> generateSnippetValue(buffer, tag);
-          case RETURN_TAG -> generateInlineReturnValue(buffer, tag, provider);
-          default -> generateUnknownInlineTagValue(buffer, tag);
+          case DOC_ROOT_TAG -> subBuffer.append(getDocRoot());
+          case VALUE_TAG -> generateValueValue(tag, subBuffer, element);
+          case INDEX_TAG -> generateIndexValue(subBuffer, tag);
+          case SUMMARY_TAG -> generateLiteralValue(subBuffer, tag, false);
+          case SNIPPET_TAG -> generateSnippetValue(subBuffer, tag);
+          case RETURN_TAG -> generateInlineReturnValue(subBuffer, tag, provider);
+          default -> generateUnknownInlineTagValue(subBuffer, tag);
         }
+      } else if (element instanceof PsiMarkdownCodeBlock) {
+        appendStyledCodeBlock(subBuffer, element.getProject(), element.getLanguage(), ((PsiMarkdownCodeBlock)element).getCodeText());
+      } else if (element instanceof PsiMarkdownReferenceLink) {
+        generateMarkdownLinkValue((PsiMarkdownReferenceLink)element, subBuffer);
       }
       else {
         String text;
@@ -1871,7 +1888,7 @@ public class JavaDocInfoGenerator {
         }
         if (htmlCodeBlockContents != null) {
           htmlCodeBlockContents = appendHtmlCodeBlockContents(
-            text, buffer, htmlCodeBlockContents, htmlCodeBlockDelimiters
+            text, subBuffer, htmlCodeBlockContents, htmlCodeBlockDelimiters
           );
         }
         else {
@@ -1879,21 +1896,34 @@ public class JavaDocInfoGenerator {
           if (delimitersWithIndex != null) {
             htmlCodeBlockDelimiters = delimitersWithIndex.first;
             int blockStart = delimitersWithIndex.second;
-            appendPlainText(buffer, text.substring(0, blockStart));
+            appendPlainText(subBuffer, text.substring(0, blockStart));
             htmlCodeBlockContents = appendHtmlCodeBlockContents(
-              text.substring(blockStart + htmlCodeBlockDelimiters.first.length()), buffer,
+              text.substring(blockStart + htmlCodeBlockDelimiters.first.length()), subBuffer,
               new StringBuilder(), htmlCodeBlockDelimiters
             );
           }
           else {
-            appendPlainText(buffer, text);
+            appendPlainText(subBuffer, text);
           }
         }
       }
+
+      flushIfNecessary(buffer, subBuffer, wasMarkdown, isMarkdown);
+      wasMarkdown = isMarkdown;
     }
     if (htmlCodeBlockContents != null) {
-      buffer.append(htmlCodeBlockDelimiters.first);
-      appendPlainText(buffer, htmlCodeBlockContents.toString());
+      subBuffer.append(htmlCodeBlockDelimiters.first);
+      appendPlainText(subBuffer, htmlCodeBlockContents.toString());
+    }
+
+    buffer.append(isMarkdown ? markdownToHtml(subBuffer.toString()) : subBuffer );
+  }
+
+  @Contract(mutates = "param1, param2")
+  private static void flushIfNecessary(StringBuilder buffer, StringBuilder subBuffer, boolean wasMarkdown, boolean isMarkdown){
+    if(wasMarkdown != isMarkdown) {
+      buffer.append(wasMarkdown ? markdownToHtml(subBuffer.toString()) : subBuffer );
+      subBuffer.setLength(0);
     }
   }
 
@@ -2328,6 +2358,10 @@ public class JavaDocInfoGenerator {
     buffer.append(StringUtil.replaceUnicodeEscapeSequences(text));
   }
 
+  private static String markdownToHtml(String markdownInput) {
+    return ourMarkdownConverter.convertMarkdownToHtml(markdownInput, null);
+  }
+
   protected boolean isLeadingAsterisks(@Nullable PsiElement element) {
     return (element instanceof PsiDocToken) && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS;
   }
@@ -2348,6 +2382,18 @@ public class JavaDocInfoGenerator {
     if (!text.isEmpty()) {
       generateLink(buffer, text, tagElements[0], plainLink);
     }
+  }
+
+  private void generateMarkdownLinkValue(PsiMarkdownReferenceLink referenceLink, StringBuilder buffer) {
+    PsiElement reference = referenceLink.getLinkElement();
+    PsiElement label = referenceLink.getLabel();
+
+    String referenceText = reference != null ? reference.getText() : "";
+    String labelText = label != null ? label.getText() : "";
+
+    // JEP 467 requires reference brackets to be escaped, remove the escape to match the reference
+    referenceText = referenceText.replace("\\[", "[").replace("\\]", "]");
+    generateLink(buffer, referenceText, labelText, referenceLink.getChildren()[0], !referenceLink.isShortLink());
   }
 
   private void generateValueValue(PsiInlineDocTag tag, StringBuilder buffer, PsiElement element) {

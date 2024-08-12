@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,9 +162,191 @@ public final class BasicJavaDocParser {
         parseSimpleTagValue(builder, javaDocElementTypeContainer);
       }
     }
+    else if (tokenType == JavaDocTokenType.DOC_CODE_FENCE) {
+      if (getBraceScope(builder) > 0) {
+        builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
+        builder.advanceLexer();
+        return;
+      }
+
+      char fenceStart = builder.getOriginalText().charAt(builder.getCurrentOffset());
+      PsiBuilder.Marker tag = builder.mark();
+
+      while (!builder.eof()) {
+        builder.advanceLexer();
+
+        if (getTokenType(builder) == JavaDocTokenType.DOC_CODE_FENCE &&
+            builder.getOriginalText().charAt(builder.getCurrentOffset()) == fenceStart) {
+          break;
+        }
+        else {
+          builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
+        }
+      }
+
+      if (!builder.eof()) {
+        builder.advanceLexer();
+      }
+
+      tag.done(javaDocElementTypeContainer.DOC_MARKDOWN_CODE_BLOCK);
+    }
+    else if (tokenType == JavaDocTokenType.DOC_LBRACKET) {
+      builder.setDebugMode(true);
+      boolean hasLabel = true;
+      PsiBuilder.Marker tag = builder.mark();
+
+      // Step 1 ensure that we have a label
+      int leftBracketCount = 1;
+      int rightBracketCount = 0;
+      int startLabelOffset = builder.getCurrentOffset();
+      int endLabelOffset;
+
+      while (!builder.eof()) {
+        IElementType token = findInlineToken(builder, JavaDocTokenType.DOC_RBRACKET, JavaDocTokenType.DOC_LBRACKET, true);
+        if (token == JavaDocTokenType.DOC_LBRACKET) {
+          leftBracketCount++;
+          continue;
+        }
+        if (token == JavaDocTokenType.DOC_RBRACKET) {
+          rightBracketCount++;
+          if (leftBracketCount == rightBracketCount) break;
+        }
+      }
+
+      endLabelOffset = builder.getCurrentOffset();
+      boolean isShortRefEmpty = endLabelOffset - startLabelOffset <= 1;
+      if (leftBracketCount != rightBracketCount || isShortRefEmpty) {
+        tag.rollbackTo();
+        builder.advanceLexer();
+        return;
+      }
+
+      IElementType firstReferenceToken = findInlineToken(builder, JavaDocTokenType.DOC_LBRACKET, JavaDocTokenType.DOC_SPACE, false);
+      if (firstReferenceToken != JavaDocTokenType.DOC_LBRACKET) {
+        if (leftBracketCount > 1 || firstReferenceToken == JavaDocTokenType.DOC_LPAREN) {
+          tag.rollbackTo();
+          builder.advanceLexer();
+          return;
+        }
+
+        hasLabel = false;
+      }
+
+      // Step 2 get the reference for full reference link
+      if (hasLabel) {
+        if (findInlineToken(builder, JavaDocTokenType.DOC_RBRACKET, JavaDocTokenType.DOC_LBRACKET, true) != JavaDocTokenType.DOC_RBRACKET) {
+          if (leftBracketCount > 1) {
+            tag.rollbackTo();
+            builder.advanceLexer();
+            return;
+          }
+
+          hasLabel = false;
+        }
+      }
+
+      // Step 3, parse the content
+      tag.rollbackTo();
+      tag = builder.mark();
+      if (hasLabel) {
+        while (!builder.eof()) {
+          builder.advanceLexer();
+          if (builder.getCurrentOffset() < endLabelOffset) {
+            builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
+          }
+          else {
+            break;
+          }
+        }
+        builder.advanceLexer();
+      }
+
+      // Parse the reference itself
+      builder.advanceLexer();
+      parseMarkdownReference(builder, javaDocElementTypeContainer);
+      builder.advanceLexer();
+
+      tag.done(javaDocElementTypeContainer.DOC_MARKDOWN_REFERENCE_LINK);
+    }
     else {
       remapAndAdvance(builder);
     }
+  }
+
+  private static void parseMarkdownReference(@NotNull PsiBuilder builder,
+                                             @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
+    PsiBuilder.Marker refStart = builder.mark();
+    if (getTokenType(builder) == JavaDocTokenType.DOC_RBRACKET) {
+      refStart.drop();
+      return;
+    }
+
+    if (getTokenType(builder) != JavaDocTokenType.DOC_SHARP) {
+      builder.remapCurrentToken(javaDocElementTypeContainer.DOC_REFERENCE_HOLDER);
+      builder.advanceLexer();
+    }
+
+    if (getTokenType(builder) == JavaDocTokenType.DOC_SHARP) {
+      // Existing integration require this token for auto completion
+      builder.remapCurrentToken(JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN);
+
+      // method/variable name
+      builder.advanceLexer();
+      builder.remapCurrentToken(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+
+      // A method only has parenthesis and a single comment data token
+      builder.advanceLexer();
+      if (builder.getTokenType() == JavaDocTokenType.DOC_LPAREN) {
+        builder.advanceLexer();
+        PsiBuilder.Marker subValue = builder.mark();
+
+        if (getTokenType(builder) == JavaDocTokenType.DOC_COMMENT_DATA) {
+          builder.remapCurrentToken(javaDocElementTypeContainer.DOC_TYPE_HOLDER);
+          builder.advanceLexer();
+        }
+
+        if (getTokenType(builder) == JavaDocTokenType.DOC_RPAREN) {
+          subValue.done(javaDocElementTypeContainer.DOC_TAG_VALUE_ELEMENT);
+          builder.advanceLexer();
+        }
+        else {
+          subValue.drop();
+        }
+      }
+
+      refStart.done(javaDocElementTypeContainer.DOC_METHOD_OR_FIELD_REF);
+      return;
+    }
+    refStart.drop();
+  }
+
+  /** Look for the token provided by `needle`, taking into account markdown line break rules */
+  @Contract(mutates = "param1")
+  private static @Nullable IElementType findInlineToken(@NotNull PsiBuilder builder,
+                                                        IElementType needle,
+                                                        IElementType travelToken,
+                                                        boolean areDisallowed) {
+    IElementType token = null;
+    IElementType previousToken;
+    while (!builder.eof()) {
+      builder.advanceLexer();
+      previousToken = token;
+      token = getTokenType(builder);
+      if (token == needle) {
+        return token;
+      }
+      boolean travelTokenFound = travelToken == token;
+      if ((areDisallowed && travelTokenFound) || (!areDisallowed && !travelTokenFound)) {
+        break;
+      }
+
+      // Markdown specific, check for EOL
+      if (token == JavaDocTokenType.DOC_SPACE && previousToken == JavaDocTokenType.DOC_SPACE) {
+        break;
+      }
+    }
+
+    return builder.eof() ? null : token;
   }
 
   private static void parseSnippetTagValue(@NotNull PsiBuilder builder,

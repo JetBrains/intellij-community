@@ -27,7 +27,9 @@ public class JavaDocElementTypeFactory extends AbstractBasicJavaDocElementTypeFa
       JavaDocElementType.DOC_SNIPPET_ATTRIBUTE,
       JavaDocElementType.DOC_METHOD_OR_FIELD_REF,
       JavaDocElementType.DOC_TYPE_HOLDER,
-      JavaDocElementType.DOC_PARAMETER_REF
+      JavaDocElementType.DOC_PARAMETER_REF,
+      JavaDocElementType.DOC_MARKDOWN_CODE_BLOCK,
+      JavaDocElementType.DOC_MARKDOWN_REFERENCE_LINK
     );
   }
 

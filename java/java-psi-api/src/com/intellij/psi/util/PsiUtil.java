@@ -1595,6 +1595,13 @@ public final class PsiUtil extends PsiUtilCore {
     }
   }
 
+  /** @return Whether or not the element is part of a markdown javadoc comment */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isInMarkdownDocComment(PsiElement element) {
+    PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
+    return docComment != null && docComment.isMarkdownComment();
+  }
+
   //<editor-fold desc="Deprecated stuff">
   /**
    * @deprecated  use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather 
