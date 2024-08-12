@@ -99,7 +99,8 @@ public abstract class AbstractValueHint {
     myCurrentRange = textRange;
   }
 
-  protected boolean canShowHint() {
+  @ApiStatus.Internal
+  public boolean canShowHint() {
     return true;
   }
 
@@ -212,7 +213,8 @@ public abstract class AbstractValueHint {
     return myEditor;
   }
 
-  protected ValueHintType getType() {
+  @ApiStatus.Internal
+  public ValueHintType getType() {
     return myType;
   }
 
@@ -319,7 +321,8 @@ public abstract class AbstractValueHint {
   protected void onHintHidden() {
   }
 
-  protected boolean isHintHidden() {
+  @ApiStatus.Internal
+  public boolean isHintHidden() {
     return myHintHidden;
   }
 
@@ -523,7 +526,8 @@ public abstract class AbstractValueHint {
     return Objects.hash(myProject, myEditor, myType, myCurrentRange);
   }
 
-  void setEditorMouseEvent(EditorMouseEvent editorMouseEvent) {
+  @ApiStatus.Internal
+  public void setEditorMouseEvent(EditorMouseEvent editorMouseEvent) {
     myEditorMouseEvent = editorMouseEvent;
   }
 

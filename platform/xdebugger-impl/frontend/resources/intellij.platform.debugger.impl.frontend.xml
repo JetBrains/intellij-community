@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.xdebugger.impl.breakpoints.frontend">
+<idea-plugin package="com.intellij.xdebugger.impl.frontend">
   <dependencies>
     <plugin id="com.intellij.platform.experimental.frontend"/>
   </dependencies>
