@@ -1,18 +1,23 @@
-package com.intellij.platform.kernel.util
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.rpc.logger
 
 import com.intellij.openapi.diagnostic.Logger
-import fleet.util.logging.*
-import kotlin.reflect.KClass
+import fleet.util.logging.BaseLogger
 
-class IjLogger(private val logger: Logger) : BaseLogger {
+internal class IjLogger(private val logger: Logger) : BaseLogger {
+
   override val isTraceEnabled: Boolean
     get() = logger.isTraceEnabled
+
   override val isDebugEnabled: Boolean
     get() = logger.isDebugEnabled
+
   override val isInfoEnabled: Boolean
     get() = true
+
   override val isWarnEnabled: Boolean
     get() = true
+
   override val isErrorEnabled: Boolean
     get() = true
 
@@ -57,23 +62,5 @@ class IjLogger(private val logger: Logger) : BaseLogger {
 
   override fun error(t: Throwable?, message: Any?) {
     logger.error(message?.toString() ?: "null", t)
-  }
-}
-
-class IjLoggerFactory : KLoggerFactory {
-  override fun logger(owner: KClass<*>): KLogger {
-    return KLogger(IjLogger(Logger.getInstance(owner.java)))
-  }
-
-  override fun logger(owner: Class<*>): KLogger {
-    return KLogger(IjLogger(Logger.getInstance(owner)))
-  }
-
-  override fun logger(owner: Any): KLogger {
-    return KLogger(IjLogger(Logger.getInstance(owner.toString())))
-  }
-
-  override fun logger(name: String): KLogger {
-    return KLogger(IjLogger(Logger.getInstance(name)))
   }
 }
