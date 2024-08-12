@@ -13,7 +13,8 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
-class RemoteApiRegistry(private val coroutineScope: CoroutineScope) : RemoteApiProviderService {
+class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProviderService {
+
   private val remoteApis = ConcurrentHashMap<InstanceId, Pair<KClass<out RemoteApi<Unit>>, RemoteApi<Unit>>>()
   private val visitedEPs = ContainerUtil.createConcurrentWeakKeyWeakValueMap<RemoteApiProvider, Unit>()
 
@@ -43,12 +44,15 @@ class RemoteApiRegistry(private val coroutineScope: CoroutineScope) : RemoteApiP
     }
   }
 
-  override fun <T : RemoteApi<Unit>> resolve(kclass: KClass<T>): T {
-    return remoteApis[kclass.toInstanceId]?.second as? T ?: throw IllegalStateException("No remote API found for $kclass")
+  override fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    return remoteApis[klass.toInstanceId]?.second as? T
+           ?: throw IllegalStateException("No remote API found for $klass")
   }
 
   fun resolve(instanceId: InstanceId): Pair<KClass<out RemoteApi<Unit>>, RemoteApi<Unit>> {
-    return remoteApis[instanceId] ?: throw IllegalStateException("No remote API found for $instanceId")
+    return remoteApis[instanceId]
+           ?: throw IllegalStateException("No remote API found for $instanceId")
   }
 }
 

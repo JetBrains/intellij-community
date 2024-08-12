@@ -3,16 +3,18 @@ package com.intellij.platform.rpc.backend
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import fleet.rpc.RemoteApi
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.reflect.KClass
 
 interface RemoteApiProvider {
+
   data class RemoteApiDescriptor<T : RemoteApi<Unit>>(val klass: KClass<T>, val service: () -> T)
 
   fun getApis(): List<RemoteApiDescriptor<*>>
 
   companion object {
-    @ApiStatus.Internal
-    val EP_NAME = ExtensionPointName<RemoteApiProvider>("com.intellij.platform.rpc.backend.remoteApiProvider")
+
+    @Internal
+    val EP_NAME: ExtensionPointName<RemoteApiProvider> = ExtensionPointName.create("com.intellij.platform.rpc.backend.remoteApiProvider")
   }
 }
