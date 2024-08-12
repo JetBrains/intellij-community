@@ -176,7 +176,12 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         val isUnQualifiable = targetElement.nameDeterminant().isTopLevelKtOrJavaMember()
         val callableReference = if (isUnQualifiable || fqName.parent() == FqName.ROOT) {
             containingKtFile.addImport(fqName)
-            KtPsiFactory(project).createCallableReferenceExpression("::${fqName.shortName()}")
+            val receiverExpr = receiverExpression
+            if (receiverExpr != null && targetElement.isCallableAsExtensionFunction()) {
+                KtPsiFactory(project).createCallableReferenceExpression("${receiverExpr.text}::${fqName.shortName()}")
+            } else {
+                KtPsiFactory(project).createCallableReferenceExpression("::${fqName.shortName()}")
+            }
         } else {
             KtPsiFactory(project).createCallableReferenceExpression("${fqName.parent().asString()}::${fqName.shortName()}")
         }
