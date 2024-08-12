@@ -33,20 +33,20 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
       }
     }
 
-    if (mouseArea != areaUnderCursor || ctrlDown != this.ctrlDown) {
-      val isHoveredWithCtrl = ctrlDown && mouseArea != null
-
+    val hasMovedToAnotherArea = mouseArea != areaUnderCursor
+    val hasCtrlKeyStateChanged = ctrlDown != this.ctrlDown
+    if (hasMovedToAnotherArea || hasCtrlKeyStateChanged) {
       val oldEntries = areaUnderCursor?.entries
-      if (oldEntries != null && !isHoveredWithCtrl) {
+      if (oldEntries != null && hasMovedToAnotherArea) {
         for (entry in oldEntries) {
           entry.isHoveredWithCtrl = false
         }
       }
 
       val newEntries = mouseArea?.entries
-      if (newEntries != null && isHoveredWithCtrl) {
+      if (newEntries != null) {
         for (entry in newEntries) {
-          entry.isHoveredWithCtrl = true
+          entry.isHoveredWithCtrl = ctrlDown
         }
       }
 
