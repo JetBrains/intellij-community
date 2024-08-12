@@ -158,7 +158,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         mapDataToModel(
           GitLabMergeRequestDraftNoteRestDTO::id,
           {
-            GitLabMergeRequestDraftNoteImpl(this, api, glMetadata, glProject, mr, { draftNotesEvents::emit }, it, currentUser)
+            GitLabMergeRequestDraftNoteImpl(this, api, glMetadata, glProject, mr, { draftNotesEvents.emit(it) }, it, currentUser)
           },
           { update(it) }
         )
