@@ -76,6 +76,7 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
         }
         result.append("///").append(line).append('\n');
       }
+      result.append(indent);
 
       Document document = element.getContainingFile().getFileDocument();
       int startOffset = element.getTextOffset();

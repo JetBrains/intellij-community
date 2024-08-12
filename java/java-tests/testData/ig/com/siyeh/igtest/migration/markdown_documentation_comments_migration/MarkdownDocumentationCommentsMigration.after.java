@@ -39,7 +39,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// [Objects] can be used to help construct simple hash codes.
   /// @see Object#equals(Object)
   /// @see System#identityHashCode
-@Override
+  @Override
   public int hashCode() {
     return super.hashCode();
   }
@@ -99,7 +99,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// on two possibly-null object references.
   /// @see #hashCode()
   /// @see HashMap
-@Override
+  @Override
   public boolean equals(final Object obj) {
     return super.equals(obj);
   }
@@ -161,7 +161,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// whose class is `Object` will result in throwing an
   /// exception at run time.
   /// @see Cloneable
-@Override
+  @Override
   protected Object clone() throws CloneNotSupportedException {
     return super.clone();
   }
@@ -192,7 +192,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// object equal to the string that would be returned if neither
   /// the `toString` nor `hashCode` methods were
   /// overridden by the object's class.
-@Override
+  @Override
   public String toString() {
     return super.toString();
   }
@@ -293,7 +293,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// 
   /// This method will remain in place until finalizers have been removed from
   /// most existing code.
-@Override
+  @Override
   protected void finalize() throws Throwable {
     super.finalize();
   }
