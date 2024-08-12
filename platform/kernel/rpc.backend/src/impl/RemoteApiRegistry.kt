@@ -9,13 +9,15 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider.Companion.EP_NAME
 import com.intellij.util.containers.ContainerUtil
 import fleet.rpc.RemoteApi
 import fleet.rpc.core.InstanceId
+import fleet.rpc.server.RpcServiceLocator
+import fleet.rpc.server.ServiceImplementation
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
-class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProviderService {
+internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProviderService, RpcServiceLocator {
 
-  private val remoteApis = ConcurrentHashMap<InstanceId, Pair<KClass<out RemoteApi<Unit>>, RemoteApi<Unit>>>()
+  private val remoteApis = ConcurrentHashMap<InstanceId, ServiceImplementation>()
   private val visitedEPs = ContainerUtil.createConcurrentWeakKeyWeakValueMap<RemoteApiProvider, Unit>()
 
   init {
@@ -24,7 +26,7 @@ class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProviderServi
         if (visitedEPs.putIfAbsent(extension, Unit) == null) {
           val apis = extension.getApis()
           for (api in apis) {
-            remoteApis[api.klass.toInstanceId] = api.klass to api.service()
+            remoteApis[api.klass.toInstanceId] = ServiceImplementation(api.klass, api.service())
           }
         }
       }
@@ -40,19 +42,18 @@ class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProviderServi
       }
     })
     EP_NAME.extensions.filter { visitedEPs.putIfAbsent(it, Unit) == null }.flatMap { it.getApis() }.forEach { api ->
-      remoteApis[api.klass.toInstanceId] = api.klass to api.service()
+      remoteApis[api.klass.toInstanceId] = ServiceImplementation(api.klass, api.service())
     }
   }
 
   override fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T {
     @Suppress("UNCHECKED_CAST")
-    return remoteApis[klass.toInstanceId]?.second as? T
+    return remoteApis[klass.toInstanceId]?.instance as? T
            ?: throw IllegalStateException("No remote API found for $klass")
   }
 
-  fun resolve(instanceId: InstanceId): Pair<KClass<out RemoteApi<Unit>>, RemoteApi<Unit>> {
-    return remoteApis[instanceId]
-           ?: throw IllegalStateException("No remote API found for $instanceId")
+  override fun resolve(serviceId: InstanceId): ServiceImplementation? {
+    return remoteApis[serviceId]
   }
 }
 
