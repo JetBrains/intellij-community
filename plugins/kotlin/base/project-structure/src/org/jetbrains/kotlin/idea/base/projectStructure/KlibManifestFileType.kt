@@ -17,7 +17,6 @@ object KlibManifestFileType : FileTypeIdentifiableByVirtualFile {
     private const val KLIB_LINK_DATA_DIR_NAME = "linkdata"
 
     override fun isMyFileType(file: VirtualFile): Boolean {
-        if (!file.isValid || file.parent?.isValid != true) return false
         if (file.nameSequence != KLIB_MANIFEST_FILE_NAME) return false
         if (file.parent?.findChild(KLIB_LINK_DATA_DIR_NAME) == null) return false
         return FileTypeRegistry.getInstance().getFileTypeByFileName(file.nameSequence) == FileTypes.UNKNOWN
