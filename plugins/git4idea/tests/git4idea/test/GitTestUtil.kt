@@ -80,7 +80,7 @@ internal fun initRepo(project: Project, repoRoot: Path, makeInitialCommit: Boole
   }
 }
 
-private fun setupLocalIgnore(repoRoot: Path) {
+internal fun setupLocalIgnore(repoRoot: Path) {
   repoRoot.resolve(".git/info/exclude").write(".shelf")
 }
 

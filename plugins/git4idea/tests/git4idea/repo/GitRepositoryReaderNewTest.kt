@@ -17,25 +17,68 @@ package git4idea.repo
 
 import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.VcsTestUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitLocalBranch
+import git4idea.GitTag
+import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
+import git4idea.config.GitExecutableManager
+import git4idea.config.GitVcsSettings
+import git4idea.config.GitVersionSpecialty
+import git4idea.test.*
 import git4idea.test.GitScenarios.conflict
-import git4idea.test.GitSingleRepoTest
-import git4idea.test.last
-import git4idea.test.makeCommit
-import git4idea.test.tac
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import java.io.File
+import java.nio.file.Files
 import kotlin.test.assertNotEquals
 
 /**
  * [GitRepositoryReaderTest] reads information from the pre-created .git directory from a real project.
  * This one, on the other hand, operates on a live Git repository, putting it to various situations and checking the results.
  */
-class GitRepositoryReaderNewTest : GitSingleRepoTest() {
+abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatformTest() {
+  class UsingReftable() : GitRepositoryReaderNewTest(usingReftable = true)
+  class UsingPackedRefs() : GitRepositoryReaderNewTest(usingReftable = false)
 
-  override fun makeInitialCommit() = false
+  protected lateinit var repo: GitRepository
+
+  override fun setUp() {
+    super.setUp()
+    repo = createTestRepository()
+    cd(projectPath)
+  }
+
+  private fun createTestRepository(): GitRepository {
+    Files.createDirectories(projectNioRoot)
+    cd(projectNioRoot.toString())
+
+    val version = GitExecutableManager.getInstance().tryGetVersion(project)
+    val supportsReftable = version != null && GitVersionSpecialty.INIT_SUPPORTS_REFTABLE_FORMAT.existsIn(version)
+
+    if (usingReftable) {
+      assumeTrue("Unsupported git version: $version", supportsReftable)
+      gitInit(project, "--ref-format=reftable")
+    }
+    else {
+      if (supportsReftable) {
+        gitInit(project, "--ref-format=files")
+      }
+      else {
+        gitInit(project)
+      }
+    }
+    setupDefaultUsername(project)
+    setupLocalIgnore(projectNioRoot)
+
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectNioRoot.resolve(GitUtil.DOT_GIT))!!
+    return registerRepo(project, projectNioRoot)
+  }
 
   // IDEA-152632
   fun `test current branch is known during rebase`() {
@@ -152,6 +195,8 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
   }
 
   fun `test non-branch files are ignored`() {
+    assumeFalse(usingReftable)
+
     tac("f.txt")
     assertTrue(File(repo.repositoryFiles.refsHeadsFile, "master.lock").createNewFile())
 
@@ -160,6 +205,8 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
   }
 
   fun `test current branch is known even if deleted`() {
+    assumeTrue(!usingReftable && Registry.`is`("git.read.branches.from.disk"))
+
     makeCommit("file.txt")
     val branch = "feature"
     git("checkout -b $branch")
@@ -167,6 +214,38 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     val state = readState()
     assertEquals(GitLocalBranch(branch), state.currentBranch)
     assertNull(state.currentRevision)
+  }
+
+  fun `test tags loading`() {
+    try {
+      makeCommit("file.txt")
+
+      GitVcsSettings.getInstance(myProject).getState().showTags = true
+
+      git("tag -a v1.4 -m tag_message")
+      git("tag v2.0")
+      val annotated_hash = HashImpl.build(git("rev-parse v1.4"))
+      val not_annotated_hash = HashImpl.build(git("rev-parse HEAD"))
+
+      val tagHolder = repo.tagHolder
+      tagHolder.updateEnabled()
+      tagHolder.ensureUpToDateForTests()
+
+      val tags = tagHolder.getTags()
+      val expected = mapOf(
+        GitTag("v1.4") to annotated_hash,
+        GitTag("v2.0") to not_annotated_hash
+      )
+      VcsTestUtil.assertEqualCollections(tags.entries, expected.entries)
+    }
+    finally {
+      GitVcsSettings.getInstance(myProject).getState().showTags = false
+    }
+  }
+
+  fun `test fresh repository`() {
+    assertTrue(repo.isFresh)
+    assertNull(repo.currentRevision)
   }
 
   private fun moveToDetachedHead(): String {
@@ -183,4 +262,6 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     val remotes = config.parseRemotes()
     return reader.readState(remotes)
   }
+
+  private fun git(command: String) = repo.git(command)
 }

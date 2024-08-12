@@ -4,15 +4,26 @@ package git4idea.repo
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.RepoStateException
 import com.intellij.dvcs.repo.Repository
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.LineTokenizer
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitUtil
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
+import git4idea.commands.GitLineHandlerListener
+import git4idea.util.StringScanner
 import org.jetbrains.annotations.NonNls
 import java.io.File
 
@@ -26,8 +37,30 @@ import java.io.File
 internal class GitRepositoryReader(private val project: Project, private val gitFiles: GitRepositoryFiles) {
 
   fun readState(remotes: Collection<GitRemote>): GitBranchState {
-    val headInfo = readHead()
-    val branches = readBranches(remotes)
+    var headInfo = readHead()
+
+    val branches: GitBranches
+    if (headInfo != null && Registry.`is`("git.read.branches.from.disk")) {
+      // read branches from disk (.git/refs/ and .git/packed-refs)
+      branches = readBranches(remotes)
+    }
+    else {
+      // read branches via git executable
+      val pair = readBranchesFromGit(remotes)
+      branches = pair.first
+      headInfo = pair.second
+
+      if (headInfo is HeadInfo.Unknown) {
+        // handle detached head in refrable repos
+        val headHash = resolveHeadRevision()
+        if (headHash != null) {
+          headInfo = HeadInfo.DetachedHead(headHash)
+        }
+        else {
+          LOG.warn(RepoStateException("Unknown repository state in ${gitFiles.rootDir}"))
+        }
+      }
+    }
 
     val state = readRepositoryState(headInfo is HeadInfo.Branch)
     val headState = parseHeadState(headInfo, state, branches)
@@ -162,7 +195,6 @@ internal class GitRepositoryReader(private val project: Project, private val git
       val result: MutableMap<String, String> = HashMap<String, String>(readPackedBranches())
       result.putAll(GitRefUtil.readFromRefsFiles(gitFiles.refsHeadsFile, GitBranch.REFS_HEADS_PREFIX, gitFiles))
       result.putAll(GitRefUtil.readFromRefsFiles(gitFiles.refsRemotesFile, GitBranch.REFS_REMOTES_PREFIX, gitFiles))
-      result.remove(GitBranch.REFS_REMOTES_PREFIX + GitUtil.ORIGIN_HEAD)
       return result
     }
     catch (e: Throwable) {
@@ -172,7 +204,102 @@ internal class GitRepositoryReader(private val project: Project, private val git
     }
   }
 
-  private fun readHead(): HeadInfo {
+  private fun readBranchesFromGit(remotes: Collection<GitRemote>): Pair<GitBranches, HeadInfo> {
+    try {
+      val handler = GitLineHandler(project, gitFiles.rootDir, GitCommand.FOR_EACH_REF)
+      handler.isEnableInteractiveCallbacks = false // the method might be called in GitRepository constructor
+      handler.addParameters("refs/heads/**", "refs/remotes/**")
+      handler.addParameters("--no-color")
+      handler.addParameters("--format=%(refname)\t%(objectname)\t%(HEAD)")
+
+      val resolvedRefs = mutableMapOf<String, Hash>()
+      var headStateRef: HeadInfo? = null
+      handler.addLineListener(object : GitLineHandlerListener {
+        private var badLineReported = 0
+        override fun onLineAvailable(line: @NlsSafe String, outputType: Key<*>) {
+          try {
+            if (outputType == ProcessOutputType.STDOUT) {
+              val scanner = StringScanner(line)
+              val branchRef = scanner.tabToken() ?: return
+              val branchHash = GitRefUtil.parseHash(scanner.tabToken()) ?: return
+              val isHead = "*" == scanner.line()
+              if (isHead) {
+                headStateRef = HeadInfo.Branch(GitLocalBranch(branchRef))
+              }
+              resolvedRefs[branchRef] = branchHash
+            }
+          }
+          catch (e: VcsException) {
+            badLineReported++
+            if (badLineReported < 5) {
+              LOG.warn("Unexpected branch output: $line", e)
+            }
+          }
+        }
+      })
+      Git.getInstance().runCommand(handler).throwOnError()
+
+      val headState = headStateRef
+      val branches = createBranchesFromData(remotes, resolvedRefs)
+
+      if (headState != null) {
+        return Pair(branches, headState)
+      }
+
+      // handle fresh repository
+      if (branches.localBranches.isEmpty()) {
+        val currentBranch = resolveCurrentBranch()
+        if (currentBranch != null) {
+          return Pair(GitBranches(emptyMap(), branches.remoteBranches), HeadInfo.Branch(currentBranch))
+        }
+      }
+
+      return Pair(branches, HeadInfo.Unknown)
+    }
+    catch (e: VcsException) {
+      LOG.warn(e)
+      return Pair(GitBranches(emptyMap(), emptyMap()), HeadInfo.Unknown)
+    }
+  }
+
+  private fun resolveCurrentBranch(): GitLocalBranch? {
+    try {
+      val handler = GitLineHandler(project, gitFiles.rootDir, GitCommand.BRANCH)
+      handler.isEnableInteractiveCallbacks = false // the method might be called in GitRepository constructor
+      handler.addParameters("--show-current")
+      handler.addParameters("--no-color")
+
+      val output = Git.getInstance().runCommand(handler).getOutputOrThrow().trim()
+      if (output.isEmpty()) return null
+
+      return GitLocalBranch(output)
+    }
+    catch (e: VcsException) {
+      LOG.warn(e)
+      return null
+    }
+  }
+
+  private fun resolveHeadRevision(): Hash? {
+    try {
+      val handler = GitLineHandler(project, gitFiles.rootDir, GitCommand.REV_PARSE)
+      handler.isEnableInteractiveCallbacks = false // the method might be called in GitRepository constructor
+      handler.addParameters("--verify")
+      handler.addParameters("HEAD^{commit}")
+
+      val output = Git.getInstance().runCommand(handler).getOutputOrThrow().trim()
+      if (GitUtil.isHashString(output)) {
+        return HashImpl.build(output)
+      }
+      return null
+    }
+    catch (e: VcsException) {
+      LOG.warn(e)
+      return null
+    }
+  }
+
+  private fun readHead(): HeadInfo? {
     val headContent: String
     try {
       headContent = DvcsUtil.tryLoadFile(gitFiles.headFile, CharsetToolkit.UTF8)
@@ -180,6 +307,10 @@ internal class GitRepositoryReader(private val project: Project, private val git
     catch (e: RepoStateException) {
       LOG.warn(e)
       return HeadInfo.Unknown
+    }
+
+    if (headContent == "ref: refs/heads/.invalid") {
+      return null // 'reftable' format is used
     }
 
     val hash = GitRefUtil.parseHash(headContent)
@@ -248,6 +379,9 @@ internal class GitRepositoryReader(private val project: Project, private val git
           localBranches.put(branch, hash)
         }
         else if (branch is GitRemoteBranch) {
+          if (branch.name == GitUtil.ORIGIN_HEAD) {
+            continue // skip fake "origin/HEAD" reference
+          }
           remoteBranches.put(branch, hash)
         }
         else {
