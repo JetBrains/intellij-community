@@ -16,14 +16,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.ObjectUtils
 import com.intellij.vcs.log.Hash
 import git4idea.*
 import git4idea.branch.GitBranchesCollection
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 import git4idea.status.GitStagingAreaHolder
 import git4idea.telemetry.GitTelemetrySpan
-import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
@@ -214,7 +212,7 @@ class GitRepositoryImpl private constructor(
       listenToRepoChanges: Boolean,
     ): GitRepository {
       val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root)
-      return ObjectUtils.notNull(repository) { createInstance(root, project, GitDisposable.getInstance(project)) }
+      return repository ?: createInstance(root, project, GitDisposable.getInstance(project))
     }
 
 
@@ -241,8 +239,8 @@ class GitRepositoryImpl private constructor(
       project: Project,
       parentDisposable: Disposable,
     ): GitRepository {
-      val gitDir = Objects.requireNonNull(GitUtil.findGitDir(root))
-      return createInstance(root, gitDir!!, project, parentDisposable)
+      val gitDir = GitUtil.findGitDir(root) ?: error("Git directory not found for $root")
+      return createInstance(root, gitDir, project, parentDisposable)
     }
 
     @JvmStatic
