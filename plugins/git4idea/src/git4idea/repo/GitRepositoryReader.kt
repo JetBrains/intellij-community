@@ -9,7 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.LineTokenizer
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.vcs.log.Hash
-import git4idea.*
+import git4idea.GitBranch
+import git4idea.GitLocalBranch
+import git4idea.GitRemoteBranch
+import git4idea.GitUtil
 import org.jetbrains.annotations.NonNls
 import java.io.File
 
@@ -40,8 +43,8 @@ internal class GitRepositoryReader(private val project: Project, private val git
     var currentBranch: GitLocalBranch?
     var currentRevision: String?
     if (headInfo !is HeadInfo.Branch || !branches.localBranches.isEmpty()) {
-      currentBranch = findCurrentBranch(headInfo, state, branches.localBranches.keys)
-      currentRevision = getCurrentRevision(headInfo, if (currentBranch == null) null else branches.localBranches[currentBranch])
+      currentBranch = fixCurrentBranchCase(findCurrentBranch(state, headInfo), branches)
+      currentRevision = getCurrentRevision(headInfo, currentBranch, branches)
     }
     else {
       currentBranch = headInfo.branch
@@ -71,18 +74,6 @@ internal class GitRepositoryReader(private val project: Project, private val git
     return shallowFile.length() > 0
   }
 
-  private fun findCurrentBranch(
-    headInfo: HeadInfo,
-    state: Repository.State,
-    localBranches: Set<GitLocalBranch>,
-  ): GitLocalBranch? {
-    val currentBranchName = findCurrentBranchName(state, headInfo) ?: return null
-    val currentBranch = localBranches.find { branch ->
-      GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(branch.fullName, currentBranchName)
-    }
-    return currentBranch ?: GitLocalBranch(currentBranchName)
-  }
-
   private fun readRepositoryState(isOnBranch: Boolean): Repository.State {
     if (isMergeInProgress()) {
       return Repository.State.MERGING
@@ -102,23 +93,28 @@ internal class GitRepositoryReader(private val project: Project, private val git
     return Repository.State.NORMAL
   }
 
-  private fun findCurrentBranchName(state: Repository.State, headInfo: HeadInfo): String? {
-    var currentBranch: String? = null
+  private fun findCurrentBranch(state: Repository.State, headInfo: HeadInfo): GitLocalBranch? {
     if (headInfo is HeadInfo.Branch) {
-      currentBranch = headInfo.branch.name
+      return headInfo.branch
     }
-    else if (state == Repository.State.REBASING) {
-      currentBranch = tryFindRebaseBranch()
+
+    if (state == Repository.State.REBASING) {
+      val currentBranch = readRebaseDirBranchFile(gitFiles.rebaseApplyDir)
+                          ?: readRebaseDirBranchFile(gitFiles.rebaseMergeDir)
+      if (currentBranch != null && currentBranch != DETACHED_HEAD) {
+        return GitLocalBranch(currentBranch)
+      }
     }
-    return GitRefUtil.addRefsHeadsPrefixIfNeeded(currentBranch)
+
+    return null
   }
 
-  private fun tryFindRebaseBranch(): String? {
-    var currentBranch: String? = readRebaseDirBranchFile(gitFiles.rebaseApplyDir)
-    if (currentBranch == null) {
-      currentBranch = readRebaseDirBranchFile(gitFiles.rebaseMergeDir)
-    }
-    return if (currentBranch == null || currentBranch == DETACHED_HEAD) null else currentBranch
+  /**
+   * Unify branch name for CaseInsensitive file systems
+   */
+  private fun fixCurrentBranchCase(currentBranch: GitLocalBranch?, branches: GitBranches): GitLocalBranch? {
+    if (currentBranch == null) return null
+    return branches.localBranches.keys.find { branch -> branch == currentBranch } ?: currentBranch
   }
 
   private fun isMergeInProgress(): Boolean = gitFiles.mergeHeadFile.exists()
@@ -225,7 +221,8 @@ internal class GitRepositoryReader(private val project: Project, private val git
       return file.exists() && file.canExecute()
     }
 
-    private fun getCurrentRevision(headInfo: HeadInfo, currentBranchHash: Hash?): String? {
+    private fun getCurrentRevision(headInfo: HeadInfo, currentBranch: GitLocalBranch?, branches: GitBranches): String? {
+      val currentBranchHash = if (currentBranch != null) branches.localBranches.get(currentBranch) else null;
       var currentRevision: String?
       if (headInfo !is HeadInfo.Branch) {
         currentRevision = (headInfo as? HeadInfo.DetachedHead)?.hash?.asString()
