@@ -9,14 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.LineTokenizer
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.vcs.log.Hash
-import git4idea.GitBranch
-import git4idea.GitLocalBranch
-import git4idea.GitReference
-import git4idea.GitRemoteBranch
-import git4idea.GitUtil
+import git4idea.*
 import org.jetbrains.annotations.NonNls
 import java.io.File
-import java.util.HashMap
 
 /**
  *
@@ -32,24 +27,20 @@ internal class GitRepositoryReader(private val project: Project, private val git
     val localBranches = branches.localBranches
 
     val headInfo = readHead()
-    val state = readRepositoryState(headInfo.isBranch)
+    val state = readRepositoryState(headInfo is HeadInfo.Branch)
 
     var currentBranch: GitLocalBranch?
     var currentRevision: String?
-    if (!headInfo.isBranch || !localBranches.isEmpty()) {
+    if (headInfo !is HeadInfo.Branch || !localBranches.isEmpty()) {
       currentBranch = findCurrentBranch(headInfo, state, localBranches.keys)
       currentRevision = getCurrentRevision(headInfo, if (currentBranch == null) null else localBranches[currentBranch])
     }
-    else if (headInfo.content != null) {
-      currentBranch = GitLocalBranch(headInfo.content)
-      currentRevision = null
-    }
     else {
-      currentBranch = null
+      currentBranch = headInfo.branch
       currentRevision = null
     }
     if (currentBranch == null && currentRevision == null) {
-      LOG.warn("Couldn't identify neither current branch nor current revision. Ref specified in .git/HEAD: [" + headInfo.content + "]")
+      LOG.warn("Couldn't identify neither current branch nor current revision. Ref specified in .git/HEAD: [" + headInfo + "]")
       LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled())
       GitRefUtil.logDebugAllRefsFiles(gitFiles)
     }
@@ -105,8 +96,8 @@ internal class GitRepositoryReader(private val project: Project, private val git
 
   private fun findCurrentBranchName(state: Repository.State, headInfo: HeadInfo): String? {
     var currentBranch: String? = null
-    if (headInfo.isBranch) {
-      currentBranch = headInfo.content
+    if (headInfo is HeadInfo.Branch) {
+      currentBranch = headInfo.branch.name
     }
     else if (state == Repository.State.REBASING) {
       currentBranch = tryFindRebaseBranch()
@@ -179,30 +170,32 @@ internal class GitRepositoryReader(private val project: Project, private val git
     }
     catch (e: RepoStateException) {
       LOG.warn(e)
-      return HeadInfo.Companion.UNKNOWN
+      return HeadInfo.Unknown
     }
 
     val hash = GitRefUtil.parseHash(headContent)
     if (hash != null) {
-      return HeadInfo(false, headContent)
+      return HeadInfo.DetachedHead(hash)
     }
 
+    // In theory, 'HEAD' can contain non-local-branch references (ex: a tag)
+    // In practice, 'git branch --all' breaks if it does
     val target = GitRefUtil.getTarget(headContent)
     if (target != null) {
-      return HeadInfo(true, target)
+      return HeadInfo.Branch(GitLocalBranch(target))
     }
 
     LOG.warn(RepoStateException("Invalid format of the .git/HEAD file: [$headContent]")) // including "refs/tags/v1"
-    return HeadInfo.Companion.UNKNOWN
+    return HeadInfo.Unknown
   }
 
   /**
    * Container to hold two information items: refname from .git/HEAD and is Git on branch.
    */
-  private class HeadInfo(val isBranch: Boolean, val content: String?) {
-    companion object {
-      val UNKNOWN: HeadInfo = HeadInfo(false, null)
-    }
+  private sealed class HeadInfo {
+    data object Unknown : HeadInfo()
+    data class Branch(val branch: GitLocalBranch) : HeadInfo()
+    data class DetachedHead(val hash: Hash) : HeadInfo()
   }
 
   private class GitBranches(
@@ -221,8 +214,8 @@ internal class GitRepositoryReader(private val project: Project, private val git
 
     private fun getCurrentRevision(headInfo: HeadInfo, currentBranchHash: Hash?): String? {
       var currentRevision: String?
-      if (!headInfo.isBranch) {
-        currentRevision = headInfo.content
+      if (headInfo !is HeadInfo.Branch) {
+        currentRevision = (headInfo as? HeadInfo.DetachedHead)?.hash?.asString()
       }
       else if (currentBranchHash == null) {
         currentRevision = null
