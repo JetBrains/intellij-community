@@ -75,12 +75,16 @@ class HotSwapSessionManager private constructor(private val project: Project, in
   internal fun addListener(listener: HotSwapChangesListener, disposable: Disposable) {
     listeners.add(listener, disposable)
     if (currentSession == null) return
-    listener.onStatusChanged()
+    listener.onStatusChanged(null)
   }
 
   internal fun fireStatusChanged(session: HotSwapSession<*>) {
     if (session !== currentSession) return
-    listeners.forEach { it.onStatusChanged() }
+    listeners.forEach { it.onStatusChanged(null) }
+  }
+
+  internal fun notifyHide() {
+    listeners.forEach { it.onStatusChanged(HotSwapVisibleStatus.HIDDEN) }
   }
 
   companion object {
@@ -90,7 +94,10 @@ class HotSwapSessionManager private constructor(private val project: Project, in
 }
 
 internal enum class HotSwapVisibleStatus {
-  NO_CHANGES, CHANGES_READY, IN_PROGRESS, SESSION_COMPLETED
+  // logical statuses used by HotSwapSession
+  NO_CHANGES, CHANGES_READY, IN_PROGRESS, SESSION_COMPLETED,
+  // additional visual statuses
+  HIDDEN
 }
 
 /**
@@ -99,19 +106,17 @@ internal enum class HotSwapVisibleStatus {
  * @see HotSwapSession.currentStatus
  */
 internal fun interface HotSwapChangesListener {
-  fun onStatusChanged()
+  fun onStatusChanged(forceStatus: HotSwapVisibleStatus?)
 }
 
 @ApiStatus.Internal
 class HotSwapSession<T> internal constructor(val project: Project, internal val provider: HotSwapProvider<T>, parentScope: CoroutineScope) : Disposable {
   internal val coroutineScope = parentScope.childScope("HotSwapSession $this")
-  private val hasActiveChanges = AtomicBoolean()
   private lateinit var changesCollector: SourceFileChangesCollector<T>
 
   @Volatile
   internal var currentStatus: HotSwapVisibleStatus = HotSwapVisibleStatus.NO_CHANGES
     private set(value) {
-      if (field == value) return
       // No further updates after the session is complete
       if (field == HotSwapVisibleStatus.SESSION_COMPLETED) return
       field = value
@@ -130,10 +135,8 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
   }
 
   private fun completeHotSwap() {
-    if (hasActiveChanges.compareAndSet(true, false)) {
-      changesCollector.resetChanges()
-      currentStatus = HotSwapVisibleStatus.NO_CHANGES
-    }
+    changesCollector.resetChanges()
+    currentStatus = HotSwapVisibleStatus.NO_CHANGES
   }
 
   /**
@@ -149,17 +152,21 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
     HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
     val statusBefore = currentStatus
     currentStatus = HotSwapVisibleStatus.IN_PROGRESS
+    val completed = AtomicBoolean()
     return object : HotSwapResultListener {
       override fun onSuccessfulReload() {
+        if (!completed.compareAndSet(false, true)) return
         completeHotSwap()
         HotSwapStatusNotificationManager.getInstance(project).showSuccessNotification(coroutineScope)
       }
 
       override fun onFinish() {
+        if (!completed.compareAndSet(false, true)) return
         completeHotSwap()
       }
 
       override fun onCanceled() {
+        if (!completed.compareAndSet(false, true)) return
         currentStatus = statusBefore
       }
     }
@@ -167,15 +174,11 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
 
   private inner class SessionSourceFileChangesListener : SourceFileChangesListener {
     override fun onNewChanges() {
-      if (hasActiveChanges.compareAndSet(false, true)) {
-        currentStatus = HotSwapVisibleStatus.CHANGES_READY
-      }
+      currentStatus = HotSwapVisibleStatus.CHANGES_READY
     }
 
     override fun onChangesCanceled() {
-      if (hasActiveChanges.compareAndSet(true, false)) {
-        currentStatus = HotSwapVisibleStatus.NO_CHANGES
-      }
+      currentStatus = HotSwapVisibleStatus.NO_CHANGES
     }
   }
 }

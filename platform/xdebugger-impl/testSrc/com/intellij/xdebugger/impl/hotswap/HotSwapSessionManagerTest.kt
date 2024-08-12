@@ -78,7 +78,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
       assertEquals(1, hotSwapSession.getChanges().size)
 
       provider.collector.addFile(MockVirtualFile("b.txt"))
-      assertEquals(1, list.size)
+      assertEquals(2, list.size)
+      assertEquals(HotSwapVisibleStatus.CHANGES_READY, list.last())
       assertEquals(2, hotSwapSession.getChanges().size)
     }
     finally {

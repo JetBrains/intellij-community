@@ -48,9 +48,8 @@ class SourceFileChangesCollectorImplTest : LightPlatformCodeInsightTestCase() {
         assertEquals(Response.NEW_CHANGES, channel.receive())
         assertEquals("a.txt", collector.getChanges().single().name)
 
-        // No new changes lead to updates
         writeCommandAction(project, "Replace second line") { document.replaceString(10, 14, "string") }
-        assertNull(channel.tryReceive().getOrNull())
+        assertEquals(Response.NEW_CHANGES, channel.receive())
         assertEquals("a.txt", collector.getChanges().single().name)
       }
     }

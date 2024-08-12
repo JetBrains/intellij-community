@@ -16,6 +16,7 @@ interface HotSwapUiExtension {
   fun isApplicable(): Boolean = true
   val hotSwapIcon: Icon
   fun createTooltip(): HelpTooltip? = null
+  val shouldAddHideButton: Boolean get() = true
 
   companion object {
     private val EP_NAME = com.intellij.openapi.extensions.ExtensionPointName<HotSwapUiExtension>("com.intellij.xdebugger.hotSwapUiExtension")

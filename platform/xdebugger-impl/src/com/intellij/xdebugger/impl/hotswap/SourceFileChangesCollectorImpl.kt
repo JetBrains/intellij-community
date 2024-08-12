@@ -89,7 +89,6 @@ class SourceFileChangesCollectorImpl(
       checkCacheValidity()
       val currentChanges = currentChanges
       val contentHash = Strings.stringHashCode(document.immutableCharSequence)
-      val wasEmpty = currentChanges.isEmpty()
 
       if (hasChangesSinceLastReset(file, contentHash, cache)) {
         currentChanges.add(file)
@@ -99,7 +98,6 @@ class SourceFileChangesCollectorImpl(
       }
 
       val isEmpty = currentChanges.isEmpty()
-      if (wasEmpty == isEmpty) continue
       if (isEmpty) listener.onChangesCanceled() else listener.onNewChanges()
     }
   }

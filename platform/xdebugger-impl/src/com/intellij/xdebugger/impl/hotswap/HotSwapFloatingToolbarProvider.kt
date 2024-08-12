@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.hotswap
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -28,6 +29,10 @@ import javax.swing.JPanel
 
 private val hotSwapIcon: Icon by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapIcon } ?: PlatformDebuggerImplIcons.Actions.DebuggerSync
+}
+
+private val addHideAction: Boolean by lazy {
+  HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddHideButton } != false
 }
 
 private fun createHelpTooltip(): HelpTooltip =
@@ -112,7 +117,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   override val autoHideable: Boolean get() = false
   private val hotSwapAction by lazy { HotSwapWithRebuildAction() }
 
-  override val actionGroup: ActionGroup by lazy { DefaultActionGroup(hotSwapAction) }
+  override val actionGroup: ActionGroup by lazy { DefaultActionGroup(hotSwapAction, HideAction()) }
 
   override fun isApplicable(dataContext: DataContext): Boolean =
     Registry.`is`("debugger.hotswap.floating.toolbar")
@@ -131,12 +136,12 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   private inner class ChangesListener(private val component: FloatingToolbarComponent, private val project: Project) : HotSwapChangesListener {
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun onStatusChanged() {
+    override fun onStatusChanged(forceStatus: HotSwapVisibleStatus?) {
       val manager = HotSwapSessionManager.getInstance(project)
       // We need to hide the button even if the coroutineScope is cancelled
       manager.coroutineScope.launch(Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
         val session = manager.currentSession
-        val status = session?.currentStatus
+        val status = forceStatus ?: session?.currentStatus
         if (status == HotSwapVisibleStatus.IN_PROGRESS) {
           hotSwapAction.inProgress = true
           hotSwapAction.session = null
@@ -144,7 +149,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
         }
 
         val action = when (status) {
-          HotSwapVisibleStatus.NO_CHANGES -> HotSwapButtonAction.HIDE
+          HotSwapVisibleStatus.NO_CHANGES, HotSwapVisibleStatus.HIDDEN -> HotSwapButtonAction.HIDE
           HotSwapVisibleStatus.CHANGES_READY -> HotSwapButtonAction.SHOW
           HotSwapVisibleStatus.SESSION_COMPLETED -> HotSwapButtonAction.HIDE_NOW
           null -> HotSwapButtonAction.HIDE_NOW
@@ -169,4 +174,19 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
 private enum class HotSwapButtonAction {
   SHOW, HIDE, HIDE_NOW
+}
+
+private class HideAction : AnAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    HotSwapSessionManager.getInstance(project).notifyHide()
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = addHideAction
+    e.presentation.icon = AllIcons.Actions.Close
+    e.presentation.hoveredIcon = AllIcons.Actions.CloseHovered
+    e.presentation.text = XDebuggerBundle.message("action.hotswap.hide.text")
+  }
 }
