@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
@@ -136,7 +135,14 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
                 .createDummyYamlWithText(valueText);
               substitute = file.getDocuments().get(0).getTopLevelValue();
               if (substitute == null) {
-                Logger.getInstance(YamlKeyCompletionInsertHandler.class).error("Could not substitute: " + valueText);
+                PsiElement grandParent = parent.getParent();
+                PsiElement copy = parent.copy();
+                ASTNode[] copies = copy.getNode().getChildren(null);
+                PsiElement anchor = parent.replace(copies[0].getPsi());
+                for (int i = 1; i < copies.length; i++) {
+                  anchor = grandParent.addAfter(copies[i].getPsi(), anchor);
+                }
+                return;
               }
             }
           }
