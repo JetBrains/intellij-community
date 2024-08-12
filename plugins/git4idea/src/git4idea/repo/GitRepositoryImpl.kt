@@ -177,7 +177,7 @@ class GitRepositoryImpl private constructor(
       val submoduleFile = File(VfsUtilCore.virtualToIoFile(root), ".gitmodules")
       val submodules = GitModulesFileReader().read(submoduleFile)
       val localBranches: Map<GitLocalBranch, Hash> = HashMap(state.localBranches)
-      recentCheckoutBranches = collectRecentCheckoutBranches { branch: GitLocalBranch -> localBranches.containsKey(branch) }
+      recentCheckoutBranches = collectRecentCheckoutBranches(project, root) { branch: GitLocalBranch -> localBranches.containsKey(branch) }
       GitRepoInfo(currentBranch = state.currentBranch,
                   currentRevision = state.currentRevision,
                   state = state.state,

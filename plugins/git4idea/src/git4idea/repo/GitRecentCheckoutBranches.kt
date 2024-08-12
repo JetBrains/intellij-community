@@ -3,7 +3,9 @@
 
 package git4idea.repo
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.GitLocalBranch
 import git4idea.commands.Git
@@ -17,17 +19,15 @@ import git4idea.config.GitVcsSettings
  * [GitVcsSettings.getRecentBranchesByRepository] will be used instead.
  */
 @RequiresBackgroundThread
-fun GitRepository.collectRecentCheckoutBranches(haveLocalBranch: (GitLocalBranch) -> Boolean): List<GitLocalBranch> {
-  val repo = this
+internal fun collectRecentCheckoutBranches(project: Project, root: VirtualFile, haveLocalBranch: (GitLocalBranch) -> Boolean): List<GitLocalBranch> {
   val recentBranchFromSettings = GitVcsSettings.getInstance(project).recentBranchesByRepository[root.path]?.let(::GitLocalBranch)
   val reflogEntriesCount = Registry.intValue("git.recent.checkout.branches.reflog.entries.count")
   if (reflogEntriesCount <= 0) return emptyList()
 
-  val handler = GitLineHandler(repo.project, repo.root, GitCommand.REF_LOG).apply {
-    setSilent(true)
-    addParameters("--max-count", reflogEntriesCount.toString(), "--grep-reflog", "checkout:")
-    endOptions()
-  }
+  val handler = GitLineHandler(project, root, GitCommand.REF_LOG)
+  handler.setSilent(true)
+  handler.addParameters("--max-count", reflogEntriesCount.toString(), "--grep-reflog", "checkout:")
+  handler.endOptions()
   handler.isEnableInteractiveCallbacks = false // the method might be called in GitRepository constructor
 
   val result = Git.getInstance().runCommand(handler)
