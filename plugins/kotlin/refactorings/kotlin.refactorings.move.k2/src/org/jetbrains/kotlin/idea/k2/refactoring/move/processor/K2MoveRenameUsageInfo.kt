@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.updatableUsageInfo
 import org.jetbrains.kotlin.idea.references.KtConstructorDelegationReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
@@ -275,7 +276,7 @@ sealed class K2MoveRenameUsageInfo(
          * Finds usages to [declaration] excluding the usages inside [declaration].
          */
         fun findExternalUsages(declaration: KtNamedDeclaration): List<MoveRenameUsageInfo> {
-            val allUsages = ReferencesSearch.search(declaration, declaration.useScope).findAll()
+            val allUsages = ReferencesSearch.search(declaration, declaration.project.projectScope()).findAll()
                 .filter { !declaration.isAncestor(it.element) } // exclude internal usages
                 .mapNotNull { ref ->
                     val element = ref.element
