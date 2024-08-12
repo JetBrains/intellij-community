@@ -1,0 +1,4 @@
+///
+/// Javadoc
+///
+class C{}

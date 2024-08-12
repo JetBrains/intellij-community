@@ -1,0 +1,54 @@
+PsiJavaFile:ReferenceLinkMarkdown05.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:label
+            PsiIdentifier:label('label')
+            PsiReferenceParameterList
+              <empty list>
+          PsiWhiteSpace(' ')
+          PsiIdentifier:with('with')
+          PsiWhiteSpace(' ')
+          PsiIdentifier:unbalanced('unbalanced')
+          PsiWhiteSpace(' ')
+          PsiIdentifier:brackets('brackets')
+        PsiDocToken:DOC_RBRACKET(']')
+      PsiDocToken:DOC_RBRACKET(']')
+      PsiReferenceLink:
+        PsiDocToken:DOC_LBRACKET('[')
+        PsiElement(DOC_REFERENCE_HOLDER)
+          PsiJavaCodeReferenceElement:java.util.HashMap
+            PsiJavaCodeReferenceElement:java.util
+              PsiJavaCodeReferenceElement:java
+                PsiIdentifier:java('java')
+                PsiReferenceParameterList
+                  <empty list>
+              PsiJavaToken:DOT('.')
+              PsiIdentifier:util('util')
+              PsiReferenceParameterList
+                <empty list>
+            PsiJavaToken:DOT('.')
+            PsiIdentifier:HashMap('HashMap')
+            PsiReferenceParameterList
+              <empty list>
+        PsiDocToken:DOC_RBRACKET(']')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

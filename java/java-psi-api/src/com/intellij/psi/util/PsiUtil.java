@@ -1578,6 +1578,30 @@ public final class PsiUtil extends PsiUtilCore {
     return SOFT_KEYWORDS.get(keyword);
   }
 
+  /**
+   * @return containing class for {@code element} ignoring {@link PsiAnonymousClass} if {@code element} is located in corresponding expression list
+   */
+  @Nullable
+  public static PsiClass getContainingClass(PsiElement element) {
+    PsiClass currentClass;
+    while (true) {
+      currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      if (currentClass instanceof PsiAnonymousClass &&
+          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, false)) {
+        element = currentClass;
+      } else {
+        return currentClass;
+      }
+    }
+  }
+
+  /** @return Whether or not the element is part of a markdown javadoc comment */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isInMarkdownDocComment(PsiElement element) {
+    PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
+    return docComment != null && docComment.isMarkdownComment();
+  }
+
   //<editor-fold desc="Deprecated stuff">
   /**
    * @deprecated  use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather 
