@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import kotlin.collections.orEmpty
-import kotlin.collections.plusAssign
 
 internal class UsedReferencesCollector(private val file: KtFile) {
 

@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.resolve.ImportPath
-import kotlin.collections.filter
 
 internal fun KaSession.buildOptimizedImports(
     file: KtFile,
