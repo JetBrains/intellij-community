@@ -119,7 +119,8 @@ public final class CompilerTester {
     try {
       RunAll.runAll(
         () -> myMainOutput.tearDown(),
-        () -> CompilerTestUtil.disableExternalCompiler(getProject())
+        () -> CompilerTestUtil.disableExternalCompiler(getProject()),
+        () -> IComponentStoreKt.getStateStore(ApplicationManager.getApplication()).clearCaches()
       );
     }
     finally {
