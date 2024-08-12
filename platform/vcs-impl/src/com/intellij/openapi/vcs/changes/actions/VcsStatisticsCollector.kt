@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object VcsStatisticsCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("vcs", 16)
+  val GROUP = EventLogGroup("vcs", 17)
 
   @JvmField
   val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -41,6 +41,12 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
 
   @JvmField
   val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
+
+  private val CHANGE_LIST_EDITED_PLACE = EventFields.Enum("editingPlace", EditChangeListPlace::class.java)
+  @JvmField
+  val CHANGE_LIST_COMMENT_EDITED = GROUP.registerEvent("change.list.edit.description", CHANGE_LIST_EDITED_PLACE)
+  @JvmField
+  val CHANGE_LIST_NAME_EDITED = GROUP.registerEvent("change.list.edit.name")
 
   private val VCS_FIELD = EventFields.StringValidatedByEnum("vcs", "vcs")
   private val IS_FULL_REFRESH_FIELD = EventFields.Boolean("is_full_refresh")
@@ -96,4 +102,8 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
   }
 
   override fun getGroup(): EventLogGroup = GROUP
+
+  enum class EditChangeListPlace {
+    EDIT_DIALOG, OTHER
+  }
 }

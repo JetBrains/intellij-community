@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -173,7 +174,9 @@ public final class ChangeListChooserPanel extends JPanel {
       myListPanel.changelistCreatedOrChanged(localChangeList);
     }
     else {
-      //update description if changed
+      if (!StringUtil.equals(localChangeList.getComment(), myListPanel.getDescription())) {
+        VcsStatisticsCollector.CHANGE_LIST_COMMENT_EDITED.log(project, VcsStatisticsCollector.EditChangeListPlace.OTHER);
+      }
       manager.editComment(changeListName, myListPanel.getDescription());
     }
     rememberSettings(project, localChangeList.isDefault(), myListPanel.getMakeActiveCheckBox().isSelected());
