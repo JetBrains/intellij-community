@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
-import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -15,6 +15,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.reference
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
@@ -33,6 +36,23 @@ internal sealed class CompletionSymbolOrigin {
         const val SCOPE_OUTSIDE_TOWER_INDEX: Int = -1
     }
 }
+
+context(KaSession)
+internal fun KotlinRawPositionContext.resolveToSymbols(): Sequence<KaSymbol> =
+    when (this) {
+        is KotlinNameReferencePositionContext -> resolveToSymbols()
+        else -> sequenceOf(rootPackageSymbol)
+    }
+
+context(KaSession)
+internal fun KotlinNameReferencePositionContext.resolveToSymbols(): Sequence<KaSymbol> =
+    when (val explicitReceiver = explicitReceiver) {
+        null -> sequenceOf(rootPackageSymbol)
+        else -> explicitReceiver.reference()
+            ?.resolveToSymbols()
+            ?.asSequence()
+            ?: emptySequence()
+    }
 
 internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
     if (typeArgumentsCount > 0) {

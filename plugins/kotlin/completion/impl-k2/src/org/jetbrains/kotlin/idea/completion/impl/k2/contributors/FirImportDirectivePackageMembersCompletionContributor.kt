@@ -6,12 +6,12 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScopes
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveToSymbols
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinImportDirectivePositionContext
 
@@ -27,25 +27,32 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
-        val reference = positionContext.explicitReceiver?.reference() ?: return
-        getStaticScopes(reference).forEach { scopeWithKind ->
-            val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
-            val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
+        positionContext.resolveToSymbols()
+            .mapNotNull { it.staticScope }
+            .forEach { scopeWithKind ->
+                val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
+                val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
 
-            scopeWithKind.scope.classifiers(scopeNameFilter)
-                .filter { visibilityChecker.isVisible(it) }
-                .forEach { addClassifierSymbolToCompletion(it, weighingContext, symbolOrigin, ImportStrategy.DoNothing) }
+                val classifiers = scopeWithKind.scope
+                    .classifiers(scopeNameFilter)
+                    .toList()
+                classifiers
+                    .filter { visibilityChecker.isVisible(it) }
+                    .forEach { addClassifierSymbolToCompletion(it, weighingContext, symbolOrigin, ImportStrategy.DoNothing) }
 
-            scopeWithKind.scope.callables(scopeNameFilter)
-                .filter { visibilityChecker.isVisible(it) }
-                .forEach {
-                    addCallableSymbolToCompletion(
-                        weighingContext,
-                        it.asSignature(),
-                        CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
-                        symbolOrigin,
-                    )
-                }
-        }
+                val callables = scopeWithKind.scope
+                    .callables(scopeNameFilter)
+                    .toList()
+                callables
+                    .filter { visibilityChecker.isVisible(it) }
+                    .forEach {
+                        addCallableSymbolToCompletion(
+                            weighingContext,
+                            it.asSignature(),
+                            CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
+                            symbolOrigin,
+                        )
+                    }
+            }
     }
 }

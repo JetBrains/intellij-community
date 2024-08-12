@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScopes
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.reference
@@ -54,8 +54,13 @@ internal open class FirClassifierCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         context: WeighingContext
     ) {
-        val reference = receiver.reference() ?: return
-        getStaticScopes(reference).forEach { scopeWithKind ->
+        val symbols = receiver.reference()
+            ?.resolveToSymbols()
+            ?: return
+
+        symbols.asSequence()
+            .mapNotNull { it.staticScope }
+            .forEach { scopeWithKind ->
             scopeWithKind.scope
                 .classifiers(scopeNameFilter)
                 .filter { filterClassifiers(it) }

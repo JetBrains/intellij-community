@@ -9,12 +9,11 @@ import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveToSymbols
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 
 internal class FirPackageCompletionContributor(
@@ -29,11 +28,11 @@ internal class FirPackageCompletionContributor(
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
-        val rootSymbol = if (positionContext !is KotlinNameReferencePositionContext || positionContext.explicitReceiver == null) {
-            rootPackageSymbol
-        } else {
-            positionContext.explicitReceiver?.reference()?.resolveToSymbols()?.filterIsInstance<KaPackageSymbol>()?.singleOrNull()
-        } ?: return
+
+        val rootSymbol = positionContext.resolveToSymbols()
+            .filterIsInstance<KaPackageSymbol>()
+            .singleOrNull()
+            ?: return
 
         val symbolOrigin = CompletionSymbolOrigin.Scope(KaScopeKinds.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))
 

@@ -55,6 +55,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/ClassInExcludedPackage/");
     }
 
+    @TestMetadata("ClassInRootPackage")
+    public void testClassInRootPackage() throws Exception {
+        runTest("../testData/basic/multifile/ClassInRootPackage/");
+    }
+
     @TestMetadata("CompleteFunctionWithNoSpecifiedType")
     public void testCompleteFunctionWithNoSpecifiedType() throws Exception {
         runTest("../testData/basic/multifile/CompleteFunctionWithNoSpecifiedType/");
