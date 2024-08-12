@@ -417,8 +417,8 @@ public final class FileStatusMap implements Disposable {
   @NotNull
   TextRange getCompositeDocumentDirtyRange(@NotNull Document document) {
     RangeMarker change = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
-    return change == null || !change.isValid() ? TextRange.EMPTY_RANGE :
-           change == WHOLE_FILE_DIRTY_MARKER ? new TextRange(0, document.getTextLength()) :
+    return change == WHOLE_FILE_DIRTY_MARKER ? new TextRange(0, document.getTextLength()) :
+           change == null || !change.isValid() ? TextRange.EMPTY_RANGE :
            change.getTextRange();
   }
   @ApiStatus.Internal
