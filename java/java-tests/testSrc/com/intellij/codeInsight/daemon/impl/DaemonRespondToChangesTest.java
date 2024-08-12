@@ -838,10 +838,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     int offset = myEditor.getCaretModel().getOffset();
     type(' ');
-    assertEquals(new TextRange(offset, offset), fileStatusMap.getCompositeDocumentDirtyRange(document));
+    assertEquals(new TextRange(offset, offset+1), fileStatusMap.getCompositeDocumentDirtyRange(document));
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(10, 11, "xxx"));
-    assertEquals(new TextRange(offset, 11), fileStatusMap.getCompositeDocumentDirtyRange(document));
+    assertEquals(new TextRange(offset, 13), fileStatusMap.getCompositeDocumentDirtyRange(document));
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("  "));
+    assertEquals(new TextRange(0, 2), fileStatusMap.getCompositeDocumentDirtyRange(document));
+    fileStatusMap.disposeDirtyDocumentRangeStorage(document);
+    assertEquals(new TextRange(0, 0), fileStatusMap.getCompositeDocumentDirtyRange(document));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0,"x"));
+    assertEquals(new TextRange(0, 1), fileStatusMap.getCompositeDocumentDirtyRange(document));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(1,"x"));
+    assertEquals(new TextRange(0, 2), fileStatusMap.getCompositeDocumentDirtyRange(document));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(4,"x"));
+    assertEquals(new TextRange(0, 5), fileStatusMap.getCompositeDocumentDirtyRange(document));
   }
 
   public void testDefensivelyDirtyFlagDoesNotClearPrematurely() {
@@ -2279,7 +2290,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       for (int i=0; i<10; i++) {
         //System.out.println("i = " + i);
         PassExecutorService.LOG.debug("i = " + i);
-        WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText(""));
+        WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText("  "));
+        doHighlighting(); // reset various optimizations e.g. FileStatusMap.getCompositeDocumentDirtyRange
         MarkupModel markupModel = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
         for (int c = 0; c < finalText.length(); c++) {
           PassExecutorService.LOG.debug("c = " + c);
