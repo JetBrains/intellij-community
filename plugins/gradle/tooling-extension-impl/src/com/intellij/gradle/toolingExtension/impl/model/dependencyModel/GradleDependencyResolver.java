@@ -13,7 +13,6 @@ import org.gradle.api.artifacts.component.*;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.result.*;
 import org.gradle.api.component.Artifact;
-import org.gradle.api.specs.Spec;
 import org.gradle.internal.resolve.ModuleVersionResolveException;
 import org.gradle.jvm.JvmLibrary;
 import org.gradle.language.base.artifact.SourcesArtifact;
@@ -62,7 +61,7 @@ public final class GradleDependencyResolver {
     this(context, project, GradleDependencyDownloadPolicyCache.getInstance(context).getDependencyDownloadPolicy(project));
   }
 
-  private static void ensureConfigurationArtifactsResolved(@NotNull Configuration configuration) {
+  private static @NotNull Set<ResolvedArtifactResult> resolveConfigurationDependencies(@NotNull Configuration configuration) {
     // The following statement should trigger parallel resolution of configuration artifacts
     // All subsequent iterations are expected to use cached results.
     try {
@@ -72,18 +71,19 @@ public final class GradleDependencyResolver {
           configuration.setLenient(true);
         }
       });
-      artifactView.getArtifacts().getArtifacts();
+      return artifactView.getArtifacts().getArtifacts();
     }
     catch (Exception ignore) {
     }
+    return Collections.emptySet();
   }
 
   public @NotNull Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration) {
     if (configuration == null) {
       return Collections.emptySet();
     }
-
-    ensureConfigurationArtifactsResolved(configuration);
+    // configurationDependencies can be empty, for example, in the case of a composite build. We should continue resolution anyway.
+    Set<ResolvedArtifactResult> configurationDependencies = resolveConfigurationDependencies(configuration);
 
     LenientConfiguration lenientConfiguration = configuration.getResolvedConfiguration().getLenientConfiguration();
     Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts = new LinkedHashMap<>();
@@ -116,7 +116,7 @@ public final class GradleDependencyResolver {
     Collection<ExternalDependency> artifactDependencies = resolveArtifactDependencies(
       resolvedFiles, resolvedArtifacts, auxiliaryArtifactsMap, transformedProjectDependenciesResultMap
     );
-    Collection<FileCollectionDependency> otherFileDependencies = resolveOtherFileDependencies(resolvedFiles, configuration);
+    Collection<FileCollectionDependency> otherFileDependencies = resolveOtherFileDependencies(resolvedFiles, configurationDependencies);
     Collection<ExternalDependency> unresolvedDependencies = collectUnresolvedDependencies(lenientConfiguration);
 
     Collection<ExternalDependency> result = new LinkedHashSet<>();
@@ -358,32 +358,25 @@ public final class GradleDependencyResolver {
     return result;
   }
 
+  // resolve generated dependencies such as annotation processing build roots and compilation result
   private static @NotNull Collection<FileCollectionDependency> resolveOtherFileDependencies(
     @NotNull Set<String> resolvedFiles, // mutable
-    @NotNull Configuration configuration
+    @NotNull Set<ResolvedArtifactResult> configurationDependencies
   ) {
-    ArtifactView artifactView = configuration.getIncoming().artifactView(new Action<ArtifactView.ViewConfiguration>() {
-      @Override
-      public void execute(@SuppressWarnings("NullableProblems") ArtifactView.ViewConfiguration configuration) {
-        configuration.setLenient(true);
-        configuration.componentFilter(new Spec<ComponentIdentifier>() {
-          @Override
-          public boolean isSatisfiedBy(ComponentIdentifier identifier) {
-            return !(identifier instanceof ProjectComponentIdentifier || identifier instanceof ModuleComponentIdentifier);
-          }
-        });
-      }
-    });
-    Set<ResolvedArtifactResult> artifactResults = artifactView.getArtifacts().getArtifacts();
     Collection<FileCollectionDependency> result = new LinkedHashSet<>();
-    for (ResolvedArtifactResult artifactResult : artifactResults) {
-      File file = artifactResult.getFile();
-      if (resolvedFiles.contains(file.getPath())) {
+    for (ResolvedArtifactResult dependency : configurationDependencies) {
+      ComponentIdentifier identifier = dependency.getId().getComponentIdentifier();
+      // libraries, modules and subprojects are already well known
+      if (identifier instanceof LibraryBinaryIdentifier
+          || identifier instanceof ModuleComponentIdentifier
+          || identifier instanceof ProjectComponentIdentifier) {
         continue;
       }
-      resolvedFiles.add(file.getPath());
-
-      result.add(new DefaultFileCollectionDependency(Collections.singleton(file)));
+      File file = dependency.getFile();
+      String path = file.getPath();
+      if (resolvedFiles.add(path)) {
+        result.add(new DefaultFileCollectionDependency(Collections.singleton(file)));
+      }
     }
     return result;
   }
