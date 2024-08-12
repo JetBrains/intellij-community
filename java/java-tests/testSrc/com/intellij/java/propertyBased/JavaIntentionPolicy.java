@@ -108,6 +108,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.startsWith("Delete unnecessary import") ||
                                       intentionText.startsWith("Delete empty class initializer") ||
                                       intentionText.startsWith("Replace with 'throws Exception'") ||
+                                      intentionText.equals("Replace 'catch' section with 'throws' declaration") ||
                                       intentionText.startsWith("Replace unicode escape with character") ||
                                       intentionText.startsWith("Remove 'serialVersionUID' field") ||
                                       intentionText.startsWith("Remove unnecessary") ||
