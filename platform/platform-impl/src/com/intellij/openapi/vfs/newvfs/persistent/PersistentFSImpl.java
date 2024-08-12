@@ -60,7 +60,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,6 +78,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SuppressWarnings("NonDefaultConstructor")
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
+  private static final boolean simplifyFindChildInfo = Boolean.getBoolean("intellij.vfs.simplify.findChildInfo");
+
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
 
@@ -588,6 +589,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       ChildInfo child = findExistingChildInfo(parent, childName, children.children);
       if (child != null) {
         foundChildRef.set(child);
+        return children;
+      }
+
+      if (simplifyFindChildInfo) {
         return children;
       }
 
