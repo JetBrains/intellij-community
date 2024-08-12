@@ -67,10 +67,10 @@ internal class HotSwapModifiedFilesAction : AnAction() {
 
 private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
   var inProgress = false
-  var session: HotSwapSession<*>? = null
 
   override fun actionPerformed(e: AnActionEvent) {
-    val session = session ?: return
+    val project = e.project ?: return
+    val session = HotSwapSessionManager.getInstance(project).currentSession ?: return
     performHotSwap(e.dataContext, session)
   }
 
@@ -156,7 +156,6 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
       // We need to hide the button even if the coroutineScope is cancelled
       manager.coroutineScope.launch(Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
         if (!showFloatingToolbar()) {
-          hotSwapAction.session = null
           component.scheduleHide()
           return@launch
         }
@@ -164,7 +163,6 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
         val status = forceStatus ?: session?.currentStatus
         if (status == HotSwapVisibleStatus.IN_PROGRESS) {
           hotSwapAction.inProgress = true
-          hotSwapAction.session = null
           return@launch
         }
 
@@ -177,10 +175,6 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
         }
         if (action == HotSwapButtonAction.SHOW) {
           hotSwapAction.inProgress = false
-          hotSwapAction.session = session
-        }
-        else {
-          hotSwapAction.session = null
         }
         when (action) {
           HotSwapButtonAction.SHOW -> component.scheduleShow()
