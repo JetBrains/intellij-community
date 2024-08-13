@@ -8,6 +8,7 @@ import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.usages.impl.searchTargets
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -73,7 +74,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
           throw Exception("No editor is opened")
         }
 
-        val offset = editor.caretModel.offset
+        val offset = writeIntentReadAction { editor.caretModel.offset }
 
         AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100; we need to find all usages to compare
         val popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
@@ -119,7 +120,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
           spanRef = spanBuilder.startSpan()
           scopeRef = spanRef!!.makeCurrent()
 
-          findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(element, popupPosition, editor, scope)
+          findUsagesFuture = writeIntentReadAction { ShowUsagesAction.startFindUsagesWithResult (element, popupPosition, editor, scope) }
         }
 
         val searchTargets = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { searchTargets(it, offset) }
