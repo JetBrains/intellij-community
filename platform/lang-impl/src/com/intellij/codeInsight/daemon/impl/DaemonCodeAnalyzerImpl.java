@@ -371,6 +371,63 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
+  // replace one file-level info with the other, possible reusing the fake highlighter
+  @Override
+  public void replaceFileLevelHighlight(@NotNull HighlightInfo oldInfo,
+                                        @NotNull HighlightInfo newInfo,
+                                        @NotNull PsiFile psiFile,
+                                        @Nullable RangeHighlighter toReuse) {
+    ThreadingAssertions.assertEventDispatchThread();
+    assertMyFile(psiFile.getProject(), psiFile);
+    VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
+    FileEditorManager fileEditorManager = getFileEditorManager();
+    for (FileEditor fileEditor : fileEditorManager.getAllEditorList(vFile)) {
+      if (fileEditor instanceof TextEditor textEditor) {
+        List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
+        newInfo.findRegisteredQuickFix((descriptor, range) -> {
+          actionRanges.add(Pair.create(descriptor, range));
+          return null;
+        });
+        List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+        if (fileLevelInfos == null) {
+          fileLevelInfos = ContainerUtil.createConcurrentList(); // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
+          fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
+        }
+        // do not dispose highlighter if it needs to be reused
+        fileLevelInfos.removeIf(fileLevelInfo-> {
+          if (!fileLevelInfo.attributesEqual(fileLevelInfo)) {
+            return false;
+          }
+          ThreadingAssertions.assertEventDispatchThread();
+          JComponent component = fileLevelInfo.getFileLevelComponent(fileEditor);
+          if (component != null) {
+            fileEditorManager.removeTopComponent(fileEditor, component);
+            fileLevelInfo.removeFileLeverComponent(fileEditor);
+          }
+          RangeHighlighterEx highlighter = fileLevelInfo.highlighter;
+          if (highlighter != null && highlighter != toReuse) {
+            highlighter.dispose();
+          }
+          return true;
+        });
+        Document document = textEditor.getEditor().getDocument();
+        MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
+        if (toReuse == null) {
+          HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(newInfo.getGroup(), newInfo, null, markupModel);
+        }
+        fileLevelInfos.add(newInfo);
+        FileLevelIntentionComponent component = new FileLevelIntentionComponent(newInfo.getDescription(), newInfo.getSeverity(),
+                                                                                newInfo.getGutterIconRenderer(), actionRanges,
+                                                                                psiFile, ((TextEditor)fileEditor).getEditor(), newInfo.getToolTip());
+        fileEditorManager.addTopComponent(fileEditor, component);
+        newInfo.addFileLevelComponent(fileEditor, component);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("addFileLevelHighlight [" + newInfo + "]: fileLevelInfos:" + fileLevelInfos);
+        }
+      }
+    }
+  }
+
   @Override
   boolean cutOperationJustHappened() {
     return myListeners.cutOperationJustHappened;
