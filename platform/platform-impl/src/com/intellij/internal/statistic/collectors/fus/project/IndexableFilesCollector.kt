@@ -44,7 +44,7 @@ private class IndexableFilesCollector : ProjectUsagesCollector() {
       }
 
       runReadAction {
-        if (!fileOrDir.isDirectory && !fileIndex.isExcluded(fileOrDir)) {
+        if (fileOrDir.isValid && !fileOrDir.isDirectory && !fileIndex.isExcluded(fileOrDir)) {
           if (fileIndex.isInContent(fileOrDir)) {
             inContentIndexableFiles++
           }
