@@ -95,6 +95,7 @@ public class GitResetOperation {
 
         updateAndRefreshChangedVfs(repository, startHash);
         VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
+        repository.getUntrackedFilesHolder().invalidate(); // 'git reset --mixed' may make a file untracked without changing anything else
       }
     }
     notifyResult(results);
