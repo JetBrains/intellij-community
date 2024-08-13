@@ -84,7 +84,7 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             if (name == null) return NO
             return checkJUnit3TestClass(
                 declaration,
-                PsiShortNamesCache.getInstance(declaration.project),
+                PsiShortNamesCache.getInstance(declaration.project).withoutLanguages(KotlinLanguage.INSTANCE),
                 declaration.resolveScope,
                 mutableSetOf(name)
             )
