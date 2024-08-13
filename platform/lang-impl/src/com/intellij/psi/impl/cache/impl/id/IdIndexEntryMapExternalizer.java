@@ -3,7 +3,6 @@ package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.util.indexing.InputMapExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -28,9 +27,9 @@ import java.util.Map;
 @ApiStatus.Internal
 public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndexEntry, Integer>> {
 
-  private final InputMapExternalizer<IdIndexEntry, Integer> fallbackExternalizer;
+  private final DataExternalizer<Map<IdIndexEntry, Integer>> fallbackExternalizer;
 
-  public IdIndexEntryMapExternalizer(@NotNull InputMapExternalizer<IdIndexEntry, Integer> externalizer) {
+  public IdIndexEntryMapExternalizer(@NotNull DataExternalizer<Map<IdIndexEntry, Integer>> externalizer) {
     fallbackExternalizer = externalizer;
   }
 
@@ -39,16 +38,18 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
   @Override
   public void save(@NotNull DataOutput out,
                    @NotNull Map<IdIndexEntry, Integer> entries) throws IOException {
+    int size = entries.size();
+    DataInputOutputUtil.writeINT(out, size);
+
+    if (size == 0) {
+      return;
+    }
+
     if (!(entries instanceof IdEntryToScopeMap idToScopeMap)) {
       fallbackExternalizer.save(out, entries);
       return;
     }
 
-    int size = entries.size();
-    DataInputOutputUtil.writeINT(out, size);
-    if (size == 0) {
-      return;
-    }
 
     Int2ObjectMap<IntSet> scopeMaskToHashes = new Int2ObjectOpenHashMap<>(8);
     idToScopeMap.forEach((idHash, scopeMask) -> {
@@ -69,10 +70,13 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
   }
 
   @Override
-  public Map<IdIndexEntry, Integer> read(@NotNull DataInput in) throws IOException {
-    int pairs = DataInputOutputUtil.readINT(in);
-    if (pairs == 0) return Collections.emptyMap();
-    IdEntryToScopeMapImpl map = new IdEntryToScopeMapImpl();
+  public @NotNull Map<IdIndexEntry, Integer> read(@NotNull DataInput in) throws IOException {
+    int entriesCount = DataInputOutputUtil.readINT(in);
+    if (entriesCount == 0) {
+      return Collections.emptyMap();
+    }
+
+    IdEntryToScopeMapImpl map = new IdEntryToScopeMapImpl(entriesCount);
     while (((InputStream)in).available() > 0) {
       int occurenceMask = in.readByte();
 

@@ -24,6 +24,10 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
     this(new Int2IntOpenHashMap());
   }
 
+  public IdEntryToScopeMapImpl(int initialCapacity) {
+    this(new Int2IntOpenHashMap(initialCapacity));
+  }
+
   public IdEntryToScopeMapImpl(@NotNull Int2IntMap hashToScopeMask) {
     this.idHashToScopeMask = hashToScopeMask;
   }
@@ -40,8 +44,10 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
 
   @Override
   public Integer get(Object key) {
-    //noinspection deprecation
-    return key instanceof IdIndexEntry entry ? idHashToScopeMask.get(entry.getWordHashCode()) : null;
+    if (key instanceof IdIndexEntry entry) {
+      return idHashToScopeMask.get(entry.getWordHashCode());
+    }
+    return null;
   }
 
   @NotNull
@@ -54,7 +60,7 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
       }
 
       @Override
-      public Iterator<IdIndexEntry> iterator() {
+      public @NotNull Iterator<IdIndexEntry> iterator() {
         return new Iterator<>() {
           final IntIterator iterator = idHashToScopeMask.keySet().iterator();
 
@@ -88,7 +94,7 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
   public Set<Entry<IdIndexEntry, Integer>> entrySet() {
     return new AbstractSet<>() {
       @Override
-      public Iterator<Entry<IdIndexEntry, Integer>> iterator() {
+      public @NotNull Iterator<Entry<IdIndexEntry, Integer>> iterator() {
         return new Iterator<>() {
           final ObjectIterator<Int2IntMap.Entry> iterator = idHashToScopeMask.int2IntEntrySet().iterator();
 
