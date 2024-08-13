@@ -110,7 +110,6 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
           return;
         }
         PsiIdentifier identifier = identifiers[0];
-        //skip if arr
         if (!notFoundArguments.isEmpty()) {
           if (notFoundArguments.size() == 1) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.incorrect.message.format.not.found.argument",
