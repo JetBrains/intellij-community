@@ -54,7 +54,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   }
 
   public boolean isDumbAware() {
-    return myEP == null ? getTool().isDumbAware() : myEP.dumbAware;
+    return getTool().isDumbAware();
   }
 
   public static @Nullable InspectionToolWrapper<?, ?> findTool2RunInBatch(@NotNull Project project,

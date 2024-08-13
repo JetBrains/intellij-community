@@ -105,7 +105,8 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
     List<? extends LocalInspectionToolWrapper> activeToolWrappers;
     List<? extends LocalInspectionToolWrapper> disabledSmartOnlyToolWrappers;
     if (isDumbMode()) {
-      activeToolWrappers = ContainerUtil.filter(toolWrappers, wrapper -> wrapper.isDumbAware());
+      activeToolWrappers = toolWrappers.stream().parallel().filter(wrapper -> wrapper.isDumbAware()).toList();
+
       if (activeToolWrappers.isEmpty()) {
         disabledSmartOnlyToolWrappers = toolWrappers;
       }

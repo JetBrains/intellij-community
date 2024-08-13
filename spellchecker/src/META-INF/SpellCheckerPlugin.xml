@@ -24,7 +24,7 @@
     <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
                      key="spellchecking.inspection.name" groupKey="proofread" enabledByDefault="true" level="TYPO"
                      language=""
-                     implementationClass="com.intellij.spellchecker.inspections.SpellCheckingInspection" dumbAware="true"/>
+                     implementationClass="com.intellij.spellchecker.inspections.SpellCheckingInspection"/>
 
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider" order="first"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>

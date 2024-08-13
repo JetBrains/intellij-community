@@ -16,6 +16,11 @@ import java.util.regex.Pattern;
 
 /**
  * Base class for local inspections.
+ * <p/>
+ * You can make your inspection dumb-aware by marking it with {@link com.intellij.openapi.project.DumbAware DumbAware} interface.
+ * Such an inspection must not use indexes during its inference, or it must be prepared to catch
+ * {@link com.intellij.openapi.project.IndexNotReadyException IndexNotReadyException}.
+ * In this case, the inspection shall just silently catch it and not report any warnings.
  *
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see GlobalInspectionTool
