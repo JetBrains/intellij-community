@@ -117,8 +117,8 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
     ): List<ImportPath>? {
         require(data is K2ImportData)
 
-        analyze(file) {
-            return buildOptimizedImports(file, data.usedReferencesData)
+        return analyzeForImportOptimization(file) {
+            buildOptimizedImports(file, data.usedReferencesData)
         }
     }
 }
