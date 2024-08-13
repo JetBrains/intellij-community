@@ -1,3 +1,0 @@
-from django.core.management.base import AppCommand
-
-class Command(AppCommand): ...
