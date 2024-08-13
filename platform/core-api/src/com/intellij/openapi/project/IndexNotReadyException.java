@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.Computable;
@@ -47,9 +48,9 @@ public final class IndexNotReadyException extends RuntimeException implements Ex
   private final @Nullable Throwable myStartTrace;
 
   // constructor is private to not let ForkJoinTask.getThrowableException() clone this by reflection causing invalid nesting etc
-  private IndexNotReadyException(@Nullable Throwable startTrace) {
+  private IndexNotReadyException(@Nullable Throwable startTrace, @Nullable Throwable cause) {
     super("Please change caller according to " + IndexNotReadyException.class.getName() + " documentation. " +
-          "Dumb mode start trace is in the cause.", startTrace);
+          "Dumb mode start trace is in attachment.", cause);
     myStartTrace = startTrace;
   }
 
@@ -65,6 +66,15 @@ public final class IndexNotReadyException extends RuntimeException implements Ex
   }
 
   public static @NotNull IndexNotReadyException create(@Nullable Throwable startTrace) {
-    return new IndexNotReadyException(startTrace);
+    return new IndexNotReadyException(startTrace, convertStartTraceToCauseInUnitTests(startTrace));
+  }
+
+  private static @Nullable Throwable convertStartTraceToCauseInUnitTests(@Nullable Throwable startTrace) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return startTrace;
+    }
+    else {
+      return null;
+    }
   }
 }
