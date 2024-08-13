@@ -83,7 +83,6 @@ f:com.intellij.structuralsearch.MatchUtil
 - s:containsRegExpMetaChar(java.lang.String):Z
 - s:createPatterns(java.lang.String[]):java.util.regex.Pattern[]
 - s:isRegExpMetaChar(I):Z
-- s:isTypedVariable(java.lang.String):Z
 - s:makeExtremeSpacesOptional(java.lang.String):java.lang.String
 - s:normalize(java.lang.String):java.lang.String
 - s:normalizeWhiteSpace(java.lang.String):java.lang.String
@@ -256,6 +255,7 @@ a:com.intellij.structuralsearch.StructuralSearchProfile
 - checkReplacementPattern(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
 - checkSearchPattern(com.intellij.structuralsearch.impl.matcher.CompiledPattern):V
 - a:compile(com.intellij.psi.PsiElement[],com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor):V
+- compileReplacementTypedVariable(java.lang.String):java.lang.String
 - createCodeFragment(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):com.intellij.psi.PsiCodeFragment
 - a:createCompiledPattern():com.intellij.structuralsearch.impl.matcher.CompiledPattern
 - a:createMatchingVisitor(com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor):com.intellij.psi.PsiElementVisitor
@@ -287,8 +287,10 @@ a:com.intellij.structuralsearch.StructuralSearchProfile
 - isIdentifier(com.intellij.psi.PsiElement):Z
 - isMatchNode(com.intellij.psi.PsiElement):Z
 - a:isMyLanguage(com.intellij.lang.Language):Z
+- isReplacementTypedVariable(java.lang.String):Z
 - provideAdditionalReplaceOptions(com.intellij.psi.PsiElement,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder):V
 - shouldShowProblem(com.intellij.psi.PsiErrorElement):Z
+- stripReplacementTypedVariableDecorations(java.lang.String):java.lang.String
 - supportsShortenFQNames():Z
 - supportsUseStaticImports():Z
 - updateCurrentNode(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
@@ -860,6 +862,7 @@ f:com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo
 f:com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder
 - findParameterization(com.intellij.psi.PsiElement):com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo
 - findParameterization(java.lang.String):java.util.Collection
+- prepareReplacementPattern():java.lang.String
 c:com.intellij.structuralsearch.plugin.replace.impl.Replacer
 - <init>(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
 - buildReplacement(com.intellij.structuralsearch.MatchResult):com.intellij.structuralsearch.plugin.replace.ReplacementInfo
@@ -868,7 +871,6 @@ c:com.intellij.structuralsearch.plugin.replace.impl.Replacer
 - s:insertSubstitution(java.lang.StringBuilder,I,com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo,java.lang.String):I
 - replace(com.intellij.structuralsearch.plugin.replace.ReplacementInfo):V
 - replaceAll(java.util.List):V
-- s:stripTypedVariableDecoration(java.lang.String):java.lang.String
 - s:testReplace(java.lang.String,java.lang.String,java.lang.String,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.openapi.project.Project):java.lang.String
 - s:testReplace(java.lang.String,java.lang.String,java.lang.String,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.openapi.project.Project,Z):java.lang.String
 - s:testReplace(java.lang.String,java.lang.String,java.lang.String,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language):java.lang.String
