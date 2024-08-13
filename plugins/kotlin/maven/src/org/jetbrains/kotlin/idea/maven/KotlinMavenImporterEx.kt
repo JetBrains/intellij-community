@@ -134,7 +134,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             val commonArguments = KotlinCommonCompilerArgumentsHolder.getInstance(project).settings
             if (compilerArguments == null) {
                 val targetPlatform = platform ?: getDefaultTargetPlatform(project)
-                LOG.debug("Detected target platform {0}", targetPlatform)
+                LOG.debug("Detected target platform ", targetPlatform)
 
                 val argumentsForPlatform = IdePlatformKindProjectStructure.getInstance(project)
                     .getCompilerArguments(targetPlatform.idePlatformKind)
@@ -161,7 +161,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             if (shouldInferLanguageLevel) {
                 languageLevel = (if (useProjectSettings) LanguageVersion.fromVersionString(commonArguments.languageVersion) else null)
                     ?: getDefaultLanguageLevel(compilerVersion, coerceRuntimeLibraryVersionToReleased = false)
-                LOG.debug("Inferred languageLevel to {0}", languageLevel)
+                LOG.debug("Inferred languageLevel to ", languageLevel)
             }
 
             if (shouldInferAPILevel) {
@@ -185,7 +185,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
                         languageLevel
                     }
                 }
-                LOG.debug("Inferred apiLevel to {0}", apiLevel)
+                LOG.debug("Inferred apiLevel to ", apiLevel)
             }
             // end of initialize
             this.pureKotlinSourceFolders = pureKotlinSourceFolders
@@ -198,6 +198,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         val executionArguments = mavenPlugin.executions
             ?.firstOrNull { it.goals.any { s -> s in compilationGoals } }
             ?.configurationElement?.let { getCompilerArgumentsByConfigurationElement(mavenProject, it, configuredPlatform, project) }
+        LOG.debug("Parsing compiler arguments: ", sharedArguments.args)
         parseCompilerArgumentsToFacetSettings(sharedArguments.args, kotlinFacetSettings, null) //modifiableModelsProvider -> null
         if (executionArguments != null) {
             parseCompilerArgumentsToFacetSettings(executionArguments.args, kotlinFacetSettings, null) //modifiableModelsProvider -> null
