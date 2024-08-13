@@ -16,12 +16,10 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
@@ -32,12 +30,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class ValueLookupManager implements EditorMouseMotionListener, EditorMouseListener {
-  /**
-   * @see XDebuggerUtil#disableValueLookup(Editor)
-   */
-  public static final Key<Boolean> DISABLE_VALUE_LOOKUP = Key.create("DISABLE_VALUE_LOOKUP");
+import static com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController.DISABLE_VALUE_LOOKUP;
 
+public class ValueLookupManager implements EditorMouseMotionListener, EditorMouseListener {
   private final Project myProject;
   private final Alarm myAlarm;
   private HintRequest myHintRequest = null;

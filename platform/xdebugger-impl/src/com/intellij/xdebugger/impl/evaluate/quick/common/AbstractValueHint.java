@@ -41,6 +41,7 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -69,7 +70,7 @@ public abstract class AbstractValueHint {
     @Override
     public void keyReleased(KeyEvent e) {
       if (!isAltMask(e.getModifiers())) {
-        ValueLookupManager.getInstance(myProject).hideHint();
+        ValueLookupManagerController.getInstance(myProject).hideHint();
       }
     }
   };
