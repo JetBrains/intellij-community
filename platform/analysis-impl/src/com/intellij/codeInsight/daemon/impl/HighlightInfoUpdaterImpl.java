@@ -234,6 +234,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     collectPsiElements(psiFile, requestor, session, toolIdPredicate,
                        psiElement -> psiElement == PsiUtilCore.NULL_PSI_ELEMENT/*evicted*/ || psiElement != FAKE_ELEMENT && !psiElement.isValid(), // find invalid PSI
                        (info, psiElement) -> {
+                         if (psiElement == PsiUtilCore.NULL_PSI_ELEMENT) {
+                           return false; // psi element was evicted
+                         }
                          RangeHighlighterEx highlighter = info.getHighlighter();
                          // heuristic: when the invalid PSI element is contained within the dirty range, kill it immediately (e.g. when the user is typing, a lot of red code happens under the caret)
                          // OTOH, when the PSI element is invalidated outside the dirty range, it usually means the incremental reparse support is poor, and a lot of PSI is invalidated unnecessarily on each typing,
