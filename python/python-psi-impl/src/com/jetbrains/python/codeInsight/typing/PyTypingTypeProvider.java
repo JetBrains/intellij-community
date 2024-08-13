@@ -116,6 +116,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String REQUIRED_EXT = "typing_extensions.Required";
   public static final String NOT_REQUIRED = "typing.NotRequired";
   public static final String NOT_REQUIRED_EXT = "typing_extensions.NotRequired";
+  public static final String READONLY = "typing.ReadOnly";
+  public static final String READONLY_EXT = "typing_extensions.ReadOnly";
+
+  public static final Set<String> TYPE_DICT_QUALIFIERS = Set.of(REQUIRED, REQUIRED_EXT, NOT_REQUIRED, NOT_REQUIRED_EXT, READONLY, READONLY_EXT);
+
   private static final String UNPACK = "typing.Unpack";
   private static final String UNPACK_EXT = "typing_extensions.Unpack";
 

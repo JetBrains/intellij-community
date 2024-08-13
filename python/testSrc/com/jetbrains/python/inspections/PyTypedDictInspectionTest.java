@@ -354,12 +354,20 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    A = TypedDict('A', {'x': <warning descr="Key cannot be required and not required at the same time">Required[NotRequired[int]]</warning>, 'y': NotRequired[int]})""");
   }
 
+  public void testRequiredNotRequiredWithReadOnly() {
+    doTestByText("""
+                   from typing_extensions import TypedDict, Required, NotRequired, ReadOnly
+                   class A(TypedDict):
+                       x: <warning descr="Key cannot be required and not required at the same time">Required[ReadOnly[NotRequired[int]]]</warning>
+                   """);
+  }
+
   // PY-53611
   public void testRequiredWithMultipleParameters() {
     doTestByText("""
                    from typing_extensions import TypedDict, Annotated, Required, NotRequired
                    Alternative = TypedDict("Alternative", {'x': Annotated[Required[int], "constraint"],
-                                                           'y': NotRequired[<warning descr="'NotRequired' must have exactly one type argument">Required[int], "constraint"</warning>]})""");
+                                                           'y': NotRequired[<warning descr="'NotRequired' must have exactly one type argument">int, "constraint"</warning>]})""");
   }
 
   // PY-55092
