@@ -164,7 +164,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     }
 
     @Override
-    public HighlightingPass @NotNull [] createPassesForEditor() {
+    public @NotNull HighlightingPass @NotNull [] createPassesForEditor() {
       return myPasses;
     }
   }

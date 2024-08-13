@@ -33,7 +33,6 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
     Pass.UPDATE_FOLDING,
     Pass.POPUP_HINTS,
     Pass.LOCAL_INSPECTIONS,
-    Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
     Pass.EXTERNAL_TOOLS};
   private static final Logger LOG = Logger.getInstance(TextEditorBackgroundHighlighter.class);
 
