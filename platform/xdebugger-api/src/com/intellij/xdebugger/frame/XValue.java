@@ -6,13 +6,10 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Represents a value in debugger tree.
@@ -61,11 +58,6 @@ public abstract class XValue extends XValueContainer {
   @Nullable
   public XValueModifier getModifier() {
     return null;
-  }
-
-  @ApiStatus.Internal
-  public CompletableFuture<Void> getInitCallback() {
-    return CompletableFuture.completedFuture(null);
   }
 
   /**
