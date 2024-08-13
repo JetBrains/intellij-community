@@ -406,6 +406,36 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                        print(x['year'])""");
   }
 
+  // PY-73099
+  public void testReadOnly() {
+    doTestByText("""
+                   from typing_extensions import TypedDict, Required, ReadOnly
+                   
+                   class Movie(TypedDict):
+                       name: ReadOnly[Required[str]]
+                   
+                   m: Movie = {"name": "Blur"}
+                   print(m["name"])
+                   <warning descr="TypedDict key \\"name\\" is ReadOnly">m["name"]</warning> = "new name"
+                   """);
+  }
+
+  public void testOverridenReadOnly() {
+    doTestByText("""
+                   from typing_extensions import TypedDict, Required, ReadOnly
+                   
+                   class VisualArt(TypedDict):
+                       name: ReadOnly[Required[str]]
+                   
+                   class Movie(VisualArt):
+                       <warning descr="Cannot overwrite TypedDict field">name</warning>: Required[str]
+                   
+                   m: Movie = {"name": "Blur"}
+                   print(m["name"])
+                   m["name"] = "new name"
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

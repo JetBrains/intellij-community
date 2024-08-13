@@ -987,6 +987,20 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                                               """));
   }
 
+  public void testRequiredWithReadOnly() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTestByText(
+      """
+        from typing_extensions import TypedDict, Required, NotRequired
+        
+        class Movie(TypedDict):
+            name: ReadOnly[Required[str]]
+            year: NotRequired[int]
+        
+        m: Movie = <warning descr="TypedDict 'Movie' has missing key: 'name'">{"year": 2024}</warning>
+        """
+    ));
+  }
+
   // PY-53611
   public void testTypingRequiredTypeSpecificationsMultiFile() {
     doMultiFileTest();

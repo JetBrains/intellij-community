@@ -177,7 +177,7 @@ class PyTypedDictInspection : PyInspection() {
           if (type is PyTypedDictType && !type.isInferred()) {
             val index = PyEvaluator.evaluate(expr.indexExpression, String::class.java)
             if (index == null || index !in type.fields) continue
-            if (type.fields[index]!!.isRequired) {
+            if (type.fields[index]!!.qualifiers.isRequired == true) {
               registerProblem(expr.indexExpression, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", index, type.name))
             }
           }
@@ -200,7 +200,7 @@ class PyTypedDictInspection : PyInspection() {
       }
 
       if (PyNames.CLEAR == callee.name || PyNames.POPITEM == callee.name) {
-        if (nodeType.fields.any { it.value.isRequired }) {
+        if (nodeType.fields.any { it.value.qualifiers.isRequired == true}) {
           registerProblem(callee.nameElement?.psi, PyPsiBundle.message("INSP.typeddict.this.operation.might.break.typeddict.consistency"),
                           if (PyNames.CLEAR == callee.name) ProblemHighlightType.WARNING else ProblemHighlightType.WEAK_WARNING)
         }
@@ -208,14 +208,14 @@ class PyTypedDictInspection : PyInspection() {
 
       if (PyNames.POP == callee.name) {
         val key = if (arguments.isNotEmpty()) PyEvaluator.evaluate(arguments[0], String::class.java) else null
-        if (key != null && key in nodeType.fields && nodeType.fields[key]!!.isRequired) {
+        if (key != null && key in nodeType.fields && nodeType.fields[key]!!.qualifiers.isRequired == true) {
           registerProblem(callee.nameElement?.psi, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", key, nodeType.name))
         }
       }
 
       if (PyNames.SETDEFAULT == callee.name) {
         val key = if (arguments.isNotEmpty()) PyEvaluator.evaluate(arguments[0], String::class.java) else null
-        if (key != null && key in nodeType.fields && !nodeType.fields[key]!!.isRequired) {
+        if (key != null && key in nodeType.fields && nodeType.fields[key]!!.qualifiers.isRequired == false) {
           if (node.arguments.size > 1) {
             val valueType = myTypeEvalContext.getType(arguments[1])
             if (!PyTypeChecker.match(nodeType.fields[key]!!.type, valueType, myTypeEvalContext)) {
@@ -250,6 +250,9 @@ class PyTypedDictInspection : PyInspection() {
         if (targetType !is PyTypedDictType) return@forEach
         val indexString = PyEvaluator.evaluate(target.indexExpression, String::class.java)
         if (indexString == null) return@forEach
+        if (targetType.fields[indexString]?.qualifiers?.isReadOnly == true) {
+          registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
+        }
 
         val expected = targetType.getElementType(indexString)
         val actualExpressions = targetsToValuesMapping.filter { it.first == target }.map { it.second }
@@ -340,10 +343,10 @@ class PyTypedDictInspection : PyInspection() {
         var notRequiredPresented = false
         expression.accept(object: PyRecursiveElementVisitor() {
           override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
-            if (PyTypedDictTypeProvider.isRequired(node.operand, myTypeEvalContext) == true) {
+            if (PyTypedDictTypeProvider.parseTypedDictFieldQualifiers(node.operand, myTypeEvalContext).isRequired == true) {
               requiredPresented = true
             }
-            if (PyTypedDictTypeProvider.isRequired(node.operand, myTypeEvalContext) == false) {
+            if (PyTypedDictTypeProvider.parseTypedDictFieldQualifiers(node.operand, myTypeEvalContext).isRequired == false) {
               notRequiredPresented = true
             }
             if (requiredPresented && notRequiredPresented) {
@@ -382,7 +385,7 @@ class PyTypedDictInspection : PyInspection() {
 
     private fun matchTypedDictFieldTypeAndTotality(expected: PyTypedDictType.FieldTypeAndTotality,
                                                    actual: PyTypedDictType.FieldTypeAndTotality): Boolean {
-      return expected.isRequired == actual.isRequired &&
+      return expected.qualifiers.isRequired == actual.qualifiers.isRequired &&
              PyTypeChecker.match(expected.type, actual.type, myTypeEvalContext)
     }
 
