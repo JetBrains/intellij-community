@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -398,17 +399,12 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup before psiElementVisited ");
 
-        List<? extends HighlightInfo> newInfosToStore;
-        newInfosToStore = List.copyOf(newInfos);
+        List<? extends HighlightInfo> newInfosToStore = List.copyOf(newInfos);
         if (LOG.isDebugEnabled()) {
           //noinspection removal
           LOG.debug("psiElementVisited: " + visitedPsiElement + " in " + visitedPsiElement.getTextRange() +
-                    (psiFile.getViewProvider() instanceof InjectedFileViewProvider
-                     ?
-                     " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange())
-                     : "") +
-                    "; tool:" + toolId + "; infos:" + newInfosToStore + "; oldInfos:" + oldInfos +
-                    currentProgressInfo());
+                    (psiFile.getViewProvider() instanceof InjectedFileViewProvider ? " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
+                    "; tool:" + toolId + "; infos:" + newInfosToStore + "; oldInfos:" + oldInfos + currentProgressInfo());
         }
 
         remap(toolId, visitedPsiElement, ContainerUtil.notNullize(oldInfos), newInfosToStore, session, psiFile, hostDocument, invalidElementRecycler);
@@ -996,10 +992,10 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                             @NotNull ManagedHighlighterRecycler invalidElementRecycler) {
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, session.getProject(), true);
     ManagedHighlighterRecycler.runWithRecycler(session, recycler -> {
-      for (HighlightInfo info : oldInfos) {
-        RangeHighlighterEx highlighter = info.getHighlighter();
+      for (HighlightInfo oldInfo : oldInfos) {
+        RangeHighlighterEx highlighter = oldInfo.getHighlighter();
         if (highlighter != null) {
-          recycler.recycleHighlighter(psiElement, info);
+          recycler.recycleHighlighter(psiElement, oldInfo);
         }
       }
 
@@ -1011,67 +1007,56 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(session.getProject());
       Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
       for (HighlightInfo newInfo : newInfos) {
-        if (newInfo.isFileLevelAnnotation()) {
-          InvalidPsi recycled = recycler.pickupFileLevelRangeHighlighter(psiFile.getTextLength());
-          String from = "recycler";
-          if (recycled == null) {
-            recycled = invalidElementRecycler.pickupFileLevelRangeHighlighter(psiFile.getTextLength());
-            from = "invalidElementRecycler";
-          }
-          if (recycled != null) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("remap: filelevel recycled " + recycled + " from " + from);
-            }
-          }
+        boolean isFileLevel = newInfo.isFileLevelAnnotation();
+        long finalInfoRange = isFileLevel ? TextRangeScalarUtil.toScalarRange(0, psiFile.getTextLength()) : BackgroundUpdateHighlightersUtil.getRangeToCreateHighlighter(newInfo, hostDocument);
+        if (finalInfoRange == -1) continue;
+        int layer = isFileLevel ? DaemonCodeAnalyzerEx.ANY_GROUP : UpdateHighlightersUtil.getLayer(newInfo, severityRegistrar);
+        int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
+        int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
 
-          if (recycled == null) {
-            ((HighlightingSessionImpl)session).addFileLevelHighlight(newInfo, null);
-          }
-          else {
-            ((HighlightingSessionImpl)session).replaceFileLevelHighlight(recycled.info(), newInfo, recycled.info().getHighlighter());
+        InvalidPsi recycled = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+        String from = "recycler";
+        if (recycled == null) {
+          recycled = invalidElementRecycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+          from = "invalidElementRecycler";
+        }
+        if (recycled != null) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("remap: filelevel recycled " + recycled + " from " + from);
           }
         }
-        else {
-          long finalInfoRange = BackgroundUpdateHighlightersUtil.getRangeToCreateHighlighter(newInfo, hostDocument);
-          if (finalInfoRange == -1) continue;
-          int layer = UpdateHighlightersUtil.getLayer(newInfo, severityRegistrar);
-          int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
-          int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
+        newInfo.setGroup(-1);
+        TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
+        com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
+          BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes);
 
-          InvalidPsi recycled = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
-          String from = "recycler";
-          if (recycled == null) {
-            recycled = invalidElementRecycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
-            from = "invalidElementRecycler";
+          range2markerCache.put(finalInfoRange, finalHighlighter);
+          newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
+        };
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("remap: create " + (newInfo.getHighlighter() == null ? "" : "(recycled)") + newInfo + currentProgressInfo());
+        }
+        if (recycled == null) {
+          // create new
+          if (isFileLevel) {
+            RangeHighlighterEx highlighter = createOrReuseFakeFileLevelHighlighter(DaemonCodeAnalyzerEx.ANY_GROUP, newInfo, null, markup);
+            ((HighlightingSessionImpl)session).addFileLevelHighlight(newInfo, highlighter);
           }
-          if (recycled != null) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("remap: recycled " + recycled + " from " + from);
-            }
-          }
-
-          newInfo.setGroup(-1);
-          TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
-          com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
-            BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile,
-                                                              infoAttributes);
-
-            range2markerCache.put(finalInfoRange, finalHighlighter);
-            newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
-          };
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("remap: create " + (newInfo.getHighlighter() == null ? "" : "(recycled)") + newInfo + currentProgressInfo());
-          }
-          if (recycled == null) {
-            // create new
+          else {
             //assertNoInfoInMarkup(newInfo, markup, recycler, invalidElementRecycler);
             markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                           HighlighterTargetArea.EXACT_RANGE, false,
                                                           changeAttributes);
           }
+        }
+        else {
+          // recycle
+          RangeHighlighterEx highlighter = recycled.info().highlighter;
+          if (isFileLevel) {
+            RangeHighlighterEx highlighterToUse = createOrReuseFakeFileLevelHighlighter(DaemonCodeAnalyzerEx.ANY_GROUP, newInfo, highlighter, markup);
+            ((HighlightingSessionImpl)session).replaceFileLevelHighlight(recycled.info(), newInfo, highlighterToUse);
+          }
           else {
-            // recycle
-            RangeHighlighterEx highlighter = recycled.info().highlighter;
             markup.changeAttributesInBatch(highlighter, changeAttributes);
             newInfo.setHighlighter(highlighter);
             highlighter.setErrorStripeTooltip(newInfo);
@@ -1080,12 +1065,28 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       }
     });
     for (HighlightInfo info : newInfos) {
-      if (!info.isFileLevelAnnotation() && BackgroundUpdateHighlightersUtil.getRangeToCreateHighlighter(info, hostDocument) != -1) { // file-level HighlightInfos set their highlighter in EDT later
+      if (BackgroundUpdateHighlightersUtil.getRangeToCreateHighlighter(info, hostDocument) != -1) {
         assert info.highlighter != null;
         assert info.highlighter.isValid();
         assert HighlightInfo.fromRangeHighlighter(info.highlighter) == info;
       }
     }
+  }
+
+  @NotNull
+  static RangeHighlighterEx createOrReuseFakeFileLevelHighlighter(int group, @NotNull HighlightInfo info, @Nullable RangeHighlighterEx toReuse, @NotNull MarkupModel markupModel) {
+    Document document = markupModel.getDocument();
+    RangeHighlighterEx highlighter = toReuse != null && toReuse.isValid() ? toReuse
+             : (RangeHighlighterEx)markupModel.addRangeHighlighter(0, document.getTextLength(), DaemonCodeAnalyzerEx.ANY_GROUP, null, HighlighterTargetArea.EXACT_RANGE);
+    highlighter.setGreedyToLeft(true);
+    highlighter.setGreedyToRight(true);
+    highlighter.setErrorStripeTooltip(info);
+    // for the condition `existing.equalsByActualOffset(info)` above work correctly,
+    // create a fake whole-file highlighter which will track the document size changes
+    // and which will make possible to calculate correct `info.getActualEndOffset()`
+    info.setHighlighter(highlighter);
+    info.setGroup(group);
+    return highlighter;
   }
 
   // psierrorelement reparse

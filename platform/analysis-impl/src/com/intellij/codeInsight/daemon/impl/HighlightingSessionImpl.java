@@ -344,8 +344,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {
       if (!project.isDisposed() && !isCanceled()) {
-        codeAnalyzer.removeFileLevelHighlight(getPsiFile(), oldFileLevelInfo);
-        codeAnalyzer.addFileLevelHighlight(oldFileLevelInfo.getGroup(), newFileLevelInfo, getPsiFile(), toReuse);
+        codeAnalyzer.replaceFileLevelHighlight( oldFileLevelInfo, newFileLevelInfo, getPsiFile(), toReuse);
       }
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
