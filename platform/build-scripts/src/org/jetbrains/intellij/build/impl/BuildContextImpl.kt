@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
@@ -360,7 +360,7 @@ class BuildContextImpl internal constructor(
           get() = false
 
         override fun updateDigest(digest: HashStream64) {
-          digest.putInt(-1)
+          digest.putByte(Byte.MIN_VALUE)
         }
 
         override suspend fun produce(targetFile: Path) {

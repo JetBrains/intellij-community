@@ -44,24 +44,23 @@ internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionC
         is InMemoryContentSource -> InMemorySourceAndCacheStrategy(source)
         is FileSource -> FileSourceCacheStrategy(source)
         is ZipSource -> {
-          if (source.file.startsWith(MAVEN_REPO)) {
-            MavenJarSourceAndCacheStrategy(source)
+          if (!source.file.startsWith(MAVEN_REPO)) {
+            NonMavenJarSourceAndCacheStrategy(source)
           }
           else {
-            NonMavenJarSourceAndCacheStrategy(source)
+            MavenJarSourceAndCacheStrategy(source)
           }
         }
         is LazySource -> LazySourceAndCacheStrategy(source)
       }
     }
+    .sortedBy { it.name }
 }
 
 internal sealed interface SourceAndCacheStrategy {
   val source: Source
+  val name: String
 
-  /**
-   * The [updateDigest] must be called prior to invoking this method.
-   */
   fun getHash(): Long
 
   fun getSize(): Long
@@ -70,36 +69,38 @@ internal sealed interface SourceAndCacheStrategy {
 }
 
 private class MavenJarSourceAndCacheStrategy(override val source: ZipSource) : SourceAndCacheStrategy {
-  private var hash = 0L
+  override val name = MAVEN_REPO.relativize(source.file).invariantSeparatorsPathString
 
-  override fun getHash() = hash
+  override fun getHash() = Hashing.komihash5_0().hashCharsToLong(name)
 
-  override fun getSize() = Files.size(source.file)
+  override fun getSize(): Long = Files.size(source.file)
 
   override fun updateDigest(digest: HashStream64) {
-    val relativePath = MAVEN_REPO.relativize(source.file).invariantSeparatorsPathString
-    hash = Hashing.komihash5_0().hashCharsToLong(relativePath)
-    digest.putString(relativePath)
+    // path includes version - that's enough
   }
 }
 
 private class LazySourceAndCacheStrategy(override val source: LazySource) : SourceAndCacheStrategy {
+  override val name: String
+    get() = source.name
+
   override fun getHash() = source.hash
 
-  override fun getSize() = 0L
+  override fun getSize(): Long = 0
 
   override fun updateDigest(digest: HashStream64) {
-    digest.putString(source.name)
     digest.putLong(source.hash)
   }
 }
 
 private class NonMavenJarSourceAndCacheStrategy(override val source: ZipSource) : SourceAndCacheStrategy {
-  private var hash = 0L
+  private var hash: Long = 0
+
+  override val name = source.file.toString()
 
   override fun getHash() = hash
 
-  override fun getSize() = Files.size(source.file)
+  override fun getSize(): Long = Files.size(source.file)
 
   override fun updateDigest(digest: HashStream64) {
     val fileContent = Files.readAllBytes(source.file)
@@ -108,44 +109,47 @@ private class NonMavenJarSourceAndCacheStrategy(override val source: ZipSource) 
   }
 }
 
-private class ModuleOutputSourceAndCacheStrategy(override val source: DirSource, private val name: String) : SourceAndCacheStrategy {
-  private var hash = 0L
+private class ModuleOutputSourceAndCacheStrategy(override val source: DirSource, override val name: String) : SourceAndCacheStrategy {
+  private var hash: Long = 0
 
   override fun getHash() = hash
 
-  override fun getSize() = 0L
+  override fun getSize(): Long = 0
 
   override fun updateDigest(digest: HashStream64) {
-    digest.putString(name)
-
     hash = computeHashForModuleOutput(source)
     digest.putLong(hash)
   }
 }
 
 private class InMemorySourceAndCacheStrategy(override val source: InMemoryContentSource) : SourceAndCacheStrategy {
-  private var hash = 0L
+  private var hash: Long = 0
+
+  override val name: String
+    get() = source.relativePath
 
   override fun getHash() = hash
 
-  override fun getSize() = source.data.size.toLong()
+  override fun getSize(): Long = 0
 
   override fun updateDigest(digest: HashStream64) {
-    digest.putString(source.relativePath)
-
     hash = Hashing.komihash5_0().hashBytesToLong(source.data)
     digest.putLong(hash).putInt(source.data.size)
   }
 }
 
 private class FileSourceCacheStrategy(override val source: FileSource) : SourceAndCacheStrategy {
-  override fun getHash() = source.hash
+  private var hash: Long = source.hash
 
-  override fun getSize() = source.size.toLong()
+  override val name: String
+    get() = source.relativePath
+
+  override fun getHash() = hash
+
+  override fun getSize(): Long = source.size.toLong()
 
   override fun updateDigest(digest: HashStream64) {
-    digest.putString(source.relativePath)
-    digest.putLong(source.hash)
+    digest.putLong(hash)
   }
 }
 
