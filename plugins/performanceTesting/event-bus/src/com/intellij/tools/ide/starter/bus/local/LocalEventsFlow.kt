@@ -3,15 +3,9 @@ package com.intellij.tools.ide.starter.bus.local
 import com.intellij.tools.ide.starter.bus.EventsFlow
 import com.intellij.tools.ide.starter.bus.Subscriber
 import com.intellij.tools.ide.starter.bus.events.Event
-import com.intellij.tools.ide.starter.bus.exceptions.EventBusException
 import com.intellij.tools.ide.starter.bus.logger.EventBusLoggerFactory
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asExecutor
-import kotlinx.coroutines.runBlocking
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
+import kotlinx.coroutines.*
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.jvm.internal.CallableReference
@@ -26,6 +20,8 @@ class LocalEventsFlow : EventsFlow {
   // Therefore, CopyOnWriteArrayList is using
   private val subscribers = HashMap<String, CopyOnWriteArrayList<Subscriber<out Event>>>()
   private val subscribersLock = ReentrantReadWriteLock()
+  private var parentJob = Job()
+  private var scope = CoroutineScope(Dispatchers.IO) + parentJob
 
   // In case using class as subscriber. eg MyClass::class
   override fun getSubscriberObject(subscriber: Any) = if (subscriber is CallableReference) subscriber::class.toString() else subscriber
@@ -67,23 +63,32 @@ class LocalEventsFlow : EventsFlow {
     (subscribersForEvent as? CopyOnWriteArrayList<Subscriber<T>>)
       ?.map { subscriber ->
         LOG.debug("Post event $eventClassName for $subscriber.")
-        CompletableFuture.runAsync({
-                                     LOG.debug("Start execution $eventClassName for $subscriber")
-                                     runBlocking { subscriber.callback(event) }
-                                     LOG.debug("Finished execution $eventClassName for $subscriber")
-                                   }, Dispatchers.IO.asExecutor())
-          .orTimeout(subscriber.timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
-          .exceptionally { throwable ->
-            throw EventBusException(eventClassName, subscriber.subscriberName.toString(),
-                                    subscribersForEvent.map { it.subscriberName },
-                                    throwable)
+        scope.launch {
+          LOG.debug("Start execution $eventClassName for $subscriber")
+          runBlocking {
+            withTimeout(subscriber.timeout) {
+              runInterruptible {
+                runBlocking {
+                  withContext(Dispatchers.IO) {
+                    try {
+                      subscriber.callback(event)
+                    }
+                    catch (e: Throwable) {
+                      exceptions.add(e)
+                    }
+                  }
+                }
+              }
+            }
           }
+          LOG.debug("Finished execution $eventClassName for $subscriber")
+        }
       }
       ?.forEach {
         try {
-          it.join()
+          runBlocking { it.join() }
         }
-        catch (e: CompletionException) {
+        catch (e: Throwable) {
           exceptions.add(e)
         }
       }
@@ -97,6 +102,16 @@ class LocalEventsFlow : EventsFlow {
   override fun unsubscribeAll() {
     subscribersLock.writeLock().withLock {
       subscribers.clear()
+    }
+    try {
+      runBlocking { parentJob.cancelAndJoin() }
+    }
+    catch (t: Throwable) {
+      LOG.info("Scope was not canceled, $t")
+    }
+    finally {
+      parentJob = Job()
+      scope = CoroutineScope(Dispatchers.IO) + parentJob
     }
   }
 }
