@@ -77,10 +77,6 @@ final class ManagedHighlighterRecycler {
     return ContainerUtil.flatten(incinerator.values());
   }
 
-  public @Nullable InvalidPsi pickupFileLevelRangeHighlighter(int fileTextLength) {
-    return pickupHighlighterFromGarbageBin(0, fileTextLength, DaemonCodeAnalyzerEx.ANY_GROUP);
-  }
-
   /**
    * - create {@link ManagedHighlighterRecycler},
    * - run {@code consumer} which usually calls {@link ManagedHighlighterRecycler#recycleHighlighter} and {@link HighlighterRecycler#pickupHighlighterFromGarbageBin}
