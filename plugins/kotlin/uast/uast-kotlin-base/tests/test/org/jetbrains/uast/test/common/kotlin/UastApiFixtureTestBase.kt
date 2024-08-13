@@ -14,10 +14,14 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
@@ -1213,6 +1217,33 @@ interface UastApiFixtureTestBase {
         TestCase.assertEquals("Foo", uCallExpression.receiverType?.canonicalText)
     }
 
+    fun checkSourcePsiOfLazyPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    var prop = "zzz"
+                        internal get
+                        private set
+                    var lazyProp by lazy { setOf("zzz") }
+                        private get
+                        internal set
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitMethod(node: UMethod): Boolean {
+                    if (node.isConstructor) {
+                        return super.visitMethod(node)
+                    }
+                    TestCase.assertTrue(node.sourcePsi?.text, node.sourcePsi is KtPropertyAccessor)
+                    return super.visitMethod(node)
+                }
+            }
+        )
+    }
+
     fun checkTextRangeOfLocalVariable(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -1283,6 +1314,109 @@ interface UastApiFixtureTestBase {
             }
         )
         TestCase.assertEquals(1, count)
+    }
+
+    fun checkNoArgConstructorSourcePsi(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                open class SingleConstructor(val x: Int)
+
+                class MultipleConstructorsOnlyPrimaryVisible(val x: Int) {
+                  private constructor(x: Int, y: Int) : this(x + y)
+
+                  internal constructor(x: Int, y: Int, z: Int) : this(x + y + z)
+                }
+
+                class MultipleConstructorsOnlySecondaryVisible private constructor(val x: Int) {
+                  constructor(x: Int, y: Int) : this(x + y)
+
+                  internal constructor(x: Int, y: Int, z: Int) : this(x + y + z)
+                }
+
+                // multiple constructors
+                open class MultipleVisibleConstructors(val x: Int) {
+                  constructor(x: Int, y: Int) : this(x + y)
+                }
+
+                // multiple constructors
+                class MultipleVisibleConstructorsBothSecondary private constructor(val x: Int) {
+                  constructor(x: Int, y: Int) : this(x + y)
+
+                  constructor(x: Int, y: Int, z: Int) : this(x + y + z)
+                }
+
+                // multiple constructors
+                class MultipleVisibleConstructorsNotFromSuperclass(x: Int) : SingleConstructor(x) {
+                  constructor(x: Int, y: Int) : this(x + y)
+                }
+
+                // multiple constructors
+                class MultipleVisibleConstructorsFromSuperclass(x: Int) : MultipleVisibleConstructors(x) {
+                  constructor(x: Int, y: Int) : this(x + y)
+                }
+
+                // If _all_ of a constructor's arguments have a default value,
+                // Kotlin will generate a default no-arg constructor as well, but! with the same PSI
+                class ConstructorWithAllDefaultArgs(val x: Int = 0)
+
+                class ConstructorWithAllDefaultArgsAndJvmOverloads
+                @JvmOverloads
+                constructor(val x: Int = 0)
+
+                class ConstructorWithSomeDefaultArgs(val x: Int, val y: Int = 0)
+
+                class ConstructorWithSomeDefaultArgsAndJvmOverloads
+                @JvmOverloads
+                constructor(val x: Int, val y: Int = 0)
+
+                // multiple constructors
+                class ConstructorWithAllDefaultArgsAndSecondaryConstructor(val x: Int = 0) {
+                  constructor(x: Int, y: Int) : this(x + y)
+                }
+
+                // multiple constructors
+                class ConstructorWithSomeDefaultArgsAndSecondaryConstructor(val x: Int, val y: Int = 0) {
+                  constructor(x: Int, y: Int, z: Int) : this(x + y, z)
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        val expectedMultipleConstructors = listOf(
+            "MultipleVisibleConstructors",
+            "MultipleVisibleConstructorsBothSecondary",
+            "MultipleVisibleConstructorsNotFromSuperclass",
+            "MultipleVisibleConstructorsFromSuperclass",
+            "ConstructorWithAllDefaultArgsAndSecondaryConstructor",
+            "ConstructorWithSomeDefaultArgsAndSecondaryConstructor",
+        )
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitClass(node: UClass): Boolean {
+                    val count = node.getNonPrivateConstructorCount()
+                    if (node.name in expectedMultipleConstructors) {
+                        TestCase.assertTrue("${node.name}: $count", count > 1)
+                    } else {
+                        TestCase.assertEquals("${node.name}: $count", 1, count)
+                    }
+                    return super.visitClass(node)
+                }
+
+                private fun UClass.getNonPrivateConstructorCount(): Int {
+                    val declaredSourceConstructors =
+                        this.methods
+                            .filter { it.isConstructor && it.sourcePsi != null }
+                            .distinctBy { System.identityHashCode(it.sourcePsi) }
+                    return declaredSourceConstructors.count {
+                        it.visibility != UastVisibility.PRIVATE && !hasInternalModifier(it)
+                    }
+                }
+
+                private fun hasInternalModifier(owner: PsiModifierListOwner): Boolean {
+                    val sourcePsi = if (owner is UElement) owner.sourcePsi else owner.unwrapped
+                    return sourcePsi is KtModifierListOwner && sourcePsi.hasModifier(KtTokens.INTERNAL_KEYWORD)
+                }
+            }
+        )
     }
 
     fun checkNullLiteral(myFixture: JavaCodeInsightTestFixture) {
