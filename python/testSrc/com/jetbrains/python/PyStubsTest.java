@@ -1277,20 +1277,6 @@ public class PyStubsTest extends PyTestCase {
     return new PyVersionRange(Version.parseVersion(lowInclusive), Version.parseVersion(highExclusive));
   }
 
-  //private static @NotNull StubElementValidator ifPart(int major, int minor, boolean isLessThan) {
-  //  return stub -> {
-  //    assertInstanceOf(stub, PyIfPartIfStub.class);
-  //    assertEquals(new PyVersionCheck(new Version(major, minor, 0), isLessThan), ((PyIfPartIfStub)stub).getVersionCheck());
-  //  };
-  //}
-  //
-  //private static @NotNull StubElementValidator elifPart(int major, int minor, boolean isLessThan) {
-  //  return stub -> {
-  //    assertInstanceOf(stub, PyIfPartElifStub.class);
-  //    assertEquals(new PyVersionCheck(new Version(major, minor, 0), isLessThan), ((PyIfPartElifStub)stub).getVersionCheck());
-  //  };
-  //}
-
   private interface StubElementValidator {
     void test(@NotNull StubElement<?> stub);
 
