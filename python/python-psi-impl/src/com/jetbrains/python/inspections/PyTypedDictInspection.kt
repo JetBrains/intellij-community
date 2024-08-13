@@ -4,7 +4,6 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -22,12 +21,6 @@ import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_NAME_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
-
-@NlsSafe
-private const val REQUIRED = "Required"
-
-@NlsSafe
-private const val NOT_REQUIRED = "NotRequired"
 
 class PyTypedDictInspection : PyInspection() {
 
@@ -272,45 +265,42 @@ class PyTypedDictInspection : PyInspection() {
       }
     }
 
+    fun isTypeDictQualifier(node: PyReferenceExpression): Boolean =
+      PyTypingTypeProvider.resolveToQualifiedNames(node, myTypeEvalContext).any { PyTypingTypeProvider.TYPE_DICT_QUALIFIERS.contains(it) }
+
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
       if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase::class.java) == null) {
-        val isRequired = PyTypingTypeProvider.resolveToQualifiedNames(node, myTypeEvalContext).any { qualifiedName ->
-          PyTypingTypeProvider.REQUIRED == qualifiedName ||
-          PyTypingTypeProvider.REQUIRED_EXT == qualifiedName
-        }
-        val isNotRequired = PyTypingTypeProvider.resolveToQualifiedNames(node, myTypeEvalContext).any { qualifiedName ->
-          PyTypingTypeProvider.NOT_REQUIRED == qualifiedName ||
-          PyTypingTypeProvider.NOT_REQUIRED_EXT == qualifiedName
-        }
-        if (isRequired || isNotRequired) {
+        val isTypeDictQualifier = isTypeDictQualifier(node)
+        if (isTypeDictQualifier) {
+          val qualifierName = node.name
           val classParent = PsiTreeUtil.getParentOfType(node, PyClass::class.java)
           val callParent = PsiTreeUtil.getParentOfType(node, PyCallExpression::class.java)
           if (classParent == null) {
             if (callParent == null) {
-              registerProblem(node, PyPsiBundle.message("INSP.typeddict.required.notrequired.cannot.be.used.outside.typeddict.definition",
-                                                        if (isRequired) REQUIRED else NOT_REQUIRED))
+              registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
+                                                        qualifierName))
             }
             else {
               if (callParent.callee != null &&
                   PyTypingTypeProvider.resolveToQualifiedNames(callParent.callee!!, myTypeEvalContext).none { qualifiedName ->
                     PyTypingTypeProvider.TYPED_DICT == qualifiedName || PyTypingTypeProvider.TYPED_DICT_EXT == qualifiedName
                   }) {
-                registerProblem(node, PyPsiBundle.message("INSP.typeddict.required.notrequired.cannot.be.used.outside.typeddict.definition",
-                                                          if (isRequired) REQUIRED else NOT_REQUIRED))
+                registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
+                                                          qualifierName))
               }
             }
           }
           else {
             if (!PyTypedDictTypeProvider.isTypingTypedDictInheritor(classParent, myTypeEvalContext)) {
-              registerProblem(node, PyPsiBundle.message("INSP.typeddict.required.notrequired.cannot.be.used.outside.typeddict.definition",
-                                                        if (isRequired) REQUIRED else NOT_REQUIRED))
+              registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
+                                                        qualifierName))
             }
           }
 
           if (node.parent is PySubscriptionExpression && (node.parent as PySubscriptionExpression).indexExpression is PyTupleExpression) {
             registerProblem((node.parent as PySubscriptionExpression).indexExpression,
                             PyPsiBundle.message("INSP.typeddict.required.notrequired.must.have.exactly.one.type.argument",
-                                                if (isRequired) REQUIRED else NOT_REQUIRED))
+                                                qualifierName))
           }
         }
       }
@@ -346,16 +336,24 @@ class PyTypedDictInspection : PyInspection() {
         return
       }
       if (expression is PySubscriptionExpression && expression.operand is PyReferenceExpression) {
-        if (expression.indexExpression is PySubscriptionExpression) {
-          val indexExpression = expression.indexExpression as PySubscriptionExpression
-          if (indexExpression.operand is PyReferenceExpression) {
-            val operandIsRequired = PyTypedDictTypeProvider.isRequired(expression.operand as PyReferenceExpression, myTypeEvalContext)
-            val indexIsRequired = PyTypedDictTypeProvider.isRequired(indexExpression.operand as PyReferenceExpression, myTypeEvalContext)
-            if (operandIsRequired != null && indexIsRequired != null && operandIsRequired.xor(indexIsRequired)) {
-              registerProblem(expression, PyPsiBundle.message("INSP.typeddict.cannot.be.required.and.not.required.at.the.same.time"))
+        var requiredPresented = false
+        var notRequiredPresented = false
+        expression.accept(object: PyRecursiveElementVisitor() {
+          override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
+            if (PyTypedDictTypeProvider.isRequired(node.operand, myTypeEvalContext) == true) {
+              requiredPresented = true
             }
+            if (PyTypedDictTypeProvider.isRequired(node.operand, myTypeEvalContext) == false) {
+              notRequiredPresented = true
+            }
+            if (requiredPresented && notRequiredPresented) {
+              registerProblem(expression, PyPsiBundle.message("INSP.typeddict.cannot.be.required.and.not.required.at.the.same.time"))
+              return
+            }
+            super.visitPySubscriptionExpression(node)
           }
-        }
+        })
+
         return
       }
       val type = if (expression is PyReferenceExpression) {
