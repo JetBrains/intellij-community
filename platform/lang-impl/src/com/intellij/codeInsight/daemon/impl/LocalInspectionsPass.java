@@ -159,9 +159,9 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
           }
         };
 
-        InspectionRunner runner =
-          new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true, progress, myIgnoreSuppressed,
-                               myProfileWrapper, mySuppressedElements);
+        InspectionRunner runner = new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true,
+                                                       isDumbMode(), progress, myIgnoreSuppressed, myProfileWrapper, mySuppressedElements);
+
         result.resultContexts = runner.inspect(activeToolWrappers,
                                         ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity(),
                                         true,

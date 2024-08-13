@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -49,6 +50,7 @@ class InspectionRunner {
   private final TextRange myPriorityRange;
   private final boolean myInspectInjected;
   private final boolean myIsOnTheFly;
+  private final boolean myDumbMode;
   private final ProgressIndicator myProgress;
   private final boolean myIgnoreSuppressed;
   private final InspectionProfileWrapper myInspectionProfileWrapper;
@@ -60,6 +62,7 @@ class InspectionRunner {
                    @NotNull TextRange priorityRange,
                    boolean inspectInjected,
                    boolean isOnTheFly,
+                   boolean dumbMode,
                    @NotNull ProgressIndicator progress,
                    boolean ignoreSuppressed,
                    @NotNull InspectionProfileWrapper inspectionProfileWrapper,
@@ -69,6 +72,7 @@ class InspectionRunner {
     myPriorityRange = priorityRange;
     myInspectInjected = inspectInjected;
     myIsOnTheFly = isOnTheFly;
+    myDumbMode = dumbMode;
     myProgress = progress;
     myIgnoreSuppressed = ignoreSuppressed;
     myInspectionProfileWrapper = inspectionProfileWrapper;
@@ -165,6 +169,10 @@ class InspectionRunner {
 
       Processor<? super InspectionContext> contextProcessor = (context) -> {
         executeInImpatientReadAction(()-> {
+          if (DumbService.isDumb(project) != myDumbMode) {
+            // Dumb state change has sneaked between our read actions. Aborting.
+            return;
+          }
           // sequentially to avoid inspection visitor reentrancy
           processContext(context, context.elementsInside(), new InspectionVisitorOptimizer(context.elementsInside()));
           processContext(context, context.elementsOutside(), new InspectionVisitorOptimizer(context.elementsOutside()));
@@ -327,8 +335,9 @@ class InspectionRunner {
     RedundantSuppressInspectionBase redundantSuppressGlobalTool = (RedundantSuppressInspectionBase)redundantSuppressTool.getTool();
     LocalInspectionTool rsLocalTool = redundantSuppressGlobalTool.createLocalTool(redundantSuppressionDetector, mySuppressedElements, activeTools, myRestrictRange);
     List<LocalInspectionToolWrapper> wrappers = Collections.singletonList(new LocalInspectionToolWrapper(rsLocalTool));
-    InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, true, myProgress, false,
-                                                   myInspectionProfileWrapper, mySuppressedElements);
+    InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, true,
+                                                   myDumbMode, myProgress, false, myInspectionProfileWrapper,
+                                                   mySuppressedElements);
     result.addAll(runner.inspect(wrappers, HighlightSeverity.WARNING, false, applyIncrementallyCallback, contextFinishedCallback, null));
   }
 
@@ -398,9 +407,9 @@ class InspectionRunner {
                   wrappers + "; injectedPsi.getTextRange()=" + injectedPsi.getTextRange() + "; shouldInspect=" + shouldInspect(injectedPsi));
       }
     }
-    InspectionRunner injectedRunner = new InspectionRunner(injectedPsi, injectedPsi.getTextRange(),
-                                                           injectedPriorityRange, false, myIsOnTheFly, myProgress,
-                                                           myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
+    InspectionRunner injectedRunner = new InspectionRunner(injectedPsi, injectedPsi.getTextRange(), injectedPriorityRange,
+                                                           false, myIsOnTheFly, myDumbMode, myProgress, myIgnoreSuppressed,
+                                                           myInspectionProfileWrapper, mySuppressedElements);
     ApplyIncrementallyCallback applyInjectionsIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) ->
       applyInjectedDescriptor(descriptors, holder, visitingPsiElement, shortName, host, addDescriptorIncrementallyCallback);
     List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(
