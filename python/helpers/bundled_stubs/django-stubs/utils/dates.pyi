@@ -1,6 +1,0 @@
-WEEKDAYS: dict[int, str]
-WEEKDAYS_ABBR: dict[int, str]
-MONTHS: dict[int, str]
-MONTHS_3: dict[int, str]
-MONTHS_AP: dict[int, str]
-MONTHS_ALT: dict[int, str]

@@ -1,3 +1,0 @@
-from django.apps import AppConfig
-
-class GISConfig(AppConfig): ...
