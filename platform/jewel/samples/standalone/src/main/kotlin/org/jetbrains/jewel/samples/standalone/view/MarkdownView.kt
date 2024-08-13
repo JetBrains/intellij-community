@@ -4,11 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -21,10 +18,9 @@ import org.jetbrains.jewel.ui.component.Divider
 @Composable
 fun MarkdownDemo() {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
-        var currentMarkdown by remember { mutableStateOf(JewelReadme) }
+        val editorState = rememberTextFieldState(JewelReadme)
         MarkdownEditor(
-            currentMarkdown = currentMarkdown,
-            onMarkdownChange = { currentMarkdown = it },
+            state = editorState,
             modifier = Modifier.fillMaxHeight().weight(1f),
         )
 
@@ -32,7 +28,7 @@ fun MarkdownDemo() {
 
         MarkdownPreview(
             modifier = Modifier.fillMaxHeight().weight(1f),
-            rawMarkdown = currentMarkdown,
+            rawMarkdown = editorState.text,
         )
     }
 }

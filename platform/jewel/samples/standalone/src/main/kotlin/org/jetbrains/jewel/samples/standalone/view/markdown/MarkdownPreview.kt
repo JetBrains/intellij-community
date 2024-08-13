@@ -43,7 +43,7 @@ import java.net.URI
 @Composable
 internal fun MarkdownPreview(
     modifier: Modifier = Modifier,
-    rawMarkdown: String,
+    rawMarkdown: CharSequence,
 ) {
     val isDark = JewelTheme.isDark
 
@@ -64,7 +64,7 @@ internal fun MarkdownPreview(
         @Suppress("InjectDispatcher") // This should never go in the composable IRL
         markdownBlocks =
             withContext(Dispatchers.Default) {
-                processor.processMarkdownDocument(rawMarkdown)
+                processor.processMarkdownDocument(rawMarkdown.toString())
             }
     }
 
