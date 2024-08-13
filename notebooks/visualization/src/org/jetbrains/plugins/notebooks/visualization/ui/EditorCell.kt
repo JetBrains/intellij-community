@@ -3,10 +3,14 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.*
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.execution.ExecutionEvent
@@ -14,27 +18,35 @@ import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progres
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
+private val CELL_EXTENSION_CONTAINER_KEY = Key<MutableMap<KClass<*>, Any>>("CELL_EXTENSION_CONTAINER_KEY")
+
 class EditorCell(
   private val editor: EditorEx,
   val manager: NotebookCellInlayManager,
   var intervalPointer: NotebookIntervalPointer,
+  parentScope: CoroutineScope,
   private val viewFactory: (EditorCell) -> EditorCellView,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
 
-  val source: String
-    get() {
-      val document = editor.document
-      val startOffset = document.getLineStartOffset(interval.lines.first + 1)
-      val endOffset = document.getLineEndOffset(interval.lines.last)
-      if (startOffset >= endOffset) return ""  // possible for empty cells
-      return document.getText(TextRange(startOffset, endOffset))
-    }
+  private val coroutineScope = parentScope.childScope("EditorCell")
+
+  private val _source = MutableStateFlow<String>(getSource())
+  val source = _source.asStateFlow()
+
+  private fun getSource(): String {
+    val document = editor.document
+    if (interval.lines.first + 1 >= document.lineCount) return ""
+    val startOffset = document.getLineStartOffset(interval.lines.first + 1)
+    val endOffset = document.getLineEndOffset(interval.lines.last)
+    if (startOffset >= endOffset) return ""  // possible for empty cells
+    return document.getText(TextRange(startOffset, endOffset))
+  }
 
   val type: NotebookCellLines.CellType get() = interval.type
 
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
 
-  var view: EditorCellView? = createView()
+  var view: EditorCellView? = null
 
   var visible: Boolean = true
     set(value) {
@@ -53,6 +65,14 @@ class EditorCell(
         }
       }
     }
+
+  init {
+    CELL_EXTENSION_CONTAINER_KEY.set(this, mutableMapOf())
+  }
+
+  fun initView() {
+    view = createView()
+  }
 
   private fun createView(): EditorCellView = manager.update { ctx ->
     val view = viewFactory(this).also { Disposer.register(this, it) }
@@ -78,7 +98,8 @@ class EditorCell(
       }
     }
 
-  private var gutterAction: AnAction? = null
+  var gutterAction: AnAction? = null
+  private set
 
   private var executionCount: Int? = null
 
@@ -91,6 +112,7 @@ class EditorCell(
   private var mode = NotebookEditorMode.COMMAND
 
   override fun dispose() {
+    coroutineScope.cancel()
     view?.let { disposeView(it) }
   }
 
@@ -103,6 +125,9 @@ class EditorCell(
   }
 
   fun updateInput() {
+    coroutineScope.launch(Dispatchers.Main) {
+      _source.emit(getSource())
+    }
     view?.updateInput()
   }
 
@@ -110,7 +135,7 @@ class EditorCell(
     view?.onViewportChanges()
   }
 
-  fun setGutterAction(action: AnAction) {
+  fun setGutterAction(action: AnAction?) {
     gutterAction = action
     view?.setGutterAction(action)
   }
@@ -176,5 +201,27 @@ class EditorCell(
 
   fun requestCaret() {
     view?.requestCaret()
+  }
+
+  inline fun <reified T: Any> getExtension(): T {
+    return getExtension(T::class)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T : Any> getExtension(cls: KClass<T>): T {
+    return CELL_EXTENSION_CONTAINER_KEY.get(this)!![cls] as T
+  }
+
+  fun <T: Any> addExtension(cls: KClass<T>, extension:T) {
+    CELL_EXTENSION_CONTAINER_KEY.get(this)!![cls] = extension
+  }
+
+  inline fun <reified T: Any> removeExtension(): T {
+    return removeExtension(T::class)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T : Any> removeExtension(cls: KClass<T>): T {
+    return CELL_EXTENSION_CONTAINER_KEY.get(this)!![cls] as T
   }
 }

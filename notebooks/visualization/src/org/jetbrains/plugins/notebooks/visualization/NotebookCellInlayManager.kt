@@ -17,9 +17,11 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NOTEBOOK_EDITOR_MODE
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorModeListener
@@ -29,13 +31,16 @@ import org.jetbrains.plugins.notebooks.visualization.ui.*
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener.*
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
-import java.util.*
 
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl,
   private val shouldCheckInlayOffsets: Boolean,
   private val inputFactories: List<NotebookCellInlayController.InputFactory>,
+  private val cellExtensionFactories: List<CellExtensionFactory>,
+  parentScope: CoroutineScope,
 ) : Disposable, NotebookIntervalPointerFactory.ChangeListener, NotebookEditorModeListener {
+  private val coroutineScope = parentScope.childScope("NotebookCellInlayManager")
+
   private val notebookCellLines = NotebookCellLines.get(editor)
 
   private var initialized = false
@@ -247,20 +252,28 @@ class NotebookCellInlayManager private constructor(
         createCell(pointerFactory.create(interval))
       }.toMutableList()
     }
+    cellEventListeners.multicaster.onEditorCellEvents(_cells.map { CellCreated(it) })
+    _cells.forEach {
+      it.initView()
+    }
 
     JupyterBoundsChangeHandler.get(editor)?.postponeUpdates()
     _cells.forEach {
       it.view?.postInitInlays()
     }
 
-    cellEventListeners.multicaster.onEditorCellEvents(_cells.map { CellCreated(it) })
     inlaysChanged()
     JupyterBoundsChangeHandler.get(editor)?.performPostponed()
   }
 
-  private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, this, interval) { cell ->
+  private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, this, interval, coroutineScope) { cell ->
     EditorCellView(editor, notebookCellLines, cell, this).also { Disposer.register(cell, it) }
-  }.also { Disposer.register(this, it) }
+  }.also {
+    cellExtensionFactories.forEach { factory ->
+      factory.onCellCreated(it)
+    }
+    Disposer.register(this, it)
+  }
 
   private fun inlaysChanged() {
     changedListener?.inlaysChanged()
@@ -273,9 +286,21 @@ class NotebookCellInlayManager private constructor(
   }
 
   companion object {
-    fun install(editor: EditorImpl, shouldCheckInlayOffsets: Boolean, inputFactories: List<NotebookCellInlayController.InputFactory> = listOf()) {
+    fun install(
+      editor: EditorImpl,
+      shouldCheckInlayOffsets: Boolean,
+      inputFactories: List<NotebookCellInlayController.InputFactory> = listOf(),
+      cellExtensionFactories: List<CellExtensionFactory> = listOf(),
+      parentScope: CoroutineScope,
+    ) {
       EditorEmbeddedComponentContainer(editor as EditorEx)
-      val notebookCellInlayManager = NotebookCellInlayManager(editor, shouldCheckInlayOffsets, inputFactories).also { Disposer.register(editor.disposable, it) }
+      val notebookCellInlayManager = NotebookCellInlayManager(
+        editor,
+        shouldCheckInlayOffsets,
+        inputFactories,
+        cellExtensionFactories,
+        parentScope
+      ).also { Disposer.register(editor.disposable, it) }
       editor.putUserData(isFoldingEnabledKey, Registry.`is`("jupyter.editor.folding.cells"))
       NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, editor.disposable)
       notebookCellInlayManager.initialize()
@@ -325,6 +350,8 @@ class NotebookCellInlayManager private constructor(
       fixInlaysOffsetsAfterNewCellInsert(change, ctx)
     }
     cellEventListeners.multicaster.onEditorCellEvents(events)
+
+    events.filterIsInstance<CellCreated>().forEach { it.cell.initView() }
 
     checkInlayOffsets()
   }

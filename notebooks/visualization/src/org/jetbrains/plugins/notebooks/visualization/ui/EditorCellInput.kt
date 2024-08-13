@@ -33,7 +33,8 @@ class EditorCellInput(
 
   private var gutterAction: AnAction? = null
 
-  private var folded = false
+  var folded = false
+    private set
 
   private fun getFoldingBounds(): Pair<Int, Int> {
     //For disposed
@@ -72,7 +73,7 @@ class EditorCellInput(
     (component as? HasGutterIcon)?.updateGutterIcons(gutterAction)
   }
 
-  fun setGutterAction(action: AnAction) {
+  fun setGutterAction(action: AnAction?) {
     gutterAction = action
     updateGutterIcons()
   }

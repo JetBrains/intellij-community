@@ -45,7 +45,7 @@ private val fallbackInputFactory = object : InputFactory {
 class EditorCellView(
   private val editor: EditorImpl,
   private val intervals: NotebookCellLines,
-  internal var cell: EditorCell,
+  var cell: EditorCell,
   private val cellInlayManager: NotebookCellInlayManager,
 ) : EditorCellViewComponent(), Disposable {
 
@@ -209,7 +209,7 @@ class EditorCellView(
     outputs?.onViewportChange()
   }
 
-  fun setGutterAction(action: AnAction) {
+  fun setGutterAction(action: AnAction?) {
     input.setGutterAction(action)
   }
 
