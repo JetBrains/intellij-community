@@ -168,6 +168,7 @@ enum class TypeProperty {
   METHOD_BODY,
   CLASS,
   FUNCTION,
+  FILE,
   TOKEN,
   UNKNOWN,
 }
