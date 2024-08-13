@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl
 
@@ -223,7 +223,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
 
   fun isHovered(): Boolean = myRollover
 
-  open fun isFocused(): Boolean = toolWindow.isActive
+  fun isFocused(): Boolean = toolWindow.isActive
 
   fun resetDrop() {
     resetMouseState()
@@ -245,7 +245,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
 
-  protected open fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
+  private fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
     return when (anchor) {
       ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
       ToolWindowAnchor.TOP -> HelpTooltip.Alignment.LEFT
@@ -317,7 +317,8 @@ internal open class SquareAnActionButton(@JvmField protected val window: ToolWin
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    e.presentation.icon = scaleIcon((window.icon ?: AllIcons.Toolbar.Unknown) as ScalableIcon)
+    val icon = window.icon ?: AllIcons.Toolbar.Unknown
+    e.presentation.icon = if (icon is ScalableIcon) scaleIcon(icon) else icon
     e.presentation.isVisible = window.isShowStripeButton && window.isAvailable
     return window.isVisible
   }
