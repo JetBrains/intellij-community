@@ -521,14 +521,6 @@ private class CellBuilderImpl<T : JComponent>(
     return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
-  @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
-  override fun sizeGroup(name: String): CellBuilderImpl<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      sizeGroup(name)
-    }
-    return this
-  }
-
   @Deprecated("Use Kotlin UI DSL Version 2")
   override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> {
     builder.updateComponentConstraints(viewComponent) {
@@ -547,13 +539,6 @@ private class CellBuilderImpl<T : JComponent>(
   override fun withLargeLeftGap(): CellBuilder<T> {
     builder.updateComponentConstraints(viewComponent) {
       horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
-    }
-    return this
-  }
-
-  override fun withLeftGap(): CellBuilder<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      horizontal.gapBefore = gapToBoundSize(builder.spacing.horizontalGap, true)
     }
     return this
   }
