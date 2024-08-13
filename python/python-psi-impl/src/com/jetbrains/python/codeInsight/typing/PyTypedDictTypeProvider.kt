@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyTypedDictStubImpl
+import com.jetbrains.python.psi.stubs.PyTypedDictFieldStub
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
 import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
@@ -95,7 +96,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
         return PyCallableTypeImpl(parameters,
                                   when {
                                     valueTypeAndTotality == null -> default
-                                    valueTypeAndTotality.isRequired -> valueTypeAndTotality.type
+                                    valueTypeAndTotality.qualifiers.isRequired == true -> valueTypeAndTotality.type
                                     else -> PyUnionType.union(valueTypeAndTotality.type, default)
                                   })
       }
@@ -180,37 +181,37 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
         return TDFields(type.fields)
       }
 
-      val fields = mutableListOf<Pair<PyExpression, Boolean?>>()
-
+      val fields = mutableListOf<Pair<PyExpression, PyTypedDictType.TypedDictFieldQualifiers>>()
+      val totality = getTotality(cls)
       cls.processClassLevelDeclarations { element, _ ->
         if (element is PyTargetExpression) {
           val stub = element.stub
           if (context.maySwitchToAST(cls) || stub == null) {
             if (element.annotation != null) {
-              fields.add(Pair(element, checkTypeSpecification(element.annotation!!.value, context)))
+              fields.add(Pair(element, checkTypeSpecification(element.annotation!!.value, context, totality)))
             }
           }
           else {
             if (stub.annotation != null) {
               val annotation = PyUtil.createExpressionFromFragment(stub.annotation!!, cls)
-              fields.add(Pair(stub.psi, checkTypeSpecification(annotation, context)))
+              fields.add(Pair(stub.psi, checkTypeSpecification(annotation, context, totality)))
             }
           }
         }
         true
       }
 
-      val totality = getTotality(cls)
-      val toTDFields = Collectors.toMap<Pair<PyExpression, Boolean?>, String, PyTypedDictType.FieldTypeAndTotality, TDFields>(
+
+      val toTDFields = Collectors.toMap<Pair<PyExpression, PyTypedDictType.TypedDictFieldQualifiers>, String, PyTypedDictType.FieldTypeAndTotality, TDFields>(
         { it.first.name },
-        { field -> PyTypedDictType.FieldTypeAndTotality(field.first, context.getType(field.first), field.second ?: totality) },
+        { field -> PyTypedDictType.FieldTypeAndTotality(field.first, context.getType(field.first), field.second) },
         { _, v2 -> v2 },
         { TDFields() })
 
       return fields.stream().collect(toTDFields)
     }
 
-    private fun checkTypeSpecification(annotation: PyExpression?, context: TypeEvalContext): Boolean? {
+    private fun checkTypeSpecification(annotation: PyExpression?, context: TypeEvalContext, totality: Boolean): PyTypedDictType.TypedDictFieldQualifiers {
       if (annotation is PySubscriptionExpression) {
         var operand = annotation.operand
         if (operand is PyReferenceExpression) {
@@ -220,24 +221,23 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
               operand = annotatedType.operand
             }
           }
-          return isRequired(operand, context)
+          return parseTypedDictFieldQualifiers(operand, context, totality = totality)
         }
       }
-      return null
+      return PyTypedDictType.TypedDictFieldQualifiers(isRequired = totality)
     }
 
-    /**
-     * @return true - if value type is Required, false - if it is NotRequired, and null if it does not have any type specification
-     */
-    fun isRequired(expression: PyExpression, context: TypeEvalContext): Boolean? {
+    fun parseTypedDictFieldQualifiers(expression: PyExpression, context: TypeEvalContext, totality: Boolean? = null): PyTypedDictType.TypedDictFieldQualifiers {
       val resolvedNames = resolveToQualifiedNames(expression, context)
+      var isRequired = totality
       if (resolvedNames.any { name -> REQUIRED == name || REQUIRED_EXT == name }) {
-        return true
+        isRequired = true
       }
       else if (resolvedNames.any { name -> NOT_REQUIRED == name || NOT_REQUIRED_EXT == name }) {
-        return false
+        isRequired = false
       }
-      return null
+      val isReadOnly = resolvedNames.any {name -> READONLY == name || READONLY_EXT == name}
+      return PyTypedDictType.TypedDictFieldQualifiers(isRequired = isRequired, isReadOnly = isReadOnly)
     }
 
     private fun getTotality(cls: PyClass): Boolean {
@@ -309,12 +309,12 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     }
 
     private fun parseTypedDictFields(anchor: PsiElement,
-                                     fields: Map<String, Optional<String>>,
+                                     fields: List<PyTypedDictFieldStub>,
                                      context: TypeEvalContext,
                                      total: Boolean): TDFields {
       val result = TDFields()
-      for ((name, type) in fields) {
-        result[name] = parseTypedDictField(anchor, type.orElse(null), context, total)
+      for (field in fields) {
+        result[field.name] = parseTypedDictField(anchor, field.type.orElse(null), context, total)
       }
       return result
     }
@@ -333,25 +333,27 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
                                     total: Boolean): PyTypedDictType.FieldTypeAndTotality {
       if (type == null) return PyTypedDictType.FieldTypeAndTotality(null, null)
 
-      val valueTypeWithTotality = getStringBasedTypeForTypedDict(type, anchor, context)
-      if (valueTypeWithTotality == null) return PyTypedDictType.FieldTypeAndTotality(null, null)
+      val valueTypeWithQualifiers = getStringBasedTypeForTypedDict(type, anchor, context)
+      if (valueTypeWithQualifiers == null) return PyTypedDictType.FieldTypeAndTotality(null, null)
 
-      val pyType = Ref.deref(valueTypeWithTotality.first)
-      val requiredField = valueTypeWithTotality.second
+      val pyType = Ref.deref(valueTypeWithQualifiers.first)
+      val requiredField = valueTypeWithQualifiers.second
 
-      return PyTypedDictType.FieldTypeAndTotality(null, pyType, requiredField ?: total)
+      val isRequired = requiredField?.isRequired ?: total
+      val qualifiers = PyTypedDictType.TypedDictFieldQualifiers(isRequired = isRequired, isReadOnly = requiredField?.isReadOnly == true)
+      return PyTypedDictType.FieldTypeAndTotality(null, pyType, qualifiers)
     }
 
     private fun getStringBasedTypeForTypedDict(contents: String,
                                                anchor: PsiElement,
-                                               context: TypeEvalContext): Pair<Ref<PyType?>?, Boolean?>? {
+                                               context: TypeEvalContext): Pair<Ref<PyType?>?, PyTypedDictType.TypedDictFieldQualifiers?>? {
       val file = FileContextUtil.getContextFile(anchor) ?: return null
       val expr = PyUtil.createExpressionFromFragment(contents, file)
-      var required: Boolean? = null
+      var qualifiers: PyTypedDictType.TypedDictFieldQualifiers ? = null
       if (expr is PySubscriptionExpression) {
-        required = isRequired(expr.operand, context)
+        qualifiers = parseTypedDictFieldQualifiers(expr.operand, context)
       }
-      return if (expr != null) Pair(getType(expr, context), required) else null
+      return if (expr != null) Pair(getType(expr, context), qualifiers) else null
     }
 
 

@@ -15,10 +15,13 @@ interface PyTypedDictStub : CustomTargetExpressionStub {
    * @return keys' names and their values' types.
    * Iteration order repeats the declaration order.
    */
-  val fields: Map<String, Optional<String>>
+  val fields: List<PyTypedDictFieldStub>
 
   /**
    * @return value of 'total' keyword argument if exists, True otherwise
    */
   val isRequired: Boolean
 }
+
+
+data class PyTypedDictFieldStub(val name: String, val type: Optional<String>, val isReadOnly: Boolean)

@@ -85,7 +85,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         val singleStarParameter = PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter())
         val ellipsis = elementGenerator.createEllipsis()
         listOf(singleStarParameter) + fields.map {
-          if (it.value.isRequired) PyCallableParameterImpl.nonPsi(it.key, it.value.type)
+          if (it.value.qualifiers.isRequired == true) PyCallableParameterImpl.nonPsi(it.key, it.value.type)
           else PyCallableParameterImpl.nonPsi(it.key, it.value.type, ellipsis)
         }
       }
@@ -131,7 +131,12 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
 
   override fun getDeclarationElement(): PyQualifiedNameOwner = declaration ?: super<PyClassTypeImpl>.getDeclarationElement()
 
-  data class FieldTypeAndTotality @JvmOverloads constructor(val value: PyExpression?, val type: PyType?, val isRequired: Boolean = true)
+  /**
+   * @isRequired is true - if value type is Required, false - if it is NotRequired, and null if it does not have any type specification
+   */
+  data class TypedDictFieldQualifiers(val isRequired: Boolean? = true, val isReadOnly: Boolean = false)
+
+  data class FieldTypeAndTotality(val value: PyExpression?, val type: PyType?, val qualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers())
 
   companion object {
 
@@ -175,7 +180,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
       }
       if (expected !is PyTypedDictType) return null
 
-      val mandatoryArguments = expected.fields.filterValues { it.isRequired }.mapValues { Pair(it.value.value, it.value.type) }
+      val mandatoryArguments = expected.fields.filterValues { it.qualifiers.isRequired == true}.mapValues { Pair(it.value.value, it.value.type) }
       val actualArguments = actual.getKeysToValuesWithTypes()
       val expectedArguments = expected.getKeysToValuesWithTypes()
 
@@ -299,7 +304,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         if (actualTypeAndTotality == null
             || !strictUnionMatch(expectedTypeAndTotality.type, actualTypeAndTotality.type, context)
             || !strictUnionMatch(actualTypeAndTotality.type, expectedTypeAndTotality.type, context)
-            || expectedTypeAndTotality.isRequired.xor(actualTypeAndTotality.isRequired)) {
+            || expectedTypeAndTotality.qualifiers.isRequired != actualTypeAndTotality.qualifiers.isRequired) {
           return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
         }
 
