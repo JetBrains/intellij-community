@@ -2,6 +2,10 @@
 package com.intellij.find.findUsages.similarity
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Iconable
 import com.intellij.ui.Gray
@@ -24,10 +28,10 @@ import javax.swing.JPanel
 
 internal class UsagePreviewComponent private constructor(
   usageView: UsageView,
-  usageInfo: UsageInfo,
+  private val usageInfo: UsageInfo,
   renderingData: SnippetRenderingData,
   parent: Disposable,
-) : JBPanel<JBPanel<*>>(), Disposable {
+) : JBPanel<JBPanel<*>>(), Disposable, UiDataProvider {
   var header: JPanel
   private var mySnippetComponent: UsageCodeSnippetComponent
   private val myUsageView: UsageView
@@ -41,6 +45,15 @@ internal class UsagePreviewComponent private constructor(
     add(mySnippetComponent)
     if (!Disposer.tryRegister(parent, this)) {
       Disposer.dispose(parent)
+    }
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY) {
+      val file = usageInfo.virtualFile ?: return@lazy emptyArray()
+      val navigationOffset = usageInfo.navigationOffset
+      val openFileDescriptor = OpenFileDescriptor(usageInfo.project, file, navigationOffset)
+      arrayOf(openFileDescriptor)
     }
   }
 
