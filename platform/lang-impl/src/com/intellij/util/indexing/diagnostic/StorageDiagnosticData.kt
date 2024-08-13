@@ -20,6 +20,8 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
+import com.intellij.util.indexing.contentQueue.dev.IndexWriter
+import com.intellij.util.indexing.contentQueue.dev.LegacyMultiThreadedIndexWriter
 import com.intellij.util.io.*
 import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
@@ -158,8 +160,10 @@ object StorageDiagnosticData {
     }
   }
 
-  private fun otherGeneralStorageStatistics(mapStats: Map<Path, PersistentHashMapStatistics>,
-                                            enumeratorStats: Map<Path, PersistentEnumeratorStatistics>): StatsPerStorage {
+  private fun otherGeneralStorageStatistics(
+    mapStats: Map<Path, PersistentHashMapStatistics>,
+    enumeratorStats: Map<Path, PersistentEnumeratorStatistics>,
+  ): StatsPerStorage {
     val macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication())
     return StatsPerStorage(
       mapStats.mapKeys { macroManager.collapsePath(it.key.pathString) }.toSortedMap(),
@@ -167,8 +171,10 @@ object StorageDiagnosticData {
     )
   }
 
-  private fun indexStorageStatistics(mapStats: MutableMap<Path, PersistentHashMapStatistics>,
-                                     enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>): IndexStorageStats {
+  private fun indexStorageStatistics(
+    mapStats: MutableMap<Path, PersistentHashMapStatistics>,
+    enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>,
+  ): IndexStorageStats {
 
     val perIndexStats = TreeMap<String, StatsPerStorage>()
     for (id in ID.getRegisteredIds()) {
@@ -193,8 +199,10 @@ object StorageDiagnosticData {
     return IndexStorageStats(perIndexStats, otherIndexStorageStats)
   }
 
-  private fun vfsStorageStatistics(mapStats: MutableMap<Path, PersistentHashMapStatistics>,
-                                   enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>)
+  private fun vfsStorageStatistics(
+    mapStats: MutableMap<Path, PersistentHashMapStatistics>,
+    enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>,
+  )
     : StatsPerStorage {
     val cacheDir = FSRecords.getCacheDir().toAbsolutePath()
     return StatsPerStorage(filterStatsForStoragesUnderDir(mapStats, cacheDir), filterStatsForStoragesUnderDir(enumeratorStats, cacheDir))
@@ -278,6 +286,19 @@ object StorageDiagnosticData {
 
     otelMeter.counterBuilder("FileChannelInterruptsRetryer.totalRetriedAttempts").buildWithCallback {
       it.record(FileChannelInterruptsRetryer.totalRetriedAttempts())
+    }
+
+    val defaultParallelWriter = IndexWriter.defaultParallelWriter()
+    defaultParallelWriter.totalTimeSpentWriting(MILLISECONDS) { workerNo, timeSpentMs ->
+      otelMeter.counterBuilder("IndexUpdateWriter_$workerNo.totalTimeSpentWritingMs").buildWithCallback {
+        it.record(timeSpentMs)
+      }
+    }
+
+    if( defaultParallelWriter is LegacyMultiThreadedIndexWriter) {
+      otelMeter.counterBuilder("IndexUpdateWriter.totalTimeIndexersSleptMs").buildWithCallback {
+        it.record(defaultParallelWriter.totalTimeIndexersSlept(MILLISECONDS))
+      }
     }
 
     mmappedStoragesMonitoringHandle = MappedStorageOTelMonitor(otelMeter)

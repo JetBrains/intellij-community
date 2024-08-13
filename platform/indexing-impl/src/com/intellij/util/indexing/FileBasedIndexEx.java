@@ -79,7 +79,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  static boolean doTraceSharedIndexUpdates() {
+  public static boolean doTraceSharedIndexUpdates() {
     return TRACE_SHARED_INDEX_UPDATES;
   }
 

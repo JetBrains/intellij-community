@@ -10,16 +10,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-final
-class SingleIndexValueApplier<FileIndexMetaData> {
-  private final FileBasedIndexImpl myIndex;
-  final @NotNull ID<?, ?> indexId;
-  final int inputId;
+public final class SingleIndexValueApplier<FileIndexMetaData> {
+  public final @NotNull ID<?, ?> indexId;
+
+  private final @NotNull FileBasedIndexImpl indexImpl;
+
+  private final int inputId;
   private final @Nullable FileIndexMetaData myFileIndexMetaData;
-  final long evaluatingIndexValueApplierTime;
-  final @NotNull Supplier<Boolean> storageUpdate;
+  private final @NotNull Supplier<Boolean> storageUpdate;
   private final @NotNull String fileInfo;
   private final boolean isMock;
+
+  /** Time of {@code index.mapInputAndPrepareUpdate(inputId, null)}, in nanoseconds */
+  public final long evaluatingIndexValueApplierTime;
 
   SingleIndexValueApplier(@NotNull FileBasedIndexImpl index,
                           @NotNull ID<?, ?> indexId,
@@ -29,7 +32,7 @@ class SingleIndexValueApplier<FileIndexMetaData> {
                           @NotNull VirtualFile file,
                           @NotNull FileContent currentFC,
                           long evaluatingIndexValueApplierTime) {
-    myIndex = index;
+    indexImpl = index;
     this.indexId = indexId;
     this.inputId = inputId;
     myFileIndexMetaData = fileIndexMetaData;
@@ -39,18 +42,18 @@ class SingleIndexValueApplier<FileIndexMetaData> {
     isMock = FileBasedIndexImpl.isMock(currentFC.getFile());
   }
 
-  boolean wasIndexProvidedByExtension() {
+  public boolean wasIndexProvidedByExtension() {
     return storageUpdate instanceof IndexInfrastructureExtensionUpdateComputation &&
            ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
   }
 
-  boolean apply() {
+  public boolean apply() {
     FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {
       return doApply();
     }
     catch (RuntimeException exception) {
-      myIndex.requestIndexRebuildOnException(exception, indexId);
+      indexImpl.requestIndexRebuildOnException(exception, indexId);
       return false;
     }
     finally {
@@ -59,15 +62,15 @@ class SingleIndexValueApplier<FileIndexMetaData> {
   }
 
   private boolean doApply() {
-    if (myIndex.runUpdateForPersistentData(storageUpdate)) {
+    if (indexImpl.runUpdateForPersistentData(storageUpdate)) {
       if (FileBasedIndexEx.doTraceStubUpdates(indexId) || FileBasedIndexEx.doTraceIndexUpdates()) {
         FileBasedIndexImpl.LOG.info("index " + indexId + " update finished for " + fileInfo);
       }
       if (!isMock) {
-        ConcurrencyUtil.withLock(myIndex.myReadLock, () -> {
+        ConcurrencyUtil.withLock(indexImpl.myReadLock, () -> {
           //noinspection unchecked
           UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index =
-            (UpdatableIndex<?, ?, FileContent, FileIndexMetaData>)myIndex.getIndex(indexId);
+            (UpdatableIndex<?, ?, FileContent, FileIndexMetaData>)indexImpl.getIndex(indexId);
           index.setIndexedStateForFileOnFileIndexMetaData(inputId, myFileIndexMetaData, wasIndexProvidedByExtension());
         });
       }

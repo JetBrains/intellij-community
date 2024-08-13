@@ -54,12 +54,12 @@ final class UnindexedFilesFinder {
     long timeIndexingWithoutContentViaInfrastructureExtension = 0;
     private @NotNull List<SingleIndexValueApplier<?>> appliers = Collections.emptyList();
     private @NotNull List<SingleIndexValueRemover> removers = Collections.emptyList();
-    final @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode;
+    final @NotNull FileIndexingResult.ApplicationMode applicationMode;
     boolean indexInfrastructureExtensionInvalidated = false;
     boolean mayMarkFileIndexed = true;
     @Nullable ArrayList<Pair<FileIndexingState, ID<?, ?>>> unindexedStates;
 
-    UnindexedFileStatusBuilder(@NotNull FileIndexesValuesApplier.ApplicationMode applicationMode) {
+    UnindexedFileStatusBuilder(@NotNull FileIndexingResult.ApplicationMode applicationMode) {
       this.applicationMode = applicationMode;
     }
 
@@ -166,7 +166,7 @@ final class UnindexedFilesFinder {
     }
     // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
     FileIndexingStamp indexingStamp = indexingRequest.getFileIndexingStamp(file);
-    FileIndexesValuesApplier.ApplicationMode applicationMode = FileBasedIndexImpl.getContentIndependentIndexesApplicationMode();
+    FileIndexingResult.ApplicationMode applicationMode = FileBasedIndexImpl.getContentIndependentIndexesApplicationMode();
 
     if (TRUST_INDEXING_FLAG) {
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {

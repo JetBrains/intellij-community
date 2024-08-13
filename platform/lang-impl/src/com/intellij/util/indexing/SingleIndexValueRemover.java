@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,21 +12,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-final
-class SingleIndexValueRemover {
-  private final FileBasedIndexImpl myIndexImpl;
-  final @NotNull ID<?, ?> indexId;
+public final class SingleIndexValueRemover {
+  public final @NotNull ID<?, ?> indexId;
+
+  private final @NotNull FileBasedIndexImpl indexImpl;
+
   private final int inputId;
   private final @Nullable String fileInfo;
-  private final @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode;
-  long evaluatingValueRemoverTime;
+  private final @NotNull FileIndexingResult.ApplicationMode applicationMode;
 
-  SingleIndexValueRemover(FileBasedIndexImpl indexImpl, @NotNull ID<?, ?> indexId,
+  /** Time of {@code index.mapInputAndPrepareUpdate(inputId, null)}, in nanoseconds */
+  public long evaluatingValueRemoverTime;
+
+  SingleIndexValueRemover(@NotNull FileBasedIndexImpl indexImpl,
+                          @NotNull ID<?, ?> indexId,
                           @Nullable VirtualFile file,
                           @Nullable FileContent fileContent,
                           int inputId,
-                          @NotNull FileIndexesValuesApplier.ApplicationMode applicationMode) {
-    myIndexImpl = indexImpl;
+                          @NotNull FileIndexingResult.ApplicationMode applicationMode) {
+    this.indexImpl = indexImpl;
     this.indexId = indexId;
     this.inputId = inputId;
     this.fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, fileContent);
@@ -34,15 +38,18 @@ class SingleIndexValueRemover {
   }
 
   /**
+   * Contrary to the {@link SingleIndexValueApplier}, the remover does both 'prepare update' and 'apply update to the index'
+   * steps here. This is because for removes {@link InvertedIndex#mapInputAndPrepareUpdate(int, Object)} is almost trivial,
+   * with ~0 cost.
    * @return false in case index update is not necessary or the update has failed
    */
-  boolean remove() {
-    if (!RebuildStatus.isOk(indexId) && !myIndexImpl.myIsUnitTestMode) {
+  public boolean remove() {
+    if (!RebuildStatus.isOk(indexId) && !indexImpl.myIsUnitTestMode) {
       return false; // the index is scheduled for rebuild, no need to update
     }
-    myIndexImpl.increaseLocalModCount();
+    indexImpl.increaseLocalModCount();
 
-    UpdatableIndex<?, ?, FileContent, ?> index = myIndexImpl.getIndex(indexId);
+    UpdatableIndex<?, ?, FileContent, ?> index = indexImpl.getIndex(indexId);
 
     FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {
@@ -59,18 +66,18 @@ class SingleIndexValueRemover {
         this.evaluatingValueRemoverTime = System.nanoTime() - startTime;
       }
 
-      if (myIndexImpl.runUpdateForPersistentData(storageUpdate)) {
+      if (indexImpl.runUpdateForPersistentData(storageUpdate)) {
         if (FileBasedIndexEx.doTraceStubUpdates(indexId) || FileBasedIndexEx.doTraceIndexUpdates()) {
           FileBasedIndexImpl.LOG.info("index " + indexId + " deletion finished for " + fileInfo);
         }
-        ConcurrencyUtil.withLock(myIndexImpl.myReadLock, () -> {
+        ConcurrencyUtil.withLock(indexImpl.myReadLock, () -> {
           index.setUnindexedStateForFile(inputId);
         });
       }
       return true;
     }
     catch (RuntimeException exception) {
-      myIndexImpl.requestIndexRebuildOnException(exception, indexId);
+      indexImpl.requestIndexRebuildOnException(exception, indexId);
       return false;
     }
     finally {
