@@ -83,7 +83,8 @@ class HotSwapSessionManager private constructor(private val project: Project, in
     listeners.forEach { it.onStatusChanged(null) }
   }
 
-  internal fun notifyUpdate(forceStatus: HotSwapVisibleStatus? = null) {
+  internal fun notifyUpdate(forceStatus: HotSwapVisibleStatus? = null, session: HotSwapSession<*>? = null) {
+    if (session != null && session !== currentSession) return
     listeners.forEach { it.onStatusChanged(forceStatus) }
   }
 
@@ -97,7 +98,7 @@ internal enum class HotSwapVisibleStatus {
   // logical statuses used by HotSwapSession
   NO_CHANGES, CHANGES_READY, IN_PROGRESS, SESSION_COMPLETED,
   // additional visual statuses
-  HIDDEN
+  HIDDEN, SUCCESS
 }
 
 /**
@@ -116,12 +117,15 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
 
   @Volatile
   internal var currentStatus: HotSwapVisibleStatus = HotSwapVisibleStatus.NO_CHANGES
-    private set(value) {
-      // No further updates after the session is complete
-      if (field == HotSwapVisibleStatus.SESSION_COMPLETED) return
-      field = value
+
+  private fun setStatus(status: HotSwapVisibleStatus, fireUpdate: Boolean = true) {
+    // No further updates after the session is complete
+    if (currentStatus == HotSwapVisibleStatus.SESSION_COMPLETED) return
+    currentStatus = status
+    if (fireUpdate) {
       HotSwapSessionManager.getInstance(project).fireStatusChanged(this)
     }
+  }
 
   internal fun init() {
     changesCollector = provider.createChangesCollector(this, coroutineScope, SessionSourceFileChangesListener())
@@ -130,13 +134,8 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
 
   override fun dispose() {
     HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
-    currentStatus = HotSwapVisibleStatus.SESSION_COMPLETED
+    setStatus(HotSwapVisibleStatus.SESSION_COMPLETED)
     coroutineScope.cancel()
-  }
-
-  private fun completeHotSwap() {
-    changesCollector.resetChanges()
-    currentStatus = HotSwapVisibleStatus.NO_CHANGES
   }
 
   /**
@@ -151,34 +150,45 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
   fun startHotSwapListening(): HotSwapResultListener {
     HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
     val statusBefore = currentStatus
-    currentStatus = HotSwapVisibleStatus.IN_PROGRESS
+    setStatus(HotSwapVisibleStatus.IN_PROGRESS)
     val completed = AtomicBoolean()
     return object : HotSwapResultListener {
       override fun onSuccessfulReload() {
-        if (!completed.compareAndSet(false, true)) return
-        completeHotSwap()
-        HotSwapStatusNotificationManager.getInstance(project).showSuccessNotification(coroutineScope)
+        completeHotSwap(true, HotSwapVisibleStatus.NO_CHANGES, HotSwapVisibleStatus.SUCCESS)
       }
 
       override fun onFinish() {
-        if (!completed.compareAndSet(false, true)) return
-        completeHotSwap()
+        completeHotSwap(true, HotSwapVisibleStatus.NO_CHANGES)
       }
 
       override fun onCanceled() {
+        completeHotSwap(false, statusBefore)
+      }
+
+      private fun completeHotSwap(resetChanges: Boolean, status: HotSwapVisibleStatus, forceStatus: HotSwapVisibleStatus? = null) {
         if (!completed.compareAndSet(false, true)) return
-        currentStatus = statusBefore
+        if (resetChanges) {
+          changesCollector.resetChanges()
+        }
+        val customFire = forceStatus != null
+        setStatus(status, fireUpdate = !customFire)
+        if (customFire) {
+          HotSwapSessionManager.getInstance(project).notifyUpdate(forceStatus, this@HotSwapSession)
+        }
+        if (forceStatus == HotSwapVisibleStatus.SUCCESS) {
+          HotSwapStatusNotificationManager.getInstance(project).showSuccessNotification(coroutineScope)
+        }
       }
     }
   }
 
   private inner class SessionSourceFileChangesListener : SourceFileChangesListener {
     override fun onNewChanges() {
-      currentStatus = HotSwapVisibleStatus.CHANGES_READY
+      setStatus(HotSwapVisibleStatus.CHANGES_READY)
     }
 
     override fun onChangesCanceled() {
-      currentStatus = HotSwapVisibleStatus.NO_CHANGES
+      setStatus(HotSwapVisibleStatus.NO_CHANGES)
     }
   }
 }

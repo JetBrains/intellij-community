@@ -18,6 +18,11 @@ interface HotSwapUiExtension {
   val hotSwapIcon: Icon
   fun createTooltip(): HelpTooltip? = null
   val shouldAddHideButton: Boolean get() = true
+  val successStatusLocation: SuccessStatusLocation get() = SuccessStatusLocation.IDE_POPUP
+
+  enum class SuccessStatusLocation {
+    IDE_POPUP, NOTIFICATION
+  }
 
   companion object {
     private val EP_NAME = com.intellij.openapi.extensions.ExtensionPointName<HotSwapUiExtension>("com.intellij.xdebugger.hotSwapUiExtension")

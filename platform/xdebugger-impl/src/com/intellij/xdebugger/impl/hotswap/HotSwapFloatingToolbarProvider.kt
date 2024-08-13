@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
@@ -26,6 +27,7 @@ import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.time.Duration.Companion.seconds
 
 private val hotSwapIcon: Icon by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.hotSwapIcon } ?: PlatformDebuggerImplIcons.Actions.DebuggerSync
@@ -65,8 +67,12 @@ internal class HotSwapModifiedFilesAction : AnAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
+private enum class HotSwapButtonStatus {
+  READY, IN_PROGRESS, SUCCESS
+}
+
 private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
-  var inProgress = false
+  var status = HotSwapButtonStatus.READY
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
@@ -88,7 +94,7 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    (component as HotSwapToolbarComponent).update(inProgress, presentation)
+    (component as HotSwapToolbarComponent).update(status, presentation)
   }
 
   companion object {
@@ -114,12 +120,17 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     tooltip.installOn(this)
   }
 
-  fun update(inProgress: Boolean, presentation: Presentation) {
-    presentation.isEnabled = !inProgress
-    presentation.icon = if (inProgress) AnimatedIcon.Default.INSTANCE else hotSwapIcon
-    // Force animation in the disabled state
-    presentation.disabledIcon = presentation.icon
+  fun update(status: HotSwapButtonStatus, presentation: Presentation) {
+    presentation.isEnabled = status == HotSwapButtonStatus.READY
+    val icon = when (status) {
+      HotSwapButtonStatus.READY -> hotSwapIcon
+      HotSwapButtonStatus.IN_PROGRESS -> AnimatedIcon.Default.INSTANCE
+      HotSwapButtonStatus.SUCCESS -> AllIcons.Status.Success
+    }
+    presentation.icon = icon
+    presentation.disabledIcon = icon
   }
+
 }
 
 private fun updateToolbarVisibility(project: Project) {
@@ -161,26 +172,42 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
         }
         val session = manager.currentSession
         val status = forceStatus ?: session?.currentStatus
-        if (status == HotSwapVisibleStatus.IN_PROGRESS) {
-          hotSwapAction.inProgress = true
-          return@launch
-        }
 
         val action = when (status) {
+          HotSwapVisibleStatus.IN_PROGRESS -> {
+            hotSwapAction.status = HotSwapButtonStatus.IN_PROGRESS
+            updateActions()
+            return@launch
+          }
+          HotSwapVisibleStatus.SUCCESS -> {
+            hotSwapAction.status = HotSwapButtonStatus.SUCCESS
+            updateActions()
+            manager.coroutineScope.launch(Dispatchers.Default) {
+              delay(NOTIFICATION_TIME_SECONDS.seconds)
+              onStatusChanged(null)
+            }
+            return@launch
+          }
           HotSwapVisibleStatus.NO_CHANGES, HotSwapVisibleStatus.HIDDEN -> HotSwapButtonAction.HIDE
           HotSwapVisibleStatus.CHANGES_READY -> HotSwapButtonAction.SHOW
           HotSwapVisibleStatus.SESSION_COMPLETED -> HotSwapButtonAction.HIDE_NOW
           null -> HotSwapButtonAction.HIDE_NOW
-          else -> error("Unexpected status $status")
         }
         if (action == HotSwapButtonAction.SHOW) {
-          hotSwapAction.inProgress = false
+          hotSwapAction.status = HotSwapButtonStatus.READY
+          updateActions()
         }
         when (action) {
           HotSwapButtonAction.SHOW -> component.scheduleShow()
           HotSwapButtonAction.HIDE -> component.scheduleHide()
           HotSwapButtonAction.HIDE_NOW -> component.hideImmediately()
         }
+      }
+    }
+
+    private fun updateActions() {
+      if (component is ActionToolbarImpl) {
+        component.updateActionsAsync()
       }
     }
   }
