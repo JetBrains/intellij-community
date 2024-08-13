@@ -5,15 +5,13 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -33,12 +31,14 @@ import org.jetbrains.uast.kotlin.internal.toPsiType
  * Due to its origin, BINARY, we don't have source PSI, but at least we have a pointer to
  * Analysis API symbol if it's resolved.
  */
-internal class UastFakeDeserializedSymbolLightMethod(
+internal class UastFakeDeserializedSymbolLightMethod
+@OptIn(KaExperimentalApi::class)
+constructor(
     private val original: KaSymbolPointer<KaNamedFunctionSymbol>,
     name: String,
     containingClass: PsiClass,
     private val context: KtElement,
-    private val typeArgumentMapping: Map<KaTypeParameterSymbol, KaType>,
+    private val typeArgumentMapping: Map<KaSymbolPointer<KaTypeParameterSymbol>, KaTypePointer<KaType>>,
 ) : UastFakeLightMethodBase(
     context.manager,
     context.language,
@@ -67,7 +67,7 @@ internal class UastFakeDeserializedSymbolLightMethod(
                 val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast PsiTypes.nullType()
                 val returnType = functionSymbol.returnType
                 val substitutedType = if (returnType is KaTypeParameterType) {
-                    typeArgumentMapping[returnType.symbol] ?: returnType
+                    lookupTypeArgument(returnType) ?: returnType
                 } else
                     returnType
                 toPsiType(
@@ -81,6 +81,17 @@ internal class UastFakeDeserializedSymbolLightMethod(
                 )
             }
         }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun KaSession.lookupTypeArgument(type: KaTypeParameterType): KaType? {
+        for (symbolPointer in typeArgumentMapping.keys) {
+            val typeParameterSymbol = symbolPointer.restoreSymbol()
+            if (typeParameterSymbol == type.symbol) {
+                return typeArgumentMapping[symbolPointer]?.restore()
+            }
+        }
+        return null
+    }
 
     override fun getReturnType(): PsiType? {
         return _returnType

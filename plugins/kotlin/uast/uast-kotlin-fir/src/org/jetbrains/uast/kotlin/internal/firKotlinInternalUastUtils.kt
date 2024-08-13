@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.lazyPub
@@ -266,8 +267,14 @@ private fun toPsiMethodForDeserialized(
     } else null
 }
 
-private fun KaCallInfo?.typeArgumentsMappingOrEmptyMap(): Map<KaTypeParameterSymbol, KaType> =
-    (this?.successfulCallOrNull<KaCall>() as? KaCallableMemberCall<*, *>)?.typeArgumentsMapping ?: emptyMap()
+@OptIn(KaExperimentalApi::class)
+private fun KaCallInfo?.typeArgumentsMappingOrEmptyMap(): Map<KaSymbolPointer<KaTypeParameterSymbol>, KaTypePointer<KaType>> =
+    (this?.successfulCallOrNull<KaCall>() as? KaCallableMemberCall<*, *>)
+        ?.typeArgumentsMapping
+        ?.map { (typeParamSymbol, type) ->
+            typeParamSymbol.createPointer() to type.createPointer()
+        }?.toMap()
+        ?: emptyMap()
 
 /**
  * Returns a `JvmName` annotation value.
