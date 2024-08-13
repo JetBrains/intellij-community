@@ -99,9 +99,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
-        assert(firstElem.name == "Foo.kt")
+        assertEquals("Foo.kt", firstElem.name)
         val lastElem = moveFilesModel.source.elements.last()
-        assert(lastElem.name == "Bar.kt")
+        assertEquals("Bar.kt", lastElem.name)
     }
 
     fun `test single object and file from source directory without target move`() {
@@ -117,9 +117,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
-        assert(firstElem.name == "Foo.kt")
+        assertEquals("Foo.kt", firstElem.name)
         val lastElem = moveFilesModel.source.elements.last()
-        assert(lastElem.name == "Bar.kt")
+        assertEquals("Bar.kt", lastElem.name)
     }
 
     fun `test java class and kotlin class from source directory without target move`() {
@@ -135,9 +135,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
-        assert(firstElem.name == "Foo.java")
+        assertEquals("Foo.java", firstElem.name)
         val lastElem = moveFilesModel.source.elements.last()
-        assert(lastElem.name == "Bar.kt")
+        assertEquals("Bar.kt", lastElem.name)
     }
 
     fun `test directory and kotlin class from source directory without target move`() {
@@ -160,9 +160,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
-        assert(firstElem.name == "a")
+        assertEquals("a", firstElem.name)
         val lastElem = moveFilesModel.source.elements.last()
-        assert(lastElem.name == "Bar.kt")
+        assertEquals("Bar.kt", lastElem.name)
     }
 
     fun `test multiple classes from source directory without target move`() {
@@ -202,10 +202,10 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
-        assert(firstElem.name == "Foo.kt")
+        assertEquals("Foo.kt", firstElem.name)
         val lastElem = moveFilesModel.source.elements.last()
-        assert(lastElem.name == "Bar.kt")
-        assert(moveFilesModel.target.pkgName.asString() == "bar")
+        assertEquals("Bar.kt", lastElem.name)
+        assertEquals("bar", moveFilesModel.target.pkgName.asString())
     }
 
     fun `test file from non-source directory move`() {
@@ -221,8 +221,8 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(1, moveFilesModel.source.elements)
         val sourceElement = moveFilesModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
-        assert(moveFilesModel.target.pkgName.asString() == "bar")
-        assert(moveFilesModel.target.fileName == "Foo.kt")
+        assertEquals("bar", moveFilesModel.target.pkgName.asString())
+        assertEquals("Foo.kt", moveFilesModel.target.fileName)
     }
 
     fun `test multiple files with the same packages from non-source directory move`() {
@@ -243,7 +243,7 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(2, moveFilesModel.source.elements)
         val sourceElement = moveFilesModel.source.elements.firstOrNull()
         assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
-        assert(moveFilesModel.target.pkgName.asString() == "foo")
+        assertEquals("foo", moveFilesModel.target.pkgName.asString())
     }
 
     fun `test multiple files with different packages from non-source directory move`() {
@@ -264,7 +264,7 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(2, moveFilesModel.source.elements)
         val sourceElement = moveFilesModel.source.elements.firstOrNull()
         assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
-        assert(moveFilesModel.target.pkgName.asString() == "foo")
+        assertEquals("foo", moveFilesModel.target.pkgName.asString())
     }
 
     fun `test move top level declaration`() {
@@ -282,7 +282,7 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Bar")
         val targetElement = moveDeclarationsModel.target.pkgName
-        assert(targetElement.asString() == "foo")
+        assertEquals("foo", targetElement.asString())
     }
 
     fun `test move enum entry should fail`() {
