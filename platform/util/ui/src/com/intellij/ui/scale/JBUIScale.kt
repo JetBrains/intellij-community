@@ -20,6 +20,7 @@ import java.awt.geom.AffineTransform
 import java.awt.geom.Point2D
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import javax.swing.UIDefaults
 import javax.swing.UIManager
@@ -28,6 +29,7 @@ import kotlin.math.roundToInt
 
 private const val DISCRETE_SCALE_RESOLUTION = 0.25f
 private const val USER_SCALE_FACTOR_PROPERTY = "JBUIScale.userScaleFactor"
+private val SYS_SCALE_ACCESS_STACK_TRACE = AtomicReference<Throwable>()
 
 object JBUIScale {
   @JvmField
@@ -47,7 +49,7 @@ object JBUIScale {
   @Internal
   suspend fun preload(uiDefaults: Supplier<UIDefaults?>) {
     if (systemScaleFactor.isInitialized()) {
-      thisLogger().error("Must be not computed before that call")
+      thisLogger().error(Throwable("Must be not computed before that call", SYS_SCALE_ACCESS_STACK_TRACE.get()))
     }
 
     val coroutineTracerShim = CoroutineTracerShim.coroutineTracer
@@ -66,7 +68,7 @@ object JBUIScale {
   @Internal
   suspend fun preloadOnMac() {
     if (systemScaleFactor.isInitialized()) {
-      thisLogger().error("Must be not computed before that call")
+      thisLogger().error(Throwable("Must be not computed before that call", SYS_SCALE_ACCESS_STACK_TRACE.get()))
     }
 
     val coroutineTracerShim = CoroutineTracerShim.coroutineTracer
@@ -87,6 +89,7 @@ object JBUIScale {
   }
 
   private val systemScaleFactor: SynchronizedClearableLazy<Float> = SynchronizedClearableLazy {
+    SYS_SCALE_ACCESS_STACK_TRACE.compareAndSet(null, Throwable("systemScaleFactor is first accessed here"))
     computeSystemScaleFactor(uiDefaults = null)
   }
 
