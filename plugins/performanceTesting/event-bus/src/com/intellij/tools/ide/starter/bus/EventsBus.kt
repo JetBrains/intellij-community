@@ -73,6 +73,7 @@ object EventsBus {
     LOG.info("Unsubscribing all events")
     SHARED_EVENTS_FLOW.unsubscribeAll()
     EVENTS_FLOW.unsubscribeAll()
+    LOG.info("Unsubscribed all events")
   }
 
   fun startServerProcess(ignoreExceptions: Boolean = true) {
