@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -58,6 +59,11 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) return;
     if (LightEdit.owns(project)) return;
     if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return;
+
+    if (ModalityState.defaultModalityState() == ModalityState.any()) {
+      LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL");
+    }
+
     if (changes.isEmpty()) {
       runFullRescan(project, "Project roots have changed");
     }
