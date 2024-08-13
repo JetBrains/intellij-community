@@ -1316,8 +1316,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
-        // wait for heavy processing to stop, re-schedule daemon but not too soon
-        boolean heavyProcessIsRunning = heavyProcessIsRunning();
         HighlightingPass[] passes = ReadAction.compute(() -> {
           if (progress.isCanceled() ||
               myProject.isDisposed() ||
@@ -1343,8 +1341,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             if (passesToIgnore.length != 0) {
               r = ContainerUtil.findAllAsArray(r, pass->!(pass instanceof TextEditorHighlightingPass te) || ArrayUtil.indexOf(passesToIgnore, te.getId()) == -1);
             }
-            if (heavyProcessIsRunning) {
+            // wait for heavy processing to stop, re-schedule daemon but not too soon
+            if (heavyProcessIsRunning()) {
               r = ContainerUtil.findAllAsArray(r, o -> DumbService.isDumbAware(o));
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("submitInBackground: heavyProcessIsRunning=true, so only these passes are created: " + Arrays.toString(r));
+              }
             }
             return r;
           }
