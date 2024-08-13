@@ -63,6 +63,9 @@ public class PyTypeCheckerInspection extends PyInspection {
       // Type check in TypedDict subscription expressions cannot be properly done because each key should have its own value type,
       // so this case is covered by PyTypedDictInspection
       if (myTypeEvalContext.getType(node.getOperand()) instanceof PyTypedDictType) return;
+      // Don't type check __class_getitem__ calls inside type hints. Normally these are not type hinted as a construct 
+      // special-cased by type checkers
+      if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) return;
       checkCallSite(node);
     }
 
