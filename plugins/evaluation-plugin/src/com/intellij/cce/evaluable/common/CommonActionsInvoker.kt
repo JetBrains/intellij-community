@@ -35,7 +35,6 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
 
   override fun moveCaret(offset: Int) = onEdt {
     val editor = getEditorSafe(project)
-    LOG.info("Move caret. ${positionToString(editor)}")
     editor.caretModel.moveToOffset(offset)
     editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
   }
@@ -52,7 +51,9 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
       return@runWriteCommandAction
     }
     for (ref in ReferencesSearch.search(psiElement)) {
-      ref.handleElementRename(text)
+      if (!isThisReference(ref.canonicalText) ) {
+        ref.handleElementRename(text)
+      }
     }
     psiElement.setName(text)
   }
@@ -142,5 +143,9 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
   companion object {
     private val LOG = logger<CommonActionsInvoker>()
     private const val LOG_MAX_LENGTH = 50
+  }
+
+  private fun isThisReference(ref: String): Boolean {
+    return ref == "\$this"
   }
 }
