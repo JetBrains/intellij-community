@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil
@@ -19,9 +20,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal class CreateKotlinClassAction(
-    val element: KtElement,
+    private val elementPointer: SmartPsiElementPointer<KtElement>,
     val kind: ClassKind,
-    private val applicableParents: List<PsiElement>,
+    private val applicableParents: List<SmartPsiElementPointer<PsiElement>>,
     val inner: Boolean,
     val open: Boolean,
     val name: String,
@@ -36,9 +37,10 @@ internal class CreateKotlinClassAction(
         if (kind == ClassKind.DEFAULT) return false
         if (applicableParents.isEmpty()) return false
         applicableParents.forEach {
-            if (it is PsiClass) {
+            val element = it.element
+            if (element is PsiClass) {
                 if (kind == ClassKind.OBJECT || kind == ClassKind.ENUM_ENTRY) return false
-                if (it.isInterface && inner) return false
+                if (element.isInterface && inner) return false
             }
         }
         return true
@@ -51,8 +53,9 @@ internal class CreateKotlinClassAction(
         if (!FileModificationService.getInstance().prepareFileForWrite(file)) {
             return
         }
-
-        CreateClassUtil.chooseAndCreateClass(project, editor, file, element, kind, applicableParents, name, text) { targetParent ->
+        val element = elementPointer.element ?: return
+        val applicableParentElements = applicableParents.mapNotNull { it.element }
+        CreateClassUtil.chooseAndCreateClass(project, editor, file, element, kind, applicableParentElements, name, text) { targetParent ->
             runCreateClassBuilder(
                 file,
                 element,
@@ -60,7 +63,8 @@ internal class CreateKotlinClassAction(
                 name,
                 superClassName,
                 paramList,
-                returnTypeString
+                returnTypeString,
+                applicableParentElements
             )
         }
     }
@@ -72,7 +76,8 @@ internal class CreateKotlinClassAction(
         className: String,
         superClassName: String?,
         paramList: Pair<String?, List<CreateKotlinCallableAction.ParamCandidate>>,
-        returnTypeString: String
+        returnTypeString: String,
+        applicableParents: List<PsiElement>
     ) {
         val declaration = CreateClassUtil.createClassDeclaration(
             file.project,
