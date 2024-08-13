@@ -17,12 +17,10 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
-
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
     fun `test empty file from source directory without target move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             package foo
         """.trimIndent()) as KtFile
@@ -38,7 +36,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test file from source directory to file move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
@@ -55,7 +52,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test file from source directory to class move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
@@ -72,7 +68,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test file from source directory to source directory move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
@@ -87,7 +82,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test single class and file from source directory without target move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
@@ -105,7 +99,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test single object and file from source directory without target move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
@@ -123,7 +116,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test java class and kotlin class from source directory without target move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.java", """
             public class Foo { }
         """.trimIndent()) as PsiFile
@@ -141,7 +133,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test directory and kotlin class from source directory without target move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         myFixture.addFileToProject("a/JavaFoo.java", """
             package a;
             
@@ -166,7 +157,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test multiple classes from source directory without target move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooClass = (myFixture.addFileToProject("Foo.kt", """
             package a
             
@@ -189,7 +179,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test single class and file from source directory to source directory move`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
@@ -209,66 +198,77 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test file from non-source directory move`() {
-        PsiTestUtil.removeSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
-        val fooFile = myFixture.addFileToProject("Foo.kt", """
+        try {
+            PsiTestUtil.removeSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+            val fooFile = myFixture.addFileToProject("Foo.kt", """
             package bar
             
             class Foo { }
         """.trimIndent()) as KtFile
-        val moveModel = K2MoveModel.create(arrayOf(fooFile), null)
-        assertInstanceOf<K2MoveModel.Declarations>(moveModel)
-        val moveFilesModel = moveModel as K2MoveModel.Declarations
-        assertSize(1, moveFilesModel.source.elements)
-        val sourceElement = moveFilesModel.source.elements.firstOrNull()
-        assert(sourceElement is KtClass && sourceElement.name == "Foo")
-        assertEquals("bar", moveFilesModel.target.pkgName.asString())
-        assertEquals("Foo.kt", moveFilesModel.target.fileName)
+            val moveModel = K2MoveModel.create(arrayOf(fooFile), null)
+            assertInstanceOf<K2MoveModel.Declarations>(moveModel)
+            val moveFilesModel = moveModel as K2MoveModel.Declarations
+            assertSize(1, moveFilesModel.source.elements)
+            val sourceElement = moveFilesModel.source.elements.firstOrNull()
+            assert(sourceElement is KtClass && sourceElement.name == "Foo")
+            assertEquals("bar", moveFilesModel.target.pkgName.asString())
+            assertEquals("Foo.kt", moveFilesModel.target.fileName)
+        } finally {
+            PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        }
     }
 
     fun `test multiple files with the same packages from non-source directory move`() {
-        PsiTestUtil.removeSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
-        val fooFile = myFixture.addFileToProject("Foo.kt", """
+        try {
+            PsiTestUtil.removeSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+            val fooFile = myFixture.addFileToProject("Foo.kt", """
             package foo
             
             class Foo { }
         """.trimIndent()) as KtFile
-        val barFile = myFixture.addFileToProject("Bar.kt", """
+            val barFile = myFixture.addFileToProject("Bar.kt", """
             package foo
             
             class Bar { }
         """.trimIndent()) as KtFile
-        val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
-        assertInstanceOf<K2MoveModel.Files>(moveModel)
-        val moveFilesModel = moveModel as K2MoveModel.Files
-        assertSize(2, moveFilesModel.source.elements)
-        val sourceElement = moveFilesModel.source.elements.firstOrNull()
-        assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
-        assertEquals("foo", moveFilesModel.target.pkgName.asString())
+            val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
+            assertInstanceOf<K2MoveModel.Files>(moveModel)
+            val moveFilesModel = moveModel as K2MoveModel.Files
+            assertSize(2, moveFilesModel.source.elements)
+            val sourceElement = moveFilesModel.source.elements.firstOrNull()
+            assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
+            assertEquals("foo", moveFilesModel.target.pkgName.asString())
+        } finally {
+            PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        }
     }
 
     fun `test multiple files with different packages from non-source directory move`() {
-        PsiTestUtil.removeSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
-        val fooFile = myFixture.addFileToProject("Foo.kt", """
+        try {
+            PsiTestUtil.removeSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+            val fooFile = myFixture.addFileToProject("Foo.kt", """
             package foo
             
             class Foo { }
         """.trimIndent()) as KtFile
-        val barFile = myFixture.addFileToProject("Bar.kt", """
+            val barFile = myFixture.addFileToProject("Bar.kt", """
             package bar
             
             class Bar { }
         """.trimIndent()) as KtFile
-        val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
-        assertInstanceOf<K2MoveModel.Files>(moveModel)
-        val moveFilesModel = moveModel as K2MoveModel.Files
-        assertSize(2, moveFilesModel.source.elements)
-        val sourceElement = moveFilesModel.source.elements.firstOrNull()
-        assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
-        assertEquals("foo", moveFilesModel.target.pkgName.asString())
+            val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
+            assertInstanceOf<K2MoveModel.Files>(moveModel)
+            val moveFilesModel = moveModel as K2MoveModel.Files
+            assertSize(2, moveFilesModel.source.elements)
+            val sourceElement = moveFilesModel.source.elements.firstOrNull()
+            assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
+            assertEquals("foo", moveFilesModel.target.pkgName.asString())
+        } finally {
+            PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        }
     }
 
     fun `test move top level declaration`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             package foo
             
@@ -286,7 +286,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test move enum entry should fail`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             package foo
             
@@ -301,7 +300,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test move nested class should fail`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             package foo
             
@@ -316,7 +314,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test move instance method should fail`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             package foo
             
@@ -331,7 +328,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test move companion object method should fail`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             package foo
             
@@ -348,7 +344,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test move multiple files to non directory should fail`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
@@ -364,7 +359,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test moving declarations from multiple files should fail`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFun = (myFixture.addFileToProject("Foo.kt", """
             fun foo { }
         """.trimIndent()) as KtFile).declarations.single()
@@ -377,7 +371,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test moving file with declaration from different file should fail`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             fun foo { }
         """.trimIndent()) as KtFile
@@ -390,7 +383,6 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test move declaration and containing file`() {
-        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
