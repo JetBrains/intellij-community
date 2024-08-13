@@ -24,10 +24,11 @@ class ArchivedCompilationContext(
     }
   }
 ) : CompilationContext by delegate {
-  val archivesLocation get() = storage.archivedOutputDirectory
+  val archivesLocation: Path
+    get() = storage.archivedOutputDirectory
 
-  override fun getModuleOutputDir(module: JpsModule): Path {
-    return replaceWithCompressedIfNeeded(delegate.getModuleOutputDir(module))
+  override fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
+    return replaceWithCompressedIfNeeded(delegate.getModuleOutputDir(module = module, forTests = forTests))
   }
 
   override fun getModuleTestsOutputDir(module: JpsModule): Path {

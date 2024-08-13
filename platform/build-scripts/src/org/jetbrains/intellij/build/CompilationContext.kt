@@ -48,7 +48,7 @@ interface CompilationContext {
 
   fun findModule(name: String): JpsModule?
 
-  fun getModuleOutputDir(module: JpsModule): Path
+  fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path
 
   fun getModuleTestsOutputDir(module: JpsModule): Path
 
@@ -57,9 +57,9 @@ interface CompilationContext {
 
   fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
 
-  fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
+  fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean = false): Path?
 
-  fun findFileInModuleSources(module: JpsModule, relativePath: String): Path?
+  fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean = false): Path?
 
   fun notifyArtifactBuilt(artifactPath: Path)
 

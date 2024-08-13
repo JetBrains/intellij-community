@@ -14,8 +14,11 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.*
 import java.io.StringReader
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+
+private val useTestSourceEnabled = System.getProperty("idea.build.pack.test.source.enabled", "false").toBoolean()
 
 // production-only - JpsJavaClasspathKind.PRODUCTION_RUNTIME
 internal class JarPackagerDependencyHelper(private val context: BuildContext) {
@@ -30,11 +33,19 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
   fun isPluginModulePackedIntoSeparateJar(module: JpsModule, layout: PluginLayout?): Boolean {
     val modulesWithExcludedModuleLibraries = layout?.modulesWithExcludedModuleLibraries ?: emptySet()
     return module.name !in modulesWithExcludedModuleLibraries &&
-           getLibraryDependencies(module).any { it.libraryReference.parentReference is JpsModuleReference }
+           getLibraryDependencies(module = module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
+  }
+
+  fun isTestPluginModule(moduleName: String): Boolean {
+    return useTestSourceEnabled &&
+           moduleName.contains(".test.") &&
+           moduleName != "intellij.rider.test.framework" &&
+           moduleName != "intellij.rider.test.api" &&
+           moduleName != "intellij.rider.test.api.teamcity"
   }
 
   fun getPluginXmlContent(pluginModule: JpsModule): String {
-    val moduleOutput = context.getModuleOutputDir(pluginModule)
+    val moduleOutput = context.getModuleOutputDir(pluginModule, forTests = isTestPluginModule(pluginModule.name))
     if (moduleOutput.toString().endsWith(".jar")) {
       return getPluginXmlContentFromJar(moduleOutput)
     }
@@ -43,7 +54,7 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     try {
       return Files.readString(pluginXmlFile)
     }
-    catch (e: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       throw IllegalStateException("${pluginXmlFile.fileName} not found in ${pluginModule.name} module (file=$pluginXmlFile)")
     }
   }
@@ -94,18 +105,18 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
   private fun getModuleDependencies(module: JpsModule): Sequence<JpsModuleDependency> {
     return sequence {
       for (element in module.dependenciesList.dependencies) {
-        if (element is JpsModuleDependency && isProductionRuntime(element)) {
+        if (element is JpsModuleDependency && isProductionRuntime(element, withTests = false)) {
           yield(element)
         }
       }
     }
   }
 
-  fun getLibraryDependencies(module: JpsModule): List<JpsLibraryDependency> {
+  fun getLibraryDependencies(module: JpsModule, withTests: Boolean): List<JpsLibraryDependency> {
     return libraryCache.computeIfAbsent(module) {
       val result = mutableListOf<JpsLibraryDependency>()
       for (element in module.dependenciesList.dependencies) {
-        if (isProductionRuntime(element) && element is JpsLibraryDependency) {
+        if (isProductionRuntime(element = element, withTests = withTests) && element is JpsLibraryDependency) {
           result.add(element)
         }
       }
@@ -120,27 +131,31 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
   // And it is a plugin that depends on cool.module.core.
   //
   // We should include cool-library only to cool.module.core (same group).
-  fun hasLibraryInDependencyChainOfModuleDependencies(dependentModule: JpsModule, libraryName: String, siblings: Collection<ModuleItem>): Boolean {
+  fun hasLibraryInDependencyChainOfModuleDependencies(dependentModule: JpsModule, libraryName: String, siblings: Collection<ModuleItem>, withTests: Boolean): Boolean {
     val parentGroup = dependentModule.name.let { it.substring(0, it.lastIndexOf('.')) }
     val prefix = "$parentGroup."
     for (dependency in getModuleDependencies(dependentModule)) {
       val moduleName = dependency.moduleReference.moduleName
       // intellij.space.kotlin depends on module intellij.space and both uses library org.apache.ivy
       if (moduleName == parentGroup) {
-        if (getLibraryDependencies(dependency.module ?: continue).any { it.libraryReference.libraryName == libraryName }) {
+        if (getLibraryDependencies(dependency.module ?: continue, withTests).any { it.libraryReference.libraryName == libraryName }) {
           return true
         }
       }
       else if (moduleName.startsWith(prefix) &&
           siblings.none { it.moduleName == moduleName } &&
-          getLibraryDependencies(dependency.module ?: continue).any { it.libraryReference.libraryName == libraryName }) {
+          getLibraryDependencies(dependency.module ?: continue, withTests).any { it.libraryReference.libraryName == libraryName }) {
         return true
       }
     }
     return false
   }
 
-  private fun isProductionRuntime(element: JpsDependencyElement): Boolean {
-    return javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) == true
+  private fun isProductionRuntime(element: JpsDependencyElement, withTests: Boolean): Boolean {
+    val scope = javaExtensionService.getDependencyExtension(element)?.scope ?: return false
+    if (withTests && scope.isIncludedIn(JpsJavaClasspathKind.TEST_RUNTIME)) {
+      return true
+    }
+    return scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
   }
 }

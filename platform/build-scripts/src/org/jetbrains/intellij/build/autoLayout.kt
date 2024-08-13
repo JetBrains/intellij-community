@@ -2,10 +2,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.readXmlAsModel
-import org.jetbrains.intellij.build.impl.JarPackager
-import org.jetbrains.intellij.build.impl.ModuleItem
-import org.jetbrains.intellij.build.impl.PlatformLayout
-import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.*
 
 private const val VERIFIER_MODULE = "intellij.platform.commercial.verifier"
 
@@ -70,7 +67,9 @@ internal suspend fun computeModuleSourcesByContent(
     }
 
     val module = context.findRequiredModule(moduleName)
-    val descriptor = readXmlAsModel(context.findFileInModuleSources(module, "$moduleName.xml")!!)
+    val forTests = (context as? BuildContextImpl)?.jarPackagerDependencyHelper?.isTestPluginModule(moduleName) ?: false
+    val descriptor = readXmlAsModel(context.findFileInModuleSources(module, "$moduleName.xml", forTests)
+                                    ?: error("$moduleName.xml not found in module $moduleName sources"))
     val useSeparateJar = descriptor.getAttributeValue("package") == null || helper.isPluginModulePackedIntoSeparateJar(module, layout)
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
