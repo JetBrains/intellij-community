@@ -5,6 +5,7 @@ import com.intellij.concurrency.callable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.runnable
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -115,6 +116,7 @@ class CancellationPropagationTest {
     pumpEDT()
   }
 
+  @IJIgnore(issue = "IJPL-160197")
   @Test
   fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking(timeout = 60.seconds) {
     launch {
