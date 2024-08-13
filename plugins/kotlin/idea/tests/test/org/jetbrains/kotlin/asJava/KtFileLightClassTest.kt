@@ -104,8 +104,8 @@ class KtFileLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
         assertNotNull(facadeClass)
     }
 
-    fun testNoFacadeForHeaderClass() {
-        val file = myFixture.configureByText("foo.kt", "header fun foo(): Int") as KtFile
+    fun testNoFacadeForExpectClass() {
+        val file = myFixture.configureByText("foo.kt", "expect fun foo(): Int") as KtFile
         assertEquals(0, file.classes.size)
         val javaSupport = KotlinAsJavaSupport.getInstance(project)
         assertNull(javaSupport.getLightFacade(file))
