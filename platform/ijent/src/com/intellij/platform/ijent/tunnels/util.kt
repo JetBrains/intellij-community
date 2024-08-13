@@ -76,22 +76,24 @@ private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int
   val buffer = ByteArray(4096)
   try {
     while (true) {
-      val bytesRead = runInterruptible {
-        inputStream.read(buffer, 0, buffer.size)
+      try {
+        val bytesRead = runInterruptible {
+          inputStream.read(buffer, 0, buffer.size)
+        }
+        LOG.trace("Connection $connectionId; Bytes read: $bytesRead")
+        if (bytesRead > 1) {
+          LOG.trace("Sending message to IJent for $connectionId")
+          channelToIJent.send(ByteBuffer.wrap(buffer.copyOf(), 0, bytesRead)) // important to make a copy, we have no guarantees when buffer will be processed
+        }
+        else {
+          channelToIJent.close()
+          break
+        }
       }
-      LOG.trace("Connection $connectionId; Bytes read: $bytesRead")
-      if (bytesRead > 1) {
-        LOG.trace("Sending message to IJent for $connectionId")
-        channelToIJent.send(ByteBuffer.wrap(buffer.copyOf(), 0, bytesRead)) // important to make a copy, we have no guarantees when buffer will be processed
-      }
-      else {
-        channelToIJent.close()
-        break
+      catch (e: SocketTimeoutException) {
+        ensureActive()
       }
     }
-  }
-  catch (e: SocketTimeoutException) {
-    ensureActive()
   }
   catch (e: ClosedSendChannelException) {
     LOG.warn("Connection $connectionId closed by IJent; $e")
@@ -107,14 +109,16 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
   val outputStream = socket.getOutputStream()
   try {
     for (data in backChannel) {
-      runInterruptible {
-        outputStream.write(data.toByteArray())
+      try {
+        runInterruptible {
+          outputStream.write(data.toByteArray())
+        }
+      }
+      catch (e: SocketTimeoutException) {
+        ensureActive()
       }
     }
     outputStream.flush()
-  }
-  catch (e: SocketTimeoutException) {
-    ensureActive()
   }
   catch (e: IjentTunnelsApi.RemoteNetworkException) {
     LOG.warn("Connection $connectionId closed", e)
