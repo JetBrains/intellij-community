@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
@@ -94,7 +94,13 @@ class EdtCoroutineDispatcherTest {
       yield() // checkLeak should be executed after the coroutine suspends in awaitCancellation
       @Suppress("INVISIBLE_REFERENCE")
       val leakClass = DispatchedRunnable::class.java
-      LeakHunter.checkLeak(job, leakClass)
+      LeakHunter.checkLeak(job, leakClass) { dispatchedRunnable ->
+        // truly leaked DispatchedRunnable instance references the Job via _completionHandle
+        LeakHunter.checkLeak(dispatchedRunnable, job.javaClass)
+        // if the above didn't throw, this is not really a leak,
+        // e.g., an empty DispatchedRunnable referenced through IdeEventQueue.trueCurrentEvent IDEA-357405
+        true
+      }
       job.cancel()
     }
   }
