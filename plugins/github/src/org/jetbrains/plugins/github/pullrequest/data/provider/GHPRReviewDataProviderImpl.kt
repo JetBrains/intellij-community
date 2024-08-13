@@ -2,19 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
@@ -88,6 +85,7 @@ internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
   override suspend fun submitReview(reviewId: String, event: GHPullRequestReviewEvent, body: String?) {
     reviewService.submitReview(pullRequestId, reviewId, event, body)
     withContext(NonCancellable) {
+      signalPendingReviewNeedsReload()
       signalThreadsNeedReload()
       withContext(Dispatchers.Main) {
         messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
