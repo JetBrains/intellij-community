@@ -9,7 +9,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pass
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.isAncestor
@@ -42,12 +45,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableContext
-import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper.Containers
-import org.jetbrains.kotlin.idea.refactoring.introduce.calculateAnchorForExpressions
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
-import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -162,15 +161,18 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         StartMarkAction.canStart(editor)?.let { return }
 
         val builder = TemplateBuilderImpl(declaration)
-        for ((index, entry) in declaration.entries.withIndex()) {
+        for ((entry, names) in declaration.entries.zip(suggestedNames)) {
             val templateExpression = object : Expression() {
-                private val lookupItems = suggestedNames[index].map { LookupElementBuilder.create(it) }.toTypedArray()
 
-                override fun calculateQuickResult(context: ExpressionContext?) = TextResult(suggestedNames[index].first())
+                private val lookupItems: Array<LookupElementBuilder> = names
+                    .map { LookupElementBuilder.create(it) }
+                    .toTypedArray()
 
-                override fun calculateResult(context: ExpressionContext?) = calculateQuickResult(context)
+                override fun calculateResult(context: ExpressionContext): TextResult =
+                    TextResult(names.first())
 
-                override fun calculateLookupItems(context: ExpressionContext?) = lookupItems
+                override fun calculateLookupItems(context: ExpressionContext): Array<LookupElementBuilder> =
+                    lookupItems
             }
             builder.replaceElement(entry, templateExpression)
         }
