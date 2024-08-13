@@ -85,7 +85,7 @@ open class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, v
             reloadConda(context)
           }
         }
-        .logException(LOG)
+        .catch { LOG.error(it) }
         .collect()
     }
   }
