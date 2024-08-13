@@ -46,6 +46,9 @@
       </action>
       <action id="RunDashboard.Stop" icon="AllIcons.Actions.Suspend" use-shortcut-of="Stop"
               class="com.intellij.platform.execution.dashboard.actions.StopAction"/>
+      <separator/>
+      <reference id="ExpandAll"/>
+      <reference id="CollapseAll"/>
     </group>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSourceInNewWindow"
