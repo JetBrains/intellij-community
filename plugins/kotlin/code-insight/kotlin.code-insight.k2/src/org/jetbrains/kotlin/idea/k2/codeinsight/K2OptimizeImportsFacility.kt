@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootM
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
-import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
 import org.jetbrains.kotlin.idea.k2.codeinsight.imports.UsedReferencesCollector
 import org.jetbrains.kotlin.idea.k2.codeinsight.imports.buildOptimizedImports
 import org.jetbrains.kotlin.name.parentOrNull
@@ -25,20 +25,27 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
         val usedReferencesData: UsedReferencesCollector.Result,
     ) : KotlinOptimizeImportsFacility.ImportData
 
+    /**
+     * Import optimizer might be invoked from write action and EDT in refactorings and reformat action, see KTIJ-25031.
+     *
+     * So we have to allow the resolve from under write action and from EDT.
+     */
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    private fun <T> analyzeForImportOptimization(file: KtFile, action: KaSession.() -> T): T =
+        allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(file) {
+                    action()
+                }
+            }
+        }
+
     override fun analyzeImports(file: KtFile): KotlinOptimizeImportsFacility.ImportData? {
         if (!canOptimizeImports(file)) return null
 
-        // Import optimizer might be called from reformat action in EDT, see KTIJ-25031
-        @OptIn(KaAllowAnalysisOnEdt::class)
-        val importAnalysis = allowAnalysisOnEdt {
-            // Import optimizer might invoke be from write action in refactorings
-            @OptIn(KaAllowAnalysisFromWriteAction::class)
-            allowAnalysisFromWriteAction {
-                analyze(file) {
-                    val referenceCollector = UsedReferencesCollector(file)
-                    referenceCollector.run { collectUsedReferences() }
-                }
-            }
+        val importAnalysis = analyzeForImportOptimization(file) {
+            val referenceCollector = UsedReferencesCollector(file)
+            referenceCollector.run { collectUsedReferences() }
         }
 
         val unusedImports = computeUnusedImports(file, importAnalysis)
