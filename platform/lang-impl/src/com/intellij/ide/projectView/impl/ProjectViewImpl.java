@@ -1860,7 +1860,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   void selectOpenedFileUsingLastFocusedEditor() {
-    selectOpenedFile(getLastFocusedEditor());
+    // invokeLater is needed here to give FileEditorManagerImpl time to figure out which editor is the last focused one.
+    // If the IDE frame has just became active because the Select Opened File button was clicked,
+    // then the editor may temporarily get focus before the Project View is focused.
+    // This needs to be undone before we can select the right file.
+    // And no, there's no way to prevent that temporary focus.
+    // See com.intellij.openapi.fileEditor.impl.EditorsSplitters.MyFocusWatcher for the gore details.
+    SwingUtilities.invokeLater(() -> {
+      selectOpenedFile(getLastFocusedEditor());
+    });
   }
 
   void selectOpenedFile() {

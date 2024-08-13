@@ -21,12 +21,17 @@ import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.Graphics
+import java.awt.Insets
+import java.awt.Rectangle
+import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
+import javax.swing.JFrame.NORMAL
+import javax.swing.JFrame.getFrames
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
@@ -56,8 +61,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
 
+  internal var lastInactiveMouseXAbs: Int = 0
+  internal var lastInactiveMouseYAbs: Int = 0
+  internal var isFirstMousePressed: Boolean = false
   @ApiStatus.Internal
-  var mouseReleaseCountSinceLastActivated = 0
+  var wasJustActivatedByClick: Boolean = false
 
   private var isDisposed = false
 
