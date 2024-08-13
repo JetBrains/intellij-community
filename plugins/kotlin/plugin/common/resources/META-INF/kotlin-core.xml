@@ -103,7 +103,7 @@
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
-    <applicationInitializedListener implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
+    <applicationActivity implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
 
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"

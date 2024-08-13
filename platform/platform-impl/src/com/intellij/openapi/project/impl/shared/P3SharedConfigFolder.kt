@@ -1,13 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl.shared
 
-import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.impl.processPerProjectSupport
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
@@ -34,15 +35,17 @@ private class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListe
 }
 
 @OptIn(FlowPreview::class)
-internal class P3SharedConfigFolderApplicationInitializedListener : ApplicationInitializedListener {
-  override suspend fun execute(asyncScope: CoroutineScope) {
+private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener : ApplicationActivity {
+  override suspend fun execute() {
     val path = PathManager.getOriginalConfigDir()
     if (processPerProjectSupport().isEnabled()) {
       LOG.info("P3 mode is enabled, configuration files with be synchronized with $path.")
       SharedConfigFolderUtil.installFsWatcher(path, useVfsWatcher())
-      ApplicationManager.getApplication().messageBus.connect().subscribe(DynamicPluginListener.TOPIC, P3DynamicPluginSynchronizer.getInstance())
-      setupSyncEarlyAccessRegistry(path, asyncScope)
-      setupSyncDisabledPlugins(path, asyncScope)
+      ApplicationManager.getApplication().messageBus.connect().subscribe(DynamicPluginListener.TOPIC, serviceAsync<P3DynamicPluginSynchronizer>())
+      coroutineScope {
+        setupSyncEarlyAccessRegistry(path, this)
+        setupSyncDisabledPlugins(path, this)
+      }
     }
   }
 
@@ -90,5 +93,5 @@ internal class P3SharedConfigFolderApplicationInitializedListener : ApplicationI
   }
 }
 
-private val LOG = logger<P3SharedConfigFolderApplicationInitializedListener>()
+private val LOG = logger<ProcessPerProjectSharedConfigFolderApplicationInitializedListener>()
 private fun useVfsWatcher() = false

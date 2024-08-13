@@ -10,14 +10,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigBackup
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.*
-import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.INSTALL_SETTINGS_REPOSITORY
-import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.USE_NEW_SETTINGS_SYNC
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.INSTALL_SETTINGS_REPOSITORY
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.USE_NEW_SETTINGS_SYNC
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.nio.file.FileVisitResult
@@ -44,7 +45,7 @@ private val OS_PREFIXES = listOf(
   "_unix" to "unix"
 )
 
-internal class SettingsRepositoryToSettingsSyncMigration(private val coroutineScope: CoroutineScope) {
+internal class SettingsRepositoryToSettingsSyncMigration {
   fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot? {
     return processLocalData(appConfigDir) { path ->
       readLocalData(path)
@@ -110,7 +111,7 @@ private fun showNotificationAboutUnbundling(coroutineScope: CoroutineScope, exec
     @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
     SettingsSyncBundle.message("settings.repository.unbundled.notification.action.install.settings.repository")) {
     coroutineScope.launch {
-      PluginManagerProxy.getInstance().createInstaller(notifyErrors = true).installPlugins(listOf(PluginId.getId(SETTINGS_REPOSITORY_ID)))
+      serviceAsync<PluginManagerProxy>().createInstaller(notifyErrors = true).installPlugins(listOf(PluginId.getId(SETTINGS_REPOSITORY_ID)))
     }
     SettingsSyncEventsStatistics.SETTINGS_REPOSITORY_NOTIFICATION_ACTION.log(INSTALL_SETTINGS_REPOSITORY)
   }
@@ -138,22 +139,21 @@ internal suspend fun migrateIfNeeded(coroutineScope: CoroutineScope, executorSer
     return
   }
 
-  val settingsRepositoryMigration = SettingsRepositoryToSettingsSyncMigration(coroutineScope)
-  if (settingsRepositoryMigration.isLocalDataAvailable(PathManager.getConfigDir())) {
-    LOG.info("Migrating from the Settings Repository")
-    val snapshot = settingsRepositoryMigration.getLocalDataIfAvailable(PathManager.getConfigDir())
-    if (snapshot != null) {
-      backupCurrentConfig()
-      TemplateSettings.getInstance() // Required for live templates to be migrated correctly, see IDEA-303831
-
-      SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
-                                  PathManager.getConfigDir()) { false }.applyToIde(snapshot, null)
-      showNotificationAboutUnbundling(coroutineScope, executorService)
-      SettingsSyncEventsStatistics.MIGRATED_FROM_SETTINGS_REPOSITORY.log()
-    }
+  val settingsRepositoryMigration = SettingsRepositoryToSettingsSyncMigration()
+  if (!settingsRepositoryMigration.isLocalDataAvailable(PathManager.getConfigDir())) {
+    return
   }
-}
 
+  LOG.info("Migrating from the Settings Repository")
+  val snapshot = settingsRepositoryMigration.getLocalDataIfAvailable(PathManager.getConfigDir()) ?: return
+    backupCurrentConfig()
+    TemplateSettings.getInstance() // Required for live templates to be migrated correctly, see IDEA-303831
+
+    SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
+                                PathManager.getConfigDir()) { false }.applyToIde(snapshot, null)
+    showNotificationAboutUnbundling(coroutineScope, executorService)
+    SettingsSyncEventsStatistics.MIGRATED_FROM_SETTINGS_REPOSITORY.log()
+}
 
 private fun backupCurrentConfig() {
   val configDir = PathManager.getConfigDir()

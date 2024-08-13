@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -218,6 +219,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOsSpecificState = state;
   }
 
+  @RequiresBlockingContext
   public static EditorSettingsExternalizable getInstance() {
     return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
   }

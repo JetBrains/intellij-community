@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -47,6 +48,7 @@ class SettingsSyncEvents : Disposable {
   }
 
   companion object {
+    @RequiresBlockingContext
     fun getInstance(): SettingsSyncEvents = service<SettingsSyncEvents>()
   }
 

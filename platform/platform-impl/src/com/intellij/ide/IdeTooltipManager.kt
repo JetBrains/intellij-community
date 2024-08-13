@@ -53,15 +53,14 @@ private val isEnabled = System.getProperty("ide.tooltip.callout", "true").toBool
 
 private val LOG = logger<IdeTooltipManager>()
 
-private class SwingTooltipManagerCustomizer : ApplicationInitializedListener {
+private class SwingTooltipManagerCustomizer : ApplicationActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
     }
   }
 
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    asyncScope.launch {
+  override suspend fun execute() {
       val ideTooltipManager by lazy(LazyThreadSafetyMode.NONE) { IdeTooltipManager.getInstance() }
       val listener = AWTEventListener {
         if (isEnabled) {
@@ -84,7 +83,6 @@ private class SwingTooltipManagerCustomizer : ApplicationInitializedListener {
         }
       })
       Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK)
-    }
   }
 }
 

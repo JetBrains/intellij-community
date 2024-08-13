@@ -1,6 +1,6 @@
 package com.intellij.settingsSync
 
-import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.ApplicationActivity
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -17,8 +17,7 @@ import com.intellij.settingsSync.migration.migrateIfNeeded
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -26,50 +25,53 @@ private val LOG = logger<SettingsSynchronizer>()
 
 private val MIGRATION_EP = ExtensionPointName<SettingsSyncMigration>("com.intellij.settingsSyncMigration")
 
-private class SettingsSynchronizerApplicationInitializedListener : ApplicationInitializedListener {
+private class SettingsSynchronizerApplicationInitializedListener : ApplicationActivity {
   init {
     if (ApplicationManager.getApplication().isHeadlessEnvironment || !isSettingsSyncEnabledByKey()) {
       throw ExtensionNotApplicableException.create()
     }
   }
 
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    asyncScope.launch {
-      val settingsSyncEventListener = object : SettingsSyncEventListener {
-        override fun categoriesStateChanged() {
-          SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
-        }
-
-        override fun enabledStateChanged(syncEnabled: Boolean) {
-          if (syncEnabled) {
-            SettingsSyncEvents.getInstance().addListener(this)
-            // the actual start of the sync is handled inside SettingsSyncEnabler
-          }
-          else {
-            SettingsSyncEvents.getInstance().removeListener(this)
-            service<SettingsSynchronizerState>().stopSyncingByTimer()
-            SettingsSyncMain.getInstance().disableSyncing()
-          }
-        }
-      }
-      SettingsSyncEvents.getInstance().addListener(settingsSyncEventListener)
-
-      if (isSettingsSyncEnabledInSettings()) {
-        initializeSyncing(SettingsSyncBridge.InitMode.JustInit, settingsSyncEventListener)
-        return@launch
+  override suspend fun execute() {
+    val settingsSyncEventListener = object : SettingsSyncEventListener {
+      override fun categoriesStateChanged() {
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
       }
 
-      if (!SettingsSyncSettings.getInstance().migrationFromOldStorageChecked) {
-        SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
-        val migration = MIGRATION_EP.extensionList.firstOrNull { it.isLocalDataAvailable(PathManager.getConfigDir()) }
-        if (migration != null) {
-          LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}")
-          initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration), settingsSyncEventListener)
-          SettingsSyncEventsStatistics.MIGRATED_FROM_OLD_PLUGIN.log()
+      override fun enabledStateChanged(syncEnabled: Boolean) {
+        if (syncEnabled) {
+          SettingsSyncEvents.getInstance().addListener(this)
+          // the actual start of the sync is handled inside SettingsSyncEnabler
         }
         else {
-          migrateIfNeeded(asyncScope, service<SettingsSynchronizerState>().executorService)
+          SettingsSyncEvents.getInstance().removeListener(this)
+          service<SettingsSynchronizerState>().stopSyncingByTimer()
+          SettingsSyncMain.getInstance().disableSyncing()
         }
+      }
+    }
+    serviceAsync<SettingsSyncEvents>().addListener(settingsSyncEventListener)
+
+    if (isSettingsSyncEnabledInSettings()) {
+      initializeSyncing(SettingsSyncBridge.InitMode.JustInit, settingsSyncEventListener)
+      return
+    }
+
+    val syncSettings = serviceAsync<SettingsSyncSettings>()
+    if (syncSettings.migrationFromOldStorageChecked) {
+      return
+    }
+
+    syncSettings.migrationFromOldStorageChecked = true
+    val migration = MIGRATION_EP.extensionList.firstOrNull { it.isLocalDataAvailable(PathManager.getConfigDir()) }
+    if (migration != null) {
+      LOG.info("Found migration from an old storage via ${migration.javaClass.simpleName}")
+      initializeSyncing(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration), settingsSyncEventListener)
+      SettingsSyncEventsStatistics.MIGRATED_FROM_OLD_PLUGIN.log()
+    }
+    else {
+      coroutineScope {
+        migrateIfNeeded(this, serviceAsync<SettingsSynchronizerState>().executorService)
       }
     }
   }

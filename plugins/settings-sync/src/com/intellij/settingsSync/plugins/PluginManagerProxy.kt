@@ -3,12 +3,12 @@ package com.intellij.settingsSync.plugins
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnableStateChangedListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 
 interface PluginManagerProxy {
   companion object {
-    fun getInstance() = ApplicationManager.getApplication().getService(PluginManagerProxy::class.java)
+    fun getInstance(): PluginManagerProxy = service()
   }
 
   fun getPlugins(): Array<IdeaPluginDescriptor>

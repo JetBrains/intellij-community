@@ -1,13 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.ApplicationActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import javax.swing.JRadioButton
 
 internal object ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
@@ -20,17 +18,15 @@ internal object ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 
-  internal class Trigger : ApplicationInitializedListener {
-    override suspend fun execute(asyncScope: CoroutineScope) {
-      asyncScope.launch {
-        val state = ImportOldConfigsState.getInstance()
-        val initialImportScenario = state.initialImportScenario
-        if (initialImportScenario != null) {
-          INITIAL_IMPORT_SCENARIO.log(initialImportScenario)
-        }
-        if (state.wasOldConfigPanelOpened()) {
-          IMPORT_DIALOG_SHOWN_EVENT.log(state.type, state.doesSourceConfigFolderExist())
-        }
+  internal class Trigger : ApplicationActivity {
+    override suspend fun execute() {
+      val state = ImportOldConfigsState.getInstance()
+      val initialImportScenario = state.initialImportScenario
+      if (initialImportScenario != null) {
+        INITIAL_IMPORT_SCENARIO.log(initialImportScenario)
+      }
+      if (state.wasOldConfigPanelOpened()) {
+        IMPORT_DIALOG_SHOWN_EVENT.log(state.type, state.doesSourceConfigFolderExist())
       }
     }
   }

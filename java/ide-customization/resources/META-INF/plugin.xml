@@ -13,8 +13,8 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
-    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>

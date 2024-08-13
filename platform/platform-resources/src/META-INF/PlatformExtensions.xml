@@ -137,7 +137,7 @@
     <applicationService serviceImplementation="com.intellij.openapi.project.impl.shared.P3DynamicPluginSynchronizer"/>
 
     <ApplicationLoadListener implementation="com.intellij.openapi.project.impl.shared.P3SharedConfigFolderApplicationLoadListener"/>
-    <applicationInitializedListener implementation="com.intellij.openapi.project.impl.shared.P3SharedConfigFolderApplicationInitializedListener"/>
+    <applicationActivity implementation="com.intellij.openapi.project.impl.shared.ProcessPerProjectSharedConfigFolderApplicationInitializedListener"/>
 
     <!-- listen VFS_CHANGES - it is core service, so, don't want use lazy message bus listener without a reason -->
     <applicationService serviceInterface="com.intellij.openapi.command.undo.DocumentReferenceManager"
@@ -917,7 +917,7 @@
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.ProxySettingsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
-    <applicationInitializedListener implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
+    <applicationActivity implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
@@ -1095,7 +1095,7 @@
                  defaultValue="true"
                  description="Enables Windows Defender configuration check on project open"/>
 
-    <applicationInitializedListener implementation="com.intellij.codeInsight.editorActions.TypedHandlerPreloader"/>
+    <applicationActivity implementation="com.intellij.codeInsight.editorActions.TypedHandlerPreloader"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
 
     <writingAccessProvider implementation="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider" order="first"/>
@@ -1450,7 +1450,7 @@
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.SuperUserSuffixTitleInfoProvider"/>
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ConfigFolderTitleInfoProvider"/>
 
-    <applicationInitializedListener implementation="com.intellij.ide.plugins.DynamicPluginVfsListenerInitializer"/>
+    <applicationActivity implementation="com.intellij.ide.plugins.DynamicPluginVfsListenerInitializer"/>
     <vfs.asyncListener implementation="com.intellij.ide.plugins.DynamicPluginVfsListener"/>
 
     <intentionMenuContributor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringIntentionContributor"/>
@@ -1725,8 +1725,8 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
 
-    <applicationInitializedListener implementation="com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckServiceStarter"/>
-    <applicationInitializedListener implementation="com.intellij.diagnostic.JVMResponsivenessMonitorStarter"/>
+    <applicationActivity implementation="com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckServiceStarter"/>
+    <applicationActivity implementation="com.intellij.diagnostic.JVMResponsivenessMonitorStarter"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
 
@@ -1828,7 +1828,7 @@
 
     <postStartupActivity implementation="com.intellij.execution.wsl.ijent.nio.toggle.IjentInProjectStarter"
                          os="windows"/>
-    <applicationInitializedListener implementation="com.intellij.ide.SwingTooltipManagerCustomizer"/>
+    <applicationActivity implementation="com.intellij.ide.SwingTooltipManagerCustomizer"/>
   </extensions>
 
   <applicationListeners>

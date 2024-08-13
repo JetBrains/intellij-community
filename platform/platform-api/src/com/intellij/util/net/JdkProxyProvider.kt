@@ -5,7 +5,6 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.proxy.CommonProxyCompatibility
-import kotlinx.coroutines.CoroutineScope
 import java.net.Authenticator
 import java.net.ProxySelector
 
@@ -39,12 +38,14 @@ sealed interface JdkProxyProvider {
 }
 
 private class OverrideDefaultJdkProxy : ApplicationInitializedListener {
-  override suspend fun execute(asyncScope: CoroutineScope) {
+  override suspend fun execute() {
+    val jdkProxyProvider = JdkProxyProvider.getInstance()
+    val jdkProxyCustomizer = JdkProxyCustomizer.getInstance()
     CommonProxyCompatibility.register(
-      JdkProxyProvider.getInstance().proxySelector,
-      JdkProxyProvider.getInstance().authenticator,
-      JdkProxyCustomizer.getInstance()::customizeProxySelector,
-      JdkProxyCustomizer.getInstance()::customizeAuthenticator
+      proxySelector = jdkProxyProvider.proxySelector,
+      authenticator = jdkProxyProvider.authenticator,
+      registerCustomProxySelector = jdkProxyCustomizer::customizeProxySelector,
+      registerCustomAuthenticator = jdkProxyCustomizer::customizeAuthenticator
     )
     JdkProxyProvider.ensureDefault()
   }

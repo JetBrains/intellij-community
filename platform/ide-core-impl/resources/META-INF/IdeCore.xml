@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
+    <extensionPoint name="applicationActivity" interface="com.intellij.ide.ApplicationActivity" dynamic="false"/>
     <extensionPoint name="registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
     <extensionPoint name="notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
   </extensionPoints>

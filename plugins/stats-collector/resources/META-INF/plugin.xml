@@ -49,7 +49,7 @@
     <registryKey key="completion.stats.analytics.platform.url" defaultValue="default"
                  description="URL to status page with endpoints for sending completion logs to Analytics Platform"/>
 
-    <applicationInitializedListener implementation="com.intellij.stats.completion.sender.SenderPreloadingActivity"/>
+    <applicationActivity implementation="com.intellij.stats.completion.sender.SenderPreloadingActivity"/>
   </extensions>
 
   <projectListeners>

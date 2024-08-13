@@ -4,10 +4,11 @@ package com.intellij.platform.ide.newUsersOnboarding
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStartingPlace
 
-internal class StartNewUsersOnboardingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+private class StartNewUsersOnboardingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     NewUsersOnboardingService.getInstance(project).startOnboarding()
@@ -16,7 +17,7 @@ internal class StartNewUsersOnboardingAction : DumbAwareAction(), ActionRemoteBe
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null && NewUsersOnboardingExperiment.getInstance().isEnabled()
+    e.presentation.isEnabledAndVisible = project != null && service<NewUsersOnboardingExperiment>().isEnabled()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

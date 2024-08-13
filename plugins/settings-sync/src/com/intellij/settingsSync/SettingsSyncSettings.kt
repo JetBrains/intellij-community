@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.openapi.components.*
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.COMPONENT_NAME
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class SettingsSyncSettings : SettingsSyncState, SerializablePersistentStateComponent<SettingsSyncSettings.State>(State()) {
   companion object {
+    @RequiresBlockingContext
     fun getInstance(): SettingsSyncSettings = service<SettingsSyncSettings>()
 
     const val FILE_SPEC = "settingsSync.xml"

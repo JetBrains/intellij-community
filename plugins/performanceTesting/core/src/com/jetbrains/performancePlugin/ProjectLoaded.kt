@@ -18,6 +18,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -50,6 +51,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.net.ConnectException
 import java.nio.file.Files
@@ -208,15 +210,16 @@ private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
 }
 
 @Suppress("SpellCheckingInspection")
+@Internal
 class ProjectLoaded : ApplicationInitializedListener {
-  override suspend fun execute(asyncScope: CoroutineScope) {
+  override suspend fun execute() {
     if (System.getProperty("com.sun.management.jmxremote") == "true") {
-      service<InvokerService>().register({ PerformanceTestSpan.TRACER },
-                                         { PerformanceTestSpan.getContext() },
-                                         { takeFullScreenshot(it) })
+      serviceAsync<InvokerService>().register({ PerformanceTestSpan.TRACER },
+                                               { PerformanceTestSpan.getContext() },
+                                               { takeFullScreenshot(it) })
     }
     if (AppMode.isLightEdit()) {
-      LightEditService.getInstance().editorManager.addListener(object : LightEditorListener {
+      serviceAsync<LightEditService>().editorManager.addListener(object : LightEditorListener {
         override fun afterSelect(editorInfo: LightEditorInfo?) {
           runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
             logStats("LightEditor")

@@ -212,7 +212,7 @@ private suspend fun preloadServicesAndCallAppInitializedListeners(app: Applicati
     }
 
     @Suppress("TestOnlyProblems")
-    callAppInitialized(getAppInitializedListeners(app), app.getCoroutineScope())
+    callAppInitialized(getAppInitializedListeners(app))
 
     LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }

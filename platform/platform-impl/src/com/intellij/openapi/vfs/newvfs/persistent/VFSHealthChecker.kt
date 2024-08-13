@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
-import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.IdleTracker
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.ApplicationManager
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.CHILDREN_CACHED
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.IS_DIRECTORY
@@ -81,60 +82,62 @@ private object VFSHealthCheckerConstants {
   val MAX_SINGLE_ERROR_LOGS_BEFORE_THROTTLE = getIntProperty("vfs.health-check.max-single-error-logs", 128)
 }
 
-private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
+private class VFSHealthCheckServiceStarter : ApplicationActivity {
+  init {
+    if (!HEALTH_CHECKING_ENABLED) {
+      LOG.info("VFS health-check disabled")
+      throw ExtensionNotApplicableException.create()
+    }
 
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    if (HEALTH_CHECKING_ENABLED) {
-      if (HEALTH_CHECKING_PERIOD_MS < 1.minutes.inWholeMilliseconds) {
-        LOG.warn("VFS health-check is NOT enabled: incorrect period $HEALTH_CHECKING_PERIOD_MS ms, must be >= 1 min")
-        return
-      }
-      LOG.info("VFS health-check enabled: first after $HEALTH_CHECKING_START_DELAY_MS ms, and each following $HEALTH_CHECKING_PERIOD_MS ms, wrap in RA: ${WRAP_HEALTH_CHECK_IN_READ_ACTION}")
+    if (HEALTH_CHECKING_PERIOD_MS < 1.minutes.inWholeMilliseconds) {
+      LOG.warn("VFS health-check is NOT enabled: incorrect period $HEALTH_CHECKING_PERIOD_MS ms, must be >= 1 min")
+      throw ExtensionNotApplicableException.create()
+    }
+  }
 
-      asyncScope.launch(Dispatchers.Default) {
-        delay(HEALTH_CHECKING_START_DELAY_MS.toDuration(MILLISECONDS))
+  override suspend fun execute() {
+    LOG.info("VFS health-check enabled: first after $HEALTH_CHECKING_START_DELAY_MS ms, " +
+             "and each following $HEALTH_CHECKING_PERIOD_MS ms, wrap in RA: ${WRAP_HEALTH_CHECK_IN_READ_ACTION}")
 
-        val checkingPeriod = HEALTH_CHECKING_PERIOD_MS.toDuration(MILLISECONDS)
-        while (isActive && !FSRecords.getInstance().isClosed) {
+    delay(HEALTH_CHECKING_START_DELAY_MS.toDuration(MILLISECONDS))
 
-          //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
-          //          since the last check.
-          if (!PowerSaveMode.isEnabled()) {
-            //HealthCheck is not really an urgent process -- it is OK to delay a minute or two after
-            // the scheduled time. On the other side, health-check takes anywhere from 3 sec to 1.5 min
-            // depending on load, and could slow down the IDE operations in the process.
-            // We don't want to disturb the user with health-check, so we delay the check until the user
-            // is idle for at least 1 min straight -- which gives us a good probability the health-check
-            // will finish before the user returns from its retreat.
-            @OptIn(FlowPreview::class)
-            IdleTracker.getInstance().events
-              .debounce(1.minutes)
-              .take(1)
-              .collect {
-                launch(Dispatchers.IO) {
-                  //MAYBE RC: show a progress bar -- or better not bother user?
-                  doCheckupAndReportResults()
-                }
+    coroutineScope {
+      val checkingPeriod = HEALTH_CHECKING_PERIOD_MS.toDuration(MILLISECONDS)
+      while (isActive && !FSRecords.getInstance().isClosed) {
+        //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
+        //          since the last check.
+        if (!PowerSaveMode.isEnabled()) {
+          //HealthCheck is not really an urgent process -- it is OK to delay a minute or two after
+          // the scheduled time. On the other side, health-check takes anywhere from 3 sec to 1.5 min
+          // depending on load, and could slow down the IDE operations in the process.
+          // We don't want to disturb the user with health-check, so we delay the check until the user
+          // is idle for at least 1 min straight -- which gives us a good probability the health-check
+          // will finish before the user returns from its retreat.
+          @OptIn(FlowPreview::class)
+          IdleTracker.getInstance().events
+            .debounce(1.minutes)
+            .take(1)
+            .collect {
+              withContext(Dispatchers.IO) {
+                //MAYBE RC: show a progress bar -- or better not bother user?
+                doCheckupAndReportResults()
               }
-          }
-          else {
-            LOG.info("VFS health-check skipped: PowerSaveMode is enabled")
-          }
+            }
+        }
+        else {
+          LOG.info("VFS health-check skipped: PowerSaveMode is enabled")
+        }
 
-          delay(checkingPeriod)
+        delay(checkingPeriod)
 
-          //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10-60sec long once/(few) hours,
-          //          which is negligible comparing to (GC/JIT/bg tasks) load accumulated
-          //          over the same few hours
-          if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
-            LOG.info("VFS health-check delayed: power source is battery")
-            delay(checkingPeriod) //make it twice rarer
-          }
+        //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10-60sec long once/(few) hours,
+        //          which is negligible comparing to (GC/JIT/bg tasks) load accumulated
+        //          over the same few hours
+        if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
+          LOG.info("VFS health-check delayed: power source is battery")
+          delay(checkingPeriod) // make it twice rarer
         }
       }
-    }
-    else {
-      LOG.info("VFS health-check disabled")
     }
   }
 

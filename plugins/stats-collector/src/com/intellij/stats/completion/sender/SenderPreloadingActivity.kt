@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.stats.completion.sender
 
-import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.ApplicationActivity
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -9,7 +9,10 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.stats.completion.network.status.WebServiceStatusManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.minutes
 
@@ -21,7 +24,7 @@ internal fun isCompletionLogsSendAllowed(): Boolean {
   return ApplicationManager.getApplication().isEAP && System.getProperty("completion.stats.send.logs", "true").toBoolean()
 }
 
-private class SenderPreloadingActivity : ApplicationInitializedListener {
+private class SenderPreloadingActivity : ApplicationActivity {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
@@ -29,16 +32,14 @@ private class SenderPreloadingActivity : ApplicationInitializedListener {
     }
   }
 
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    asyncScope.launch {
-      // do not check right after the start - avoid getting UsageStatisticsPersistenceComponent too early
+  override suspend fun execute() {
+    // do not check right after the start - avoid getting UsageStatisticsPersistenceComponent too early
+    delay(5.minutes)
+    while (isSendAllowed()) {
       delay(5.minutes)
-      while (isSendAllowed()) {
-        delay(5.minutes)
-        runCatching {
-          send()
-        }.getOrLogException(logger<SenderPreloadingActivity>())
-      }
+      runCatching {
+        send()
+      }.getOrLogException(logger<SenderPreloadingActivity>())
     }
   }
 
