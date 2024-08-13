@@ -63,7 +63,7 @@ public interface Navigatable {
   /**
    * Indicates whether this instance supports navigation to source (that means some kind of editor).
    * Note that navigation can be supported even if this method returns {@code false}.
-   * In such cases it is not recМшommended to do batch navigation for all navigatables
+   * In such cases it is not recommended to do batch navigation for all navigatables
    * available via {@link com.intellij.openapi.actionSystem.CommonDataKeys#NAVIGATABLE_ARRAY},
    * because it may lead to opening several modal dialogs.
    * Use {@link com.intellij.util.OpenSourceUtil#navigate} to process such arrays correctly.
