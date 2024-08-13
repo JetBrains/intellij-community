@@ -7,4 +7,4 @@ interface PyVersionSpecificStub {
   val versionRange: PyVersionRange
 }
 
-class PyVersionRange(val lowInclusive: Version?, val highExclusive: Version?)
+data class PyVersionRange(val lowInclusive: Version?, val highExclusive: Version?)

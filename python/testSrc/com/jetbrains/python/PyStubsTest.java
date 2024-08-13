@@ -5,6 +5,7 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -128,6 +129,28 @@ public class PyStubsTest extends PyTestCase {
         assertNotParsed(file);
       }
     );
+  }
+
+  // PY-34617
+  public void testStubStructureWithVersionChecks() {
+    final PsiFileImpl file = (PsiFileImpl)getTestFile();
+    element(PyFileStub.class)
+      .withChildren(
+        element(PyImportStatementStub.class),
+        element(PyFunctionStub.class, versionRange("3.0", "3.12")),
+        element(PyTypeAliasStatementStub.class, versionLessThan("2.2")),
+        element(PyTargetExpressionStub.class, versionRange("2.2", "2.5")),
+        element(PyClassStub.class, versionRange("2.5", "3.0"))
+          .withChildren(
+            element(PyClassStub.class, versionRange("2.5", "3.0"))
+              .withChildren(
+                element(PyFunctionStub.class, versionRange("3.11", "3.0")),
+                element(PyTargetExpressionStub.class, versionRange("2.5", "3.0"))
+              ),
+            element(PyTargetExpressionStub.class, versionRange("3.12", "3.0"))
+          )
+      )
+      .test(file.getStub());
   }
 
   public void testLoadingDeeperTreeRemainsKnownPsiElement() {
@@ -1231,6 +1254,55 @@ public class PyStubsTest extends PyTestCase {
       assertEquals(hasDefault, fieldStub.hasDefault());
       assertEquals(hasDefaultFactory, fieldStub.hasDefaultFactory());
       assertEquals(initValue, fieldStub.initValue());
+    }
+  }
+
+  private static <T extends StubElement<?>> @NotNull StubElementValidator element(@NotNull Class<T> clazz) {
+    return stub -> assertInstanceOf(stub, clazz);
+  }
+
+  private static <T extends PyVersionSpecificStub> @NotNull StubElementValidator element(@NotNull Class<T> clazz,
+                                                                                         @NotNull PyVersionRange versionRange) {
+    return stub -> {
+      assertInstanceOf(stub, clazz);
+      assertEquals(versionRange, clazz.cast(stub).getVersionRange());
+    };
+  }
+
+  private static @NotNull PyVersionRange versionLessThan(@NotNull String version) {
+    return new PyVersionRange(null, Version.parseVersion(version));
+  }
+
+  private static @NotNull PyVersionRange versionRange(@NotNull String lowInclusive, @NotNull String highExclusive) {
+    return new PyVersionRange(Version.parseVersion(lowInclusive), Version.parseVersion(highExclusive));
+  }
+
+  //private static @NotNull StubElementValidator ifPart(int major, int minor, boolean isLessThan) {
+  //  return stub -> {
+  //    assertInstanceOf(stub, PyIfPartIfStub.class);
+  //    assertEquals(new PyVersionCheck(new Version(major, minor, 0), isLessThan), ((PyIfPartIfStub)stub).getVersionCheck());
+  //  };
+  //}
+  //
+  //private static @NotNull StubElementValidator elifPart(int major, int minor, boolean isLessThan) {
+  //  return stub -> {
+  //    assertInstanceOf(stub, PyIfPartElifStub.class);
+  //    assertEquals(new PyVersionCheck(new Version(major, minor, 0), isLessThan), ((PyIfPartElifStub)stub).getVersionCheck());
+  //  };
+  //}
+
+  private interface StubElementValidator {
+    void test(@NotNull StubElement<?> stub);
+
+    default @NotNull StubElementValidator withChildren(StubElementValidator @NotNull ... children) {
+      return stub -> {
+        test(stub);
+        List<StubElement<?>> childrenStubs = stub.getChildrenStubs();
+        assertSize(children.length, childrenStubs);
+        for (int i = 0; i != children.length; i++) {
+          children[i].test(childrenStubs.get(i));
+        }
+      };
     }
   }
 }
