@@ -271,7 +271,7 @@ sealed class K2MoveModel {
                         val file = elementsToMove.firstOrNull { it.containingFile != null }?.containingFile
                             ?: error("No default target found")
                         val directory = file.containingDirectory ?: error("No default target found")
-                        val pkgName = elementsToMove.firstIsInstanceOrNull<KtFile>()?.containingKtFile?.packageFqName ?: FqName.ROOT
+                        val pkgName = elementsToMove.firstIsInstanceOrNull<KtElement>()?.containingKtFile?.packageFqName ?: FqName.ROOT
                         K2MoveTargetModel.SourceDirectory(pkgName, directory)
                     }
                     Files(project, source, target, inSourceRoot, moveCallBack)

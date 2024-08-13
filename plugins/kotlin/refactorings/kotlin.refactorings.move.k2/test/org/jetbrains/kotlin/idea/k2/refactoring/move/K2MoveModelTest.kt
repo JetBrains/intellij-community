@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.*
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -164,13 +165,36 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assert(lastElem.name == "Bar.kt")
     }
 
+    fun `test multiple classes from source directory without target move`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        val fooClass = (myFixture.addFileToProject("Foo.kt", """
+            package a
+            
+            class Foo { }
+        """.trimIndent()) as KtFile).declarations.single()
+        val barClass = (myFixture.addFileToProject("Bar.kt", """
+            package a
+            
+            class Bar { }
+        """.trimIndent()) as KtFile).declarations.single()
+        val moveModel = K2MoveModel.create(arrayOf(fooClass, barClass), null)
+        assertInstanceOf<K2MoveModel.Files>(moveModel)
+        val moveFilesModel = moveModel as K2MoveModel.Files
+        assertSize(2, moveFilesModel.source.elements)
+        val firstElem = moveFilesModel.source.elements.first()
+        assertEquals("Foo.kt", firstElem.name)
+        val lastElem = moveFilesModel.source.elements.last()
+        assertEquals("Bar.kt", lastElem.name)
+        assertEquals("a", moveFilesModel.target.pkgName.asString())
+    }
+
     fun `test single class and file from source directory to source directory move`() {
         PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
         val barClass = (myFixture.addFileToProject("Bar.kt", """
-            class Foo { }
+            class Bar { }
         """.trimIndent()) as KtFile).declarations.single()
         val barDir = runWriteAction { fooFile.containingDirectory?.createSubdirectory("bar") }
         val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), barDir)
