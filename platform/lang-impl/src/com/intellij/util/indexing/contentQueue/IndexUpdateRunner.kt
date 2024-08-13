@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -286,7 +287,14 @@ class IndexUpdateRunner(
       loader: CachedFileContentLoader,
     ): Triple<FileIndexingResult, Long, Long> {
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing.
-      val loadingResult: ContentLoadingResult = loadContent(file, loader)
+      val loadingResult = withContext(Dispatchers.IO) {
+        //TODO IJPL-157558: the withContext(NonCancellable) {} don't work here (but should)
+        //TODO RC: non-cancellable section is used just to avoid context-switch down the stack (DiskQueryRelay):
+        Cancellation.withNonCancelableSection().use {
+          loadContent(file, loader)
+        }
+      }
+
       val contentLoadingTime: Long = System.nanoTime() - startTime
 
       val fileContent = loadingResult.cachedFileContent
