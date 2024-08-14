@@ -17,10 +17,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -92,26 +89,25 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   }
 
   @Override
-  protected @Nullable Object getSlowDataFromSelection(@Nullable Object @NotNull [] selectedUserObjects,
-                                                      @Nullable Object @Nullable [] singleSelectedPathUserObjects,
-                                                      @NotNull String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+  protected void uiDataSnapshotForSelection(@NotNull DataSink sink,
+                                            @Nullable Object @NotNull [] selectedUserObjects,
+                                            @Nullable Object @Nullable [] singleSelectedPathUserObjects) {
+    super.uiDataSnapshotForSelection(sink, selectedUserObjects, singleSelectedPathUserObjects);
+    sink.lazy(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, () -> {
       Object o = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
       if (o instanceof PackageElement) {
         return myDeletePSIElementProvider;
       }
-    }
-    if (PackageElement.DATA_KEY.is(dataId)) {
-      Object o = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
-      return o instanceof PackageElement ? o : null;
-    }
-    if (PlatformCoreDataKeys.MODULE.is(dataId)) {
-      Object o = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
-      if (o instanceof PackageElement) {
-        return ((PackageElement)o).getModule();
-      }
-    }
-    return super.getSlowDataFromSelection(selectedUserObjects, singleSelectedPathUserObjects, dataId);
+      return null;
+    });
+    sink.lazy(PackageElement.DATA_KEY, () -> {
+      Object value = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
+      return value instanceof PackageElement o ? o : null;
+    });
+    sink.lazy(PlatformCoreDataKeys.MODULE, () -> {
+      Object value = selectedUserObjects.length != 1 ? null : getValueFromNode(selectedUserObjects[0]);
+      return value instanceof PackageElement o ? o.getModule() : null;
+    });
   }
 
   @RequiresBackgroundThread(generateAssertion = false)

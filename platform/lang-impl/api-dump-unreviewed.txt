@@ -15938,7 +15938,6 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - f:getSelectedValues(java.lang.Object[]):java.lang.Object[]
 - getSelectionPaths():javax.swing.tree.TreePath[]
 - f:getSingleSelectedPathUserObjects():java.lang.Object[]
-- p:getSlowDataFromSelection(java.lang.Object[],java.lang.Object[],java.lang.String):java.lang.Object
 - f:getSubId():java.lang.String
 - getSubIds():java.lang.String[]
 - a:getTitle():java.lang.String
@@ -15966,6 +15965,7 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - f:setSubId(java.lang.String):V
 - supportsManualOrder():Z
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+- p:uiDataSnapshotForSelection(com.intellij.openapi.actionSystem.DataSink,java.lang.Object[],java.lang.Object[]):V
 - updateFrom(java.lang.Object,Z,Z):V
 - a:updateFromRoot(Z):com.intellij.openapi.util.ActionCallback
 - writeExternal(org.jdom.Element):V
