@@ -65,7 +65,7 @@ internal object ShellEnvBasedGenerators {
       shellSupport.parseAliases(text)
     }
     catch (t: Throwable) {
-      LOG.error("Failed to parse aliases: $text")
+      LOG.error("Failed to parse aliases: $text", t)
       emptyMap()
     }
   }
