@@ -95,11 +95,6 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
   }
 
   @Override
-  public @Nullable Object getDataForItem(@NotNull ChooseRunConfigurationPopup.ItemWrapper element, @NotNull String dataId) {
-    return null;
-  }
-
-  @Override
   public @NotNull ListCellRenderer<? super ChooseRunConfigurationPopup.ItemWrapper> getElementsRenderer() {
     return renderer;
   }

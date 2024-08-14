@@ -14,7 +14,6 @@ fun createDumbContributor(id: String, showTab: Boolean = false, essential: Boole
     override fun showInFindResults(): Boolean = false
     override fun isShownInSeparateTab(): Boolean = showTab
     override fun getElementsRenderer(): ListCellRenderer<in Unit> = ListCellRenderer { _, _, _, _, _ -> JPanel() }
-    override fun getDataForItem(element: Unit, dataId: String): Any? = null
     override fun processSelectedItem(selected: Unit, modifiers: Int, searchText: String): Boolean = false
     override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in Unit>) {}
 

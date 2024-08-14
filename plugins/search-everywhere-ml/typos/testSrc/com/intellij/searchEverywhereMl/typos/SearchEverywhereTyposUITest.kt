@@ -1,6 +1,9 @@
 package com.intellij.searchEverywhereMl.typos
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.progress.ProgressIndicator
@@ -31,7 +34,6 @@ private class MockSearchEverywhereContributor(private val elements: Collection<S
 
   override fun getSearchProviderId(): String = this::class.java.simpleName
   override fun getGroupName(): String = this::class.java.simpleName
-  override fun getDataForItem(element: String, dataId: String): Any? = null
   override fun getSortWeight(): Int = 0
   override fun showInFindResults(): Boolean = true
   override fun processSelectedItem(selected: String, modifiers: Int, searchText: String): Boolean = true

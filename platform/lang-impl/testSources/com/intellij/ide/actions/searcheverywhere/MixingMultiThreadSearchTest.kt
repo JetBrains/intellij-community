@@ -10,12 +10,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.Processor
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.junit.Assert
-import java.lang.UnsupportedOperationException
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executor
-import java.util.concurrent.Phaser
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.ListCellRenderer
 
@@ -319,10 +314,6 @@ class MixingMultiThreadSearchTest : BasePlatformTestCase() {
 
         override fun getElementsRenderer(): ListCellRenderer<in Any?> {
           throw UnsupportedOperationException()
-        }
-
-        override fun getDataForItem(element: Any, dataId: String): Any? {
-          return null
         }
       }
     }

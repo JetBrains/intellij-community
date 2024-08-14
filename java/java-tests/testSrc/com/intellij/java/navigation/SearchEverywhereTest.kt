@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil.waitForFuture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.assertEquals
 import com.intellij.util.Processor
 import org.mockito.Mockito
 import javax.swing.DefaultListCellRenderer
@@ -302,8 +303,6 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean = false
 
     override fun getElementsRenderer(): ListCellRenderer<in Any> = DefaultListCellRenderer()
-
-    override fun getDataForItem(element: Any, dataId: String): Any? = null
   }
 
   private class StubAction(text: String) : AnAction(text) {

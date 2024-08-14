@@ -12,7 +12,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -83,12 +82,6 @@ final class AutoCompletionProvider {
     @Override
     public @NotNull ListCellRenderer<? super AutoCompletionCommand> getElementsRenderer() {
       return new CommandRenderer();
-    }
-
-    @Override
-    public @Nullable Object getDataForItem(@NotNull AutoCompletionCommand element,
-                                           @NotNull String dataId) {
-      return null;
     }
   }
 

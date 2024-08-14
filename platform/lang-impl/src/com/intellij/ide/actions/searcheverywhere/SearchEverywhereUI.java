@@ -504,7 +504,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
   }
 
-  private static @Nullable Object getDataFromElementInfo(@NotNull String dataId, SearchEverywhereFoundElementInfo info) {
+  private static @Nullable Object getDataFromElementInfo(@NotNull String dataId, @NotNull SearchEverywhereFoundElementInfo info) {
     //noinspection unchecked
     SearchEverywhereContributor<Object> contributor = (SearchEverywhereContributor<Object>)info.getContributor();
     if (contributor == null) return null;
@@ -1939,11 +1939,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     @Override
     public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
       return myCommandRenderer;
-    }
-
-    @Override
-    public @Nullable Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
-      return null;
     }
   };
 

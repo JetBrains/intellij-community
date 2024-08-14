@@ -87,11 +87,6 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     return new NavigationItemListCellRenderer();
   }
 
-  @Override
-  public Object getDataForItem(@NotNull YAMLKeyNavigationItem element, @NotNull String dataId) {
-    return null;
-  }
-
   private void findKeys(@NotNull Processor<? super YAMLKeyNavigationItem> consumer, @NotNull String pattern) {
     if (ActionUtil.isDumbMode(myProject)) {
       return;

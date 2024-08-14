@@ -201,8 +201,6 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
            && VcsProjectLog.getInstance(project).logManager != null
   }
 
-  override fun getDataForItem(element: Any, dataId: String): Any? = null
-
   class Factory : SearchEverywhereContributorFactory<Any> {
     override fun createContributor(initEvent: AnActionEvent): GitSearchEverywhereContributor {
       val project = initEvent.getRequiredData(CommonDataKeys.PROJECT)

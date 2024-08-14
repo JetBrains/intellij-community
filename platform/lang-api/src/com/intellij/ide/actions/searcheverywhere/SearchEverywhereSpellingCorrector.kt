@@ -52,5 +52,4 @@ class SearchEverywhereSpellingCorrectorContributor(private val textComponent: JT
     return false
   }
   override fun getElementsRenderer(): ListCellRenderer<in SearchEverywhereSpellCheckResult.Correction> = SearchEverywhereSpellingElementRenderer()
-  override fun getDataForItem(element: SearchEverywhereSpellCheckResult.Correction, dataId: String): Any? = null
 }

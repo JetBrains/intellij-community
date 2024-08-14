@@ -2817,7 +2817,7 @@ com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 - filterControlSymbols(java.lang.String):java.lang.String
 - getActions(java.lang.Runnable):java.util.List
 - getAdvertisement():java.lang.String
-- a:getDataForItem(java.lang.Object,java.lang.String):java.lang.Object
+- getDataForItem(java.lang.Object,java.lang.String):java.lang.Object
 - getElementPriority(java.lang.Object,java.lang.String):I
 - a:getElementsRenderer():javax.swing.ListCellRenderer
 - getFullGroupName():java.lang.String

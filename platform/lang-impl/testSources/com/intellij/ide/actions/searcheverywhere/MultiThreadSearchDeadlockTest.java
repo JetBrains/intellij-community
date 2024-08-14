@@ -11,7 +11,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -203,12 +202,6 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
     @Override
     public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
       return false;
-    }
-
-    @Nullable
-    @Override
-    public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
-      return null;
     }
 
     @NotNull

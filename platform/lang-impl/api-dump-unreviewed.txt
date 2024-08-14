@@ -13948,7 +13948,6 @@ f:com.intellij.ide.actions.searcheverywhere.RunConfigurationsSEContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.util.function.Supplier):V
 - fetchElements(java.lang.String,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):V
-- getDataForItem(com.intellij.execution.actions.ChooseRunConfigurationPopup$ItemWrapper,java.lang.String):java.lang.Object
 - getElementsRenderer():javax.swing.ListCellRenderer
 - getGroupName():java.lang.String
 - getSearchProviderId():java.lang.String
@@ -14221,7 +14220,6 @@ f:com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 - sf:TOP_HIT_ELEMENT_PRIORITY:I
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.util.function.Consumer):V
 - fetchElements(java.lang.String,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):V
-- getDataForItem(java.lang.Object,java.lang.String):java.lang.Object
 - getElementPriority(java.lang.Object,java.lang.String):I
 - getElementsRenderer():javax.swing.ListCellRenderer
 - getGroupName():java.lang.String

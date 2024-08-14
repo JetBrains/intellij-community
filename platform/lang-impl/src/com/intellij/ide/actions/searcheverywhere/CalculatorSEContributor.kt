@@ -66,8 +66,6 @@ private class CalculatorSEContributor : WeightedSearchEverywhereContributor<Eval
     consumer.process(FoundItemDescriptor(EvaluationResult(result, pattern), 0x8000))
   }
 
-  override fun getDataForItem(element: EvaluationResult, dataId: String): Any? = null
-
   override fun processSelectedItem(selected: EvaluationResult, modifiers: Int, searchText: String): Boolean {
     CopyPasteManager.getInstance().setContents(StringSelection(selected.value))
     return true

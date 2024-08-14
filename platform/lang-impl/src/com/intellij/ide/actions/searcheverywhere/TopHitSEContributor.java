@@ -94,11 +94,6 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
   }
 
   @Override
-  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
-    return null;
-  }
-
-  @Override
   public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
     if (selected instanceof BooleanOptionDescription option) {
       option.setOptionState(!option.isOptionEnabled());
