@@ -948,7 +948,8 @@ fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
   return platformPrefix == PlatformUtils.IDEA_PREFIX ||
          platformPrefix == PlatformUtils.WEB_PREFIX ||
          platformPrefix == PlatformUtils.DBE_PREFIX ||
-         platformPrefix == PlatformUtils.GATEWAY_PREFIX
+         platformPrefix == PlatformUtils.GATEWAY_PREFIX ||
+         platformPrefix == PlatformUtils.GITCLIENT_PREFIX
 }
 
 private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStreamReader2? {

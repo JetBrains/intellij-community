@@ -668,16 +668,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 throw CancellationException("beforeOpen callback returned false")
               }
 
-              if (options.runConfigurators &&
-                  (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty()) ||
-                  project.isLoadedFromCacheButHasNoModules()) {
-                module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-                  baseDir = projectStoreBaseDir,
-                  project = project,
-                  newProject = options.isProjectCreatedWithWizard,
-                )
-                options.preparedToOpen?.invoke(module)
-              }
+              configureWorkspace(project, projectStoreBaseDir, options)
             }
 
             if (!addToOpened(project)) {
@@ -952,6 +943,20 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
 
+  open suspend fun configureWorkspace(project: Project, projectStoreBaseDir: Path, options: OpenProjectTask): Module? {
+    if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())
+        || project.isLoadedFromCacheButHasNoModules()) {
+      val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+        baseDir = projectStoreBaseDir,
+        project = project,
+        newProject = options.isProjectCreatedWithWizard,
+      )
+      options.preparedToOpen?.invoke(module)
+      return module
+    }
+    return null
+  }
+
   private suspend fun checkExistingProjectOnOpen(projectToClose: Project, options: OpenProjectTask, projectDir: Path): Boolean {
     if (options.forceReuseFrame) {
       return !closeAndDisposeKeepingFrame(projectToClose)
@@ -1189,8 +1194,7 @@ private fun ensureCouldCloseIfUnableToSave(project: Project): Boolean {
 
 @Internal
 class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) :
-  Notification("Project Settings", IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"), IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR)
-{
+  Notification("Project Settings", IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"), IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR) {
   private var project: Project?
 
   var files: List<VirtualFile>
@@ -1222,8 +1226,10 @@ private fun toCanonicalName(filePath: String): Path {
       return file.toRealPath(LinkOption.NOFOLLOW_LINKS)
     }
   }
-  catch (_: InvalidPathException) { }
-  catch (_: IOException) { } // the file does not yet exist, so its canonical path will be equal to its original path
+  catch (_: InvalidPathException) {
+  }
+  catch (_: IOException) {
+  } // the file does not yet exist, so its canonical path will be equal to its original path
   return file
 }
 
