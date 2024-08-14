@@ -188,9 +188,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
       final Sdk createdSdk = ((PyLazySdk)sdk).create();
       LOGGER.info(String.format("Lazy PythonSDK generated sdk: %s", createdSdk));
       settings.setSdk(createdSdk);
-      if (createdSdk != null && !useNewInterpreterCreationUi()) {
-        SdkConfigurationUtil.addSdk(createdSdk);
-      }
     }
 
     final PyProjectSynchronizer synchronizer = sdk != null ? PyProjectSynchronizerProvider.getSynchronizer(sdk) : null;
@@ -516,6 +513,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   }
 
   public static boolean useNewInterpreterCreationUi() {
-    return Registry.is("python.new.interpreter.creation.ui") && !PlatformUtils.isDataSpell();
+  return true;
   }
 }

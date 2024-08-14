@@ -8,10 +8,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedActionGroup;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.util.ObjectUtils;
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.newProject.*;
-import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep;
 import com.jetbrains.python.newProject.steps.PythonProjectSpecificSettingsStep;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-
-import static com.jetbrains.python.newProject.PythonProjectGenerator.useNewInterpreterCreationUi;
 
 public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewProjectSettings> {
   public PyCharmNewProjectStep() {
@@ -50,16 +47,14 @@ public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewPro
         //noinspection unchecked
         return new NewProjectWizardProjectSettingsStep<PyNewProjectSettings>(npwGenerator);
       }
-      else if (useNewInterpreterCreationUi()) {
-        return new PythonProjectSpecificSettingsStep<>(projectGenerator, callback);
-      }
       else {
-        return new ProjectSpecificSettingsStep<>(projectGenerator, callback);
+        return new PythonProjectSpecificSettingsStep<>(projectGenerator, callback);
       }
     }
 
     @Override
-    public AnAction[] getActions(@NotNull List<? extends DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<PyNewProjectSettings> callback) {
+    public AnAction[] getActions(@NotNull List<? extends DirectoryProjectGenerator<?>> generators,
+                                 @NotNull AbstractCallback<PyNewProjectSettings> callback) {
       generators = new ArrayList<>(generators);
       generators.sort(Comparator.comparing(DirectoryProjectGenerator::getName));
       generators.sort(Comparator.comparingInt(value -> {
@@ -72,23 +67,16 @@ public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewPro
         return 0;
       }));
 
-      if (useNewInterpreterCreationUi()) {
-        //noinspection unchecked
-        var map = StreamEx.of(generators)
-          .map(generator -> new Pair<>(generator, getActions((DirectoryProjectGenerator<PyNewProjectSettings>)generator, callback)))
-          .partitioningBy((pair) -> pair.first instanceof PythonProjectGenerator);
-
-        var python = new DefaultActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.python.group.name"),
-                                            map.get(true).stream().flatMap(pair -> Arrays.stream(pair.second)).toList());
-        var other = new CollapsedActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.other.group.name"),
-                                             map.get(false).stream().flatMap(pair -> Arrays.stream(pair.second)).toList());
-        return new AnAction[] { python, other };
-      }
-
       //noinspection unchecked
-      return StreamEx.of(generators)
-        .flatMap(generator -> StreamEx.of(getActions((DirectoryProjectGenerator<PyNewProjectSettings>)generator, callback)))
-        .toArray(EMPTY_ARRAY);
+      var map = StreamEx.of(generators)
+        .map(generator -> new Pair<>(generator, getActions((DirectoryProjectGenerator<PyNewProjectSettings>)generator, callback)))
+        .partitioningBy((pair) -> pair.first instanceof PythonProjectGenerator);
+
+      var python = new DefaultActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.python.group.name"),
+                                          map.get(true).stream().flatMap(pair -> Arrays.stream(pair.second)).toList());
+      var other = new CollapsedActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.other.group.name"),
+                                           map.get(false).stream().flatMap(pair -> Arrays.stream(pair.second)).toList());
+      return new AnAction[]{python, other};
     }
   }
 }
