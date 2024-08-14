@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -6,14 +6,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -49,23 +49,34 @@ public final class DanglingJavadocInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    boolean markdownComment = (boolean)infos[0];
     return new LocalQuickFix[] {
       new DeleteCommentFix(),
-      new ConvertCommentFix()
+      new ConvertCommentFix(markdownComment)
     };
   }
 
   private static class ConvertCommentFix extends PsiUpdateModCommandQuickFix {
+    private final boolean myMarkdownComment;
+
+    ConvertCommentFix(boolean markdownComment) {
+      myMarkdownComment = markdownComment;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("dangling.javadoc.convert.quickfix");
+      return myMarkdownComment
+             ? InspectionGadgetsBundle.message("dangling.javadoc.convert.line.comment.quickfix")
+             : InspectionGadgetsBundle.message("dangling.javadoc.convert.quickfix");
     }
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiElement docComment = element.getParent();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiDocComment docComment)) return;
+      boolean markdownComment = docComment.isMarkdownComment();
       final StringBuilder newCommentText = new StringBuilder();
       for (PsiElement child = docComment.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child instanceof PsiDocToken docToken) {
@@ -76,7 +87,7 @@ public final class DanglingJavadocInspection extends BaseInspection {
           else if (!JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS.equals(tokenType)) {
             newCommentText.append(child.getText());
           }
-          else if (PsiUtil.isInMarkdownDocComment(docToken)) {
+          else if (markdownComment) {
             newCommentText.append("//");
           }
         }
@@ -84,9 +95,10 @@ public final class DanglingJavadocInspection extends BaseInspection {
           newCommentText.append(child.getText());
         }
       }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiComment newComment = factory.createCommentFromText(newCommentText.toString(), element);
-      docComment.replace(newComment);
+
+      Document document = element.getContainingFile().getFileDocument();
+      TextRange range = docComment.getTextRange();
+      document.replaceString(range.getStartOffset(), range.getEndOffset(), newCommentText);
     }
   }
 
@@ -116,7 +128,7 @@ public final class DanglingJavadocInspection extends BaseInspection {
     public void visitDocComment(@NotNull PsiDocComment comment) {
       super.visitDocComment(comment);
       if (JavaDocUtil.isDanglingDocComment(comment, ignoreCopyright)) {
-        registerError(comment.getFirstChild());
+        registerError(comment.getFirstChild(), comment.isMarkdownComment());
       }
     }
   }

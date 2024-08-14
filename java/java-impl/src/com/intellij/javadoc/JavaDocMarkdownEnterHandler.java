@@ -8,12 +8,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +21,7 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
                                 @NotNull Ref<Integer> caretAdvance,
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
+    if (!(file instanceof PsiJavaFile) || !file.isValid()) return Result.Continue;
 
     PsiElement caretElement = file.findElementAt(caretOffset.get());
     if (caretElement == null) return Result.Continue;
@@ -35,7 +32,7 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
       currentElement = currentElement.getPrevSibling();
     }
 
-    if (!((currentElement instanceof PsiDocToken token) && shouldInsertLeadingTokens(token))) {
+    if (!shouldInsertLeadingTokens(currentElement)) {
       return Result.Continue;
     }
     Document document = editor.getDocument();
@@ -52,7 +49,7 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
    * @param element a doc element found at the caret offset
    * @return If the javadoc is tied to a method/a class it should return true otherwise false
    */
-  private static boolean shouldInsertLeadingTokens(PsiDocToken element) {
+  private static boolean shouldInsertLeadingTokens(PsiElement element) {
     PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false, PsiMember.class);
     if (docComment == null || !docComment.isMarkdownComment()) return false;
 

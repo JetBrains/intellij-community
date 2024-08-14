@@ -8,6 +8,8 @@ import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,8 +32,10 @@ public class DocCommentBlock extends AbstractJavaBlock{
     final ArrayList<Block> result = new ArrayList<>();
 
     ASTNode child = myNode.getFirstChildNode();
+    boolean isMarkdown = PsiUtil.isInMarkdownDocComment(child.getPsi());
     while (child != null) {
-      if (child.getElementType() == JavaDocTokenType.DOC_COMMENT_START) {
+      IElementType type = child.getElementType();
+      if (type == JavaDocTokenType.DOC_COMMENT_START || (type == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS && isMarkdown)) {
         result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy(), getFormattingMode()));
       } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && !child.getText().trim().isEmpty()){
         result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getSpaceIndent(1), null, AlignmentStrategy.getNullStrategy(), getFormattingMode()));

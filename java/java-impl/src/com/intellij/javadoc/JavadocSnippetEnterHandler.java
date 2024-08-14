@@ -40,7 +40,7 @@ public final class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapte
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
     final PsiSnippetDocTag host = ObjectUtils.tryCast(injectedLanguageManager.getInjectionHost(file), PsiSnippetDocTag.class);
 
-    return (host == null || PsiUtil.isInMarkdownDocComment(host)) ? Result.Continue : Result.Default;
+    return host == null ? Result.Continue : Result.Default;
   }
 
   @Override
@@ -60,7 +60,7 @@ public final class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapte
     int firstNonWsLineOffset = CharArrayUtil.shiftForward(hostDocument.getText(), lineStartOffset, " \t");
 
     if (hostDocument.getText().charAt(firstNonWsLineOffset) != '*') {
-      final String prefix = calcPrefix(host);
+      final String prefix = calcPrefix(host, PsiUtil.isInMarkdownDocComment(InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file)));
       hostDocument.insertString(lineStartOffset, prefix);
       caretModelHost.moveToOffset(caretOffsetHost + prefix.length());
       EditorModificationUtilEx.scrollToCaret(editor);
@@ -84,7 +84,7 @@ public final class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapte
     return host;
   }
 
-  private static String calcPrefix(PsiSnippetDocTag host) {
+  private static String calcPrefix(PsiSnippetDocTag host, boolean markdownComment) {
     final PsiFile file = host.getContainingFile();
     final String text = file.getText();
 
@@ -99,7 +99,7 @@ public final class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapte
 
     final JavaCodeStyleSettings settings = CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
 
-    return settings.JD_LEADING_ASTERISKS_ARE_ENABLED ? whitespacesPrefix + "* " : whitespacesPrefix;
+    return (settings.JD_LEADING_ASTERISKS_ARE_ENABLED && !markdownComment) ? whitespacesPrefix + "* " : whitespacesPrefix;
   }
 
 }
