@@ -850,40 +850,45 @@ class _JavaDocLexer implements FlexLexer {
           case 43: break;
           case 4:
             { yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.sharp();
+        }
         return myTokenTypes.commentData();
             }
           // fall through
           case 44: break;
           case 5:
             { yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.leftParenthesis();
+        }
         return myTokenTypes.commentData();
             }
           // fall through
           case 45: break;
           case 6:
             { yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.rightParenthesis();
+        }
         return myTokenTypes.commentData();
             }
           // fall through
           case 46: break;
           case 7:
             { yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.leftBracket();
+        }
         return myTokenTypes.commentData();
             }
           // fall through
           case 47: break;
           case 8:
             { yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.rightBracket();
+        }
         return myTokenTypes.commentData();
             }
           // fall through
@@ -996,8 +1001,9 @@ class _JavaDocLexer implements FlexLexer {
           // fall through
           case 66: break;
           case 27:
-            { if (myMarkdownMode)
+            { if (myMarkdownMode) {
           return myTokenTypes.commentData();
+        }
         return myTokenTypes.commentLeadingAsterisks();
             }
           // fall through
@@ -1029,8 +1035,9 @@ class _JavaDocLexer implements FlexLexer {
           // fall through
           case 71: break;
           case 32:
-            { if(myMarkdownMode)
+            { if(myMarkdownMode) {
       return myTokenTypes.commentData();
+    }
     return myTokenTypes.commentEnd();
             }
           // fall through
@@ -1041,8 +1048,9 @@ class _JavaDocLexer implements FlexLexer {
           // fall through
           case 73: break;
           case 34:
-            { if(myMarkdownMode)
+            { if(myMarkdownMode) {
           return myTokenTypes.badCharacter();
+        }
         yybegin(COMMENT_DATA_START);
         return myTokenTypes.commentStart();
             }
@@ -1059,15 +1067,17 @@ class _JavaDocLexer implements FlexLexer {
           case 75: break;
           case 36:
             { yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.codeFence();
+        }
         return myTokenTypes.commentData();
             }
           // fall through
           case 76: break;
           case 37:
-            { if (myMarkdownMode)
+            { if (myMarkdownMode) {
           return myTokenTypes.commentLeadingAsterisks();
+        }
         return myTokenTypes.commentData();
             }
           // fall through

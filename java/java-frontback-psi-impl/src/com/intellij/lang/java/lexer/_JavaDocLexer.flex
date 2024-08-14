@@ -79,8 +79,9 @@ LEADING_TOKEN_MARKDOWN="///"
 %%
 
 <YYINITIAL> {START_COMMENT_HTML} {
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.badCharacter();
+        }
         yybegin(COMMENT_DATA_START);
         return myTokenTypes.commentStart();
 }
@@ -123,8 +124,9 @@ LEADING_TOKEN_MARKDOWN="///"
 <COMMENT_DATA_START, COMMENT_DATA> {
       {CODE_FENCE} {
         yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.codeFence();
+        }
         return myTokenTypes.commentData();
       }
 
@@ -136,33 +138,38 @@ LEADING_TOKEN_MARKDOWN="///"
 
       "#" {
         yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.sharp();
+        }
         return myTokenTypes.commentData();
       }
 
       \[ {
         yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.leftBracket();
+        }
         return myTokenTypes.commentData();
       }
       \] {
         yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.rightBracket();
+        }
         return myTokenTypes.commentData();
       }
       \( {
         yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.leftParenthesis();
+        }
         return myTokenTypes.commentData();
       }
       \) {
         yybegin(COMMENT_DATA);
-        if(myMarkdownMode)
+        if(myMarkdownMode) {
           return myTokenTypes.rightParenthesis();
+        }
         return myTokenTypes.commentData();
        }
 }
@@ -209,13 +216,15 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}"
       : { yybegin(SNIPPET_TAG_BODY_DATA); return myTokenTypes.tagValueColon(); }
 
       {LEADING_TOKEN_HTML} {
-        if (myMarkdownMode)
+        if (myMarkdownMode) {
           return myTokenTypes.commentData();
+        }
         return myTokenTypes.commentLeadingAsterisks();
       }
       {LEADING_TOKEN_MARKDOWN} {
-        if (myMarkdownMode)
+        if (myMarkdownMode) {
           return myTokenTypes.commentLeadingAsterisks();
+        }
         return myTokenTypes.commentData();
       }
 
@@ -250,8 +259,9 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}"
 <CODE_TAG, CODE_TAG_SPACE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(CODE_TAG); return myTokenTypes.space(); }
 
 "*"+"/" {
-    if(myMarkdownMode)
+    if(myMarkdownMode) {
       return myTokenTypes.commentData();
+    }
     return myTokenTypes.commentEnd();
 }
 [^] { return myTokenTypes.badCharacter(); }

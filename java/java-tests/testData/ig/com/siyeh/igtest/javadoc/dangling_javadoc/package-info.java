@@ -10,3 +10,7 @@ package com.siyeh.igtest.javadoc.dangling_javadoc;
 <warning descr="Dangling Javadoc comment">/**</warning>
  oops
  */
+
+<warning descr="Dangling Javadoc comment">///</warning>
+ ///oops
+ ///
