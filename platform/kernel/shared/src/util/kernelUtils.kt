@@ -12,6 +12,7 @@ import fleet.kernel.rete.Rete
 import fleet.kernel.rete.withRete
 import fleet.rpc.core.Serialization
 import fleet.util.async.conflateReduce
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -21,7 +22,7 @@ import kotlinx.serialization.modules.SerializersModule
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
-suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend () -> T) {
+suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend CoroutineScope.() -> T) {
   val entityClasses = listOf(Kernel::class.java.classLoader).flatMap(::collectEntityClasses)
   fleet.kernel.withKernel(entityClasses, middleware = middleware) { currentKernel ->
     withRete {

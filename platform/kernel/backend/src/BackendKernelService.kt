@@ -9,7 +9,7 @@ import com.intellij.platform.kernel.util.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.rpc.backend.RemoteApiProvider.RemoteApiDescriptor
 import com.intellij.platform.util.coroutines.childScope
-import fleet.kernel.kernel
+import fleet.kernel.change
 import fleet.kernel.rebase.*
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
@@ -43,15 +43,13 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
     }
 
   init {
-    coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
+    coroutineScope.launch {
       withKernel(middleware = LeaderKernelMiddleware(KernelRpcSerialization, CommonInstructionSet.encoder())) {
-        coroutineScope {
-          contextDeferred.complete(currentCoroutineContext().kernelCoroutineContext())
-          kernel().changeSuspend {
-            initWorkspaceClock()
-          }
-          ReadTracker.subscribeForChanges()
+        change {
+          initWorkspaceClock()
         }
+        contextDeferred.complete(currentCoroutineContext().kernelCoroutineContext())
+        ReadTracker.subscribeForChanges()
       }
     }
   }
