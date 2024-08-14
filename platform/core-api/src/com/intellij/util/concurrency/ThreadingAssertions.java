@@ -174,7 +174,7 @@ public final class ThreadingAssertions {
 
   private static @NotNull RuntimeExceptionWithAttachments createThreadAccessException(@NonNls @NotNull String message) {
     return new RuntimeExceptionWithAttachments(
-      message + "; see " + DOCUMENTATION_URL + " for details" + "\n" + getThreadDetails()
+      message + "; If you access or modify model on EDT consider wrapping your code in WriteIntentReadAction or ReadAction; see " + DOCUMENTATION_URL + " for details" + "\n" + getThreadDetails()
     );
   }
 
