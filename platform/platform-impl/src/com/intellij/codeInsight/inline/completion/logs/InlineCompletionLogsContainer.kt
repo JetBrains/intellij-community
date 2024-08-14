@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 class InlineCompletionLogsContainer {
 
   /**
-   * Describes phase of the ML session.
+   * Describes phase of the Inline completion session.
    * Each phase can have multiple features (logs)
    */
   enum class Phase(val description: String) {
