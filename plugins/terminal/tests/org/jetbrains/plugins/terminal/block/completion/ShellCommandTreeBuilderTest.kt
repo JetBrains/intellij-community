@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellAliasSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
+import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
 import org.jetbrains.plugins.terminal.block.util.TestCommandSpecsManager
 import org.jetbrains.plugins.terminal.block.util.TestGeneratorsExecutor
 import org.jetbrains.plugins.terminal.block.util.TestRuntimeContextProvider
@@ -367,8 +368,8 @@ internal class ShellCommandTreeBuilderTest {
   private suspend fun doTestImpl(arguments: List<String>, assertions: ShellCommandTreeAssertions.() -> Unit) {
     // Mock fileSuggestionsGenerator result
     val generatorCommandsRunner = ShellCommandExecutor { command ->
-      if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
-        val path = command.removePrefix("__jetbrains_intellij_get_directory_files").trim()
+      if (command.startsWith(GET_DIRECTORY_FILES.functionName)) {
+        val path = command.removePrefix(GET_DIRECTORY_FILES.functionName).trim()
       val files = filePathSuggestions[path]
         if (files != null) {
           ShellCommandResult.create(files.joinToString("\n"), exitCode = 0)

@@ -9,6 +9,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
+import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions
+import org.jetbrains.plugins.terminal.block.shellintegration.ShellIntegrationGenerators
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
 internal object ShellEnvBasedGenerators {
@@ -26,7 +28,7 @@ internal object ShellEnvBasedGenerators {
   }
 
   suspend fun getShellEnv(context: ShellRuntimeContext): ShellEnvironment? {
-    val result = context.runShellCommand("__jetbrains_intellij_get_environment")
+    val result = context.runShellCommand(ShellIntegrationFunctions.GET_ENVIRONMENT.functionName)
     if (result.exitCode != 0) {
       LOG.error("Get shell environment command failed with exit code ${result.exitCode}, output: ${result.output}")
       return null
