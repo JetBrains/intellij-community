@@ -160,10 +160,10 @@ final class WatchRootsManager {
       initialMappings.addAll(pathMappings);
     }
     else {
-      for (String recursiveWatchRoot: optimizedRecursiveWatchRoots) {
+      for (String recursiveWatchRoot : optimizedRecursiveWatchRoots) {
         optimizedRecursiveWatchRootsCopy.add(recursiveWatchRoot.replace('/', '\\'));
       }
-      for (Pair<String, String> mapping: pathMappings) {
+      for (Pair<String, String> mapping : pathMappings) {
         initialMappings.add(new Pair<>(mapping.first.replace('/', '\\'),
                                        mapping.second.replace('/', '\\')));
       }
@@ -231,11 +231,18 @@ final class WatchRootsManager {
     try {
       Path rootPath = Path.of(FileUtil.toSystemDependentName(root));
       if (!rootPath.isAbsolute()) throw new InvalidPathException(root, "Watch roots should be absolute");
+      checkRootIsSane(rootPath);
       return FileUtil.toSystemIndependentName(rootPath.toString());
     }
     catch (InvalidPathException e) {
       LOG.warn("invalid watch root", e);
       return null;
+    }
+  }
+
+  private static void checkRootIsSane(Path rootPath) {
+    if (rootPath.startsWith("/proc")) {
+      LOG.error("One shouldn't use [" + rootPath + "] as watch root");
     }
   }
 
