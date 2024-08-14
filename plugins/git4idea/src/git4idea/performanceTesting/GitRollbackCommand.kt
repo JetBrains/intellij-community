@@ -2,6 +2,7 @@
 package git4idea.performanceTesting
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
@@ -25,17 +26,19 @@ class GitRollbackCommand(text: String, line: Int) : PerformanceCommandCoroutineA
     val project = context.project
     val filePath = extractCommandArgument(PREFIX)
     withContext(Dispatchers.EDT) {
-      val file = OpenFileCommand.findFile(filePath, project) ?: throw IllegalArgumentException("There is no file  ${filePath}")
-      val changes = ChangeListManager.getInstance(project).defaultChangeList.changes
-      val fileChanges = changes.filter { it.virtualFile == file }
-      FileDocumentManager.getInstance().saveAllDocuments()
-      val operationName = RollbackUtil.getRollbackOperationName(project)
-      val actionCallback = ActionCallback()
-      RollbackWorker(project, operationName, false)
-        .doRollback(fileChanges, false, Runnable {
-          actionCallback.setDone()
-        }, null)
-
+      val actionCallback = writeIntentReadAction {
+        val file = OpenFileCommand.findFile(filePath, project) ?: throw IllegalArgumentException("There is no file  ${filePath}")
+        val changes = ChangeListManager.getInstance(project).defaultChangeList.changes
+        val fileChanges = changes.filter { it.virtualFile == file }
+        FileDocumentManager.getInstance().saveAllDocuments()
+        val operationName = RollbackUtil.getRollbackOperationName(project)
+        val ac = ActionCallback()
+        RollbackWorker(project, operationName, false)
+          .doRollback(fileChanges, false, Runnable {
+            ac.setDone()
+          }, null)
+        ac
+      }
       actionCallback.toPromise().await()
     }
   }

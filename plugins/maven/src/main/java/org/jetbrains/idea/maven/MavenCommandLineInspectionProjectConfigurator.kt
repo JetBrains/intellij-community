@@ -13,6 +13,7 @@ import com.intellij.ide.impl.ProjectOpenKeyProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
@@ -90,8 +91,10 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
     if (!isMavenProjectLinked) {
       withContext(Dispatchers.EDT) {
-        FileDocumentManager.getInstance().saveAllDocuments()
-        MavenUtil.setupProjectSdk(project)
+        writeIntentReadAction {
+          FileDocumentManager.getInstance().saveAllDocuments()
+          MavenUtil.setupProjectSdk(project)
+        }
       }
 
       // GradleWarmupConfigurator sets "external.system.auto.import.disabled" to true, but we have to import the project nevertheless

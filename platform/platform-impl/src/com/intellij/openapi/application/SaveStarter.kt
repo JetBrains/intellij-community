@@ -14,7 +14,9 @@ internal class SaveStarter private constructor() : ApplicationStarterBase(0) {
 
   override suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
     withContext(Dispatchers.EDT) {
-      FileDocumentManager.getInstance().saveAllDocuments()
+      writeIntentReadAction {
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
     }
     saveSettings(ApplicationManager.getApplication())
     return CliResult.OK

@@ -87,7 +87,9 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
       }
       finally {
         withContext(Dispatchers.EDT) {
-          FileDocumentManager.getInstance().saveAllDocuments()
+          writeIntentReadAction {
+            FileDocumentManager.getInstance().saveAllDocuments()
+          }
         }
         saveSettings(ApplicationManager.getApplication())
       }
