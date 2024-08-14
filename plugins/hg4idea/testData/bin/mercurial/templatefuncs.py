@@ -5,8 +5,8 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
+import binascii
 import re
 
 from .i18n import _
@@ -50,8 +50,8 @@ templatefunc = registrar.templatefunc(funcs)
 
 @templatefunc(b'date(date[, fmt])')
 def date(context, mapping, args):
-    """Format a date. See :hg:`help dates` for formatting
-    strings. The default is a Unix date format, including the timezone:
+    """Format a date. The format string uses the Python strftime format.
+    The default is a Unix date format, including the timezone:
     "Mon Sep 04 15:13:13 2006 0700"."""
     if not (1 <= len(args) <= 2):
         # i18n: "date" is a keyword
@@ -89,7 +89,7 @@ def dict_(context, mapping, args):
 
     data.update(
         (k, evalfuncarg(context, mapping, v))
-        for k, v in pycompat.iteritems(args[b'kwargs'])
+        for k, v in args[b'kwargs'].items()
     )
     return templateutil.hybriddict(data)
 
@@ -439,9 +439,10 @@ def join(context, mapping, args):
 
 @templatefunc(b'label(label, expr)', requires={b'ui'})
 def label(context, mapping, args):
-    """Apply a label to generated content. Content with
-    a label applied can result in additional post-processing, such as
-    automatic colorization."""
+    """Apply a label to generated content. Content with a label
+    applied can result in additional post-processing, such as
+    automatic colorization. In order to receive effects, labels must
+    have a dot, such as `log.secret` or `branch.active`."""
     if len(args) != 2:
         # i18n: "label" is a keyword
         raise error.ParseError(_(b"label expects two arguments"))
@@ -770,7 +771,7 @@ def shortest(context, mapping, args):
     elif len(hexnode) == hexnodelen:
         try:
             node = bin(hexnode)
-        except TypeError:
+        except binascii.Error:
             return hexnode
     else:
         try:
@@ -911,7 +912,7 @@ def word(context, mapping, args):
 
 def loadfunction(ui, extname, registrarobj):
     """Load template function from specified registrarobj"""
-    for name, func in pycompat.iteritems(registrarobj._table):
+    for name, func in registrarobj._table.items():
         funcs[name] = func
 
 

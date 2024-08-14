@@ -65,13 +65,14 @@ mappedgenerator
     operation.
 """
 
-from __future__ import absolute_import, print_function
 
 import abc
 import os
 
 from .i18n import _
-from .pycompat import getattr
+from .pycompat import (
+    FileNotFoundError,
+)
 from . import (
     config,
     encoding,
@@ -175,10 +176,17 @@ def tokenize(program, start, end, term=None):
             quote = program[pos : pos + 2]
             s = pos = pos + 2
             while pos < end:  # find closing escaped quote
+                # pycompat.bytestr (and bytes) both have .startswith() that
+                # takes an optional start and an optional end, but pytype thinks
+                # it only takes 2 args.
+
+                # pytype: disable=wrong-arg-count
                 if program.startswith(b'\\\\\\', pos, end):
                     pos += 4  # skip over double escaped characters
                     continue
                 if program.startswith(quote, pos, end):
+                    # pytype: enable=wrong-arg-count
+
                     # interpret as if it were a part of an outer string
                     data = parser.unescapestr(program[s:pos])
                     if token == b'template':
@@ -298,7 +306,14 @@ def _scantemplate(tmpl, start, stop, quote=b'', raw=False):
                 return
 
             parseres, pos = p.parse(tokenize(tmpl, n + 1, stop, b'}'))
+
+            # pycompat.bytestr (and bytes) both have .startswith() that
+            # takes an optional start and an optional end, but pytype thinks
+            # it only takes 2 args.
+
+            # pytype: disable=wrong-arg-count
             if not tmpl.startswith(b'}', pos):
+                # pytype: enable=wrong-arg-count
                 raise error.ParseError(_(b"invalid token"), pos)
             yield (b'template', parseres, n)
             pos += 1
@@ -528,8 +543,7 @@ def _buildfuncargs(exp, context, curmethods, funcname, argspec):
 
     def compiledict(xs):
         return util.sortdict(
-            (k, compileexp(x, context, curmethods))
-            for k, x in pycompat.iteritems(xs)
+            (k, compileexp(x, context, curmethods)) for k, x in xs.items()
         )
 
     def compilelist(xs):
@@ -625,7 +639,7 @@ def unquotestring(s):
     return s[1:-1]
 
 
-class resourcemapper(object):  # pytype: disable=ignored-metaclass
+class resourcemapper:  # pytype: disable=ignored-metaclass
     """Mapper of internal template resources"""
 
     __metaclass__ = abc.ABCMeta
@@ -662,7 +676,7 @@ class nullresourcemapper(resourcemapper):
         return {}
 
 
-class engine(object):
+class engine:
     """template expansion engine.
 
     template expansion works like this. a map file contains key=value
@@ -706,7 +720,7 @@ class engine(object):
         newres = self._resources.availablekeys(newmapping)
         mapping = {
             k: v
-            for k, v in pycompat.iteritems(origmapping)
+            for k, v in origmapping.items()
             if (
                 k in knownres  # not a symbol per self.symbol()
                 or newres.isdisjoint(self._defaultrequires(k))
@@ -856,7 +870,7 @@ def _readmapfile(fp, mapfile):
                     subresource = resourceutil.open_resource(
                         b'mercurial.templates', rel
                     )
-                except resourceutil.FileNotFoundError:
+                except FileNotFoundError:
                     subresource = None
             else:
                 dir = templatedir()
@@ -918,7 +932,7 @@ def _readmapfile(fp, mapfile):
     return cache, tmap, aliases
 
 
-class loader(object):
+class loader:
     """Load template fragments optionally from a map file"""
 
     def __init__(self, cache, aliases):
@@ -993,7 +1007,7 @@ class loader(object):
         return syms
 
 
-class templater(object):
+class templater:
     def __init__(
         self,
         filters=None,

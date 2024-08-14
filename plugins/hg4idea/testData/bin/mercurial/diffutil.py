@@ -7,19 +7,36 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
+import typing
+
+from typing import (
+    Any,
+    Dict,
+    Optional,
+)
 
 from .i18n import _
+from .node import nullrev
 
 from . import (
     mdiff,
     pycompat,
 )
 
+if typing.TYPE_CHECKING:
+    from . import ui as uimod
+
+# TODO: narrow the value after the config module is typed
+_Opts = Dict[bytes, Any]
+
 
 def diffallopts(
-    ui, opts=None, untrusted=False, section=b'diff', configprefix=b''
-):
+    ui: "uimod.ui",
+    opts: Optional[_Opts] = None,
+    untrusted: bool = False,
+    section: bytes = b'diff',
+    configprefix: bytes = b'',
+) -> mdiff.diffopts:
     '''return diffopts with all features supported and parsed'''
     return difffeatureopts(
         ui,
@@ -34,15 +51,15 @@ def diffallopts(
 
 
 def difffeatureopts(
-    ui,
-    opts=None,
-    untrusted=False,
-    section=b'diff',
-    git=False,
-    whitespace=False,
-    formatchanging=False,
-    configprefix=b'',
-):
+    ui: "uimod.ui",
+    opts: Optional[_Opts] = None,
+    untrusted: bool = False,
+    section: bytes = b'diff',
+    git: bool = False,
+    whitespace: bool = False,
+    formatchanging: bool = False,
+    configprefix: bytes = b'',
+) -> mdiff.diffopts:
     """return diffopts with only opted-in features parsed
 
     Features:
@@ -52,7 +69,12 @@ def difffeatureopts(
       with most diff parsers
     """
 
-    def get(key, name=None, getter=ui.configbool, forceplain=None):
+    def get(
+        key: bytes,
+        name: Optional[bytes] = None,
+        getter=ui.configbool,
+        forceplain: Optional[bool] = None,
+    ) -> Any:
         if opts:
             v = opts.get(key)
             # diffopts flags are either None-default (which is passed
@@ -121,7 +143,7 @@ def difffeatureopts(
         )
         buildopts[b'ignorewseol'] = get(b'ignore_space_at_eol', b'ignorewseol')
     if formatchanging:
-        buildopts[b'text'] = opts and opts.get(b'text')
+        buildopts[b'text'] = None if opts is None else opts.get(b'text')
         binary = None if opts is None else opts.get(b'binary')
         buildopts[b'nobinary'] = (
             not binary
@@ -134,3 +156,35 @@ def difffeatureopts(
         )
 
     return mdiff.diffopts(**pycompat.strkwargs(buildopts))
+
+
+def diff_parent(ctx):
+    """get the context object to use as parent when diffing
+
+
+    If diff.merge is enabled, an overlayworkingctx of the auto-merged parents will be returned.
+    """
+    repo = ctx.repo()
+    if repo.ui.configbool(b"diff", b"merge") and ctx.p2().rev() != nullrev:
+        # avoid circular import
+        from . import (
+            context,
+            merge,
+        )
+
+        wctx = context.overlayworkingctx(repo)
+        wctx.setbase(ctx.p1())
+        with repo.ui.configoverride(
+            {
+                (
+                    b"ui",
+                    b"forcemerge",
+                ): b"internal:merge3-lie-about-conflicts",
+            },
+            b"merge-diff",
+        ):
+            with repo.ui.silent():
+                merge.merge(ctx.p2(), wc=wctx)
+        return wctx
+    else:
+        return ctx.p1()

@@ -107,7 +107,7 @@ kdiff3.regkeyalt=Software\Wow6432Node\KDiff3
 
 meld.args=--label=$labellocal $local --label='merged' $base --label=$labelother $other -o $output --auto-merge
 meld.check=changed
-meld.diffargs=-a --label=$plabel1 $parent --label=$clabel $child
+meld.diffargs=--label=$plabel1 $parent --label=$clabel $child
 meld.gui=True
 
 merge.check=conflicts

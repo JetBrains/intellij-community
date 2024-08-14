@@ -6,7 +6,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 from ..i18n import _
 
@@ -32,6 +31,7 @@ REVIDX_DEFAULT_FLAGS
 REVIDX_FLAGS_ORDER
 REVIDX_RAWTEXT_CHANGING_FLAGS
 
+# Keep this in sync with REVIDX_KNOWN_FLAGS in rust/hg-core/src/revlog/revlog.rs
 REVIDX_KNOWN_FLAGS = util.bitsfrom(REVIDX_FLAGS_ORDER)
 
 # Store flag processors (cf. 'addflagprocessor()' to register)
@@ -176,8 +176,12 @@ def _processflagsfunc(revlog, text, flags, operation):
             vhash = True
 
             if flag not in revlog._flagprocessors:
+                hint = None
+                if flag == REVIDX_EXTSTORED:
+                    hint = _(b"the lfs extension must be enabled")
+
                 message = _(b"missing processor for flag '%#x'") % flag
-                raise revlog._flagserrorclass(message)
+                raise revlog._flagserrorclass(message, hint=hint)
 
             processor = revlog._flagprocessors[flag]
             if processor is not None:

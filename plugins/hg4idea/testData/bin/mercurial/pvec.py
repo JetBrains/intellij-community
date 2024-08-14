@@ -48,7 +48,6 @@ Uses:
   different branches
 '''
 
-from __future__ import absolute_import
 
 from .node import nullrev
 from . import (
@@ -73,10 +72,9 @@ def _bin(bs):
     return v
 
 
-def _str(v, l):
-    # type: (int, int) -> bytes
+def _str(v: int, l: int) -> bytes:
     bs = b""
-    for p in pycompat.xrange(l):
+    for p in range(l):
         bs = pycompat.bytechr(v & 255) + bs
         v >>= 8
     return bs
@@ -100,7 +98,7 @@ def _hweight(x):
     return c
 
 
-_htab = [_hweight(x) for x in pycompat.xrange(256)]
+_htab = [_hweight(x) for x in range(256)]
 
 
 def _hamming(a, b):
@@ -160,12 +158,12 @@ def _flipbit(v, node):
 def ctxpvec(ctx):
     '''construct a pvec for ctx while filling in the cache'''
     r = ctx.repo()
-    if not util.safehasattr(r, "_pveccache"):
+    if not hasattr(r, "_pveccache"):
         r._pveccache = {}
     pvc = r._pveccache
     if ctx.rev() not in pvc:
         cl = r.changelog
-        for n in pycompat.xrange(ctx.rev() + 1):
+        for n in range(ctx.rev() + 1):
             if n not in pvc:
                 node = cl.node(n)
                 p1, p2 = cl.parentrevs(n)
@@ -181,7 +179,7 @@ def ctxpvec(ctx):
     return pvec(util.b85encode(bs))
 
 
-class pvec(object):
+class pvec:
     def __init__(self, hashorctx):
         if isinstance(hashorctx, bytes):
             self._bs = hashorctx

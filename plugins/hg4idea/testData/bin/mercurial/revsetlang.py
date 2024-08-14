@@ -5,12 +5,10 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import string
 
 from .i18n import _
-from .pycompat import getattr
 from .node import hex
 from . import (
     error,
@@ -76,7 +74,7 @@ _syminitletters = set(
         + pycompat.sysbytes(string.digits)
         + b'._@'
     )
-) | set(map(pycompat.bytechr, pycompat.xrange(128, 256)))
+) | set(map(pycompat.bytechr, range(128, 256)))
 
 # default set of valid characters for non-initial letters of symbols
 _symletters = _syminitletters | set(pycompat.iterbytestr(b'-/'))
@@ -394,7 +392,7 @@ def _analyze(x):
     elif op == b'negate':
         s = getstring(x[1], _(b"can't negate that"))
         return _analyze((b'string', b'-' + s))
-    elif op in (b'string', b'symbol', b'smartset'):
+    elif op in (b'string', b'symbol', b'smartset', b'nodeset'):
         return x
     elif op == b'rangeall':
         return (op, None)
@@ -443,8 +441,9 @@ def _optimize(x):
         return 0, x
 
     op = x[0]
-    if op in (b'string', b'symbol', b'smartset'):
-        return 0.5, x  # single revisions are small
+    if op in (b'string', b'symbol', b'smartset', b'nodeset'):
+        # single revisions are small, and set of already computed revision are assumed to be cheap.
+        return 0.5, x
     elif op == b'and':
         wa, ta = _optimize(x[1])
         wb, tb = _optimize(x[2])
@@ -613,7 +612,7 @@ def expandaliases(tree, aliases, warn=None):
     tree = _aliasrules.expand(aliases, tree)
     # warn about problematic (but not referred) aliases
     if warn is not None:
-        for name, alias in sorted(pycompat.iteritems(aliases)):
+        for name, alias in sorted(aliases.items()):
             if alias.error and not alias.warned:
                 warn(_(b'warning: %s\n') % (alias.error))
                 alias.warned = True
@@ -786,6 +785,8 @@ def formatspec(expr, *args):
             if isinstance(arg, set):
                 arg = sorted(arg)
             ret.append(_formatintlist(list(arg)))
+        elif t == b'nodeset':
+            ret.append(_formatlistexp(list(arg), b"n"))
         else:
             raise error.ProgrammingError(b"unknown revspec item type: %r" % t)
     return b''.join(ret)
@@ -801,6 +802,10 @@ def spectree(expr, *args):
             ret.append(arg)
         elif t == b'baseset':
             newtree = (b'smartset', smartset.baseset(arg))
+            inputs.append(newtree)
+            ret.append(b"$")
+        elif t == b'nodeset':
+            newtree = (b'nodeset', arg)
             inputs.append(newtree)
             ret.append(b"$")
         else:
@@ -863,6 +868,12 @@ def _parseargs(expr, args):
                 # extra cost. If we are going to serialize it we better
                 # skip it.
                 ret.append((b'baseset', arg))
+                pos += 1
+                continue
+            elif islist and d == b'n' and arg:
+                # we cannot turn the node into revision yet, but not
+                # serializing them will same a lot of time for large set.
+                ret.append((b'nodeset', arg))
                 pos += 1
                 continue
             try:

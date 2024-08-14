@@ -6,12 +6,10 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 from .node import hex
 
 from . import (
-    pycompat,
     util,
     vfs as vfsmod,
 )
@@ -78,7 +76,7 @@ def writeremotenamefile(repo, remotepath, names, nametype):
         if oldpath != remotepath:
             f.write(b'%s\0%s\0%s\n' % (node, oldpath, rname))
 
-    for name, node in sorted(pycompat.iteritems(names)):
+    for name, node in sorted(names.items()):
         if nametype == b"branches":
             for n in node:
                 f.write(b'%s\0%s\0%s\n' % (n, remotepath, name))
@@ -115,7 +113,7 @@ def activepath(repo, remote):
     if local:
         rpath = util.pconvert(remote._repo.root)
     elif not isinstance(remote, bytes):
-        rpath = remote._url
+        rpath = remote.url()
 
     # represent the remotepath with user defined path name if exists
     for path, url in repo.ui.configitems(b'paths'):
@@ -160,7 +158,7 @@ def pullremotenames(localrepo, remoterepo):
     with remoterepo.commandexecutor() as e:
         branchmap = e.callcommand(b'branchmap', {}).result()
 
-    for branch, nodes in pycompat.iteritems(branchmap):
+    for branch, nodes in branchmap.items():
         bmap[branch] = []
         for node in nodes:
             if node in repo and not repo[node].obsolete():

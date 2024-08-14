@@ -11,26 +11,23 @@ This allows us to catch exceptions at higher levels without forcing
 imports.
 """
 
-from __future__ import absolute_import
 
 import difflib
+
+from typing import (
+    AnyStr,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Union,
+)
 
 # Do not import anything but pycompat here, please
 from . import pycompat
 
-if pycompat.TYPE_CHECKING:
-    from typing import (
-        Any,
-        AnyStr,
-        Iterable,
-        List,
-        Optional,
-        Sequence,
-        Union,
-    )
 
-
-def _tobytes(exc):
+def _tobytes(exc) -> bytes:
     """Byte-stringify exception in the same way as BaseException_str()"""
     if not exc.args:
         return b''
@@ -39,7 +36,7 @@ def _tobytes(exc):
     return b'(%s)' % b', '.join(b"'%s'" % pycompat.bytestr(a) for a in exc.args)
 
 
-class Hint(object):
+class Hint:
     """Mix-in to provide a hint of an error
 
     This should come first in the inheritance list to consume a hint and
@@ -47,7 +44,7 @@ class Hint(object):
     """
 
     def __init__(self, *args, **kw):
-        self.hint = kw.pop('hint', None)
+        self.hint: Optional[bytes] = kw.pop('hint', None)
         super(Hint, self).__init__(*args, **kw)
 
 
@@ -57,8 +54,7 @@ class Error(Hint, Exception):
     coarse_exit_code = None
     detailed_exit_code = None
 
-    def __init__(self, message, hint=None):
-        # type: (bytes, Optional[bytes]) -> None
+    def __init__(self, message: bytes, hint: Optional[bytes] = None) -> None:
         self.message = message
         self.hint = hint
         # Pass the message into the Exception constructor to help extensions
@@ -68,16 +64,13 @@ class Error(Hint, Exception):
     def __bytes__(self):
         return self.message
 
-    if pycompat.ispy3:
+    def __str__(self) -> str:
+        # the output would be unreadable if the message was translated,
+        # but do not replace it with encoding.strfromlocal(), which
+        # may raise another exception.
+        return pycompat.sysstr(self.__bytes__())
 
-        def __str__(self):
-            # the output would be unreadable if the message was translated,
-            # but do not replace it with encoding.strfromlocal(), which
-            # may raise another exception.
-            return pycompat.sysstr(self.__bytes__())
-
-    def format(self):
-        # type: () -> bytes
+    def format(self) -> bytes:
         from .i18n import _
 
         message = _(b"abort: %s\n") % self.message
@@ -104,7 +97,7 @@ class RevlogError(StorageError):
 
 
 class SidedataHashError(RevlogError):
-    def __init__(self, key, expected, got):
+    def __init__(self, key: int, expected: bytes, got: bytes) -> None:
         self.hint = None
         self.sidedatakey = key
         self.expecteddigest = expected
@@ -116,7 +109,7 @@ class FilteredIndexError(IndexError):
 
 
 class LookupError(RevlogError, KeyError):
-    def __init__(self, name, index, message):
+    def __init__(self, name: bytes, index: bytes, message: bytes) -> None:
         self.name = name
         self.index = index
         # this can't be called 'message' because at least some installs of
@@ -153,8 +146,7 @@ class ManifestLookupError(LookupError):
 class CommandError(Exception):
     """Exception raised on errors in parsing the command line."""
 
-    def __init__(self, command, message):
-        # type: (bytes, bytes) -> None
+    def __init__(self, command: Optional[bytes], message: bytes) -> None:
         self.command = command
         self.message = message
         super(CommandError, self).__init__()
@@ -165,8 +157,11 @@ class CommandError(Exception):
 class UnknownCommand(Exception):
     """Exception raised if command is not in the command table."""
 
-    def __init__(self, command, all_commands=None):
-        # type: (bytes, Optional[List[bytes]]) -> None
+    def __init__(
+        self,
+        command: bytes,
+        all_commands: Optional[List[bytes]] = None,
+    ) -> None:
         self.command = command
         self.all_commands = all_commands
         super(UnknownCommand, self).__init__()
@@ -177,8 +172,7 @@ class UnknownCommand(Exception):
 class AmbiguousCommand(Exception):
     """Exception raised if command shortcut matches more than one command."""
 
-    def __init__(self, prefix, matches):
-        # type: (bytes, List[bytes]) -> None
+    def __init__(self, prefix: bytes, matches: List[bytes]) -> None:
         self.prefix = prefix
         self.matches = matches
         super(AmbiguousCommand, self).__init__()
@@ -189,8 +183,7 @@ class AmbiguousCommand(Exception):
 class WorkerError(Exception):
     """Exception raised when a worker process dies."""
 
-    def __init__(self, status_code):
-        # type: (int) -> None
+    def __init__(self, status_code: int) -> None:
         self.status_code = status_code
         # Pass status code to superclass just so it becomes part of __bytes__
         super(WorkerError, self).__init__(status_code)
@@ -204,8 +197,7 @@ class InterventionRequired(Abort):
     coarse_exit_code = 1
     detailed_exit_code = 240
 
-    def format(self):
-        # type: () -> bytes
+    def format(self) -> bytes:
         from .i18n import _
 
         message = _(b"%s\n") % self.message
@@ -217,8 +209,7 @@ class InterventionRequired(Abort):
 class ConflictResolutionRequired(InterventionRequired):
     """Exception raised when a continuable command required merge conflict resolution."""
 
-    def __init__(self, opname):
-        # type: (bytes) -> None
+    def __init__(self, opname: bytes) -> None:
         from .i18n import _
 
         self.opname = opname
@@ -287,13 +278,16 @@ class ConfigError(Abort):
 
     detailed_exit_code = 30
 
-    def __init__(self, message, location=None, hint=None):
-        # type: (bytes, Optional[bytes], Optional[bytes]) -> None
+    def __init__(
+        self,
+        message: bytes,
+        location: Optional[bytes] = None,
+        hint: Optional[bytes] = None,
+    ) -> None:
         super(ConfigError, self).__init__(message, hint=hint)
         self.location = location
 
-    def format(self):
-        # type: () -> bytes
+    def format(self) -> bytes:
         from .i18n import _
 
         if self.location is not None:
@@ -342,7 +336,11 @@ class RemoteError(Abort):
 class OutOfBandError(RemoteError):
     """Exception raised when a remote repo reports failure"""
 
-    def __init__(self, message=None, hint=None):
+    def __init__(
+        self,
+        message: Optional[bytes] = None,
+        hint: Optional[bytes] = None,
+    ):
         from .i18n import _
 
         if message:
@@ -358,13 +356,16 @@ class ParseError(Abort):
 
     detailed_exit_code = 10
 
-    def __init__(self, message, location=None, hint=None):
-        # type: (bytes, Optional[Union[bytes, int]], Optional[bytes]) -> None
+    def __init__(
+        self,
+        message: bytes,
+        location: Optional[Union[bytes, int]] = None,
+        hint: Optional[bytes] = None,
+    ):
         super(ParseError, self).__init__(message, hint=hint)
         self.location = location
 
-    def format(self):
-        # type: () -> bytes
+    def format(self) -> bytes:
         from .i18n import _
 
         if self.location is not None:
@@ -383,16 +384,22 @@ class PatchError(Exception):
     __bytes__ = _tobytes
 
 
-def getsimilar(symbols, value):
-    # type: (Iterable[bytes], bytes) -> List[bytes]
+class PatchParseError(PatchError):
+    __bytes__ = _tobytes
+
+
+class PatchApplicationError(PatchError):
+    __bytes__ = _tobytes
+
+
+def getsimilar(symbols: Iterable[bytes], value: bytes) -> List[bytes]:
     sim = lambda x: difflib.SequenceMatcher(None, value, x).ratio()
     # The cutoff for similarity here is pretty arbitrary. It should
     # probably be investigated and tweaked.
     return [s for s in symbols if sim(s) > 0.6]
 
 
-def similarity_hint(similar):
-    # type: (List[bytes]) -> Optional[bytes]
+def similarity_hint(similar: List[bytes]) -> Optional[bytes]:
     from .i18n import _
 
     if len(similar) == 1:
@@ -407,8 +414,7 @@ def similarity_hint(similar):
 class UnknownIdentifier(ParseError):
     """Exception raised when a {rev,file}set references an unknown identifier"""
 
-    def __init__(self, function, symbols):
-        # type: (bytes, Iterable[bytes]) -> None
+    def __init__(self, function: bytes, symbols: Iterable[bytes]) -> None:
         from .i18n import _
 
         similar = getsimilar(symbols, function)
@@ -442,16 +448,14 @@ class RequirementError(RepoError):
 class StdioError(IOError):
     """Raised if I/O to stdout or stderr fails"""
 
-    def __init__(self, err):
-        # type: (IOError) -> None
+    def __init__(self, err: IOError) -> None:
         IOError.__init__(self, err.errno, err.strerror)
 
     # no __bytes__() because error message is derived from the standard IOError
 
 
 class UnsupportedMergeRecords(Abort):
-    def __init__(self, recordtypes):
-        # type: (Iterable[bytes]) -> None
+    def __init__(self, recordtypes: Iterable[bytes]) -> None:
         from .i18n import _
 
         self.recordtypes = sorted(recordtypes)
@@ -469,16 +473,24 @@ class UnsupportedMergeRecords(Abort):
 class UnknownVersion(Abort):
     """generic exception for aborting from an encounter with an unknown version"""
 
-    def __init__(self, msg, hint=None, version=None):
-        # type: (bytes, Optional[bytes], Optional[bytes]) -> None
+    def __init__(
+        self,
+        msg: bytes,
+        hint: Optional[bytes] = None,
+        version: Optional[bytes] = None,
+    ) -> None:
         self.version = version
         super(UnknownVersion, self).__init__(msg, hint=hint)
 
 
 class LockError(IOError):
-    def __init__(self, errno, strerror, filename, desc):
-        # TODO: figure out if this should be bytes or str
-        # _type: (int, str, str, bytes) -> None
+    def __init__(
+        self,
+        errno: int,
+        strerror: str,
+        filename: bytes,
+        desc: Optional[bytes],
+    ) -> None:
         IOError.__init__(self, errno, strerror, filename)
         self.desc = desc
 
@@ -486,8 +498,15 @@ class LockError(IOError):
 
 
 class LockHeld(LockError):
-    def __init__(self, errno, filename, desc, locker):
-        LockError.__init__(self, errno, b'Lock held', filename, desc)
+    def __init__(
+        self,
+        errno: int,
+        filename: bytes,
+        desc: Optional[bytes],
+        locker,
+    ):
+        LockError.__init__(self, errno, 'Lock held', filename, desc)
+        self.filename: bytes = filename
         self.locker = locker
 
 
@@ -524,8 +543,7 @@ class PushRaced(RuntimeError):
 class ProgrammingError(Hint, RuntimeError):
     """Raised if a mercurial (core or extension) developer made a mistake"""
 
-    def __init__(self, msg, *args, **kwargs):
-        # type: (AnyStr, Any, Any) -> None
+    def __init__(self, msg: AnyStr, *args, **kwargs):
         # On Python 3, turn the message back into a string since this is
         # an internal-only error that won't be printed except in a
         # stack traces.
@@ -602,8 +620,7 @@ class CensoredNodeError(StorageError):
     Also contains the tombstone data substituted for the uncensored data.
     """
 
-    def __init__(self, filename, node, tombstone):
-        # type: (bytes, bytes, bytes) -> None
+    def __init__(self, filename: bytes, node: bytes, tombstone: bytes):
         from .node import short
 
         StorageError.__init__(self, b'%s:%s' % (filename, short(node)))
@@ -640,6 +657,13 @@ class CorruptedState(Exception):
     __bytes__ = _tobytes
 
 
+class CorruptedDirstate(Exception):
+    """error raised the dirstate appears corrupted on-disk. It may be due to
+    a dirstate version mismatch (i.e. expecting v2 and finding v1 on disk)."""
+
+    __bytes__ = _tobytes
+
+
 class PeerTransportError(Abort):
     """Transport-level I/O error when communicating with a peer repo."""
 
@@ -658,7 +682,10 @@ class WireprotoCommandError(Exception):
     The error is a formatter string and an optional iterable of arguments.
     """
 
-    def __init__(self, message, args=None):
-        # type: (bytes, Optional[Sequence[bytes]]) -> None
+    def __init__(
+        self,
+        message: bytes,
+        args: Optional[Sequence[bytes]] = None,
+    ) -> None:
         self.message = message
         self.messageargs = args

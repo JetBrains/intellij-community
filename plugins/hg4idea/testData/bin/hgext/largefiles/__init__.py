@@ -104,10 +104,10 @@ largefile. To add the first largefile to a repository, you must
 explicitly do so with the --large flag passed to the :hg:`add`
 command.
 '''
-from __future__ import absolute_import
 
 from mercurial import (
     cmdutil,
+    configitems,
     extensions,
     exthelper,
     hg,
@@ -136,7 +136,7 @@ eh.merge(proto.eh)
 eh.configitem(
     b'largefiles',
     b'minsize',
-    default=eh.configitem.dynamicdefault,
+    default=configitems.dynamicdefault,
 )
 eh.configitem(
     b'largefiles',
@@ -184,7 +184,7 @@ def _uisetup(ui):
     )
 
     extensions.wrapfunction(
-        wireprotov1server.commands[b'heads'], b'func', proto.heads
+        wireprotov1server.commands[b'heads'], 'func', proto.heads
     )
     # TODO also wrap wireproto.commandsv2 once heads is implemented there.
 
@@ -193,7 +193,7 @@ def _uisetup(ui):
         if name == b'rebase':
             # TODO: teach exthelper to handle this
             extensions.wrapfunction(
-                module, b'rebase', overrides.overriderebasecmd
+                module, 'rebase', overrides.overriderebasecmd
             )
 
 

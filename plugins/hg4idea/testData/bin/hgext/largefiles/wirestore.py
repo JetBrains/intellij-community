@@ -4,7 +4,6 @@
 # GNU General Public License version 2 or any later version.
 
 '''largefile store working over Mercurial's wire protocol'''
-from __future__ import absolute_import
 
 from . import (
     lfutil,
