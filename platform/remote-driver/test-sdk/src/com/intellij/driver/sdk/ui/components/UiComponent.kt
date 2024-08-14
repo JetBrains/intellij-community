@@ -2,7 +2,6 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.model.RemoteMouseButton
-import com.intellij.driver.sdk.screenshot.takeScreenshot
 import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.SearchContext
@@ -20,8 +19,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import java.awt.Color
 import java.awt.Point
-import java.awt.Rectangle
 import java.awt.image.BufferedImage
+import java.io.File
+import javax.imageio.ImageIO
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -371,7 +371,8 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun getScreenshot(): BufferedImage {
-    val screenshot = takeScreenshot(Rectangle(component.getLocationOnScreen().x, component.getLocationOnScreen().y, component.width, component.height))
+    val screenshotPath = driver.takeScreenshot(this::class.simpleName)
+    val screenshot = ImageIO.read(File(screenshotPath)).getSubimage(component.getLocationOnScreen().x, component.getLocationOnScreen().y, component.width, component.height)
     if (SystemInfo.isWindows && this is DialogUiComponent)
       return screenshot.getSubimage(
         7,
@@ -380,6 +381,11 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
         component.height - 7
       )
     return screenshot
+  }
+
+  fun getFullScreenScreenshot(): BufferedImage {
+    val screenshotPath = driver.takeScreenshot(this::class.simpleName)
+    return ImageIO.read(File(screenshotPath))
   }
 
   // Mouse
