@@ -68,10 +68,9 @@ internal fun takeFirstResolvedInTensorFlow(qualifiedName: String, context: PyQua
 private fun getTensorFlowPackage(sdk: Sdk?): PyPackage? {
   if (sdk == null) return null
 
-  val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
   val pkgManager = PyPackageManager.getInstance(sdk)
 
-  val packages = if (unitTestMode) pkgManager.refreshAndGetPackages(false) else pkgManager.packages ?: return null
+  val packages = pkgManager.packages ?: return null
   return PyPsiPackageUtil.findPackage(packages, "tensorflow")
 }
 
