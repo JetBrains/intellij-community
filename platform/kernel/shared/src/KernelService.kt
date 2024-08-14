@@ -2,9 +2,8 @@
 package com.intellij.platform.kernel
 
 import com.intellij.openapi.application.ApplicationManager
-import fleet.kernel.DbSource
 import fleet.kernel.Kernel
-import fleet.kernel.rete.Rete
+import fleet.kernel.kernel
 import fleet.kernel.withCondition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -13,8 +12,9 @@ import kotlin.coroutines.CoroutineContext
 
 interface KernelService {
 
-  val kernel: Kernel
-  val rete: Rete
+  val coroutineContext: CoroutineContext
+
+  val kernel: Kernel get() = coroutineContext.kernel
 
   companion object {
 
@@ -22,7 +22,7 @@ interface KernelService {
       get() = ApplicationManager.getApplication().getService(KernelService::class.java)
 
     val kernelCoroutineContext: CoroutineContext
-      get() = instance.kernel + instance.rete + DbSource(instance.kernel.dbState, instance.kernel.toString())
+      get() = instance.coroutineContext
 
     fun <T> CoroutineScope.saga(condition: () -> Boolean = { true }, block: suspend CoroutineScope.() -> T): Deferred<T> {
       return async(kernelCoroutineContext) {

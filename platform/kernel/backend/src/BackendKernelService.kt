@@ -5,18 +5,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.kernel.KernelService
-import com.intellij.platform.kernel.util.CommonInstructionSet
-import com.intellij.platform.kernel.util.KernelRpcSerialization
-import com.intellij.platform.kernel.util.ReadTracker
-import com.intellij.platform.kernel.util.withKernel
+import com.intellij.platform.kernel.util.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.rpc.backend.RemoteApiProvider.RemoteApiDescriptor
 import com.intellij.platform.util.coroutines.childScope
-import fleet.kernel.Kernel
 import fleet.kernel.kernel
 import fleet.kernel.rebase.*
-import fleet.kernel.rete.Rete
 import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
 @Service
 private class RemoteKernelScopeHolder(coroutineScope: CoroutineScope) {
@@ -39,15 +35,18 @@ internal class RemoteKernelProvider : RemoteApiProvider {
 
 internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelService {
 
-  private val kernelDeferred: CompletableDeferred<Kernel> = CompletableDeferred()
-  private val reteDeferred: CompletableDeferred<Rete> = CompletableDeferred()
+  private val contextDeferred: CompletableDeferred<CoroutineContext> = CompletableDeferred()
+
+  override val coroutineContext: CoroutineContext
+    get() = runBlocking {
+      contextDeferred.await()
+    }
 
   init {
     coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
       withKernel(middleware = LeaderKernelMiddleware(KernelRpcSerialization, CommonInstructionSet.encoder())) {
         coroutineScope {
-          kernelDeferred.complete(currentCoroutineContext()[Kernel]!!)
-          reteDeferred.complete(currentCoroutineContext()[Rete]!!)
+          contextDeferred.complete(currentCoroutineContext().kernelCoroutineContext())
           kernel().changeSuspend {
             initWorkspaceClock()
           }
@@ -56,14 +55,4 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
       }
     }
   }
-
-  override val kernel: Kernel
-    get() = runBlocking {
-      kernelDeferred.await()
-    }
-
-  override val rete: Rete
-    get() = runBlocking {
-      reteDeferred.await()
-    }
 }

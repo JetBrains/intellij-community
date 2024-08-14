@@ -6,12 +6,10 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.collectEntityClasses
-import fleet.kernel.Kernel
-import fleet.kernel.KernelMiddleware
-import fleet.kernel.kernel
+import fleet.kernel.*
 import fleet.kernel.rebase.*
+import fleet.kernel.rete.Rete
 import fleet.kernel.rete.withRete
-import fleet.kernel.subscribe
 import fleet.rpc.core.Serialization
 import fleet.util.async.conflateReduce
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.modules.SerializersModule
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 
 suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend () -> T) {
   val entityClasses = listOf(Kernel::class.java.classLoader).flatMap(::collectEntityClasses)
@@ -29,6 +28,10 @@ suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend () -> T) 
       body()
     }
   }
+}
+
+fun CoroutineContext.kernelCoroutineContext(): CoroutineContext {
+  return kernel + this[Rete]!! + this[DbSource]!!
 }
 
 val CommonInstructionSet: InstructionSet =

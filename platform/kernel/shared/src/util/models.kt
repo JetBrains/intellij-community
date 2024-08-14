@@ -123,7 +123,7 @@ abstract class SharedModel(uniqueId: String = "") {
     val instance = KernelService.instance
     instance.kernel.coroutineScope.launch {
       supervisorScope {
-        withContext(instance.kernel + instance.rete + DbSource(instance.kernel.dbState, "foobar") ) {
+        withContext(instance.coroutineContext) {
           modelCreated.await()
           lookupOne(ViewModelEntity::modelId, id)?.let { viewModelEntity ->
             withCondition({lookupOne(ViewModelEntity::modelId, id) != null}) {
