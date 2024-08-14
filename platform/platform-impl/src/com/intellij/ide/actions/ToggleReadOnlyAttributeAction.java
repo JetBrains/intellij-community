@@ -7,7 +7,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.stream.Stream;
 
-public final class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+public final class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = getFiles(e.getDataContext());
