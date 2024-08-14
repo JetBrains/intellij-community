@@ -4,6 +4,10 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.FlowTestUtil.assertEmits
 import com.intellij.collaboration.util.MainDispatcherRule
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerifyAll
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -17,12 +21,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRFilesService
 import org.junit.Assert.assertEquals
 import org.junit.ClassRule
-import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mock
-import org.mockito.junit.MockitoJUnit
-import org.mockito.junit.MockitoRule
-import org.mockito.kotlin.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -36,12 +35,7 @@ class GHPRViewedStateDataProviderImplTest {
     internal val mainRule = MainDispatcherRule()
   }
 
-  @Rule
-  @JvmField
-  internal val mockitoRule: MockitoRule = MockitoJUnit.rule()
-
-  @Mock
-  internal lateinit var filesService: GHPRFilesService
+  private val filesService = mockk<GHPRFilesService>()
 
   private fun TestScope.createProvider(): GHPRViewedStateDataProvider =
     GHPRViewedStateDataProviderImpl(backgroundScope, filesService, PR_ID)
@@ -49,17 +43,17 @@ class GHPRViewedStateDataProviderImplTest {
   @Test
   fun testCachingStateLoad() = runTest {
     val result = emptyList<GHPullRequestChangedFile>()
-    whenever(filesService.loadFiles(PR_ID)) doReturn result
+    coEvery { filesService.loadFiles(PR_ID) } returns result
 
     val inst = createProvider()
     assertEquals(inst.loadViewedState(), inst.loadViewedState())
 
-    verify(filesService, times(1)).loadFiles(eq(PR_ID))
+    coVerifyAll { filesService.loadFiles(eq(PR_ID)) }
   }
 
   @Test
   fun testReloadOnError() = runTest {
-    whenever(filesService.updateViewedState(eq(PR_ID), any(), any())) doThrow EXCEPTION
+    coEvery { filesService.updateViewedState(eq(PR_ID), any(), any()) } throws EXCEPTION
 
     val inst = createProvider()
     val signalAwaiter = launchNow {
@@ -71,7 +65,7 @@ class GHPRViewedStateDataProviderImplTest {
       signalAwaiter.join()
     }
 
-    verify(filesService, atLeastOnce()).updateViewedState(eq(PR_ID), any(), any())
+    coVerify { filesService.updateViewedState(eq(PR_ID), any(), any()) }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -79,7 +73,7 @@ class GHPRViewedStateDataProviderImplTest {
   fun testChangesFlow() = runTest(UnconfinedTestDispatcher()) {
     val result = emptyList<GHPullRequestChangedFile>()
     var counter = 0
-    whenever(filesService.loadFiles(eq(PR_ID))) doSuspendableAnswer {
+    coEvery { filesService.loadFiles(eq(PR_ID)) } coAnswers {
       if (counter == 0) {
         delay(1.seconds)
         throw EXCEPTION

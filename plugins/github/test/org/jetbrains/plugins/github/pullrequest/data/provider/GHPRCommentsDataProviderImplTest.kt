@@ -2,18 +2,13 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.util.MainDispatcherRule
 import com.intellij.util.messages.MessageBus
+import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.github.api.data.GHComment
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
-import org.junit.Before
 import org.junit.ClassRule
-import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mock
-import org.mockito.junit.MockitoJUnit
-import org.mockito.junit.MockitoRule
-import org.mockito.kotlin.*
 import java.util.*
 
 class GHPRCommentsDataProviderImplTest {
@@ -25,26 +20,14 @@ class GHPRCommentsDataProviderImplTest {
     internal val mainRule = MainDispatcherRule()
   }
 
-  @Rule
-  @JvmField
-  internal val mockitoRule: MockitoRule = MockitoJUnit.rule()
-
-  @Mock
-  internal lateinit var commentsService: GHPRCommentService
-
-  @Mock
-  internal lateinit var messageBus: MessageBus
-
-  @Mock
-  internal lateinit var listener: GHPRDataOperationsListener
+  private val commentsService = mockk<GHPRCommentService>(relaxed = true)
+  private val listener = mockk<GHPRDataOperationsListener>(relaxUnitFun = true)
+  private val messageBus = mockk<MessageBus> {
+    every { syncPublisher(GHPRDataOperationsListener.TOPIC) } returns listener
+  }
 
   private fun createProvider(): GHPRCommentsDataProvider =
     GHPRCommentsDataProviderImpl(commentsService, PR_ID, messageBus)
-
-  @Before
-  fun setUp() {
-    whenever(messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC)) doReturn listener
-  }
 
   @Test
   fun testAddComment() = runTest {
@@ -52,8 +35,10 @@ class GHPRCommentsDataProviderImplTest {
 
     val prv = createProvider()
     prv.addComment(body)
-    verify(commentsService, times(1)).addComment(eq(PR_ID), eq(body))
-    verify(listener, times(1)).onCommentAdded()
+    coVerifyAll {
+      commentsService.addComment(eq(PR_ID), eq(body))
+      listener.onCommentAdded()
+    }
   }
 
   @Test
@@ -61,12 +46,14 @@ class GHPRCommentsDataProviderImplTest {
     val id = "id"
     val body = "test"
 
-    whenever(commentsService.updateComment(eq(id), any())) doReturn GHComment("", null, body, Date(), mock())
+    coEvery { commentsService.updateComment(eq(id), any()) } returns GHComment("", null, body, Date(), mockk())
 
     val prv = createProvider()
     prv.updateComment(id, body)
-    verify(commentsService, times(1)).updateComment(eq(id), eq(body))
-    verify(listener, times(1)).onCommentUpdated(eq(id), eq(body))
+    coVerifyAll {
+      commentsService.updateComment(eq(id), eq(body))
+      listener.onCommentUpdated(eq(id), eq(body))
+    }
   }
 
   @Test
@@ -74,7 +61,9 @@ class GHPRCommentsDataProviderImplTest {
     val id = "id"
     val prv = createProvider()
     prv.deleteComment(id)
-    verify(commentsService, times(1)).deleteComment(eq(id))
-    verify(listener, times(1)).onCommentDeleted(eq(id))
+    coVerifyAll {
+      commentsService.deleteComment(eq(id))
+      listener.onCommentDeleted(eq(id))
+    }
   }
 }
