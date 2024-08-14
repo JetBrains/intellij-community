@@ -61,7 +61,7 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return;
 
     if (ModalityState.defaultModalityState() == ModalityState.any()) {
-      LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL");
+      LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (130820241337)");
     }
 
     if (changes.isEmpty()) {
@@ -71,7 +71,12 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
       doIndexChanges(project, changes);
     }
     else {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> doIndexChanges(project, changes));
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        if (ModalityState.defaultModalityState() == ModalityState.any()) {
+          LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (140820241138)");
+        }
+        doIndexChanges(project, changes);
+      });
     }
   }
 
