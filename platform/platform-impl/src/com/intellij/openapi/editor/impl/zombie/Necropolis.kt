@@ -5,8 +5,8 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -147,7 +147,12 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
         if (documentContent != null) {
           val fingerprint = FingerprintedZombieImpl.captureFingerprint(documentContent)
           for ((necromancer, zombie) in zombies) {
-            launch(CoroutineName(necromancer.name())) {
+            val context = if (ApplicationManagerEx.isInIntegrationTest()){
+              CoroutineName(necromancer.name()) + NonCancellable
+            } else {
+              CoroutineName(necromancer.name())
+            }
+            launch(context) {
               if (recipe.isValid() && necromancer.shouldBuryZombie(recipe, zombie)) {
                 necromancer.buryZombie(recipe.fileId, FingerprintedZombieImpl(fingerprint, zombie))
               }
