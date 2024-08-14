@@ -22,10 +22,6 @@ public final class ExternalSystemTelemetryUtil {
       .getTracer(ExternalSystemObservabilityScopesKt.forSystem(id == null ? ProjectSystemId.IDE : id));
   }
 
-  public static <T> T computeWithSpan(@Nullable ProjectSystemId id, @NotNull String spanName, @NotNull Function<Span, T> fn) {
-    return TraceKt.use(getTracer(id).spanBuilder(spanName), fn::apply);
-  }
-
   public static void runWithSpan(@Nullable ProjectSystemId id, @NotNull String spanName, @NotNull Consumer<Span> fn) {
     TraceKt.use(getTracer(id).spanBuilder(spanName), span -> {
       fn.accept(span);

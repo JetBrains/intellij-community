@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import io.opentelemetry.api.trace.StatusCode
@@ -137,7 +138,9 @@ object GradleWrapperHelper {
     SystemPropertiesAdjuster.executeAdjusted(projectPath) {
       val launcher: BuildLauncher = GradleExecutionHelper().getBuildLauncher(connection, id, listOf("wrapper"), settings, listener)
       launcher.withCancellationToken(cancellationToken)
-      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExecuteWrapperTask") { launcher.run() }
+      ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+        .spanBuilder("ExecuteWrapperTask")
+        .use { launcher.run() }
     }
   }
 

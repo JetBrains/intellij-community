@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.task.RunConfigurationTaskState
 import com.intellij.util.ThreeState
 import org.gradle.initialization.BuildCancellationToken
@@ -243,30 +244,32 @@ internal class GradleConnectorService(project: Project) : Disposable {
         targetEnvironmentConfigurationProvider,
         executionSettings?.getUserData(RunConfigurationTaskState.KEY)
       )
-      return ExternalSystemTelemetryUtil.computeWithSpan(GradleConstants.SYSTEM_ID, "GradleConnection") {
-        val connectionService = getInstance(projectPath, taskId)
-        if (connectionService != null) {
-          val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
-          buildCancellationToken?.let { connectionService.cancellationTokens.add(it) }
-          try {
-            val connection = connectionService.getConnection(connectionParams, taskId, listener)
-            return@computeWithSpan if (connection is NonClosableConnection) {
-              function.apply(connection)
+      return ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+        .spanBuilder("GradleConnection")
+        .use {
+          val connectionService = getInstance(projectPath, taskId)
+          if (connectionService != null) {
+            val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
+            buildCancellationToken?.let { connectionService.cancellationTokens.add(it) }
+            try {
+              val connection = connectionService.getConnection(connectionParams, taskId, listener)
+              return@use if (connection is NonClosableConnection) {
+                function.apply(connection)
+              }
+              else {
+                connection.use(function::apply)
+              }
             }
-            else {
-              connection.use(function::apply)
+            finally {
+              buildCancellationToken?.let { connectionService.cancellationTokens.remove(it) }
             }
           }
-          finally {
-            buildCancellationToken?.let { connectionService.cancellationTokens.remove(it) }
+          else {
+            val newConnector = createConnector(connectionParams, taskId, listener)
+            val connection = newConnector.connect()
+            return@use connection.use(function::apply)
           }
         }
-        else {
-          val newConnector = createConnector(connectionParams, taskId, listener)
-          val connection = newConnector.connect()
-          return@computeWithSpan connection.use(function::apply)
-        }
-      }
     }
 
     @ApiStatus.Experimental
