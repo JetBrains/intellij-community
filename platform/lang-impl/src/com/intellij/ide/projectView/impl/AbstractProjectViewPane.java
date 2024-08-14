@@ -309,7 +309,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     TreePath[] paths = getSelectionPaths();
     Object[] selectedUserObjects =
       paths == null ? ArrayUtil.EMPTY_OBJECT_ARRAY :
-      ArrayUtil.toObjectArray(ContainerUtil.map(paths, TreeUtil::getLastUserObject));
+      ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(paths, TreeUtil::getLastUserObject));
     Object[] singleSelectedPathUserObjects =
       paths == null || paths.length != 1 ? null :
       ArrayUtil.toObjectArray(ContainerUtil.map(paths[0].getPath(), TreeUtil::getUserObject));
