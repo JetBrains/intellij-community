@@ -1,15 +1,11 @@
-from __future__ import absolute_import
-
 import threading
 
 from mercurial.node import (
     hex,
     sha1nodeconstants,
 )
-from mercurial.pycompat import getattr
 from mercurial import (
     mdiff,
-    pycompat,
     revlog,
 )
 from . import (
@@ -19,7 +15,7 @@ from . import (
 )
 
 
-class ChainIndicies(object):
+class ChainIndicies:
     """A static class for easy reference to the delta chain indicies."""
 
     # The filename of this revision delta
@@ -231,7 +227,7 @@ class remotefilelogcontentstore(basestore.basestore):
         self._threaddata.metacache = (node, meta)
 
 
-class remotecontentstore(object):
+class remotecontentstore:
     def __init__(self, ui, fileservice, shared):
         self._fileservice = fileservice
         # type(shared) is usually remotefilelogcontentstore
@@ -276,7 +272,7 @@ class remotecontentstore(object):
         pass
 
 
-class manifestrevlogstore(object):
+class manifestrevlogstore:
     def __init__(self, repo):
         self._store = repo.store
         self._svfs = repo.svfs
@@ -368,7 +364,7 @@ class manifestrevlogstore(object):
         rl = revlog.revlog(self._svfs, radix=b'00manifesttree')
         startlinkrev = self._repackstartlinkrev
         endlinkrev = self._repackendlinkrev
-        for rev in pycompat.xrange(len(rl) - 1, -1, -1):
+        for rev in range(len(rl) - 1, -1, -1):
             linkrev = rl.linkrev(rev)
             if linkrev < startlinkrev:
                 break
@@ -378,14 +374,14 @@ class manifestrevlogstore(object):
             ledger.markdataentry(self, treename, node)
             ledger.markhistoryentry(self, treename, node)
 
-        for t, path, encoded, size in self._store.datafiles():
+        for t, path, size in self._store.data_entries():
             if path[:5] != b'meta/' or path[-2:] != b'.i':
                 continue
 
             treename = path[5 : -len(b'/00manifest')]
 
             rl = revlog.revlog(self._svfs, indexfile=path[:-2])
-            for rev in pycompat.xrange(len(rl) - 1, -1, -1):
+            for rev in range(len(rl) - 1, -1, -1):
                 linkrev = rl.linkrev(rev)
                 if linkrev < startlinkrev:
                     break

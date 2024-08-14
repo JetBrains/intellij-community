@@ -8,7 +8,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import collections
 import contextlib
@@ -40,7 +39,7 @@ def bisect(repo, state):
     def buildancestors(bad, good):
         badrev = min([changelog.rev(n) for n in bad])
         ancestors = collections.defaultdict(lambda: None)
-        for rev in repo.revs(b"descendants(%ln) - ancestors(%ln)", good, good):
+        for rev in repo.revs(b"(%ln::%d) - (::%ln)", good, badrev, good):
             ancestors[rev] = []
         if ancestors[badrev] is None:
             return badrev, None
@@ -116,11 +115,21 @@ def bisect(repo, state):
             poison.update(children.get(rev, []))
             continue
 
+        unvisited = []
         for c in children.get(rev, []):
             if ancestors[c]:
                 ancestors[c] = list(set(ancestors[c] + a))
             else:
+                unvisited.append(c)
+
+        # Reuse existing ancestor list for the first unvisited child to avoid
+        # excessive copying for linear portions of history.
+        if unvisited:
+            first = unvisited.pop(0)
+            for c in unvisited:
                 ancestors[c] = a + [c]
+            a.append(first)
+            ancestors[first] = a
 
     assert best_rev is not None
     best_node = changelog.node(best_rev)

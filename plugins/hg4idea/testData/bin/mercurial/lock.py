@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import contextlib
 import errno
@@ -13,10 +12,10 @@ import os
 import signal
 import socket
 import time
+import typing
 import warnings
 
 from .i18n import _
-from .pycompat import getattr
 
 from . import (
     encoding,
@@ -39,9 +38,8 @@ def _getlockprefix():
     if pycompat.sysplatform.startswith(b'linux'):
         try:
             result += b'/%x' % os.stat(b'/proc/self/ns/pid').st_ino
-        except OSError as ex:
-            if ex.errno not in (errno.ENOENT, errno.EACCES, errno.ENOTDIR):
-                raise
+        except (FileNotFoundError, PermissionError, NotADirectoryError):
+            pass
     return result
 
 
@@ -78,11 +76,11 @@ def _delayedinterrupt():
         # save handlers first so they can be restored even if a setup is
         # interrupted between signal.signal() and orighandlers[] =.
         for name in [
-            b'CTRL_C_EVENT',
-            b'SIGINT',
-            b'SIGBREAK',
-            b'SIGHUP',
-            b'SIGTERM',
+            'CTRL_C_EVENT',
+            'SIGINT',
+            'SIGBREAK',
+            'SIGHUP',
+            'SIGTERM',
         ]:
             num = getattr(signal, name, None)
             if num and num not in orighandlers:
@@ -117,6 +115,7 @@ def trylock(ui, vfs, lockname, timeout, warntimeout, *args, **kwargs):
 
     This function is responsible to issue warnings and or debug messages about
     the held lock while trying to acquires it."""
+    devel_wait_file = kwargs.pop("devel_wait_sync_file", None)
 
     def printwarning(printer, locker):
         """issue the usual "waiting on lock" message through any channel"""
@@ -152,13 +151,22 @@ def trylock(ui, vfs, lockname, timeout, warntimeout, *args, **kwargs):
             l._trylock()
             break
         except error.LockHeld as inst:
+            if devel_wait_file is not None:
+                # create the file to signal we are waiting
+                with open(devel_wait_file, 'w'):
+                    pass
+
             if delay == debugidx:
                 printwarning(ui.debug, inst.locker)
             if delay == warningidx:
                 printwarning(ui.warn, inst.locker)
             if timeout <= delay:
+                assert isinstance(inst.filename, bytes)
                 raise error.LockHeld(
-                    errno.ETIMEDOUT, inst.filename, l.desc, inst.locker
+                    errno.ETIMEDOUT,
+                    typing.cast(bytes, inst.filename),
+                    l.desc,
+                    inst.locker,
                 )
             time.sleep(1)
             delay += 1
@@ -174,7 +182,7 @@ def trylock(ui, vfs, lockname, timeout, warntimeout, *args, **kwargs):
     return l
 
 
-class lock(object):
+class lock:
     """An advisory lock held by one process to control access to a set
     of files.  Non-cooperating processes or incorrectly written scripts
     can ignore Mercurial's locking scheme and stomp all over the
@@ -293,8 +301,13 @@ class lock(object):
                             locker,
                         )
                 else:
+                    assert isinstance(why.filename, bytes)
+                    assert isinstance(why.strerror, str)
                     raise error.LockUnavailable(
-                        why.errno, why.strerror, why.filename, self.desc
+                        why.errno,
+                        why.strerror,
+                        typing.cast(bytes, why.filename),
+                        self.desc,
                     )
 
         if not self.held:
@@ -312,10 +325,8 @@ class lock(object):
         """
         try:
             return self.vfs.readlock(self.f)
-        except (OSError, IOError) as why:
-            if why.errno == errno.ENOENT:
-                return None
-            raise
+        except FileNotFoundError:
+            return None
 
     def _lockshouldbebroken(self, locker):
         if locker is None:

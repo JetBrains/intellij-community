@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import gzip
 import os
@@ -28,6 +27,8 @@ from . import (
     util,
     vfs as vfsmod,
 )
+
+from .utils import stringutil
 
 stringio = util.stringio
 
@@ -74,7 +75,7 @@ exts = {
 
 
 def guesskind(dest):
-    for kind, extensions in pycompat.iteritems(exts):
+    for kind, extensions in exts.items():
         if any(dest.endswith(ext) for ext in extensions):
             return kind
     return None
@@ -131,42 +132,9 @@ def buildmetadata(ctx):
     return out.getvalue()
 
 
-class tarit(object):
+class tarit:
     """write archive to tar file or stream.  can write uncompressed,
     or compress with gzip or bzip2."""
-
-    if pycompat.ispy3:
-        GzipFileWithTime = gzip.GzipFile  # camelcase-required
-    else:
-
-        class GzipFileWithTime(gzip.GzipFile):
-            def __init__(self, *args, **kw):
-                timestamp = None
-                if 'mtime' in kw:
-                    timestamp = kw.pop('mtime')
-                if timestamp is None:
-                    self.timestamp = time.time()
-                else:
-                    self.timestamp = timestamp
-                gzip.GzipFile.__init__(self, *args, **kw)
-
-            def _write_gzip_header(self):
-                self.fileobj.write(b'\037\213')  # magic header
-                self.fileobj.write(b'\010')  # compression method
-                fname = self.name
-                if fname and fname.endswith(b'.gz'):
-                    fname = fname[:-3]
-                flags = 0
-                if fname:
-                    flags = gzip.FNAME  # pytype: disable=module-attr
-                self.fileobj.write(pycompat.bytechr(flags))
-                gzip.write32u(  # pytype: disable=module-attr
-                    self.fileobj, int(self.timestamp)
-                )
-                self.fileobj.write(b'\002')
-                self.fileobj.write(b'\377')
-                if fname:
-                    self.fileobj.write(fname + b'\000')
 
     def __init__(self, dest, mtime, kind=b''):
         self.mtime = mtime
@@ -177,7 +145,7 @@ class tarit(object):
                 mode = mode[0:1]
                 if not fileobj:
                     fileobj = open(name, mode + b'b')
-                gzfileobj = self.GzipFileWithTime(
+                gzfileobj = gzip.GzipFile(
                     name,
                     pycompat.sysstr(mode + b'b'),
                     zlib.Z_BEST_COMPRESSION,
@@ -186,9 +154,14 @@ class tarit(object):
                 )
                 self.fileobj = gzfileobj
                 return (
+                    # taropen() wants Literal['a', 'r', 'w', 'x'] for the mode,
+                    # but Literal[] is only available in 3.8+ without the
+                    # typing_extensions backport.
+                    # pytype: disable=wrong-arg-types
                     tarfile.TarFile.taropen(  # pytype: disable=attribute-error
                         name, pycompat.sysstr(mode), gzfileobj
                     )
+                    # pytype: enable=wrong-arg-types
                 )
             else:
                 try:
@@ -196,7 +169,7 @@ class tarit(object):
                         name, pycompat.sysstr(mode + kind), fileobj
                     )
                 except tarfile.CompressionError as e:
-                    raise error.Abort(pycompat.bytestr(e))
+                    raise error.Abort(stringutil.forcebytestr(e))
 
         if isinstance(dest, bytes):
             self.z = taropen(b'w:', name=dest)
@@ -225,7 +198,7 @@ class tarit(object):
             self.fileobj.close()
 
 
-class zipit(object):
+class zipit:
     """write archive to zip file or stream.  can write uncompressed,
     or compressed with deflate."""
 
@@ -272,7 +245,7 @@ class zipit(object):
         self.z.close()
 
 
-class fileit(object):
+class fileit:
     '''write archive as files in directory.'''
 
     def __init__(self, name, mtime):
@@ -336,9 +309,6 @@ def archive(
 
     subrepos tells whether to include subrepos.
     """
-
-    if kind == b'txz' and not pycompat.ispy3:
-        raise error.Abort(_(b'xz compression is only available in Python 3'))
 
     if kind == b'files':
         if prefix:

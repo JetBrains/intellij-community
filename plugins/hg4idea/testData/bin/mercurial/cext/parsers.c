@@ -17,16 +17,6 @@
 #include "charencode.h"
 #include "util.h"
 
-#ifdef IS_PY3K
-/* The mapping of Python types is meant to be temporary to get Python
- * 3 to compile. We should remove this once Python 3 support is fully
- * supported and proper types are used in the extensions themselves. */
-#define PyInt_Check PyLong_Check
-#define PyInt_FromLong PyLong_FromLong
-#define PyInt_FromSsize_t PyLong_FromSsize_t
-#define PyInt_AsLong PyLong_AsLong
-#endif
-
 static const char *const versionerrortext = "Python minor version mismatch";
 
 static const int dirstate_v1_from_p2 = -2;
@@ -44,42 +34,112 @@ static PyObject *dict_new_presized(PyObject *self, PyObject *args)
 	return _dict_new_presized(expected_size);
 }
 
-static inline dirstateItemObject *make_dirstate_item(char state, int mode,
-                                                     int size, int mtime)
-{
-	dirstateItemObject *t =
-	    PyObject_New(dirstateItemObject, &dirstateItemType);
-	if (!t) {
-		return NULL;
-	}
-	t->state = state;
-	t->mode = mode;
-	t->size = size;
-	t->mtime = mtime;
-	return t;
-}
-
 static PyObject *dirstate_item_new(PyTypeObject *subtype, PyObject *args,
                                    PyObject *kwds)
 {
 	/* We do all the initialization here and not a tp_init function because
 	 * dirstate_item is immutable. */
 	dirstateItemObject *t;
-	char state;
-	int size, mode, mtime;
-	if (!PyArg_ParseTuple(args, "ciii", &state, &mode, &size, &mtime)) {
+	int wc_tracked;
+	int p1_tracked;
+	int p2_info;
+	int has_meaningful_data;
+	int has_meaningful_mtime;
+	int mtime_second_ambiguous;
+	int mode;
+	int size;
+	int mtime_s;
+	int mtime_ns;
+	PyObject *parentfiledata;
+	PyObject *mtime;
+	PyObject *fallback_exec;
+	PyObject *fallback_symlink;
+	static char *keywords_name[] = {
+	    "wc_tracked",          "p1_tracked",           "p2_info",
+	    "has_meaningful_data", "has_meaningful_mtime", "parentfiledata",
+	    "fallback_exec",       "fallback_symlink",     NULL,
+	};
+	wc_tracked = 0;
+	p1_tracked = 0;
+	p2_info = 0;
+	has_meaningful_mtime = 1;
+	has_meaningful_data = 1;
+	mtime_second_ambiguous = 0;
+	parentfiledata = Py_None;
+	fallback_exec = Py_None;
+	fallback_symlink = Py_None;
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iiiiiOOO", keywords_name,
+	                                 &wc_tracked, &p1_tracked, &p2_info,
+	                                 &has_meaningful_data,
+	                                 &has_meaningful_mtime, &parentfiledata,
+	                                 &fallback_exec, &fallback_symlink)) {
 		return NULL;
 	}
-
 	t = (dirstateItemObject *)subtype->tp_alloc(subtype, 1);
 	if (!t) {
 		return NULL;
 	}
-	t->state = state;
-	t->mode = mode;
-	t->size = size;
-	t->mtime = mtime;
 
+	t->flags = 0;
+	if (wc_tracked) {
+		t->flags |= dirstate_flag_wc_tracked;
+	}
+	if (p1_tracked) {
+		t->flags |= dirstate_flag_p1_tracked;
+	}
+	if (p2_info) {
+		t->flags |= dirstate_flag_p2_info;
+	}
+
+	if (fallback_exec != Py_None) {
+		t->flags |= dirstate_flag_has_fallback_exec;
+		if (PyObject_IsTrue(fallback_exec)) {
+			t->flags |= dirstate_flag_fallback_exec;
+		}
+	}
+	if (fallback_symlink != Py_None) {
+		t->flags |= dirstate_flag_has_fallback_symlink;
+		if (PyObject_IsTrue(fallback_symlink)) {
+			t->flags |= dirstate_flag_fallback_symlink;
+		}
+	}
+
+	if (parentfiledata != Py_None) {
+		if (!PyArg_ParseTuple(parentfiledata, "iiO", &mode, &size,
+		                      &mtime)) {
+			return NULL;
+		}
+		if (mtime != Py_None) {
+			if (!PyArg_ParseTuple(mtime, "iii", &mtime_s, &mtime_ns,
+			                      &mtime_second_ambiguous)) {
+				return NULL;
+			}
+		} else {
+			has_meaningful_mtime = 0;
+		}
+	} else {
+		has_meaningful_data = 0;
+		has_meaningful_mtime = 0;
+	}
+	if (has_meaningful_data) {
+		t->flags |= dirstate_flag_has_meaningful_data;
+		t->mode = mode;
+		t->size = size;
+		if (mtime_second_ambiguous) {
+			t->flags |= dirstate_flag_mtime_second_ambiguous;
+		}
+	} else {
+		t->mode = 0;
+		t->size = 0;
+	}
+	if (has_meaningful_mtime) {
+		t->flags |= dirstate_flag_has_mtime;
+		t->mtime_s = mtime_s;
+		t->mtime_ns = mtime_ns;
+	} else {
+		t->mtime_s = 0;
+		t->mtime_ns = 0;
+	}
 	return (PyObject *)t;
 }
 
@@ -88,92 +148,178 @@ static void dirstate_item_dealloc(PyObject *o)
 	PyObject_Del(o);
 }
 
-static Py_ssize_t dirstate_item_length(PyObject *o)
+static inline bool dirstate_item_c_tracked(dirstateItemObject *self)
 {
-	return 4;
+	return (self->flags & dirstate_flag_wc_tracked);
 }
 
-static PyObject *dirstate_item_item(PyObject *o, Py_ssize_t i)
+static inline bool dirstate_item_c_any_tracked(dirstateItemObject *self)
 {
-	dirstateItemObject *t = (dirstateItemObject *)o;
-	switch (i) {
-	case 0:
-		return PyBytes_FromStringAndSize(&t->state, 1);
-	case 1:
-		return PyInt_FromLong(t->mode);
-	case 2:
-		return PyInt_FromLong(t->size);
-	case 3:
-		return PyInt_FromLong(t->mtime);
-	default:
-		PyErr_SetString(PyExc_IndexError, "index out of range");
-		return NULL;
+	const int mask = dirstate_flag_wc_tracked | dirstate_flag_p1_tracked |
+	                 dirstate_flag_p2_info;
+	return (self->flags & mask);
+}
+
+static inline bool dirstate_item_c_added(dirstateItemObject *self)
+{
+	const int mask = (dirstate_flag_wc_tracked | dirstate_flag_p1_tracked |
+	                  dirstate_flag_p2_info);
+	const int target = dirstate_flag_wc_tracked;
+	return (self->flags & mask) == target;
+}
+
+static inline bool dirstate_item_c_removed(dirstateItemObject *self)
+{
+	if (self->flags & dirstate_flag_wc_tracked) {
+		return false;
+	}
+	return (self->flags &
+	        (dirstate_flag_p1_tracked | dirstate_flag_p2_info));
+}
+
+static inline bool dirstate_item_c_modified(dirstateItemObject *self)
+{
+	return ((self->flags & dirstate_flag_wc_tracked) &&
+	        (self->flags & dirstate_flag_p1_tracked) &&
+	        (self->flags & dirstate_flag_p2_info));
+}
+
+static inline bool dirstate_item_c_from_p2(dirstateItemObject *self)
+{
+	return ((self->flags & dirstate_flag_wc_tracked) &&
+	        !(self->flags & dirstate_flag_p1_tracked) &&
+	        (self->flags & dirstate_flag_p2_info));
+}
+
+static inline char dirstate_item_c_v1_state(dirstateItemObject *self)
+{
+	if (dirstate_item_c_removed(self)) {
+		return 'r';
+	} else if (dirstate_item_c_modified(self)) {
+		return 'm';
+	} else if (dirstate_item_c_added(self)) {
+		return 'a';
+	} else {
+		return 'n';
 	}
 }
 
-static PySequenceMethods dirstate_item_sq = {
-    dirstate_item_length, /* sq_length */
-    0,                    /* sq_concat */
-    0,                    /* sq_repeat */
-    dirstate_item_item,   /* sq_item */
-    0,                    /* sq_ass_item */
-    0,                    /* sq_contains */
-    0,                    /* sq_inplace_concat */
-    0                     /* sq_inplace_repeat */
-};
-
-static PyObject *dirstate_item_v1_state(dirstateItemObject *self)
+static inline bool dirstate_item_c_has_fallback_exec(dirstateItemObject *self)
 {
-	return PyBytes_FromStringAndSize(&self->state, 1);
-};
+	return (bool)self->flags & dirstate_flag_has_fallback_exec;
+}
 
-static PyObject *dirstate_item_v1_mode(dirstateItemObject *self)
+static inline bool
+dirstate_item_c_has_fallback_symlink(dirstateItemObject *self)
 {
-	return PyInt_FromLong(self->mode);
-};
+	return (bool)self->flags & dirstate_flag_has_fallback_symlink;
+}
 
-static PyObject *dirstate_item_v1_size(dirstateItemObject *self)
+static inline int dirstate_item_c_v1_mode(dirstateItemObject *self)
 {
-	return PyInt_FromLong(self->size);
-};
-
-static PyObject *dirstate_item_v1_mtime(dirstateItemObject *self)
-{
-	return PyInt_FromLong(self->mtime);
-};
-
-static PyObject *dm_nonnormal(dirstateItemObject *self)
-{
-	if (self->state != 'n' || self->mtime == ambiguous_time) {
-		Py_RETURN_TRUE;
+	if (self->flags & dirstate_flag_has_meaningful_data) {
+		return self->mode;
 	} else {
-		Py_RETURN_FALSE;
+		return 0;
 	}
-};
-static PyObject *dm_otherparent(dirstateItemObject *self)
+}
+
+static inline int dirstate_item_c_v1_size(dirstateItemObject *self)
 {
-	if (self->size == dirstate_v1_from_p2) {
-		Py_RETURN_TRUE;
+	if (!(self->flags & dirstate_flag_wc_tracked) &&
+	    (self->flags & dirstate_flag_p2_info)) {
+		if (self->flags & dirstate_flag_p1_tracked) {
+			return dirstate_v1_nonnormal;
+		} else {
+			return dirstate_v1_from_p2;
+		}
+	} else if (dirstate_item_c_removed(self)) {
+		return 0;
+	} else if (self->flags & dirstate_flag_p2_info) {
+		return dirstate_v1_from_p2;
+	} else if (dirstate_item_c_added(self)) {
+		return dirstate_v1_nonnormal;
+	} else if (self->flags & dirstate_flag_has_meaningful_data) {
+		return self->size;
 	} else {
-		Py_RETURN_FALSE;
+		return dirstate_v1_nonnormal;
 	}
+}
+
+static inline int dirstate_item_c_v1_mtime(dirstateItemObject *self)
+{
+	if (dirstate_item_c_removed(self)) {
+		return 0;
+	} else if (!(self->flags & dirstate_flag_has_mtime) ||
+	           !(self->flags & dirstate_flag_p1_tracked) ||
+	           !(self->flags & dirstate_flag_wc_tracked) ||
+	           (self->flags & dirstate_flag_p2_info) ||
+	           (self->flags & dirstate_flag_mtime_second_ambiguous)) {
+		return ambiguous_time;
+	} else {
+		return self->mtime_s;
+	}
+}
+
+static PyObject *dirstate_item_v2_data(dirstateItemObject *self)
+{
+	int flags = self->flags;
+	int mode = dirstate_item_c_v1_mode(self);
+#ifdef S_IXUSR
+	/* This is for platforms with an exec bit */
+	if ((mode & S_IXUSR) != 0) {
+		flags |= dirstate_flag_mode_exec_perm;
+	} else {
+		flags &= ~dirstate_flag_mode_exec_perm;
+	}
+#else
+	flags &= ~dirstate_flag_mode_exec_perm;
+#endif
+#ifdef S_ISLNK
+	/* This is for platforms with support for symlinks */
+	if (S_ISLNK(mode)) {
+		flags |= dirstate_flag_mode_is_symlink;
+	} else {
+		flags &= ~dirstate_flag_mode_is_symlink;
+	}
+#else
+	flags &= ~dirstate_flag_mode_is_symlink;
+#endif
+	return Py_BuildValue("iiii", flags, self->size, self->mtime_s,
+	                     self->mtime_ns);
 };
 
-static PyObject *dirstate_item_need_delay(dirstateItemObject *self,
-                                          PyObject *value)
+static PyObject *dirstate_item_mtime_likely_equal_to(dirstateItemObject *self,
+                                                     PyObject *other)
 {
-	long now;
-	if (!pylong_to_long(value, &now)) {
+	int other_s;
+	int other_ns;
+	int other_second_ambiguous;
+	if (!PyArg_ParseTuple(other, "iii", &other_s, &other_ns,
+	                      &other_second_ambiguous)) {
 		return NULL;
 	}
-	if (self->state == 'n' && self->mtime == now) {
+	if (!(self->flags & dirstate_flag_has_mtime)) {
+		Py_RETURN_FALSE;
+	}
+	if (self->mtime_s != other_s) {
+		Py_RETURN_FALSE;
+	}
+	if (self->mtime_ns == 0 || other_ns == 0) {
+		if (self->flags & dirstate_flag_mtime_second_ambiguous) {
+			Py_RETURN_FALSE;
+		} else {
+			Py_RETURN_TRUE;
+		}
+	}
+	if (self->mtime_ns == other_ns) {
 		Py_RETURN_TRUE;
 	} else {
 		Py_RETURN_FALSE;
 	}
 };
 
-/* This will never change since it's bound to V1, unlike `make_dirstate_item`
+/* This will never change since it's bound to V1
  */
 static inline dirstateItemObject *
 dirstate_item_from_v1_data(char state, int mode, int size, int mtime)
@@ -183,35 +329,89 @@ dirstate_item_from_v1_data(char state, int mode, int size, int mtime)
 	if (!t) {
 		return NULL;
 	}
-	t->state = state;
-	t->mode = mode;
-	t->size = size;
-	t->mtime = mtime;
+	t->flags = 0;
+	t->mode = 0;
+	t->size = 0;
+	t->mtime_s = 0;
+	t->mtime_ns = 0;
+
+	if (state == 'm') {
+		t->flags = (dirstate_flag_wc_tracked |
+		            dirstate_flag_p1_tracked | dirstate_flag_p2_info);
+	} else if (state == 'a') {
+		t->flags = dirstate_flag_wc_tracked;
+	} else if (state == 'r') {
+		if (size == dirstate_v1_nonnormal) {
+			t->flags =
+			    dirstate_flag_p1_tracked | dirstate_flag_p2_info;
+		} else if (size == dirstate_v1_from_p2) {
+			t->flags = dirstate_flag_p2_info;
+		} else {
+			t->flags = dirstate_flag_p1_tracked;
+		}
+	} else if (state == 'n') {
+		if (size == dirstate_v1_from_p2) {
+			t->flags =
+			    dirstate_flag_wc_tracked | dirstate_flag_p2_info;
+		} else if (size == dirstate_v1_nonnormal) {
+			t->flags =
+			    dirstate_flag_wc_tracked | dirstate_flag_p1_tracked;
+		} else if (mtime == ambiguous_time) {
+			t->flags = (dirstate_flag_wc_tracked |
+			            dirstate_flag_p1_tracked |
+			            dirstate_flag_has_meaningful_data);
+			t->mode = mode;
+			t->size = size;
+		} else {
+			t->flags = (dirstate_flag_wc_tracked |
+			            dirstate_flag_p1_tracked |
+			            dirstate_flag_has_meaningful_data |
+			            dirstate_flag_has_mtime);
+			t->mode = mode;
+			t->size = size;
+			t->mtime_s = mtime;
+		}
+	} else {
+		PyErr_Format(PyExc_RuntimeError,
+		             "unknown state: `%c` (%d, %d, %d)", state, mode,
+		             size, mtime);
+		Py_DECREF(t);
+		return NULL;
+	}
+
 	return t;
 }
 
-/* This will never change since it's bound to V1, unlike `dirstate_item_new` */
-static PyObject *dirstate_item_from_v1_meth(PyTypeObject *subtype,
+static PyObject *dirstate_item_from_v2_meth(PyTypeObject *subtype,
                                             PyObject *args)
 {
-	/* We do all the initialization here and not a tp_init function because
-	 * dirstate_item is immutable. */
-	dirstateItemObject *t;
-	char state;
-	int size, mode, mtime;
-	if (!PyArg_ParseTuple(args, "ciii", &state, &mode, &size, &mtime)) {
-		return NULL;
-	}
-
-	t = (dirstateItemObject *)subtype->tp_alloc(subtype, 1);
+	dirstateItemObject *t =
+	    PyObject_New(dirstateItemObject, &dirstateItemType);
 	if (!t) {
 		return NULL;
 	}
-	t->state = state;
-	t->mode = mode;
-	t->size = size;
-	t->mtime = mtime;
-
+	if (!PyArg_ParseTuple(args, "iiii", &t->flags, &t->size, &t->mtime_s,
+	                      &t->mtime_ns)) {
+		return NULL;
+	}
+	if (t->flags & dirstate_flag_expected_state_is_modified) {
+		t->flags &= ~(dirstate_flag_expected_state_is_modified |
+		              dirstate_flag_has_meaningful_data |
+		              dirstate_flag_has_mtime);
+	}
+	t->mode = 0;
+	if (t->flags & dirstate_flag_has_meaningful_data) {
+		if (t->flags & dirstate_flag_mode_exec_perm) {
+			t->mode = 0755;
+		} else {
+			t->mode = 0644;
+		}
+		if (t->flags & dirstate_flag_mode_is_symlink) {
+			t->mode |= S_IFLNK;
+		} else {
+			t->mode |= S_IFREG;
+		}
+	}
 	return (PyObject *)t;
 };
 
@@ -219,55 +419,204 @@ static PyObject *dirstate_item_from_v1_meth(PyTypeObject *subtype,
    to make sure it is correct. */
 static PyObject *dirstate_item_set_possibly_dirty(dirstateItemObject *self)
 {
-	self->mtime = ambiguous_time;
+	self->flags &= ~dirstate_flag_has_mtime;
 	Py_RETURN_NONE;
 }
 
+/* See docstring of the python implementation for details */
+static PyObject *dirstate_item_set_clean(dirstateItemObject *self,
+                                         PyObject *args)
+{
+	int size, mode, mtime_s, mtime_ns, mtime_second_ambiguous;
+	PyObject *mtime;
+	mtime_s = 0;
+	mtime_ns = 0;
+	mtime_second_ambiguous = 0;
+	if (!PyArg_ParseTuple(args, "iiO", &mode, &size, &mtime)) {
+		return NULL;
+	}
+	if (mtime != Py_None) {
+		if (!PyArg_ParseTuple(mtime, "iii", &mtime_s, &mtime_ns,
+		                      &mtime_second_ambiguous)) {
+			return NULL;
+		}
+	} else {
+		self->flags &= ~dirstate_flag_has_mtime;
+	}
+	self->flags = dirstate_flag_wc_tracked | dirstate_flag_p1_tracked |
+	              dirstate_flag_has_meaningful_data |
+	              dirstate_flag_has_mtime;
+	if (mtime_second_ambiguous) {
+		self->flags |= dirstate_flag_mtime_second_ambiguous;
+	}
+	self->mode = mode;
+	self->size = size;
+	self->mtime_s = mtime_s;
+	self->mtime_ns = mtime_ns;
+	Py_RETURN_NONE;
+}
+
+static PyObject *dirstate_item_set_tracked(dirstateItemObject *self)
+{
+	self->flags |= dirstate_flag_wc_tracked;
+	self->flags &= ~dirstate_flag_has_mtime;
+	Py_RETURN_NONE;
+}
+
+static PyObject *dirstate_item_set_untracked(dirstateItemObject *self)
+{
+	self->flags &= ~dirstate_flag_wc_tracked;
+	self->flags &= ~dirstate_flag_has_meaningful_data;
+	self->flags &= ~dirstate_flag_has_mtime;
+	self->mode = 0;
+	self->size = 0;
+	self->mtime_s = 0;
+	self->mtime_ns = 0;
+	Py_RETURN_NONE;
+}
+
+static PyObject *dirstate_item_drop_merge_data(dirstateItemObject *self)
+{
+	if (self->flags & dirstate_flag_p2_info) {
+		self->flags &= ~(dirstate_flag_p2_info |
+		                 dirstate_flag_has_meaningful_data |
+		                 dirstate_flag_has_mtime);
+		self->mode = 0;
+		self->size = 0;
+		self->mtime_s = 0;
+		self->mtime_ns = 0;
+	}
+	Py_RETURN_NONE;
+}
 static PyMethodDef dirstate_item_methods[] = {
-    {"v1_state", (PyCFunction)dirstate_item_v1_state, METH_NOARGS,
-     "return a \"state\" suitable for v1 serialization"},
-    {"v1_mode", (PyCFunction)dirstate_item_v1_mode, METH_NOARGS,
-     "return a \"mode\" suitable for v1 serialization"},
-    {"v1_size", (PyCFunction)dirstate_item_v1_size, METH_NOARGS,
-     "return a \"size\" suitable for v1 serialization"},
-    {"v1_mtime", (PyCFunction)dirstate_item_v1_mtime, METH_NOARGS,
-     "return a \"mtime\" suitable for v1 serialization"},
-    {"need_delay", (PyCFunction)dirstate_item_need_delay, METH_O,
-     "True if the stored mtime would be ambiguous with the current time"},
-    {"from_v1_data", (PyCFunction)dirstate_item_from_v1_meth, METH_O,
-     "build a new DirstateItem object from V1 data"},
+    {"v2_data", (PyCFunction)dirstate_item_v2_data, METH_NOARGS,
+     "return data suitable for v2 serialization"},
+    {"mtime_likely_equal_to", (PyCFunction)dirstate_item_mtime_likely_equal_to,
+     METH_O, "True if the stored mtime is likely equal to the given mtime"},
+    {"from_v2_data", (PyCFunction)dirstate_item_from_v2_meth,
+     METH_VARARGS | METH_CLASS, "build a new DirstateItem object from V2 data"},
     {"set_possibly_dirty", (PyCFunction)dirstate_item_set_possibly_dirty,
      METH_NOARGS, "mark a file as \"possibly dirty\""},
-    {"dm_nonnormal", (PyCFunction)dm_nonnormal, METH_NOARGS,
-     "True is the entry is non-normal in the dirstatemap sense"},
-    {"dm_otherparent", (PyCFunction)dm_otherparent, METH_NOARGS,
-     "True is the entry is `otherparent` in the dirstatemap sense"},
+    {"set_clean", (PyCFunction)dirstate_item_set_clean, METH_VARARGS,
+     "mark a file as \"clean\""},
+    {"set_tracked", (PyCFunction)dirstate_item_set_tracked, METH_NOARGS,
+     "mark a file as \"tracked\""},
+    {"set_untracked", (PyCFunction)dirstate_item_set_untracked, METH_NOARGS,
+     "mark a file as \"untracked\""},
+    {"drop_merge_data", (PyCFunction)dirstate_item_drop_merge_data, METH_NOARGS,
+     "remove all \"merge-only\" from a DirstateItem"},
     {NULL} /* Sentinel */
 };
 
 static PyObject *dirstate_item_get_mode(dirstateItemObject *self)
 {
-	return PyInt_FromLong(self->mode);
+	return PyLong_FromLong(dirstate_item_c_v1_mode(self));
 };
 
 static PyObject *dirstate_item_get_size(dirstateItemObject *self)
 {
-	return PyInt_FromLong(self->size);
+	return PyLong_FromLong(dirstate_item_c_v1_size(self));
 };
 
 static PyObject *dirstate_item_get_mtime(dirstateItemObject *self)
 {
-	return PyInt_FromLong(self->mtime);
+	return PyLong_FromLong(dirstate_item_c_v1_mtime(self));
 };
 
 static PyObject *dirstate_item_get_state(dirstateItemObject *self)
 {
-	return PyBytes_FromStringAndSize(&self->state, 1);
+	char state = dirstate_item_c_v1_state(self);
+	return PyBytes_FromStringAndSize(&state, 1);
+};
+
+static PyObject *dirstate_item_get_has_fallback_exec(dirstateItemObject *self)
+{
+	if (dirstate_item_c_has_fallback_exec(self)) {
+		Py_RETURN_TRUE;
+	} else {
+		Py_RETURN_FALSE;
+	}
+};
+
+static PyObject *dirstate_item_get_fallback_exec(dirstateItemObject *self)
+{
+	if (dirstate_item_c_has_fallback_exec(self)) {
+		if (self->flags & dirstate_flag_fallback_exec) {
+			Py_RETURN_TRUE;
+		} else {
+			Py_RETURN_FALSE;
+		}
+	} else {
+		Py_RETURN_NONE;
+	}
+};
+
+static int dirstate_item_set_fallback_exec(dirstateItemObject *self,
+                                           PyObject *value)
+{
+	if ((value == Py_None) || (value == NULL)) {
+		self->flags &= ~dirstate_flag_has_fallback_exec;
+	} else {
+		self->flags |= dirstate_flag_has_fallback_exec;
+		if (PyObject_IsTrue(value)) {
+			self->flags |= dirstate_flag_fallback_exec;
+		} else {
+			self->flags &= ~dirstate_flag_fallback_exec;
+		}
+	}
+	return 0;
+};
+
+static PyObject *
+dirstate_item_get_has_fallback_symlink(dirstateItemObject *self)
+{
+	if (dirstate_item_c_has_fallback_symlink(self)) {
+		Py_RETURN_TRUE;
+	} else {
+		Py_RETURN_FALSE;
+	}
+};
+
+static PyObject *dirstate_item_get_fallback_symlink(dirstateItemObject *self)
+{
+	if (dirstate_item_c_has_fallback_symlink(self)) {
+		if (self->flags & dirstate_flag_fallback_symlink) {
+			Py_RETURN_TRUE;
+		} else {
+			Py_RETURN_FALSE;
+		}
+	} else {
+		Py_RETURN_NONE;
+	}
+};
+
+static int dirstate_item_set_fallback_symlink(dirstateItemObject *self,
+                                              PyObject *value)
+{
+	if ((value == Py_None) || (value == NULL)) {
+		self->flags &= ~dirstate_flag_has_fallback_symlink;
+	} else {
+		self->flags |= dirstate_flag_has_fallback_symlink;
+		if (PyObject_IsTrue(value)) {
+			self->flags |= dirstate_flag_fallback_symlink;
+		} else {
+			self->flags &= ~dirstate_flag_fallback_symlink;
+		}
+	}
+	return 0;
 };
 
 static PyObject *dirstate_item_get_tracked(dirstateItemObject *self)
 {
-	if (self->state == 'a' || self->state == 'm' || self->state == 'n') {
+	if (dirstate_item_c_tracked(self)) {
+		Py_RETURN_TRUE;
+	} else {
+		Py_RETURN_FALSE;
+	}
+};
+static PyObject *dirstate_item_get_p1_tracked(dirstateItemObject *self)
+{
+	if (self->flags & dirstate_flag_p1_tracked) {
 		Py_RETURN_TRUE;
 	} else {
 		Py_RETURN_FALSE;
@@ -276,25 +625,26 @@ static PyObject *dirstate_item_get_tracked(dirstateItemObject *self)
 
 static PyObject *dirstate_item_get_added(dirstateItemObject *self)
 {
-	if (self->state == 'a') {
+	if (dirstate_item_c_added(self)) {
 		Py_RETURN_TRUE;
 	} else {
 		Py_RETURN_FALSE;
 	}
 };
 
-static PyObject *dirstate_item_get_merged(dirstateItemObject *self)
+static PyObject *dirstate_item_get_p2_info(dirstateItemObject *self)
 {
-	if (self->state == 'm') {
+	if (self->flags & dirstate_flag_wc_tracked &&
+	    self->flags & dirstate_flag_p2_info) {
 		Py_RETURN_TRUE;
 	} else {
 		Py_RETURN_FALSE;
 	}
 };
 
-static PyObject *dirstate_item_get_merged_removed(dirstateItemObject *self)
+static PyObject *dirstate_item_get_modified(dirstateItemObject *self)
 {
-	if (self->state == 'r' && self->size == dirstate_v1_nonnormal) {
+	if (dirstate_item_c_modified(self)) {
 		Py_RETURN_TRUE;
 	} else {
 		Py_RETURN_FALSE;
@@ -303,16 +653,29 @@ static PyObject *dirstate_item_get_merged_removed(dirstateItemObject *self)
 
 static PyObject *dirstate_item_get_from_p2(dirstateItemObject *self)
 {
-	if (self->state == 'n' && self->size == dirstate_v1_from_p2) {
+	if (dirstate_item_c_from_p2(self)) {
 		Py_RETURN_TRUE;
 	} else {
 		Py_RETURN_FALSE;
 	}
 };
 
-static PyObject *dirstate_item_get_from_p2_removed(dirstateItemObject *self)
+static PyObject *dirstate_item_get_maybe_clean(dirstateItemObject *self)
 {
-	if (self->state == 'r' && self->size == dirstate_v1_from_p2) {
+	if (!(self->flags & dirstate_flag_wc_tracked)) {
+		Py_RETURN_FALSE;
+	} else if (!(self->flags & dirstate_flag_p1_tracked)) {
+		Py_RETURN_FALSE;
+	} else if (self->flags & dirstate_flag_p2_info) {
+		Py_RETURN_FALSE;
+	} else {
+		Py_RETURN_TRUE;
+	}
+};
+
+static PyObject *dirstate_item_get_any_tracked(dirstateItemObject *self)
+{
+	if (dirstate_item_c_any_tracked(self)) {
 		Py_RETURN_TRUE;
 	} else {
 		Py_RETURN_FALSE;
@@ -321,7 +684,7 @@ static PyObject *dirstate_item_get_from_p2_removed(dirstateItemObject *self)
 
 static PyObject *dirstate_item_get_removed(dirstateItemObject *self)
 {
-	if (self->state == 'r') {
+	if (dirstate_item_c_removed(self)) {
 		Py_RETURN_TRUE;
 	} else {
 		Py_RETURN_FALSE;
@@ -333,14 +696,25 @@ static PyGetSetDef dirstate_item_getset[] = {
     {"size", (getter)dirstate_item_get_size, NULL, "size", NULL},
     {"mtime", (getter)dirstate_item_get_mtime, NULL, "mtime", NULL},
     {"state", (getter)dirstate_item_get_state, NULL, "state", NULL},
+    {"has_fallback_exec", (getter)dirstate_item_get_has_fallback_exec, NULL,
+     "has_fallback_exec", NULL},
+    {"fallback_exec", (getter)dirstate_item_get_fallback_exec,
+     (setter)dirstate_item_set_fallback_exec, "fallback_exec", NULL},
+    {"has_fallback_symlink", (getter)dirstate_item_get_has_fallback_symlink,
+     NULL, "has_fallback_symlink", NULL},
+    {"fallback_symlink", (getter)dirstate_item_get_fallback_symlink,
+     (setter)dirstate_item_set_fallback_symlink, "fallback_symlink", NULL},
     {"tracked", (getter)dirstate_item_get_tracked, NULL, "tracked", NULL},
+    {"p1_tracked", (getter)dirstate_item_get_p1_tracked, NULL, "p1_tracked",
+     NULL},
     {"added", (getter)dirstate_item_get_added, NULL, "added", NULL},
-    {"merged_removed", (getter)dirstate_item_get_merged_removed, NULL,
-     "merged_removed", NULL},
-    {"merged", (getter)dirstate_item_get_merged, NULL, "merged", NULL},
-    {"from_p2_removed", (getter)dirstate_item_get_from_p2_removed, NULL,
-     "from_p2_removed", NULL},
+    {"p2_info", (getter)dirstate_item_get_p2_info, NULL, "p2_info", NULL},
+    {"modified", (getter)dirstate_item_get_modified, NULL, "modified", NULL},
     {"from_p2", (getter)dirstate_item_get_from_p2, NULL, "from_p2", NULL},
+    {"maybe_clean", (getter)dirstate_item_get_maybe_clean, NULL, "maybe_clean",
+     NULL},
+    {"any_tracked", (getter)dirstate_item_get_any_tracked, NULL, "any_tracked",
+     NULL},
     {"removed", (getter)dirstate_item_get_removed, NULL, "removed", NULL},
     {NULL} /* Sentinel */
 };
@@ -357,7 +731,7 @@ PyTypeObject dirstateItemType = {
     0,                                 /* tp_compare */
     0,                                 /* tp_repr */
     0,                                 /* tp_as_number */
-    &dirstate_item_sq,                 /* tp_as_sequence */
+    0,                                 /* tp_as_sequence */
     0,                                 /* tp_as_mapping */
     0,                                 /* tp_hash  */
     0,                                 /* tp_call */
@@ -396,9 +770,8 @@ static PyObject *parse_dirstate(PyObject *self, PyObject *args)
 	Py_ssize_t len = 40;
 	Py_ssize_t readlen;
 
-	if (!PyArg_ParseTuple(
-	        args, PY23("O!O!s#:parse_dirstate", "O!O!y#:parse_dirstate"),
-	        &PyDict_Type, &dmap, &PyDict_Type, &cmap, &str, &readlen)) {
+	if (!PyArg_ParseTuple(args, "O!O!y#:parse_dirstate", &PyDict_Type,
+	                      &dmap, &PyDict_Type, &cmap, &str, &readlen)) {
 		goto quit;
 	}
 
@@ -411,8 +784,8 @@ static PyObject *parse_dirstate(PyObject *self, PyObject *args)
 		goto quit;
 	}
 
-	parents = Py_BuildValue(PY23("s#s#", "y#y#"), str, (Py_ssize_t)20,
-	                        str + 20, (Py_ssize_t)20);
+	parents = Py_BuildValue("y#y#", str, (Py_ssize_t)20, str + 20,
+	                        (Py_ssize_t)20);
 	if (!parents) {
 		goto quit;
 	}
@@ -441,6 +814,8 @@ static PyObject *parse_dirstate(PyObject *self, PyObject *args)
 
 		entry = (PyObject *)dirstate_item_from_v1_data(state, mode,
 		                                               size, mtime);
+		if (!entry)
+			goto quit;
 		cpos = memchr(cur, 0, flen);
 		if (cpos) {
 			fname = PyBytes_FromStringAndSize(cur, cpos - cur);
@@ -476,68 +851,6 @@ quit:
 }
 
 /*
- * Build a set of non-normal and other parent entries from the dirstate dmap
- */
-static PyObject *nonnormalotherparententries(PyObject *self, PyObject *args)
-{
-	PyObject *dmap, *fname, *v;
-	PyObject *nonnset = NULL, *otherpset = NULL, *result = NULL;
-	Py_ssize_t pos;
-
-	if (!PyArg_ParseTuple(args, "O!:nonnormalentries", &PyDict_Type,
-	                      &dmap)) {
-		goto bail;
-	}
-
-	nonnset = PySet_New(NULL);
-	if (nonnset == NULL) {
-		goto bail;
-	}
-
-	otherpset = PySet_New(NULL);
-	if (otherpset == NULL) {
-		goto bail;
-	}
-
-	pos = 0;
-	while (PyDict_Next(dmap, &pos, &fname, &v)) {
-		dirstateItemObject *t;
-		if (!dirstate_tuple_check(v)) {
-			PyErr_SetString(PyExc_TypeError,
-			                "expected a dirstate tuple");
-			goto bail;
-		}
-		t = (dirstateItemObject *)v;
-
-		if (t->state == 'n' && t->size == -2) {
-			if (PySet_Add(otherpset, fname) == -1) {
-				goto bail;
-			}
-		}
-
-		if (t->state == 'n' && t->mtime != -1) {
-			continue;
-		}
-		if (PySet_Add(nonnset, fname) == -1) {
-			goto bail;
-		}
-	}
-
-	result = Py_BuildValue("(OO)", nonnset, otherpset);
-	if (result == NULL) {
-		goto bail;
-	}
-	Py_DECREF(nonnset);
-	Py_DECREF(otherpset);
-	return result;
-bail:
-	Py_XDECREF(nonnset);
-	Py_XDECREF(otherpset);
-	Py_XDECREF(result);
-	return NULL;
-}
-
-/*
  * Efficiently pack a dirstate object into its on-disk format.
  */
 static PyObject *pack_dirstate(PyObject *self, PyObject *args)
@@ -547,11 +860,9 @@ static PyObject *pack_dirstate(PyObject *self, PyObject *args)
 	Py_ssize_t nbytes, pos, l;
 	PyObject *k, *v = NULL, *pn;
 	char *p, *s;
-	int now;
 
-	if (!PyArg_ParseTuple(args, "O!O!O!i:pack_dirstate", &PyDict_Type, &map,
-	                      &PyDict_Type, &copymap, &PyTuple_Type, &pl,
-	                      &now)) {
+	if (!PyArg_ParseTuple(args, "O!O!O!:pack_dirstate", &PyDict_Type, &map,
+	                      &PyDict_Type, &copymap, &PyTuple_Type, &pl)) {
 		return NULL;
 	}
 
@@ -616,25 +927,10 @@ static PyObject *pack_dirstate(PyObject *self, PyObject *args)
 		}
 		tuple = (dirstateItemObject *)v;
 
-		state = tuple->state;
-		mode = tuple->mode;
-		size = tuple->size;
-		mtime = tuple->mtime;
-		if (state == 'n' && mtime == now) {
-			/* See pure/parsers.py:pack_dirstate for why we do
-			 * this. */
-			mtime = -1;
-			mtime_unset = (PyObject *)make_dirstate_item(
-			    state, mode, size, mtime);
-			if (!mtime_unset) {
-				goto bail;
-			}
-			if (PyDict_SetItem(map, k, mtime_unset) == -1) {
-				goto bail;
-			}
-			Py_DECREF(mtime_unset);
-			mtime_unset = NULL;
-		}
+		state = dirstate_item_c_v1_state(tuple);
+		mode = dirstate_item_c_v1_mode(tuple);
+		size = dirstate_item_c_v1_size(tuple);
+		mtime = dirstate_item_c_v1_mtime(tuple);
 		*p++ = state;
 		putbe32((uint32_t)mode, p);
 		putbe32((uint32_t)size, p + 4);
@@ -818,8 +1114,7 @@ static PyObject *fm1readmarkers(PyObject *self, PyObject *args)
 	Py_ssize_t datalen, offset, stop;
 	PyObject *markers = NULL;
 
-	if (!PyArg_ParseTuple(args, PY23("s#nn", "y#nn"), &data, &datalen,
-	                      &offset, &stop)) {
+	if (!PyArg_ParseTuple(args, "y#nn", &data, &datalen, &offset, &stop)) {
 		return NULL;
 	}
 	if (offset < 0) {
@@ -869,9 +1164,6 @@ PyObject *parse_index2(PyObject *self, PyObject *args, PyObject *kwargs);
 
 static PyMethodDef methods[] = {
     {"pack_dirstate", pack_dirstate, METH_VARARGS, "pack a dirstate\n"},
-    {"nonnormalotherparententries", nonnormalotherparententries, METH_VARARGS,
-     "create a set containing non-normal and other parent entries of given "
-     "dirstate\n"},
     {"parse_dirstate", parse_dirstate, METH_VARARGS, "parse a dirstate\n"},
     {"parse_index2", (PyCFunction)parse_index2, METH_VARARGS | METH_KEYWORDS,
      "parse a revlog index\n"},
@@ -895,11 +1187,10 @@ void dirs_module_init(PyObject *mod);
 void manifest_module_init(PyObject *mod);
 void revlog_module_init(PyObject *mod);
 
-static const int version = 20;
+static const int version = 21;
 
 static void module_init(PyObject *mod)
 {
-	PyObject *capsule = NULL;
 	PyModule_AddIntConstant(mod, "version", version);
 
 	/* This module constant has two purposes.  First, it lets us unit test
@@ -915,12 +1206,6 @@ static void module_init(PyObject *mod)
 	dirs_module_init(mod);
 	manifest_module_init(mod);
 	revlog_module_init(mod);
-
-	capsule = PyCapsule_New(
-	    make_dirstate_item,
-	    "mercurial.cext.parsers.make_dirstate_item_CAPI", NULL);
-	if (capsule != NULL)
-		PyModule_AddObject(mod, "make_dirstate_item_CAPI", capsule);
 
 	if (PyType_Ready(&dirstateItemType) < 0) {
 		return;
@@ -941,7 +1226,7 @@ static int check_python_version(void)
 	if (!ver) {
 		return -1;
 	}
-	hexversion = PyInt_AsLong(ver);
+	hexversion = PyLong_AsLong(ver);
 	Py_DECREF(ver);
 	/* sys.hexversion is a 32-bit number by default, so the -1 case
 	 * should only occur in unusual circumstances (e.g. if sys.hexversion
@@ -961,7 +1246,6 @@ static int check_python_version(void)
 	return 0;
 }
 
-#ifdef IS_PY3K
 static struct PyModuleDef parsers_module = {PyModuleDef_HEAD_INIT, "parsers",
                                             parsers_doc, -1, methods};
 
@@ -975,15 +1259,3 @@ PyMODINIT_FUNC PyInit_parsers(void)
 	module_init(mod);
 	return mod;
 }
-#else
-PyMODINIT_FUNC initparsers(void)
-{
-	PyObject *mod;
-
-	if (check_python_version() == -1) {
-		return;
-	}
-	mod = Py_InitModule3("parsers", methods, parsers_doc);
-	module_init(mod);
-}
-#endif

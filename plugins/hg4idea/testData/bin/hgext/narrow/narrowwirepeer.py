@@ -5,11 +5,15 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
+
+from mercurial.i18n import _
+
+from mercurial.utils import stringutil
 
 from mercurial import (
     bundle2,
     error,
+    exchange,
     extensions,
     hg,
     narrowspec,
@@ -36,7 +40,7 @@ def reposetup(repo):
                 kwargs["excludepats"] = b','.join(exclude)
             return orig(cmd, *args, **kwargs)
 
-        extensions.wrapfunction(peer, b'_calltwowaystream', wrapped)
+        extensions.wrapfunction(peer, '_calltwowaystream', wrapped)
 
     hg.wirepeersetupfuncs.append(wirereposetup)
 
@@ -82,15 +86,38 @@ def narrow_widen(
             # work around ''.split(',') => ['']
             return data.split(b',') if data else []
 
-        oldincludes = splitpaths(oldincludes)
-        newincludes = splitpaths(newincludes)
-        oldexcludes = splitpaths(oldexcludes)
-        newexcludes = splitpaths(newexcludes)
+        oldincludes = set(splitpaths(oldincludes))
+        newincludes = set(splitpaths(newincludes))
+        oldexcludes = set(splitpaths(oldexcludes))
+        newexcludes = set(splitpaths(newexcludes))
+
+        # enforce narrow acl if set
+        if repo.ui.has_section(exchange._NARROWACL_SECTION):
+            kwargs = exchange.applynarrowacl(
+                repo, {'includepats': newincludes, 'excludepats': newexcludes}
+            )
+            newincludes = kwargs['includepats']
+            requiredexcludes = kwargs['excludepats'] - newexcludes
+            if requiredexcludes:
+                # XXX: The below code to get the username was copied from exchange.py,
+                # where it is noted that this is technically a layering violation for
+                # assuming the existence of HTTP. Using it anyway to make the error
+                # message consistent with the error message for invalid includes.
+                ui = repo.ui
+                username = ui.shortuser(
+                    ui.environ.get(b'REMOTE_USER') or ui.username()
+                )
+                raise error.Abort(
+                    _(b"The following excludes cannot be removed for %s: %s")
+                    % (username, stringutil.pprint(list(requiredexcludes)))
+                )
+            newexcludes = kwargs['excludepats']
+
         # validate the patterns
-        narrowspec.validatepatterns(set(oldincludes))
-        narrowspec.validatepatterns(set(newincludes))
-        narrowspec.validatepatterns(set(oldexcludes))
-        narrowspec.validatepatterns(set(newexcludes))
+        narrowspec.validatepatterns(oldincludes)
+        narrowspec.validatepatterns(newincludes)
+        narrowspec.validatepatterns(oldexcludes)
+        narrowspec.validatepatterns(newexcludes)
 
         common = wireprototypes.decodelist(commonheads)
         known = wireprototypes.decodelist(known)

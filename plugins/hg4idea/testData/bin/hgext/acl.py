@@ -213,14 +213,12 @@ In the examples below, we will:
 
 '''
 
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial import (
     error,
     extensions,
     match,
-    pycompat,
     registrar,
     util,
 )
@@ -453,7 +451,7 @@ def _txnhook(ui, repo, hooktype, node, source, user, **kwargs):
     allow = buildmatch(ui, repo, user, b'acl.allow')
     deny = buildmatch(ui, repo, user, b'acl.deny')
 
-    for rev in pycompat.xrange(repo[node].rev(), len(repo)):
+    for rev in range(repo[node].rev(), len(repo)):
         ctx = repo[rev]
         branch = ctx.branch()
         if denybranches and denybranches(branch):

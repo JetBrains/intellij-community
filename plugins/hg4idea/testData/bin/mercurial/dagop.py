@@ -5,11 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import heapq
 
-from .node import nullrev
 from .thirdparty import attr
 from .node import nullrev
 from . import (
@@ -205,7 +203,7 @@ def _genrevdescendants(repo, revs, followfirst):
 def _builddescendantsmap(repo, startrev, followfirst):
     """Build map of 'rev -> child revs', offset from startrev"""
     cl = repo.changelog
-    descmap = [[] for _rev in pycompat.xrange(startrev, len(cl))]
+    descmap = [[] for _rev in range(startrev, len(cl))]
     for currev in cl.revs(startrev + 1):
         p1rev, p2rev = cl.parentrevs(currev)
         if p1rev >= startrev:
@@ -273,7 +271,7 @@ def descendantrevs(revs, revsfn, parentrevsfn):
                 break
 
 
-class subsetparentswalker(object):
+class subsetparentswalker:
     r"""Scan adjacent ancestors in the graph given by the subset
 
     This computes parent-child relations in the sub graph filtered by
@@ -649,7 +647,7 @@ def blockdescendants(fctx, fromline, toline):
 
 
 @attr.s(slots=True, frozen=True)
-class annotateline(object):
+class annotateline:
     fctx = attr.ib()
     lineno = attr.ib()
     # Whether this annotation was the result of a skip-annotate.
@@ -658,7 +656,7 @@ class annotateline(object):
 
 
 @attr.s(slots=True, frozen=True)
-class _annotatedfile(object):
+class _annotatedfile:
     # list indexed by lineno - 1
     fctxs = attr.ib()
     linenos = attr.ib()
@@ -727,7 +725,7 @@ def _annotatepair(parents, childfctx, child, skipchild, diffopts):
         for idx, (parent, blocks) in enumerate(pblocks):
             for (a1, a2, b1, b2), _t in blocks:
                 if a2 - a1 >= b2 - b1:
-                    for bk in pycompat.xrange(b1, b2):
+                    for bk in range(b1, b2):
                         if child.fctxs[bk] == childfctx:
                             ak = min(a1 + (bk - b1), a2 - 1)
                             child.fctxs[bk] = parent.fctxs[ak]
@@ -740,7 +738,7 @@ def _annotatepair(parents, childfctx, child, skipchild, diffopts):
         # line.
         for parent, blocks in remaining:
             for a1, a2, b1, b2 in blocks:
-                for bk in pycompat.xrange(b1, b2):
+                for bk in range(b1, b2):
                     if child.fctxs[bk] == childfctx:
                         ak = min(a1 + (bk - b1), a2 - 1)
                         child.fctxs[bk] = parent.fctxs[ak]
@@ -1035,6 +1033,37 @@ def headrevs(revs, parentsfn):
         up(parentsfn(rev))
     headrevs.difference_update(parents)
     return headrevs
+
+
+def headrevsdiff(parentsfn, start, stop):
+    """Compute how the set of heads changed between
+    revisions `start-1` and `stop-1`.
+    """
+    parents = set()
+
+    heads_added = set()
+    heads_removed = set()
+
+    for rev in range(stop - 1, start - 1, -1):
+        if rev in parents:
+            parents.remove(rev)
+        else:
+            heads_added.add(rev)
+        for p in parentsfn(rev):
+            parents.add(p)
+
+    # now `parents` is the collection of candidate removed heads
+    rev = start - 1
+    while parents:
+        if rev in parents:
+            heads_removed.add(rev)
+            parents.remove(rev)
+
+        for p in parentsfn(rev):
+            parents.discard(p)
+        rev = rev - 1
+
+    return (heads_removed, heads_added)
 
 
 def headrevssubset(revsfn, parentrevsfn, startrev=None, stoprevs=None):

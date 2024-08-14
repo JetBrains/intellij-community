@@ -7,7 +7,6 @@
 
 '''adds a new flag extras to commit (ADVANCED)'''
 
-from __future__ import absolute_import
 
 import re
 
@@ -17,7 +16,6 @@ from mercurial import (
     error,
     extensions,
     registrar,
-    util,
 )
 
 cmdtable = {}
@@ -53,7 +51,7 @@ def extsetup(ui):
 
 
 def _commit(orig, ui, repo, *pats, **opts):
-    if util.safehasattr(repo, 'unfiltered'):
+    if hasattr(repo, 'unfiltered'):
         repo = repo.unfiltered()
 
     class repoextra(repo.__class__):
@@ -65,23 +63,23 @@ def _commit(orig, ui, repo, *pats, **opts):
                         b"unable to parse '%s', should follow "
                         b"KEY=VALUE format"
                     )
-                    raise error.Abort(msg % raw)
+                    raise error.InputError(msg % raw)
                 k, v = raw.split(b'=', 1)
                 if not k:
                     msg = _(b"unable to parse '%s', keys can't be empty")
-                    raise error.Abort(msg % raw)
+                    raise error.InputError(msg % raw)
                 if re.search(br'[^\w-]', k):
                     msg = _(
                         b"keys can only contain ascii letters, digits,"
                         b" '_' and '-'"
                     )
-                    raise error.Abort(msg)
+                    raise error.InputError(msg)
                 if k in usedinternally:
                     msg = _(
                         b"key '%s' is used internally, can't be set "
                         b"manually"
                     )
-                    raise error.Abort(msg % k)
+                    raise error.InputError(msg % k)
                 inneropts['extra'][k] = v
             return super(repoextra, self).commit(*innerpats, **inneropts)
 
