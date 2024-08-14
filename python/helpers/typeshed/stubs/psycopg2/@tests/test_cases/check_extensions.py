@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 from typing_extensions import assert_type
 
 import psycopg2.extensions
@@ -54,3 +55,8 @@ assert_type(dconn.cursor("test-dcur"), psycopg2.extras.DictCursor)
 assert_type(dconn.cursor("test-dcur", None), psycopg2.extras.DictCursor)
 assert_type(dconn.cursor("test-dcur", cursor_factory=None), psycopg2.extras.DictCursor)
 assert_type(dconn.cursor("test-dcur", cursor_factory=MyCursor), MyCursor)
+
+# file protocols
+# --------------
+cur = conn.cursor()
+cur.copy_from(io.StringIO(), "table")

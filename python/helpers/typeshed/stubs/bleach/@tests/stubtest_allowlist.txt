@@ -1,2 +1,5 @@
-bleach.css_sanitizer  # Requires tinycss2 to be installed
-bleach.html5lib_shim.*
+# Internal private stuff:
+bleach._vendor.*
+
+# Is a property returning a method, simplified:
+bleach.html5lib_shim.InputStreamWithMemory.changeEncoding

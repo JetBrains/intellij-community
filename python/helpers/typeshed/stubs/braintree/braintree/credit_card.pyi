@@ -1,49 +1,59 @@
 from _typeshed import Incomplete
-from typing import Any
+from enum import Enum
+from typing import Final
 
-from braintree.address import Address as Address
-from braintree.configuration import Configuration as Configuration
-from braintree.credit_card_verification import CreditCardVerification as CreditCardVerification
-from braintree.resource import Resource as Resource
+from braintree.address import Address
+from braintree.credit_card_verification import CreditCardVerification
+from braintree.resource import Resource
+from braintree.subscription import Subscription
 
 class CreditCard(Resource):
     class CardType:
-        AmEx: str
-        CarteBlanche: str
-        ChinaUnionPay: str
-        DinersClubInternational: str
-        Discover: str
-        Electron: str
-        Elo: str
-        Hiper: str
-        Hipercard: str
-        JCB: str
-        Laser: str
-        UK_Maestro: str
-        Maestro: str
-        MasterCard: str
-        Solo: str
-        Switch: str
-        Visa: str
-        Unknown: str
+        AmEx: Final = "American Express"
+        CarteBlanche: Final = "Carte Blanche"
+        ChinaUnionPay: Final = "China UnionPay"
+        DinersClubInternational: Final = "Diners Club"
+        Discover: Final = "Discover"
+        Electron: Final = "Electron"
+        Elo: Final = "Elo"
+        Hiper: Final = "Hiper"
+        Hipercard: Final = "Hipercard"
+        JCB: Final = "JCB"
+        Laser: Final = "Laser"
+        UK_Maestro: Final = "UK Maestro"
+        Maestro: Final = "Maestro"
+        MasterCard: Final = "MasterCard"
+        Solo: Final = "Solo"
+        Switch: Final = "Switch"
+        Visa: Final = "Visa"
+        Unknown: Final = "Unknown"
 
     class CustomerLocation:
-        International: str
-        US: str
+        International: Final = "international"
+        US: Final = "us"
 
     class CardTypeIndicator:
-        Yes: str
-        No: str
-        Unknown: str
-    Commercial: Any
-    DurbinRegulated: Any
-    Debit: Any
-    Healthcare: Any
-    CountryOfIssuance: Any
-    IssuingBank: Any
-    Payroll: Any
-    Prepaid: Any
-    ProductId: Any
+        Yes: Final = "Yes"
+        No: Final = "No"
+        Unknown: Final = "Unknown"
+
+    class DebitNetwork(Enum):
+        Accel = "ACCEL"
+        Maestro = "MAESTRO"
+        Nyce = "NYCE"
+        Pulse = "PULSE"
+        Star = "STAR"
+        Star_Access = "STAR_ACCESS"
+
+    Commercial: type[CardTypeIndicator]
+    DurbinRegulated: type[CardTypeIndicator]
+    Debit: type[CardTypeIndicator]
+    Healthcare: type[CardTypeIndicator]
+    CountryOfIssuance: type[CardTypeIndicator]
+    IssuingBank: type[CardTypeIndicator]
+    Payroll: type[CardTypeIndicator]
+    Prepaid: type[CardTypeIndicator]
+    ProductId: type[CardTypeIndicator]
     @staticmethod
     def create(params: Incomplete | None = None): ...
     @staticmethod
@@ -64,10 +74,10 @@ class CreditCard(Resource):
     def update_signature(): ...
     @staticmethod
     def signature(type): ...
-    is_expired: Any
-    billing_address: Any
-    subscriptions: Any
-    verification: Any
+    is_expired = expired
+    billing_address: Address | None
+    subscriptions: list[Subscription]
+    verification: CreditCardVerification
     def __init__(self, gateway, attributes): ...
     @property
     def expiration_date(self): ...

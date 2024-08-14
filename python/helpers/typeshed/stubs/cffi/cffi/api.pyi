@@ -2,8 +2,8 @@ import sys
 import types
 from _typeshed import Incomplete, ReadableBuffer, WriteableBuffer
 from collections.abc import Callable, Hashable
-from typing import Any, TypeVar, overload
-from typing_extensions import Literal, TypeAlias
+from typing import Any, Literal, TypeVar, overload
+from typing_extensions import TypeAlias
 
 import _cffi_backend
 from setuptools._distutils.extension import Extension

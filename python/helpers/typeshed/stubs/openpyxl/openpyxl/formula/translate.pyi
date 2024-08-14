@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from re import Pattern
-from typing_extensions import Final
+from typing import Final
 
 class TranslatorError(Exception): ...
 

@@ -1,8 +1,8 @@
-from _typeshed import Incomplete, Unused
-from typing import ClassVar, overload
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToInt, Incomplete, Unused
+from typing import ClassVar, Literal, overload
+from typing_extensions import TypeAlias
 
-from openpyxl.descriptors.base import Bool, Integer, NoneSet, String, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Bool, Integer, NoneSet, String, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 
 _WebPublishingTargetScreenSize: TypeAlias = Literal[
@@ -30,7 +30,7 @@ class WebPublishObject(Serialisable):
     @overload
     def __init__(
         self,
-        id: _ConvertibleToInt,
+        id: ConvertibleToInt,
         divId: str,
         sourceObject: str | None = None,
         *,
@@ -41,7 +41,7 @@ class WebPublishObject(Serialisable):
     @overload
     def __init__(
         self,
-        id: _ConvertibleToInt,
+        id: ConvertibleToInt,
         divId: str,
         sourceObject: str | None,
         destinationFile: str,
@@ -78,7 +78,7 @@ class WebPublishing(Serialisable):
         vml: _ConvertibleToBool | None = None,
         allowPng: _ConvertibleToBool | None = None,
         targetScreenSize: _WebPublishingTargetScreenSize | Literal["none"] | None = "800x600",
-        dpi: _ConvertibleToInt | None = None,
-        codePage: _ConvertibleToInt | None = None,
+        dpi: ConvertibleToInt | None = None,
+        codePage: ConvertibleToInt | None = None,
         characterSet: str | None = None,
     ) -> None: ...

@@ -4,8 +4,8 @@ from collections.abc import Callable, MutableMapping
 from fractions import Fraction, _ComparableNum
 from numbers import Rational
 from types import TracebackType
-from typing import ClassVar, overload
-from typing_extensions import Final, Literal, SupportsIndex, TypeAlias
+from typing import ClassVar, Final, Literal, SupportsIndex, overload
+from typing_extensions import TypeAlias
 
 from ._imaging import _PixelAccessor
 from .ImageFile import ImageFile

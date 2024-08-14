@@ -3,8 +3,8 @@ import sys
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from re import Pattern
-from typing import Any, ClassVar, TypeVar, overload
-from typing_extensions import Literal, ParamSpec, TypeAlias
+from typing import Any, ClassVar, Literal, TypeVar, overload
+from typing_extensions import ParamSpec, TypeAlias
 
 from pyflakes.messages import Message
 
@@ -39,11 +39,11 @@ _OmitType: TypeAlias = str | tuple[str, ...] | None
 
 def iter_child_nodes(node: ast.AST, omit: _OmitType = None, _fields_order: _FieldsOrder = ...) -> Iterator[ast.AST]: ...
 @overload
-def convert_to_value(item: ast.Str) -> str: ...  # type: ignore[misc]
+def convert_to_value(item: ast.Str) -> str: ...  # type: ignore[overload-overlap]
 @overload
-def convert_to_value(item: ast.Bytes) -> bytes: ...  # type: ignore[misc]
+def convert_to_value(item: ast.Bytes) -> bytes: ...  # type: ignore[overload-overlap]
 @overload
-def convert_to_value(item: ast.Tuple) -> tuple[Any, ...]: ...  # type: ignore[misc]
+def convert_to_value(item: ast.Tuple) -> tuple[Any, ...]: ...  # type: ignore[overload-overlap]
 @overload
 def convert_to_value(item: ast.Name | ast.NameConstant) -> Any: ...
 @overload
@@ -141,11 +141,6 @@ class AnnotationState:
 
 def in_annotation(func: _F) -> _F: ...
 def in_string_annotation(func: _F) -> _F: ...
-
-if sys.version_info >= (3, 8):
-    _NamedExpr: TypeAlias = ast.NamedExpr
-else:
-    _NamedExpr: TypeAlias = Any
 
 if sys.version_info >= (3, 10):
     _Match: TypeAlias = ast.Match
@@ -247,7 +242,7 @@ class Checker:
     def ATTRIBUTE(self, tree: ast.Attribute, omit: _OmitType = None) -> None: ...
     def STARRED(self, tree: ast.Starred, omit: _OmitType = None) -> None: ...
     def NAMECONSTANT(self, tree: ast.NameConstant, omit: _OmitType = None) -> None: ...
-    def NAMEDEXPR(self, tree: _NamedExpr, omit: _OmitType = None) -> None: ...
+    def NAMEDEXPR(self, tree: ast.NamedExpr, omit: _OmitType = None) -> None: ...
     def SUBSCRIPT(self, node: ast.Subscript) -> None: ...
     def CALL(self, node: ast.Call) -> None: ...
     def BINOP(self, node: ast.BinOp) -> None: ...

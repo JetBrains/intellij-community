@@ -1,4 +1,6 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, Unused
+from collections.abc import Callable
+from typing import ClassVar
 
 from ..cmd import Command
 
@@ -6,9 +8,9 @@ def show_compilers() -> None: ...
 
 class build(Command):
     description: str
-    user_options: Incomplete
-    boolean_options: Incomplete
-    help_options: Incomplete
+    user_options: ClassVar[list[tuple[str, str | None, str]]]
+    boolean_options: ClassVar[list[str]]
+    help_options: ClassVar[list[tuple[str, str | None, str, Callable[[], Unused]]]]
     build_base: str
     build_purelib: Incomplete
     build_platlib: Incomplete

@@ -13,9 +13,7 @@ def logging_redirect_tqdm(
 ) -> _GeneratorContextManager[None]: ...
 
 # TODO type *args, **kwargs here more precisely
-# The type ignore is because mypy complains that the second overload will never be matched
-# (I'm not sure that's true)
 @overload
 def tqdm_logging_redirect(*args, tqdm_class: Callable[..., _TqdmT], **kwargs) -> _GeneratorContextManager[_TqdmT]: ...
 @overload
-def tqdm_logging_redirect(*args, **kwargs) -> _GeneratorContextManager[std_tqdm[Incomplete]]: ...  # type: ignore[misc]
+def tqdm_logging_redirect(*args, **kwargs) -> _GeneratorContextManager[std_tqdm[Incomplete]]: ...

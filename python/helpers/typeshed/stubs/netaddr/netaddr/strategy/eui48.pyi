@@ -1,12 +1,8 @@
 from collections.abc import Iterable, Sequence
 from re import Pattern
-from typing import ClassVar
-from typing_extensions import Literal
+from typing import ClassVar, Literal
 
-AF_LINK: Literal[48]
 width: Literal[48]
-family: Literal[48]
-family_name: Literal["MAC"]
 version: Literal[48]
 max_int: int
 

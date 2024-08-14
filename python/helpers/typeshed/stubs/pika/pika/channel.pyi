@@ -1,8 +1,8 @@
 from _typeshed import Incomplete
 from collections.abc import Callable
 from logging import Logger
-from typing import Any
-from typing_extensions import Final, Self
+from typing import Any, Final
+from typing_extensions import Self
 
 from .callback import CallbackManager
 from .connection import Connection

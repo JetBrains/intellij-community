@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, ClassVar
-from typing_extensions import Literal, Self
+from typing import Any, ClassVar, Literal
+from typing_extensions import Self
 
 class PasswordHash(metaclass=ABCMeta):
     is_disabled: ClassVar[bool]

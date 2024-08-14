@@ -43,8 +43,7 @@ class ObjectIdentifierEncoder(AbstractItemEncoder):
     def encodeValue(self, value, asn1Spec, encodeFun, **options): ...
 
 class RealEncoder(AbstractItemEncoder):
-    # Mistake in the module, should be False, but is 0 at runtime
-    supportIndefLenMode: int  # type: ignore[assignment]
+    supportIndefLenMode: bool
     binEncBase: int
     def encodeValue(self, value, asn1Spec, encodeFun, **options): ...
 

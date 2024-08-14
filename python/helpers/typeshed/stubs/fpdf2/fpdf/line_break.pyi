@@ -1,13 +1,15 @@
 from _typeshed import Incomplete
-from collections.abc import Sequence
-from typing import NamedTuple
+from collections.abc import Callable, Sequence
+from typing import Final, NamedTuple
 
-from .enums import WrapMode
+from .enums import Align, TextDirection, WrapMode
 
-SOFT_HYPHEN: str
-HYPHEN: str
-SPACE: str
-NEWLINE: str
+SOFT_HYPHEN: Final[str]
+HYPHEN: Final[str]
+SPACE: Final[str]
+NBSP: Final[str]
+NEWLINE: Final[str]
+FORM_FEED: Final[str]
 
 class Fragment:
     characters: list[str]
@@ -15,7 +17,7 @@ class Fragment:
     k: float
     url: str | None
     def __init__(
-        self, characters: list[str] | str, graphics_state: dict[str, Incomplete], k: float, url: str | None = None
+        self, characters: list[str] | str, graphics_state: dict[str, Incomplete], k: float, link: str | int | None = None
     ) -> None: ...
     @property
     def font(self): ...
@@ -52,18 +54,34 @@ class Fragment:
     @property
     def lift(self): ...
     @property
-    def string(self): ...
-    def trim(self, index: int): ...
+    def string(self) -> str: ...
+    @property
+    def width(self) -> float: ...
+    @property
+    def text_shaping_parameters(self): ...
+    @property
+    def paragraph_direction(self) -> TextDirection: ...
+    @property
+    def fragment_direction(self) -> TextDirection: ...
+    def trim(self, index: int) -> None: ...
     def __eq__(self, other: Fragment) -> bool: ...  # type: ignore[override]
-    def get_width(self, start: int = 0, end: int | None = None, chars: str | None = None, initial_cs: bool = True): ...
+    def get_width(self, start: int = 0, end: int | None = None, chars: str | None = None, initial_cs: bool = True) -> float: ...
     def get_character_width(self, character: str, print_sh: bool = False, initial_cs: bool = True): ...
+    def render_pdf_text(self, frag_ws, current_ws, word_spacing, adjust_x, adjust_y, h): ...
+    def render_pdf_text_ttf(self, frag_ws, word_spacing): ...
+    def render_with_text_shaping(self, pos_x: float, pos_y: float, h: float, word_spacing: float) -> str: ...
+    def render_pdf_text_core(self, frag_ws, current_ws): ...
 
 class TextLine(NamedTuple):
-    fragments: tuple[Incomplete, ...]
+    fragments: tuple[Fragment, ...]
     text_width: float
     number_of_spaces: int
-    justify: bool
-    trailing_nl: bool = ...
+    align: Align
+    height: float
+    max_width: float
+    trailing_nl: bool = False
+    trailing_form_feed: bool = False
+    def get_ordered_fragments(self) -> tuple[Fragment, ...]: ...
 
 class SpaceHint(NamedTuple):
     original_fragment_index: int
@@ -86,13 +104,16 @@ class HyphenHint(NamedTuple):
     k: float
 
 class CurrentLine:
+    max_width: float
     print_sh: Incomplete
-    fragments: Incomplete
-    width: int
+    fragments: list[Fragment]
+    height: int
     number_of_spaces: int
     space_break_hint: Incomplete
     hyphen_break_hint: Incomplete
-    def __init__(self, print_sh: bool = False) -> None: ...
+    def __init__(self, max_width: float, print_sh: bool = False) -> None: ...
+    @property
+    def width(self) -> float: ...
     def add_character(
         self,
         character: str,
@@ -101,22 +122,35 @@ class CurrentLine:
         k: float,
         original_fragment_index: int,
         original_character_index: int,
+        height: float,
         url: str | None = None,
     ): ...
     def trim_trailing_spaces(self) -> None: ...
-    def manual_break(self, justify: bool = False, trailing_nl: bool = False): ...
-    def automatic_break_possible(self): ...
-    def automatic_break(self, justify: bool): ...
+    def manual_break(self, align: Align, trailing_nl: bool = False, trailing_form_feed: bool = False) -> TextLine: ...
+    def automatic_break_possible(self) -> bool: ...
+    def automatic_break(self, align: Align): ...
 
 class MultiLineBreak:
-    styled_text_fragments: Sequence[Fragment]
-    justify: bool
+    fragments: Sequence[Fragment]
+    get_width: float
+    margins: Sequence[float]
+    align: Align
     print_sh: bool
-    wrap_mode: WrapMode
+    wrapmode: WrapMode
+    line_height: float
+    skip_leading_spaces: bool
     fragment_index: int
     character_index: int
     idx_last_forced_break: int | None
     def __init__(
-        self, styled_text_fragments: Sequence[Fragment], justify: bool = False, print_sh: bool = False, wrapmode: WrapMode = ...
+        self,
+        fragments: Sequence[Fragment],
+        max_width: float | Callable[[float], float],
+        margins: Sequence[float],
+        align: Align = ...,
+        print_sh: bool = False,
+        wrapmode: WrapMode = ...,
+        line_height: float = 1.0,
+        skip_leading_spaces: bool = False,
     ) -> None: ...
-    def get_line_of_given_width(self, maximum_width: float, wordsplit: bool = True): ...
+    def get_line(self): ...

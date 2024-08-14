@@ -13,7 +13,7 @@ from win32com.server.exception import COMException as COMException
 S_OK: int
 IDispatchType: Incomplete
 IUnknownType: Incomplete
-error: Incomplete
+error: str
 regSpec: str
 regPolicy: str
 regDispatcher: str

@@ -1,7 +1,7 @@
 import datetime
 from collections.abc import Iterable
 from decimal import Decimal
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 from .feedback import _Feedback
 from .matching import _Match

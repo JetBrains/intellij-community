@@ -15,3 +15,6 @@ stubs/pika/pika/adapters/twisted_connection.pyi
 
 # pytype.pytd.visitors.ContainerError: Conflicting values for TypeVar
 stubs/openpyxl/openpyxl/descriptors/nested.pyi
+
+# matplotlib not installed during tests
+stubs/shapely/shapely/plotting.pyi

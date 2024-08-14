@@ -7,4 +7,3 @@ from Xlib.protocol.rq import Request
 
 _T = TypeVar("_T")
 ErrorHandler: TypeAlias = Callable[[XError, Request | None], _T]
-Unused: TypeAlias = object

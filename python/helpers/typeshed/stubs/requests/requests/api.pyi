@@ -5,7 +5,7 @@ from typing_extensions import TypeAlias
 from .models import Response
 from .sessions import RequestsCookieJar, _Auth, _Cert, _Data, _Files, _HooksInput, _Params, _TextMapping, _Timeout, _Verify
 
-_HeadersMapping: TypeAlias = Mapping[str, str | bytes]
+_HeadersMapping: TypeAlias = Mapping[str, str | bytes | None]
 
 def request(
     method: str | bytes,

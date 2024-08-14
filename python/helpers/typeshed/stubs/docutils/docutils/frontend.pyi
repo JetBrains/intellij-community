@@ -13,40 +13,84 @@ __docformat__: str
 def store_multiple(option, opt, value, parser, *args, **kwargs) -> None: ...
 def read_config_file(option, opt, value, parser) -> None: ...
 def validate_encoding(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ): ...
 def validate_encoding_error_handler(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ): ...
 def validate_encoding_and_error_handler(
     setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
 ): ...
 def validate_boolean(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ) -> bool: ...
 def validate_nonnegative_int(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ) -> int: ...
 def validate_threshold(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ) -> int: ...
 def validate_colon_separated_string_list(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ) -> list[str]: ...
 def validate_comma_separated_list(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ) -> list[str]: ...
 def validate_url_trailing_slash(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ) -> str: ...
 def validate_dependency_file(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ) -> DependencyList: ...
 def validate_strip_class(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ): ...
 def validate_smartquotes_locales(
-    setting, value, option_parser, config_parser: Incomplete | None = None, config_section: Incomplete | None = None
+    setting,
+    value: Incomplete | None = None,
+    option_parser: Incomplete | None = None,
+    config_parser: Incomplete | None = None,
+    config_section: Incomplete | None = None,
 ) -> list[tuple[str, str]]: ...
 def make_paths_absolute(pathdict, keys, base_path: Incomplete | None = None) -> None: ...
 def make_one_path_absolute(base_path, path) -> str: ...

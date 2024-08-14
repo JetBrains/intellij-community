@@ -1,6 +1,7 @@
 import ctypes
 import sys
-from typing_extensions import Literal, TypeAlias
+from typing import Literal
+from typing_extensions import TypeAlias
 
 if sys.platform == "win32":
     win32con_WM_COPYDATA: int

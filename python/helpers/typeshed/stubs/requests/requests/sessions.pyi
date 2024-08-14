@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, SupportsItems, SupportsRead, Unused
 from collections.abc import Callable, Iterable, Mapping, MutableMapping
-from typing import Any
-from typing_extensions import Self, TypeAlias, TypedDict
+from typing import Any, TypedDict
+from typing_extensions import Self, TypeAlias
 
 from urllib3._collections import RecentlyUsedContainer
 
@@ -36,6 +36,7 @@ get_auth_from_url = utils.get_auth_from_url
 codes = status_codes.codes
 REDIRECT_STATI = models.REDIRECT_STATI
 
+def preferred_clock() -> float: ...
 def merge_setting(request_setting, session_setting, dict_class=...): ...
 def merge_hooks(request_hooks, session_hooks, dict_class=...): ...
 

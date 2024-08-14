@@ -5,12 +5,10 @@ fpdf.fpdf.FPDF.set_creation_date
 # fonttools shims since we can't import it
 fpdf._fonttools_shims
 
+# Only present if harfbuzz is installed
+fpdf.fonts.HarfBuzzFont
+
 # Checking the following function crashes stubtest 0.991, but seems to be
 # fixed in later versions.
 fpdf.FPDF.set_encryption
 fpdf.fpdf.FPDF.set_encryption
-
-# Runtime has some internal arguments.
-fpdf.syntax.build_obj_dict
-fpdf.ViewerPreferences.serialize
-fpdf\.[a-z]+\.[A-Za-z]+\.serialize

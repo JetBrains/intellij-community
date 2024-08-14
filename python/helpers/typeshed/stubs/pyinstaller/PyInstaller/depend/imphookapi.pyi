@@ -5,7 +5,7 @@
 from _typeshed import StrOrBytesPath
 from collections.abc import Generator, Iterable
 from types import CodeType
-from typing_extensions import Literal
+from typing import Literal
 
 from PyInstaller.building.build_main import Analysis
 from PyInstaller.building.datastruct import TOC
@@ -66,5 +66,5 @@ class PostGraphAPI:
     def add_binaries(self, binaries: TOC | Iterable[tuple[StrOrBytesPath, StrOrBytesPath]]) -> None: ...
     def add_datas(self, datas: TOC | Iterable[tuple[StrOrBytesPath, StrOrBytesPath]]) -> None: ...
     def set_module_collection_mode(
-        self, name: str | None, mode: Literal["pyz", "pyc", "py", "pyz+py", "py+pyz", None]
+        self, name: str | None, mode: Literal["pyz", "pyc", "py", "pyz+py", "py+pyz"] | None
     ) -> None: ...

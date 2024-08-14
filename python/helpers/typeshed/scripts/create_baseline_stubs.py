@@ -17,12 +17,10 @@ import re
 import subprocess
 import sys
 import urllib.parse
+from importlib.metadata import distribution
 
 import aiohttp
 import termcolor
-
-if sys.version_info >= (3, 8):
-    from importlib.metadata import distribution
 
 PYRIGHT_CONFIG = "pyrightconfig.stricter.json"
 
@@ -65,14 +63,9 @@ def run_black(stub_dir: str) -> None:
     subprocess.run(["black", stub_dir])
 
 
-def run_isort(stub_dir: str) -> None:
-    print(f"Running isort: isort {stub_dir}")
-    subprocess.run([sys.executable, "-m", "isort", stub_dir])
-
-
 def run_ruff(stub_dir: str) -> None:
-    print(f"Running Ruff: ruff {stub_dir}")
-    subprocess.run([sys.executable, "-m", "ruff", stub_dir])
+    print(f"Running Ruff: ruff check {stub_dir} --fix-only")
+    subprocess.run([sys.executable, "-m", "ruff", "check", stub_dir, "--fix-only"])
 
 
 async def get_project_urls_from_pypi(project: str, session: aiohttp.ClientSession) -> dict[str, str]:
@@ -189,7 +182,7 @@ def add_pyright_exclusion(stub_dir: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="""Generate baseline stubs automatically for an installed pip package
-                       using stubgen. Also run Black, isort and Ruff. If the name of
+                       using stubgen. Also run Black and Ruff. If the name of
                        the project is different from the runtime Python package name, you may
                        need to use --package (example: --package yaml PyYAML)."""
     )
@@ -209,12 +202,11 @@ def main() -> None:
         #
         # The importlib.metadata module is used for projects whose name is different
         # from the runtime Python package name (example: PyYAML/yaml)
-        if sys.version_info >= (3, 8):
-            dist = distribution(project).read_text("top_level.txt")
-            if dist is not None:
-                packages = [name for name in dist.split() if not name.startswith("_")]
-                if len(packages) == 1:
-                    package = packages[0]
+        dist = distribution(project).read_text("top_level.txt")
+        if dist is not None:
+            packages = [name for name in dist.split() if not name.startswith("_")]
+            if len(packages) == 1:
+                package = packages[0]
         print(f'Using detected package "{package}" for project "{project}"', file=sys.stderr)
         print("Suggestion: Try again with --package argument if that's not what you wanted", file=sys.stderr)
 
@@ -239,7 +231,6 @@ def main() -> None:
     run_stubdefaulter(stub_dir)
 
     run_ruff(stub_dir)
-    run_isort(stub_dir)
     run_black(stub_dir)
 
     create_metadata(project, stub_dir, version)

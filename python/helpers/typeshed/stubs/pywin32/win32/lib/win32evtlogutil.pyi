@@ -2,8 +2,8 @@ from _typeshed import Incomplete
 from collections.abc import Iterable
 
 import _win32typing
+from win32.lib.pywintypes import error as error
 
-error: Incomplete
 langid: Incomplete
 
 def AddSourceToRegistry(

@@ -2,7 +2,7 @@ RASEAPF_Logon: int
 RASEAPF_NonInteractive: int
 RASEAPF_Preview: int
 
-def GetEapUserIdentity(*args, **kwargs): ...  # incomplete
+def GetEapUserIdentity(*args): ...  # incomplete
 
 RASCS_AllDevicesConnected: int
 RASCS_AuthAck: int

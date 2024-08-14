@@ -1,7 +1,3 @@
-# Loop variables leaked in global scope
-openpyxl.utils.cell.col
-openpyxl.utils.cell.i
-
 # Unintended re-export from star-import
 openpyxl.chart.marker.DRAWING_NS
 openpyxl.chart.marker.PRESET_COLORS
@@ -21,13 +17,22 @@ openpyxl.xml.functions.tostring
 openpyxl.utils.dataframe
 
 # Fake getters
-openpyxl\.descriptors\..*\.__get__
+openpyxl.descriptors.(base.)?Descriptor.__get__
+openpyxl.descriptors.(base.)?MatchPattern.__get__
+openpyxl.descriptors.(base.)?Typed.__get__
+openpyxl.descriptors.nested.EmptyTag.__get__
+openpyxl.descriptors.nested.Nested.__get__
+openpyxl.descriptors.nested.NestedMinMax.__get__
+openpyxl.descriptors.nested.NestedText.__get__
+openpyxl.descriptors.nested.NestedValue.__get__
 
 # Stubtest sees <class T> and type[T] as different: https://github.com/python/mypy/issues/13316
 openpyxl.chart.descriptors.NumberFormatDescriptor.expected_type
 openpyxl.chart.title.TitleDescriptor.expected_type
 openpyxl.drawing.colors.ColorChoiceDescriptor.expected_type
+openpyxl.packaging.relationship.RelationshipList.expected_type
 openpyxl.styles.colors.ColorDescriptor.expected_type
+openpyxl.styles.fills.StopList.expected_type
 
 # Stubtest doesn't like generics here
 openpyxl\.descriptors\.(base\.)?Bool\.allow_none
@@ -41,8 +46,13 @@ openpyxl\.descriptors\.(base\.)?MinMax\.allow_none
 openpyxl\.descriptors\.(base\.)?String\.allow_none
 openpyxl\.descriptors\.(base\.)?Typed\.allow_none
 
-# "has a default value but stub argument does not"
-# Runtime has default arguments that would fail
+# Inconsistent methods because
+# - using the default value results in an error because of the runtime type-guards
+# - or, keyword arguments are explicitly specified
+openpyxl.cell.Cell.__init__
+openpyxl.cell.cell.Cell.__init__
+openpyxl.cell.cell.WriteOnlyCell
+openpyxl.cell.WriteOnlyCell
 openpyxl.cell.text.PhoneticProperties.__init__
 openpyxl.cell.text.PhoneticText.__init__
 openpyxl.chart.axis._BaseAxis.__init__
@@ -110,6 +120,8 @@ openpyxl.drawing.text.PresetTextShape.__init__
 openpyxl.drawing.text.TextField.__init__
 openpyxl.drawing.text.TextNormalAutofit.__init__
 openpyxl.formatting.rule.DataBar.__init__
+openpyxl.packaging.core.QualifiedDateTime.to_tree
+openpyxl.packaging.relationship.get_rel
 openpyxl.packaging.relationship.Relationship.__init__
 openpyxl.packaging.workbook.ChildSheet.__init__
 openpyxl.packaging.workbook.PivotCache.__init__
@@ -119,24 +131,16 @@ openpyxl.pivot.cache.CacheHierarchy.__init__
 openpyxl.pivot.cache.CacheSource.__init__
 openpyxl.pivot.cache.CalculatedItem.__init__
 openpyxl.pivot.cache.CalculatedMember.__init__
-openpyxl.pivot.cache.DiscretePr.__init__
-openpyxl.pivot.cache.FieldsUsage.__init__
 openpyxl.pivot.cache.FieldUsage.__init__
 openpyxl.pivot.cache.GroupLevel.__init__
-openpyxl.pivot.cache.GroupLevels.__init__
 openpyxl.pivot.cache.GroupMember.__init__
-openpyxl.pivot.cache.GroupMembers.__init__
-openpyxl.pivot.cache.Groups.__init__
 openpyxl.pivot.cache.LevelGroup.__init__
 openpyxl.pivot.cache.MeasureGroup.__init__
 openpyxl.pivot.cache.OLAPSet.__init__
-openpyxl.pivot.cache.OLAPSets.__init__
 openpyxl.pivot.cache.PageItem.__init__
-openpyxl.pivot.cache.PCDKPI.__init__
 openpyxl.pivot.cache.PCDSDTCEntries.__init__
 openpyxl.pivot.cache.PivotDimension.__init__
 openpyxl.pivot.cache.Query.__init__
-openpyxl.pivot.cache.QueryCache.__init__
 openpyxl.pivot.cache.RangeSet.__init__
 openpyxl.pivot.fields.Error.__init__
 openpyxl.pivot.fields.Number.__init__
@@ -191,3 +195,7 @@ openpyxl.worksheet.smart_tag.CellSmartTagPr.__init__
 openpyxl.worksheet.smart_tag.CellSmartTags.__init__
 openpyxl.worksheet.table.TableColumn.__init__
 openpyxl.worksheet.table.XMLColumnProps.__init__
+
+# Inherited from the stdlib, where we lie about the presence
+# of this method in order to mark it as deprecated.
+openpyxl.xml.functions.Element.__bool__

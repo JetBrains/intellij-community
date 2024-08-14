@@ -15,7 +15,7 @@ class FieldList(Field, Generic[_BoundFieldT]):
     entries: list[_BoundFieldT]
     object_data: Iterable[Any]
     def __init__(
-        self: FieldList[_BoundFieldT],
+        self: FieldList[_BoundFieldT],  # pyright: ignore[reportInvalidTypeVarUse]  #11780
         # because of our workaround we need to accept Field as well
         unbound_field: UnboundField[_BoundFieldT] | _BoundFieldT,
         label: str | None = None,

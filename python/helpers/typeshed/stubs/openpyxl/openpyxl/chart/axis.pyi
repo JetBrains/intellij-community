@@ -1,12 +1,12 @@
-from _typeshed import Incomplete, Unused
-from typing import ClassVar, overload
-from typing_extensions import Literal, Self, TypeAlias
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, Unused
+from typing import ClassVar, Literal, overload
+from typing_extensions import Self, TypeAlias
 
 from openpyxl.chart.layout import Layout
 from openpyxl.chart.shapes import GraphicalProperties
 from openpyxl.chart.text import RichText, Text
 from openpyxl.chart.title import Title, TitleDescriptor
-from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool, _ConvertibleToFloat, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.nested import (
     NestedBool,
@@ -57,10 +57,10 @@ class Scaling(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        logBase: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        logBase: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         orientation: _HasTagAndGet[_ScalingOrientation] | _ScalingOrientation = "minMax",
-        max: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
-        min: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        max: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
+        min: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         extLst: Unused = None,
     ) -> None: ...
 
@@ -88,7 +88,7 @@ class _BaseAxis(Serialisable):
     @overload
     def __init__(
         self,
-        axId: _HasTagAndGet[_ConvertibleToInt] | _ConvertibleToInt,
+        axId: _HasTagAndGet[ConvertibleToInt] | ConvertibleToInt,
         scaling: Scaling | None,
         delete: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None,
         axPos: _HasTagAndGet[_BaseAxisAxPos] | _BaseAxisAxPos,
@@ -101,14 +101,14 @@ class _BaseAxis(Serialisable):
         tickLblPos: _NestedNoneSetParam[_BaseAxisTickLblPos],
         spPr: GraphicalProperties | None,
         txPr: RichText | None,
-        crossAx: _HasTagAndGet[_ConvertibleToInt] | _ConvertibleToInt,
+        crossAx: _HasTagAndGet[ConvertibleToInt] | ConvertibleToInt,
         crosses: _NestedNoneSetParam[_BaseAxisCrosses] = None,
-        crossesAt: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        crossesAt: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
     ) -> None: ...
     @overload
     def __init__(
         self,
-        axId: _HasTagAndGet[_ConvertibleToInt] | _ConvertibleToInt,
+        axId: _HasTagAndGet[ConvertibleToInt] | ConvertibleToInt,
         scaling: Scaling | None = None,
         delete: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
         axPos: _HasTagAndGet[_BaseAxisAxPos] | _BaseAxisAxPos = "l",
@@ -122,9 +122,9 @@ class _BaseAxis(Serialisable):
         spPr: GraphicalProperties | None = None,
         txPr: RichText | None = None,
         *,
-        crossAx: _HasTagAndGet[_ConvertibleToInt] | _ConvertibleToInt,
+        crossAx: _HasTagAndGet[ConvertibleToInt] | ConvertibleToInt,
         crosses: Incomplete | None = None,
-        crossesAt: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        crossesAt: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
     ) -> None: ...
 
 class DisplayUnitsLabel(Serialisable):
@@ -154,11 +154,10 @@ class DisplayUnitsLabelList(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        custUnit: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
-        builtInUnit: _HasTagAndGet[_DisplayUnitsLabelListBuiltInUnit]
-        | _DisplayUnitsLabelListBuiltInUnit
-        | Literal["none"]
-        | None = None,
+        custUnit: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
+        builtInUnit: (
+            _HasTagAndGet[_DisplayUnitsLabelListBuiltInUnit] | _DisplayUnitsLabelListBuiltInUnit | Literal["none"] | None
+        ) = None,
         dispUnitsLbl: DisplayUnitsLabel | None = None,
         extLst: Unused = None,
     ) -> None: ...
@@ -191,8 +190,8 @@ class NumericAxis(_BaseAxis):
     def __init__(
         self,
         crossBetween: _NestedNoneSetParam[_NumericAxisCrossBetween] = None,
-        majorUnit: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
-        minorUnit: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        majorUnit: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
+        minorUnit: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         dispUnits: DisplayUnitsLabelList | None = None,
         extLst: Unused = None,
         **kw,
@@ -231,9 +230,9 @@ class TextAxis(_BaseAxis):
         self,
         auto: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
         lblAlgn: _NestedNoneSetParam[_TextAxisLblAlgn] = None,
-        lblOffset: _HasTagAndGet[_ConvertibleToFloat] | _ConvertibleToFloat = 100,
-        tickLblSkip: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
-        tickMarkSkip: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        lblOffset: _HasTagAndGet[ConvertibleToFloat] | ConvertibleToFloat = 100,
+        tickLblSkip: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
+        tickMarkSkip: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         noMultiLvlLbl: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
         extLst: Unused = None,
         **kw,
@@ -270,11 +269,11 @@ class DateAxis(TextAxis):
     def __init__(
         self,
         auto: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
-        lblOffset: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        lblOffset: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         baseTimeUnit: _NestedNoneSetParam[_DateAxisTimeUnit] = None,
-        majorUnit: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        majorUnit: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         majorTimeUnit: _NestedNoneSetParam[_DateAxisTimeUnit] = None,
-        minorUnit: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        minorUnit: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         minorTimeUnit: _NestedNoneSetParam[_DateAxisTimeUnit] = None,
         extLst: Unused = None,
         **kw,
@@ -305,8 +304,8 @@ class SeriesAxis(_BaseAxis):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        tickLblSkip: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
-        tickMarkSkip: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        tickLblSkip: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
+        tickMarkSkip: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         extLst: Unused = None,
         **kw,
     ) -> None: ...

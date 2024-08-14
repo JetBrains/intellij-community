@@ -1,20 +1,19 @@
-from _typeshed import ReadableBuffer, SliceableBuffer, SupportsTrunc
+from _typeshed import ConvertibleToInt, SliceableBuffer, Unused
 from array import array
 
 # Avoid name collision with List.type
 from builtins import type as Type
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, SupportsInt, TypeVar, overload, type_check_only
-from typing_extensions import Final, Literal, LiteralString, SupportsIndex, TypeAlias
+from typing import Any, Final, Literal, SupportsIndex, TypeVar, overload, type_check_only
+from typing_extensions import LiteralString, TypeAlias
 
-from Xlib._typing import ErrorHandler, Unused
+from Xlib._typing import ErrorHandler
 from Xlib.display import _BaseDisplay, _ResourceBaseClass
 from Xlib.error import XError
 from Xlib.ext.xinput import ClassInfoClass
 from Xlib.protocol import display
 
 _T = TypeVar("_T")
-_IntNew: TypeAlias = str | ReadableBuffer | SupportsInt | SupportsIndex | SupportsTrunc
 _ModifierMappingList8Elements: TypeAlias = Sequence[Sequence[int]]
 
 def decode_string(bs: bytes | bytearray) -> str: ...
@@ -237,7 +236,7 @@ class Object(ValueField):
 class PropertyData(ValueField):
     structcode: None
     def parse_binary_value(
-        self, data: SliceableBuffer, display: Unused, length: _IntNew | None, format: int
+        self, data: SliceableBuffer, display: Unused, length: ConvertibleToInt | None, format: int
     ) -> tuple[tuple[int, SliceableBuffer] | None, SliceableBuffer]: ...
     def pack_value(  # type: ignore[override]  # Override Callable
         self, value: tuple[int, Sequence[float] | Sequence[str]]
@@ -348,7 +347,7 @@ class Struct:
     # Structs generate their attributes
     # TODO: Create a specific type-only class for all instances of `Struct`
     @type_check_only
-    def __getattr__(self, __name: str) -> Any: ...
+    def __getattr__(self, name: str, /) -> Any: ...
 
 class TextElements8(ValueField):
     string_textitem: Struct
@@ -366,8 +365,7 @@ class GetAttrData:
     # GetAttrData classes get their attributes dynamically
     # TODO: Complete all classes inheriting from GetAttrData
     def __getattr__(self, attr: str) -> Any: ...
-    @type_check_only
-    def __setattr__(self, __name: str, __value: Any) -> None: ...
+    def __setattr__(self, name: str, value: Any, /) -> None: ...
 
 class DictWrapper(GetAttrData):
     def __init__(self, dict: dict[str, Any]) -> None: ...

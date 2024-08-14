@@ -1,6 +1,9 @@
 from _typeshed import Incomplete
 
-from influxdb_client.client.exceptions import InfluxDBError
+from urllib3 import HTTPResponse
+
+from ._sync.rest import RESTResponse
+from .client.exceptions import InfluxDBError
 
 class ApiException(InfluxDBError):
     status: Incomplete
@@ -8,7 +11,10 @@ class ApiException(InfluxDBError):
     body: Incomplete
     headers: Incomplete
     def __init__(
-        self, status: Incomplete | None = None, reason: Incomplete | None = None, http_resp: Incomplete | None = None
+        self,
+        status: Incomplete | None = None,
+        reason: Incomplete | None = None,
+        http_resp: HTTPResponse | RESTResponse | None = None,
     ) -> None: ...
 
 class _BaseRESTClient:

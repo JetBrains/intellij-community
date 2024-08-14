@@ -1,6 +1,6 @@
 import sys
 from collections.abc import Callable
-from typing_extensions import Literal
+from typing import Literal
 
 STDOUT: Literal[-11]
 STDERR: Literal[-12]
@@ -18,6 +18,7 @@ if sys.platform == "win32":
         wAttributes: wintypes.WORD
         srWindow: wintypes.SMALL_RECT
         dwMaximumWindowSize: COORD
+
     def winapi_test() -> bool: ...
     def GetConsoleScreenBufferInfo(stream_id: int = -11) -> CONSOLE_SCREEN_BUFFER_INFO: ...
     def SetConsoleTextAttribute(stream_id: int, attrs: wintypes.WORD) -> wintypes.BOOL: ...

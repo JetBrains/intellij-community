@@ -13,3 +13,4 @@ scheme: Any
 challenge: Any
 authentication_info: Any
 www_authenticate: Any
+downcaseTokens: Any

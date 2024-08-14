@@ -1,0 +1,7 @@
+version = "4.2.2"
+# GitHub mirror of https://hg.reportlab.com/hg-public/reportlab/file
+upstream_repository = "https://github.com/MrBitBucket/reportlab-mirror"
+
+[tool.stubtest]
+apt_dependencies = ["libcairo2-dev"]
+extras = ["pycairo"]

@@ -1,5 +1,6 @@
 from collections.abc import Sequence
-from typing_extensions import Final, TypeAlias
+from typing import Final
+from typing_extensions import TypeAlias
 
 from Xlib.display import Display
 from Xlib.protocol import request, rq

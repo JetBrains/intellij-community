@@ -2,8 +2,7 @@ import io
 from _typeshed import ReadableBuffer, WriteableBuffer
 from abc import abstractmethod
 from collections.abc import Callable, Generator
-from typing import Any
-from typing_extensions import Final
+from typing import Any, Final
 
 from serial.rs485 import RS485Settings
 
@@ -63,7 +62,7 @@ class SerialBase(io.RawIOBase):
         write_timeout: float | None = None,
         dsrdtr: bool = False,
         inter_byte_timeout: float | None = None,
-        exclusive: float | None = None,
+        exclusive: bool | None = None,
     ) -> None: ...
 
     # Return type:
@@ -77,9 +76,9 @@ class SerialBase(io.RawIOBase):
     # in terms of `read`. If subclasses do not implement `read`, any call to `read` or `read_into`
     # will fail at runtime with a `RecursionError`.
     @abstractmethod
-    def read(self, __size: int = -1) -> bytes: ...
+    def read(self, size: int = -1, /) -> bytes: ...
     @abstractmethod
-    def write(self, __b: ReadableBuffer) -> int | None: ...
+    def write(self, b: ReadableBuffer, /) -> int | None: ...
     @property
     def port(self) -> str | None: ...
     @port.setter
@@ -146,7 +145,7 @@ class SerialBase(io.RawIOBase):
     def rs485_mode(self, rs485_settings: RS485Settings | None) -> None: ...
     def get_settings(self) -> dict[str, Any]: ...
     def apply_settings(self, d: dict[str, Any]) -> None: ...
-    def readinto(self, __buffer: WriteableBuffer) -> int: ...  # returns int unlike `io.RawIOBase`
+    def readinto(self, buffer: WriteableBuffer, /) -> int: ...  # returns int unlike `io.RawIOBase`
     def send_break(self, duration: float = 0.25) -> None: ...
     def read_all(self) -> bytes | None: ...
     def read_until(self, expected: bytes = b"\n", size: int | None = None) -> bytes: ...

@@ -1,6 +1,6 @@
-from typing import Any
+import itertools
 
-flatten: Any
+flatten = itertools.chain.from_iterable
 
 class Installer:
     nspkg_ext: str

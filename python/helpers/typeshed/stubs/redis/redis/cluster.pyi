@@ -2,8 +2,8 @@ from _typeshed import Incomplete, Unused
 from collections.abc import Callable, Iterable, Sequence
 from threading import Lock
 from types import TracebackType
-from typing import Any, ClassVar, Generic, NoReturn, Protocol
-from typing_extensions import Literal, Self
+from typing import Any, ClassVar, Literal, NoReturn, Protocol
+from typing_extensions import Self
 
 from redis.client import CaseInsensitiveDict, PubSub, Redis, _ParseResponseOptions
 from redis.commands import CommandsParser, RedisClusterCommands
@@ -45,7 +45,7 @@ class AbstractRedisCluster:
     RESULT_CALLBACKS: ClassVar[dict[str, Callable[[Incomplete, Incomplete], Incomplete]]]
     ERRORS_ALLOW_RETRY: ClassVar[tuple[type[RedisError], ...]]
 
-class RedisCluster(AbstractRedisCluster, RedisClusterCommands[_StrType], Generic[_StrType]):
+class RedisCluster(AbstractRedisCluster, RedisClusterCommands[_StrType]):
     user_on_connect_func: Callable[[Connection], object] | None
     encoder: Encoder
     cluster_error_retry_attempts: int
@@ -188,7 +188,7 @@ class ClusterPubSub(PubSub):
     def execute_command(self, *args, **kwargs) -> None: ...
     def get_redis_connection(self) -> Redis[Any] | None: ...
 
-class ClusterPipeline(RedisCluster[_StrType], Generic[_StrType]):
+class ClusterPipeline(RedisCluster[_StrType]):
     command_stack: list[Incomplete]
     nodes_manager: Incomplete
     refresh_table_asap: bool
@@ -250,7 +250,7 @@ class PipelineCommand:
     ) -> None: ...
 
 class _ParseResponseCallback(Protocol):
-    def __call__(self, __connection: Connection, __command: EncodableT, **kwargs: Incomplete) -> Any: ...
+    def __call__(self, connection: Connection, command: EncodableT, /, **kwargs) -> Any: ...
 
 class NodeCommands:
     parse_response: _ParseResponseCallback

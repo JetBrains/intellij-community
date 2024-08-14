@@ -1,8 +1,7 @@
-from _typeshed import Incomplete
-from typing import ClassVar, overload
-from typing_extensions import Literal
+from _typeshed import ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal, overload
 
-from openpyxl.descriptors.base import Bool, Integer, String, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Bool, Integer, String, Typed, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.worksheet.ole import ObjectAnchor
 
@@ -53,10 +52,10 @@ class Control(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     @overload
     def __init__(
-        self, controlPr: ControlProperty | None = None, *, shapeId: _ConvertibleToInt, name: str | None = None
+        self, controlPr: ControlProperty | None = None, *, shapeId: ConvertibleToInt, name: str | None = None
     ) -> None: ...
     @overload
-    def __init__(self, controlPr: ControlProperty | None, shapeId: _ConvertibleToInt, name: str | None = None) -> None: ...
+    def __init__(self, controlPr: ControlProperty | None, shapeId: ConvertibleToInt, name: str | None = None) -> None: ...
 
 class Controls(Serialisable):
     tagname: ClassVar[str]

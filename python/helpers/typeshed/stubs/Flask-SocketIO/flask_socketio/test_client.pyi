@@ -1,6 +1,5 @@
 from _typeshed import Incomplete
-from typing import Any
-from typing_extensions import TypedDict
+from typing import Any, TypedDict
 
 from flask import Flask
 from flask.testing import FlaskClient

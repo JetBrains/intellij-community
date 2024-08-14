@@ -2,8 +2,8 @@ import contextlib
 from _typeshed import Incomplete, SupportsWrite
 from collections.abc import Callable, Iterable, Iterator, Mapping, MutableMapping
 from types import TracebackType
-from typing import Any, ClassVar, Generic, NoReturn, TypeVar, overload
-from typing_extensions import Literal, Self
+from typing import Any, ClassVar, Generic, Literal, NoReturn, TypeVar, overload
+from typing_extensions import Self
 
 from ._monitor import TMonitor
 from .utils import Comparable
@@ -31,7 +31,7 @@ class TqdmMonitorWarning(TqdmWarning, RuntimeWarning): ...
 
 _T = TypeVar("_T")
 
-class tqdm(Iterable[_T], Comparable, Generic[_T]):
+class tqdm(Comparable, Generic[_T]):
     monitor_interval: ClassVar[int]
     monitor: ClassVar[TMonitor | None]
 

@@ -1,10 +1,9 @@
 from collections.abc import Callable
-from typing import IO, Any
-from typing_extensions import Literal
+from typing import IO, Any, Final
 
 __all__ = ["Cmd"]
 
-PROMPT: Literal["(Cmd) "]
+PROMPT: Final = "(Cmd) "
 IDENTCHARS: str  # Too big to be `Literal`
 
 class Cmd:

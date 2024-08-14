@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable
-from typing import Any, TypeVar
-from typing_extensions import NotRequired, TypedDict
+from typing import Any, TypedDict, TypeVar
+from typing_extensions import NotRequired
 
 TYPES_MAP: dict[str, str]
 REVERSE_TYPES_MAP: dict[str, tuple[str, ...]]

@@ -7,7 +7,6 @@
         "editorconfig.editorconfig",
         "ms-python.black-formatter",
         "ms-python.flake8",
-        "ms-python.isort",
         "ms-python.mypy-type-checker",
         "ms-python.python",
         "ms-python.vscode-pylance",
@@ -16,17 +15,19 @@
     ],
     "unwantedRecommendations": [
         /*
-         * Don't recommend by default for this workspace
+        * Don't recommend by default for this workspace
         */
         "christian-kohler.npm-intellisense",
         /*
-         * Must disable in this workspace
-         * https://github.com/microsoft/vscode/issues/40239
+        * Must disable in this workspace
+        * https://github.com/microsoft/vscode/issues/40239
         */
         // even-better-toml has format on save
         "bungcip.better-toml",
         // Don't use two mypy extensions simultaneously
         "matangover.mypy",
+        // Use Ruff instead
+        "ms-python.isort",
         // We use Black
         "ms-python.autopep8",
         // Not using pylint

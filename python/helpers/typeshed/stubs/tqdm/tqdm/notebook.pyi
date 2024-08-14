@@ -1,6 +1,6 @@
 from _typeshed import Incomplete, SupportsWrite
 from collections.abc import Iterable, Iterator, Mapping
-from typing import Generic, NoReturn, TypeVar, overload
+from typing import NoReturn, TypeVar, overload
 
 from .std import tqdm as std_tqdm, trange as trange
 
@@ -8,7 +8,7 @@ __all__ = ["tqdm_notebook", "tnrange", "tqdm", "trange"]
 
 _T = TypeVar("_T")
 
-class tqdm_notebook(std_tqdm[_T], Generic[_T]):
+class tqdm_notebook(std_tqdm[_T]):
     @staticmethod
     def status_printer(
         _: SupportsWrite[str] | None, total: float | None = None, desc: str | None = None, ncols: int | None = None

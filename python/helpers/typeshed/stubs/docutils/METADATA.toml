@@ -1,4 +1,4 @@
-version = "0.20.*"
+version = "0.21.*"
 upstream_repository = "https://sourceforge.net/p/docutils/code"
 partial_stub = true
 

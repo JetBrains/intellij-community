@@ -1,4 +1,4 @@
-from typing_extensions import Final
+from typing import Final
 
 XK_leftradical: Final = 0x8A1
 XK_topleftradical: Final = 0x8A2

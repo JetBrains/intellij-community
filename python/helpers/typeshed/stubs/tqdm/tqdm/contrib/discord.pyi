@@ -1,6 +1,6 @@
 from _typeshed import Incomplete, SupportsWrite
 from collections.abc import Iterable, Mapping
-from typing import Generic, NoReturn, TypeVar, overload
+from typing import NoReturn, TypeVar, overload
 
 from ..auto import tqdm as tqdm_auto
 from .utils_worker import MonoWorker
@@ -15,7 +15,7 @@ class DiscordIO(MonoWorker):
 
 _T = TypeVar("_T")
 
-class tqdm_discord(tqdm_auto[_T], Generic[_T]):
+class tqdm_discord(tqdm_auto[_T]):
     dio: Incomplete
     @overload
     def __init__(
@@ -80,12 +80,7 @@ class tqdm_discord(tqdm_auto[_T], Generic[_T]):
         **kwargs,
     ) -> None: ...
     def display(
-        self,
-        msg: str | None = ...,
-        pos: int | None = ...,
-        close: bool = ...,
-        bar_style: Incomplete = ...,
-        check_delay: bool = ...,
+        self, msg: str | None = ..., pos: int | None = ..., close: bool = ..., bar_style=..., check_delay: bool = ...
     ) -> None: ...
     def clear(self, *args, **kwargs) -> None: ...
 

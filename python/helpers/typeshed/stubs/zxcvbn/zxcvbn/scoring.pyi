@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from decimal import Decimal
 from re import Pattern
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 from .adjacency_graphs import _Graph
 from .matching import _Match

@@ -8,41 +8,41 @@ from typing_extensions import Self
 from pynput._util import AbstractListener
 
 class Button(enum.Enum):
-    unknown: int
-    left: int
-    middle: int
-    right: int
+    unknown = 0
+    left = 1
+    middle = 2
+    right = 3
     if sys.platform == "linux":
-        button8: int
-        button9: int
-        button10: int
-        button11: int
-        button12: int
-        button13: int
-        button14: int
-        button15: int
-        button16: int
-        button17: int
-        button18: int
-        button19: int
-        button20: int
-        button21: int
-        button22: int
-        button23: int
-        button24: int
-        button25: int
-        button26: int
-        button27: int
-        button28: int
-        button29: int
-        button30: int
-        scroll_down: int
-        scroll_left: int
-        scroll_right: int
-        scroll_up: int
+        button8 = 8
+        button9 = 9
+        button10 = 10
+        button11 = 11
+        button12 = 12
+        button13 = 13
+        button14 = 14
+        button15 = 15
+        button16 = 16
+        button17 = 17
+        button18 = 18
+        button19 = 19
+        button20 = 20
+        button21 = 21
+        button22 = 22
+        button23 = 23
+        button24 = 24
+        button25 = 25
+        button26 = 26
+        button27 = 27
+        button28 = 28
+        button29 = 29
+        button30 = 30
+        scroll_down = 5
+        scroll_left = 6
+        scroll_right = 7
+        scroll_up = 4
     if sys.platform == "win32":
-        x1: int
-        x2: int
+        x1 = 0  # Value unknown
+        x2 = 0  # Value unknown
 
 class Controller:
     def __init__(self) -> None: ...

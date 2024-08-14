@@ -60,6 +60,7 @@ class ReusableStrategy(BaseStrategy):
         worker_lock: Any
         def __init__(self, connection, request_queue) -> None: ...
         def new_connection(self) -> None: ...
+
     sync: bool
     no_real_dsa: bool
     pooled: bool

@@ -1,49 +1,54 @@
 import sys
-from _typeshed import Incomplete
-from collections.abc import Sequence
-from socket import socket
-from typing import Any
+from _typeshed import Unused
+from _typeshed.wsgi import WSGIApplication
+from collections.abc import Callable, Sequence
+from socket import _RetAddress, socket
+from typing import Literal
 
 from waitress import wasyncore
-from waitress.adjustments import Adjustments
+from waitress.adjustments import Adjustments, _AdjustmentsParams
 from waitress.channel import HTTPChannel
 from waitress.task import Task, ThreadedTaskDispatcher
+from waitress.wasyncore import _SocketMap
 
 def create_server(
-    application: Any,
-    map: Incomplete | None = None,
+    application: WSGIApplication,
+    map: _SocketMap | None = None,
     _start: bool = True,
     _sock: socket | None = None,
     _dispatcher: ThreadedTaskDispatcher | None = None,
-    **kw: Any,
+    **kw: _AdjustmentsParams,
 ) -> MultiSocketServer | BaseWSGIServer: ...
 
 class MultiSocketServer:
-    asyncore: Any
+    asyncore = wasyncore
     adj: Adjustments
-    map: Any
+    map: _SocketMap | None
     effective_listen: Sequence[tuple[str, int]]
     task_dispatcher: ThreadedTaskDispatcher
     def __init__(
         self,
-        map: Incomplete | None = None,
+        map: _SocketMap | None = None,
         adj: Adjustments | None = None,
         effective_listen: Sequence[tuple[str, int]] | None = None,
         dispatcher: ThreadedTaskDispatcher | None = None,
+        # Can be None, but print_listen will fail
+        log_info: Callable[[str], Unused] | None = None,
     ) -> None: ...
     def print_listen(self, format_str: str) -> None: ...
     def run(self) -> None: ...
     def close(self) -> None: ...
 
 class BaseWSGIServer(wasyncore.dispatcher):
-    channel_class: HTTPChannel
+    channel_class: type[HTTPChannel]
     next_channel_cleanup: int
     socketmod: socket
-    asyncore: Any
-    sockinfo: tuple[int, int, int, tuple[str, int]]
+    asyncore = wasyncore
+    in_connection_overflow: bool
+    sockinfo: tuple[int, int, int | None, _RetAddress]
     family: int
     socktype: int
-    application: Any
+    application: WSGIApplication
     adj: Adjustments
     trigger: int
     task_dispatcher: ThreadedTaskDispatcher
@@ -51,19 +56,18 @@ class BaseWSGIServer(wasyncore.dispatcher):
     active_channels: HTTPChannel
     def __init__(
         self,
-        application: Any,
-        map: Incomplete | None = None,
+        application: WSGIApplication,
+        map: _SocketMap | None = None,
         _start: bool = True,
-        _sock: Incomplete | None = None,
+        _sock: socket | None = None,
         dispatcher: ThreadedTaskDispatcher | None = None,
         adj: Adjustments | None = None,
-        sockinfo: Incomplete | None = None,
+        sockinfo: tuple[int, int, int | None, _RetAddress] | None = None,
         bind_socket: bool = True,
-        **kw: Any,
+        **kw: _AdjustmentsParams,
     ) -> None: ...
     def bind_server_socket(self) -> None: ...
-    def get_server_name(self, ip: str) -> str: ...
-    def getsockname(self) -> Any: ...
+    def getsockname(self) -> tuple[str, str]: ...
     accepting: bool
     def accept_connections(self) -> None: ...
     def add_task(self, task: Task) -> None: ...
@@ -74,33 +78,32 @@ class BaseWSGIServer(wasyncore.dispatcher):
     def handle_accept(self) -> None: ...
     def run(self) -> None: ...
     def pull_trigger(self) -> None: ...
-    def set_socket_options(self, conn: Any) -> None: ...
-    def fix_addr(self, addr: Any) -> Any: ...
+    def set_socket_options(self, conn: socket) -> None: ...
+    def fix_addr(self, addr: _RetAddress) -> _RetAddress: ...
     def maintenance(self, now: int) -> None: ...
     def print_listen(self, format_str: str) -> None: ...
     def close(self) -> None: ...
 
 class TcpWSGIServer(BaseWSGIServer):
     def bind_server_socket(self) -> None: ...
-    def getsockname(self) -> tuple[str, tuple[str, int]]: ...
+    def getsockname(self) -> tuple[str, str]: ...
     def set_socket_options(self, conn: socket) -> None: ...
 
 if sys.platform != "win32":
     class UnixWSGIServer(BaseWSGIServer):
         def __init__(
             self,
-            application: Any,
-            map: Incomplete | None = ...,
-            _start: bool = ...,
-            _sock: Incomplete | None = ...,
-            dispatcher: Incomplete | None = ...,
-            adj: Adjustments | None = ...,
-            sockinfo: Incomplete | None = ...,
-            **kw: Any,
+            application: WSGIApplication,
+            map: _SocketMap | None = None,
+            _start: bool = True,
+            _sock: socket | None = None,
+            dispatcher: ThreadedTaskDispatcher | None = None,
+            adj: Adjustments | None = None,
+            sockinfo: tuple[int, int, int | None, _RetAddress] | None = None,
+            **kw: _AdjustmentsParams,
         ) -> None: ...
         def bind_server_socket(self) -> None: ...
-        def getsockname(self) -> tuple[str, tuple[str, int]]: ...
-        def fix_addr(self, addr: Any) -> tuple[str, None]: ...
-        def get_server_name(self, ip: Any) -> str: ...
+        def getsockname(self) -> tuple[str, str]: ...
+        def fix_addr(self, addr: _RetAddress) -> tuple[Literal["localhost"], None]: ...
 
-WSGIServer: TcpWSGIServer
+WSGIServer = TcpWSGIServer

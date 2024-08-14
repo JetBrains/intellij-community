@@ -1,4 +1,4 @@
-from braintree.resource import Resource as Resource
+from braintree.resource import Resource
 
 class ConnectedMerchantPayPalStatusChanged(Resource):
     def __init__(self, gateway, attributes) -> None: ...

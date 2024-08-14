@@ -1,8 +1,8 @@
 import enum
-from _typeshed import ReadableBuffer, SupportsKeysAndGetItem
+from _typeshed import ConvertibleToFloat, SupportsKeysAndGetItem
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence, Set as AbstractSet
-from typing import Any, Generic, NamedTuple, SupportsFloat, TypeVar, overload, type_check_only
-from typing_extensions import Literal, ParamSpec, Self, SupportsIndex, TypeAlias
+from typing import Any, Generic, Literal, NamedTuple, TypeVar, overload, type_check_only
+from typing_extensions import ParamSpec, Self, TypeAlias
 
 _T = TypeVar("_T")
 _KT = TypeVar("_KT")
@@ -10,7 +10,6 @@ _VT_co = TypeVar("_VT_co", covariant=True)
 _P = ParamSpec("_P")
 _Mode: TypeAlias = Literal["string", "filename", "dirname"]
 _OutputStyle: TypeAlias = Literal["nested", "expanded", "compact", "compressed"]
-_ConvertsToFloat: TypeAlias = SupportsFloat | SupportsIndex | str | ReadableBuffer
 _CustomFunctions: TypeAlias = Mapping[str, Callable[..., Any]] | Sequence[Callable[..., Any]] | AbstractSet[Callable[..., Any]]
 _ImportCallbackRet: TypeAlias = (
     list[tuple[str, str, str]] | list[tuple[str, str]] | list[tuple[str]] | list[tuple[str, ...]] | None
@@ -113,7 +112,7 @@ class _SassNumber(NamedTuple):
     unit: str
 
 class SassNumber(_SassNumber):
-    def __new__(cls, value: _ConvertsToFloat, unit: str | bytes) -> Self: ...
+    def __new__(cls, value: ConvertibleToFloat, unit: str | bytes) -> Self: ...
 
 @type_check_only
 class _SassColor(NamedTuple):
@@ -123,7 +122,7 @@ class _SassColor(NamedTuple):
     a: float
 
 class SassColor(_SassColor):
-    def __new__(cls, r: _ConvertsToFloat, g: _ConvertsToFloat, b: _ConvertsToFloat, a: _ConvertsToFloat) -> Self: ...
+    def __new__(cls, r: ConvertibleToFloat, g: ConvertibleToFloat, b: ConvertibleToFloat, a: ConvertibleToFloat) -> Self: ...
 
 @type_check_only
 class _Separator(enum.Enum):
@@ -161,15 +160,25 @@ class SassMap(Mapping[_KT, _VT_co]):
     @overload
     def __init__(self) -> None: ...
     @overload
-    def __init__(self: SassMap[str, _VT_co], **kwargs: _VT_co) -> None: ...
+    def __init__(self: SassMap[str, _VT_co], **kwargs: _VT_co) -> None: ...  # pyright: ignore[reportInvalidTypeVarUse]  #11780
     @overload
-    def __init__(self, __map: SupportsKeysAndGetItem[_KT, _VT_co]) -> None: ...
+    def __init__(self, map: SupportsKeysAndGetItem[_KT, _VT_co], /) -> None: ...
     @overload
-    def __init__(self: SassMap[str, _VT_co], __map: SupportsKeysAndGetItem[str, _VT_co], **kwargs: _VT_co) -> None: ...
+    def __init__(
+        self: SassMap[str, _VT_co],  # pyright: ignore[reportInvalidTypeVarUse]  #11780
+        map: SupportsKeysAndGetItem[str, _VT_co],
+        /,
+        **kwargs: _VT_co,
+    ) -> None: ...
     @overload
-    def __init__(self, __iterable: Iterable[tuple[_KT, _VT_co]]) -> None: ...
+    def __init__(self, iterable: Iterable[tuple[_KT, _VT_co]], /) -> None: ...
     @overload
-    def __init__(self: SassMap[str, _VT_co], __iterable: Iterable[tuple[str, _VT_co]], **kwargs: _VT_co) -> None: ...
+    def __init__(
+        self: SassMap[str, _VT_co],  # pyright: ignore[reportInvalidTypeVarUse]  #11780
+        iterable: Iterable[tuple[str, _VT_co]],
+        /,
+        **kwargs: _VT_co,
+    ) -> None: ...
     def __getitem__(self, key: _KT) -> _VT_co: ...
     def __iter__(self) -> Iterator[_KT]: ...
     def __len__(self) -> int: ...

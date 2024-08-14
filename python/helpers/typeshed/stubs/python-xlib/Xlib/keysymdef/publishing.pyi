@@ -1,4 +1,4 @@
-from typing_extensions import Final
+from typing import Final
 
 XK_emspace: Final = 0xAA1
 XK_enspace: Final = 0xAA2

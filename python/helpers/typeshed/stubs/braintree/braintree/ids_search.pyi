@@ -1,6 +1,4 @@
-from typing import Any
-
-from braintree.search import Search as Search
+from braintree.search import Search
 
 class IdsSearch:
-    ids: Any
+    ids: Search.MultipleValueNodeBuilder

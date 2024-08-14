@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from typing_extensions import Final
+from typing import Final
 
 from .encryption import StandardSecurityHandler
 from .output import ContentWithoutID, OutputProducer

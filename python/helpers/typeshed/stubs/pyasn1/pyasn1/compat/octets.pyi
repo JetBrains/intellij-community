@@ -1,5 +1,4 @@
-from typing import TypeVar
-from typing_extensions import Literal
+from typing import Literal, TypeVar
 
 _T = TypeVar("_T")
 

@@ -1,12 +1,13 @@
-from _typeshed import Incomplete
+from _typeshed import ConvertibleToFloat, Incomplete, Unused
 from collections.abc import Iterable, Iterator, Sequence as ABCSequence
-from typing import ClassVar
-from typing_extensions import Final, Literal, TypeAlias
+from typing import ClassVar, Final, Literal
+from typing_extensions import TypeAlias
 
 from openpyxl.descriptors import Sequence, Strict
-from openpyxl.descriptors.base import Alias, Float, MinMax, NoneSet, Set, _ConvertibleToFloat
+from openpyxl.descriptors.base import Alias, Float, MinMax, NoneSet, Set
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.styles.colors import Color, ColorDescriptor
+from openpyxl.xml.functions import Element
 
 from ..xml._functions_overloads import _SupportsIterAndAttribAndTextAndTag
 
@@ -76,7 +77,7 @@ class PatternFill(Fill):
         start_color: str | Color | None = None,
         end_color: str | Color | None = None,
     ) -> None: ...
-    def to_tree(self, tagname: str | None = None, idx: Incomplete | None = None): ...  # type: ignore[override]
+    def to_tree(self, tagname: Unused = None, idx: Unused = None) -> Element: ...  # type: ignore[override]
 
 DEFAULT_EMPTY_FILL: Final[PatternFill]
 DEFAULT_GRAY_FILL: Final[PatternFill]
@@ -85,11 +86,11 @@ class Stop(Serialisable):
     tagname: ClassVar[str]
     position: MinMax[float, Literal[False]]
     color: Incomplete
-    def __init__(self, color, position: _ConvertibleToFloat) -> None: ...
+    def __init__(self, color, position: ConvertibleToFloat) -> None: ...
 
-class StopList(Sequence):
-    expected_type: type[Incomplete]
-    def __set__(self, obj: Serialisable | Strict, values) -> None: ...
+class StopList(Sequence[list[Stop]]):
+    expected_type: type[Stop]
+    def __set__(self, obj: Serialisable | Strict, values: list[Stop] | tuple[Stop, ...]) -> None: ...
 
 class GradientFill(Fill):
     tagname: ClassVar[str]
@@ -104,12 +105,14 @@ class GradientFill(Fill):
     def __init__(
         self,
         type: _GradientFillType = "linear",
-        degree: _ConvertibleToFloat = 0,
-        left: _ConvertibleToFloat = 0,
-        right: _ConvertibleToFloat = 0,
-        top: _ConvertibleToFloat = 0,
-        bottom: _ConvertibleToFloat = 0,
+        degree: ConvertibleToFloat = 0,
+        left: ConvertibleToFloat = 0,
+        right: ConvertibleToFloat = 0,
+        top: ConvertibleToFloat = 0,
+        bottom: ConvertibleToFloat = 0,
         stop=(),
     ) -> None: ...
     def __iter__(self) -> Iterator[tuple[str, str]]: ...
-    def to_tree(self, tagname: str | None = None, namespace: str | None = None, idx: Incomplete | None = None): ...  # type: ignore[override]
+    def to_tree(  # type: ignore[override]
+        self, tagname: Unused = None, namespace: Unused = None, idx: Unused = None
+    ) -> Element: ...

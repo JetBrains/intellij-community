@@ -1,12 +1,11 @@
 from _typeshed import Incomplete
-from typing_extensions import Literal, TypeAlias
+from typing import ClassVar, Literal
 
 import _win32typing
 
-def odbc(connectionString: str) -> _win32typing.connection: ...
-def SQLDataSources(direction) -> tuple[Incomplete, Incomplete]: ...
+def odbc(connectionString: str, /) -> _win32typing.connection: ...
+def SQLDataSources(direction, /) -> tuple[Incomplete, Incomplete]: ...
 
-_odbcError: TypeAlias = type  # noqa: Y042  # Does not exist at runtime, but odbc.odbcError is a valid type.
 DATE: str
 NUMBER: str
 RAW: str
@@ -20,10 +19,14 @@ SQL_FETCH_PRIOR: int
 SQL_FETCH_RELATIVE: int
 STRING: str
 TYPES: tuple[Literal["STRING"], Literal["RAW"], Literal["NUMBER"], Literal["DATE"]]
-dataError: Incomplete
-error: _odbcError
-integrityError: Incomplete
-internalError: Incomplete
-noError: Incomplete
-opError: Incomplete
-progError: Incomplete
+
+class error(Exception):
+    __name__: ClassVar[str] = "odbcError"
+
+# These all pretend to come from a module called "dbi", but that module doesn't exist
+class dataError(Exception): ...
+class integrityError(Exception): ...
+class internalError(Exception): ...
+class noError(Exception): ...
+class opError(Exception): ...
+class progError(Exception): ...

@@ -39,7 +39,7 @@ _T_conn = TypeVar("_T_conn", bound=connection)
 def connect(
     dsn: str | None,
     connection_factory: Callable[..., _T_conn],
-    cursor_factory: Callable[..., cursor] | None = None,
+    cursor_factory: Callable[[connection, str | bytes | None], cursor] | None = None,
     **kwargs: Any,
 ) -> _T_conn: ...
 @overload
@@ -47,13 +47,13 @@ def connect(
     dsn: str | None = None,
     *,
     connection_factory: Callable[..., _T_conn],
-    cursor_factory: Callable[..., cursor] | None = None,
+    cursor_factory: Callable[[connection, str | bytes | None], cursor] | None = None,
     **kwargs: Any,
 ) -> _T_conn: ...
 @overload
 def connect(
     dsn: str | None = None,
     connection_factory: Callable[..., connection] | None = None,
-    cursor_factory: Callable[..., cursor] | None = None,
+    cursor_factory: Callable[[connection, str | bytes | None], cursor] | None = None,
     **kwargs: Any,
 ) -> connection: ...

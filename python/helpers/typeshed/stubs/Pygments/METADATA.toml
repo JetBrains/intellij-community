@@ -1,4 +1,4 @@
-version = "2.16.*"
+version = "2.18.*"
 upstream_repository = "https://github.com/pygments/pygments"
 requires = ["types-docutils", "types-setuptools"]
 partial_stub = true

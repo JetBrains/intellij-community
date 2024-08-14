@@ -1,8 +1,7 @@
-from _typeshed import Incomplete
-from typing import ClassVar, overload
-from typing_extensions import Literal
+from _typeshed import ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal, overload
 
-from openpyxl.descriptors.base import Alias, Bool, Integer, String, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Bool, Integer, String, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 
 class _Protected:
@@ -63,7 +62,7 @@ class SheetProtection(Serialisable, _Protected):
         password: Incomplete | None = None,
         algorithmName: str | None = None,
         saltValue: Incomplete | None = None,
-        spinCount: _ConvertibleToInt | None = None,
+        spinCount: ConvertibleToInt | None = None,
         hashValue: Incomplete | None = None,
     ) -> None: ...
     @overload

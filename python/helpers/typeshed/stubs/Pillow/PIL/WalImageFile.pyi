@@ -1,5 +1,5 @@
-from typing import ClassVar
-from typing_extensions import Literal
+from _typeshed import StrOrBytesPath
+from typing import ClassVar, Literal
 
 from . import ImageFile
 from ._imaging import _PixelAccessor
@@ -9,6 +9,6 @@ class WalImageFile(ImageFile.ImageFile):
     format_description: ClassVar[str]
     def load(self) -> _PixelAccessor: ...
 
-def open(filename): ...
+def open(filename: StrOrBytesPath) -> WalImageFile: ...
 
 quake2palette: bytes
