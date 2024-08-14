@@ -3,7 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,10 +58,6 @@ public abstract class EdtInvocationManager {
       }
     }
     return result;
-  }
-
-  public static @Nullable EdtInvocationManager setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
-    return ourInstance.getAndSet(edtInvocationManager);
   }
 
   /**
