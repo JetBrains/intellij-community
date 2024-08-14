@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.kernel.util.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
-import com.intellij.platform.rpc.backend.RemoteApiProvider.RemoteApiDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import fleet.kernel.change
 import fleet.kernel.rebase.*
@@ -33,13 +32,12 @@ private class RemoteKernelScopeHolder(private val coroutineScope: CoroutineScope
 }
 
 internal class RemoteKernelProvider : RemoteApiProvider {
-
-  override fun getApis(): List<RemoteApiDescriptor<*>> {
-    return listOf(RemoteApiDescriptor(RemoteKernel::class) {
+  override fun RemoteApiProvider.Sink.remoteApis() {
+    remoteApi(RemoteKernel::class) {
       runBlockingCancellable {
         ApplicationManager.getApplication().service<RemoteKernelScopeHolder>().createRemoteKernel()
       }
-    })
+    }
   }
 }
 

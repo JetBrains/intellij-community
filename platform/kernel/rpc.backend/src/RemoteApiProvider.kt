@@ -8,9 +8,11 @@ import kotlin.reflect.KClass
 
 interface RemoteApiProvider {
 
-  data class RemoteApiDescriptor<T : RemoteApi<Unit>>(val klass: KClass<T>, val service: () -> T)
+  interface Sink {
+    fun <T : RemoteApi<Unit>> remoteApi(klass: KClass<T>, implementation: () -> T)
+  }
 
-  fun getApis(): List<RemoteApiDescriptor<*>>
+  fun Sink.remoteApis()
 
   companion object {
 

@@ -13,49 +13,62 @@ import fleet.rpc.server.RpcServiceLocator
 import fleet.rpc.server.ServiceImplementation
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.set
 import kotlin.reflect.KClass
 
 internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProviderService, RpcServiceLocator {
 
-  private val remoteApis = ConcurrentHashMap<InstanceId, ServiceImplementation>()
+  private val remoteApis = ConcurrentHashMap<String, ServiceImplementation>()
   private val visitedEPs = ContainerUtil.createConcurrentWeakKeyWeakValueMap<RemoteApiProvider, Unit>()
+
+  private val registeringSink = object : RemoteApiProvider.Sink {
+    override fun <T : RemoteApi<Unit>> remoteApi(klass: KClass<T>, implementation: () -> T) {
+      remoteApis[klass.java.name] = ServiceImplementation(klass, implementation())
+    }
+  }
+
+  private val unregisteringSink = object : RemoteApiProvider.Sink {
+    override fun <T : RemoteApi<Unit>> remoteApi(klass: KClass<T>, implementation: () -> T) {
+      remoteApis.remove(klass.java.name)
+    }
+  }
 
   init {
     EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<RemoteApiProvider> {
       override fun extensionAdded(extension: RemoteApiProvider, pluginDescriptor: PluginDescriptor) {
         if (visitedEPs.putIfAbsent(extension, Unit) == null) {
-          val apis = extension.getApis()
-          for (api in apis) {
-            remoteApis[api.klass.toInstanceId] = ServiceImplementation(api.klass, api.service())
+          with(extension) {
+            registeringSink.remoteApis()
           }
         }
       }
 
       override fun extensionRemoved(extension: RemoteApiProvider, pluginDescriptor: PluginDescriptor) {
         visitedEPs.remove(extension)
-        val apis = extension.getApis()
         synchronized(this) {
-          apis.forEach { api ->
-            remoteApis.remove(api.klass.toInstanceId)
+          with(extension) {
+            unregisteringSink.remoteApis()
           }
         }
       }
     })
-    EP_NAME.extensions.filter { visitedEPs.putIfAbsent(it, Unit) == null }.flatMap { it.getApis() }.forEach { api ->
-      remoteApis[api.klass.toInstanceId] = ServiceImplementation(api.klass, api.service())
+    for (extension in EP_NAME.extensionList) {
+      if (visitedEPs.putIfAbsent(extension, Unit) == null) {
+        with(extension) {
+          registeringSink.remoteApis()
+        }
+      }
     }
   }
 
   override suspend fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T {
     @Suppress("UNCHECKED_CAST")
-    return remoteApis[klass.toInstanceId]?.instance as? T
+    return remoteApis[klass.java.name]?.instance as? T
            ?: throw IllegalStateException("No remote API found for $klass")
   }
 
-  override fun resolve(serviceId: InstanceId): ServiceImplementation? {
-    return remoteApis[serviceId]
+  override fun resolve(serviceId: InstanceId): ServiceImplementation {
+    return remoteApis[serviceId.id]
+           ?: throw IllegalStateException("No remote API found for $serviceId")
   }
 }
-
-private val KClass<out RemoteApi<Unit>>.toInstanceId: InstanceId
-  get() = InstanceId(this.qualifiedName!!)
