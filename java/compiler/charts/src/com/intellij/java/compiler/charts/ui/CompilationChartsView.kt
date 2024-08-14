@@ -70,12 +70,12 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
     vm.filter.advise(vm.lifetime) { filter ->
       diagrams.modules.filter = filter
-      diagrams.forceRepaint()
+      diagrams.smartDraw()
     }
 
     vm.cpuMemory.advise(vm.lifetime) { filter ->
       diagrams.cpuMemory = filter
-      diagrams.forceRepaint()
+      diagrams.smartDraw()
     }
 
     vm.scrollToEndEvent.advise(vm.lifetime) { _ ->

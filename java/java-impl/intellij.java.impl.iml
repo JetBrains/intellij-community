@@ -25,7 +25,6 @@
     <orderEntry type="module" module-name="intellij.xml.dom.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.java.compiler.charts.jps" />
     <orderEntry type="module" module-name="intellij.java.frontback.impl" exported="" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" />

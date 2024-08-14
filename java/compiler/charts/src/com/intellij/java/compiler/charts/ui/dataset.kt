@@ -25,37 +25,32 @@ data class DataModel(private val charts: Charts) {
 
 class ChartModel {
   internal var model: MutableMap<EventKey, List<Modules.Event>> = mutableMapOf()
+    set(value) {
+      field = value
+      value.values.flatten().forEach {
+        threads = max(threads, it.threadNumber)
+        start = min(start, it.target.time)
+        end = max(end, it.target.time)
+      }
+    }
   internal var filter: Predicate<EventKey> = Predicate<EventKey> { _ -> true }
   internal var threads: Int = 0
   internal var start: Long = Long.MAX_VALUE
   internal var end: Long = Long.MIN_VALUE
-
-  fun data(data: MutableMap<EventKey, List<Modules.Event>>) {
-    model = data
-
-    data.values.flatten().forEach {
-      threads = max(threads, it.threadNumber)
-      start = min(start, it.target.time)
-      end = max(end, it.target.time)
-    }
-  }
 }
 
 class UsageModel {
   internal var model: MutableSet<StatisticData> = mutableSetOf()
+    set(value) {
+      field = value
+      value.forEach {
+        start = min(start, it.time)
+        end = max(end, it.time)
+      }
+    }
   internal var type: CpuMemoryStatisticsType = MEMORY
 
   internal var start: Long = Long.MAX_VALUE
   internal var end: Long = Long.MIN_VALUE
   internal var maximum by Delegates.notNull<Long>()
-
-  fun data(data: MutableSet<StatisticData>, maximum: Long) {
-    model = data
-    this.maximum = maximum
-
-    data.forEach {
-      start = min(start, it.time)
-      end = max(end, it.time)
-    }
-  }
 }

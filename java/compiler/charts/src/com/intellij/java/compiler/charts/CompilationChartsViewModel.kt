@@ -122,6 +122,13 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
   class ScrollToEndEvent
 
   enum class CpuMemoryStatisticsType {
-    CPU, MEMORY
+    CPU {
+      override fun max(statistics: Statistics): Long = 100
+    },
+    MEMORY {
+      override fun max(statistics: Statistics): Long = statistics.maxMemory
+    };
+
+    abstract fun max(statistics: Statistics): Long
   }
 }

@@ -73,10 +73,21 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
     }
   }
 
-  private fun Graphics2D.drawChart(data: MutableMap<EventKey, List<Event>>,
-                                   settings: ChartSettings,
-                                   g2d: Graphics2D) {
-    for ((key, events) in data.filter { state.filter.test(it.key) }) {
+  private fun Graphics2D.drawChart(
+    data: MutableMap<EventKey, List<Event>>,
+    settings: ChartSettings,
+    g2d: Graphics2D,
+  ) {
+    for ((key, events) in data.asSequence()
+      .filter { state.filter.test(it.key) }
+      .filter {
+        inViewport(it.value.filterIsInstance<StartEvent>().firstOrNull()?.target?.time,
+                   it.value.filterIsInstance<FinishEvent>().firstOrNull()?.target?.time,
+                   settings,
+                   zoom,
+                   this@ChartProgress.clip)
+      }
+      .filter { !isSmall(it.value) }) {
       val start = events.filterIsInstance<StartEvent>().firstOrNull() ?: continue
       val end = events.filterIsInstance<FinishEvent>().firstOrNull()
       val rect = getRectangle(start, end, settings)
@@ -104,6 +115,12 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
     }
   }
 
+  private fun isSmall(events: List<Event>): Boolean {
+    val start = events.filterIsInstance<StartEvent>().firstOrNull() ?: return false
+    val finish = events.filterIsInstance<FinishEvent>().firstOrNull() ?: return false
+    return zoom.toPixels(finish.target.time) - zoom.toPixels(start.target.time) < 2
+  }
+
   private fun getRectangle(start: StartEvent, end: FinishEvent?, settings: ChartSettings): Rectangle2D {
     val x0 = zoom.toPixels(start.target.time - settings.duration.from)
     val x1 = zoom.toPixels((end?.target?.time ?: System.nanoTime()) - settings.duration.from)
@@ -112,7 +129,7 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel) : Ch
 }
 
 class ChartUsage(private val zoom: Zoom, private val name: String, internal val state: UsageModel) : ChartComponent {
-  private val model: MutableSet<StatisticData> = TreeSet()
+  private val model: NavigableSet<StatisticData> = TreeSet()
 
   lateinit var unit: String
   lateinit var color: UsageColor
@@ -143,7 +160,7 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     drawUsageChart(model, settings, g2d)
   }
 
-  private fun drawUsageChart(data: MutableSet<StatisticData>,
+  private fun drawUsageChart(data: NavigableSet<StatisticData>,
                              settings: ChartSettings,
                              g2d: Graphics2D): Boolean {
     if (data.isEmpty()) return true
@@ -159,20 +176,41 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
     return false
   }
 
-  private fun path(data: MutableSet<StatisticData>, settings: ChartSettings): Path2D {
+  private fun path(data: NavigableSet<StatisticData>, settings: ChartSettings): Path2D {
     val neighborhood = DoubleArray(8) { Double.NaN }
     val border = 5
     val height = clip.height - border
-    val x0 = 0.0
+    val x0 = this@ChartUsage.clip.x
     val y0 = clip.y + height + border
 
     val path = Path2D.Double()
     path.moveTo(x0, y0)
-    data.forEachIndexed { i, statistic ->
-      val px = zoom.toPixels(statistic.time - settings.duration.from)
-      val py = y0 - (statistic.data.toDouble() / state.maximum * height)
-      neighborhood.shiftLeftByTwo(px, py)
-      path.curveTo(neighborhood)
+
+    var cursor: StatisticData? = null
+    data.forEach { statistic ->
+      if (inViewport(statistic.time, statistic.time, settings, zoom, clip)) {
+        if (cursor == null) {
+          // prev point
+          data.lower(statistic)?.let { lower ->
+            getXY(lower, settings, y0, height).let { (px, py) ->
+              neighborhood.shiftLeftByTwo(px, py)
+              path.curveTo(neighborhood)
+            }
+          }
+        }
+        getXY(statistic, settings, y0, height).let { (px, py) ->
+          neighborhood.shiftLeftByTwo(px, py)
+          path.curveTo(neighborhood)
+        }
+        cursor = statistic
+      }
+    }
+    // next point
+    if (cursor != null) data.higher(cursor)?.let { higher ->
+      getXY(higher, settings, y0, height).let { (px, py) ->
+        neighborhood.shiftLeftByTwo(px, py)
+        path.curveTo(neighborhood)
+      }
     }
 
     neighborhood.shiftLeftByTwo(Double.NaN, Double.NaN)
@@ -186,6 +224,10 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
 
     return path
   }
+
+  private fun getXY(statistic: StatisticData, settings: ChartSettings, y0: Double, height: Double): Pair<Double, Double> =
+    zoom.toPixels(statistic.time - settings.duration.from) to
+      y0 - (statistic.data.toDouble() / state.maximum * height)
 
   private fun DoubleArray.shiftLeftByTwo(first: Double, second: Double) {
     for (j in 2 until size) {
@@ -210,7 +252,7 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
       fill(this@ChartAxis.clip)
     }
     g2d.withColor(settings.line.color) {
-      draw(Line2D.Double(0.0, this@ChartAxis.clip.y, this@ChartAxis.clip.width, this@ChartAxis.clip.y))
+      draw(Line2D.Double(this@ChartAxis.clip.x, this@ChartAxis.clip.y, this@ChartAxis.clip.x + this@ChartAxis.clip.width, this@ChartAxis.clip.y))
     }
   }
 
@@ -218,8 +260,8 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
     g2d.withAntialiasing {
       val size = UIUtil.getFontSize(settings.font.size) + padding
 
-      val from = 0
-      val to = this@ChartAxis.clip.width.toInt()
+      val from = (this@ChartAxis.clip.x.toInt() / distance).toInt() * distance
+      val to = from + this@ChartAxis.clip.width.toInt() + this@ChartAxis.clip.x.toInt() % distance
 
       withColor(COLOR_LINE) {
         for (x in from..to step distance) {

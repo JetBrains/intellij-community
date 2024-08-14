@@ -5,6 +5,6 @@
     <compileServer.plugin classpath="jps/java-compiler-charts-jps.jar"/>
 
     <registryKey key="compilation.charts" defaultValue="false"
-                 description="Show compilation charts" restartRequired="true"/>
+                 description="Show compilation charts" restartRequired="false"/>
   </extensions>
 </idea-plugin>

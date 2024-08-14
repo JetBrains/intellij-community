@@ -9,12 +9,9 @@ import com.intellij.util.ui.UIUtil.FontSize
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Point
-import java.awt.RenderingHints
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
-import java.awt.image.BufferedImage
-import java.awt.image.ImageObserver
 import javax.swing.JLabel
 import javax.swing.JPopupMenu
 import javax.swing.JViewport
@@ -27,7 +24,7 @@ fun charts(vm: CompilationChartsViewModel, zoom: Zoom, viewport: JViewport, init
 
 class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom, private val viewport: JViewport) {
   private val model: DataModel = DataModel(this)
-  internal var area: Area = Area(viewport.x.toDouble(), viewport.y.toDouble(), viewport.width.toDouble(), viewport.height.toDouble())
+  internal var area: Rectangle2D.Double = Rectangle2D.Double(viewport.x.toDouble(), viewport.y.toDouble(), viewport.width.toDouble(), viewport.height.toDouble())
   internal val progress: ChartProgress = ChartProgress(zoom, model.chart)
   internal lateinit var usage: ChartUsage
   internal lateinit var axis: ChartAxis
@@ -49,40 +46,15 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
     axis = ChartAxis(zoom).apply(init)
   }
 
-  fun draw(g2d: Graphics2D, component: ImageObserver, init: Charts.() -> BufferedImage?): BufferedImage? {
-    val image = init()
-    return if (image != null) {
-      withImage(image, g2d, component) { g -> drawChartComponents(g) }
-    }
-    else {
-      drawChartComponents(g2d)
-      null
-    }
-  }
+  fun draw(g2d: Graphics2D, init: Charts.() -> Unit) {
+    init()
 
-  private fun drawChartComponents(g: Graphics2D) {
     val components = listOf(progress, usage, axis)
-    components.forEach { it.background(g, settings) }
-    components.forEach { it.component(g, settings) }
+    components.forEach { it.background(g2d, settings) }
+    components.forEach { it.component(g2d, settings) }
   }
 
-  private fun withImage(image: BufferedImage, g2d: Graphics2D, component: ImageObserver, draw: (Graphics2D) -> Unit): BufferedImage {
-    image.createGraphics().run {
-      setupRenderingHints()
-
-      draw(this)
-
-      dispose()
-    }
-
-    g2d.run {
-      setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      drawImage(image, component)
-    }
-    return image
-  }
-
-  fun width(): Double = axis.clip.width
+  fun width(): Double =  max(zoom.toPixels(MaxSize(progress, settings).width), area.width)
   fun height(): Double = axis.clip.run { y + height }
 
   fun update(init: Charts.() -> Unit) {
@@ -92,21 +64,21 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
   fun model(function: DataModel.() -> Unit): Charts {
     model.function()
 
-    area = Area(viewport.x.toDouble(), viewport.y.toDouble(), viewport.width.toDouble(), viewport.height.toDouble())
+    area = Rectangle2D.Double(viewport.viewPosition.x.toDouble(), viewport.y.toDouble(), viewport.width.toDouble(), viewport.height.toDouble())
     settings.duration.from = min(model.chart.start, model.usage.start)
     settings.duration.to = max(model.chart.end, model.usage.end)
 
     val size = MaxSize(progress, settings)
 
-    progress.clip = Rectangle2D.Double(0.0,
+    progress.clip = Rectangle2D.Double(area.x,
                                        0.0,
-                                       max(zoom.toPixels(size.width), area.width),
+                                       area.width,
                                        size.height)
-    usage.clip = Rectangle2D.Double(0.0,
+    usage.clip = Rectangle2D.Double(area.x,
                                     size.height,
                                     progress.clip.width,
                                     max(progress.height * 3, area.height - progress.clip.height - axis.height))
-    axis.clip = Rectangle2D.Double(0.0,
+    axis.clip = Rectangle2D.Double(area.x,
                                    progress.clip.height + usage.clip.height,
                                    progress.clip.width,
                                    axis.height)
@@ -146,7 +118,6 @@ class ChartSettings {
   }
 }
 
-internal data class Area(val x: Double, val y: Double, val width: Double, val height: Double)
 internal data class MaxSize(val width: Double, val height: Double) {
   constructor(width: Long, height: Double) : this(width.toDouble(), height)
   constructor(progress: ChartProgress, settings: ChartSettings) : this(with(settings.duration) { to - from }, (progress.state.threads + 1) * progress.height)

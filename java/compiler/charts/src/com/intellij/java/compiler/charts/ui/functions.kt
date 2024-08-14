@@ -2,12 +2,9 @@
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
-import com.intellij.util.JBHiDPIScaledImage
 import java.awt.*
-import java.awt.geom.AffineTransform
 import java.awt.geom.Path2D
-import java.awt.image.BufferedImage
-import java.awt.image.ImageObserver
+import java.awt.geom.Rectangle2D
 import kotlin.math.hypot
 
 fun Graphics2D.withColor(color: Color, block: Graphics2D.() -> Unit): Graphics2D {
@@ -56,13 +53,6 @@ fun Graphics2D.withStroke(stroke: Stroke, block: Graphics2D.() -> Unit): Graphic
   val result = HashMap(this)
   result.entries.forEach { this.remove(it.key, it.value) }
   return result
-}
-
-fun Graphics2D.drawImage(img: BufferedImage, observer: ImageObserver?) {
-  val transform = AffineTransform().apply {
-    if (img is JBHiDPIScaledImage) scale(1 / img.scale, 1 / img.scale)
-  }
-  drawImage(img, transform, observer)
 }
 
 internal fun Path2D.Double.curveTo(neighbour: DoubleArray) {
@@ -126,3 +116,15 @@ internal fun Graphics2D.setupRenderingHints() {
 }
 
 private fun Double.orZero() = if (this.isNaN()) 0.0 else this
+
+internal fun inViewport(startTime: Long?, finishTime: Long?, settings: ChartSettings, zoom: Zoom, viewport: Rectangle2D): Boolean {
+  if (startTime == null) return false
+  val x0 = viewport.x
+  val x1 = x0 + viewport.width
+  val startPixel = zoom.toPixels(startTime - settings.duration.from)
+  if (startPixel > x1) return false
+  if (finishTime == null) return true
+  val finishPixel = zoom.toPixels(finishTime - settings.duration.from)
+  if (finishPixel < x0) return false
+  return true
+}
