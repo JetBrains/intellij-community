@@ -10360,9 +10360,9 @@ a:com.intellij.ui.table.AdditionalTableHeader
 - pf:changeTableAtPositionHelper(javax.swing.JTable,javax.swing.JTable):V
 - a:createColumnsController():com.intellij.ui.table.AdditionalTableHeader$ColumnsControllerPanel
 - a:detachController():V
+- f:disposeOldTable(javax.swing.JTable,javax.swing.JTable):V
 - pf:getColumnsController():com.intellij.ui.table.AdditionalTableHeader$ColumnsControllerPanel
 - f:getPosition():com.intellij.ui.table.AdditionalTableHeader$Position
-- pf:getPositionHelper():com.intellij.ui.table.AdditionalTableHeaderPositionHelper
 - pf:getResizer():java.awt.event.ComponentAdapter
 - a:getTable():javax.swing.JTable
 - installTable(javax.swing.JTable):V

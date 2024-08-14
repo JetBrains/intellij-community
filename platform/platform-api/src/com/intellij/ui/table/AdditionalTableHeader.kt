@@ -34,6 +34,32 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()) {
   abstract var table: JTable?
     protected set
 
+  private val updateChangeListener = PropertyChangeListener { evt: PropertyChangeEvent ->
+    if ("model" == evt.propertyName || "componentOrientation" == evt.propertyName) {
+      removeController()
+      recreateController()
+    }
+  }
+
+  var position: Position?
+    /** Returns the mode currently associated to the TableHeader.  */
+    get() = positionHelper.position
+    /** Sets the position of the header related to the table.  */
+    set(location) {
+      positionHelper.position = location
+    }
+
+  protected var columnsController: ColumnsControllerPanel? = null
+
+  /** The helper to handle the location of the additional header in the table header.  */
+  private val positionHelper: AdditionalTableHeaderPositionHelper = AdditionalTableHeaderPositionHelper(this)
+
+  protected val resizer: ComponentAdapter = object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent) {
+      columnsController?.revalidate()
+    }
+  }
+
   open fun installTable(table: JTable?) {
     val oldTable = this.table
     disposeOldTable(oldTable, table)
@@ -41,13 +67,6 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()) {
     this.table = table
 
     setupNewTable(table)
-  }
-
-  private val updateChangeListener = PropertyChangeListener { evt: PropertyChangeEvent ->
-    if ("model" == evt.propertyName || "componentOrientation" == evt.propertyName) {
-      removeController()
-      recreateController()
-    }
   }
 
   private fun setupNewTable(newTable: JTable?) {
@@ -63,7 +82,7 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()) {
     }
   }
 
-  private fun disposeOldTable(oldTable: JTable?, newTable: JTable?) {
+  fun disposeOldTable(oldTable: JTable?, newTable: JTable?) {
     changeTableAtPositionHelper(oldTable, newTable)
     if (oldTable != null) {
       oldTable.removeComponentListener(resizer)
@@ -71,19 +90,6 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()) {
       oldTable.removePropertyChangeListener("componentOrientation", updateChangeListener)
     }
   }
-
-  var position: Position?
-    /** Returns the mode currently associated to the TableHeader.  */
-    get() = positionHelper.position
-    /** Sets the position of the header related to the table.  */
-    set(location) {
-      positionHelper.position = location
-    }
-
-  protected var columnsController: ColumnsControllerPanel? = null
-
-  /** The helper to handle the location of the additional header in the table header.  */
-  protected val positionHelper: AdditionalTableHeaderPositionHelper = AdditionalTableHeaderPositionHelper(this)
 
   protected fun changeTableAtPositionHelper(oldTable: JTable?, newTable: JTable?) {
     positionHelper.changeTable(oldTable, newTable)
@@ -106,12 +112,6 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()) {
     columnsController = newController
     add(newController, BorderLayout.WEST)
     revalidate()
-  }
-
-  protected val resizer: ComponentAdapter = object : ComponentAdapter() {
-    override fun componentResized(e: ComponentEvent) {
-      columnsController?.revalidate()
-    }
   }
 
   /** Method automatically invoked when the class ancestor changes.  */
