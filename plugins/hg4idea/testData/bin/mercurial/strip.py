@@ -1,19 +1,16 @@
-from __future__ import absolute_import
-
 from .i18n import _
-from .pycompat import getattr
 from . import (
     bookmarks as bookmarksmod,
     cmdutil,
     error,
     hg,
     lock as lockmod,
+    logcmdutil,
     mergestate as mergestatemod,
     pycompat,
     registrar,
     repair,
     scmutil,
-    util,
 )
 
 release = lockmod.release
@@ -37,7 +34,7 @@ def _findupdatetarget(repo, nodes):
     currentbranch = repo[None].branch()
 
     if (
-        util.safehasattr(repo, b'mq')
+        hasattr(repo, 'mq')
         and p2 != repo.nullid
         and p2 in [x.node for x in repo.mq.applied]
     ):
@@ -178,7 +175,7 @@ def debugstrip(ui, repo, *revs, **opts):
 
     cl = repo.changelog
     revs = list(revs) + opts.get(b'rev')
-    revs = set(scmutil.revrange(repo, revs))
+    revs = set(logcmdutil.revrange(repo, revs))
 
     with repo.wlock():
         bookmarks = set(opts.get(b'bookmark'))
@@ -194,7 +191,7 @@ def debugstrip(ui, repo, *revs, **opts):
             # a revision we have to only delete the bookmark and not strip
             # anything. revsets cannot detect that case.
             nodetobookmarks = {}
-            for mark, node in pycompat.iteritems(repomarks):
+            for mark, node in repomarks.items():
                 nodetobookmarks.setdefault(node, []).append(mark)
             for marks in nodetobookmarks.values():
                 if bookmarks.issuperset(marks):
@@ -242,29 +239,32 @@ def debugstrip(ui, repo, *revs, **opts):
 
         revs = sorted(rootnodes)
         if update and opts.get(b'keep'):
-            urev = _findupdatetarget(repo, revs)
-            uctx = repo[urev]
+            with repo.dirstate.changing_parents(repo):
+                urev = _findupdatetarget(repo, revs)
+                uctx = repo[urev]
 
-            # only reset the dirstate for files that would actually change
-            # between the working context and uctx
-            descendantrevs = repo.revs(b"only(., %d)", uctx.rev())
-            changedfiles = []
-            for rev in descendantrevs:
-                # blindly reset the files, regardless of what actually changed
-                changedfiles.extend(repo[rev].files())
+                # only reset the dirstate for files that would actually change
+                # between the working context and uctx
+                descendantrevs = repo.revs(b"only(., %d)", uctx.rev())
+                changedfiles = []
+                for rev in descendantrevs:
+                    # blindly reset the files, regardless of what actually changed
+                    changedfiles.extend(repo[rev].files())
 
-            # reset files that only changed in the dirstate too
-            dirstate = repo.dirstate
-            dirchanges = [f for f in dirstate if dirstate[f] != b'n']
-            changedfiles.extend(dirchanges)
+                # reset files that only changed in the dirstate too
+                dirstate = repo.dirstate
+                dirchanges = [
+                    f for f in dirstate if not dirstate.get_entry(f).maybe_clean
+                ]
+                changedfiles.extend(dirchanges)
 
-            repo.dirstate.rebuild(urev, uctx.manifest(), changedfiles)
-            repo.dirstate.write(repo.currenttransaction())
+                repo.dirstate.rebuild(urev, uctx.manifest(), changedfiles)
+                repo.dirstate.write(repo.currenttransaction())
 
-            # clear resolve state
-            mergestatemod.mergestate.clean(repo)
+                # clear resolve state
+                mergestatemod.mergestate.clean(repo)
 
-            update = False
+                update = False
 
         strip(
             ui,

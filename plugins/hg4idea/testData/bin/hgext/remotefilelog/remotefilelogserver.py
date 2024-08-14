@@ -4,9 +4,7 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
-from __future__ import absolute_import
 
-import errno
 import os
 import stat
 import time
@@ -22,7 +20,6 @@ from mercurial import (
     error,
     extensions,
     match,
-    pycompat,
     scmutil,
     store,
     streamclone,
@@ -64,13 +61,13 @@ def setupserver(ui, repo):
                     repo.root, b'', None, includepattern, excludepattern
                 )
 
-            changedfiles = list([f for f in changedfiles if not m(f)])
+            changedfiles = [f for f in changedfiles if not m(f)]
         return orig(
             self, changedfiles, linknodes, commonrevs, source, *args, **kwargs
         )
 
     extensions.wrapfunction(
-        changegroup.cgpacker, b'generatefiles', generatefiles
+        changegroup.cgpacker, 'generatefiles', generatefiles
     )
 
 
@@ -95,7 +92,7 @@ def onetimesetup(ui):
         b'x_rfl_getfile', b'file node', permission=b'pull'
     )(getfile)
 
-    class streamstate(object):
+    class streamstate:
         match = None
         shallowremote = False
         noflatmf = False
@@ -148,7 +145,9 @@ def onetimesetup(ui):
     )
 
     # don't clone filelogs to shallow clients
-    def _walkstreamfiles(orig, repo, matcher=None):
+    def _walkstreamfiles(
+        orig, repo, matcher=None, phase=False, obsolescence=False
+    ):
         if state.shallowremote:
             # if we are shallow ourselves, stream our local commits
             if shallowutil.isenabled(repo):
@@ -165,27 +164,32 @@ def onetimesetup(ui):
                             ):
                                 n = util.pconvert(fp[striplen:])
                                 d = store.decodedir(n)
-                                t = store.FILETYPE_OTHER
-                                yield (t, d, n, st.st_size)
+                                yield store.SimpleStoreEntry(
+                                    entry_path=d,
+                                    is_volatile=False,
+                                    file_size=st.st_size,
+                                )
+
                         if kind == stat.S_IFDIR:
                             visit.append(fp)
 
             if scmutil.istreemanifest(repo):
-                for (t, u, e, s) in repo.store.datafiles():
-                    if u.startswith(b'meta/') and (
-                        u.endswith(b'.i') or u.endswith(b'.d')
-                    ):
-                        yield (t, u, e, s)
+                for entry in repo.store.data_entries():
+                    if not entry.is_revlog:
+                        continue
+                    if entry.is_manifestlog:
+                        yield entry
 
             # Return .d and .i files that do not match the shallow pattern
             match = state.match
             if match and not match.always():
-                for (t, u, e, s) in repo.store.datafiles():
-                    f = u[5:-2]  # trim data/...  and .i/.d
-                    if not state.match(f):
-                        yield (t, u, e, s)
+                for entry in repo.store.data_entries():
+                    if not entry.is_revlog:
+                        continue
+                    if not state.match(entry.target_id):
+                        yield entry
 
-            for x in repo.store.topfiles():
+            for x in repo.store.top_entries():
                 if state.noflatmf and x[1][:11] == b'00manifest.':
                     continue
                 yield x
@@ -198,10 +202,12 @@ def onetimesetup(ui):
                 _(b"Cannot clone from a shallow repo to a full repo.")
             )
         else:
-            for x in orig(repo, matcher):
+            for x in orig(
+                repo, matcher, phase=phase, obsolescence=obsolescence
+            ):
                 yield x
 
-    extensions.wrapfunction(streamclone, b'_walkstreamfiles', _walkstreamfiles)
+    extensions.wrapfunction(streamclone, '_walkstreamfiles', _walkstreamfiles)
 
     # expose remotefilelog capabilities
     def _capabilities(orig, repo, proto):
@@ -216,18 +222,18 @@ def onetimesetup(ui):
             caps.append(b'x_rfl_getfile')
         return caps
 
-    extensions.wrapfunction(wireprotov1server, b'_capabilities', _capabilities)
+    extensions.wrapfunction(wireprotov1server, '_capabilities', _capabilities)
 
     def _adjustlinkrev(orig, self, *args, **kwargs):
         # When generating file blobs, taking the real path is too slow on large
         # repos, so force it to just return the linkrev directly.
         repo = self._repo
-        if util.safehasattr(repo, b'forcelinkrev') and repo.forcelinkrev:
+        if hasattr(repo, 'forcelinkrev') and repo.forcelinkrev:
             return self._filelog.linkrev(self._filelog.rev(self._filenode))
         return orig(self, *args, **kwargs)
 
     extensions.wrapfunction(
-        context.basefilectx, b'_adjustlinkrev', _adjustlinkrev
+        context.basefilectx, '_adjustlinkrev', _adjustlinkrev
     )
 
     def _iscmd(orig, cmd):
@@ -235,7 +241,7 @@ def onetimesetup(ui):
             return False
         return orig(cmd)
 
-    extensions.wrapfunction(wireprotoserver, b'iscmd', _iscmd)
+    extensions.wrapfunction(wireprotoserver, 'iscmd', _iscmd)
 
 
 def _loadfileblob(repo, cachepath, path, node):
@@ -257,9 +263,8 @@ def _loadfileblob(repo, cachepath, path, node):
             if not os.path.exists(dirname):
                 try:
                     os.makedirs(dirname)
-                except OSError as ex:
-                    if ex.errno != errno.EEXIST:
-                        raise
+                except FileExistsError:
+                    pass
 
             f = None
             try:
@@ -417,7 +422,7 @@ def gcserver(ui, repo):
     cachepath = repo.vfs.join(b"remotefilelogcache")
     for head in heads:
         mf = repo[head].manifest()
-        for filename, filenode in pycompat.iteritems(mf):
+        for filename, filenode in mf.items():
             filecachepath = os.path.join(cachepath, filename, hex(filenode))
             neededfiles.add(filecachepath)
 

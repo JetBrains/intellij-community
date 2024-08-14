@@ -5,8 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
+import io
+import stat
 import struct
 import zlib
 
@@ -17,7 +18,6 @@ from ..node import (
 from ..thirdparty import attr
 from .. import (
     error,
-    pycompat,
     revlogutils,
     util,
 )
@@ -25,7 +25,7 @@ from .. import (
 from ..revlogutils import nodemap as nodemaputil
 from ..revlogutils import constants as revlog_constants
 
-stringio = pycompat.bytesio
+stringio = io.BytesIO
 
 
 _pack = struct.pack
@@ -43,29 +43,149 @@ NONNORMAL = -1
 # a special value used internally for `time` if the time is ambigeous
 AMBIGUOUS_TIME = -1
 
+# Bits of the `flags` byte inside a node in the file format
+DIRSTATE_V2_WDIR_TRACKED = 1 << 0
+DIRSTATE_V2_P1_TRACKED = 1 << 1
+DIRSTATE_V2_P2_INFO = 1 << 2
+DIRSTATE_V2_MODE_EXEC_PERM = 1 << 3
+DIRSTATE_V2_MODE_IS_SYMLINK = 1 << 4
+DIRSTATE_V2_HAS_FALLBACK_EXEC = 1 << 5
+DIRSTATE_V2_FALLBACK_EXEC = 1 << 6
+DIRSTATE_V2_HAS_FALLBACK_SYMLINK = 1 << 7
+DIRSTATE_V2_FALLBACK_SYMLINK = 1 << 8
+DIRSTATE_V2_EXPECTED_STATE_IS_MODIFIED = 1 << 9
+DIRSTATE_V2_HAS_MODE_AND_SIZE = 1 << 10
+DIRSTATE_V2_HAS_MTIME = 1 << 11
+DIRSTATE_V2_MTIME_SECOND_AMBIGUOUS = 1 << 12
+DIRSTATE_V2_DIRECTORY = 1 << 13
+DIRSTATE_V2_ALL_UNKNOWN_RECORDED = 1 << 14
+DIRSTATE_V2_ALL_IGNORED_RECORDED = 1 << 15
+
 
 @attr.s(slots=True, init=False)
-class DirstateItem(object):
+class DirstateItem:
     """represent a dirstate entry
 
-    It contains:
+    It hold multiple attributes
 
-    - state (one of 'n', 'a', 'r', 'm')
-    - mode,
-    - size,
-    - mtime,
+    # about file tracking
+    - wc_tracked: is the file tracked by the working copy
+    - p1_tracked: is the file tracked in working copy first parent
+    - p2_info: the file has been involved in some merge operation. Either
+               because it was actually merged, or because the p2 version was
+               ahead, or because some rename moved it there. In either case
+               `hg status` will want it displayed as modified.
+
+    # about the file state expected from p1 manifest:
+    - mode: the file mode in p1
+    - size: the file size in p1
+
+    These value can be set to None, which mean we don't have a meaningful value
+    to compare with. Either because we don't really care about them as there
+    `status` is known without having to look at the disk or because we don't
+    know these right now and a full comparison will be needed to find out if
+    the file is clean.
+
+    # about the file state on disk last time we saw it:
+    - mtime: the last known clean mtime for the file.
+
+    This value can be set to None if no cachable state exist. Either because we
+    do not care (see previous section) or because we could not cache something
+    yet.
     """
 
-    _state = attr.ib()
+    _wc_tracked = attr.ib()
+    _p1_tracked = attr.ib()
+    _p2_info = attr.ib()
     _mode = attr.ib()
     _size = attr.ib()
-    _mtime = attr.ib()
+    _mtime_s = attr.ib()
+    _mtime_ns = attr.ib()
+    _fallback_exec = attr.ib()
+    _fallback_symlink = attr.ib()
+    _mtime_second_ambiguous = attr.ib()
 
-    def __init__(self, state, mode, size, mtime):
-        self._state = state
-        self._mode = mode
-        self._size = size
-        self._mtime = mtime
+    def __init__(
+        self,
+        wc_tracked=False,
+        p1_tracked=False,
+        p2_info=False,
+        has_meaningful_data=True,
+        has_meaningful_mtime=True,
+        parentfiledata=None,
+        fallback_exec=None,
+        fallback_symlink=None,
+    ):
+        self._wc_tracked = wc_tracked
+        self._p1_tracked = p1_tracked
+        self._p2_info = p2_info
+
+        self._fallback_exec = fallback_exec
+        self._fallback_symlink = fallback_symlink
+
+        self._mode = None
+        self._size = None
+        self._mtime_s = None
+        self._mtime_ns = None
+        self._mtime_second_ambiguous = False
+        if parentfiledata is None:
+            has_meaningful_mtime = False
+            has_meaningful_data = False
+        elif parentfiledata[2] is None:
+            has_meaningful_mtime = False
+        if has_meaningful_data:
+            self._mode = parentfiledata[0]
+            self._size = parentfiledata[1]
+        if has_meaningful_mtime:
+            (
+                self._mtime_s,
+                self._mtime_ns,
+                self._mtime_second_ambiguous,
+            ) = parentfiledata[2]
+
+    @classmethod
+    def from_v2_data(cls, flags, size, mtime_s, mtime_ns):
+        """Build a new DirstateItem object from V2 data"""
+        has_mode_size = bool(flags & DIRSTATE_V2_HAS_MODE_AND_SIZE)
+        has_meaningful_mtime = bool(flags & DIRSTATE_V2_HAS_MTIME)
+        mode = None
+
+        if flags & +DIRSTATE_V2_EXPECTED_STATE_IS_MODIFIED:
+            # we do not have support for this flag in the code yet,
+            # force a lookup for this file.
+            has_mode_size = False
+            has_meaningful_mtime = False
+
+        fallback_exec = None
+        if flags & DIRSTATE_V2_HAS_FALLBACK_EXEC:
+            fallback_exec = flags & DIRSTATE_V2_FALLBACK_EXEC
+
+        fallback_symlink = None
+        if flags & DIRSTATE_V2_HAS_FALLBACK_SYMLINK:
+            fallback_symlink = flags & DIRSTATE_V2_FALLBACK_SYMLINK
+
+        if has_mode_size:
+            assert stat.S_IXUSR == 0o100
+            if flags & DIRSTATE_V2_MODE_EXEC_PERM:
+                mode = 0o755
+            else:
+                mode = 0o644
+            if flags & DIRSTATE_V2_MODE_IS_SYMLINK:
+                mode |= stat.S_IFLNK
+            else:
+                mode |= stat.S_IFREG
+
+        second_ambiguous = flags & DIRSTATE_V2_MTIME_SECOND_AMBIGUOUS
+        return cls(
+            wc_tracked=bool(flags & DIRSTATE_V2_WDIR_TRACKED),
+            p1_tracked=bool(flags & DIRSTATE_V2_P1_TRACKED),
+            p2_info=bool(flags & DIRSTATE_V2_P2_INFO),
+            has_meaningful_data=has_mode_size,
+            has_meaningful_mtime=has_meaningful_mtime,
+            parentfiledata=(mode, size, (mtime_s, mtime_ns, second_ambiguous)),
+            fallback_exec=fallback_exec,
+            fallback_symlink=fallback_symlink,
+        )
 
     @classmethod
     def from_v1_data(cls, state, mode, size, mtime):
@@ -74,12 +194,41 @@ class DirstateItem(object):
         Since the dirstate-v1 format is frozen, the signature of this function
         is not expected to change, unlike the __init__ one.
         """
-        return cls(
-            state=state,
-            mode=mode,
-            size=size,
-            mtime=mtime,
-        )
+        if state == b'm':
+            return cls(wc_tracked=True, p1_tracked=True, p2_info=True)
+        elif state == b'a':
+            return cls(wc_tracked=True)
+        elif state == b'r':
+            if size == NONNORMAL:
+                p1_tracked = True
+                p2_info = True
+            elif size == FROM_P2:
+                p1_tracked = False
+                p2_info = True
+            else:
+                p1_tracked = True
+                p2_info = False
+            return cls(p1_tracked=p1_tracked, p2_info=p2_info)
+        elif state == b'n':
+            if size == FROM_P2:
+                return cls(wc_tracked=True, p2_info=True)
+            elif size == NONNORMAL:
+                return cls(wc_tracked=True, p1_tracked=True)
+            elif mtime == AMBIGUOUS_TIME:
+                return cls(
+                    wc_tracked=True,
+                    p1_tracked=True,
+                    has_meaningful_mtime=False,
+                    parentfiledata=(mode, size, (42, 0, False)),
+                )
+            else:
+                return cls(
+                    wc_tracked=True,
+                    p1_tracked=True,
+                    parentfiledata=(mode, size, (mtime, 0, False)),
+                )
+        else:
+            raise RuntimeError(b'unknown state: %s' % state)
 
     def set_possibly_dirty(self):
         """Mark a file as "possibly dirty"
@@ -87,39 +236,92 @@ class DirstateItem(object):
         This means the next status call will have to actually check its content
         to make sure it is correct.
         """
-        self._mtime = AMBIGUOUS_TIME
+        self._mtime_s = None
+        self._mtime_ns = None
 
-    def __getitem__(self, idx):
-        if idx == 0 or idx == -4:
-            msg = b"do not use item[x], use item.state"
-            util.nouideprecwarn(msg, b'6.0', stacklevel=2)
-            return self._state
-        elif idx == 1 or idx == -3:
-            msg = b"do not use item[x], use item.mode"
-            util.nouideprecwarn(msg, b'6.0', stacklevel=2)
-            return self._mode
-        elif idx == 2 or idx == -2:
-            msg = b"do not use item[x], use item.size"
-            util.nouideprecwarn(msg, b'6.0', stacklevel=2)
-            return self._size
-        elif idx == 3 or idx == -1:
-            msg = b"do not use item[x], use item.mtime"
-            util.nouideprecwarn(msg, b'6.0', stacklevel=2)
-            return self._mtime
-        else:
-            raise IndexError(idx)
+    def set_clean(self, mode, size, mtime):
+        """mark a file as "clean" cancelling potential "possibly dirty call"
+
+        Note: this function is a descendant of `dirstate.normal` and is
+        currently expected to be call on "normal" entry only. There are not
+        reason for this to not change in the future as long as the ccode is
+        updated to preserve the proper state of the non-normal files.
+        """
+        self._wc_tracked = True
+        self._p1_tracked = True
+        self._mode = mode
+        self._size = size
+        self._mtime_s, self._mtime_ns, self._mtime_second_ambiguous = mtime
+
+    def set_tracked(self):
+        """mark a file as tracked in the working copy
+
+        This will ultimately be called by command like `hg add`.
+        """
+        self._wc_tracked = True
+        # `set_tracked` is replacing various `normallookup` call. So we mark
+        # the files as needing lookup
+        #
+        # Consider dropping this in the future in favor of something less broad.
+        self._mtime_s = None
+        self._mtime_ns = None
+
+    def set_untracked(self):
+        """mark a file as untracked in the working copy
+
+        This will ultimately be called by command like `hg remove`.
+        """
+        self._wc_tracked = False
+        self._mode = None
+        self._size = None
+        self._mtime_s = None
+        self._mtime_ns = None
+
+    def drop_merge_data(self):
+        """remove all "merge-only" information from a DirstateItem
+
+        This is to be call by the dirstatemap code when the second parent is dropped
+        """
+        if self._p2_info:
+            self._p2_info = False
+            self._mode = None
+            self._size = None
+            self._mtime_s = None
+            self._mtime_ns = None
 
     @property
     def mode(self):
-        return self._mode
+        return self._v1_mode()
 
     @property
     def size(self):
-        return self._size
+        return self._v1_size()
 
     @property
     def mtime(self):
-        return self._mtime
+        return self._v1_mtime()
+
+    def mtime_likely_equal_to(self, other_mtime):
+        self_sec = self._mtime_s
+        if self_sec is None:
+            return False
+        self_ns = self._mtime_ns
+        other_sec, other_ns, second_ambiguous = other_mtime
+        if self_sec != other_sec:
+            # seconds are different theses mtime are definitly not equal
+            return False
+        elif other_ns == 0 or self_ns == 0:
+            # at least one side as no nano-seconds information
+
+            if self._mtime_second_ambiguous:
+                # We cannot trust the mtime in this case
+                return False
+            else:
+                # the "seconds" value was reliable on its own. We are good to go.
+                return True
+        else:
+            # We have nano second information, let us use them !
+            return self_ns == other_ns
 
     @property
     def state(self):
@@ -134,101 +336,236 @@ class DirstateItem(object):
         dirstatev1 format. It would make sense to ultimately deprecate it in
         favor of the more "semantic" attributes.
         """
-        return self._state
+        if not self.any_tracked:
+            return b'?'
+        return self._v1_state()
+
+    @property
+    def has_fallback_exec(self):
+        """True if "fallback" information are available for the "exec" bit
+
+        Fallback information can be stored in the dirstate to keep track of
+        filesystem attribute tracked by Mercurial when the underlying file
+        system or operating system does not support that property, (e.g.
+        Windows).
+
+        Not all version of the dirstate on-disk storage support preserving this
+        information.
+        """
+        return self._fallback_exec is not None
+
+    @property
+    def fallback_exec(self):
+        """ "fallback" information for the executable bit
+
+        True if the file should be considered executable when we cannot get
+        this information from the files system. False if it should be
+        considered non-executable.
+
+        See has_fallback_exec for details."""
+        return self._fallback_exec
+
+    @fallback_exec.setter
+    def set_fallback_exec(self, value):
+        """control "fallback" executable bit
+
+        Set to:
+        - True if the file should be considered executable,
+        - False if the file should be considered non-executable,
+        - None if we do not have valid fallback data.
+
+        See has_fallback_exec for details."""
+        if value is None:
+            self._fallback_exec = None
+        else:
+            self._fallback_exec = bool(value)
+
+    @property
+    def has_fallback_symlink(self):
+        """True if "fallback" information are available for symlink status
+
+        Fallback information can be stored in the dirstate to keep track of
+        filesystem attribute tracked by Mercurial when the underlying file
+        system or operating system does not support that property, (e.g.
+        Windows).
+
+        Not all version of the dirstate on-disk storage support preserving this
+        information."""
+        return self._fallback_symlink is not None
+
+    @property
+    def fallback_symlink(self):
+        """ "fallback" information for symlink status
+
+        True if the file should be considered executable when we cannot get
+        this information from the files system. False if it should be
+        considered non-executable.
+
+        See has_fallback_exec for details."""
+        return self._fallback_symlink
+
+    @fallback_symlink.setter
+    def set_fallback_symlink(self, value):
+        """control "fallback" symlink status
+
+        Set to:
+        - True if the file should be considered a symlink,
+        - False if the file should be considered not a symlink,
+        - None if we do not have valid fallback data.
+
+        See has_fallback_symlink for details."""
+        if value is None:
+            self._fallback_symlink = None
+        else:
+            self._fallback_symlink = bool(value)
 
     @property
     def tracked(self):
         """True is the file is tracked in the working copy"""
-        return self._state in b"nma"
+        return self._wc_tracked
+
+    @property
+    def any_tracked(self):
+        """True is the file is tracked anywhere (wc or parents)"""
+        return self._wc_tracked or self._p1_tracked or self._p2_info
 
     @property
     def added(self):
         """True if the file has been added"""
-        return self._state == b'a'
+        return self._wc_tracked and not (self._p1_tracked or self._p2_info)
 
     @property
-    def merged(self):
-        """True if the file has been merged
-
-        Should only be set if a merge is in progress in the dirstate
-        """
-        return self._state == b'm'
+    def modified(self):
+        """True if the file has been modified"""
+        return self._wc_tracked and self._p1_tracked and self._p2_info
 
     @property
-    def from_p2(self):
-        """True if the file have been fetched from p2 during the current merge
-
-        This is only True is the file is currently tracked.
-
-        Should only be set if a merge is in progress in the dirstate
-        """
-        return self._state == b'n' and self._size == FROM_P2
+    def maybe_clean(self):
+        """True if the file has a chance to be in the "clean" state"""
+        if not self._wc_tracked:
+            return False
+        elif not self._p1_tracked:
+            return False
+        elif self._p2_info:
+            return False
+        return True
 
     @property
-    def from_p2_removed(self):
-        """True if the file has been removed, but was "from_p2" initially
+    def p1_tracked(self):
+        """True if the file is tracked in the first parent manifest"""
+        return self._p1_tracked
 
-        This property seems like an abstraction leakage and should probably be
-        dealt in this class (or maybe the dirstatemap) directly.
+    @property
+    def p2_info(self):
+        """True if the file needed to merge or apply any input from p2
+
+        See the class documentation for details.
         """
-        return self._state == b'r' and self._size == FROM_P2
+        return self._wc_tracked and self._p2_info
 
     @property
     def removed(self):
         """True if the file has been removed"""
-        return self._state == b'r'
+        return not self._wc_tracked and (self._p1_tracked or self._p2_info)
 
-    @property
-    def merged_removed(self):
-        """True if the file has been removed, but was "merged" initially
+    def v2_data(self):
+        """Returns (flags, mode, size, mtime) for v2 serialization"""
+        flags = 0
+        if self._wc_tracked:
+            flags |= DIRSTATE_V2_WDIR_TRACKED
+        if self._p1_tracked:
+            flags |= DIRSTATE_V2_P1_TRACKED
+        if self._p2_info:
+            flags |= DIRSTATE_V2_P2_INFO
+        if self._mode is not None and self._size is not None:
+            flags |= DIRSTATE_V2_HAS_MODE_AND_SIZE
+            if self.mode & stat.S_IXUSR:
+                flags |= DIRSTATE_V2_MODE_EXEC_PERM
+            if stat.S_ISLNK(self.mode):
+                flags |= DIRSTATE_V2_MODE_IS_SYMLINK
+        if self._mtime_s is not None:
+            flags |= DIRSTATE_V2_HAS_MTIME
+        if self._mtime_second_ambiguous:
+            flags |= DIRSTATE_V2_MTIME_SECOND_AMBIGUOUS
 
-        This property seems like an abstraction leakage and should probably be
-        dealt in this class (or maybe the dirstatemap)  directly.
-        """
-        return self._state == b'r' and self._size == NONNORMAL
+        if self._fallback_exec is not None:
+            flags |= DIRSTATE_V2_HAS_FALLBACK_EXEC
+            if self._fallback_exec:
+                flags |= DIRSTATE_V2_FALLBACK_EXEC
 
-    @property
-    def dm_nonnormal(self):
-        """True is the entry is non-normal in the dirstatemap sense
+        if self._fallback_symlink is not None:
+            flags |= DIRSTATE_V2_HAS_FALLBACK_SYMLINK
+            if self._fallback_symlink:
+                flags |= DIRSTATE_V2_FALLBACK_SYMLINK
 
-        There is no reason for any code, but the dirstatemap one to use this.
-        """
-        return self.state != b'n' or self.mtime == AMBIGUOUS_TIME
+        # Note: we do not need to do anything regarding
+        # DIRSTATE_V2_ALL_UNKNOWN_RECORDED and DIRSTATE_V2_ALL_IGNORED_RECORDED
+        # since we never set _DIRSTATE_V2_HAS_DIRCTORY_MTIME
+        return (flags, self._size or 0, self._mtime_s or 0, self._mtime_ns or 0)
 
-    @property
-    def dm_otherparent(self):
-        """True is the entry is `otherparent` in the dirstatemap sense
-
-        There is no reason for any code, but the dirstatemap one to use this.
-        """
-        return self._size == FROM_P2
-
-    def v1_state(self):
+    def _v1_state(self):
         """return a "state" suitable for v1 serialization"""
-        return self._state
+        if not self.any_tracked:
+            # the object has no state to record, this is -currently-
+            # unsupported
+            raise RuntimeError('untracked item')
+        elif self.removed:
+            return b'r'
+        elif self._p1_tracked and self._p2_info:
+            return b'm'
+        elif self.added:
+            return b'a'
+        else:
+            return b'n'
 
-    def v1_mode(self):
+    def _v1_mode(self):
         """return a "mode" suitable for v1 serialization"""
-        return self._mode
+        return self._mode if self._mode is not None else 0
 
-    def v1_size(self):
+    def _v1_size(self):
         """return a "size" suitable for v1 serialization"""
-        return self._size
+        if not self.any_tracked:
+            # the object has no state to record, this is -currently-
+            # unsupported
+            raise RuntimeError('untracked item')
+        elif self.removed and self._p1_tracked and self._p2_info:
+            return NONNORMAL
+        elif self._p2_info:
+            return FROM_P2
+        elif self.removed:
+            return 0
+        elif self.added:
+            return NONNORMAL
+        elif self._size is None:
+            return NONNORMAL
+        else:
+            return self._size
 
-    def v1_mtime(self):
+    def _v1_mtime(self):
         """return a "mtime" suitable for v1 serialization"""
-        return self._mtime
-
-    def need_delay(self, now):
-        """True if the stored mtime would be ambiguous with the current time"""
-        return self._state == b'n' and self._mtime == now
+        if not self.any_tracked:
+            # the object has no state to record, this is -currently-
+            # unsupported
+            raise RuntimeError('untracked item')
+        elif self.removed:
+            return 0
+        elif self._mtime_s is None:
+            return AMBIGUOUS_TIME
+        elif self._p2_info:
+            return AMBIGUOUS_TIME
+        elif not self._p1_tracked:
+            return AMBIGUOUS_TIME
+        elif self._mtime_second_ambiguous:
+            return AMBIGUOUS_TIME
+        else:
+            return self._mtime_s
 
 
 def gettype(q):
     return int(q & 0xFFFF)
 
 
-class BaseIndexObject(object):
+class BaseIndexObject:
     # Can I be passed to an algorithme implemented in Rust ?
     rust_ext_compat = 0
     # Format of an index entry according to Python's `struct` language
@@ -251,17 +588,12 @@ class BaseIndexObject(object):
         0,
         revlog_constants.COMP_MODE_INLINE,
         revlog_constants.COMP_MODE_INLINE,
+        revlog_constants.RANK_UNKNOWN,
     )
 
     @util.propertycache
     def entry_size(self):
         return self.index_format.size
-
-    @property
-    def nodemap(self):
-        msg = b"index.nodemap is deprecated, use index.[has_node|rev|get_rev]"
-        util.nouideprecwarn(msg, b'5.3', stacklevel=2)
-        return self._nodemap
 
     @util.propertycache
     def _nodemap(self):
@@ -314,7 +646,7 @@ class BaseIndexObject(object):
         if not isinstance(i, int):
             raise TypeError(b"expecting int indexes")
         if i < 0 or i >= len(self):
-            raise IndexError
+            raise IndexError(i)
 
     def __getitem__(self, i):
         if i == -1:
@@ -338,6 +670,7 @@ class BaseIndexObject(object):
             0,
             revlog_constants.COMP_MODE_INLINE,
             revlog_constants.COMP_MODE_INLINE,
+            revlog_constants.RANK_UNKNOWN,
         )
         return r
 
@@ -470,9 +803,14 @@ class InlinedIndexObject(BaseIndexObject):
         return self._offsets[i]
 
 
-def parse_index2(data, inline, revlogv2=False):
+def parse_index2(data, inline, format=revlog_constants.REVLOGV1):
+    if format == revlog_constants.CHANGELOGV2:
+        return parse_index_cl_v2(data)
     if not inline:
-        cls = IndexObject2 if revlogv2 else IndexObject
+        if format == revlog_constants.REVLOGV2:
+            cls = IndexObject2
+        else:
+            cls = IndexObject
         return cls(data), None
     cls = InlinedIndexObject
     return cls(data, inline), (0, data)
@@ -520,7 +858,7 @@ class IndexObject2(IndexObject):
         entry = data[:10]
         data_comp = data[10] & 3
         sidedata_comp = (data[10] & (3 << 2)) >> 2
-        return entry + (data_comp, sidedata_comp)
+        return entry + (data_comp, sidedata_comp, revlog_constants.RANK_UNKNOWN)
 
     def _pack_entry(self, rev, entry):
         data = entry[:10]
@@ -545,20 +883,53 @@ class IndexObject2(IndexObject):
 class IndexChangelogV2(IndexObject2):
     index_format = revlog_constants.INDEX_ENTRY_CL_V2
 
+    null_item = (
+        IndexObject2.null_item[: revlog_constants.ENTRY_RANK]
+        + (0,)  # rank of null is 0
+        + IndexObject2.null_item[revlog_constants.ENTRY_RANK :]
+    )
+
     def _unpack_entry(self, rev, data, r=True):
         items = self.index_format.unpack(data)
-        entry = items[:3] + (rev, rev) + items[3:8]
-        data_comp = items[8] & 3
-        sidedata_comp = (items[8] >> 2) & 3
-        return entry + (data_comp, sidedata_comp)
+        return (
+            items[revlog_constants.INDEX_ENTRY_V2_IDX_OFFSET],
+            items[revlog_constants.INDEX_ENTRY_V2_IDX_COMPRESSED_LENGTH],
+            items[revlog_constants.INDEX_ENTRY_V2_IDX_UNCOMPRESSED_LENGTH],
+            rev,
+            rev,
+            items[revlog_constants.INDEX_ENTRY_V2_IDX_PARENT_1],
+            items[revlog_constants.INDEX_ENTRY_V2_IDX_PARENT_2],
+            items[revlog_constants.INDEX_ENTRY_V2_IDX_NODEID],
+            items[revlog_constants.INDEX_ENTRY_V2_IDX_SIDEDATA_OFFSET],
+            items[
+                revlog_constants.INDEX_ENTRY_V2_IDX_SIDEDATA_COMPRESSED_LENGTH
+            ],
+            items[revlog_constants.INDEX_ENTRY_V2_IDX_COMPRESSION_MODE] & 3,
+            (items[revlog_constants.INDEX_ENTRY_V2_IDX_COMPRESSION_MODE] >> 2)
+            & 3,
+            items[revlog_constants.INDEX_ENTRY_V2_IDX_RANK],
+        )
 
     def _pack_entry(self, rev, entry):
-        assert entry[3] == rev, entry[3]
-        assert entry[4] == rev, entry[4]
-        data = entry[:3] + entry[5:10]
-        data_comp = entry[10] & 3
-        sidedata_comp = (entry[11] & 3) << 2
-        data += (data_comp | sidedata_comp,)
+
+        base = entry[revlog_constants.ENTRY_DELTA_BASE]
+        link_rev = entry[revlog_constants.ENTRY_LINK_REV]
+        assert base == rev, (base, rev)
+        assert link_rev == rev, (link_rev, rev)
+        data = (
+            entry[revlog_constants.ENTRY_DATA_OFFSET],
+            entry[revlog_constants.ENTRY_DATA_COMPRESSED_LENGTH],
+            entry[revlog_constants.ENTRY_DATA_UNCOMPRESSED_LENGTH],
+            entry[revlog_constants.ENTRY_PARENT_1],
+            entry[revlog_constants.ENTRY_PARENT_2],
+            entry[revlog_constants.ENTRY_NODE_ID],
+            entry[revlog_constants.ENTRY_SIDEDATA_OFFSET],
+            entry[revlog_constants.ENTRY_SIDEDATA_COMPRESSED_LENGTH],
+            entry[revlog_constants.ENTRY_DATA_COMPRESSION_MODE] & 3
+            | (entry[revlog_constants.ENTRY_SIDEDATA_COMPRESSION_MODE] & 3)
+            << 2,
+            entry[revlog_constants.ENTRY_RANK],
+        )
         return self.index_format.pack(*data)
 
 
@@ -588,32 +959,19 @@ def parse_dirstate(dmap, copymap, st):
     return parents
 
 
-def pack_dirstate(dmap, copymap, pl, now):
-    now = int(now)
+def pack_dirstate(dmap, copymap, pl):
     cs = stringio()
     write = cs.write
     write(b"".join(pl))
-    for f, e in pycompat.iteritems(dmap):
-        if e.need_delay(now):
-            # The file was last modified "simultaneously" with the current
-            # write to dirstate (i.e. within the same second for file-
-            # systems with a granularity of 1 sec). This commonly happens
-            # for at least a couple of files on 'update'.
-            # The user could change the file without changing its size
-            # within the same second. Invalidate the file's mtime in
-            # dirstate, forcing future 'status' calls to compare the
-            # contents of the file if the size is the same. This prevents
-            # mistakenly treating such files as clean.
-            e.set_possibly_dirty()
-
+    for f, e in dmap.items():
         if f in copymap:
             f = b"%s\0%s" % (f, copymap[f])
         e = _pack(
             b">cllll",
-            e.v1_state(),
-            e.v1_mode(),
-            e.v1_size(),
-            e.v1_mtime(),
+            e._v1_state(),
+            e._v1_mode(),
+            e._v1_size(),
+            e._v1_mtime(),
             len(f),
         )
         write(e)

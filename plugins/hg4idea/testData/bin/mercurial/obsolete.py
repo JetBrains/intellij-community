@@ -67,17 +67,12 @@ The header is followed by the markers. Marker format depend of the version. See
 comment associated with each format for details.
 
 """
-from __future__ import absolute_import
 
-import errno
+import binascii
 import struct
+import weakref
 
 from .i18n import _
-from .node import (
-    bin,
-    hex,
-)
-from .pycompat import getattr
 from .node import (
     bin,
     hex,
@@ -249,11 +244,11 @@ def _fm0readmarkers(data, off, stop):
                     if len(p) != 20:
                         parents = None
                         break
-            except TypeError:
+            except binascii.Error:
                 # if content cannot be translated to nodeid drop the data.
                 parents = None
 
-        metadata = tuple(sorted(pycompat.iteritems(metadata)))
+        metadata = tuple(sorted(metadata.items()))
 
         yield (pre, sucs, flags, metadata, date, parents)
 
@@ -283,7 +278,7 @@ def _fm0encodemeta(meta):
     """Return encoded metadata string to string mapping.
 
     Assume no ':' in key and no '\0' in both key and value."""
-    for key, value in pycompat.iteritems(meta):
+    for key, value in meta.items():
         if b':' in key or b'\0' in key:
             raise ValueError(b"':' and '\0' are forbidden in metadata key'")
         if b'\0' in value:
@@ -343,8 +338,6 @@ _fm1nodesha1size = _calcsize(_fm1nodesha1)
 _fm1nodesha256size = _calcsize(_fm1nodesha256)
 _fm1fsize = _calcsize(_fm1fixed)
 _fm1parentnone = 3
-_fm1parentshift = 14
-_fm1parentmask = _fm1parentnone << _fm1parentshift
 _fm1metapair = b'BB'
 _fm1metapairsize = _calcsize(_fm1metapair)
 
@@ -403,7 +396,7 @@ def _fm1purereadmarkers(data, off, stop):
         off = o3 + metasize * nummeta
         metapairsize = unpack(b'>' + (metafmt * nummeta), data[o3:off])
         metadata = []
-        for idx in pycompat.xrange(0, len(metapairsize), 2):
+        for idx in range(0, len(metapairsize), 2):
             o1 = off + metapairsize[idx]
             o2 = o1 + metapairsize[idx + 1]
             metadata.append((data[off:o1], data[o1:o2]))
@@ -546,7 +539,7 @@ def _checkinvalidmarkers(repo, markers):
             )
 
 
-class obsstore(object):
+class obsstore:
     """Store obsolete markers
 
     Markers can be accessed with two mappings:
@@ -568,9 +561,17 @@ class obsstore(object):
         # caches for various obsolescence related cache
         self.caches = {}
         self.svfs = svfs
-        self.repo = repo
+        self._repo = weakref.ref(repo)
         self._defaultformat = defaultformat
         self._readonly = readonly
+
+    @property
+    def repo(self):
+        r = self._repo()
+        if r is None:
+            msg = "using the obsstore of a deallocated repo"
+            raise error.ProgrammingError(msg)
+        return r
 
     def __iter__(self):
         return iter(self._all)
@@ -579,14 +580,19 @@ class obsstore(object):
         return len(self._all)
 
     def __nonzero__(self):
+        from . import statichttprepo
+
+        if isinstance(self.repo, statichttprepo.statichttprepository):
+            # If repo is accessed via static HTTP, then we can't use os.stat()
+            # to just peek at the file size.
+            return len(self._data) > 1
         if not self._cached('_all'):
             try:
                 return self.svfs.stat(b'obsstore').st_size > 1
-            except OSError as inst:
-                if inst.errno != errno.ENOENT:
-                    raise
+            except FileNotFoundError:
                 # just build an empty _all list if no obsstore exists, which
                 # avoids further stat() syscalls
+                pass
         return bool(self._all)
 
     __bool__ = __nonzero__
@@ -647,11 +653,9 @@ class obsstore(object):
                 if len(succ) != 20:
                     raise ValueError(succ)
         if prec in succs:
-            raise ValueError(
-                'in-marker cycle with %s' % pycompat.sysstr(hex(prec))
-            )
+            raise ValueError('in-marker cycle with %s' % prec.hex())
 
-        metadata = tuple(sorted(pycompat.iteritems(metadata)))
+        metadata = tuple(sorted(metadata.items()))
         for k, v in metadata:
             try:
                 # might be better to reject non-ASCII keys
@@ -814,7 +818,7 @@ def makestore(ui, repo):
     store = obsstore(repo, repo.svfs, readonly=readonly, **kwargs)
     if store and readonly:
         ui.warn(
-            _(b'obsolete feature not enabled but %i markers found!\n')
+            _(b'"obsolete" feature not enabled but %i markers found!\n')
             % len(list(store))
         )
     return store
@@ -935,7 +939,7 @@ def clearobscaches(repo):
 
 def _mutablerevs(repo):
     """the set of mutable revision in the repository"""
-    return repo._phasecache.getrevset(repo, phases.mutablephases)
+    return repo._phasecache.getrevset(repo, phases.relevant_mutable_phases)
 
 
 @cachefor(b'obsolete')
@@ -944,8 +948,7 @@ def _computeobsoleteset(repo):
     getnode = repo.changelog.node
     notpublic = _mutablerevs(repo)
     isobs = repo.obsstore.successors.__contains__
-    obs = {r for r in notpublic if isobs(getnode(r))}
-    return obs
+    return frozenset(r for r in notpublic if isobs(getnode(r)))
 
 
 @cachefor(b'orphan')
@@ -963,14 +966,14 @@ def _computeorphanset(repo):
             if p in obsolete or p in unstable:
                 unstable.add(r)
                 break
-    return unstable
+    return frozenset(unstable)
 
 
 @cachefor(b'suspended')
 def _computesuspendedset(repo):
     """the set of obsolete parents with non obsolete descendants"""
     suspended = repo.changelog.ancestors(getrevs(repo, b'orphan'))
-    return {r for r in getrevs(repo, b'obsolete') if r in suspended}
+    return frozenset(r for r in getrevs(repo, b'obsolete') if r in suspended)
 
 
 @cachefor(b'extinct')
@@ -990,7 +993,8 @@ def _computephasedivergentset(repo):
     torev = cl.index.get_rev
     tonode = cl.node
     obsstore = repo.obsstore
-    for rev in repo.revs(b'(not public()) and (not obsolete())'):
+    candidates = sorted(_mutablerevs(repo) - getrevs(repo, b"obsolete"))
+    for rev in candidates:
         # We only evaluate mutable, non-obsolete revision
         node = tonode(rev)
         # (future) A cache of predecessors may worth if split is very common
@@ -1002,7 +1006,7 @@ def _computephasedivergentset(repo):
                 # we have a public predecessor
                 bumped.add(rev)
                 break  # Next draft!
-    return bumped
+    return frozenset(bumped)
 
 
 @cachefor(b'contentdivergent')
@@ -1012,7 +1016,8 @@ def _computecontentdivergentset(repo):
     obsstore = repo.obsstore
     newermap = {}
     tonode = repo.changelog.node
-    for rev in repo.revs(b'(not public()) - obsolete()'):
+    candidates = sorted(_mutablerevs(repo) - getrevs(repo, b"obsolete"))
+    for rev in candidates:
         node = tonode(rev)
         mark = obsstore.predecessors.get(node, ())
         toprocess = set(mark)
@@ -1029,7 +1034,7 @@ def _computecontentdivergentset(repo):
                 divergent.add(rev)
                 break
             toprocess.update(obsstore.predecessors.get(prec, ()))
-    return divergent
+    return frozenset(divergent)
 
 
 def makefoldid(relation, user):

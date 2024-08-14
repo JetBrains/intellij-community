@@ -17,7 +17,6 @@ Usage:
     python:hgext.hooklib.changeset_obsoleted.hook
 """
 
-from __future__ import absolute_import
 
 import email.errors as emailerrors
 import email.utils as emailutils
@@ -33,7 +32,10 @@ from mercurial import (
     pycompat,
     registrar,
 )
-from mercurial.utils import dateutil
+from mercurial.utils import (
+    dateutil,
+    stringutil,
+)
 from .. import notify
 
 configtable = {}
@@ -99,7 +101,7 @@ def _report_commit(ui, repo, ctx):
     try:
         msg = mail.parsebytes(data)
     except emailerrors.MessageParseError as inst:
-        raise error.Abort(inst)
+        raise error.Abort(stringutil.forcebytestr(inst))
 
     msg['In-reply-to'] = notify.messageid(ctx, domain, messageidseed)
     msg['Message-Id'] = notify.messageid(
@@ -115,7 +117,7 @@ def _report_commit(ui, repo, ctx):
         msg['From'] = mail.addressencode(ui, sender, n.charsets, n.test)
     msg['To'] = ', '.join(sorted(subs))
 
-    msgtext = msg.as_bytes() if pycompat.ispy3 else msg.as_string()
+    msgtext = msg.as_bytes()
     if ui.configbool(b'notify', b'test'):
         ui.write(msgtext)
         if not msgtext.endswith(b'\n'):

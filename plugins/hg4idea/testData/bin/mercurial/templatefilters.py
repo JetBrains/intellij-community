@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import os
 import re
@@ -141,7 +140,7 @@ def commondir(filelist):
             b = b[: len(a)]
         if a == b:
             return a
-        for i in pycompat.xrange(len(a)):
+        for i in range(len(a)):
             if a[i] != b[i]:
                 return a[:i]
         return a
@@ -269,10 +268,7 @@ def fill76(text):
 @templatefilter(b'firstline', intype=bytes)
 def firstline(text):
     """Any text. Returns the first line of text."""
-    try:
-        return text.splitlines(True)[0].rstrip(b'\r\n')
-    except IndexError:
-        return b''
+    return stringutil.firstline(text)
 
 
 @templatefilter(b'hex', intype=bytes)
@@ -315,7 +311,7 @@ def indent(text, prefix, firstline=b''):
     endswithnewline = text[-1:] == b'\n'
 
     def indenter():
-        for i in pycompat.xrange(num_lines):
+        for i in range(num_lines):
             l = lines[i]
             if l.strip():
                 yield prefix if i else firstline
@@ -335,7 +331,7 @@ def json(obj, paranoid=True):
         return b'false'
     elif obj is True:
         return b'true'
-    elif isinstance(obj, (int, pycompat.long, float)):
+    elif isinstance(obj, (int, int, float)):
         return pycompat.bytestr(obj)
     elif isinstance(obj, bytes):
         return b'"%s"' % encoding.jsonescape(obj, paranoid=paranoid)
@@ -343,14 +339,14 @@ def json(obj, paranoid=True):
         raise error.ProgrammingError(
             b'Mercurial only does output with bytes: %r' % obj
         )
-    elif util.safehasattr(obj, b'keys'):
+    elif hasattr(obj, 'keys'):
         out = [
             b'"%s": %s'
             % (encoding.jsonescape(k, paranoid=paranoid), json(v, paranoid))
-            for k, v in sorted(pycompat.iteritems(obj))
+            for k, v in sorted(obj.items())
         ]
         return b'{' + b', '.join(out) + b'}'
-    elif util.safehasattr(obj, b'__iter__'):
+    elif hasattr(obj, '__iter__'):
         out = [json(i, paranoid) for i in obj]
         return b'[' + b', '.join(out) + b']'
     raise error.ProgrammingError(b'cannot encode %r' % obj)
@@ -373,9 +369,7 @@ def obfuscate(text):
     """Any text. Returns the input text rendered as a sequence of
     XML entities.
     """
-    text = pycompat.unicode(
-        text, pycompat.sysstr(encoding.encoding), r'replace'
-    )
+    text = str(text, pycompat.sysstr(encoding.encoding), r'replace')
     return b''.join([b'&#%d;' % ord(c) for c in text])
 
 
@@ -394,6 +388,14 @@ def person(author):
     interpreting it as per RFC 5322.
     """
     return stringutil.person(author)
+
+
+@templatefilter(b'reverse')
+def reverse(list_):
+    """List. Reverses the order of list items."""
+    if isinstance(list_, list):
+        return templateutil.hybridlist(list_[::-1], name=b'item')
+    raise error.ParseError(_(b'not reversible'))
 
 
 @templatefilter(b'revescape', intype=bytes)
@@ -549,7 +551,7 @@ def websub(text, websubtable):
 
 def loadfilter(ui, extname, registrarobj):
     """Load template filter from specified registrarobj"""
-    for name, func in pycompat.iteritems(registrarobj._table):
+    for name, func in registrarobj._table.items():
         filters[name] = func
 
 

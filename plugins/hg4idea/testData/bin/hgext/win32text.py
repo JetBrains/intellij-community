@@ -41,13 +41,13 @@ pushed or pulled::
   # or pretxnchangegroup.cr = python:hgext.win32text.forbidcr
 '''
 
-from __future__ import absolute_import
 
 import re
 from mercurial.i18n import _
 from mercurial.node import short
 from mercurial import (
-    pycompat,
+    cmdutil,
+    extensions,
     registrar,
 )
 from mercurial.utils import stringutil
@@ -155,9 +155,7 @@ def forbidnewline(ui, repo, hooktype, node, newline, **kwargs):
     # changegroup that contains an unacceptable commit followed later
     # by a commit that fixes the problem.
     tip = repo[b'tip']
-    for rev in pycompat.xrange(
-        repo.changelog.tiprev(), repo[node].rev() - 1, -1
-    ):
+    for rev in range(repo.changelog.tiprev(), repo[node].rev() - 1, -1):
         c = repo[rev]
         for f in c.files():
             if f in seen or f not in tip or f not in c:
@@ -211,8 +209,31 @@ def forbidcr(ui, repo, hooktype, node, **kwargs):
 def reposetup(ui, repo):
     if not repo.local():
         return
-    for name, fn in pycompat.iteritems(_filters):
+    for name, fn in _filters.items():
         repo.adddatafilter(name, fn)
+
+
+def wrap_revert(orig, repo, ctx, names, uipathfn, actions, *args, **kwargs):
+    # reset dirstate cache for file we touch
+    ds = repo.dirstate
+    for filename in actions[b'revert'][0]:
+        entry = ds.get_entry(filename)
+        if entry is not None:
+            if entry.p1_tracked:
+                # If we revert the file, it is possibly dirty. However,
+                # this extension meddle with the file content and therefore
+                # its size. As a result, we cannot simply call
+                # `dirstate.set_possibly_dirty` as it will not affet the
+                # expected size of the file.
+                #
+                # At least, now, the quirk is properly documented.
+                ds.hacky_extension_update_file(
+                    filename,
+                    entry.tracked,
+                    p1_tracked=entry.p1_tracked,
+                    p2_info=entry.p2_info,
+                )
+    return orig(repo, ctx, names, uipathfn, actions, *args, **kwargs)
 
 
 def extsetup(ui):
@@ -224,3 +245,4 @@ def extsetup(ui):
                 b"https://mercurial-scm.org/wiki/Win32TextExtension\n"
             )
         )
+    extensions.wrapfunction(cmdutil, '_performrevert', wrap_revert)

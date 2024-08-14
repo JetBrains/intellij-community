@@ -57,11 +57,11 @@ Config::
     example.phabtoken = cli-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 """
 
-from __future__ import absolute_import
 
 import base64
 import contextlib
 import hashlib
+import io
 import itertools
 import json
 import mimetypes
@@ -71,7 +71,6 @@ import time
 
 from mercurial.node import bin, short
 from mercurial.i18n import _
-from mercurial.pycompat import getattr
 from mercurial.thirdparty import attr
 from mercurial import (
     cmdutil,
@@ -219,9 +218,7 @@ def _loadhgrc(orig, ui, wdirvfs, hgvfs, requirements, *args, **opts):
         rawparams = encoding.unifromlocal(wdirvfs.read(b".arcconfig"))
         # json.loads only returns unicode strings
         arcconfig = pycompat.rapply(
-            lambda x: encoding.unitolocal(x)
-            if isinstance(x, pycompat.unicode)
-            else x,
+            lambda x: encoding.unitolocal(x) if isinstance(x, str) else x,
             pycompat.json_loads(rawparams),
         )
 
@@ -288,8 +285,11 @@ def vcrcommand(name, flags, spec, helpcategory=None, optionalrepo=False):
                 import hgdemandimport
 
                 with hgdemandimport.deactivated():
+                    # pytype: disable=import-error
                     import vcr as vcrmod
                     import vcr.stubs as stubs
+
+                    # pytype: enable=import-error
 
                     vcr = vcrmod.VCR(
                         serializer='json',
@@ -352,11 +352,14 @@ def urlencodenested(params):
     """
     flatparams = util.sortdict()
 
-    def process(prefix, obj):
+    def process(prefix: bytes, obj):
         if isinstance(obj, bool):
             obj = {True: b'true', False: b'false'}[obj]  # Python -> PHP form
         lister = lambda l: [(b'%d' % k, v) for k, v in enumerate(l)]
+        # .items() will only be called for a dict type
+        # pytype: disable=attribute-error
         items = {list: lister, dict: lambda x: x.items()}.get(type(obj))
+        # pytype: enable=attribute-error
         if items is None:
             flatparams[prefix] = obj
         else:
@@ -447,9 +450,7 @@ def callconduit(ui, name, params):
                 time.sleep(retry_interval)
     ui.debug(b'Conduit Response: %s\n' % body)
     parsed = pycompat.rapply(
-        lambda x: encoding.unitolocal(x)
-        if isinstance(x, pycompat.unicode)
-        else x,
+        lambda x: encoding.unitolocal(x) if isinstance(x, str) else x,
         # json.loads only accepts bytes from py3.6+
         pycompat.json_loads(encoding.unifromlocal(body)),
     )
@@ -473,9 +474,7 @@ def debugcallconduit(ui, repo, name):
     rawparams = encoding.unifromlocal(ui.fin.read())
     # json.loads only returns unicode strings
     params = pycompat.rapply(
-        lambda x: encoding.unitolocal(x)
-        if isinstance(x, pycompat.unicode)
-        else x,
+        lambda x: encoding.unitolocal(x) if isinstance(x, str) else x,
         pycompat.json_loads(rawparams),
     )
     # json.dumps only accepts unicode strings
@@ -674,7 +673,7 @@ def getdiff(basectx, ctx, diffopts):
     return output.getvalue()
 
 
-class DiffChangeType(object):
+class DiffChangeType:
     ADD = 1
     CHANGE = 2
     DELETE = 3
@@ -685,7 +684,7 @@ class DiffChangeType(object):
     MULTICOPY = 8
 
 
-class DiffFileType(object):
+class DiffFileType:
     TEXT = 1
     IMAGE = 2
     BINARY = 3
@@ -706,7 +705,7 @@ class phabhunk(dict):
 
 
 @attr.s
-class phabchange(object):
+class phabchange:
     """Represents a Differential change, owns Differential hunks and owned by a
     Differential diff.  Each one represents one file in a diff.
     """
@@ -747,7 +746,7 @@ class phabchange(object):
 
 
 @attr.s
-class phabdiff(object):
+class phabdiff:
     """Represents a Differential diff, owns Differential changes.  Corresponds
     to a commit.
     """
@@ -1354,7 +1353,7 @@ def phabsend(ui, repo, *revs, **opts):
     """
     opts = pycompat.byteskwargs(opts)
     revs = list(revs) + opts.get(b'rev', [])
-    revs = scmutil.revrange(repo, revs)
+    revs = logcmdutil.revrange(repo, revs)
     revs.sort()  # ascending order to preserve topological parent/child in phab
 
     if not revs:
@@ -1927,7 +1926,9 @@ def querydrev(ui, spec):
                 raise error.Abort(_(b'unknown symbol: %s') % tree[1])
         elif op in {b'and_', b'add', b'sub'}:
             assert len(tree) == 3
-            return getattr(operator, op)(walk(tree[1]), walk(tree[2]))
+            return getattr(operator, pycompat.sysstr(op))(
+                walk(tree[1]), walk(tree[2])
+            )
         elif op == b'group':
             return walk(tree[1])
         elif op == b'ancestors':
@@ -2200,7 +2201,7 @@ def phabimport(ui, repo, *specs, **opts):
             for drev, contents in patches:
                 ui.status(_(b'applying patch from D%s\n') % drev)
 
-                with patch.extract(ui, pycompat.bytesio(contents)) as patchdata:
+                with patch.extract(ui, io.BytesIO(contents)) as patchdata:
                     msg, node, rej = cmdutil.tryimportone(
                         ui,
                         repo,
@@ -2276,10 +2277,10 @@ def phabupdate(ui, repo, *specs, **opts):
         if specs:
             raise error.InputError(_(b'cannot specify both DREVSPEC and --rev'))
 
-        drevmap = getdrevmap(repo, scmutil.revrange(repo, [revs]))
+        drevmap = getdrevmap(repo, logcmdutil.revrange(repo, [revs]))
         specs = []
         unknown = []
-        for r, d in pycompat.iteritems(drevmap):
+        for r, d in drevmap.items():
             if d is None:
                 unknown.append(repo[r])
             else:
@@ -2364,7 +2365,7 @@ def phabstatusshowview(ui, repo, displayer):
     revs = repo.revs('sort(_underway(), topo)')
     drevmap = getdrevmap(repo, revs)
     unknownrevs, drevids, revsbydrevid = [], set(), {}
-    for rev, drevid in pycompat.iteritems(drevmap):
+    for rev, drevid in drevmap.items():
         if drevid is not None:
             drevids.add(drevid)
             revsbydrevid.setdefault(drevid, set()).add(rev)

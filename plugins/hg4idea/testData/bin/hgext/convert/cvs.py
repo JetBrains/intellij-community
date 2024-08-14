@@ -4,7 +4,6 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
-from __future__ import absolute_import
 
 import errno
 import os
@@ -13,13 +12,11 @@ import socket
 
 from mercurial.i18n import _
 from mercurial.pycompat import (
-    getattr,
     open,
 )
 from mercurial import (
     encoding,
     error,
-    pycompat,
     util,
 )
 from mercurial.utils import (
@@ -144,7 +141,9 @@ class convert_cvs(converter_source):
 
         if root.startswith(b":pserver:"):
             root = root[9:]
-            m = re.match(r'(?:(.*?)(?::(.*?))?@)?([^:/]*)(?::(\d*))?(.*)', root)
+            m = re.match(
+                br'(?:(.*?)(?::(.*?))?@)?([^:/]*)(?::(\d*))?(.*)', root
+            )
             if m:
                 conntype = b"pserver"
                 user, passw, serv, port, root = m.groups()
@@ -199,7 +198,7 @@ class convert_cvs(converter_source):
                 if sck.recv(128) != b"I LOVE YOU\n":
                     raise error.Abort(_(b"CVS pserver authentication failed"))
 
-                self.writep = self.readp = sck.makefile(b'r+')
+                self.writep = self.readp = sck.makefile('rwb')
 
         if not conntype and root.startswith(b":local:"):
             conntype = b"local"
@@ -317,7 +316,7 @@ class convert_cvs(converter_source):
         if full:
             raise error.Abort(_(b"convert from cvs does not support --full"))
         self._parse()
-        return sorted(pycompat.iteritems(self.files[rev])), {}, set()
+        return sorted(self.files[rev].items()), {}, set()
 
     def getcommit(self, rev):
         self._parse()

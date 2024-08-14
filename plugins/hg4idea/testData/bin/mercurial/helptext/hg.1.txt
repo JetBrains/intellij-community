@@ -112,7 +112,7 @@ Mailing list: https://www.mercurial-scm.org/mailman/listinfo/mercurial/
 
 Copying
 """""""
-Copyright (C) 2005-2021 Olivia Mackall.
+Copyright (C) 2005-2024 Olivia Mackall.
 Free use of this software is granted under the terms of the GNU General
 Public License version 2 or any later version.
 

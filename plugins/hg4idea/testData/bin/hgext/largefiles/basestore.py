@@ -7,7 +7,6 @@
 # GNU General Public License version 2 or any later version.
 
 '''base class for store implementations and store-related utility code'''
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 
@@ -42,7 +41,7 @@ class StoreError(Exception):
         return b"%s: %s" % (urlutil.hidepassword(self.url), self.detail)
 
 
-class basestore(object):
+class basestore:
     def __init__(self, ui, repo, url):
         self.ui = ui
         self.repo = repo

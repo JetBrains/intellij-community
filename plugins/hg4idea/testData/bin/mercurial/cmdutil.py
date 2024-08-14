@@ -5,12 +5,22 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import copy as copymod
 import errno
+import functools
 import os
 import re
+
+from typing import (
+    Any,
+    AnyStr,
+    Dict,
+    Iterable,
+    Optional,
+    TYPE_CHECKING,
+    cast,
+)
 
 from .i18n import _
 from .node import (
@@ -19,20 +29,19 @@ from .node import (
     short,
 )
 from .pycompat import (
-    getattr,
     open,
-    setattr,
 )
 from .thirdparty import attr
 
 from . import (
     bookmarks,
+    bundle2,
     changelog,
     copies,
     crecord as crecordmod,
-    dirstateguard,
     encoding,
     error,
+    exchange,
     formatter,
     logcmdutil,
     match as matchmod,
@@ -49,6 +58,7 @@ from . import (
     rewriteutil,
     scmutil,
     state as statemod,
+    streamclone,
     subrepoutil,
     templatekw,
     templater,
@@ -59,20 +69,17 @@ from . import (
 from .utils import (
     dateutil,
     stringutil,
+    urlutil,
 )
 
 from .revlogutils import (
     constants as revlog_constants,
 )
 
-if pycompat.TYPE_CHECKING:
-    from typing import (
-        Any,
-        Dict,
+if TYPE_CHECKING:
+    from . import (
+        ui as uimod,
     )
-
-    for t in (Any, Dict):
-        assert t
 
 stringio = util.stringio
 
@@ -270,13 +277,16 @@ debugrevlogopts = [
 _linebelow = b"^HG: ------------------------ >8 ------------------------$"
 
 
-def check_at_most_one_arg(opts, *args):
+def check_at_most_one_arg(
+    opts: Dict[AnyStr, Any],
+    *args: AnyStr,
+) -> Optional[AnyStr]:
     """abort if more than one of the arguments are in opts
 
     Returns the unique argument or None if none of them were specified.
     """
 
-    def to_display(name):
+    def to_display(name: AnyStr) -> bytes:
         return pycompat.sysbytes(name).replace(b'_', b'-')
 
     previous = None
@@ -291,7 +301,11 @@ def check_at_most_one_arg(opts, *args):
     return previous
 
 
-def check_incompatible_arguments(opts, first, others):
+def check_incompatible_arguments(
+    opts: Dict[AnyStr, Any],
+    first: AnyStr,
+    others: Iterable[AnyStr],
+) -> None:
     """abort if the first argument is given along with any of the others
 
     Unlike check_at_most_one_arg(), `others` are not mutually exclusive
@@ -301,7 +315,7 @@ def check_incompatible_arguments(opts, first, others):
         check_at_most_one_arg(opts, first, other)
 
 
-def resolve_commit_options(ui, opts):
+def resolve_commit_options(ui: "uimod.ui", opts: Dict[str, Any]) -> bool:
     """modify commit options dict to handle related options
 
     The return value indicates that ``rewrite.update-timestamp`` is the reason
@@ -328,7 +342,7 @@ def resolve_commit_options(ui, opts):
     return datemaydiffer
 
 
-def check_note_size(opts):
+def check_note_size(opts: Dict[str, Any]) -> None:
     """make sure note is of valid format"""
 
     note = opts.get('note')
@@ -430,6 +444,227 @@ def recordfilter(ui, originalhunks, match, operation=None):
     return newchunks, newopts
 
 
+def _record(
+    ui,
+    repo,
+    message,
+    match,
+    opts,
+    commitfunc,
+    backupall,
+    filterfn,
+    pats,
+):
+    """This is generic record driver.
+
+    Its job is to interactively filter local changes, and
+    accordingly prepare working directory into a state in which the
+    job can be delegated to a non-interactive commit command such as
+    'commit' or 'qrefresh'.
+
+    After the actual job is done by non-interactive command, the
+    working directory is restored to its original state.
+
+    In the end we'll record interesting changes, and everything else
+    will be left in place, so the user can continue working.
+    """
+    assert repo.currentwlock() is not None
+    if not opts.get(b'interactive-unshelve'):
+        checkunfinished(repo, commit=True)
+    wctx = repo[None]
+    merge = len(wctx.parents()) > 1
+    if merge:
+        raise error.InputError(
+            _(b'cannot partially commit a merge ' b'(use "hg commit" instead)')
+        )
+
+    def fail(f, msg):
+        raise error.InputError(b'%s: %s' % (f, msg))
+
+    force = opts.get(b'force')
+    if not force:
+        match = matchmod.badmatch(match, fail)
+
+    status = repo.status(match=match)
+
+    overrides = {(b'ui', b'commitsubrepos'): True}
+
+    with repo.ui.configoverride(overrides, b'record'):
+        # subrepoutil.precommit() modifies the status
+        tmpstatus = scmutil.status(
+            copymod.copy(status.modified),
+            copymod.copy(status.added),
+            copymod.copy(status.removed),
+            copymod.copy(status.deleted),
+            copymod.copy(status.unknown),
+            copymod.copy(status.ignored),
+            copymod.copy(status.clean),  # pytype: disable=wrong-arg-count
+        )
+
+        # Force allows -X subrepo to skip the subrepo.
+        subs, commitsubs, newstate = subrepoutil.precommit(
+            repo.ui, wctx, tmpstatus, match, force=True
+        )
+        for s in subs:
+            if s in commitsubs:
+                dirtyreason = wctx.sub(s).dirtyreason(True)
+                raise error.Abort(dirtyreason)
+
+    if not force:
+        repo.checkcommitpatterns(wctx, match, status, fail)
+    diffopts = patch.difffeatureopts(
+        ui,
+        opts=opts,
+        whitespace=True,
+        section=b'commands',
+        configprefix=b'commit.interactive.',
+    )
+    diffopts.nodates = True
+    diffopts.git = True
+    diffopts.showfunc = True
+    originaldiff = patch.diff(repo, changes=status, opts=diffopts)
+    original_headers = patch.parsepatch(originaldiff)
+    match = scmutil.match(repo[None], pats)
+
+    # 1. filter patch, since we are intending to apply subset of it
+    try:
+        chunks, newopts = filterfn(ui, original_headers, match)
+    except error.PatchParseError as err:
+        raise error.InputError(_(b'error parsing patch: %s') % err)
+    except error.PatchApplicationError as err:
+        raise error.StateError(_(b'error applying patch: %s') % err)
+    opts.update(newopts)
+
+    # We need to keep a backup of files that have been newly added and
+    # modified during the recording process because there is a previous
+    # version without the edit in the workdir. We also will need to restore
+    # files that were the sources of renames so that the patch application
+    # works.
+    newlyaddedandmodifiedfiles, alsorestore = newandmodified(chunks)
+    contenders = set()
+    for h in chunks:
+        if isheader(h):
+            contenders.update(set(h.files()))
+
+    changed = status.modified + status.added + status.removed
+    newfiles = [f for f in changed if f in contenders]
+    if not newfiles:
+        ui.status(_(b'no changes to record\n'))
+        return 0
+
+    modified = set(status.modified)
+
+    # 2. backup changed files, so we can restore them in the end
+
+    if backupall:
+        tobackup = changed
+    else:
+        tobackup = [
+            f
+            for f in newfiles
+            if f in modified or f in newlyaddedandmodifiedfiles
+        ]
+    backups = {}
+    if tobackup:
+        backupdir = repo.vfs.join(b'record-backups')
+        try:
+            os.mkdir(backupdir)
+        except FileExistsError:
+            pass
+    try:
+        # backup continues
+        for f in tobackup:
+            fd, tmpname = pycompat.mkstemp(
+                prefix=os.path.basename(f) + b'.', dir=backupdir
+            )
+            os.close(fd)
+            ui.debug(b'backup %r as %r\n' % (f, tmpname))
+            util.copyfile(repo.wjoin(f), tmpname, copystat=True)
+            backups[f] = tmpname
+
+        fp = stringio()
+        for c in chunks:
+            fname = c.filename()
+            if fname in backups:
+                c.write(fp)
+        dopatch = fp.tell()
+        fp.seek(0)
+
+        # 2.5 optionally review / modify patch in text editor
+        if opts.get(b'review', False):
+            patchtext = (
+                crecordmod.diffhelptext + crecordmod.patchhelptext + fp.read()
+            )
+            reviewedpatch = ui.edit(
+                patchtext, b"", action=b"diff", repopath=repo.path
+            )
+            fp.truncate(0)
+            fp.write(reviewedpatch)
+            fp.seek(0)
+
+        [os.unlink(repo.wjoin(c)) for c in newlyaddedandmodifiedfiles]
+        # 3a. apply filtered patch to clean repo  (clean)
+        if backups:
+            m = scmutil.matchfiles(repo, set(backups.keys()) | alsorestore)
+            mergemod.revert_to(repo[b'.'], matcher=m)
+
+        # 3b. (apply)
+        if dopatch:
+            try:
+                ui.debug(b'applying patch\n')
+                ui.debug(fp.getvalue())
+                patch.internalpatch(ui, repo, fp, 1, eolmode=None)
+            except error.PatchParseError as err:
+                raise error.InputError(pycompat.bytestr(err))
+            except error.PatchApplicationError as err:
+                raise error.StateError(pycompat.bytestr(err))
+        del fp
+
+        # 4. We prepared working directory according to filtered
+        #    patch. Now is the time to delegate the job to
+        #    commit/qrefresh or the like!
+
+        # Make all of the pathnames absolute.
+        newfiles = [repo.wjoin(nf) for nf in newfiles]
+        return commitfunc(ui, repo, *newfiles, **pycompat.strkwargs(opts))
+    finally:
+        # 5. finally restore backed-up files
+        try:
+            dirstate = repo.dirstate
+            for realname, tmpname in backups.items():
+                ui.debug(b'restoring %r to %r\n' % (tmpname, realname))
+
+                if dirstate.get_entry(realname).maybe_clean:
+                    # without normallookup, restoring timestamp
+                    # may cause partially committed files
+                    # to be treated as unmodified
+
+                    # XXX-PENDINGCHANGE: We should clarify the context in
+                    # which this function is called  to make sure it
+                    # already called within a `pendingchange`, However we
+                    # are taking a shortcut here in order to be able to
+                    # quickly deprecated the older API.
+                    with dirstate.changing_parents(repo):
+                        dirstate.update_file(
+                            realname,
+                            p1_tracked=True,
+                            wc_tracked=True,
+                            possibly_dirty=True,
+                        )
+
+                # copystat=True here and above are a hack to trick any
+                # editors that have f open that we haven't modified them.
+                #
+                # Also note that this racy as an editor could notice the
+                # file's mtime before we've finished writing it.
+                util.copyfile(tmpname, repo.wjoin(realname), copystat=True)
+                os.unlink(tmpname)
+            if tobackup:
+                os.rmdir(backupdir)
+        except OSError:
+            pass
+
+
 def dorecord(
     ui, repo, commitfunc, cmdsuggest, backupall, filterfn, *pats, **opts
 ):
@@ -445,225 +680,18 @@ def dorecord(
     if not opts.get(b'user'):
         ui.username()  # raise exception, username not provided
 
-    def recordfunc(ui, repo, message, match, opts):
-        """This is generic record driver.
+    func = functools.partial(
+        _record,
+        commitfunc=commitfunc,
+        backupall=backupall,
+        filterfn=filterfn,
+        pats=pats,
+    )
 
-        Its job is to interactively filter local changes, and
-        accordingly prepare working directory into a state in which the
-        job can be delegated to a non-interactive commit command such as
-        'commit' or 'qrefresh'.
-
-        After the actual job is done by non-interactive command, the
-        working directory is restored to its original state.
-
-        In the end we'll record interesting changes, and everything else
-        will be left in place, so the user can continue working.
-        """
-        if not opts.get(b'interactive-unshelve'):
-            checkunfinished(repo, commit=True)
-        wctx = repo[None]
-        merge = len(wctx.parents()) > 1
-        if merge:
-            raise error.InputError(
-                _(
-                    b'cannot partially commit a merge '
-                    b'(use "hg commit" instead)'
-                )
-            )
-
-        def fail(f, msg):
-            raise error.InputError(b'%s: %s' % (f, msg))
-
-        force = opts.get(b'force')
-        if not force:
-            match = matchmod.badmatch(match, fail)
-
-        status = repo.status(match=match)
-
-        overrides = {(b'ui', b'commitsubrepos'): True}
-
-        with repo.ui.configoverride(overrides, b'record'):
-            # subrepoutil.precommit() modifies the status
-            tmpstatus = scmutil.status(
-                copymod.copy(status.modified),
-                copymod.copy(status.added),
-                copymod.copy(status.removed),
-                copymod.copy(status.deleted),
-                copymod.copy(status.unknown),
-                copymod.copy(status.ignored),
-                copymod.copy(status.clean),  # pytype: disable=wrong-arg-count
-            )
-
-            # Force allows -X subrepo to skip the subrepo.
-            subs, commitsubs, newstate = subrepoutil.precommit(
-                repo.ui, wctx, tmpstatus, match, force=True
-            )
-            for s in subs:
-                if s in commitsubs:
-                    dirtyreason = wctx.sub(s).dirtyreason(True)
-                    raise error.Abort(dirtyreason)
-
-        if not force:
-            repo.checkcommitpatterns(wctx, match, status, fail)
-        diffopts = patch.difffeatureopts(
-            ui,
-            opts=opts,
-            whitespace=True,
-            section=b'commands',
-            configprefix=b'commit.interactive.',
-        )
-        diffopts.nodates = True
-        diffopts.git = True
-        diffopts.showfunc = True
-        originaldiff = patch.diff(repo, changes=status, opts=diffopts)
-        original_headers = patch.parsepatch(originaldiff)
-        match = scmutil.match(repo[None], pats)
-
-        # 1. filter patch, since we are intending to apply subset of it
-        try:
-            chunks, newopts = filterfn(ui, original_headers, match)
-        except error.PatchError as err:
-            raise error.InputError(_(b'error parsing patch: %s') % err)
-        opts.update(newopts)
-
-        # We need to keep a backup of files that have been newly added and
-        # modified during the recording process because there is a previous
-        # version without the edit in the workdir. We also will need to restore
-        # files that were the sources of renames so that the patch application
-        # works.
-        newlyaddedandmodifiedfiles, alsorestore = newandmodified(chunks)
-        contenders = set()
-        for h in chunks:
-            if isheader(h):
-                contenders.update(set(h.files()))
-
-        changed = status.modified + status.added + status.removed
-        newfiles = [f for f in changed if f in contenders]
-        if not newfiles:
-            ui.status(_(b'no changes to record\n'))
-            return 0
-
-        modified = set(status.modified)
-
-        # 2. backup changed files, so we can restore them in the end
-
-        if backupall:
-            tobackup = changed
-        else:
-            tobackup = [
-                f
-                for f in newfiles
-                if f in modified or f in newlyaddedandmodifiedfiles
-            ]
-        backups = {}
-        if tobackup:
-            backupdir = repo.vfs.join(b'record-backups')
-            try:
-                os.mkdir(backupdir)
-            except OSError as err:
-                if err.errno != errno.EEXIST:
-                    raise
-        try:
-            # backup continues
-            for f in tobackup:
-                fd, tmpname = pycompat.mkstemp(
-                    prefix=os.path.basename(f) + b'.', dir=backupdir
-                )
-                os.close(fd)
-                ui.debug(b'backup %r as %r\n' % (f, tmpname))
-                util.copyfile(repo.wjoin(f), tmpname, copystat=True)
-                backups[f] = tmpname
-
-            fp = stringio()
-            for c in chunks:
-                fname = c.filename()
-                if fname in backups:
-                    c.write(fp)
-            dopatch = fp.tell()
-            fp.seek(0)
-
-            # 2.5 optionally review / modify patch in text editor
-            if opts.get(b'review', False):
-                patchtext = (
-                    crecordmod.diffhelptext
-                    + crecordmod.patchhelptext
-                    + fp.read()
-                )
-                reviewedpatch = ui.edit(
-                    patchtext, b"", action=b"diff", repopath=repo.path
-                )
-                fp.truncate(0)
-                fp.write(reviewedpatch)
-                fp.seek(0)
-
-            [os.unlink(repo.wjoin(c)) for c in newlyaddedandmodifiedfiles]
-            # 3a. apply filtered patch to clean repo  (clean)
-            if backups:
-                m = scmutil.matchfiles(repo, set(backups.keys()) | alsorestore)
-                mergemod.revert_to(repo[b'.'], matcher=m)
-
-            # 3b. (apply)
-            if dopatch:
-                try:
-                    ui.debug(b'applying patch\n')
-                    ui.debug(fp.getvalue())
-                    patch.internalpatch(ui, repo, fp, 1, eolmode=None)
-                except error.PatchError as err:
-                    raise error.InputError(pycompat.bytestr(err))
-            del fp
-
-            # 4. We prepared working directory according to filtered
-            #    patch. Now is the time to delegate the job to
-            #    commit/qrefresh or the like!
-
-            # Make all of the pathnames absolute.
-            newfiles = [repo.wjoin(nf) for nf in newfiles]
-            return commitfunc(ui, repo, *newfiles, **pycompat.strkwargs(opts))
-        finally:
-            # 5. finally restore backed-up files
-            try:
-                dirstate = repo.dirstate
-                for realname, tmpname in pycompat.iteritems(backups):
-                    ui.debug(b'restoring %r to %r\n' % (tmpname, realname))
-
-                    if dirstate[realname] == b'n':
-                        # without normallookup, restoring timestamp
-                        # may cause partially committed files
-                        # to be treated as unmodified
-
-                        # XXX-PENDINGCHANGE: We should clarify the context in
-                        # which this function is called  to make sure it
-                        # already called within a `pendingchange`, However we
-                        # are taking a shortcut here in order to be able to
-                        # quickly deprecated the older API.
-                        with dirstate.parentchange():
-                            dirstate.update_file(
-                                realname,
-                                p1_tracked=True,
-                                wc_tracked=True,
-                                possibly_dirty=True,
-                            )
-
-                    # copystat=True here and above are a hack to trick any
-                    # editors that have f open that we haven't modified them.
-                    #
-                    # Also note that this racy as an editor could notice the
-                    # file's mtime before we've finished writing it.
-                    util.copyfile(tmpname, repo.wjoin(realname), copystat=True)
-                    os.unlink(tmpname)
-                if tobackup:
-                    os.rmdir(backupdir)
-            except OSError:
-                pass
-
-    def recordinwlock(ui, repo, message, match, opts):
-        with repo.wlock():
-            return recordfunc(ui, repo, message, match, opts)
-
-    return commit(ui, repo, recordinwlock, pats, opts)
+    return commit(ui, repo, func, pats, opts)
 
 
-class dirnode(object):
+class dirnode:
     """
     Represent a directory in user working copy with information required for
     the purpose of tersing its status.
@@ -788,18 +816,17 @@ def tersedir(statuslist, terseargs):
     # creating a dirnode object for the root of the repo
     rootobj = dirnode(b'')
     pstatus = (
-        b'modified',
-        b'added',
-        b'deleted',
-        b'clean',
-        b'unknown',
-        b'ignored',
-        b'removed',
+        ('modified', b'm'),
+        ('added', b'a'),
+        ('deleted', b'd'),
+        ('clean', b'c'),
+        ('unknown', b'u'),
+        ('ignored', b'i'),
+        ('removed', b'r'),
     )
 
     tersedict = {}
-    for attrname in pstatus:
-        statuschar = attrname[0:1]
+    for attrname, statuschar in pstatus:
         for f in getattr(statuslist, attrname):
             rootobj.addfile(f, statuschar)
         tersedict[statuschar] = []
@@ -829,8 +856,8 @@ def _commentlines(raw):
 
 
 @attr.s(frozen=True)
-class morestatus(object):
-    reporoot = attr.ib()
+class morestatus:
+    repo = attr.ib()
     unfinishedop = attr.ib()
     unfinishedmsg = attr.ib()
     activemerge = attr.ib()
@@ -874,7 +901,7 @@ class morestatus(object):
             mergeliststr = b'\n'.join(
                 [
                     b'    %s'
-                    % util.pathto(self.reporoot, encoding.getcwd(), path)
+                    % util.pathto(self.repo.root, encoding.getcwd(), path)
                     for path in self.unresolvedpaths
                 ]
             )
@@ -896,6 +923,7 @@ To mark files as resolved:  hg resolve --mark FILE'''
                     # Already output.
                     continue
                 fm.startitem()
+                fm.context(repo=self.repo)
                 # We can't claim to know the status of the file - it may just
                 # have been in one of the states that were not requested for
                 # display, so it could be anything.
@@ -921,7 +949,7 @@ def readmorestatus(repo):
     if activemerge:
         unresolved = sorted(mergestate.unresolved())
     return morestatus(
-        repo.root, unfinishedop, unfinishedmsg, activemerge, unresolved
+        repo, unfinishedop, unfinishedmsg, activemerge, unresolved
     )
 
 
@@ -981,13 +1009,13 @@ def findcmd(cmd, table, strict=True):
     raise error.UnknownCommand(cmd, allcmds)
 
 
-def changebranch(ui, repo, revs, label, opts):
+def changebranch(ui, repo, revs, label, **opts):
     """Change the branch name of given revs to label"""
 
     with repo.wlock(), repo.lock(), repo.transaction(b'branches'):
         # abort in case of uncommitted merge or dirty wdir
         bailifchanged(repo)
-        revs = scmutil.revrange(repo, revs)
+        revs = logcmdutil.revrange(repo, revs)
         if not revs:
             raise error.InputError(b"empty revision set")
         roots = repo.revs(b'roots(%ld)', revs)
@@ -1000,7 +1028,7 @@ def changebranch(ui, repo, revs, label, opts):
         root = repo[roots.first()]
         rpb = {parent.branch() for parent in root.parents()}
         if (
-            not opts.get(b'force')
+            not opts.get('force')
             and label not in rpb
             and label in repo.branchmap()
         ):
@@ -1112,12 +1140,12 @@ def bailifchanged(repo, merge=True, hint=None):
         ctx.sub(s).bailifchanged(hint=hint)
 
 
-def logmessage(ui, opts):
+def logmessage(ui: "uimod.ui", opts: Dict[bytes, Any]) -> Optional[bytes]:
     """get the log message according to -m and -l option"""
 
     check_at_most_one_arg(opts, b'message', b'logfile')
 
-    message = opts.get(b'message')
+    message = cast(Optional[bytes], opts.get(b'message'))
     logfile = opts.get(b'logfile')
 
     if not message and logfile:
@@ -1340,7 +1368,7 @@ def isstdiofilename(pat):
     return not pat or pat == b'-'
 
 
-class _unclosablefile(object):
+class _unclosablefile:
     def __init__(self, fp):
         self._fp = fp
 
@@ -1424,7 +1452,7 @@ def openstorage(repo, cmd, file_, opts, returnrevlog=False):
         if returnrevlog:
             if isinstance(r, revlog.revlog):
                 pass
-            elif util.safehasattr(r, b'_revlog'):
+            elif hasattr(r, '_revlog'):
                 r = r._revlog  # pytype: disable=attribute-error
             elif r is not None:
                 raise error.InputError(
@@ -1462,7 +1490,7 @@ def openrevlog(repo, cmd, file_, opts):
     return openstorage(repo, cmd, file_, opts, returnrevlog=True)
 
 
-def copy(ui, repo, pats, opts, rename=False):
+def copy(ui, repo, pats, opts: Dict[bytes, Any], rename=False):
     check_incompatible_arguments(opts, b'forget', [b'dry_run'])
 
     # called with the repo lock held
@@ -1480,7 +1508,7 @@ def copy(ui, repo, pats, opts, rename=False):
             # TODO: Remove this restriction and make it also create the copy
             #       targets (and remove the rename source if rename==True).
             raise error.InputError(_(b'--at-rev requires --after'))
-        ctx = scmutil.revsingle(repo, rev)
+        ctx = logcmdutil.revsingle(repo, rev)
         if len(ctx.parents()) > 1:
             raise error.InputError(
                 _(b'cannot mark/unmark copy in merge commit')
@@ -1529,7 +1557,7 @@ def copy(ui, repo, pats, opts, rename=False):
                 new_node = mem_ctx.commit()
 
                 if repo.dirstate.p1() == ctx.node():
-                    with repo.dirstate.parentchange():
+                    with repo.dirstate.changing_parents(repo):
                         scmutil.movedirstate(repo, repo[new_node])
                 replacements = {ctx.node(): [new_node]}
                 scmutil.cleanupnodes(
@@ -1622,7 +1650,7 @@ def copy(ui, repo, pats, opts, rename=False):
             new_node = mem_ctx.commit()
 
             if repo.dirstate.p1() == ctx.node():
-                with repo.dirstate.parentchange():
+                with repo.dirstate.changing_parents(repo):
                     scmutil.movedirstate(repo, repo[new_node])
             replacements = {ctx.node(): [new_node]}
             scmutil.cleanupnodes(repo, replacements, b'copy', fixphase=True)
@@ -1642,7 +1670,9 @@ def copy(ui, repo, pats, opts, rename=False):
         reltarget = repo.pathto(abstarget, cwd)
         target = repo.wjoin(abstarget)
         src = repo.wjoin(abssrc)
-        state = repo.dirstate[abstarget]
+        entry = repo.dirstate.get_entry(abstarget)
+
+        already_commited = entry.tracked and not entry.added
 
         scmutil.checkportable(ui, abstarget)
 
@@ -1672,30 +1702,48 @@ def copy(ui, repo, pats, opts, rename=False):
                 exists = False
                 samefile = True
 
-        if not after and exists or after and state in b'mn':
+        if not after and exists or after and already_commited:
             if not opts[b'force']:
-                if state in b'mn':
+                if already_commited:
                     msg = _(b'%s: not overwriting - file already committed\n')
-                    if after:
-                        flags = b'--after --force'
-                    else:
-                        flags = b'--force'
-                    if rename:
-                        hint = (
-                            _(
-                                b"('hg rename %s' to replace the file by "
-                                b'recording a rename)\n'
+                    # Check if if the target was added in the parent and the
+                    # source already existed in the grandparent.
+                    looks_like_copy_in_pctx = abstarget in pctx and any(
+                        abssrc in gpctx and abstarget not in gpctx
+                        for gpctx in pctx.parents()
+                    )
+                    if looks_like_copy_in_pctx:
+                        if rename:
+                            hint = _(
+                                b"('hg rename --at-rev .' to record the rename "
+                                b"in the parent of the working copy)\n"
                             )
-                            % flags
-                        )
-                    else:
-                        hint = (
-                            _(
-                                b"('hg copy %s' to replace the file by "
-                                b'recording a copy)\n'
+                        else:
+                            hint = _(
+                                b"('hg copy --at-rev .' to record the copy in "
+                                b"the parent of the working copy)\n"
                             )
-                            % flags
-                        )
+                    else:
+                        if after:
+                            flags = b'--after --force'
+                        else:
+                            flags = b'--force'
+                        if rename:
+                            hint = (
+                                _(
+                                    b"('hg rename %s' to replace the file by "
+                                    b'recording a rename)\n'
+                                )
+                                % flags
+                            )
+                        else:
+                            hint = (
+                                _(
+                                    b"('hg copy %s' to replace the file by "
+                                    b'recording a copy)\n'
+                                )
+                                % flags
+                            )
                 else:
                     msg = _(b'%s: not overwriting - file exists\n')
                     if rename:
@@ -1985,7 +2033,9 @@ def tryimportone(ui, repo, patchdata, parents, opts, msgs, updatefunc):
             repo.setparents(p1.node(), p2.node())
 
         if opts.get(b'exact') or importbranch:
-            repo.dirstate.setbranch(branch or b'default')
+            repo.dirstate.setbranch(
+                branch or b'default', repo.currenttransaction()
+            )
 
         partial = opts.get(b'partial', False)
         files = set()
@@ -2000,9 +2050,16 @@ def tryimportone(ui, repo, patchdata, parents, opts, msgs, updatefunc):
                 eolmode=None,
                 similarity=sim / 100.0,
             )
-        except error.PatchError as e:
+        except error.PatchParseError as e:
+            raise error.InputError(
+                pycompat.bytestr(e),
+                hint=_(
+                    b'check that whitespace in the patch has not been mangled'
+                ),
+            )
+        except error.PatchApplicationError as e:
             if not partial:
-                raise error.Abort(pycompat.bytestr(e))
+                raise error.StateError(pycompat.bytestr(e))
             if partial:
                 rejects = True
 
@@ -2059,8 +2116,15 @@ def tryimportone(ui, repo, patchdata, parents, opts, msgs, updatefunc):
                     files,
                     eolmode=None,
                 )
-            except error.PatchError as e:
-                raise error.Abort(stringutil.forcebytestr(e))
+            except error.PatchParseError as e:
+                raise error.InputError(
+                    stringutil.forcebytestr(e),
+                    hint=_(
+                        b'check that whitespace in the patch has not been mangled'
+                    ),
+                )
+            except error.PatchApplicationError as e:
+                raise error.StateError(stringutil.forcebytestr(e))
             if opts.get(b'exact'):
                 editor = None
             else:
@@ -2322,8 +2386,19 @@ def add(ui, repo, match, prefix, uipathfn, explicitonly, **opts):
             full=False,
         )
     ):
+        entry = dirstate.get_entry(f)
+        # We don't want to even attmpt to add back files that have been removed
+        # It would lead to a misleading message saying we're adding the path,
+        # and can also lead to file/dir conflicts when attempting to add it.
+        removed = entry and entry.removed
         exact = match.exact(f)
-        if exact or not explicitonly and f not in wctx and repo.wvfs.lexists(f):
+        if (
+            exact
+            or not explicitonly
+            and f not in wctx
+            and repo.wvfs.lexists(f)
+            and not removed
+        ):
             if cca:
                 cca(f)
             names.append(f)
@@ -2692,7 +2767,6 @@ def _updatecatformatter(fm, ctx, matcher, path, decode):
 
 def cat(ui, repo, ctx, matcher, basefm, fntemplate, prefix, **opts):
     err = 1
-    opts = pycompat.byteskwargs(opts)
 
     def write(path):
         filename = None
@@ -2706,7 +2780,7 @@ def cat(ui, repo, ctx, matcher, basefm, fntemplate, prefix, **opts):
             except OSError:
                 pass
         with formatter.maybereopen(basefm, filename) as fm:
-            _updatecatformatter(fm, ctx, matcher, path, opts.get(b'decode'))
+            _updatecatformatter(fm, ctx, matcher, path, opts.get('decode'))
 
     # Automation often uses hg cat on single files, so special case it
     # for performance to avoid the cost of parsing the manifest.
@@ -2741,7 +2815,7 @@ def cat(ui, repo, ctx, matcher, basefm, fntemplate, prefix, **opts):
                 basefm,
                 fntemplate,
                 subprefix,
-                **pycompat.strkwargs(opts)
+                **opts,
             ):
                 err = 0
         except error.RepoLookupError:
@@ -2752,29 +2826,135 @@ def cat(ui, repo, ctx, matcher, basefm, fntemplate, prefix, **opts):
     return err
 
 
+class _AddRemoveContext:
+    """a small (hacky) context to deal with lazy opening of context
+
+    This is to be used in the `commit` function right below. This deals with
+    lazily open a `changing_files` context inside a `transaction` that span the
+    full commit operation.
+
+    We need :
+    - a `changing_files` context to wrap the dirstate change within the
+      "addremove" operation,
+    - a transaction to make sure these change are not written right after the
+      addremove, but when the commit operation succeed.
+
+    However it get complicated because:
+    - opening a transaction "this early" shuffle hooks order, especially the
+      `precommit` one happening after the `pretxtopen` one which I am not too
+      enthusiastic about.
+    - the `mq` extensions + the `record` extension stacks many layers of call
+      to implement `qrefresh --interactive` and this result with `mq` calling a
+      `strip` in the middle of this function. Which prevent the existence of
+      transaction wrapping all of its function code. (however, `qrefresh` never
+      call the `addremove` bits.
+    - the largefile extensions (and maybe other extensions?) wraps `addremove`
+      so slicing `addremove` in smaller bits is a complex endeavour.
+
+    So I eventually took a this shortcut that open the transaction if we
+    actually needs it, not disturbing much of the rest of the code.
+
+    It will result in some hooks order change for `hg commit --addremove`,
+    however it seems a corner case enough to ignore that for now (hopefully).
+
+    Notes that None of the above problems seems insurmountable, however I have
+    been fighting with this specific piece of code for a couple of day already
+    and I need a solution to keep moving forward on the bigger work around
+    `changing_files` context that is being introduced at the same time as this
+    hack.
+
+    Each problem seems to have a solution:
+    - the hook order issue could be solved by refactoring the many-layer stack
+      that currently composes a commit and calling them earlier,
+    - the mq issue could be solved by refactoring `mq` so that the final strip
+      is done after transaction closure. Be warned that the mq code is quite
+      antic however.
+    - large-file could be reworked in parallel of the `addremove` to be
+      friendlier to this.
+
+    However each of these tasks are too much a diversion right now. In addition
+    they will be much easier to undertake when the `changing_files` dust has
+    settled."""
+
+    def __init__(self, repo):
+        self._repo = repo
+        self._transaction = None
+        self._dirstate_context = None
+        self._state = None
+
+    def __enter__(self):
+        assert self._state is None
+        self._state = True
+        return self
+
+    def open_transaction(self):
+        """open a `transaction` and `changing_files` context
+
+        Call this when you know that change to the dirstate will be needed and
+        we need to open the transaction early
+
+        This will also open the dirstate `changing_files` context, so you should
+        call `close_dirstate_context` when the distate changes are done.
+        """
+        assert self._state is not None
+        if self._transaction is None:
+            self._transaction = self._repo.transaction(b'commit')
+            self._transaction.__enter__()
+        if self._dirstate_context is None:
+            self._dirstate_context = self._repo.dirstate.changing_files(
+                self._repo
+            )
+            self._dirstate_context.__enter__()
+
+    def close_dirstate_context(self):
+        """close the change_files if any
+
+        Call this after the (potential) `open_transaction` call to close the
+        (potential) changing_files context.
+        """
+        if self._dirstate_context is not None:
+            self._dirstate_context.__exit__(None, None, None)
+            self._dirstate_context = None
+
+    def __exit__(self, *args):
+        if self._dirstate_context is not None:
+            self._dirstate_context.__exit__(*args)
+        if self._transaction is not None:
+            self._transaction.__exit__(*args)
+
+
 def commit(ui, repo, commitfunc, pats, opts):
     '''commit the specified files or all outstanding changes'''
     date = opts.get(b'date')
     if date:
         opts[b'date'] = dateutil.parsedate(date)
-    message = logmessage(ui, opts)
-    matcher = scmutil.match(repo[None], pats, opts)
 
-    dsguard = None
-    # extract addremove carefully -- this function can be called from a command
-    # that doesn't support addremove
-    if opts.get(b'addremove'):
-        dsguard = dirstateguard.dirstateguard(repo, b'commit')
-    with dsguard or util.nullcontextmanager():
-        if dsguard:
-            relative = scmutil.anypats(pats, opts)
-            uipathfn = scmutil.getuipathfn(repo, legacyrelativevalue=relative)
-            if scmutil.addremove(repo, matcher, b"", uipathfn, opts) != 0:
-                raise error.Abort(
-                    _(b"failed to mark all new/missing files as added/removed")
+    with repo.wlock(), repo.lock():
+        message = logmessage(ui, opts)
+        matcher = scmutil.match(repo[None], pats, opts)
+
+        with _AddRemoveContext(repo) as c:
+            # extract addremove carefully -- this function can be called from a
+            # command that doesn't support addremove
+            if opts.get(b'addremove'):
+                relative = scmutil.anypats(pats, opts)
+                uipathfn = scmutil.getuipathfn(
+                    repo,
+                    legacyrelativevalue=relative,
                 )
-
-        return commitfunc(ui, repo, message, matcher, opts)
+                r = scmutil.addremove(
+                    repo,
+                    matcher,
+                    b"",
+                    uipathfn,
+                    opts,
+                    open_tr=c.open_transaction,
+                )
+                m = _(b"failed to mark all new/missing files as added/removed")
+                if r != 0:
+                    raise error.Abort(m)
+            c.close_dirstate_context()
+            return commitfunc(ui, repo, message, matcher, opts)
 
 
 def samefile(f, ctx1, ctx2):
@@ -2789,7 +2969,7 @@ def samefile(f, ctx1, ctx2):
         return f not in ctx2.manifest()
 
 
-def amend(ui, repo, old, extra, pats, opts):
+def amend(ui, repo, old, extra, pats, opts: Dict[str, Any]):
     # avoid cycle context -> subrepo -> cmdutil
     from . import context
 
@@ -2843,12 +3023,13 @@ def amend(ui, repo, old, extra, pats, opts):
         matcher = scmutil.match(wctx, pats, opts)
         relative = scmutil.anypats(pats, opts)
         uipathfn = scmutil.getuipathfn(repo, legacyrelativevalue=relative)
-        if opts.get(b'addremove') and scmutil.addremove(
-            repo, matcher, b"", uipathfn, opts
-        ):
-            raise error.Abort(
-                _(b"failed to mark all new/missing files as added/removed")
-            )
+        if opts.get(b'addremove'):
+            with repo.dirstate.changing_files(repo):
+                if scmutil.addremove(repo, matcher, b"", uipathfn, opts) != 0:
+                    m = _(
+                        b"failed to mark all new/missing files as added/removed"
+                    )
+                    raise error.Abort(m)
 
         # Check subrepos. This depends on in-place wctx._status update in
         # subrepo.precommit(). To minimize the risk of this hack, we do
@@ -2868,11 +3049,18 @@ def amend(ui, repo, old, extra, pats, opts):
         filestoamend = {f for f in wctx.files() if matcher(f)}
 
         changes = len(filestoamend) > 0
-        if changes:
+        changeset_copies = (
+            repo.ui.config(b'experimental', b'copies.read-from')
+            != b'filelog-only'
+        )
+        # If there are changes to amend or if copy information needs to be read
+        # from the changeset extras, we cannot take the fast path of using
+        # filectxs from the old commit.
+        if changes or changeset_copies:
             # Recompute copies (avoid recording a -> b -> a)
-            copied = copies.pathcopies(base, wctx, matcher)
-            if old.p2:
-                copied.update(copies.pathcopies(old.p2(), wctx, matcher))
+            copied = copies.pathcopies(base, wctx)
+            if old.p2():
+                copied.update(copies.pathcopies(old.p2(), wctx))
 
             # Prune files which were reverted by the updates: if old
             # introduced file X and the file was renamed in the working
@@ -2890,18 +3078,17 @@ def amend(ui, repo, old, extra, pats, opts):
             def filectxfn(repo, ctx_, path):
                 try:
                     # If the file being considered is not amongst the files
-                    # to be amended, we should return the file context from the
+                    # to be amended, we should use the file context from the
                     # old changeset. This avoids issues when only some files in
                     # the working copy are being amended but there are also
                     # changes to other files from the old changeset.
-                    if path not in filestoamend:
-                        return old.filectx(path)
-
-                    # Return None for removed files.
-                    if path in wctx.removed():
-                        return None
-
-                    fctx = wctx[path]
+                    if path in filestoamend:
+                        # Return None for removed files.
+                        if path in wctx.removed():
+                            return None
+                        fctx = wctx[path]
+                    else:
+                        fctx = old.filectx(path)
                     flags = fctx.flags()
                     mctx = context.memfilectx(
                         repo,
@@ -2976,10 +3163,12 @@ def amend(ui, repo, old, extra, pats, opts):
         commitphase = None
         if opts.get(b'secret'):
             commitphase = phases.secret
+        elif opts.get(b'draft'):
+            commitphase = phases.draft
         newid = repo.commitctx(new)
         ms.reset()
 
-        with repo.dirstate.parentchange():
+        with repo.dirstate.changing_parents(repo):
             # Reroute the working copy parent to the new changeset
             repo.setparents(newid, repo.nullid)
 
@@ -3153,9 +3342,7 @@ def buildcommittext(repo, ctx, subs, extramsg):
     return b"\n".join(edittext)
 
 
-def commitstatus(repo, node, branch, bheads=None, tip=None, opts=None):
-    if opts is None:
-        opts = {}
+def commitstatus(repo, node, branch, bheads=None, tip=None, **opts):
     ctx = repo[node]
     parents = ctx.parents()
 
@@ -3165,7 +3352,7 @@ def commitstatus(repo, node, branch, bheads=None, tip=None, opts=None):
         # for most instances
         repo.ui.warn(_(b"warning: commit already existed in the repository!\n"))
     elif (
-        not opts.get(b'amend')
+        not opts.get('amend')
         and bheads
         and node not in bheads
         and not any(
@@ -3202,7 +3389,7 @@ def commitstatus(repo, node, branch, bheads=None, tip=None, opts=None):
         #
         # H H  n  head merge: head count decreases
 
-    if not opts.get(b'close_branch'):
+    if not opts.get('close_branch'):
         for r in parents:
             if r.closesbranch() and r.branch() == branch:
                 repo.ui.status(
@@ -3242,7 +3429,7 @@ def revert(ui, repo, ctx, *pats, **opts):
     names = {}
     uipathfn = scmutil.getuipathfn(repo, legacyrelativevalue=True)
 
-    with repo.wlock():
+    with repo.wlock(), repo.dirstate.changing_files(repo):
         ## filling of the `names` mapping
         # walk dirstate to fill `names`
 
@@ -3350,7 +3537,11 @@ def revert(ui, repo, ctx, *pats, **opts):
         for f in localchanges:
             src = repo.dirstate.copied(f)
             # XXX should we check for rename down to target node?
-            if src and src not in names and repo.dirstate[src] == b'r':
+            if (
+                src
+                and src not in names
+                and repo.dirstate.get_entry(src).removed
+            ):
                 dsremoved.add(src)
                 names[src] = True
 
@@ -3364,12 +3555,12 @@ def revert(ui, repo, ctx, *pats, **opts):
         # distinguish between file to forget and the other
         added = set()
         for abs in dsadded:
-            if repo.dirstate[abs] != b'a':
+            if not repo.dirstate.get_entry(abs).added:
                 added.add(abs)
         dsadded -= added
 
         for abs in deladded:
-            if repo.dirstate[abs] == b'a':
+            if repo.dirstate.get_entry(abs).added:
                 dsadded.add(abs)
         deladded -= dsadded
 
@@ -3604,15 +3795,14 @@ def _performrevert(
         prntstatusmsg(b'drop', f)
         repo.dirstate.set_untracked(f)
 
-    normal = None
-    if node == parent:
-        # We're reverting to our parent. If possible, we'd like status
-        # to report the file as clean. We have to use normallookup for
-        # merges to avoid losing information about merged/dirty files.
-        if p2 != repo.nullid:
-            normal = repo.dirstate.set_tracked
-        else:
-            normal = repo.dirstate.set_clean
+    # We are reverting to our parent. If possible, we had like `hg status`
+    # to report the file as clean. We have to be less agressive for
+    # merges to avoid losing information about copy introduced by the merge.
+    # This might comes with bugs ?
+    reset_copy = p2 == repo.nullid
+
+    def normal(filename):
+        return repo.dirstate.set_tracked(filename, reset_copy=reset_copy)
 
     newlyaddedandmodifiedfiles = set()
     if interactive:
@@ -3650,8 +3840,10 @@ def _performrevert(
             if operation == b'discard':
                 chunks = patch.reversehunks(chunks)
 
-        except error.PatchError as err:
-            raise error.Abort(_(b'error parsing patch: %s') % err)
+        except error.PatchParseError as err:
+            raise error.InputError(_(b'error parsing patch: %s') % err)
+        except error.PatchApplicationError as err:
+            raise error.StateError(_(b'error applying patch: %s') % err)
 
         # FIXME: when doing an interactive revert of a copy, there's no way of
         # performing a partial revert of the added file, the only option is
@@ -3686,8 +3878,10 @@ def _performrevert(
         if dopatch:
             try:
                 patch.internalpatch(repo.ui, repo, fp, 1, eolmode=None)
-            except error.PatchError as err:
-                raise error.Abort(pycompat.bytestr(err))
+            except error.PatchParseError as err:
+                raise error.InputError(pycompat.bytestr(err))
+            except error.PatchApplicationError as err:
+                raise error.StateError(pycompat.bytestr(err))
         del fp
     else:
         for f in actions[b'revert'][0]:
@@ -3698,14 +3892,19 @@ def _performrevert(
 
     for f in actions[b'add'][0]:
         # Don't checkout modified files, they are already created by the diff
-        if f not in newlyaddedandmodifiedfiles:
-            prntstatusmsg(b'add', f)
-            checkout(f)
-            repo.dirstate.set_tracked(f)
+        if f in newlyaddedandmodifiedfiles:
+            continue
 
-    normal = repo.dirstate.set_tracked
-    if node == parent and p2 == repo.nullid:
-        normal = repo.dirstate.set_clean
+        if interactive:
+            choice = repo.ui.promptchoice(
+                _(b"add new file %s (Yn)?$$ &Yes $$ &No") % uipathfn(f)
+            )
+            if choice != 0:
+                continue
+        prntstatusmsg(b'add', f)
+        checkout(f)
+        repo.dirstate.set_tracked(f)
+
     for f in actions[b'undelete'][0]:
         if interactive:
             choice = repo.ui.promptchoice(
@@ -3923,8 +4122,10 @@ def abortgraft(ui, repo, graftstate):
     return 0
 
 
-def readgraftstate(repo, graftstate):
-    # type: (Any, statemod.cmdstate) -> Dict[bytes, Any]
+def readgraftstate(
+    repo: Any,
+    graftstate: statemod.cmdstate,
+) -> Dict[bytes, Any]:
     """read the graft state file and return a dict of the data stored in it"""
     try:
         return graftstate.read()
@@ -3938,3 +4139,90 @@ def hgabortgraft(ui, repo):
     with repo.wlock():
         graftstate = statemod.cmdstate(repo, b'graftstate')
         return abortgraft(ui, repo, graftstate)
+
+
+def postincoming(ui, repo, modheads, optupdate, checkout, brev):
+    """Run after a changegroup has been added via pull/unbundle
+
+    This takes arguments below:
+
+    :modheads: change of heads by pull/unbundle
+    :optupdate: updating working directory is needed or not
+    :checkout: update destination revision (or None to default destination)
+    :brev: a name, which might be a bookmark to be activated after updating
+
+    return True if update raise any conflict, False otherwise.
+    """
+    if modheads == 0:
+        return False
+    if optupdate:
+        # avoid circular import
+        from . import hg
+
+        try:
+            return hg.updatetotally(ui, repo, checkout, brev)
+        except error.UpdateAbort as inst:
+            msg = _(b"not updating: %s") % stringutil.forcebytestr(inst)
+            hint = inst.hint
+            raise error.UpdateAbort(msg, hint=hint)
+    if ui.quiet:
+        pass  # we won't report anything so the other clause are useless.
+    elif modheads is not None and modheads > 1:
+        currentbranchheads = len(repo.branchheads())
+        if currentbranchheads == modheads:
+            ui.status(
+                _(b"(run 'hg heads' to see heads, 'hg merge' to merge)\n")
+            )
+        elif currentbranchheads > 1:
+            ui.status(
+                _(b"(run 'hg heads .' to see heads, 'hg merge' to merge)\n")
+            )
+        else:
+            ui.status(_(b"(run 'hg heads' to see heads)\n"))
+    elif not ui.configbool(b'commands', b'update.requiredest'):
+        ui.status(_(b"(run 'hg update' to get a working copy)\n"))
+    return False
+
+
+def unbundle_files(ui, repo, fnames, unbundle_source=b'unbundle'):
+    """utility for `hg unbundle` and `hg debug::unbundle`"""
+    assert fnames
+    # avoid circular import
+    from . import hg
+
+    with repo.lock():
+        for fname in fnames:
+            f = hg.openpath(ui, fname)
+            gen = exchange.readbundle(ui, f, fname)
+            if isinstance(gen, streamclone.streamcloneapplier):
+                raise error.InputError(
+                    _(
+                        b'packed bundles cannot be applied with '
+                        b'"hg unbundle"'
+                    ),
+                    hint=_(b'use "hg debugapplystreamclonebundle"'),
+                )
+            url = b'bundle:' + fname
+            try:
+                txnname = b'unbundle'
+                if not isinstance(gen, bundle2.unbundle20):
+                    txnname = b'unbundle\n%s' % urlutil.hidepassword(url)
+                with repo.transaction(txnname) as tr:
+                    op = bundle2.applybundle(
+                        repo,
+                        gen,
+                        tr,
+                        source=unbundle_source,  # used by debug::unbundle
+                        url=url,
+                    )
+            except error.BundleUnknownFeatureError as exc:
+                raise error.Abort(
+                    _(b'%s: unknown bundle feature, %s') % (fname, exc),
+                    hint=_(
+                        b"see https://mercurial-scm.org/"
+                        b"wiki/BundleFeature for more "
+                        b"information"
+                    ),
+                )
+            modheads = bundle2.combinechangegroupresults(op)
+    return modheads

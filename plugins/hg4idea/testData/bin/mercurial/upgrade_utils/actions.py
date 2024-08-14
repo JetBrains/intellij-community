@@ -5,13 +5,17 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
+import random
+
+from typing import (
+    List,
+    Type,
+)
 
 from ..i18n import _
 from .. import (
     error,
     localrepo,
-    pycompat,
     requirements,
     revlog,
     util,
@@ -19,12 +23,11 @@ from .. import (
 
 from ..utils import compression
 
-if pycompat.TYPE_CHECKING:
-    from typing import (
-        List,
-        Type,
-    )
-
+# keeps pyflakes happy
+assert [
+    List,
+    Type,
+]
 
 # list of requirements that request a clone of all revlog if added/removed
 RECLONES_REQUIREMENTS = {
@@ -36,14 +39,18 @@ RECLONES_REQUIREMENTS = {
 
 
 def preservedrequirements(repo):
-    return set()
+    preserved = {
+        requirements.SHARED_REQUIREMENT,
+        requirements.NARROW_REQUIREMENT,
+    }
+    return preserved & repo.requirements
 
 
 FORMAT_VARIANT = b'deficiency'
 OPTIMISATION = b'optimization'
 
 
-class improvement(object):
+class improvement:
     """Represents an improvement that can be made as part of an upgrade."""
 
     ### The following attributes should be defined for each subclass:
@@ -97,8 +104,11 @@ class improvement(object):
     # Whether this improvement touches the dirstate
     touches_dirstate = False
 
+    # Can this action be run on a share instead of its mains repository
+    compatible_with_share = False
 
-allformatvariant = []  # type: List[Type['formatvariant']]
+
+allformatvariant: List[Type['formatvariant']] = []
 
 
 def registerformatvariant(cls):
@@ -178,7 +188,9 @@ class dirstatev2(requirementformatvariant):
 
     description = _(
         b'version 1 of the dirstate file format requires '
-        b'reading and parsing it all at once.'
+        b'reading and parsing it all at once.\n'
+        b'Version 2 has a better structure,'
+        b'better information and lighter update mechanism'
     )
 
     upgrademessage = _(b'"hg status" will be faster')
@@ -188,6 +200,30 @@ class dirstatev2(requirementformatvariant):
     touches_changelog = False
     touches_requirements = True
     touches_dirstate = True
+    compatible_with_share = True
+
+
+@registerformatvariant
+class dirstatetrackedkey(requirementformatvariant):
+    name = b'tracked-hint'
+    _requirement = requirements.DIRSTATE_TRACKED_HINT_V1
+
+    default = False
+
+    description = _(
+        b'Add a small file to help external tooling that watch the tracked set'
+    )
+
+    upgrademessage = _(
+        b'external tools will be informated of potential change in the tracked set'
+    )
+
+    touches_filelogs = False
+    touches_manifests = False
+    touches_changelog = False
+    touches_requirements = True
+    touches_dirstate = True
+    compatible_with_share = True
 
 
 @registerformatvariant
@@ -241,7 +277,7 @@ class sharesafe(requirementformatvariant):
     name = b'share-safe'
     _requirement = requirements.SHARESAFE_REQUIREMENT
 
-    default = False
+    default = True
 
     description = _(
         b'old shared repositories do not share source repository '
@@ -257,8 +293,7 @@ class sharesafe(requirementformatvariant):
 
     postdowngrademessage = _(
         b'repository downgraded to not use share safe mode, '
-        b'existing shares will not work and needs to'
-        b' be reshared.'
+        b'existing shares will not work and need to be reshared.'
     )
 
     postupgrademessage = _(
@@ -327,8 +362,11 @@ class copiessdc(requirementformatvariant):
     description = _(b'Stores copies information alongside changesets.')
 
     upgrademessage = _(
-        b'Allows to use more efficient algorithm to deal with ' b'copy tracing.'
+        b'Allows to use more efficient algorithm to deal with copy tracing.'
     )
+
+    touches_filelogs = False
+    touches_manifests = False
 
 
 @registerformatvariant
@@ -347,6 +385,9 @@ class changelogv2(requirementformatvariant):
     default = False
     description = _(b'An iteration of the revlog focussed on changelog needs.')
     upgrademessage = _(b'quite experimental')
+
+    touches_filelogs = False
+    touches_manifests = False
 
 
 @registerformatvariant
@@ -372,9 +413,17 @@ class removecldeltachain(formatvariant):
     def fromrepo(repo):
         # Mercurial 4.0 changed changelogs to not use delta chains. Search for
         # changelogs with deltas.
-        cl = repo.changelog
+        cl = repo.unfiltered().changelog
+        if len(cl) <= 1000:
+            some_rev = list(cl)
+        else:
+            # do a random sampling to speeds things up Scanning the whole
+            # repository can get really slow on bigger repo.
+            some_rev = sorted(
+                {random.randint(0, len(cl) - 1) for x in range(1000)}
+            )
         chainbase = cl.chainbase
-        return all(rev == chainbase(rev) for rev in cl)
+        return all(rev == chainbase(rev) for rev in some_rev)
 
     @staticmethod
     def fromconfig(repo):
@@ -452,7 +501,7 @@ class compressionlevel(formatvariant):
             level = repo.ui.configint(b'storage', b'revlog.zstd.level')
         if level is None:
             return b'default'
-        return bytes(level)
+        return b"%d" % level
 
     @classmethod
     def fromconfig(cls, repo):
@@ -464,7 +513,7 @@ class compressionlevel(formatvariant):
             level = repo.ui.configint(b'storage', b'revlog.zstd.level')
         if level is None:
             return b'default'
-        return bytes(level)
+        return b"%d" % level
 
 
 def find_format_upgrades(repo):
@@ -633,7 +682,7 @@ def determine_upgrade_actions(
     newactions = []
 
     for d in format_upgrades:
-        if util.safehasattr(d, '_requirement'):
+        if hasattr(d, '_requirement'):
             name = d._requirement
         else:
             name = None
@@ -645,7 +694,11 @@ def determine_upgrade_actions(
 
         newactions.append(d)
 
-    newactions.extend(o for o in sorted(optimizations) if o not in newactions)
+    newactions.extend(
+        o
+        for o in sorted(optimizations, key=(lambda x: x.name))
+        if o not in newactions
+    )
 
     # FUTURE consider adding some optimizations here for certain transitions.
     # e.g. adding generaldelta could schedule parent redeltas.
@@ -653,7 +706,24 @@ def determine_upgrade_actions(
     return newactions
 
 
-class UpgradeOperation(object):
+class BaseOperation:
+    """base class that contains the minimum for an upgrade to work
+
+    (this might need to be extended as the usage for subclass alternative to
+    UpgradeOperation extends)
+    """
+
+    def __init__(
+        self,
+        new_requirements,
+        backup_store,
+    ):
+        self.new_requirements = new_requirements
+        # should this operation create a backup of the store
+        self.backup_store = backup_store
+
+
+class UpgradeOperation(BaseOperation):
     """represent the work to be done during an upgrade"""
 
     def __init__(
@@ -666,8 +736,11 @@ class UpgradeOperation(object):
         revlogs_to_process,
         backup_store,
     ):
+        super().__init__(
+            new_requirements,
+            backup_store,
+        )
         self.ui = ui
-        self.new_requirements = new_requirements
         self.current_requirements = current_requirements
         # list of upgrade actions the operation will perform
         self.upgrade_actions = upgrade_actions
@@ -708,9 +781,6 @@ class UpgradeOperation(object):
         self.force_re_delta_both_parents = (
             b're-delta-multibase' in upgrade_actions_names
         )
-
-        # should this operation create a backup of the store
-        self.backup_store = backup_store
 
     @property
     def upgrade_actions_names(self):
@@ -793,7 +863,7 @@ class UpgradeOperation(object):
 
         return False
 
-    def _write_labeled(self, l, label):
+    def _write_labeled(self, l, label: bytes):
         """
         Utility function to aid writing of a list under one label
         """
@@ -808,19 +878,19 @@ class UpgradeOperation(object):
         self.ui.write(_(b'requirements\n'))
         self.ui.write(_(b'   preserved: '))
         self._write_labeled(
-            self._preserved_requirements, "upgrade-repo.requirement.preserved"
+            self._preserved_requirements, b"upgrade-repo.requirement.preserved"
         )
         self.ui.write((b'\n'))
         if self._removed_requirements:
             self.ui.write(_(b'   removed: '))
             self._write_labeled(
-                self._removed_requirements, "upgrade-repo.requirement.removed"
+                self._removed_requirements, b"upgrade-repo.requirement.removed"
             )
             self.ui.write((b'\n'))
         if self._added_requirements:
             self.ui.write(_(b'   added: '))
             self._write_labeled(
-                self._added_requirements, "upgrade-repo.requirement.added"
+                self._added_requirements, b"upgrade-repo.requirement.added"
             )
             self.ui.write((b'\n'))
         self.ui.write(b'\n')
@@ -834,7 +904,7 @@ class UpgradeOperation(object):
             self.ui.write(_(b'optimisations: '))
             self._write_labeled(
                 [a.name for a in optimisations],
-                "upgrade-repo.optimisation.performed",
+                b"upgrade-repo.optimisation.performed",
             )
             self.ui.write(b'\n\n')
 
@@ -891,14 +961,9 @@ def blocksourcerequirements(repo):
     requirements in the returned set.
     """
     return {
-        # The upgrade code does not yet support these experimental features.
-        # This is an artificial limitation.
-        requirements.TREEMANIFEST_REQUIREMENT,
         # This was a precursor to generaldelta and was never enabled by default.
         # It should (hopefully) not exist in the wild.
         b'parentdelta',
-        # Upgrade should operate on the actual store, not the shared link.
-        requirements.SHARED_REQUIREMENT,
     }
 
 
@@ -930,6 +995,16 @@ def check_source_requirements(repo):
         m = _(b'cannot upgrade repository; unsupported source requirement: %s')
         blockingreqs = b', '.join(sorted(blockingreqs))
         raise error.Abort(m % blockingreqs)
+    # Upgrade should operate on the actual store, not the shared link.
+
+    bad_share = (
+        requirements.SHARED_REQUIREMENT in repo.requirements
+        and requirements.SHARESAFE_REQUIREMENT not in repo.requirements
+    )
+    if bad_share:
+        m = _(b'cannot upgrade repository; share repository without share-safe')
+        h = _(b'check :hg:`help config.format.use-share-safe`')
+        raise error.Abort(m, hint=h)
 
 
 ### Verify the validity of the planned requirement changes ####################
@@ -950,6 +1025,7 @@ def supportremovedrequirements(repo):
         requirements.REVLOGV2_REQUIREMENT,
         requirements.CHANGELOGV2_REQUIREMENT,
         requirements.REVLOGV1_REQUIREMENT,
+        requirements.DIRSTATE_TRACKED_HINT_V1,
         requirements.DIRSTATE_V2_REQUIREMENT,
     }
     for name in compression.compengines:
@@ -964,24 +1040,28 @@ def supportremovedrequirements(repo):
 def supporteddestrequirements(repo):
     """Obtain requirements that upgrade supports in the destination.
 
-    If the result of the upgrade would create requirements not in this set,
+    If the result of the upgrade would have requirements not in this set,
     the upgrade is disallowed.
 
     Extensions should monkeypatch this to add their custom requirements.
     """
     supported = {
+        requirements.CHANGELOGV2_REQUIREMENT,
+        requirements.COPIESSDC_REQUIREMENT,
+        requirements.DIRSTATE_TRACKED_HINT_V1,
+        requirements.DIRSTATE_V2_REQUIREMENT,
         requirements.DOTENCODE_REQUIREMENT,
         requirements.FNCACHE_REQUIREMENT,
         requirements.GENERALDELTA_REQUIREMENT,
-        requirements.REVLOGV1_REQUIREMENT,  # allowed in case of downgrade
-        requirements.STORE_REQUIREMENT,
-        requirements.SPARSEREVLOG_REQUIREMENT,
-        requirements.COPIESSDC_REQUIREMENT,
         requirements.NODEMAP_REQUIREMENT,
-        requirements.SHARESAFE_REQUIREMENT,
+        requirements.REVLOGV1_REQUIREMENT,  # allowed in case of downgrade
         requirements.REVLOGV2_REQUIREMENT,
-        requirements.CHANGELOGV2_REQUIREMENT,
-        requirements.DIRSTATE_V2_REQUIREMENT,
+        requirements.SHARED_REQUIREMENT,
+        requirements.SHARESAFE_REQUIREMENT,
+        requirements.SPARSEREVLOG_REQUIREMENT,
+        requirements.STORE_REQUIREMENT,
+        requirements.TREEMANIFEST_REQUIREMENT,
+        requirements.NARROW_REQUIREMENT,
     }
     for name in compression.compengines:
         engine = compression.compengines[name]
@@ -1013,6 +1093,7 @@ def allowednewrequirements(repo):
         requirements.REVLOGV1_REQUIREMENT,
         requirements.REVLOGV2_REQUIREMENT,
         requirements.CHANGELOGV2_REQUIREMENT,
+        requirements.DIRSTATE_TRACKED_HINT_V1,
         requirements.DIRSTATE_V2_REQUIREMENT,
     }
     for name in compression.compengines:

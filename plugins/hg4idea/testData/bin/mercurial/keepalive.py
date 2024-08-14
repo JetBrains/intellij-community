@@ -82,17 +82,14 @@ EXTRA ATTRIBUTES AND METHODS
 
 # $Id: keepalive.py,v 1.14 2006/04/04 21:00:32 mstenner Exp $
 
-from __future__ import absolute_import, print_function
 
 import collections
-import errno
 import hashlib
 import socket
 import sys
 import threading
 
 from .i18n import _
-from .pycompat import getattr
 from .node import hex
 from . import (
     pycompat,
@@ -108,7 +105,7 @@ urlreq = util.urlreq
 DEBUG = None
 
 
-class ConnectionManager(object):
+class ConnectionManager:
     """
     The connection manager must be able to:
       * keep track of all existing
@@ -168,10 +165,12 @@ class ConnectionManager(object):
         if host:
             return list(self._hostmap[host])
         else:
-            return dict(self._hostmap)
+            return dict(
+                {h: list(conns) for (h, conns) in self._hostmap.items()}
+            )
 
 
-class KeepAliveHandler(object):
+class KeepAliveHandler:
     def __init__(self, timeout=None):
         self._cm = ConnectionManager()
         self._timeout = timeout
@@ -194,7 +193,7 @@ class KeepAliveHandler(object):
 
     def close_all(self):
         """close all open connections"""
-        for host, conns in pycompat.iteritems(self._cm.get_all()):
+        for host, conns in self._cm.get_all().items():
             for h in conns:
                 self._cm.remove(h)
                 h.close()
@@ -399,12 +398,8 @@ class HTTPResponse(httplib.HTTPResponse):
     # modification from socket.py
 
     def __init__(self, sock, debuglevel=0, strict=0, method=None):
-        extrakw = {}
-        if not pycompat.ispy3:
-            extrakw['strict'] = True
-            extrakw['buffering'] = True
         httplib.HTTPResponse.__init__(
-            self, sock, debuglevel=debuglevel, method=method, **extrakw
+            self, sock, debuglevel=debuglevel, method=method
         )
         self.fileno = sock.fileno
         self.code = None
@@ -662,14 +657,14 @@ def safesend(self, str):
         else:
             self.sock.sendall(str)
             self.sentbytescount += len(str)
-    except socket.error as v:
-        reraise = True
-        if v.args[0] == errno.EPIPE:  # Broken pipe
-            if self._HTTPConnection__state == httplib._CS_REQ_SENT:
-                self._broken_pipe_resp = None
-                self._broken_pipe_resp = self.getresponse()
-                reraise = False
-            self.close()
+    except BrokenPipeError:
+        if self._HTTPConnection__state == httplib._CS_REQ_SENT:
+            self._broken_pipe_resp = None
+            self._broken_pipe_resp = self.getresponse()
+            reraise = False
+        else:
+            reraise = True
+        self.close()
         if reraise:
             raise
 
@@ -705,6 +700,17 @@ class HTTPConnection(httplib.HTTPConnection):
         httplib.HTTPConnection.__init__(self, *args, **kwargs)
         self.sentbytescount = 0
         self.receivedbytescount = 0
+
+    def __repr__(self):
+        base = super(HTTPConnection, self).__repr__()
+        local = "(unconnected)"
+        s = self.sock
+        if s:
+            try:
+                local = "%s:%d" % s.getsockname()
+            except OSError:
+                pass  # Likely not connected
+        return "<%s: %s <--> %s:%d>" % (base, local, self.host, self.port)
 
 
 #########################################################################
@@ -794,7 +800,7 @@ def test_timeout(url):
     global DEBUG
     dbbackup = DEBUG
 
-    class FakeLogger(object):
+    class FakeLogger:
         def debug(self, msg, *args):
             print(msg % args)
 

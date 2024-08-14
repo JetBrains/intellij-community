@@ -4,7 +4,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import, print_function
 
 import posixpath
 
@@ -42,7 +41,7 @@ def normalize(path):
     return posixpath.normpath(path)
 
 
-class filemapper(object):
+class filemapper:
     """Map and filter filenames when importing.
     A name can be mapped to itself, a new name, or None (omit from new
     repository)."""
@@ -126,7 +125,7 @@ class filemapper(object):
         repo belong to the source repo and what parts don't."""
         if self.targetprefixes is None:
             self.targetprefixes = set()
-            for before, after in pycompat.iteritems(self.rename):
+            for before, after in self.rename.items():
                 self.targetprefixes.add(after)
 
         # If "." is a target, then all target files are considered from the

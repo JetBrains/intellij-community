@@ -9,6 +9,13 @@
 Provides a command that runs configured tools on the contents of modified files,
 writing back any fixes to the working copy or replacing changesets.
 
+Fixer tools are run in the repository's root directory. This allows them to read
+configuration files from the working copy, or even write to the working copy.
+The working copy is not updated to match the revision being fixed. In fact,
+several revisions may be fixed in parallel. Writes to the working copy are not
+amended into the revision being fixed; fixer tools MUST always read content to
+be fixed from stdin, and write fixed file content back to stdout.
+
 Here is an example configuration that causes :hg:`fix` to apply automatic
 formatting fixes to modified lines in C++ code::
 
@@ -113,16 +120,8 @@ perform other post-fixing work. The supported hooks are::
     mapping fixer tool names to lists of metadata values returned from
     executions that modified a file. This aggregates the same metadata
     previously passed to the "postfixfile" hook.
-
-Fixer tools are run in the repository's root directory. This allows them to read
-configuration files from the working copy, or even write to the working copy.
-The working copy is not updated to match the revision being fixed. In fact,
-several revisions may be fixed in parallel. Writes to the working copy are not
-amended into the revision being fixed; fixer tools should always write fixed
-file content back to stdout as documented above.
 """
 
-from __future__ import absolute_import
 
 import collections
 import itertools
@@ -144,11 +143,11 @@ from mercurial import (
     context,
     copies,
     error,
+    logcmdutil,
     match as matchmod,
     mdiff,
     merge,
     mergestate as mergestatemod,
-    obsolete,
     pycompat,
     registrar,
     rewriteutil,
@@ -240,7 +239,8 @@ usage = _(b'[OPTION]... [FILE]...')
 def fix(ui, repo, *pats, **opts):
     """rewrite file content in changesets or working directory
 
-    Runs any configured tools to fix the content of files. Only affects files
+    Runs any configured tools to fix the content of files. (See
+    :hg:`help -e fix` for details about configuring tools.) Only affects files
     with changes, unless file arguments are provided. Only affects changed lines
     of files, unless the --whole flag is used. Some tools may always affect the
     whole file regardless of --whole.
@@ -283,20 +283,29 @@ def fix(ui, repo, *pats, **opts):
         # There are no data dependencies between the workers fixing each file
         # revision, so we can use all available parallelism.
         def getfixes(items):
-            for rev, path in items:
-                ctx = repo[rev]
+            for srcrev, path, dstrevs in items:
+                ctx = repo[srcrev]
                 olddata = ctx[path].data()
                 metadata, newdata = fixfile(
-                    ui, repo, opts, fixers, ctx, path, basepaths, basectxs[rev]
-                )
-                # Don't waste memory/time passing unchanged content back, but
-                # produce one result per item either way.
-                yield (
-                    rev,
+                    ui,
+                    repo,
+                    opts,
+                    fixers,
+                    ctx,
                     path,
-                    metadata,
-                    newdata if newdata != olddata else None,
+                    basepaths,
+                    basectxs[srcrev],
                 )
+                # We ungroup the work items now, because the code that consumes
+                # these results has to handle each dstrev separately, and in
+                # topological order. Because these are handled in topological
+                # order, it's important that we pass around references to
+                # "newdata" instead of copying it. Otherwise, we would be
+                # keeping more copies of file content in memory at a time than
+                # if we hadn't bothered to group/deduplicate the work items.
+                data = newdata if newdata != olddata else None
+                for dstrev in dstrevs:
+                    yield (dstrev, path, metadata, data)
 
         results = worker.worker(
             ui, 1.0, getfixes, tuple(), workqueue, threadsafe=False
@@ -369,30 +378,37 @@ def cleanup(repo, replacements, wdirwritten):
     Useful as a hook point for extending "hg fix" with output summarizing the
     effects of the command, though we choose not to output anything here.
     """
-    replacements = {
-        prec: [succ] for prec, succ in pycompat.iteritems(replacements)
-    }
+    replacements = {prec: [succ] for prec, succ in replacements.items()}
     scmutil.cleanupnodes(repo, replacements, b'fix', fixphase=True)
 
 
 def getworkqueue(ui, repo, pats, opts, revstofix, basectxs):
-    """Constructs the list of files to be fixed at specific revisions
+    """Constructs a list of files to fix and which revisions each fix applies to
 
-    It is up to the caller how to consume the work items, and the only
-    dependence between them is that replacement revisions must be committed in
-    topological order. Each work item represents a file in the working copy or
-    in some revision that should be fixed and written back to the working copy
-    or into a replacement revision.
+    To avoid duplicating work, there is usually only one work item for each file
+    revision that might need to be fixed. There can be multiple work items per
+    file revision if the same file needs to be fixed in multiple changesets with
+    different baserevs. Each work item also contains a list of changesets where
+    the file's data should be replaced with the fixed data. The work items for
+    earlier changesets come earlier in the work queue, to improve pipelining by
+    allowing the first changeset to be replaced while fixes are still being
+    computed for later changesets.
 
-    Work items for the same revision are grouped together, so that a worker
-    pool starting with the first N items in parallel is likely to finish the
-    first revision's work before other revisions. This can allow us to write
-    the result to disk and reduce memory footprint. At time of writing, the
-    partition strategy in worker.py seems favorable to this. We also sort the
-    items by ascending revision number to match the order in which we commit
-    the fixes later.
+    Also returned is a map from changesets to the count of work items that might
+    affect each changeset. This is used later to count when all of a changeset's
+    work items have been finished, without having to inspect the remaining work
+    queue in each worker subprocess.
+
+    The example work item (1, "foo/bar.txt", (1, 2, 3)) means that the data of
+    bar.txt should be read from revision 1, then fixed, and written back to
+    revisions 1, 2 and 3. Revision 1 is called the "srcrev" and the list of
+    revisions is called the "dstrevs". In practice the srcrev is always one of
+    the dstrevs, and we make that choice when constructing the work item so that
+    the choice can't be made inconsistently later on. The dstrevs should all
+    have the same file revision for the given path, so the choice of srcrev is
+    arbitrary. The wdirrev can be a dstrev and a srcrev.
     """
-    workqueue = []
+    dstrevmap = collections.defaultdict(list)
     numitems = collections.defaultdict(int)
     maxfilesize = ui.configbytes(b'fix', b'maxfilesize')
     for rev in sorted(revstofix):
@@ -410,8 +426,21 @@ def getworkqueue(ui, repo, pats, opts, revstofix, basectxs):
                     % (util.bytecount(maxfilesize), path)
                 )
                 continue
-            workqueue.append((rev, path))
+            baserevs = tuple(ctx.rev() for ctx in basectxs[rev])
+            dstrevmap[(fctx.filerev(), baserevs, path)].append(rev)
             numitems[rev] += 1
+    workqueue = [
+        (min(dstrevs), path, dstrevs)
+        for (_filerev, _baserevs, path), dstrevs in dstrevmap.items()
+    ]
+    # Move work items for earlier changesets to the front of the queue, so we
+    # might be able to replace those changesets (in topological order) while
+    # we're still processing later work items. Note the min() in the previous
+    # expression, which means we don't need a custom comparator here. The path
+    # is also important in the sort order to make the output order stable. There
+    # are some situations where this doesn't help much, but some situations
+    # where it lets us buffer O(1) files instead of O(n) files.
+    workqueue.sort()
     return workqueue, numitems
 
 
@@ -420,7 +449,7 @@ def getrevstofix(ui, repo, opts):
     if opts[b'all']:
         revs = repo.revs(b'(not public() and not obsolete()) or wdir()')
     elif opts[b'source']:
-        source_revs = scmutil.revrange(repo, opts[b'source'])
+        source_revs = logcmdutil.revrange(repo, opts[b'source'])
         revs = set(repo.revs(b'(%ld::) - obsolete()', source_revs))
         if wdirrev in source_revs:
             # `wdir()::` is currently empty, so manually add wdir
@@ -428,11 +457,9 @@ def getrevstofix(ui, repo, opts):
         if repo[b'.'].rev() in revs:
             revs.add(wdirrev)
     else:
-        revs = set(scmutil.revrange(repo, opts[b'rev']))
+        revs = set(logcmdutil.revrange(repo, opts[b'rev']))
         if opts.get(b'working_dir'):
             revs.add(wdirrev)
-        for rev in revs:
-            checkfixablectx(ui, repo, repo[rev])
     # Allow fixing only wdir() even if there's an unfinished operation
     if not (len(revs) == 1 and wdirrev in revs):
         cmdutil.checkunfinished(repo)
@@ -447,16 +474,6 @@ def getrevstofix(ui, repo, opts):
             b'no changesets specified', hint=b'use --source or --working-dir'
         )
     return revs
-
-
-def checkfixablectx(ui, repo, ctx):
-    """Aborts if the revision shouldn't be replaced with a fixed one."""
-    if ctx.obsolete():
-        # It would be better to actually check if the revision has a successor.
-        if not obsolete.isenabled(repo, obsolete.allowdivergenceopt):
-            raise error.Abort(
-                b'fixing obsolete revision could cause divergence'
-            )
 
 
 def pathstofix(ui, repo, pats, opts, match, basectxs, fixctx):
@@ -516,9 +533,9 @@ def getbasepaths(repo, opts, workqueue, basectxs):
         return {}
 
     basepaths = {}
-    for rev, path in workqueue:
-        fixctx = repo[rev]
-        for basectx in basectxs[rev]:
+    for srcrev, path, _dstrevs in workqueue:
+        fixctx = repo[srcrev]
+        for basectx in basectxs[srcrev]:
             basepath = copies.pathcopies(basectx, fixctx).get(path, path)
             if basepath in basectx:
                 basepaths[(basectx.rev(), fixctx.rev(), path)] = basepath
@@ -618,7 +635,7 @@ def getbasectxs(repo, opts, revstofix):
     # The --base flag overrides the usual logic, and we give every revision
     # exactly the set of baserevs that the user specified.
     if opts.get(b'base'):
-        baserevs = set(scmutil.revrange(repo, opts.get(b'base')))
+        baserevs = set(logcmdutil.revrange(repo, opts.get(b'base')))
         if not baserevs:
             baserevs = {nullrev}
         basectxs = {repo[rev] for rev in baserevs}
@@ -641,10 +658,10 @@ def _prefetchfiles(repo, workqueue, basepaths):
     toprefetch = set()
 
     # Prefetch the files that will be fixed.
-    for rev, path in workqueue:
-        if rev == wdirrev:
+    for srcrev, path, _dstrevs in workqueue:
+        if srcrev == wdirrev:
             continue
-        toprefetch.add((rev, path))
+        toprefetch.add((srcrev, path))
 
     # Prefetch the base contents for lineranges().
     for (baserev, fixrev, path), basepath in basepaths.items():
@@ -674,7 +691,7 @@ def fixfile(ui, repo, opts, fixers, fixctx, path, basepaths, basectxs):
     """
     metadata = {}
     newdata = fixctx[path].data()
-    for fixername, fixer in pycompat.iteritems(fixers):
+    for fixername, fixer in fixers.items():
         if fixer.affects(opts, fixctx, path):
             ranges = lineranges(
                 opts, path, basepaths, basectxs, fixctx, newdata
@@ -682,6 +699,9 @@ def fixfile(ui, repo, opts, fixers, fixctx, path, basepaths, basectxs):
             command = fixer.command(ui, path, ranges)
             if command is None:
                 continue
+            msg = b'fixing: %s - %s - %s\n'
+            msg %= (fixctx, fixername, path)
+            ui.debug(msg)
             ui.debug(b'subprocess: %s\n' % (command,))
             proc = subprocess.Popen(
                 procutil.tonativestr(command),
@@ -752,16 +772,15 @@ def writeworkingdir(repo, ctx, filedata, replacements):
 
     Directly updates the dirstate for the affected files.
     """
-    assert repo.dirstate.p2() == nullid
-
-    for path, data in pycompat.iteritems(filedata):
+    for path, data in filedata.items():
         fctx = ctx[path]
         fctx.write(data, fctx.flags())
 
     oldp1 = repo.dirstate.p1()
     newp1 = replacements.get(oldp1, oldp1)
     if newp1 != oldp1:
-        with repo.dirstate.parentchange():
+        assert repo.dirstate.p2() == nullid
+        with repo.dirstate.changing_parents(repo):
             scmutil.movedirstate(repo, repo[newp1])
 
 
@@ -888,7 +907,7 @@ def fixernames(ui):
     return names
 
 
-class Fixer(object):
+class Fixer:
     """Wraps the raw config values for a fixer with methods"""
 
     def __init__(

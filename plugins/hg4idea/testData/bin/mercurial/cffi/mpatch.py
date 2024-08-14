@@ -5,7 +5,8 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
+
+from typing import List
 
 from ..pure.mpatch import *
 from ..pure.mpatch import mpatchError  # silence pyflakes
@@ -27,7 +28,7 @@ def cffi_get_next_item(arg, pos):
     return container[0]
 
 
-def patches(text, bins):
+def patches(text: bytes, bins: List[bytes]) -> bytes:
     lgt = len(bins)
     all = []
     if not lgt:

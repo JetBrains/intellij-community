@@ -65,6 +65,7 @@ changeset = '\{
   "tags": [{join(changesettag, ", ")}],
   "user": {author|utf8|json},
   "parents": [{join(parent%changesetparent, ", ")}],
+  "children": [{join(child%changesetparent, ", ")}],
   "files": [{join(files, ", ")}],
   "diff": [{join(diff, ", ")}],
   "phase": {phase|json}

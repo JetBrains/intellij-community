@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import unittest
 
@@ -13,7 +12,6 @@ from ..node import (
     hex,
     nullrev,
 )
-from ..pycompat import getattr
 from .. import (
     error,
     mdiff,
@@ -1282,7 +1280,7 @@ class ifilemutationtests(basetestcase):
             node2 = f.add(b'foo\n' * 32, None, tr, 2, node1, f.nullid)
 
         with self._maketransactionfn() as tr:
-            f.censorrevision(tr, node1)
+            f.censorrevision(tr, [node1])
 
         self.assertEqual(len(f), 3)
         self.assertEqual(list(f.revs()), [0, 1, 2])

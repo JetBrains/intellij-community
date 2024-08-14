@@ -5,13 +5,11 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import, print_function
 
 import contextlib
 
 from .i18n import _
 from .pycompat import (
-    getattr,
     open,
 )
 from . import (
@@ -72,6 +70,7 @@ def lsprofile(ui, fp):
             stats = lsprof.Stats(p.getstats())
             stats.sort(pycompat.sysstr(field))
             stats.pprint(limit=limit, file=fp, climit=climit)
+        fp.flush()
 
 
 @contextlib.contextmanager
@@ -99,14 +98,15 @@ def flameprofile(ui, fp):
     finally:
         thread.stop()
         thread.join()
-        print(
-            b'Collected %d stack frames (%d unique) in %2.2f seconds.'
-            % (
+        m = b'Collected %d stack frames (%d unique) in %2.2f seconds.'
+        m %= (
+            (
                 util.timer() - start_time,
                 thread.num_frames(),
                 thread.num_frames(unique=True),
-            )
+            ),
         )
+        print(m, flush=True)
 
 
 @contextlib.contextmanager
@@ -172,9 +172,10 @@ def statprofile(ui, fp):
             kwargs['showtime'] = showtime
 
         statprof.display(fp, data=data, format=displayformat, **kwargs)
+        fp.flush()
 
 
-class profile(object):
+class profile:
     """Start profiling.
 
     Profiling is active when the context manager is active. When the context
@@ -232,7 +233,7 @@ class profile(object):
                 self._fp = open(path, b'wb')
             elif pycompat.iswindows:
                 # parse escape sequence by win32print()
-                class uifp(object):
+                class uifp:
                     def __init__(self, ui):
                         self._ui = ui
 

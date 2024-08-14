@@ -1,8 +1,10 @@
 Mercurial accepts several notations for identifying one or more files
 at a time.
 
-By default, Mercurial treats filenames as shell-style extended glob
-patterns.
+By default, Mercurial treats filenames verbatim without pattern
+matching, relative to the current working directory. Note that your
+system shell might perform pattern matching of its own before passing
+filenames into Mercurial.
 
 Alternate pattern notations must be specified explicitly.
 
@@ -16,7 +18,8 @@ To use a plain path name without any pattern matching, start it with
 current repository root, and when the path points to a directory, it is matched
 recursively. To match all files in a directory non-recursively (not including
 any files in subdirectories), ``rootfilesin:`` can be used, specifying an
-absolute path (relative to the repository root).
+absolute path (relative to the repository root). To match a single file exactly,
+relative to the repository root, you can use ``filepath:``.
 
 To use an extended glob, start a name with ``glob:``. Globs are rooted
 at the current directory; a glob such as ``*.c`` will only match files
@@ -48,11 +51,15 @@ For ``-I`` and ``-X`` options, ``glob:`` will match directories recursively.
 
 Plain examples::
 
-  path:foo/bar        a name bar in a directory named foo in the root
-                      of the repository
-  path:path:name      a file or directory named "path:name"
-  rootfilesin:foo/bar the files in a directory called foo/bar, but not any files
-                      in its subdirectories and not a file bar in directory foo
+  path:foo/bar                  a name bar in a directory named foo in the root
+                                of the repository
+  path:some/path                a file or directory named "some/path"
+  filepath:some/path/to/a/file  exactly a single file named
+                                "some/path/to/a/file", relative to the root
+                                of the repository
+  rootfilesin:foo/bar           the files in a directory called foo/bar, but
+                                not any files in its subdirectories and not
+                                a file bar in directory foo
 
 Glob examples::
 

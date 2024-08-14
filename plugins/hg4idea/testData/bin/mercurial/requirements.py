@@ -5,14 +5,20 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
+
+# obsolete experimental requirements:
+#  - manifestv2: An experimental new manifest format that allowed
+#    for stem compression of long paths. Experiment ended up not
+#    being successful (repository sizes went up due to worse delta
+#    chains), and the code was deleted in 4.6.
 
 GENERALDELTA_REQUIREMENT = b'generaldelta'
 DOTENCODE_REQUIREMENT = b'dotencode'
 STORE_REQUIREMENT = b'store'
 FNCACHE_REQUIREMENT = b'fncache'
 
-DIRSTATE_V2_REQUIREMENT = b'exp-dirstate-v2'
+DIRSTATE_TRACKED_HINT_V1 = b'dirstate-tracked-key-v1'
+DIRSTATE_V2_REQUIREMENT = b'dirstate-v2'
 
 # When narrowing is finalized and no longer subject to format changes,
 # we should move this to just "narrow" or similar.
@@ -23,12 +29,19 @@ SPARSE_REQUIREMENT = b'exp-sparse'
 
 # Enables the internal phase which is used to hide changesets instead
 # of stripping them
-INTERNAL_PHASE_REQUIREMENT = b'internal-phase'
+INTERNAL_PHASE_REQUIREMENT = b'internal-phase-2'
+
+# Enables the internal phase which is used to hide changesets instead
+# of stripping them
+ARCHIVED_PHASE_REQUIREMENT = b'exp-archived-phase'
 
 # Stores manifest in Tree structure
 TREEMANIFEST_REQUIREMENT = b'treemanifest'
 
 REVLOGV1_REQUIREMENT = b'revlogv1'
+
+# allow using ZSTD as compression engine for revlog content
+REVLOG_COMPRESSION_ZSTD = b'revlog-compression-zstd'
 
 # Increment the sub-version when the revlog v2 format changes to lock out old
 # clients.
@@ -66,6 +79,10 @@ RELATIVE_SHARED_REQUIREMENT = b'relshared'
 # `.hg/store/requires` are present.
 SHARESAFE_REQUIREMENT = b'share-safe'
 
+# Bookmarks must be stored in the `store` part of the repository and will be
+# share accross shares
+BOOKMARKS_IN_STORE_REQUIREMENT = b'bookmarksinstore'
+
 # List of requirements which are working directory specific
 # These requirements cannot be shared between repositories if they
 # share the same store
@@ -83,5 +100,26 @@ WORKING_DIR_REQUIREMENTS = {
     SHARED_REQUIREMENT,
     RELATIVE_SHARED_REQUIREMENT,
     SHARESAFE_REQUIREMENT,
+    DIRSTATE_TRACKED_HINT_V1,
     DIRSTATE_V2_REQUIREMENT,
+}
+
+# List of requirement that impact "stream-clone" (and hardlink clone) and
+# cannot be changed in such cases.
+#
+# requirements not in this list are safe to be altered during stream-clone.
+#
+# note: the list is currently inherited from previous code and miss some relevant requirement while containing some irrelevant ones.
+STREAM_FIXED_REQUIREMENTS = {
+    ARCHIVED_PHASE_REQUIREMENT,
+    BOOKMARKS_IN_STORE_REQUIREMENT,
+    CHANGELOGV2_REQUIREMENT,
+    COPIESSDC_REQUIREMENT,
+    GENERALDELTA_REQUIREMENT,
+    INTERNAL_PHASE_REQUIREMENT,
+    REVLOG_COMPRESSION_ZSTD,
+    REVLOGV1_REQUIREMENT,
+    REVLOGV2_REQUIREMENT,
+    SPARSEREVLOG_REQUIREMENT,
+    TREEMANIFEST_REQUIREMENT,
 }

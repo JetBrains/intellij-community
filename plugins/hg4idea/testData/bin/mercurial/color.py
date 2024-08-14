@@ -5,12 +5,10 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import re
 
 from .i18n import _
-from .pycompat import getattr
 
 from . import (
     encoding,
@@ -248,28 +246,19 @@ def _modesetup(ui):
     if pycompat.iswindows:
         from . import win32
 
-        term = encoding.environ.get(b'TERM')
-        # TERM won't be defined in a vanilla cmd.exe environment.
-
-        # UNIX-like environments on Windows such as Cygwin and MSYS will
-        # set TERM. They appear to make a best effort attempt at setting it
-        # to something appropriate. However, not all environments with TERM
-        # defined support ANSI.
-        ansienviron = term and b'xterm' in term
-
         if mode == b'auto':
             # Since "ansi" could result in terminal gibberish, we error on the
             # side of selecting "win32". However, if w32effects is not defined,
             # we almost certainly don't support "win32", so don't even try.
             # w32effects is not populated when stdout is redirected, so checking
             # it first avoids win32 calls in a state known to error out.
-            if ansienviron or not w32effects or win32.enablevtmode():
+            if not w32effects or win32.enablevtmode():
                 realmode = b'ansi'
             else:
                 realmode = b'win32'
         # An empty w32effects is a clue that stdout is redirected, and thus
         # cannot enable VT mode.
-        elif mode == b'ansi' and w32effects and not ansienviron:
+        elif mode == b'ansi' and w32effects:
             win32.enablevtmode()
     elif mode == b'auto':
         realmode = b'ansi'

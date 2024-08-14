@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import errno
 import os
@@ -23,7 +22,7 @@ _version = 4
 _versionformat = b">I"
 
 
-class state(object):
+class state:
     def __init__(self, repo):
         self._vfs = repo.vfs
         self._ui = repo.ui
@@ -138,9 +137,8 @@ class state(object):
     def invalidate(self):
         try:
             os.unlink(os.path.join(self._rootdir, b'.hg', b'fsmonitor.state'))
-        except OSError as inst:
-            if inst.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
         self._identity = util.filestat(None)
 
     def setlastclock(self, clock):

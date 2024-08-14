@@ -5,22 +5,28 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
-import errno
 import os
 import posixpath
 import re
+import typing
+
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+)
 
 from .i18n import _
-from .pycompat import getattr
 from . import (
     config,
     error,
     filemerge,
     pathutil,
     phases,
-    pycompat,
     util,
 )
 from .utils import (
@@ -28,17 +34,19 @@ from .utils import (
     urlutil,
 )
 
+# keeps pyflakes happy
+assert [
+    Any,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+]
+
 nullstate = (b'', b'', b'empty')
 
-if pycompat.TYPE_CHECKING:
-    from typing import (
-        Any,
-        Dict,
-        List,
-        Optional,
-        Set,
-        Tuple,
-    )
+if typing.TYPE_CHECKING:
     from . import (
         context,
         localrepo,
@@ -48,25 +56,32 @@ if pycompat.TYPE_CHECKING:
         ui as uimod,
     )
 
-    Substate = Dict[bytes, Tuple[bytes, bytes, bytes]]
+    # keeps pyflakes happy
+    assert [
+        context,
+        localrepo,
+        matchmod,
+        scmutil,
+        subrepo,
+        uimod,
+    ]
+
+Substate = Dict[bytes, Tuple[bytes, bytes, bytes]]
 
 
-def state(ctx, ui):
-    # type: (context.changectx, uimod.ui) -> Substate
+def state(ctx: "context.changectx", ui: "uimod.ui") -> Substate:
     """return a state dict, mapping subrepo paths configured in .hgsub
     to tuple: (source from .hgsub, revision from .hgsubstate, kind
     (key in types dict))
     """
-    p = config.config()
+    p: config.config = config.config()
     repo = ctx.repo()
 
     def read(f, sections=None, remap=None):
         if f in ctx:
             try:
                 data = ctx[f].data()
-            except IOError as err:
-                if err.errno != errno.ENOENT:
-                    raise
+            except FileNotFoundError:
                 # handle missing subrepo spec files as removed
                 ui.warn(
                     _(b"warning: subrepo spec file \'%s\' not found\n")
@@ -103,12 +118,10 @@ def state(ctx, ui):
                         % (repo.pathto(b'.hgsubstate'), (i + 1))
                     )
                 rev[path] = revision
-        except IOError as err:
-            if err.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
 
-    def remap(src):
-        # type: (bytes) -> bytes
+    def remap(src: bytes) -> bytes:
         for pattern, repl in p.items(b'subpaths'):
             # Turn r'C:\foo\bar' into r'C:\\foo\\bar' since re.sub
             # does a string decode.
@@ -130,7 +143,7 @@ def state(ctx, ui):
         return src
 
     state = {}
-    for path, src in p.items(b''):  # type: bytes
+    for path, src in p.items(b''):
         kind = b'hg'
         if src.startswith(b'['):
             if b']' not in src:
@@ -160,8 +173,7 @@ def state(ctx, ui):
     return state
 
 
-def writestate(repo, state):
-    # type: (localrepo.localrepository, Substate) -> None
+def writestate(repo: "localrepo.localrepository", state: Substate) -> None:
     """rewrite .hgsubstate in (outer) repo with these subrepo states"""
     lines = [
         b'%s %s\n' % (state[s][1], s)
@@ -171,8 +183,14 @@ def writestate(repo, state):
     repo.wwrite(b'.hgsubstate', b''.join(lines), b'')
 
 
-def submerge(repo, wctx, mctx, actx, overwrite, labels=None):
-    # type: (localrepo.localrepository, context.workingctx, context.changectx, context.changectx, bool, Optional[Any]) -> Substate
+def submerge(
+    repo: "localrepo.localrepository",
+    wctx: "context.workingctx",
+    mctx: "context.changectx",
+    actx: "context.changectx",
+    overwrite: bool,
+    labels: Optional[Any] = None,
+) -> Substate:
     # TODO: type the `labels` arg
     """delegated from merge.applyupdates: merging of .hgsubstate file
     in working context, merging context and ancestor context"""
@@ -191,7 +209,7 @@ def submerge(repo, wctx, mctx, actx, overwrite, labels=None):
         repo.ui.debug(b"  subrepo %s: %s %s\n" % (s, msg, r))
 
     promptssrc = filemerge.partextras(labels)
-    for s, l in sorted(pycompat.iteritems(s1)):
+    for s, l in sorted(s1.items()):
         a = sa.get(s, nullstate)
         ld = l  # local state with possible dirty flag for compares
         if wctx.sub(s).dirty():
@@ -312,8 +330,13 @@ def submerge(repo, wctx, mctx, actx, overwrite, labels=None):
     return sm
 
 
-def precommit(ui, wctx, status, match, force=False):
-    # type: (uimod.ui, context.workingcommitctx, scmutil.status, matchmod.basematcher, bool) -> Tuple[List[bytes], Set[bytes], Substate]
+def precommit(
+    ui: "uimod.ui",
+    wctx: "context.workingcommitctx",
+    status: "scmutil.status",
+    match: "matchmod.basematcher",
+    force: bool = False,
+) -> Tuple[List[bytes], Set[bytes], Substate]:
     """Calculate .hgsubstate changes that should be applied before committing
 
     Returns (subs, commitsubs, newstate) where
@@ -389,7 +412,7 @@ def repo_rel_or_abs_source(repo):
     Either absolute or relative the outermost repo"""
     parent = repo
     chunks = []
-    while util.safehasattr(parent, b'_subparent'):
+    while hasattr(parent, '_subparent'):
         source = urlutil.url(parent._subsource)
         chunks.append(bytes(source))
         if source.isabs():
@@ -398,29 +421,41 @@ def repo_rel_or_abs_source(repo):
 
     chunks.reverse()
     path = posixpath.join(*chunks)
-    return posixpath.normpath(path)
+    matchscheme = re.compile(b'^[a-zA-Z0-9+.\\-]+:').match
+    if matchscheme(path):
+        scheme, path = path.split(b':', 1)
+        if path.startswith(b'//'):
+            path = path[2:]
+            sep = b'//'
+        else:
+            sep = b''
+        normalized_path = scheme + b':' + sep + posixpath.normpath(path)
+    else:
+        normalized_path = posixpath.normpath(path)
+    return normalized_path
 
 
-def reporelpath(repo):
-    # type: (localrepo.localrepository) -> bytes
+def reporelpath(repo: "localrepo.localrepository") -> bytes:
     """return path to this (sub)repo as seen from outermost repo"""
     parent = repo
-    while util.safehasattr(parent, b'_subparent'):
+    while hasattr(parent, '_subparent'):
         parent = parent._subparent
     return repo.root[len(pathutil.normasprefix(parent.root)) :]
 
 
-def subrelpath(sub):
-    # type: (subrepo.abstractsubrepo) -> bytes
+def subrelpath(sub: "subrepo.abstractsubrepo") -> bytes:
     """return path to this subrepo as seen from outermost repo"""
     return sub._relpath
 
 
-def _abssource(repo, push=False, abort=True):
-    # type: (localrepo.localrepository, bool, bool) -> Optional[bytes]
+def _abssource(
+    repo: "localrepo.localrepository",
+    push: bool = False,
+    abort: bool = True,
+) -> Optional[bytes]:
     """return pull/push path of repo - either based on parent repo .hgsub info
     or on the top repo config. Abort or return None if no source found."""
-    if util.safehasattr(repo, b'_subparent'):
+    if hasattr(repo, '_subparent'):
         source = urlutil.url(repo._subsource)
         if source.isabs():
             return bytes(source)
@@ -433,7 +468,7 @@ def _abssource(repo, push=False, abort=True):
             return bytes(parent)
     else:  # recursion reached top repo
         path = None
-        if util.safehasattr(repo, b'_subtoppath'):
+        if hasattr(repo, '_subtoppath'):
             path = repo._subtoppath
         elif push and repo.ui.config(b'paths', b'default-push'):
             path = repo.ui.config(b'paths', b'default-push')
@@ -465,8 +500,7 @@ def _abssource(repo, push=False, abort=True):
         raise error.Abort(_(b"default path for subrepository not found"))
 
 
-def newcommitphase(ui, ctx):
-    # type: (uimod.ui, context.changectx) -> int
+def newcommitphase(ui: "uimod.ui", ctx: "context.changectx") -> int:
     commitphase = phases.newcommitphase(ui)
     substate = getattr(ctx, "substate", None)
     if not substate:

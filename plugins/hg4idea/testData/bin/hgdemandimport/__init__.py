@@ -11,15 +11,11 @@
 # demand loading is per-package. Keeping demandimport in the mercurial package
 # would disable demand loading for any modules in mercurial.
 
-from __future__ import absolute_import
 
 import os
 import sys
 
-if sys.version_info[0] >= 3:
-    from . import demandimportpy3 as demandimport
-else:
-    from . import demandimportpy2 as demandimport
+from . import demandimportpy3 as demandimport
 
 # Full module names which can't be lazy imported.
 # Extensions can add to this set.
@@ -59,6 +55,13 @@ IGNORES = {
     'builtins',
     'urwid.command_map',  # for pudb
     'lzma',
+    # setuptools uses this hack to inject it's own distutils at import time
+    'setuptools',
+    '_distutils_hack.override',
+    # threading is locally imported by importlib.util.LazyLoader.exec_module
+    '_weakrefset',
+    'warnings',
+    'threading',
 }
 
 _pypy = '__pypy__' in sys.builtin_module_names
@@ -66,6 +69,9 @@ _pypy = '__pypy__' in sys.builtin_module_names
 if _pypy:
     # _ctypes.pointer is shadowed by "from ... import pointer" (PyPy 5)
     IGNORES.add('_ctypes.pointer')
+    # pure Python module on PyPy, must be loaded to raise ModuleNotFoundError
+    # on non-Windows platforms
+    IGNORES.add('msvcrt')
 
 demandimport.init(IGNORES)
 

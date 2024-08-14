@@ -6,10 +6,8 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import errno
-import importlib
 import os
 import socket
 import sys
@@ -18,7 +16,6 @@ import wsgiref.validate
 
 from ..i18n import _
 from ..pycompat import (
-    getattr,
     open,
 )
 
@@ -53,7 +50,7 @@ def _splitURI(uri):
     return urlreq.unquote(path), query
 
 
-class _error_logger(object):
+class _error_logger:
     def __init__(self, handler):
         self.handler = handler
 
@@ -102,7 +99,7 @@ class _httprequesthandler(httpservermod.basehttprequesthandler):
 
     def log_request(self, code='-', size='-'):
         xheaders = []
-        if util.safehasattr(self, b'headers'):
+        if hasattr(self, 'headers'):
             xheaders = [
                 h for h in self.headers.items() if h[0].startswith('x-')
             ]
@@ -117,9 +114,8 @@ class _httprequesthandler(httpservermod.basehttprequesthandler):
     def do_write(self):
         try:
             self.do_hgweb()
-        except socket.error as inst:
-            if inst.errno != errno.EPIPE:
-                raise
+        except BrokenPipeError:
+            pass
 
     def do_POST(self):
         try:
@@ -154,6 +150,9 @@ class _httprequesthandler(httpservermod.basehttprequesthandler):
     def do_GET(self):
         self.do_POST()
 
+    def do_HEAD(self):
+        self.do_POST()
+
     def do_hgweb(self):
         self.sent_headers = False
         path, query = _splitURI(self.path)
@@ -186,18 +185,11 @@ class _httprequesthandler(httpservermod.basehttprequesthandler):
         env['REMOTE_ADDR'] = self.client_address[0]
         env['QUERY_STRING'] = query or ''
 
-        if pycompat.ispy3:
-            if self.headers.get_content_type() is None:
-                env['CONTENT_TYPE'] = self.headers.get_default_type()
-            else:
-                env['CONTENT_TYPE'] = self.headers.get_content_type()
-            length = self.headers.get('content-length')
+        if self.headers.get_content_type() is None:
+            env['CONTENT_TYPE'] = self.headers.get_default_type()
         else:
-            if self.headers.typeheader is None:
-                env['CONTENT_TYPE'] = self.headers.type
-            else:
-                env['CONTENT_TYPE'] = self.headers.typeheader
-            length = self.headers.getheader('content-length')
+            env['CONTENT_TYPE'] = self.headers.get_content_type()
+        length = self.headers.get('content-length')
         if length:
             env['CONTENT_LENGTH'] = length
         for header in [
@@ -213,7 +205,7 @@ class _httprequesthandler(httpservermod.basehttprequesthandler):
         env['SERVER_PROTOCOL'] = self.request_version
         env['wsgi.version'] = (1, 0)
         env['wsgi.url_scheme'] = pycompat.sysstr(self.url_scheme)
-        if env.get('HTTP_EXPECT', b'').lower() == b'100-continue':
+        if env.get('HTTP_EXPECT', '').lower() == '100-continue':
             self.rfile = common.continuereader(self.rfile, self.wfile.write)
 
         env['wsgi.input'] = self.rfile
@@ -221,7 +213,7 @@ class _httprequesthandler(httpservermod.basehttprequesthandler):
         env['wsgi.multithread'] = isinstance(
             self.server, socketserver.ThreadingMixIn
         )
-        if util.safehasattr(socketserver, b'ForkingMixIn'):
+        if hasattr(socketserver, 'ForkingMixIn'):
             env['wsgi.multiprocess'] = isinstance(
                 self.server, socketserver.ForkingMixIn
             )
@@ -256,7 +248,11 @@ class _httprequesthandler(httpservermod.basehttprequesthandler):
             self.send_header(*h)
             if h[0].lower() == 'content-length':
                 self.length = int(h[1])
-        if self.length is None and saved_status[0] != common.HTTP_NOT_MODIFIED:
+        if (
+            self.length is None
+            and saved_status[0] != common.HTTP_NOT_MODIFIED
+            and self.command != 'HEAD'
+        ):
             self._chunked = (
                 not self.close_connection and self.request_version == 'HTTP/1.1'
             )
@@ -347,11 +343,11 @@ try:
     threading.active_count()  # silence pyflakes and bypass demandimport
     _mixin = socketserver.ThreadingMixIn
 except ImportError:
-    if util.safehasattr(os, b"fork"):
+    if hasattr(os, "fork"):
         _mixin = socketserver.ForkingMixIn
     else:
 
-        class _mixin(object):
+        class _mixin:
             pass
 
 
@@ -412,26 +408,9 @@ def create_server(ui, app):
         cls = MercurialHTTPServer
 
     # ugly hack due to python issue5853 (for threaded use)
-    try:
-        import mimetypes
+    import mimetypes
 
-        mimetypes.init()
-    except UnicodeDecodeError:
-        # Python 2.x's mimetypes module attempts to decode strings
-        # from Windows' ANSI APIs as ascii (fail), then re-encode them
-        # as ascii (clown fail), because the default Python Unicode
-        # codec is hardcoded as ascii.
-
-        sys.argv  # unwrap demand-loader so that reload() works
-        # resurrect sys.setdefaultencoding()
-        try:
-            importlib.reload(sys)
-        except AttributeError:
-            reload(sys)
-        oldenc = sys.getdefaultencoding()
-        sys.setdefaultencoding(b"latin1")  # or any full 8-bit encoding
-        mimetypes.init()
-        sys.setdefaultencoding(oldenc)
+    mimetypes.init()
 
     address = ui.config(b'web', b'address')
     port = urlutil.getport(ui.config(b'web', b'port'))

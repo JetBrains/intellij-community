@@ -8,11 +8,10 @@
 # The original module was split in an interface and an implementation
 # file to defer pygments loading and speedup extension setup.
 
-from __future__ import absolute_import
 
 from mercurial import demandimport
 
-demandimport.IGNORES.update([b'pkgutil', b'pkg_resources', b'__main__'])
+demandimport.IGNORES.update(['pkgutil', 'pkg_resources', '__main__'])
 
 from mercurial import (
     encoding,

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import unittest
 
 # picked from test-parse-index2, copied rather than imported
@@ -22,11 +21,20 @@ data_non_inlined = (
     b'\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 )
 
+from ..revlogutils.constants import REVLOGV1
+
 
 try:
     from ..cext import parsers as cparsers  # pytype: disable=import-error
 except ImportError:
     cparsers = None
+
+try:
+    from ..rustext.revlog import (  # pytype: disable=import-error
+        Index as RustIndex,
+    )
+except ImportError:
+    RustIndex = None
 
 
 @unittest.skipIf(
@@ -34,5 +42,21 @@ except ImportError:
     'The C version of the "parsers" module is not available. It is needed for this test.',
 )
 class RevlogBasedTestBase(unittest.TestCase):
-    def parseindex(self):
-        return cparsers.parse_index2(data_non_inlined, False)[0]
+    def parseindex(self, data=None):
+        if data is None:
+            data = data_non_inlined
+        return cparsers.parse_index2(data, False)[0]
+
+
+@unittest.skipIf(
+    RustIndex is None,
+    'The Rust index is not available. It is needed for this test.',
+)
+class RustRevlogBasedTestBase(unittest.TestCase):
+    def parserustindex(self, data=None):
+        if data is None:
+            data = data_non_inlined
+        # not inheriting RevlogBasedTestCase to avoid having a
+        # `parseindex` method that would be shadowed by future subclasses
+        # this duplication will soon be removed
+        return RustIndex(data, REVLOGV1)
