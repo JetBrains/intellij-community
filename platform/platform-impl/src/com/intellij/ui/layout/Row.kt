@@ -59,14 +59,6 @@ interface RowBuilder : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun onGlobalApply(callback: () -> Unit): Row
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun onGlobalReset(callback: () -> Unit): Row
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun onGlobalIsModified(callback: () -> Boolean): Row
 }
 
 @ApiStatus.ScheduledForRemoval

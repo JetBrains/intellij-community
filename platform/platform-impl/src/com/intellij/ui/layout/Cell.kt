@@ -189,10 +189,6 @@ interface CellBuilder<out T : JComponent> {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun visible(isVisible: Boolean)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -218,12 +214,6 @@ private fun <T : JComponent> CellBuilder<T>.intApplyToComponent(task: T.() -> Un
 @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 fun <T : JTextComponent> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
   return withBindingInt(JTextComponent::getText, JTextComponent::setText, modelBinding)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun <T : AbstractButton> CellBuilder<T>.withSelectedBinding(modelBinding: PropertyBinding<Boolean>): CellBuilder<T> {
-  return withBindingInt(AbstractButton::isSelected, AbstractButton::setSelected, modelBinding)
 }
 
 @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)

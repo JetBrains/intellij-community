@@ -24964,7 +24964,6 @@ com.intellij.ui.layout.CellBuilder
 - a:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - a:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - a:onReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
-- ba:visible(Z):V
 - ba:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.layout.CellBuilder
 - b:withBinding(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 - a:withGraphProperty(com.intellij.openapi.observable.properties.GraphProperty):com.intellij.ui.layout.CellBuilder
@@ -24980,7 +24979,6 @@ f:com.intellij.ui.layout.CellKt
 - bsf:getSelected(com.intellij.ui.layout.CellBuilder):com.intellij.ui.layout.ComponentPredicate
 - bsf:listCellRenderer(kotlin.jvm.functions.Function4):com.intellij.ui.SimpleListCellRenderer
 - bsf:toNullable(com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.PropertyBinding
-- bsf:withSelectedBinding(com.intellij.ui.layout.CellBuilder,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 - bsf:withTextBinding(com.intellij.ui.layout.CellBuilder,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 @:com.intellij.ui.layout.CellMarker
 - java.lang.annotation.Annotation
@@ -25067,8 +25065,6 @@ com.intellij.ui.layout.RowBuilder
 - b:noteRow(java.lang.String,kotlin.jvm.functions.Function1):V
 - bs:noteRow$default(com.intellij.ui.layout.RowBuilder,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - ba:onGlobalApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
-- ba:onGlobalIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
-- ba:onGlobalReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
 - b:row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - row(javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row

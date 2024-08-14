@@ -411,16 +411,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return this
   }
 
-  override fun onGlobalReset(callback: () -> Unit): Row {
-    builder.resetCallbacks.getOrPut(null, { SmartList() }).add(callback)
-    return this
-  }
-
-  override fun onGlobalIsModified(callback: () -> Boolean): Row {
-    builder.isModifiedCallbacks.getOrPut(null, { SmartList() }).add(callback)
-    return this
-  }
-
   private val labeledComponents = listOf(JTextComponent::class, JComboBox::class, JSpinner::class, JSlider::class)
 
   /**
@@ -500,10 +490,6 @@ private class CellBuilderImpl<T : JComponent>(
     viewComponent.isEnabled = predicate()
     predicate.addListener { viewComponent.isEnabled = it }
     return this
-  }
-
-  override fun visible(isVisible: Boolean) {
-    viewComponent.isVisible = isVisible
   }
 
   override fun visibleIf(predicate: ComponentPredicate): CellBuilder<T> {
