@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfo.isLinux
 import java.awt.Point
 
@@ -17,7 +18,12 @@ class FrameHeaderUI(data: ComponentData) : UiComponent(data) {
 }
 
 fun Finder.openMenuItem(vararg items: String) {
-  toolbarHeader.burgerMenuButton.click()
+  if (isLinux) {
+    x("//div[@tooltiptext='Main Menu']").click()
+  } else {
+    toolbarHeader.burgerMenuButton.click()
+  }
+
 
   if (xx(xQuery { or(byClass("LinuxIdeMenuBar"), byClass("IdeJMenuBar")) }).list().isNotEmpty()) {
     items.dropLast(1).forEach { path ->
