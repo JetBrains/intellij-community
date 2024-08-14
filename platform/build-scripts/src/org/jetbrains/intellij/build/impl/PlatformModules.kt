@@ -494,6 +494,22 @@ private suspend fun processAndGetProductPluginContentModules(
       moduleOutputPatcher.patchModuleOutput(productPluginSourceModuleName, "META-INF/$fileName", data)
     }
 
+    // Android Studio (b/356927528): Also embed the AndroidGameDevelopmentToolsPlugin.xml file, similar to how
+    //   AndroidStudioPlugin.xml is embedded above.
+    if (context.productProperties.platformPrefix == "AndroidStudio") {
+      val gameToolsPluginFileName = "AndroidGameDevelopmentToolsPlugin.xml"
+      val gameToolsPluginFile = requireNotNull(context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/$gameToolsPluginFileName")
+      ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
+      val gameToolsPluginXml = JDOMUtil.load(gameToolsPluginFile)
+
+      val unused = embedAndCollectProductModules(file = gameToolsPluginFile, xml = gameToolsPluginXml, xIncludePathResolver = xIncludePathResolver, context = context)
+
+      val gameToolsPluginData = JDOMUtil.write(gameToolsPluginXml)
+      layout.withPatch { moduleOutputPatcher, _, _ ->
+        moduleOutputPatcher.patchModuleOutput(productPluginSourceModuleName, "META-INF/$gameToolsPluginFileName", gameToolsPluginData)
+      }
+    }
+
     result
   }
 }
