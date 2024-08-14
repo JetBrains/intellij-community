@@ -7,7 +7,7 @@
   <properties>
     <java.version>17</java.version>
     <kotlin.target>17</kotlin.target>
-    <gradle.version>8.9</gradle.version>
+    <gradle.version>8.10</gradle.version>
     <kotlin.version>1.9.25</kotlin.version>
     <gradle.intellij.version>1.17.4</gradle.intellij.version>
 
