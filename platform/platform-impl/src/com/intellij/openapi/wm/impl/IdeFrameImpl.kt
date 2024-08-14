@@ -23,12 +23,15 @@ import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.AWTEvent
 import java.awt.Graphics
 import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.MouseEvent
+import java.awt.event.WindowEvent
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -65,7 +68,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
 
   internal var lastInactiveMouseXAbs: Int = 0
   internal var lastInactiveMouseYAbs: Int = 0
-  internal var isFirstMousePressed: Boolean = false
+  internal var mouseNotPressedYetSinceLastActivation: Boolean = false
   @ApiStatus.Internal
   var wasJustActivatedByClick: Boolean = false
 
@@ -196,6 +199,45 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
     super.setVisible(b)
     if (b) {
       FUSProjectHotStartUpMeasurer.frameBecameVisible()
+    }
+  }
+
+  /**
+   * Detects whether the frame was activated by a mouse click
+   *
+   * When the frame is activated, it's impossible to tell the reason,
+   * as the JRE doesn't report it, and if the frame was activated by a mouse click,
+   * the mouse-pressed event may not even be in the queue yet.
+   *
+   * Therefore, we detect it using heuristics: we record the mouse coordinates
+   * when the frame is inactive and then compare them with the mouse coordinates
+   * when the first mouse-pressed event arrives after frame activation.
+   * If the coordinates are the same, the click is likely to be the cause of the activation.
+   *
+   * This heuristic doesn't work in the case when the user alt-tabs into the frame
+   * and then clicks the mouse without moving it by a single pixel.
+   * But it's a highly unlikely sequence of events and, we're willing to accept false positives in such cases.
+   */
+  internal fun detectWindowActivationByMousePressed(e: AWTEvent) {
+    when (e.id) {
+      MouseEvent.MOUSE_MOVED -> {
+        e as MouseEvent
+        if (!isActive) {
+          lastInactiveMouseXAbs = e.xOnScreen
+          lastInactiveMouseYAbs = e.yOnScreen
+        }
+      }
+      WindowEvent.WINDOW_ACTIVATED -> {
+        mouseNotPressedYetSinceLastActivation = true
+      }
+      MouseEvent.MOUSE_PRESSED -> {
+        e as MouseEvent
+        wasJustActivatedByClick =
+          mouseNotPressedYetSinceLastActivation &&
+          e.xOnScreen == lastInactiveMouseXAbs &&
+          e.yOnScreen == lastInactiveMouseYAbs
+        mouseNotPressedYetSinceLastActivation = false
+      }
     }
   }
 }
