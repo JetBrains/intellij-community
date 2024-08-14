@@ -7,7 +7,6 @@ import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.util.common.logError
 import io.opentelemetry.sdk.common.InstrumentationScopeInfo
 import io.opentelemetry.sdk.metrics.data.Data
-import io.opentelemetry.sdk.metrics.data.LongPointData
 import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.data.MetricDataType
 import io.opentelemetry.sdk.resources.Resource
@@ -17,11 +16,21 @@ import kotlin.io.path.name
 
 
 /**
- * Extract meters from OpenTelemetry JSON report stored by [com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter]
- * [meterFilter] Input data: key - meter name. value - list of collected data points for that meter
+ * Collects metrics from `open-telemetry-meters.*DATE*.json` files usually located in IDE's log directory.
+ * More details about meters are in [OpenTelemetry Meters documentation](https://opentelemetry.io/docs/concept/signal/metrics/#metric-instruments).
+ *
+ * For traces/spans use [com.intellij.tools.ide.metrics.collector.OpenTelemetrySpanCollector]
+ *
+ * To report meters from IDE take a look at usages of [com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getMeter]
+ * and [com.intellij.platform.diagnostic.telemetry.TelemetryManager.getMeter]
+ *
+ * Note:
+ * meters from IDE are stored by [com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter]
  */
-open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: MetricsSelectionStrategy,
-                                           val meterFilter: (MetricData) -> Boolean) : TelemetryMetricsCollector {
+open class OpenTelemetryJsonMeterCollector(
+  val metricsSelectionStrategy: MetricsSelectionStrategy,
+  val meterFilter: (MetricData) -> Boolean,
+) : MetricsCollector {
 
   fun collect(logsDirPath: Path, transform: (String, Long) -> Pair<String, Int>): List<PerformanceMetrics.Metric> {
     val metricsFiles = logsDirPath.listDirectoryEntries("*.json").filter { it.name.startsWith("open-telemetry-meter") }
@@ -64,8 +73,7 @@ open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: Metrics
     }
   }
 
-
   override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> {
-    return collect(logsDirPath)  { name, value -> name to value.toInt() }
+    return collect(logsDirPath) { name, value -> name to value.toInt() }
   }
 }

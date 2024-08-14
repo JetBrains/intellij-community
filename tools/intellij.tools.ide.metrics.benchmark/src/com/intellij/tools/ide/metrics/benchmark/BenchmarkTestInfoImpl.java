@@ -13,7 +13,7 @@ import com.intellij.testFramework.BenchmarkTestInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProfilerForTests;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector;
+import com.intellij.tools.ide.metrics.collector.MetricsCollector;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,7 +55,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
   @NotNull
   private final IJTracer tracer;
-  private final ArrayList<TelemetryMetricsCollector> metricsCollectors = new ArrayList<>();
+  private final ArrayList<MetricsCollector> metricsCollectors = new ArrayList<>();
 
   private boolean useDefaultSpanMetricExporter = true;
 
@@ -114,7 +114,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
       TelemetryManager.getInstance().resetExportersBlocking();
 
       // remove content of the previous tests from the idea.log
-      IJPerfMetricsPublisher.Companion.truncateTestLog();
+      IJPerfBenchmarksMetricsPublisher.Companion.truncateTestLog();
 
       var filesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) ->
                                                                           it.toString().contains("-metrics") ||
@@ -187,7 +187,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
    * </pre>
    */
   @Contract(pure = true) // to warn about not calling .start() in the end
-  public BenchmarkTestInfoImpl withMetricsCollector(TelemetryMetricsCollector meterCollector) {
+  public BenchmarkTestInfoImpl withMetricsCollector(MetricsCollector meterCollector) {
     this.metricsCollectors.add(meterCollector);
     return this;
   }
@@ -357,14 +357,14 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
       try {
         // publish warmup and final measurements at once at the end of the runs
         if (iterationType.equals(IterationMode.MEASURE)) {
-          var collectors = new ArrayList<TelemetryMetricsCollector>();
+          var collectors = new ArrayList<MetricsCollector>();
           if (useDefaultSpanMetricExporter) {
             collectors.add(new BenchmarksSpanMetricsCollector(uniqueTestName,
                                                               BenchmarksSpanMetricsCollector.Companion.getDefaultPathToTelemetrySpanJson()));
           }
           collectors.addAll(metricsCollectors);
 
-          IJPerfMetricsPublisher.Companion.publishSync(uniqueTestName, collectors.toArray(new TelemetryMetricsCollector[0]));
+          IJPerfBenchmarksMetricsPublisher.Companion.publishSync(uniqueTestName, collectors.toArray(new MetricsCollector[0]));
         }
       }
       catch (Throwable t) {

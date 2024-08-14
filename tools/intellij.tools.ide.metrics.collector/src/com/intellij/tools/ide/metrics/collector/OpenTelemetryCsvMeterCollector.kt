@@ -16,7 +16,7 @@ import kotlin.io.path.name
 open class OpenTelemetryCsvMeterCollector(
   val metricsSelectionStrategy: MetricsSelectionStrategy,
   val metersFilter: (Map.Entry<String, List<LongPointData>>) -> Boolean,
-) : TelemetryMetricsCollector {
+) : MetricsCollector {
   private fun getOpenTelemetryCsvReportFiles(logsDirPath: Path): List<Path> {
     val metricsCsvFiles = logsDirPath.listDirectoryEntries("*.csv").filter { it.name.startsWith("open-telemetry-metrics") }
     require(metricsCsvFiles.isNotEmpty()) {

@@ -2,16 +2,13 @@
 package com.intellij.tools.ide.metrics.benchmark
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector
+import com.intellij.tools.ide.metrics.collector.MetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.*
 import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetrySpanJsonParser
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
-import com.intellij.tools.ide.util.common.withRetryBlocking
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.milliseconds
 
-class BenchmarksSpanMetricsCollector(val spanName: String, private val telemetryJsonFile: Path = getDefaultPathToTelemetrySpanJson()) : TelemetryMetricsCollector {
+class BenchmarksSpanMetricsCollector(val spanName: String, private val telemetryJsonFile: Path = getDefaultPathToTelemetrySpanJson()) : MetricsCollector {
   companion object {
     fun getDefaultPathToTelemetrySpanJson(): Path {
       return Path.of(System.getProperty("idea.diagnostic.opentelemetry.file",

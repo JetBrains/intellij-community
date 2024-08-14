@@ -8,7 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector
+import com.intellij.tools.ide.metrics.collector.MetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
@@ -32,7 +32,7 @@ import kotlin.time.Duration.Companion.seconds
  * Metrics will be stored as TeamCity artifacts and later will be collected by IJ Perf collector (~ once/twice per hour).
  * Charts can be found at [IJ Perf Dashboard](https://ij-perf.labs.jb.gg/intellij/testsDev) - link is prone to change, though.
  */
-class IJPerfMetricsPublisher {
+class IJPerfBenchmarksMetricsPublisher {
 
   companion object {
 
@@ -66,7 +66,7 @@ class IJPerfMetricsPublisher {
     )
 
     @Suppress("TestOnlyProblems")
-    private suspend fun prepareMetricsForPublishing(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector): PerformanceMetricsDto {
+    private suspend fun prepareMetricsForPublishing(uniqueTestIdentifier: String, vararg metricsCollectors: MetricsCollector): PerformanceMetricsDto {
       delay(1.seconds) // give some time to settle metrics (usually meters) that were published at the end of the test
 
       val metrics: List<PerformanceMetrics.Metric> = withRetry("Telemetry metrics should be exported",
@@ -105,13 +105,13 @@ class IJPerfMetricsPublisher {
       )
     }
 
-    fun publishSync(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector) {
+    fun publishSync(fullQualifiedTestMethodName: String, vararg metricsCollectors: MetricsCollector) {
       runBlocking {
         publish(fullQualifiedTestMethodName, *metricsCollectors)
       }
     }
 
-    suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector) {
+    suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: MetricsCollector) {
       val metricsDto = prepareMetricsForPublishing(uniqueTestIdentifier, *metricsCollectors)
 
       withContext(Dispatchers.IO) {
