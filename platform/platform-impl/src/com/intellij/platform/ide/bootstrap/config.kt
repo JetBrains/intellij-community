@@ -5,6 +5,7 @@ import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
@@ -31,13 +32,19 @@ internal suspend fun importConfigIfNeeded(
   euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
   initLafJob: Job
 ): Job? {
-  if (AppMode.isRemoteDevHost() || !configImportNeededDeferred.await()) {
+  if (!configImportNeededDeferred.await()) {
     return null
   }
 
   if (isHeadless) {
     importConfigHeadless(lockSystemDirsJob, logDeferred)
     if (!AppMode.isRemoteDevHost()) enableNewUi(logDeferred, false)
+    val log = logDeferred.await()
+    if (shouldMigrateConfigOnNextRun(args)) {
+      log.info("writing marker to ${PathManager.getOriginalConfigDir()} to ensure that config will be imported next time")
+      CustomConfigMigrationOption.MergeConfigs.writeConfigMarkerFile()
+    }
+    log.info("config importing not performed in headless mode")
     return null
   }
 
@@ -56,6 +63,13 @@ internal suspend fun importConfigIfNeeded(
   }
 
   return null
+}
+
+private fun shouldMigrateConfigOnNextRun(args: List<String>): Boolean {
+  val command = args.firstOrNull()
+  //currently, migration of config will be performed on the next run only for headless commands from remote dev mode only; later we can enable this behavior for all commands 
+  return command == "cwmHostStatus" || command == "remoteDevStatus" || command == "cwmHost" || command == "invalidateCaches" || command == "remoteDevShowHelp" 
+         || command == "registerBackendLocationForGateway"
 }
 
 private suspend fun importConfigHeadless(lockSystemDirsJob: Job, logDeferred: Deferred<Logger>) {
