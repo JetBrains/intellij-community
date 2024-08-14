@@ -1913,8 +1913,10 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:SEARCH_TAG:com.intellij.openapi.util.Key
 - sf:SECONDARY_ICON:com.intellij.openapi.util.Key
 - sf:SECONDARY_TEXT:com.intellij.openapi.util.Key
+- sf:SHOW_TEXT_IN_TOOLBAR:com.intellij.openapi.util.Key
 - sf:SUPPRESS_SUBMENU:com.intellij.openapi.util.Key
 - sf:TOOLTIP_TEXT:com.intellij.openapi.util.Key
+- sf:USE_SMALL_FONT_IN_TOOLBAR:com.intellij.openapi.util.Key
 - sf:clearActions(javax.swing.JComponent):V
 - sf:copyFrom(com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.openapi.actionSystem.AnAction
 - sf:copyRegisteredShortcuts(javax.swing.JComponent,javax.swing.JComponent):V

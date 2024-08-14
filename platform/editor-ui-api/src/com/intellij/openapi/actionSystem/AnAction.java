@@ -289,8 +289,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Return {@code true} if the action has to display its text along with the icon when placed in the toolbar.
    * <p>
-   * TODO Move to template presentation client properties and drop the method.
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#SHOW_TEXT_IN_TOOLBAR} presentation property instead.
    */
+  @Deprecated(forRemoval = true)
   public boolean displayTextInToolbar() {
     return false;
   }
@@ -298,8 +299,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Return {@code true} if the action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar.
    * <p>
-   * TODO Move to template presentation client properties and drop the method.
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#USE_SMALL_FONT_IN_TOOLBAR} presentation property instead.
    */
+  @Deprecated(forRemoval = true)
   public boolean useSmallerFontForTextInToolbar() {
     return false;
   }
@@ -366,7 +368,14 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   @NotNull
   Presentation createTemplatePresentation() {
-    return Presentation.newTemplatePresentation();
+    Presentation presentation = Presentation.newTemplatePresentation();
+    if (displayTextInToolbar()) {
+      presentation.putClientProperty("SHOW_TEXT_IN_TOOLBAR", true);
+      if (useSmallerFontForTextInToolbar()) {
+        presentation.putClientProperty("USE_SMALL_FONT_IN_TOOLBAR", true);
+      }
+    }
+    return presentation;
   }
 
   /**
@@ -411,6 +420,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * <p>
    * TODO Move to template presentation client properties and drop the method.
    */
+  @ApiStatus.Internal
   public void setDefaultIcon(boolean isDefaultIconSet) {
     myIsDefaultIcon = isDefaultIconSet;
   }
@@ -420,6 +430,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * <p>
    * TODO Move to template presentation client properties and drop the method.
    */
+  @ApiStatus.Internal
   public boolean isDefaultIcon() {
     return myIsDefaultIcon;
   }

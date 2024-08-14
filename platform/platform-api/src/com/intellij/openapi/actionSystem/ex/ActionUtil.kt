@@ -22,12 +22,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.NlsActions.ActionText
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClientProperty
@@ -53,6 +49,12 @@ private val LOG = logger<ActionUtil>()
 private val InputEventDummyAction = EmptyAction.createEmptyAction(null, null, true)
 
 object ActionUtil {
+
+  @JvmField
+  val SHOW_TEXT_IN_TOOLBAR: Key<Boolean> = Key.create("SHOW_TEXT_IN_TOOLBAR")
+
+  @JvmField
+  val USE_SMALL_FONT_IN_TOOLBAR: Key<Boolean> = Key.create("USE_SMALL_FONT_IN_TOOLBAR")
 
   @JvmField
   val TOOLTIP_TEXT: Key<@NlsContexts.Tooltip String> = Key.create(JComponent.TOOL_TIP_TEXT_KEY)

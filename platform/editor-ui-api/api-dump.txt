@@ -1197,7 +1197,6 @@ a:com.intellij.openapi.actionSystem.AnAction
 - getSynonyms():java.util.List
 - f:getTemplatePresentation():com.intellij.openapi.actionSystem.Presentation
 - f:getTemplateText():java.lang.String
-- isDefaultIcon():Z
 - isDumbAware():Z
 - f:isEnabledInModalContext():Z
 - isInInjectedContext():Z
@@ -1205,7 +1204,6 @@ a:com.intellij.openapi.actionSystem.AnAction
 - f:registerCustomShortcutSet(com.intellij.openapi.actionSystem.ShortcutSet,javax.swing.JComponent):V
 - f:registerCustomShortcutSet(com.intellij.openapi.actionSystem.ShortcutSet,javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - f:registerCustomShortcutSet(javax.swing.JComponent,com.intellij.openapi.Disposable):V
-- setDefaultIcon(Z):V
 - pf:setEnabledInModalContext(Z):V
 - setInjectedContext(Z):V
 - f:unregisterCustomShortcutSet(javax.swing.JComponent):V
