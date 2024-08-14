@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.RefactoringBundle
@@ -53,18 +54,8 @@ sealed class K2MoveModel {
     @RequiresReadLock
     abstract fun toDescriptor(): K2MoveOperationDescriptor<*>
 
-    fun isValidRefactoring(): Boolean {
-        fun KtFile.isTargetFile(): Boolean {
-            return (target as? K2MoveTargetModel.File)?.let { fileTarget ->
-                containingDirectory == fileTarget.directory
-                        && packageFqName == fileTarget.pkgName // check both pkg and directory in case of implicit pkg prefix
-                        && name == fileTarget.fileName
-            } ?: false
-        }
-        if (source.elements.isEmpty()) return false
-        if (target is K2MoveTargetModel.File && !(target as K2MoveTargetModel.File).fileName.isValidKotlinFile()) return false
-        val files = source.elements.map { it.containingFile }.toSet()
-        return files.size != 1 || !(files.single() as KtFile).isTargetFile()
+    open fun isValidRefactoring(): Boolean {
+        return source.elements.isNotEmpty()
     }
 
     enum class Setting(private val text: @NlsContexts.Checkbox String) {
@@ -128,6 +119,20 @@ sealed class K2MoveModel {
         override val inSourceRoot: Boolean,
         override val moveCallBack: MoveCallback? = null
     ) : K2MoveModel() {
+        private fun PsiFile.isAlreadyInTarget(): Boolean {
+            return parent == target.directory && when (this) {
+                is PsiJavaFile -> packageName == target.pkgName.asString()
+                is KtFile -> packageFqName == target.pkgName
+                else -> true
+            }
+        }
+
+        override fun isValidRefactoring(): Boolean {
+            if (!super.isValidRefactoring()) return false
+            if (source.elements.all { it is PsiFile && it.isAlreadyInTarget() }) return false
+            return true
+        }
+
         override fun toDescriptor(): K2MoveOperationDescriptor.Files {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
@@ -160,6 +165,19 @@ sealed class K2MoveModel {
         override val inSourceRoot: Boolean,
         override val moveCallBack: MoveCallback? = null
     ) : K2MoveModel() {
+        private fun KtFile.isTargetFile(): Boolean {
+            return containingDirectory == target.directory
+                    && packageFqName == target.pkgName
+                    && name == target.fileName
+        }
+
+        override fun isValidRefactoring(): Boolean {
+            if (!super.isValidRefactoring()) return false
+            if (!target.fileName.isValidKotlinFile()) return false
+            val files = source.elements.map { it.containingFile }
+            return files.size != 1 || !(files.single() as KtFile).isTargetFile()
+        }
+
         override fun toDescriptor(): K2MoveOperationDescriptor.Declarations {
             return K2MoveOperationDescriptor.Declarations(
                 project,
