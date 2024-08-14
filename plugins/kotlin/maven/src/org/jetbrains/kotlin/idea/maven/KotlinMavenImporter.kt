@@ -11,6 +11,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -78,6 +79,8 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
         const val KOTLIN_PLUGIN_ARTIFACT_ID = "kotlin-maven-plugin"
 
         const val KOTLIN_PLUGIN_SOURCE_DIRS_CONFIG = "sourceDirs"
+
+        private val LOG = logger<KotlinMavenImporter>()
 
         internal val KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED = Key<Boolean>("KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED")
         val KOTLIN_JPS_VERSION_ACCUMULATOR = Key<IdeKotlinVersion>("KOTLIN_JPS_VERSION_ACCUMULATOR")
@@ -251,9 +254,10 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
                 arguments.javaParameters = configuration?.getChild("javaParameters")?.text?.toBoolean() ?: false
 
                 val jvmTarget = configuration?.getChild("jvmTarget")?.text ?: mavenProject.properties["kotlin.compiler.jvmTarget"]?.toString()
-                if (jvmTarget == JvmTarget.JVM_1_6.description &&
-                    KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.isBlank() != false
-                ) {
+                val jpsVersion = KotlinJpsPluginSettings.getInstance(project)?.settings?.version
+                LOG.debug("Found JPS version ", jpsVersion)
+
+                if (jvmTarget == JvmTarget.JVM_1_6.description && jpsVersion?.isBlank() != false) {
                     // Load JVM target 1.6 in Maven projects as 1.8, for IDEA platforms <= 222.
                     // The reason is that JVM target 1.6 is no longer supported by the latest Kotlin compiler, yet we'd like JPS projects imported from
                     // Maven to be compilable by IDEA, to avoid breaking local development.
@@ -261,9 +265,11 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
                     // when explicit version is specified in kotlinc.xml)
                     arguments.jvmTarget = JvmTarget.JVM_1_8.description
                     jvmTarget6IsUsed = true
+                    LOG.info("Using JVM target 1.8 rather than 1.6")
                 } else {
                     arguments.jvmTarget = jvmTarget
                 }
+                LOG.debug("Using JVM target ", jvmTarget)
             }
 
             is K2JSCompilerArguments -> {
