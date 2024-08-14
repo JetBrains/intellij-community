@@ -58,8 +58,6 @@ public final class FUCounterUsageLogger {
       registerGroupFromEP(ep);
     }
 
-    registerEventLogSystemCollectors();
-
     ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(COUNTER_EP_NAME).addExtensionPointListener(
       new ExtensionPointListener<>() {
         @Override
@@ -86,13 +84,18 @@ public final class FUCounterUsageLogger {
 
   /**
    * Event log counter-system collectors aren't registered in EP,
-   * so we register each such collector for every StatisticsEventLoggerProvider.
+   * so we log 'registered' event for every StatisticsEventLoggerProvider event log collector.
+   *
    * @see StatisticsEventLoggerProvider#getEventLogSystemLogger$intellij_platform_statistics()
    */
-  private void registerEventLogSystemCollectors() {
+  private static List<CompletableFuture<Void>> eventLogSystemCollectorsRegisteredEvents() {
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
     for (StatisticsEventLoggerProvider statisticsEventLoggerProvider: StatisticsEventLogProviderUtil.getEventLogProviders()) {
-      register(statisticsEventLoggerProvider.getEventLogSystemLogger$intellij_platform_statistics().getGroup());
+      EventLogGroup group = statisticsEventLoggerProvider.getEventLogSystemLogger$intellij_platform_statistics().getGroup();
+      StatisticsEventLogger logger = StatisticsEventLogProviderUtil.getEventLogProvider(group.getRecorder()).getLogger();
+      futures.add(logger.logAsync(group, EventLogSystemEvents.COLLECTOR_REGISTERED, false));
     }
+    return futures;
   }
 
   public static @NotNull List<FeatureUsagesCollector> instantiateCounterCollectors() {
@@ -144,6 +147,7 @@ public final class FUCounterUsageLogger {
     for (EventLogGroup group : myGroups.values()) {
       futures.add(FeatureUsageLogger.getInstance().log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
     }
+    futures.addAll(eventLogSystemCollectorsRegisteredEvents());
     Map<String, StatisticsEventLogger> recorderLoggers = new HashMap<>();
     for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
       EventLogGroup group = collector.getGroup();
