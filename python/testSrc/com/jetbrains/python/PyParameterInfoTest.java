@@ -873,7 +873,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: A, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: C, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("__obj: _T, **changes", new String[]{"**changes"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj: _DataclassT, /, **changes", new String[]{"**changes"});
   }
 
   // PY-28506
@@ -883,7 +883,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: B1, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B2, *, a: int = ..., b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: B3, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("__obj: _T, **changes", new String[]{"**changes"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj: _DataclassT, /, **changes", new String[]{"**changes"});
     feignCtrlP(marks.get("<arg5>").getTextOffset()).check("obj: B5, *, x: int = ..., y: int = ..., z: int = ...",
                                                           ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
@@ -894,8 +894,8 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: B1, *, a: int = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B2, *, b: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
-    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("__obj: _T, **changes", new String[]{"**changes"});
-    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("__obj: _T, **changes", new String[]{"**changes"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: _DataclassT, /, **changes", new String[]{"**changes"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj: _DataclassT, /, **changes", new String[]{"**changes"});
     feignCtrlP(marks.get("<arg5>").getTextOffset()).check("obj: C5, *, x: int = ..., z: str = ...", ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
@@ -990,8 +990,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testInitializingTypeVar() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    feignCtrlP(offset).check(Arrays.asList("self: TypeVar, name: str, *constraints, bound: Any | None = None, covariant: bool = False, " +
-                                           "contravariant: bool = False, infer_variance: bool = False"),
+    feignCtrlP(offset).check(Arrays.asList("self: TypeVar, name: str, *constraints, bound: Any | None = None, covariant: bool = False, contravariant: bool = False, infer_variance: bool = False"),
                              Arrays.asList(new String[]{"name: str, "}, new String[]{"name: str, "}),
                              Arrays.asList(new String[]{"self: TypeVar, "}, new String[]{"self: TypeVar, "}));
   }
