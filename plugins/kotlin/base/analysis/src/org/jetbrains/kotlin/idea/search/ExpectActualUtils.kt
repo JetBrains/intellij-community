@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
