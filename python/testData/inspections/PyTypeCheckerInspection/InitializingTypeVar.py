@@ -4,4 +4,4 @@ TypeVar("T", int, str, bound=int, covariant=True, contravariant=True)
 TypeVar("T", int, str, bound='int', covariant=True, contravariant=True)
 TypeVar("T", int, 'str', bound=int, covariant=True, contravariant=True)
 TypeVar("T", 'int', 'str', bound=int, covariant=True, contravariant=True)
-TypeVar<warning descr="Unexpected type(s):(str, int, int, int, int, int)Possible type(s):(str, Any | None, bool, bool, Any, Any)(str, Any | None, bool, bool, Any, Any)" textAttributesKey="WARNING_ATTRIBUTES">("T", 0, 1, bound=2, covariant=3, contravariant=4)</warning>
+TypeVar("T", 0, 1, bound=2, <warning descr="Expected type 'bool', got 'int' instead" textAttributesKey="WARNING_ATTRIBUTES">covariant=3</warning>, <warning descr="Expected type 'bool', got 'int' instead" textAttributesKey="WARNING_ATTRIBUTES">contravariant=4</warning>)
