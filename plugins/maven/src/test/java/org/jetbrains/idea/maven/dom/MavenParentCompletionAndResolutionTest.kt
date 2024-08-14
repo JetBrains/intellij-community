@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElementVisitor
@@ -510,23 +511,23 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testHighlightingAbsentArtifactId() = runBlocking {
+  fun testHighlightingAbsentArtifactIdMaven4() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <<error descr="'artifactId' child tag should be defined">parent</error>>
                          <groupId>junit</groupId>
-                         <version><error>4.0</error></version>
+                         <version>4.0</version>
                        </parent>
                        """.trimIndent())
-    importProjectAsync()
     checkHighlighting()
   }
 
+
   @Test
   fun testHighlightingAbsentVersion() = runBlocking {
-    needFixForMaven4()
+    assumeMaven3()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -536,8 +537,6 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                          <artifactId>junit</artifactId>
                        </parent>
                        """.trimIndent())
-    importProjectAsync()
-
     fixture.enableInspections(MavenParentMissedVersionInspection::class.java)
     checkHighlighting()
   }
