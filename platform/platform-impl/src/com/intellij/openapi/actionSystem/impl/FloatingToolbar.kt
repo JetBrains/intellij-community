@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
@@ -112,7 +113,10 @@ abstract class FloatingToolbar(
       return
     }
     val hint = createHint()
-    showHint(hint)
+    //maybe readaction
+    writeIntentReadAction {
+      showHint (hint)
+    }
     hint.addHintListener {
       this.hint = null
     }

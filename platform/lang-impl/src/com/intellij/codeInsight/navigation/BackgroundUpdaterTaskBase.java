@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -119,10 +120,10 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
       if (!myData.add(element)) return true;
     }
 
-    myAlarm.addRequest(() -> {
+    myAlarm.addRequest(() -> WriteIntentReadAction.run((Runnable)() -> {
       myAlarm.cancelAllRequests();
       refreshModelImmediately();
-    }, 200, ModalityState.stateForComponent(myPopup.getContent()));
+    }), 200, ModalityState.stateForComponent(myPopup.getContent()));
     return true;
   }
 

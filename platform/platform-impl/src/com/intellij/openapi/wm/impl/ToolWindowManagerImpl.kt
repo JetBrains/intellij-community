@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -646,8 +647,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                        source = source)
 
     coroutineScope.launch(Dispatchers.EDT) {
-      runnable?.run()
-      UiActivityMonitor.getInstance().removeActivity(project, activity)
+      //maybe readaction
+      writeIntentReadAction {
+        runnable?.run()
+        UiActivityMonitor.getInstance().removeActivity(project, activity)
+      }
     }
   }
 
