@@ -72,7 +72,7 @@ class InlineCompletionLogsContainer {
   suspend fun log() {
     waitForAsyncAdds()
     InlineCompletionLogs.Session.SESSION_EVENT.log(
-      logs.map { (phase, events) ->
+      logs.filter { it.value.isNotEmpty() }.map { (phase, events) ->
         InlineCompletionLogs.Session.phases[phase]!!.with(ObjectEventData(events.toList()))
       }
     )
