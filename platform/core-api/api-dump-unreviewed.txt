@@ -905,18 +905,12 @@ c:com.intellij.lexer.DelegateLexer
 - start(java.lang.CharSequence,I,I,I):V
 com.intellij.lexer.DocCommentTokenTypes
 - a:badCharacter():com.intellij.psi.tree.IElementType
-- codeFence():com.intellij.psi.tree.IElementType
 - a:commentData():com.intellij.psi.tree.IElementType
 - a:commentEnd():com.intellij.psi.tree.IElementType
 - a:commentLeadingAsterisks():com.intellij.psi.tree.IElementType
 - a:commentStart():com.intellij.psi.tree.IElementType
 - a:inlineTagEnd():com.intellij.psi.tree.IElementType
 - a:inlineTagStart():com.intellij.psi.tree.IElementType
-- leftBracket():com.intellij.psi.tree.IElementType
-- leftParenthesis():com.intellij.psi.tree.IElementType
-- rightBracket():com.intellij.psi.tree.IElementType
-- rightParenthesis():com.intellij.psi.tree.IElementType
-- sharp():com.intellij.psi.tree.IElementType
 - a:space():com.intellij.psi.tree.IElementType
 - a:spaceCommentsTokenSet():com.intellij.psi.tree.TokenSet
 - a:tagName():com.intellij.psi.tree.IElementType

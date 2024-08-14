@@ -26,24 +26,6 @@ public interface DocCommentTokenTypes {
   IElementType inlineTagEnd();
   IElementType badCharacter();
   IElementType commentLeadingAsterisks();
-  default IElementType codeFence() {
-    return commentData();
-  }
-  default IElementType rightBracket() {
-    return commentData();
-  }
-  default IElementType leftBracket() {
-    return commentData();
-  }
-  default IElementType leftParenthesis() {
-    return commentData();
-  }
-  default IElementType rightParenthesis() {
-    return commentData();
-  }
-  default IElementType sharp() {
-    return commentData();
-  }
   default IElementType tagValueQuote() {
     return commentData();
   }

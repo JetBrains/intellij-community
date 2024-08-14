@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.javadoc;
+package com.intellij.codeInsight.javadoc.markdown;
 
 import org.intellij.markdown.IElementType;
 import org.intellij.markdown.MarkdownElementTypes;
@@ -10,6 +10,7 @@ import org.intellij.markdown.html.GeneratingProvider;
 import org.intellij.markdown.html.HtmlGenerator;
 import org.intellij.markdown.html.TrimmingInlineHolderProvider;
 import org.intellij.markdown.parser.LinkMap;
+import org.intellij.markdown.parser.MarkerProcessorFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +30,9 @@ public class JavaDocMarkdownFlavourDescriptor extends GFMFlavourDescriptor {
   @NotNull
   @Override
   public Map<IElementType, GeneratingProvider> createHtmlGeneratingProviders(@NotNull LinkMap linkMap, @Nullable URI baseURI) {
-     Map<IElementType, GeneratingProvider> result = new HashMap<>(super.createHtmlGeneratingProviders(linkMap, baseURI));
+    Map<IElementType, GeneratingProvider> result = new HashMap<>(super.createHtmlGeneratingProviders(linkMap, baseURI));
 
-     // We don't generate a body
+    // We don't generate a body
     result.remove(MarkdownElementTypes.MARKDOWN_FILE);
 
     // Paragraphs may need to be inlined
@@ -40,12 +41,18 @@ public class JavaDocMarkdownFlavourDescriptor extends GFMFlavourDescriptor {
     return result;
   }
 
+  @NotNull
+  @Override
+  public MarkerProcessorFactory getMarkerProcessorFactory() {
+    return new JavaDocMarkerProcessorFactory();
+  }
+
   private static class JavaDocParagraphProvider extends TrimmingInlineHolderProvider {
     private static final CharSequence[] EMPTY_ARRAY = new CharSequence[0];
 
     /** @return Whether or no the paragraph is small and thus should be rendered inline */
     private static boolean isSmallParagraph(@NotNull ASTNode node) {
-      for(ASTNode child : node.getChildren()) {
+      for (ASTNode child : node.getChildren()) {
         if (child.getType() == MarkdownTokenTypes.EOL) {
           return false;
         }
@@ -56,7 +63,7 @@ public class JavaDocMarkdownFlavourDescriptor extends GFMFlavourDescriptor {
         // Check if the next thing is an EOL
         List<ASTNode> siblings = parent.getChildren();
         ASTNode nextSibling = siblings.get(Math.min(siblings.size() - 1, siblings.indexOf(node) + 1));
-        if(nextSibling != null && nextSibling.getType() == MarkdownTokenTypes.EOL) {
+        if (nextSibling != null && nextSibling.getType() == MarkdownTokenTypes.EOL) {
           return false;
         }
       }

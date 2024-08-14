@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.javadoc.PsiSnippetDocTag;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
@@ -39,7 +40,7 @@ public final class JavadocSnippetEnterHandler extends EnterHandlerDelegateAdapte
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
     final PsiSnippetDocTag host = ObjectUtils.tryCast(injectedLanguageManager.getInjectionHost(file), PsiSnippetDocTag.class);
 
-    return host == null ? Result.Continue : Result.Default;
+    return (host == null || PsiUtil.isInMarkdownDocComment(host)) ? Result.Continue : Result.Default;
   }
 
   @Override

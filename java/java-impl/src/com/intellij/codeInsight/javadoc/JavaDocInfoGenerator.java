@@ -7,6 +7,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
+import com.intellij.codeInsight.javadoc.markdown.JavaDocMarkdownFlavourDescriptor;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
@@ -1807,16 +1808,14 @@ public class JavaDocInfoGenerator {
                              int startIndex,
                              InheritDocProvider<PsiElement[]> provider) {
     int predictOffset = startIndex < elements.length ? elements[startIndex].getTextOffset() + elements[startIndex].getText().length() : 0;
-    boolean wasMarkdown = false, isMarkdown = false;
 
     // Secondary buffer to flush at each switch between (non-)markdown content
+    boolean isMarkdown = startIndex < elements.length && PsiUtil.isInMarkdownDocComment(elements[startIndex]);
     StringBuilder subBuffer = new StringBuilder();
 
     StringBuilder htmlCodeBlockContents = null;
     Pair<String, String> htmlCodeBlockDelimiters = null;
     for (int i = startIndex; i < elements.length; i++) {
-      isMarkdown = PsiUtil.isInMarkdownDocComment(elements[i]);
-
       if (elements[i].getTextOffset() > predictOffset) {
         if (htmlCodeBlockContents != null) {
           htmlCodeBlockContents.append(' ');
@@ -1853,10 +1852,8 @@ public class JavaDocInfoGenerator {
             if (provider == null) continue;
             Pair<PsiElement[], InheritDocProvider<PsiElement[]>> inheritInfo = provider.getInheritDoc();
             if (inheritInfo != null) {
-              isMarkdown = PsiUtil.isInMarkdownDocComment(inheritInfo.first[0]);
-              flushIfNecessary(buffer, subBuffer, wasMarkdown, isMarkdown);
-              wasMarkdown = isMarkdown;
-              generateValue(subBuffer, inheritInfo.first, inheritInfo.second);
+              flushSubBuffer(buffer, subBuffer, isMarkdown);
+              generateValue(buffer, inheritInfo.first, inheritInfo.second);
             }
           }
           case DOC_ROOT_TAG -> subBuffer.append(getDocRoot());
@@ -1867,9 +1864,11 @@ public class JavaDocInfoGenerator {
           case RETURN_TAG -> generateInlineReturnValue(subBuffer, tag, provider);
           default -> generateUnknownInlineTagValue(subBuffer, tag);
         }
-      } else if (element instanceof PsiMarkdownCodeBlock) {
-        appendStyledCodeBlock(subBuffer, element.getProject(), element.getLanguage(), ((PsiMarkdownCodeBlock)element).getCodeText());
-      } else if (element instanceof PsiMarkdownReferenceLink) {
+      }
+      else if (element instanceof PsiMarkdownCodeBlock markdownCodeBlock) {
+        appendStyledCodeBlock(subBuffer, element.getProject(), markdownCodeBlock.getCodeLanguage(), markdownCodeBlock.getCodeText());
+      }
+      else if (element instanceof PsiMarkdownReferenceLink) {
         generateMarkdownLinkValue((PsiMarkdownReferenceLink)element, subBuffer);
       }
       else {
@@ -1907,24 +1906,19 @@ public class JavaDocInfoGenerator {
           }
         }
       }
-
-      flushIfNecessary(buffer, subBuffer, wasMarkdown, isMarkdown);
-      wasMarkdown = isMarkdown;
     }
     if (htmlCodeBlockContents != null) {
       subBuffer.append(htmlCodeBlockDelimiters.first);
       appendPlainText(subBuffer, htmlCodeBlockContents.toString());
     }
 
-    buffer.append(isMarkdown ? markdownToHtml(subBuffer.toString()) : subBuffer );
+    flushSubBuffer(buffer, subBuffer, isMarkdown);
   }
 
   @Contract(mutates = "param1, param2")
-  private static void flushIfNecessary(StringBuilder buffer, StringBuilder subBuffer, boolean wasMarkdown, boolean isMarkdown){
-    if(wasMarkdown != isMarkdown) {
-      buffer.append(wasMarkdown ? markdownToHtml(subBuffer.toString()) : subBuffer );
-      subBuffer.setLength(0);
-    }
+  private static void flushSubBuffer(StringBuilder buffer, StringBuilder subBuffer, boolean flushAsMarkdown) {
+    buffer.append(flushAsMarkdown ? markdownToHtml(subBuffer.toString()) : subBuffer);
+    subBuffer.setLength(0);
   }
 
   private @Nullable StringBuilder appendHtmlCodeBlockContents(@NotNull String text, @NotNull StringBuilder buffer,

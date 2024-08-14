@@ -3,9 +3,9 @@ package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -13,6 +13,7 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -75,6 +76,9 @@ public final class DanglingJavadocInspection extends BaseInspection {
           else if (!JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS.equals(tokenType)) {
             newCommentText.append(child.getText());
           }
+          else if (PsiUtil.isInMarkdownDocComment(docToken)) {
+            newCommentText.append("//");
+          }
         }
         else {
           newCommentText.append(child.getText());
@@ -111,18 +115,9 @@ public final class DanglingJavadocInspection extends BaseInspection {
     @Override
     public void visitDocComment(@NotNull PsiDocComment comment) {
       super.visitDocComment(comment);
-      if (comment.getOwner() != null || TemplateLanguageUtil.isInsideTemplateFile(comment)) {
-        return;
+      if (JavaDocUtil.isDanglingDocComment(comment, ignoreCopyright)) {
+        registerError(comment.getFirstChild());
       }
-      if (JavaDocUtil.isInsidePackageInfo(comment) &&
-          PsiTreeUtil.skipWhitespacesAndCommentsForward(comment) instanceof PsiPackageStatement &&
-          "package-info.java".equals(comment.getContainingFile().getName())) {
-        return;
-      }
-      if (ignoreCopyright && comment.getPrevSibling() == null && comment.getParent() instanceof PsiFile) {
-        return;
-      }
-      registerError(comment.getFirstChild());
     }
   }
 }

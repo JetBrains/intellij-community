@@ -2,13 +2,13 @@
 // source: _JavaDocLexer.flex
 
   /* It's an automatically generated code. Do not modify it. */
-  package com.intellij.lang.java.lexer;
+package com.intellij.lang.java.lexer;
 
-  import com.intellij.lexer.DocCommentTokenTypes;
-  import com.intellij.lexer.FlexLexer;
-  import com.intellij.psi.tree.IElementType;
+import com.intellij.lexer.JavaDocCommentTokenTypes;
+import com.intellij.lexer.FlexLexer;
+import com.intellij.psi.tree.IElementType;
 
-  @SuppressWarnings("ALL")
+@SuppressWarnings("ALL")
 
 class _JavaDocLexer implements FlexLexer {
 
@@ -565,31 +565,31 @@ class _JavaDocLexer implements FlexLexer {
 
   /* user code: */
   private boolean myJdk15Enabled;
-    private DocCommentTokenTypes myTokenTypes;
-    private int mySnippetBracesLevel = 0;
-    /* Enable markdown support for java 23 */
-    private boolean myMarkdownMode = false;
+  private JavaDocCommentTokenTypes myTokenTypes;
+  private int mySnippetBracesLevel = 0;
+  /* Enable markdown support for java 23 */
+  private boolean myMarkdownMode = false;
 
-    public _JavaDocLexer(boolean isJdk15Enabled, DocCommentTokenTypes tokenTypes) {
-      this((java.io.Reader)null);
-      myJdk15Enabled = isJdk15Enabled;
-      myTokenTypes = tokenTypes;
-    }
+  public _JavaDocLexer(boolean isJdk15Enabled, JavaDocCommentTokenTypes tokenTypes) {
+    this((java.io.Reader)null);
+    myJdk15Enabled = isJdk15Enabled;
+    myTokenTypes = tokenTypes;
+  }
 
-    /** Should be called right after a reset */
-    public void setMarkdownMode(boolean isEnabled) {
-      myMarkdownMode = isEnabled;
-    }
+  /** Should be called right after a reset */
+  public void setMarkdownMode(boolean isEnabled) {
+    myMarkdownMode = isEnabled;
+  }
 
-    public boolean checkAhead(char c) {
-      if (zzMarkedPos >= zzBuffer.length()) return false;
-      return zzBuffer.charAt(zzMarkedPos) == c;
-    }
+  public boolean checkAhead(char c) {
+    if (zzMarkedPos >= zzBuffer.length()) return false;
+    return zzBuffer.charAt(zzMarkedPos) == c;
+  }
 
-    public void goTo(int offset) {
-      zzCurrentPos = zzMarkedPos = zzStartRead = offset;
-      zzAtEOF = false;
-    }
+  public void goTo(int offset) {
+    zzCurrentPos = zzMarkedPos = zzStartRead = offset;
+    zzAtEOF = false;
+  }
 
 
   /**
