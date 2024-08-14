@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
@@ -57,6 +58,7 @@ private fun isIdentifierInPropertyWithDelegate(leafElement: LeafPsiElement): Boo
 
 private fun findTaskNameInSurroundingCallExpression(element: PsiElement): String? {
     val callExpression = element.getParentOfType<KtCallExpression>(false, KtScriptInitializer::class.java) ?: return null
+    if (!hasNameRelatedToTasks(callExpression)) return null
     return analyze(callExpression) {
         val resolvedCall = callExpression.resolveToCall() ?: return null
         val functionCall = resolvedCall.singleFunctionCallOrNull() ?: return null
@@ -69,6 +71,14 @@ private fun findTaskNameInSurroundingCallExpression(element: PsiElement): String
             ?.value.safeAs<String>()
         taskName
     }
+}
+
+/**
+ * Allows avoiding resolve (analysis) of PSI elements not related to Gradle tasks configuration
+ */
+private fun hasNameRelatedToTasks(callExpression: KtCallExpression): Boolean {
+    val methodName = callExpression.getCallNameExpression()?.getReferencedNameAsName()?.identifier ?: return false
+    return methodName in taskContainerMethods || methodName == "task"
 }
 
 private fun findTaskNameInSurroundingProperty(element: PsiElement): String? {
