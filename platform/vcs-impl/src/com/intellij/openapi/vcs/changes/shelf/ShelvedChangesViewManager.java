@@ -87,7 +87,6 @@ import static java.util.Objects.requireNonNull;
 
 public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
-  private static final String HELP_ID = "ideaInterface.shelf";
   static final @NonNls String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
   private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"; //NON-NLS
 
@@ -98,6 +97,8 @@ public class ShelvedChangesViewManager implements Disposable {
   private final List<Runnable> myPostUpdateEdtActivity = new ArrayList<>();
 
   private @Nullable ShelfToolWindowPanel myPanel = null;
+
+  public static final String HELP_ID = "ideaInterface.shelf";
 
   public static final DataKey<ChangesTree> SHELVED_CHANGES_TREE =
     DataKey.create("ShelveChangesManager.ShelvedChangesTree");

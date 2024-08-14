@@ -1,10 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes.shelf;
+package com.intellij.vcs.impl.backend.shelf;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChange;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 

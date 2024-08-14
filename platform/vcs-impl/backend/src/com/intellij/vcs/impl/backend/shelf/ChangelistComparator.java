@@ -1,5 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes.shelf;
+package com.intellij.vcs.impl.backend.shelf;
+
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 
 import java.util.Comparator;
 

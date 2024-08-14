@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes.shelf;
+package com.intellij.vcs.impl.backend.shelf;
 
 import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -21,6 +21,10 @@ import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
+import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.PopupHandler;

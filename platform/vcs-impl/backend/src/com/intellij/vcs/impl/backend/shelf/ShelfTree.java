@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes.shelf;
+package com.intellij.vcs.impl.backend.shelf;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.shelf.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -26,11 +27,11 @@ import static com.intellij.util.containers.ContainerUtil.map2Array;
 
 final class ShelfTree extends AsyncChangesTree {
   private final DeleteProvider myDeleteProvider = new ShelvedChangesViewManager.MyShelveDeleteProvider(myProject, this);
-  private final ShelfTreeAsyncModel myAsyncTreeModel;
+  private final com.intellij.openapi.vcs.changes.shelf.ShelfTreeAsyncModel myAsyncTreeModel;
 
   private ShelfTree(@NotNull Project project) {
     super(project, false, false, false);
-    myAsyncTreeModel = new ShelfTreeAsyncModel(project, getScope());
+    myAsyncTreeModel = new com.intellij.openapi.vcs.changes.shelf.ShelfTreeAsyncModel(project, getScope());
 
     TreeSpeedSearch.installOn(this, true, ChangesBrowserNode.TO_TEXT_CONVERTER);
     setKeepTreeState(true);
@@ -43,7 +44,7 @@ final class ShelfTree extends AsyncChangesTree {
 
   @Override
   public boolean isPathEditable(TreePath path) {
-    return isEditable() && getSelectionCount() == 1 && path.getLastPathComponent() instanceof ShelvedListNode;
+    return isEditable() && getSelectionCount() == 1 && path.getLastPathComponent() instanceof com.intellij.openapi.vcs.changes.shelf.ShelvedListNode;
   }
 
   @Override

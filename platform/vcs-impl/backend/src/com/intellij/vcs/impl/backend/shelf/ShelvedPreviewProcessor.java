@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes.shelf;
+package com.intellij.vcs.impl.backend.shelf;
 
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -8,6 +8,7 @@ import com.intellij.diff.util.DiffPlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor;
+import com.intellij.openapi.vcs.changes.shelf.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.tree.TreeUtil;

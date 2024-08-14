@@ -1,13 +1,18 @@
-package com.intellij.openapi.vcs.changes.shelf;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.impl.backend.shelf;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChange;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,8 +20,9 @@ import java.util.List;
 
 import static java.util.Comparator.comparing;
 
-final class ShelvedTreeModelBuilder extends TreeModelBuilder {
-  private ShelvedTreeModelBuilder(Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
+@ApiStatus.Internal
+public final class ShelvedTreeModelBuilder extends TreeModelBuilder {
+  public ShelvedTreeModelBuilder(Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
     super(project, grouping);
   }
 
@@ -46,7 +52,8 @@ final class ShelvedTreeModelBuilder extends TreeModelBuilder {
       for (ShelvedWrapper shelved : shelvedChanges) {
         Change change = shelved.getChangeWithLocal(myProject);
         FilePath filePath = ChangesUtil.getFilePath(change);
-        insertChangeNode(change, shelvedListNode, new ShelvedChangeNode(shelved, filePath, change.getOriginText(myProject)));
+        insertChangeNode(change, shelvedListNode,
+                         new ShelvedChangeNode(shelved, filePath, change.getOriginText(myProject)));
       }
     }
   }
