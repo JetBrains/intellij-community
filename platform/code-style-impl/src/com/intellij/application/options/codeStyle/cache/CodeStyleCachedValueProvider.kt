@@ -136,7 +136,11 @@ internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<V
             computeSettings()
           }
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            notifyCachedValueComputed()
+            //need to fix clients and remove global lock from there
+            //maybe readaction
+            writeIntentReadAction {
+              notifyCachedValueComputed()
+            }
           }
         }
       }

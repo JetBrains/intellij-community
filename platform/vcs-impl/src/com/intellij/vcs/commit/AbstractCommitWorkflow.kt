@@ -8,6 +8,7 @@ import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -350,7 +351,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   private suspend fun runModalCommitCheck(commitInfo: DynamicCommitInfo, commitCheck: CommitCheck): CommitChecksResult? {
     try {
       val problem = runCommitCheck(project, commitCheck, commitInfo) ?: return null
-      val result = blockingContext {
+      val result = writeIntentReadAction {
         problem.showModalSolution(project, commitInfo)
       }
       when (result) {

@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,14 +38,17 @@ class MoveFilesCommand(text: String, line: Int) : PerformanceCommandCoroutineAda
     val moveFileData = deserializeOptionsFromJson(extractCommandArgument(PREFIX), MoveFilesData::class.java)
     val tag = if (moveFileData.spanTag.isNotEmpty()) "_${moveFileData.spanTag}" else ""
     withContext(Dispatchers.EDT) {
-      val files = moveFileData.files
-        .map { file -> findFile(project, file) }
-        .map { file -> psiManager.findFile(file) }
-        .toTypedArray()
-      val toDirectory = psiManager.findDirectory(findFile(project, moveFileData.toDirectory))
-      TelemetryManager.getTracer(Scope("MoveFiles")).spanBuilder("$NAME$tag").use {
-        withIgnoredConflicts<Throwable> {
-          MoveHandler.doMove(project, files, toDirectory, null, null)
+      //maybe readaction
+      writeIntentReadAction {
+        val files = moveFileData.files
+          .map { file -> findFile(project, file) }
+          .map { file -> psiManager.findFile(file) }
+          .toTypedArray()
+        val toDirectory = psiManager.findDirectory(findFile(project, moveFileData.toDirectory))
+        TelemetryManager.getTracer(Scope("MoveFiles")).spanBuilder("$NAME$tag").use {
+          withIgnoredConflicts<Throwable> {
+            MoveHandler.doMove(project, files, toDirectory, null, null)
+          }
         }
       }
     }

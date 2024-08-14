@@ -438,7 +438,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
           AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
         } ?: continue
 
-        val solution = problem.showModalSolution(project, commitInfo)
+        val solution = writeIntentReadAction { problem.showModalSolution(project, commitInfo) }
         if (solution == CheckinHandler.ReturnResult.COMMIT) continue
 
         reportCommitCheckFailure(problem)

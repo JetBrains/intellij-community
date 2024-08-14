@@ -3,6 +3,7 @@ package com.intellij.performance.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.diagnostic.telemetry.Scope
@@ -33,14 +34,17 @@ class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCo
                 ?: throw IllegalArgumentException("There is no file $filePath")
 
             TelemetryManager.getTracer(Scope("javaToKotlin")).spanBuilder(NAME).use {
-                JavaToKotlinAction.Handler.convertFiles(
-                    files = listOf(javaFile),
-                    project = project,
-                    module = module,
-                    enableExternalCodeProcessing = false,
-                    askExternalCodeProcessing = false,
-                    forceUsingOldJ2k = false
-                )
+                //readaction is not enough
+                writeIntentReadAction {
+                    JavaToKotlinAction.Handler.convertFiles(
+                        files = listOf(javaFile),
+                        project = project,
+                        module = module,
+                        enableExternalCodeProcessing = false,
+                        askExternalCodeProcessing = false,
+                        forceUsingOldJ2k = false
+                    )
+                }
             }
         }
     }
