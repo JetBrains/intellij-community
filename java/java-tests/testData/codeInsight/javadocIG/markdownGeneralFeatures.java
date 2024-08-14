@@ -6,4 +6,7 @@
 /// *italic* **strong** `code`
 ///
 /// Separate paragraph
+/// ```JAVA
+/// System.out.println("Hello there");
+/// ```
 class MarkdownFeatures {}
