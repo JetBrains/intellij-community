@@ -31,6 +31,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <virtualFileCustomDataProvider implementation="com.intellij.json.split.JsonCodeStyleSettingsCustomDataSynchronizer"/>
+
     <registryKey key="json.schema.object.v2" defaultValue="true" description="Use lightweight implementation of JsonSchemaObject"/>
     <registryKey key="remote.schema.cache.validity.duration" defaultValue="1"
                  description="The time period (in minutes) a file is being kept in cache for. Applicable to references that contain remote URLs."/>
@@ -40,13 +42,6 @@
     <statusBarWidgetFactory id="JSONSchemaSelector" implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetFactory"
                             order="after CodeStyleStatusBarWidget, before ReadOnlyAttribute"/>
     <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
-
-    <!-- Code style and formatting -->
-    <codeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonCodeStyleSettingsProvider"/>
-    <langCodeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonLanguageCodeStyleSettingsProvider"/>
-    <lang.formatter language="JSON" implementationClass="com.intellij.json.formatter.JsonFormattingBuilderModel"/>
-    <preFormatProcessor implementation="com.intellij.json.formatter.JsonTrailingCommaRemover"/>
-    <enterBetweenBracesDelegate language="JSON"  implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
 
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
@@ -110,7 +105,6 @@
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector"/>
-    <lang.lineWrapStrategy language="JSON" implementationClass="com.intellij.json.formatter.JsonLineWrapPositionStrategy"/>
     <gotoDeclarationHandler id="JsonSchemaGotoDeclarationHandler" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
     <highlightVisitor implementation="com.intellij.json.highlighting.JsonRainbowVisitor"/>
     <intentionAction>
