@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * Provides features and the phase for the FUS event registration in the [InlineCompletionLogs].
  *
  */
+@ApiStatus.Internal
 abstract class PhasedLogs(val phase: Phase) {
   private val _fields = mutableListOf<EventField<*>>()
 

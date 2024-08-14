@@ -21,6 +21,7 @@ class InlineCompletionLogsContainer {
    * Describes phase of the Inline completion session.
    * Each phase can have multiple features (logs)
    */
+  @ApiStatus.Internal
   enum class Phase(val description: String) {
     INLINE_API_STARTING("Execution inside inline completion API"),
     CONTEXT_COLLECTION("During context collecting"),
