@@ -1,7 +1,7 @@
-from typing import Any
+from decimal import Decimal
 
-from braintree.resource import Resource as Resource
+from braintree.resource import Resource
 
 class StatusEvent(Resource):
-    amount: Any
+    amount: Decimal
     def __init__(self, gateway, attributes) -> None: ...

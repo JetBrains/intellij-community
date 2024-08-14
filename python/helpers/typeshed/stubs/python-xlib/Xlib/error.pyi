@@ -1,5 +1,5 @@
 from _typeshed import SliceableBuffer
-from typing_extensions import Final, Literal
+from typing import Final, Literal
 
 from Xlib.protocol import display, rq
 

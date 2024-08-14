@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from typing import Literal
 
 from openpyxl.chart.data_source import NumFmt
 from openpyxl.descriptors import Strict, Typed

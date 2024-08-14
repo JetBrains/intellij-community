@@ -43,7 +43,11 @@ object PyTypeShed {
     "_bootlocale" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON39),
     "_dummy_thread" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON38),
     "_dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
+    "_interpchannels" to (LanguageLevel.PYTHON313 to null),
+    "_interpqueues" to (LanguageLevel.PYTHON313 to null),
+    "_interpreters" to (LanguageLevel.PYTHON313 to null),
     "_py_abc" to (LanguageLevel.PYTHON37 to null),
+    "aifc" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "asynchat" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
     "asyncio.exceptions" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "asyncio.format_helpers" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
@@ -55,33 +59,60 @@ object PyTypeShed {
     "asyncio.timeouts" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
     "asyncio.trsock" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "asyncore" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
+    "audioop" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "binhex" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),
+    "cgi" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "cgitb" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "chunk" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "contextvars" to (LanguageLevel.PYTHON37 to null),
+    "crypt" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "dataclasses" to (LanguageLevel.PYTHON37 to null),
+    "dbm.sqlite3" to (LanguageLevel.PYTHON313 to null),
     "distutils" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
     "distutils.command.bdist_msi" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),  // likely it is ignored now
     "distutils.command.bdist_wininst" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),  // likely it is ignored now
     "dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
     "formatter" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
     "graphlib" to (LanguageLevel.PYTHON39 to null),
+    "imghdr" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "imp" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
+    "importlib._abc" to (LanguageLevel.PYTHON310 to null),
     "importlib.metadata" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "importlib.metadata._meta" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
+    "importlib.metadata.diagnose" to (LanguageLevel.PYTHON313 to null),
+    "importlib.readers" to (LanguageLevel.PYTHON310 to null),
     "importlib.resources" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
     "importlib.resources.abc" to (LanguageLevel.PYTHON311 to null),
-    "macpath" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON37),
+    "importlib.resources.readers" to (LanguageLevel.PYTHON311 to null),
+    "importlib.resources.simple" to (LanguageLevel.PYTHON311 to null),
+    "importlib.simple" to (LanguageLevel.PYTHON311 to null),
+    "lib2to3" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "mailcap" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "msilib" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "multiprocessing.resource_tracker" to (LanguageLevel.PYTHON38 to null), // likely it is ignored now
     "multiprocessing.shared_memory" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "nis" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "nntplib" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "ossaudiodev" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "parser" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "pipes" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "smtpd" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
+    "sndhdr" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "spwd" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "sunau" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "symbol" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
     "sys._monitoring" to (LanguageLevel.PYTHON312 to null),
+    "telnetlib" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "tkinter.tix" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "tomllib" to (LanguageLevel.PYTHON311 to null),
     "unittest._log" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
     "unittest.async_case" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "uu" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
     "wsgiref.types" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
+    "xdrlib" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "zipfile._path" to (LanguageLevel.PYTHON312 to null),
     "zoneinfo" to (LanguageLevel.PYTHON39 to null)
-  ) // Modified by script 2023-10-19 17:21:25
+  ) // Modified by script 2024-07-31 07:30:25
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].

@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, IndexableBuffer, SliceableBuffer, Unused
 from collections.abc import Callable, Mapping
-from typing import Any, TypeVar, overload
-from typing_extensions import Final, TypeAlias
+from typing import Any, Final, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from pyasn1.codec.ber.encoder import AbstractItemEncoder
 

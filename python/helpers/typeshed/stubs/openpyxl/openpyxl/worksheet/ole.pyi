@@ -1,8 +1,8 @@
-from _typeshed import Incomplete
-from typing import ClassVar, overload
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal, overload
+from typing_extensions import TypeAlias
 
-from openpyxl.descriptors.base import Bool, Integer, Set, String, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Bool, Integer, Set, String, Typed, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.drawing.spreadsheet_drawing import AnchorMarker
 
@@ -22,7 +22,7 @@ class ObjectAnchor(Serialisable):
         to: AnchorMarker,
         moveWithCells: _ConvertibleToBool | None = False,
         sizeWithCells: _ConvertibleToBool | None = False,
-        z_order: _ConvertibleToInt | None = None,
+        z_order: ConvertibleToInt | None = None,
     ) -> None: ...
 
 class ObjectPr(Serialisable):
@@ -94,7 +94,7 @@ class OleObject(Serialisable):
         *,
         oleUpdate: _OleObjectOleUpdate,
         autoLoad: _ConvertibleToBool | None = False,
-        shapeId: _ConvertibleToInt,
+        shapeId: ConvertibleToInt,
     ) -> None: ...
     @overload
     def __init__(
@@ -105,7 +105,7 @@ class OleObject(Serialisable):
         link: str | None,
         oleUpdate: _OleObjectOleUpdate,
         autoLoad: _ConvertibleToBool | None,
-        shapeId: _ConvertibleToInt,
+        shapeId: ConvertibleToInt,
     ) -> None: ...
 
 class OleObjects(Serialisable):

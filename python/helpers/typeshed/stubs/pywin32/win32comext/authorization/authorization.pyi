@@ -1,5 +1,5 @@
 import _win32typing
 
-def EditSecurity(*args, **kwargs): ...  # incomplete
+def EditSecurity(hwndOwner, psi): ...
 
 IID_ISecurityInformation: _win32typing.PyIID

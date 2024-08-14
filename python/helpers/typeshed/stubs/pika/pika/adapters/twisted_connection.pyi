@@ -6,22 +6,25 @@ from typing import Generic, NamedTuple, TypeVar
 
 import pika.connection
 from pika.adapters.utils import nbio_interface
-from twisted.internet.base import DelayedCall  # type: ignore[import]  # pyright: ignore[reportMissingImports]
-from twisted.internet.defer import Deferred, DeferredQueue  # type: ignore[import]  # pyright: ignore[reportMissingImports]
-from twisted.internet.interfaces import ITransport  # type: ignore[import]  # pyright: ignore[reportMissingImports]
-from twisted.internet.protocol import Protocol  # type: ignore[import]  # pyright: ignore[reportMissingImports]
-from twisted.python.failure import Failure  # type: ignore[import]  # pyright: ignore[reportMissingImports]
+from twisted.internet.base import DelayedCall  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports]
+from twisted.internet.defer import (  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports]
+    Deferred,
+    DeferredQueue,
+)
+from twisted.internet.interfaces import ITransport  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports]
+from twisted.internet.protocol import Protocol  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports]
+from twisted.python.failure import Failure  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports]
 
 _T = TypeVar("_T")
 
 LOGGER: Incomplete
 
-class ClosableDeferredQueue(DeferredQueue[_T], Generic[_T]):  # pyright: ignore[reportUntypedBaseClass]
+class ClosableDeferredQueue(DeferredQueue[_T], Generic[_T]):  # pyright: ignore[reportUntypedBaseClass]  # noqa: Y060
     closed: Failure | BaseException | None
     def __init__(self, size: Incomplete | None = ..., backlog: Incomplete | None = ...) -> None: ...
     # Returns a Deferred with an error if fails. None if success
-    def put(self, obj: _T) -> Deferred[Failure | BaseException] | None: ...  # type: ignore[override]
-    def get(self) -> Deferred[Failure | BaseException | _T]: ...  # type: ignore[override]
+    def put(self, obj: _T) -> Deferred[Failure | BaseException] | None: ...  # type: ignore[override]  # ignore is not needed for mypy, but is for stubtest
+    def get(self) -> Deferred[Failure | BaseException | _T]: ...  # type: ignore[override]  # ignore is not needed for mypy, but is for stubtest
     pending: Incomplete
     def close(self, reason: BaseException | None) -> None: ...
 

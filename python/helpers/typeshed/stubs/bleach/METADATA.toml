@@ -1,6 +1,6 @@
 version = "6.1.*"
+requires = ["types-html5lib"]
 upstream_repository = "https://github.com/mozilla/bleach"
-partial_stub = true
 
 [tool.stubtest]
-ignore_missing_stub = true
+extras = ["css"]

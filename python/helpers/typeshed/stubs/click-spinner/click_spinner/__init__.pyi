@@ -1,15 +1,15 @@
 import threading
 from collections.abc import Iterator
 from types import TracebackType
-from typing import Protocol
-from typing_extensions import Literal, Self
+from typing import Literal, Protocol
+from typing_extensions import Self
 
 __version__: str
 
 class _Stream(Protocol):
     def isatty(self) -> bool: ...
     def flush(self) -> None: ...
-    def write(self, s: str) -> int: ...
+    def write(self, s: str, /) -> int: ...
 
 class Spinner:
     spinner_cycle: Iterator[str]

@@ -9,10 +9,14 @@ from .ImageColor import _Ink
 _Border: TypeAlias = int | tuple[int, int] | tuple[int, int, int, int]
 
 class _Deformer(Protocol):
-    def getmesh(self, image: Image): ...
+    def getmesh(self, image: Image, /): ...
 
 def autocontrast(
-    image: Image, cutoff: int = 0, ignore: int | None = None, mask: Image | None = None, preserve_tone: bool = False
+    image: Image,
+    cutoff: float | tuple[float, float] = 0,
+    ignore: int | None = None,
+    mask: Image | None = None,
+    preserve_tone: bool = False,
 ) -> Image: ...
 def colorize(
     image: Image,

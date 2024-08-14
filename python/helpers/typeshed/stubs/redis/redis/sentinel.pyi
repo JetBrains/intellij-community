@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Iterator
-from typing import Any, TypeVar, overload
-from typing_extensions import Literal, TypeAlias
+from typing import Any, Literal, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from redis.client import Redis
 from redis.commands.sentinel import SentinelCommands

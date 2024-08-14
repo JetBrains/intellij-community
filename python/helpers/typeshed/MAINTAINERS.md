@@ -7,6 +7,7 @@ At present the active maintainers are (alphabetically):
 * Guido van Rossum (@gvanrossum)
 * Shantanu (@hauntsaninja)
 * Nikita Sobolev (@sobolevn)
+* Samuel Therrien (@Avasam)
 * Aku Viljanen (@Akuli)
 * Alex Waygood (@AlexWaygood)
 * Jelle Zijlstra (@JelleZijlstra)
@@ -21,8 +22,8 @@ Former maintainers include:
 
 For security reasons, maintainers who haven't been active for twelve months
 (no PR reviews or merges, no opened PRs, no significant participation in
-issues or on typing-sig) will have their access rights removed. They will
-also be moved to the "former maintainers" section here.
+issues or typing-related discussion) will have their access rights removed.
+They will also be moved to the "former maintainers" section here.
 
 Former maintainers who want their access rights restored should open
 an issue or mail one of the active maintainers.

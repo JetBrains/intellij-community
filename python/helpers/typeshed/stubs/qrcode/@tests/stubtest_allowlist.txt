@@ -4,6 +4,10 @@ qrcode\.compat\..*
 qrcode\.tests
 qrcode\.tests\..*
 
+# Parameter "data" has unhelpful default value, which creates a QR code with string "None".
+qrcode\.make
+qrcode\.main\.make
+
 # Stubtest hiccup: It doesn't recognize that the annotated type is a base
 # class of the default class assigned to the attribute.
 qrcode\.image\..*\.default_drawer_class

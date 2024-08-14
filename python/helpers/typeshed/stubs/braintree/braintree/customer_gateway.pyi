@@ -1,17 +1,8 @@
 from _typeshed import Incomplete
-from typing import Any
-
-from braintree.customer import Customer as Customer
-from braintree.error_result import ErrorResult as ErrorResult
-from braintree.exceptions.not_found_error import NotFoundError as NotFoundError
-from braintree.ids_search import IdsSearch as IdsSearch
-from braintree.resource import Resource as Resource
-from braintree.resource_collection import ResourceCollection as ResourceCollection
-from braintree.successful_result import SuccessfulResult as SuccessfulResult
 
 class CustomerGateway:
-    gateway: Any
-    config: Any
+    gateway: Incomplete
+    config: Incomplete
     def __init__(self, gateway) -> None: ...
     def all(self): ...
     def create(self, params: Incomplete | None = None): ...

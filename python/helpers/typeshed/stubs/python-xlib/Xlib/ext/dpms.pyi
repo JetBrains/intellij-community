@@ -1,6 +1,6 @@
-from typing_extensions import Final, Literal
+from _typeshed import Unused
+from typing import Final, Literal
 
-from Xlib._typing import Unused
 from Xlib.display import Display
 from Xlib.protocol import rq
 from Xlib.xobject import resource

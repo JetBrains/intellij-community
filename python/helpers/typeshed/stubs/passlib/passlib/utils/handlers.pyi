@@ -27,7 +27,7 @@ class TruncateMixin(MinimalHandler, metaclass=abc.ABCMeta):
     truncate_error: ClassVar[bool]
     truncate_verify_reject: ClassVar[bool]
     @classmethod
-    def using(cls, truncate_error: object = None, *, relaxed: bool = ...) -> type[Self]: ...  # type: ignore[override]
+    def using(cls, truncate_error: object = None, **kwds: Any) -> type[Self]: ...  # type: ignore[override]
 
 class GenericHandler(MinimalHandler):
     setting_kwds: ClassVar[tuple[str, ...]]

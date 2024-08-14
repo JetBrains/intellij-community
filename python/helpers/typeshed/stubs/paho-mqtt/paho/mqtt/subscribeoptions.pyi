@@ -1,5 +1,4 @@
-from typing import Any
-from typing_extensions import TypedDict
+from typing import Any, TypedDict
 
 from . import MQTTException as MQTTException
 

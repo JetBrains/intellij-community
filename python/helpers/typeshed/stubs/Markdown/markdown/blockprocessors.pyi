@@ -3,13 +3,12 @@ from re import Match, Pattern
 from typing import Any, ClassVar
 from xml.etree.ElementTree import Element
 
-from markdown import Markdown
-
-from .blockparser import BlockParser
+from markdown.blockparser import BlockParser
+from markdown.core import Markdown
 
 logger: Logger
 
-def build_block_parser(md: Markdown, **kwargs: Any): ...
+def build_block_parser(md: Markdown, **kwargs: Any) -> BlockParser: ...
 
 class BlockProcessor:
     parser: BlockParser

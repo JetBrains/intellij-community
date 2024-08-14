@@ -8,7 +8,9 @@ end_of_line = lf
 indent_size = 2
 
 [*.md]
+max_line_length = 79
 trim_trailing_whitespace = false
 
 [*.{py,pyi,toml,json}]
+max_line_length = 130
 indent_size = 4

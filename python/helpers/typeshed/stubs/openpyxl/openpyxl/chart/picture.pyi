@@ -1,7 +1,8 @@
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToFloat
+from typing import ClassVar, Literal
+from typing_extensions import TypeAlias
 
-from openpyxl.descriptors.base import _ConvertibleToBool, _ConvertibleToFloat
+from openpyxl.descriptors.base import _ConvertibleToBool
 from openpyxl.descriptors.nested import NestedBool, NestedFloat, NestedNoneSet, _NestedNoneSetParam
 from openpyxl.descriptors.serialisable import Serialisable
 
@@ -23,5 +24,5 @@ class PictureOptions(Serialisable):
         applyToSides: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
         applyToEnd: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
         pictureFormat: _NestedNoneSetParam[_PictureOptionsPictureFormat] = None,
-        pictureStackUnit: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        pictureStackUnit: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
     ) -> None: ...

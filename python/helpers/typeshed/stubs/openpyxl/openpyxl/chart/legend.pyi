@@ -1,11 +1,11 @@
-from _typeshed import Incomplete, Unused
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToInt, Incomplete, Unused
+from typing import ClassVar, Literal
+from typing_extensions import TypeAlias
 
 from openpyxl.chart.layout import Layout
 from openpyxl.chart.shapes import GraphicalProperties
 from openpyxl.chart.text import RichText
-from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.nested import NestedBool, NestedInteger, NestedSet
 from openpyxl.descriptors.serialisable import Serialisable
@@ -23,7 +23,7 @@ class LegendEntry(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        idx: _HasTagAndGet[_ConvertibleToInt] | _ConvertibleToInt = 0,
+        idx: _HasTagAndGet[ConvertibleToInt] | ConvertibleToInt = 0,
         delete: _HasTagAndGet[_ConvertibleToBool] | _ConvertibleToBool = False,
         txPr: RichText | None = None,
         extLst: Unused = None,

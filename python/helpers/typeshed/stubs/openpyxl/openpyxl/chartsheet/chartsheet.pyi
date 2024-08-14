@@ -1,6 +1,5 @@
-from _typeshed import Incomplete, Unused
-from typing import ClassVar
-from typing_extensions import Literal
+from _typeshed import Unused
+from typing import ClassVar, Literal
 
 from openpyxl import _Decodable, _VisibilityType
 from openpyxl.chartsheet.custom import CustomChartsheetViews
@@ -13,9 +12,11 @@ from openpyxl.descriptors.base import Alias, Set, Typed
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.workbook.child import _WorkbookChild
+from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet.drawing import Drawing
 from openpyxl.worksheet.header_footer import HeaderFooter as _HeaderFooter
 from openpyxl.worksheet.page import PageMargins, PrintPageSetup
+from openpyxl.xml.functions import Element
 
 class Chartsheet(_WorkbookChild, Serialisable):
     tagname: ClassVar[str]
@@ -33,7 +34,7 @@ class Chartsheet(_WorkbookChild, Serialisable):
     extLst: Typed[ExtensionList, Literal[True]]
     sheet_state: Set[_VisibilityType]
     headerFooter: Typed[_HeaderFooter, Literal[False]]
-    HeaderFooter: Alias
+    HeaderFooter: Alias  # type: ignore[assignment] # Different from parent class
     __elements__: ClassVar[tuple[str, ...]]
     __attrs__: ClassVar[tuple[str, ...]]
     def __init__(
@@ -50,9 +51,9 @@ class Chartsheet(_WorkbookChild, Serialisable):
         picture: SheetBackgroundPicture | None = None,
         webPublishItems: WebPublishItems | None = None,
         extLst: Unused = None,
-        parent: Incomplete | None = None,
+        parent: Workbook | None = None,
         title: str | _Decodable | None = "",
         sheet_state: _VisibilityType = "visible",
     ) -> None: ...
     def add_chart(self, chart) -> None: ...
-    def to_tree(self): ...
+    def to_tree(self) -> Element: ...  # type: ignore[override]

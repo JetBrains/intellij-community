@@ -1,15 +1,16 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar
 
 from .._distutils.command import sdist as orig
 
 def walk_revctrl(dirname: str = "") -> None: ...
 
 class sdist(orig.sdist):
-    user_options: Any
-    negative_opt: Any
-    README_EXTENSIONS: Any
-    READMES: Any
-    filelist: Any
+    user_options: ClassVar[list[tuple[str, str | None, str]]]
+    negative_opt: ClassVar[dict[str, str]]
+    README_EXTENSIONS: ClassVar[list[str]]
+    READMES: ClassVar[tuple[str, ...]]
+    filelist: Incomplete
     def run(self) -> None: ...
     def initialize_options(self) -> None: ...
     def make_distribution(self) -> None: ...

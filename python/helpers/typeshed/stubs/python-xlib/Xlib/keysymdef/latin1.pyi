@@ -1,4 +1,4 @@
-from typing_extensions import Final
+from typing import Final
 
 XK_space: Final = 0x020
 XK_exclam: Final = 0x021

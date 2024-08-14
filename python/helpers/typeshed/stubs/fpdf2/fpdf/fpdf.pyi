@@ -1,12 +1,12 @@
 import datetime
 from _typeshed import Incomplete, StrPath, Unused
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Generator, Iterable, Sequence
 from contextlib import _GeneratorContextManager
 from io import BytesIO
 from pathlib import PurePath
 from re import Pattern
-from typing import Any, ClassVar, NamedTuple, overload
-from typing_extensions import Literal, TypeAlias
+from typing import Any, ClassVar, Final, Literal, NamedTuple, overload
+from typing_extensions import TypeAlias, deprecated
 
 from fpdf import ViewerPreferences
 from PIL import Image
@@ -25,8 +25,11 @@ from .enums import (
     RenderStyle,
     TableBordersLayout,
     TableCellFillMode,
+    TableHeadingsDisplay,
+    TextDirection,
     TextMarkupType,
     TextMode as TextMode,
+    VAlign,
     WrapMode as WrapMode,
     XPos as XPos,
     YPos as YPos,
@@ -35,30 +38,40 @@ from .errors import FPDFException as FPDFException
 from .fonts import FontFace
 from .graphics_state import GraphicsStateMixin
 from .html import HTML2FPDF
+from .image_datastructures import (
+    ImageCache,
+    ImageInfo as ImageInfo,
+    RasterImageInfo as RasterImageInfo,
+    VectorImageInfo as VectorImageInfo,
+    _TextAlign,
+)
 from .output import OutputProducer, PDFPage
 from .recorder import FPDFRecorder
 from .structure_tree import StructureTreeBuilder
 from .syntax import DestinationXYZ
 from .table import Table
-from .util import _Unit
+from .util import Padding, _Unit
 
-__all__ = ["FPDF", "XPos", "YPos", "get_page_format", "ImageInfo", "TextMode", "TitleStyle", "PAGE_FORMATS"]
+__all__ = [
+    "FPDF",
+    "XPos",
+    "YPos",
+    "get_page_format",
+    "ImageInfo",
+    "RasterImageInfo",
+    "VectorImageInfo",
+    "TextMode",
+    "TitleStyle",
+    "PAGE_FORMATS",
+]
 
 _Orientation: TypeAlias = Literal["", "portrait", "p", "P", "landscape", "l", "L"]
 _Format: TypeAlias = Literal["", "a3", "A3", "a4", "A4", "a5", "A5", "letter", "Letter", "legal", "Legal"]
 _FontStyle: TypeAlias = Literal["", "B", "I"]
 _FontStyles: TypeAlias = Literal["", "B", "I", "U", "BU", "UB", "BI", "IB", "IU", "UI", "BIU", "BUI", "IBU", "IUB", "UBI", "UIB"]
-PAGE_FORMATS: dict[_Format, tuple[float, float]]
 
-class ImageInfo(dict[str, Any]):
-    @property
-    def width(self) -> int: ...
-    @property
-    def height(self) -> int: ...
-    @property
-    def rendered_width(self) -> int: ...
-    @property
-    def rendered_height(self) -> int: ...
+FPDF_VERSION: Final[str]
+PAGE_FORMATS: dict[_Format, tuple[float, float]]
 
 class TitleStyle(FontFace):
     t_margin: int | None
@@ -83,17 +96,10 @@ class ToCPlaceholder(NamedTuple):
     y: int
     pages: int = ...
 
-class SubsetMap:
-    def __init__(self, identities: Iterable[int]) -> None: ...
-    def __len__(self) -> int: ...
-    def pick(self, unicode: int) -> int: ...
-    def dict(self) -> dict[int, int]: ...
-
 def get_page_format(format: _Format | tuple[float, float], k: float | None = None) -> tuple[float, float]: ...
 
 # TODO: TypedDicts
 _Font: TypeAlias = dict[str, Any]
-_Image: TypeAlias = dict[str, Any]
 
 class FPDF(GraphicsStateMixin):
     MARKDOWN_BOLD_MARKER: ClassVar[str]
@@ -101,21 +107,21 @@ class FPDF(GraphicsStateMixin):
     MARKDOWN_UNDERLINE_MARKER: ClassVar[str]
     MARKDOWN_LINK_REGEX: ClassVar[Pattern[str]]
     MARKDOWN_LINK_COLOR: ClassVar[Incomplete | None]
+    MARKDOWN_LINK_UNDERLINE: ClassVar[bool]
 
     HTML2FPDF_CLASS: ClassVar[type[HTML2FPDF]]
 
     page: int
     pages: dict[int, PDFPage]
     fonts: dict[str, _Font]
-    images: dict[str, _Image]
     links: dict[int, DestinationXYZ]
     embedded_files: list[PDFEmbeddedFile]
+    image_cache: ImageCache
 
     in_footer: bool
     str_alias_nb_pages: str
 
     xmp_metadata: str | None
-    image_filter: str
     page_duration: int
     page_transition: Incomplete | None
     allow_images_transparency: bool
@@ -199,6 +205,14 @@ class FPDF(GraphicsStateMixin):
         self,
         zoom: Literal["fullpage", "fullwidth", "real", "default"] | float,
         layout: Literal["single", "continuous", "two", "default"] = "continuous",
+    ) -> None: ...
+    def set_text_shaping(
+        self,
+        use_shaping_engine: bool = True,
+        features: dict[str, bool] | None = None,
+        direction: Literal["ltr", "rtl"] | TextDirection | None = None,
+        script: str | None = None,
+        language: str | None = None,
     ) -> None: ...
     def set_compression(self, compress: bool) -> None: ...
     title: str
@@ -368,7 +382,16 @@ class FPDF(GraphicsStateMixin):
         h: float = 1,
         name: AnnotationName | str | None = None,
         flags: tuple[AnnotationFlag, ...] | tuple[str, ...] = ...,
-    ) -> None: ...
+    ) -> AnnotationDict: ...
+    def free_text_annotation(
+        self,
+        text: str,
+        x: float | None = None,
+        y: float | None = None,
+        w: float | None = None,
+        h: float | None = None,
+        flags: tuple[AnnotationFlag, ...] | tuple[str, ...] = ...,
+    ) -> AnnotationDict: ...
     def add_action(self, action, x: float, y: float, w: float, h: float) -> None: ...
     def highlight(
         self,
@@ -397,12 +420,13 @@ class FPDF(GraphicsStateMixin):
         color: Sequence[float] = (1, 1, 0),
         border_width: int = 1,
     ) -> AnnotationDict: ...
-    def text(self, x: float, y: float, txt: str = "") -> None: ...
+    def text(self, x: float, y: float, text: str = "") -> None: ...
     def rotate(self, angle: float, x: float | None = None, y: float | None = None) -> None: ...
     def rotation(self, angle: float, x: float | None = None, y: float | None = None) -> _GeneratorContextManager[None]: ...
     def skew(
         self, ax: float = 0, ay: float = 0, x: float | None = None, y: float | None = None
     ) -> _GeneratorContextManager[None]: ...
+    def mirror(self, origin, angle) -> Generator[None, None, None]: ...
     def local_context(
         self,
         font_family: Incomplete | None = None,
@@ -421,13 +445,13 @@ class FPDF(GraphicsStateMixin):
         self,
         w: float | None = None,
         h: float | None = None,
-        txt: str = "",
+        text: str = "",
         border: bool | Literal[0, 1] | str = 0,
         ln: int | Literal["DEPRECATED"] = "DEPRECATED",
         align: str | Align = ...,
         fill: bool = False,
         link: str = "",
-        center: bool | Literal["DEPRECATED"] = "DEPRECATED",
+        center: bool = False,
         markdown: bool = False,
         new_x: XPos | str = ...,
         new_y: YPos | str = ...,
@@ -438,12 +462,12 @@ class FPDF(GraphicsStateMixin):
         self,
         w: float,
         h: float | None = None,
-        txt: str = "",
+        text: str = "",
         border: bool | Literal[0, 1] | str = 0,
         align: str | Align = ...,
         fill: bool = False,
         split_only: bool = False,
-        link: str | int = "",
+        link: str = "",
         ln: int | Literal["DEPRECATED"] = "DEPRECATED",
         max_line_height: float | None = None,
         markdown: bool = False,
@@ -453,10 +477,28 @@ class FPDF(GraphicsStateMixin):
         wrapmode: WrapMode = ...,
         dry_run: bool = False,
         output: MethodReturnValue | str | int = ...,
+        center: bool = False,
+        padding: int = 0,
     ): ...
     def write(
-        self, h: float | None = None, txt: str = "", link: str = "", print_sh: bool = False, wrapmode: WrapMode = ...
+        self, h: float | None = None, text: str = "", link: str = "", print_sh: bool = False, wrapmode: WrapMode = ...
     ) -> bool: ...
+    def text_columns(
+        self,
+        text: str | None = None,
+        img: str | None = None,
+        img_fill_width: bool = False,
+        ncols: int = 1,
+        gutter: float = 10,
+        balance: bool = False,
+        text_align: str | _TextAlign | tuple[_TextAlign | str, ...] = "LEFT",
+        line_height: float = 1,
+        l_margin: float | None = None,
+        r_margin: float | None = None,
+        print_sh: bool = False,
+        wrapmode: WrapMode = ...,
+        skip_leading_spaces: bool = False,
+    ): ...
     def image(
         self,
         name: str | Image.Image | BytesIO | StrPath,
@@ -470,7 +512,8 @@ class FPDF(GraphicsStateMixin):
         alt_text: str | None = None,
         dims: tuple[float, float] | None = None,
         keep_aspect_ratio: bool = False,
-    ) -> _Image: ...
+    ) -> RasterImageInfo | VectorImageInfo: ...
+    @deprecated("Deprecated since 2.7.7; use fpdf.image_parsing.preload_image() instead")
     def preload_image(
         self, name: str | Image.Image | BytesIO, dims: tuple[float, float] | None = None
     ) -> tuple[str, Any, ImageInfo]: ...
@@ -480,7 +523,7 @@ class FPDF(GraphicsStateMixin):
     def get_y(self) -> float: ...
     def set_y(self, y: float) -> None: ...
     def set_xy(self, x: float, y: float) -> None: ...
-    def normalize_text(self, txt: str) -> str: ...
+    def normalize_text(self, text: str) -> str: ...
     def sign_pkcs12(
         self,
         pkcs_filepath: str,
@@ -505,8 +548,8 @@ class FPDF(GraphicsStateMixin):
         flags: tuple[AnnotationFlag, ...] = ...,
     ) -> None: ...
     def file_id(self) -> str: ...
-    def interleaved2of5(self, txt, x: float, y: float, w: float = 1, h: float = 10) -> None: ...
-    def code39(self, txt, x: float, y: float, w: float = 1.5, h: float = 5) -> None: ...
+    def interleaved2of5(self, text, x: float, y: float, w: float = 1, h: float = 10) -> None: ...
+    def code39(self, text, x: float, y: float, w: float = 1.5, h: float = 5) -> None: ...
     def rect_clip(self, x: float, y: float, w: float, h: float) -> _GeneratorContextManager[None]: ...
     def elliptic_clip(self, x: float, y: float, w: float, h: float) -> _GeneratorContextManager[None]: ...
     def round_clip(self, x: float, y: float, r: float) -> _GeneratorContextManager[None]: ...
@@ -529,20 +572,29 @@ class FPDF(GraphicsStateMixin):
         self,
         rows: Iterable[Incomplete] = (),
         *,
-        align: str | Align = "CENTER",
+        # Keep in sync with `fpdf.table.Table`:
+        align: str | _TextAlign = "CENTER",
+        v_align: str | VAlign = "MIDDLE",
         borders_layout: str | TableBordersLayout = ...,
         cell_fill_color: int | tuple[Incomplete, ...] | DeviceGray | DeviceRGB | None = None,
         cell_fill_mode: str | TableCellFillMode = ...,
         col_widths: int | tuple[int, ...] | None = None,
         first_row_as_headings: bool = True,
+        gutter_height: float = 0,
+        gutter_width: float = 0,
         headings_style: FontFace = ...,
         line_height: int | None = None,
         markdown: bool = False,
-        text_align: str | Align = "JUSTIFY",
+        text_align: str | _TextAlign | tuple[str | _TextAlign, ...] = "JUSTIFY",
         width: int | None = None,
+        wrapmode: WrapMode = ...,
+        padding: float | Padding | None = None,
+        outer_border_width: float | None = None,
+        num_heading_rows: int = 1,
+        repeat_headings: TableHeadingsDisplay | int = 1,
     ) -> _GeneratorContextManager[Table]: ...
     @overload
-    def output(  # type: ignore[misc]
+    def output(  # type: ignore[overload-overlap]
         self,
         name: Literal[""] | None = "",
         dest: Unused = "",

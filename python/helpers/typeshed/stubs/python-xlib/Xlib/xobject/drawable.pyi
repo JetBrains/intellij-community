@@ -1,11 +1,20 @@
 from collections.abc import Iterable, Sequence
-from typing import Any
+from typing import Any, Literal, Protocol, type_check_only
 
-from PIL import Image
 from Xlib._typing import ErrorHandler
 from Xlib.protocol import request, rq
 from Xlib.protocol.structs import _Arc6IntSequence, _Rectangle4IntSequence, _RGB3IntIterable, _Segment4IntSequence
 from Xlib.xobject import colormap, cursor, fontable, resource
+
+# Protocol for the parts of PIL.Image.Image used by python-xlib.
+@type_check_only
+class _PilImage(Protocol):
+    @property
+    def mode(self) -> str: ...
+    @property
+    def size(self) -> tuple[int, int]: ...
+    def crop(self, box: tuple[int, int, int, int], /) -> _PilImage: ...
+    def tobytes(self, encoder_name: Literal["raw"], rawmode: str, stride: int, x: Literal[0], /) -> bytes: ...
 
 class Drawable(resource.Resource):
     __drawable__ = resource.Resource.__resource__
@@ -100,7 +109,7 @@ class Drawable(resource.Resource):
         data: bytes | bytearray,
         onerror: ErrorHandler[object] | None = None,
     ) -> None: ...
-    def put_pil_image(self, gc: int, x: int, y: int, image: Image.Image, onerror: ErrorHandler[object] | None = None) -> None: ...
+    def put_pil_image(self, gc: int, x: int, y: int, image: _PilImage, onerror: ErrorHandler[object] | None = None) -> None: ...
     def get_image(self, x: int, y: int, width: int, height: int, format: int, plane_mask: int) -> request.GetImage: ...
     def draw_text(
         self, gc: int, x: int, y: int, text: dict[str, str | int], onerror: ErrorHandler[object] | None = None

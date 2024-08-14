@@ -1,6 +1,6 @@
 from collections.abc import Iterable
-from typing import TypeVar, overload
-from typing_extensions import Self, SupportsIndex, TypeAlias
+from typing import SupportsIndex, TypeVar, overload
+from typing_extensions import Self, TypeAlias
 
 _T = TypeVar("_T")
 

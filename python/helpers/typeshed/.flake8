@@ -1,45 +1,19 @@
-# The following rules come from plugins that are not used by typeshed.
-# Since typeshed stubs them, they can still be expected to be found in a
-# developer's venv for intellisense and reference reasons
-#     A      flake8-builtins
-#     D      flake8-docstrings
-#     N8     pep8-naming
-#     SIM    flake8-simplify
-#     RST    flake8-rst-docstrings
-#     TYP    flake8-typing-imports
-
-# The following rules are incompatible with or enforced by Black:
-#     E203   whitespace before ':' -- scripts only
-#     E301   expected 1 blank line
-#     E302   expected 2 blank lines
-#     E305   expected 2 blank lines
-#     E501   line too long
-
-# Some rules are considered irrelevant to stub files:
-#     B      All flake8-bugbear rules are .py-specific
-#     E701   multiple statements on one line (colon) -- disallows "..." on the same line
-#     F401   imported but unused -- does not recognize re-exports
-#            https://github.com/PyCQA/pyflakes/issues/474
-
-# Rules that are out of the control of stub authors:
-#     E741   ambiguous variable name
-#     F403   import *' used; unable to detect undefined names
-#     F405   defined from star imports
-
 [flake8]
-extend-ignore = A, D, N8, SIM, RST, TYP, E301, E302, E305, E501
+# NQA: Ruff won't warn about redundant `# noqa: Y`
+# Y: Flake8 is only used to run flake8-pyi, everything else is in Ruff
+# F821: Typeshed is a testing ground for flake8-pyi, which monkeypatches F821
+select = NQA, Y, F821
+# Ignore rules normally excluded by default
+extend-ignore = Y090
 per-file-ignores =
-  *.py: E203
-  *.pyi: B, E701, E741, F401, F403, F405
-  # Since typing.pyi defines "overload" this is not recognized by Flake8 as typing.overload.
-  # Unfortunately, Flake8 does not allow to "noqa" just a specific error inside the file itself.
-  # https://github.com/PyCQA/flake8/issues/1079
-  #     F811 redefinition of unused '...'
-  stdlib/typing.pyi: B, E701, E741, F401, F403, F405, F811
-  # Generated protobuf files include docstrings
-  # *_pb2.pyi: B, E701, E741, F401, F403, F405, Y021, Y026, Y053, Y054
+  # We should only need to noqa Y and F821 codes in .pyi files
+  *.py: NQA
+  # Generated protobuf files:
+  # Y021: Include docstrings
+  # Y023: Alias typing as typing_extensions
+  # Y026: Have implicit type aliases
+  # Y053: have literals >50 characters long
+  stubs/*_pb2.pyi: Y021, Y023, Y026, Y053
 
-# TODO: Re-enable Flake8 on generated protobuf files
-# after https://github.com/nipunn1313/mypy-protobuf/issues/523 is resolved
-exclude = .venv*,.git,*_pb2.pyi
+exclude = .venv*,.git
 noqa_require_code = true

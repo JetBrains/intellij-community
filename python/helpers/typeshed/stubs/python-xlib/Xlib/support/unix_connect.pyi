@@ -1,19 +1,19 @@
 import sys
 from _socket import _Address
+from _typeshed import Unused
 from platform import uname_result
 from re import Pattern
 from socket import socket
-from typing_extensions import Final, Literal, TypeAlias
-
-from Xlib._typing import Unused
+from typing import Final, Literal
+from typing_extensions import TypeAlias
 
 if sys.platform == "darwin":
     SUPPORTED_PROTOCOLS: Final[tuple[None, Literal["tcp"], Literal["unix"], Literal["darwin"]]]
-    _Protocol: TypeAlias = Literal[None, "tcp", "unix", "darwin"]
+    _Protocol: TypeAlias = Literal["tcp", "unix", "darwin"] | None
     DARWIN_DISPLAY_RE: Final[Pattern[str]]
 else:
     SUPPORTED_PROTOCOLS: Final[tuple[None, Literal["tcp"], Literal["unix"]]]
-    _Protocol: TypeAlias = Literal[None, "tcp", "unix"]
+    _Protocol: TypeAlias = Literal["tcp", "unix"] | None
 uname: uname_result
 DISPLAY_RE: Final[Pattern[str]]
 

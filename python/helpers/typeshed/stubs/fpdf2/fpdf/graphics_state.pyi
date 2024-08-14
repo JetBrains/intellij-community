@@ -1,9 +1,18 @@
-from typing import Any, ClassVar
-
-from fpdf.fonts import FontFace
+from typing import Any, ClassVar, Literal, TypedDict, type_check_only
 
 from .drawing import DeviceGray, DeviceRGB
 from .enums import TextMode
+from .fonts import FontFace
+
+@type_check_only
+class _TextShaping(TypedDict):
+    use_shaping_engine: bool
+    features: dict[str, bool]
+    direction: Literal["ltr", "rtl"]
+    script: str | None
+    language: str | None
+    fragment_direction: Literal["L", "R"] | None
+    paragraph_direction: Literal["L", "R"] | None
 
 class GraphicsStateMixin:
     DEFAULT_DRAW_COLOR: ClassVar[DeviceGray]
@@ -102,4 +111,8 @@ class GraphicsStateMixin:
     def denom_lift(self): ...
     @denom_lift.setter
     def denom_lift(self, v) -> None: ...
+    @property
+    def text_shaping(self) -> _TextShaping | None: ...
+    @text_shaping.setter
+    def text_shaping(self, v: _TextShaping | None) -> None: ...
     def font_face(self) -> FontFace: ...

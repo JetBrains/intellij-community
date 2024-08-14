@@ -24,17 +24,16 @@ jobs:
           # use an ssh key so that checks automatically run on stubsabot PRs
           ssh-key: ${{ secrets.STUBSABOT_SSH_PRIVATE_KEY }}
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements-tests.txt
+          python-version: "3.12"
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: git config
         run: |
           git config --global user.name stubsabot
           git config --global user.email '<>'
       - name: Install dependencies
-        run: pip install -r requirements-tests.txt
+        run: uv pip install -r requirements-tests.txt --system
       - name: Run stubsabot
         run: GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} python scripts/stubsabot.py --action-level everything
 
@@ -45,7 +44,7 @@ jobs:
     needs: [stubsabot]
     if: ${{ github.repository == 'python/typeshed' && always() && (needs.stubsabot.result == 'failure') }}
     steps:
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

@@ -1,14 +1,14 @@
+from _typeshed import Incomplete
 from collections.abc import Generator
-from typing import Any
 
-WHEEL_NAME: Any
+WHEEL_NAME: Incomplete
 NAMESPACE_PACKAGE_INIT: str
 
 def unpack(src_dir, dst_dir) -> None: ...
 def disable_info_traces() -> Generator[None, None, None]: ...
 
 class Wheel:
-    filename: Any
+    filename: Incomplete
     def __init__(self, filename) -> None: ...
     def tags(self): ...
     def is_compatible(self): ...

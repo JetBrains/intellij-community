@@ -1,15 +1,12 @@
-from _typeshed import ReadableBuffer, SliceableBuffer
+from _typeshed import ConvertibleToFloat, SliceableBuffer, Unused
 from collections.abc import Iterable, Sequence
-from typing import SupportsFloat, TypeVar
-from typing_extensions import Final, SupportsIndex, TypeAlias
+from typing import Final, TypeVar
 
-from Xlib._typing import Unused
 from Xlib.display import Display
 from Xlib.protocol import display, request, rq
 from Xlib.xobject import drawable, resource
 
 _T = TypeVar("_T")
-_Floatable: TypeAlias = SupportsFloat | SupportsIndex | str | ReadableBuffer
 
 extname: Final = "XInputExtension"
 PropertyDeleted: Final = 0
@@ -119,12 +116,12 @@ PROPERTY_TYPE_FLOAT: Final = "FLOAT"
 # ignore[override] because of Liskov substitution principle violations
 class FP1616(rq.Int32):
     def check_value(self, value: float) -> int: ...  # type: ignore[override]
-    def parse_value(self, value: _Floatable, display: Unused) -> float: ...  # type: ignore[override]
+    def parse_value(self, value: ConvertibleToFloat, display: Unused) -> float: ...  # type: ignore[override]
 
 class FP3232(rq.ValueField):
     structcode: str
     def check_value(self, value: _T) -> _T: ...  # type: ignore[override]
-    def parse_value(self, value: tuple[_Floatable, _Floatable], display: Unused) -> float: ...  # type: ignore[override]
+    def parse_value(self, value: tuple[ConvertibleToFloat, ConvertibleToFloat], display: Unused) -> float: ...  # type: ignore[override]
 
 class XIQueryVersion(rq.ReplyRequest): ...
 

@@ -1,13 +1,13 @@
 from _typeshed import Incomplete
 from collections import OrderedDict
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from humanfriendly.compat import unicode
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 
-class CaseInsensitiveDict(OrderedDict[_KT, _VT], Generic[_KT, _VT]):
+class CaseInsensitiveDict(OrderedDict[_KT, _VT]):
     def __init__(self, other: Incomplete | None = None, **kw) -> None: ...
     def coerce_key(self, key): ...
     @classmethod

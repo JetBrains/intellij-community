@@ -1,6 +1,5 @@
 from collections.abc import Iterator
-from typing import ClassVar
-from typing_extensions import TypedDict
+from typing import ClassVar, TypedDict
 
 from jmespath.exceptions import EmptyExpressionError as EmptyExpressionError, LexerError as LexerError
 

@@ -1,8 +1,7 @@
 import abc
 from _typeshed import Incomplete
 from decimal import Decimal
-from typing import overload
-from typing_extensions import Literal
+from typing import Literal, overload
 from xml.etree.ElementTree import Element
 
 import qrcode.image.base

@@ -1,5 +1,5 @@
 from re import Pattern
-from typing_extensions import Final
+from typing import Final
 
 PERCENT_REGEX: Final[Pattern[str]]
 TIME_REGEX: Final[Pattern[str]]

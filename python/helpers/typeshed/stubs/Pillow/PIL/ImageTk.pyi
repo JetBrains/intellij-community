@@ -3,14 +3,14 @@ import tkinter
 from _typeshed import ReadableBuffer, StrOrBytesPath, SupportsRead
 from typing import Any
 
-from PIL.Image import Image, _Mode, _Size
+from PIL.Image import Image
 
 class PhotoImage(tkinter._PhotoImageLike):
     tk: _tkinter.TkappType
     def __init__(
         self,
-        image: Image | _Mode | None = None,
-        size: _Size | None = None,
+        image: Image | str | None = None,
+        size: tuple[int, int] | None = None,
         *,
         file: StrOrBytesPath | SupportsRead[bytes] = ...,
         data: ReadableBuffer = ...,

@@ -1,3 +1,0 @@
-version = "0.8.*"
-upstream_repository = "https://github.com/pypi/stdlib-list"
-obsolete_since = "0.9.0" # Released on 2023-06-22

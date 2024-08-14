@@ -1,5 +1,5 @@
 from datetime import date
-from typing_extensions import Literal
+from typing import Literal
 
 EASTER_JULIAN: Literal[1]
 EASTER_ORTHODOX: Literal[2]

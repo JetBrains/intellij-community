@@ -7,7 +7,7 @@
     ],
     "exclude": [
         // test cases use a custom config file
-        "stubs/**/@tests/test_cases"
+        "**/@tests/test_cases",
     ],
     "typeCheckingMode": "strict",
     // Allowed in base settings for incomplete stubs, checked in stricter settings
@@ -18,7 +18,6 @@
     "reportUnknownVariableType": "none",
     // Extra strict settings
     "reportCallInDefaultInitializer": "error",
-    "reportImplicitStringConcatenation": "error",
     "reportUnnecessaryTypeIgnoreComment": "error",
     // Leave "type: ignore" comments to mypy
     "enableTypeIgnoreComments": false,
@@ -42,4 +41,6 @@
     "reportOverlappingOverload": "none",
     // The name of the self/cls parameter is out of typeshed's control.
     "reportSelfClsParameterName": "none",
+    // Not actionable in typeshed
+    "reportDeprecated": "none",
 }

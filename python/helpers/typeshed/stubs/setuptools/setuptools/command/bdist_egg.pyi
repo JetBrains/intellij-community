@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Generator
+from typing import ClassVar, Final
 
 from .. import Command
 
@@ -9,13 +10,13 @@ def write_stub(resource, pyfile) -> None: ...
 
 class bdist_egg(Command):
     description: str
-    user_options: Incomplete
-    boolean_options: Incomplete
+    user_options: ClassVar[list[tuple[str, str | None, str]]]
+    boolean_options: ClassVar[list[str]]
     bdist_dir: Incomplete
     plat_name: Incomplete
-    keep_temp: int
+    keep_temp: bool
     dist_dir: Incomplete
-    skip_build: int
+    skip_build: bool
     egg_output: Incomplete
     exclude_source_files: Incomplete
     def initialize_options(self) -> None: ...
@@ -32,7 +33,7 @@ class bdist_egg(Command):
     def copy_metadata_to(self, target_dir) -> None: ...
     def get_ext_outputs(self): ...
 
-NATIVE_EXTENSIONS: Incomplete
+NATIVE_EXTENSIONS: Final[dict[str, None]]
 
 def walk_egg(egg_dir) -> Generator[Incomplete, None, None]: ...
 def analyze_egg(egg_dir, stubs): ...
@@ -44,6 +45,8 @@ def scan_module(egg_dir, base, name, stubs): ...
 def iter_symbols(code) -> Generator[Incomplete, None, None]: ...
 def can_scan(): ...
 
-INSTALL_DIRECTORY_ATTRS: Incomplete
+INSTALL_DIRECTORY_ATTRS: Final[list[str]]
 
-def make_zipfile(zip_filename, base_dir, verbose: int = 0, dry_run: int = 0, compress: bool = True, mode: str = "w"): ...
+def make_zipfile(
+    zip_filename, base_dir, verbose: bool = False, dry_run: bool = False, compress: bool = True, mode: str = "w"
+): ...

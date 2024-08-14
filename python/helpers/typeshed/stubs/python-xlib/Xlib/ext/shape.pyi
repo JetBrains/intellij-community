@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing_extensions import Final
+from typing import Final
 
 from Xlib.display import Display
 from Xlib.protocol import request, rq

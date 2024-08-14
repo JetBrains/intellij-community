@@ -1,6 +1,5 @@
 from _typeshed import Incomplete
-from typing import ClassVar
-from typing_extensions import Final
+from typing import ClassVar, Final
 
 class ScriptLanguage:
     FLUX: Final = "flux"

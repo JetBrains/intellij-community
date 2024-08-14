@@ -1,4 +1,4 @@
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 # Unused in this module, but imported in multiple submodules.
 class _EncodedRLE(TypedDict):  # noqa: Y049

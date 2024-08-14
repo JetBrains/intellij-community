@@ -1,4 +1,4 @@
-from typing_extensions import Final
+from typing import Final
 
 DEFAULT_ROW_HEIGHT: Final[float]
 BASE_COL_WIDTH: Final = 8

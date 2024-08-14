@@ -1,3 +1,3 @@
-from braintree.attribute_getter import AttributeGetter as AttributeGetter
+from braintree.attribute_getter import AttributeGetter
 
 class BinData(AttributeGetter): ...

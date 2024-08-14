@@ -113,7 +113,7 @@ class NoneAdapter:
     def getquoted(self, _null: bytes = b"NULL") -> bytes: ...
 
 @overload
-def make_dsn(dsn: bytes) -> bytes: ...  # type: ignore[misc]
+def make_dsn(dsn: bytes) -> bytes: ...  # type: ignore[overload-overlap]
 @overload
 def make_dsn(dsn: None = None) -> str: ...
 @overload

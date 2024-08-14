@@ -46,7 +46,7 @@ class DictConnection(_connection):
         self,
         name: str | bytes | None = None,
         *,
-        cursor_factory: Callable[..., _T_cur],
+        cursor_factory: Callable[[_connection, str | bytes | None], _T_cur],
         withhold: bool = False,
         scrollable: bool | None = None,
     ) -> _T_cur: ...
@@ -54,7 +54,7 @@ class DictConnection(_connection):
     def cursor(
         self,
         name: str | bytes | None,
-        cursor_factory: Callable[..., _T_cur],
+        cursor_factory: Callable[[_connection, str | bytes | None], _T_cur],
         withhold: bool = False,
         scrollable: bool | None = None,
     ) -> _T_cur: ...
@@ -91,7 +91,7 @@ class RealDictConnection(_connection):
         self,
         name: str | bytes | None = None,
         *,
-        cursor_factory: Callable[..., _T_cur],
+        cursor_factory: Callable[[_connection, str | bytes | None], _T_cur],
         withhold: bool = False,
         scrollable: bool | None = None,
     ) -> _T_cur: ...
@@ -99,7 +99,7 @@ class RealDictConnection(_connection):
     def cursor(
         self,
         name: str | bytes | None,
-        cursor_factory: Callable[..., _T_cur],
+        cursor_factory: Callable[[_connection, str | bytes | None], _T_cur],
         withhold: bool = False,
         scrollable: bool | None = None,
     ) -> _T_cur: ...
@@ -128,7 +128,7 @@ class NamedTupleConnection(_connection):
         self,
         name: str | bytes | None = None,
         *,
-        cursor_factory: Callable[..., _T_cur],
+        cursor_factory: Callable[[_connection, str | bytes | None], _T_cur],
         withhold: bool = False,
         scrollable: bool | None = None,
     ) -> _T_cur: ...
@@ -136,7 +136,7 @@ class NamedTupleConnection(_connection):
     def cursor(
         self,
         name: str | bytes | None,
-        cursor_factory: Callable[..., _T_cur],
+        cursor_factory: Callable[[_connection, str | bytes | None], _T_cur],
         withhold: bool = False,
         scrollable: bool | None = None,
     ) -> _T_cur: ...
@@ -196,6 +196,9 @@ class ReplicationCursor(_replicationCursor):
         status_interval: int = 10,
     ) -> None: ...
     def fileno(self): ...
+    def consume_stream(
+        self, consume: Callable[[ReplicationMessage], object], keepalive_interval: float | None = None
+    ) -> None: ...
 
 class UUID_adapter:
     def __init__(self, uuid) -> None: ...

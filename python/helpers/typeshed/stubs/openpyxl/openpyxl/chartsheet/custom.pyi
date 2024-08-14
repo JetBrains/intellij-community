@@ -1,9 +1,8 @@
-from _typeshed import Incomplete
-from typing import ClassVar, overload
-from typing_extensions import Literal
+from _typeshed import ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal, overload
 
 from openpyxl import _VisibilityType
-from openpyxl.descriptors.base import Bool, Integer, Set, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Bool, Integer, Set, Typed, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.worksheet.header_footer import HeaderFooter
 from openpyxl.worksheet.page import PageMargins, PrintPageSetup
@@ -23,7 +22,7 @@ class CustomChartsheetView(Serialisable):
         self,
         guid: Incomplete | None = None,
         *,
-        scale: _ConvertibleToInt,
+        scale: ConvertibleToInt,
         state: _VisibilityType = "visible",
         zoomToFit: _ConvertibleToBool | None = None,
         pageMargins: PageMargins | None = None,
@@ -34,7 +33,7 @@ class CustomChartsheetView(Serialisable):
     def __init__(
         self,
         guid: Incomplete | None,
-        scale: _ConvertibleToInt,
+        scale: ConvertibleToInt,
         state: _VisibilityType = "visible",
         zoomToFit: _ConvertibleToBool | None = None,
         pageMargins: PageMargins | None = None,

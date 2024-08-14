@@ -4,8 +4,8 @@ from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from datetime import datetime, timedelta
 from re import Pattern
 from types import TracebackType
-from typing import Any, ClassVar, Generic, TypeVar, overload
-from typing_extensions import Literal, Self, TypeAlias
+from typing import Any, ClassVar, Literal, TypeVar, overload
+from typing_extensions import Self, TypeAlias
 
 from redis import RedisError
 
@@ -76,7 +76,7 @@ _LockType = TypeVar("_LockType")
 class AbstractRedis:
     RESPONSE_CALLBACKS: dict[str, Any]
 
-class Redis(AbstractRedis, RedisModuleCommands, CoreCommands[_StrType], SentinelCommands, Generic[_StrType]):
+class Redis(AbstractRedis, RedisModuleCommands, CoreCommands[_StrType], SentinelCommands):
     @overload
     @classmethod
     def from_url(
@@ -213,6 +213,7 @@ class Redis(AbstractRedis, RedisModuleCommands, CoreCommands[_StrType], Sentinel
         *,
         decode_responses: Literal[True],
         retry_on_timeout: bool = False,
+        retry_on_error: list[type[RedisError]] | None = None,
         ssl: bool = False,
         ssl_keyfile: str | None = None,
         ssl_certfile: str | None = None,
@@ -253,6 +254,7 @@ class Redis(AbstractRedis, RedisModuleCommands, CoreCommands[_StrType], Sentinel
         errors: str | None = None,
         decode_responses: Literal[False] = False,
         retry_on_timeout: bool = False,
+        retry_on_error: list[type[RedisError]] | None = None,
         ssl: bool = False,
         ssl_keyfile: str | None = None,
         ssl_certfile: str | None = None,
@@ -382,7 +384,7 @@ class PubSubWorkerThread(threading.Thread):
     def run(self) -> None: ...
     def stop(self) -> None: ...
 
-class Pipeline(Redis[_StrType], Generic[_StrType]):
+class Pipeline(Redis[_StrType]):
     UNWATCH_COMMANDS: Any
     connection_pool: Any
     connection: Any
@@ -395,7 +397,7 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     scripts: Any
     explicit_transaction: Any
     def __init__(self, connection_pool, response_callbacks, transaction, shard_hint) -> None: ...
-    def __enter__(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def __enter__(self) -> Pipeline[_StrType]: ...
     def __exit__(
         self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
     ) -> None: ...
@@ -417,7 +419,7 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     def unwatch(self) -> bool: ...
     # in the Redis implementation, the following methods are inherited from client.
     def set_response_callback(self, command, callback): ...
-    def pipeline(self, transaction: bool = True, shard_hint: Any = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def pipeline(self, transaction: bool = True, shard_hint: Any = None) -> Pipeline[_StrType]: ...
     def acl_cat(self, category: str | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def acl_deluser(self, username: str) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def acl_genpass(self, bits: int | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
@@ -453,8 +455,10 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     def client_setname(self, name: str) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def readwrite(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def readonly(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def config_get(self, pattern: PatternT = "*", *args: PatternT, **kwargs: _CommandOptions) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def config_set(self, name: KeyT, value: EncodableT, *args: KeyT | EncodableT, **kwargs: _CommandOptions) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def config_get(self, pattern: PatternT = "*", *args: PatternT, **kwargs: _CommandOptions) -> Pipeline[_StrType]: ...
+    def config_set(
+        self, name: KeyT, value: EncodableT, *args: KeyT | EncodableT, **kwargs: _CommandOptions
+    ) -> Pipeline[_StrType]: ...
     def config_resetstat(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def config_rewrite(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def dbsize(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
@@ -467,23 +471,23 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     def object(self, infotype, key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def ping(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def save(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def sentinel_get_master_addr_by_name(self, service_name) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def sentinel_master(self, service_name) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def sentinel_masters(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def sentinel_monitor(self, name, ip, port, quorum) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def sentinel_remove(self, name) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def sentinel_sentinels(self, service_name) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def sentinel_set(self, name, option, value) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def sentinel_slaves(self, service_name) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def sentinel_get_master_addr_by_name(self, service_name) -> Pipeline[_StrType]: ...
+    def sentinel_master(self, service_name) -> Pipeline[_StrType]: ...
+    def sentinel_masters(self) -> Pipeline[_StrType]: ...
+    def sentinel_monitor(self, name, ip, port, quorum) -> Pipeline[_StrType]: ...
+    def sentinel_remove(self, name) -> Pipeline[_StrType]: ...
+    def sentinel_sentinels(self, service_name) -> Pipeline[_StrType]: ...
+    def sentinel_set(self, name, option, value) -> Pipeline[_StrType]: ...
+    def sentinel_slaves(self, service_name) -> Pipeline[_StrType]: ...
     def slaveof(self, host=None, port=None) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def slowlog_get(self, num=None) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def slowlog_len(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def slowlog_reset(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def time(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def append(self, key, value) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def append(self, key, value) -> Pipeline[_StrType]: ...
     def bitcount(self, key: _Key, start: int | None = None, end: int | None = None, mode: str | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def bitop(self, operation, dest, *keys) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def bitpos(self, key, bit, start=None, end=None, mode: str | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def bitop(self, operation, dest, *keys) -> Pipeline[_StrType]: ...
+    def bitpos(self, key, bit, start=None, end=None, mode: str | None = None) -> Pipeline[_StrType]: ...
     def decr(self, name, amount=1) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def delete(self, *names: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def __delitem__(self, _Key) -> None: ...
@@ -491,11 +495,13 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     def exists(self, *names: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def __contains__(self, *names: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def expire(self, name: _Key, time: int | timedelta, nx: bool = False, xx: bool = False, gt: bool = False, lt: bool = False) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def expireat(self, name, when, nx: bool = False, xx: bool = False, gt: bool = False, lt: bool = False) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def expireat(
+        self, name, when, nx: bool = False, xx: bool = False, gt: bool = False, lt: bool = False
+    ) -> Pipeline[_StrType]: ...
     def get(self, name: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def __getitem__(self, name) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def __getitem__(self, name) -> Pipeline[_StrType]: ...
     def getbit(self, name: _Key, offset: int) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def getrange(self, key, start, end) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def getrange(self, key, start, end) -> Pipeline[_StrType]: ...
     def getset(self, name, value) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def incr(self, name, amount=1) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def incrby(self, name, amount=1) -> Pipeline[_StrType]: ...  # type: ignore[override]
@@ -508,12 +514,21 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     def persist(self, name: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def pexpire(self, name: _Key, time: int | timedelta, nx: bool = False, xx: bool = False, gt: bool = False, lt: bool = False) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def pexpireat(self, name: _Key, when: int | datetime, nx: bool = False, xx: bool = False, gt: bool = False, lt: bool = False) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def psetex(self, name, time_ms, value) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def psetex(self, name, time_ms, value) -> Pipeline[_StrType]: ...
     def pttl(self, name) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def randomkey(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def rename(self, src, dst) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def renamenx(self, src, dst) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def restore(self, name, ttl, value, replace: bool = False, absttl: bool = False, idletime: Incomplete | None = None, frequency: Incomplete | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def rename(self, src, dst) -> Pipeline[_StrType]: ...
+    def renamenx(self, src, dst) -> Pipeline[_StrType]: ...
+    def restore(
+        self,
+        name,
+        ttl,
+        value,
+        replace: bool = False,
+        absttl: bool = False,
+        idletime: Incomplete | None = None,
+        frequency: Incomplete | None = None,
+    ) -> Pipeline[_StrType]: ...
     def set(  # type: ignore[override]
         self,
         name: _Key,
@@ -531,11 +546,11 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     def setbit(self, name: _Key, offset: int, value: int) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def setex(self, name: _Key, time: int | timedelta, value: _Value) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def setnx(self, name, value) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def setrange(self, name, offset, value) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def strlen(self, name) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def substr(self, name, start, end=-1) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def setrange(self, name, offset, value) -> Pipeline[_StrType]: ...
+    def strlen(self, name) -> Pipeline[_StrType]: ...
+    def substr(self, name, start, end=-1) -> Pipeline[_StrType]: ...
     def ttl(self, name: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def type(self, name) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def type(self, name) -> Pipeline[_StrType]: ...
     def unlink(self, *names: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def blmove(  # type: ignore[override]
         self,
@@ -547,7 +562,7 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     ) -> Pipeline[_StrType]: ...
     def blpop(self, keys: _Value | Iterable[_Value], timeout: float = 0) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def brpop(self, keys: _Value | Iterable[_Value], timeout: float = 0) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def brpoplpush(self, src, dst, timeout=0) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def brpoplpush(self, src, dst, timeout=0) -> Pipeline[_StrType]: ...
     def lindex(self, name: _Key, index: int) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def linsert(  # type: ignore[override]
         self, name: _Key, where: Literal["BEFORE", "AFTER", "before", "after"], refvalue: _Value, value: _Value
@@ -560,17 +575,17 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
         src: Literal["LEFT", "RIGHT"] = "LEFT",
         dest: Literal["LEFT", "RIGHT"] = "RIGHT",
     ) -> Pipeline[_StrType]: ...
-    def lpop(self, name, count: int | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def lpop(self, name, count: int | None = None) -> Pipeline[_StrType]: ...
     def lpush(self, name: _Value, *values: _Value) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def lpushx(self, name, value) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def lpushx(self, name, value) -> Pipeline[_StrType]: ...
     def lrange(self, name: _Key, start: int, end: int) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def lrem(self, name: _Key, count: int, value: _Value) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def lset(self, name: _Key, index: int, value: _Value) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def ltrim(self, name: _Key, start: int, end: int) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def rpop(self, name, count: int | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def rpoplpush(self, src, dst) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def rpop(self, name, count: int | None = None) -> Pipeline[_StrType]: ...
+    def rpoplpush(self, src, dst) -> Pipeline[_StrType]: ...
     def rpush(self, name: _Value, *values: _Value) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def rpushx(self, name, value) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def rpushx(self, name, value) -> Pipeline[_StrType]: ...
     def sort(  # type: ignore[override]
         self,
         name: _Key,
@@ -606,8 +621,18 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     def srem(self, name: _Key, *values: _Value) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def sunion(self, keys: _Key | Iterable[_Key], *args: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def sunionstore(self, dest: _Key, keys: _Key | Iterable[_Key], *args: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xack(self, name, groupname, *ids) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xadd(self, name, fields, id="*", maxlen=None, approximate: bool = True, nomkstream: bool = False, minid: Incomplete | None = None, limit: int | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def xack(self, name, groupname, *ids) -> Pipeline[_StrType]: ...
+    def xadd(
+        self,
+        name,
+        fields,
+        id="*",
+        maxlen=None,
+        approximate: bool = True,
+        nomkstream: bool = False,
+        minid: Incomplete | None = None,
+        limit: int | None = None,
+    ) -> Pipeline[_StrType]: ...
     def xclaim(
         self,
         name,
@@ -620,23 +645,27 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
         retrycount=None,
         force=False,
         justid=False,
-    ) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xdel(self, name, *ids) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xgroup_create(self, name, groupname, id="$", mkstream=False, entries_read: int | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xgroup_delconsumer(self, name, groupname, consumername) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xgroup_destroy(self, name, groupname) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xgroup_setid(self, name, groupname, id, entries_read: int | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xinfo_consumers(self, name, groupname) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xinfo_groups(self, name) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xinfo_stream(self, name, full: bool = False) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    ) -> Pipeline[_StrType]: ...
+    def xdel(self, name, *ids) -> Pipeline[_StrType]: ...
+    def xgroup_create(self, name, groupname, id="$", mkstream=False, entries_read: int | None = None) -> Pipeline[_StrType]: ...
+    def xgroup_delconsumer(self, name, groupname, consumername) -> Pipeline[_StrType]: ...
+    def xgroup_destroy(self, name, groupname) -> Pipeline[_StrType]: ...
+    def xgroup_setid(self, name, groupname, id, entries_read: int | None = None) -> Pipeline[_StrType]: ...
+    def xinfo_consumers(self, name, groupname) -> Pipeline[_StrType]: ...
+    def xinfo_groups(self, name) -> Pipeline[_StrType]: ...
+    def xinfo_stream(self, name, full: bool = False) -> Pipeline[_StrType]: ...
     def xlen(self, name: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xpending(self, name, groupname) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xpending_range(self, name: _Key, groupname, min, max, count: int, consumername: Incomplete | None = None, idle: int | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xrange(self, name, min="-", max="+", count=None) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xread(self, streams, count=None, block=None) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xreadgroup(self, groupname, consumername, streams, count=None, block=None, noack=False) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xrevrange(self, name, max="+", min="-", count=None) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def xtrim(self, name, maxlen: int | None = None, approximate: bool = True, minid: Incomplete | None = None, limit: int | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def xpending(self, name, groupname) -> Pipeline[_StrType]: ...
+    def xpending_range(
+        self, name: _Key, groupname, min, max, count: int, consumername: Incomplete | None = None, idle: int | None = None
+    ) -> Pipeline[_StrType]: ...
+    def xrange(self, name, min="-", max="+", count=None) -> Pipeline[_StrType]: ...
+    def xread(self, streams, count=None, block=None) -> Pipeline[_StrType]: ...
+    def xreadgroup(self, groupname, consumername, streams, count=None, block=None, noack=False) -> Pipeline[_StrType]: ...
+    def xrevrange(self, name, max="+", min="-", count=None) -> Pipeline[_StrType]: ...
+    def xtrim(
+        self, name, maxlen: int | None = None, approximate: bool = True, minid: Incomplete | None = None, limit: int | None = None
+    ) -> Pipeline[_StrType]: ...
     def zadd(  # type: ignore[override]
         self,
         name: _Key,
@@ -720,23 +749,23 @@ class Pipeline(Redis[_StrType], Generic[_StrType]):
     def hset(
         self, name: _Key, key: _Key, value: _Value, mapping: Mapping[_Key, _Value] | None = None, items: Incomplete | None = None
     ) -> Pipeline[_StrType]: ...
-    @overload  # type: ignore[override]
+    @overload
     def hset(
         self, name: _Key, key: None, value: None, mapping: Mapping[_Key, _Value], items: Incomplete | None = None
     ) -> Pipeline[_StrType]: ...
-    @overload  # type: ignore[override]
+    @overload
     def hset(self, name: _Key, *, mapping: Mapping[_Key, _Value], items: Incomplete | None = None) -> Pipeline[_StrType]: ...
     def hsetnx(self, name: _Key, key: _Key, value: _Value) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def hmset(self, name: _Key, mapping: Mapping[_Key, _Value]) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def hmget(self, name: _Key, keys: _Key | Iterable[_Key], *args: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def hvals(self, name: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def publish(self, channel: _Key, message: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def eval(self, script, numkeys, *keys_and_args) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def evalsha(self, sha, numkeys, *keys_and_args) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def script_exists(self, *args) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def script_flush(self, sync_type: Incomplete | None = None) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def script_kill(self) -> Pipeline[_StrType]: ...  # type: ignore[override]
-    def script_load(self, script) -> Pipeline[_StrType]: ...  # type: ignore[override]
+    def eval(self, script, numkeys, *keys_and_args) -> Pipeline[_StrType]: ...
+    def evalsha(self, sha, numkeys, *keys_and_args) -> Pipeline[_StrType]: ...
+    def script_exists(self, *args) -> Pipeline[_StrType]: ...
+    def script_flush(self, sync_type: Incomplete | None = None) -> Pipeline[_StrType]: ...
+    def script_kill(self) -> Pipeline[_StrType]: ...
+    def script_load(self, script) -> Pipeline[_StrType]: ...
     def pubsub_channels(self, pattern: _Key = "*") -> Pipeline[_StrType]: ...  # type: ignore[override]
     def pubsub_numsub(self, *args: _Key) -> Pipeline[_StrType]: ...  # type: ignore[override]
     def pubsub_numpat(self) -> Pipeline[_StrType]: ...  # type: ignore[override]

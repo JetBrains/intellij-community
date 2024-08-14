@@ -1,8 +1,6 @@
 from _typeshed import Incomplete
 from typing import ClassVar
 
-from braintree.exceptions.configuration_error import ConfigurationError as ConfigurationError
-
 class Environment:
     Development: ClassVar[Environment]
     QA: ClassVar[Environment]

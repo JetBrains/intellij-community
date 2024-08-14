@@ -54,6 +54,7 @@ class BlockingConnection:
 
     class _OnChannelOpenedArgs(NamedTuple):
         channel: Incomplete
+
     def __init__(
         self, parameters: Parameters | Sequence[Parameters] | None = None, _impl_class: Incomplete | None = None
     ) -> None: ...
@@ -164,6 +165,7 @@ class BlockingChannel:
 
     class _FlowOkCallbackResultArgs(NamedTuple):
         active: Incomplete
+
     def __init__(self, channel_impl, connection) -> None: ...
     def __int__(self) -> int: ...
     def __enter__(self): ...

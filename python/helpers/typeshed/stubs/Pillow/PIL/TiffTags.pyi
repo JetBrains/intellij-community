@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
-from typing import NamedTuple
-from typing_extensions import Final, Literal, TypeAlias
+from typing import Final, Literal, NamedTuple
+from typing_extensions import TypeAlias
 
 _TagType: TypeAlias = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16]
 _TagTuple: TypeAlias = tuple[str, _TagType, int] | tuple[str, _TagInfo, int, dict[str, int]]

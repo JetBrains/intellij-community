@@ -1,15 +1,16 @@
-from _typeshed import Incomplete, Unused
+from _typeshed import ConvertibleToInt, Incomplete, Unused
 from collections.abc import Generator
-from typing import ClassVar, overload
-from typing_extensions import Literal, TypeAlias
+from typing import ClassVar, Literal, overload
+from typing_extensions import TypeAlias
 
 from openpyxl.cell.text import Text
 from openpyxl.comments.author import AuthorList
 from openpyxl.comments.comments import Comment
-from openpyxl.descriptors.base import Bool, Integer, Set, String, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Bool, Integer, Set, String, Typed, _ConvertibleToBool
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.worksheet.ole import ObjectAnchor
+from openpyxl.xml.functions import Element
 
 _PropertiesTextHAlign: TypeAlias = Literal["left", "center", "right", "justify", "distributed"]
 _PropertiesTextVAlign: TypeAlias = Literal["top", "center", "bottom", "justify", "distributed"]
@@ -90,9 +91,9 @@ class CommentRecord(Serialisable):
     def __init__(
         self,
         ref: str = "",
-        authorId: _ConvertibleToInt = 0,
+        authorId: ConvertibleToInt = 0,
         guid: Incomplete | None = None,
-        shapeId: _ConvertibleToInt | None = 0,
+        shapeId: ConvertibleToInt | None = 0,
         text: Text | None = None,
         commentPr: Properties | None = None,
         author: str | None = None,
@@ -112,7 +113,7 @@ class CommentSheet(Serialisable):
     mime_type: str
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(self, authors: AuthorList, commentList: Incomplete | None = None, extLst: Unused = None) -> None: ...
-    def to_tree(self): ...
+    def to_tree(self) -> Element: ...  # type: ignore[override]
     @property
     def comments(self) -> Generator[tuple[str, Comment], None, None]: ...
     @classmethod

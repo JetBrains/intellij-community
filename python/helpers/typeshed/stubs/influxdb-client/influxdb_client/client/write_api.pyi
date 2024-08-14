@@ -17,9 +17,9 @@ _Observable: TypeAlias = Any  # reactivex.Observable
 logger: logging.Logger
 
 class WriteType(Enum):
-    batching: int
-    asynchronous: int
-    synchronous: int
+    batching = 1
+    asynchronous = 2
+    synchronous = 3
 
 class WriteOptions:
     write_type: WriteType
@@ -85,19 +85,21 @@ class WriteApi(_BaseWriteApi):
         self,
         bucket: str,
         org: str | None = None,
-        record: str
-        | Iterable[str]
-        | Point
-        | Iterable[Point]
-        | dict[Incomplete, Incomplete]
-        | Iterable[dict[Incomplete, Incomplete]]
-        | bytes
-        | Iterable[bytes]
-        | _Observable
-        | _NamedTuple
-        | Iterable[_NamedTuple]
-        | _DataClass
-        | Iterable[_DataClass] = None,
+        record: (
+            str
+            | Iterable[str]
+            | Point
+            | Iterable[Point]
+            | dict[Incomplete, Incomplete]
+            | Iterable[dict[Incomplete, Incomplete]]
+            | bytes
+            | Iterable[bytes]
+            | _Observable
+            | _NamedTuple
+            | Iterable[_NamedTuple]
+            | _DataClass
+            | Iterable[_DataClass]
+        ) = None,
         write_precision: _WritePrecision = "ns",
         **kwargs,
     ) -> Any: ...

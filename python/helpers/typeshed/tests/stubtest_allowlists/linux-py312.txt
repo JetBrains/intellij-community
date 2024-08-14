@@ -1,3 +1,0 @@
-# Exists on some Linux builds, and is documented,
-# but is unavailable in Github Actions on Linux with Python 3.12
-(os|posix).CLONE_NEWTIME

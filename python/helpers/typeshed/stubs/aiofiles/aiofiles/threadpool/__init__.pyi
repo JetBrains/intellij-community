@@ -9,8 +9,8 @@ from _typeshed import (
 )
 from asyncio import AbstractEventLoop
 from collections.abc import Callable
-from typing import overload
-from typing_extensions import Literal, TypeAlias
+from typing import Literal, overload
+from typing_extensions import TypeAlias
 
 from ..base import AiofilesContextManager
 from .binary import AsyncBufferedIOBase, AsyncBufferedReader, AsyncFileIO, AsyncIndirectBufferedIOBase, _UnknownAsyncBinaryIO
@@ -32,7 +32,7 @@ def open(
     *,
     loop: AbstractEventLoop | None = None,
     executor: Incomplete | None = None,
-) -> AiofilesContextManager[None, None, AsyncTextIOWrapper]: ...
+) -> AiofilesContextManager[AsyncTextIOWrapper]: ...
 
 # Unbuffered binary: returns a FileIO
 @overload
@@ -48,7 +48,7 @@ def open(
     *,
     loop: AbstractEventLoop | None = None,
     executor: Incomplete | None = None,
-) -> AiofilesContextManager[None, None, AsyncFileIO]: ...
+) -> AiofilesContextManager[AsyncFileIO]: ...
 
 # Buffered binary reading/updating: AsyncBufferedReader
 @overload
@@ -64,7 +64,7 @@ def open(
     *,
     loop: AbstractEventLoop | None = None,
     executor: Incomplete | None = None,
-) -> AiofilesContextManager[None, None, AsyncBufferedReader]: ...
+) -> AiofilesContextManager[AsyncBufferedReader]: ...
 
 # Buffered binary writing: AsyncBufferedIOBase
 @overload
@@ -80,7 +80,7 @@ def open(
     *,
     loop: AbstractEventLoop | None = None,
     executor: Incomplete | None = None,
-) -> AiofilesContextManager[None, None, AsyncBufferedIOBase]: ...
+) -> AiofilesContextManager[AsyncBufferedIOBase]: ...
 
 # Buffering cannot be determined: fall back to _UnknownAsyncBinaryIO
 @overload
@@ -96,7 +96,7 @@ def open(
     *,
     loop: AbstractEventLoop | None = None,
     executor: Incomplete | None = None,
-) -> AiofilesContextManager[None, None, _UnknownAsyncBinaryIO]: ...
+) -> AiofilesContextManager[_UnknownAsyncBinaryIO]: ...
 
 stdin: AsyncTextIndirectIOWrapper
 stdout: AsyncTextIndirectIOWrapper

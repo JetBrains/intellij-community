@@ -1,22 +1,21 @@
 from _typeshed import Incomplete
 from enum import IntEnum
-from typing import ClassVar
-from typing_extensions import Literal
+from typing import ClassVar, Literal
 
 from .ImageFile import ImageFile, PyDecoder, PyEncoder
 
 class Format(IntEnum):
-    JPEG: int
+    JPEG = 0
 
 class Encoding(IntEnum):
-    UNCOMPRESSED: int
-    DXT: int
-    UNCOMPRESSED_RAW_BGRA: int
+    UNCOMPRESSED = 1
+    DXT = 2
+    UNCOMPRESSED_RAW_BGRA = 3
 
 class AlphaEncoding(IntEnum):
-    DXT1: int
-    DXT3: int
-    DXT5: int
+    DXT1 = 0
+    DXT3 = 1
+    DXT5 = 7
 
 def unpack_565(i): ...
 def decode_dxt1(data, alpha: bool = False): ...

@@ -2,8 +2,7 @@ from _typeshed import SupportsItems
 from collections.abc import Callable
 from logging import Logger
 from threading import Condition, Event, Lock
-from typing import Any, TypeVar
-from typing_extensions import Literal
+from typing import Any, Literal, TypeVar
 
 from paramiko.buffered_pipe import BufferedPipe
 from paramiko.file import BufferedFile

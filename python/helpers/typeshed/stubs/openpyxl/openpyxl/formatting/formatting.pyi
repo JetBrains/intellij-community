@@ -1,11 +1,10 @@
 from _typeshed import Incomplete, Unused
 from collections.abc import Iterator
-from typing import ClassVar
-from typing_extensions import Literal
+from typing import ClassVar, Literal
 
 from openpyxl.descriptors.base import Alias, Bool, Convertible, _ConvertibleToBool, _ConvertibleToMultiCellRange
 from openpyxl.descriptors.serialisable import Serialisable
-from openpyxl.worksheet.cell_range import MultiCellRange
+from openpyxl.worksheet.cell_range import CellRange, MultiCellRange
 
 class ConditionalFormatting(Serialisable):
     tagname: ClassVar[str]
@@ -17,9 +16,9 @@ class ConditionalFormatting(Serialisable):
     def __init__(
         self, sqref: _ConvertibleToMultiCellRange = (), pivot: _ConvertibleToBool | None = None, cfRule=(), extLst: Unused = None
     ) -> None: ...
-    def __eq__(self, other): ...
+    def __eq__(self, other: object) -> bool: ...
     def __hash__(self) -> int: ...
-    def __contains__(self, coord): ...
+    def __contains__(self, coord: str | CellRange) -> bool: ...
 
 class ConditionalFormattingList:
     max_priority: int

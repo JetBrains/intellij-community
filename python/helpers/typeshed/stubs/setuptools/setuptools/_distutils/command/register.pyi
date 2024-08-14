@@ -1,6 +1,10 @@
 from _typeshed import Incomplete
+from collections.abc import Iterable, Iterator
+from typing import AnyStr, TypeVar, overload
 
 from ..config import PyPIRCCommand
+
+_T = TypeVar("_T")
 
 class register(PyPIRCCommand):
     description: str
@@ -15,3 +19,12 @@ class register(PyPIRCCommand):
     def send_metadata(self) -> None: ...
     def build_post_data(self, action): ...
     def post_to_server(self, data, auth: Incomplete | None = ...): ...
+
+@overload
+def make_iterable(values: None) -> list[None]: ...
+@overload
+def make_iterable(values: AnyStr) -> Iterator[AnyStr]: ...
+@overload
+def make_iterable(values: Iterable[_T]) -> Iterator[_T]: ...
+@overload
+def make_iterable(values: _T) -> Iterator[_T]: ...
