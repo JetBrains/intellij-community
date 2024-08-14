@@ -64,13 +64,17 @@ __jetbrains_intellij_get_directory_files() {
   command ls -1ap "$1"
 }
 
+__jetbrains_intellij_get_aliases() {
+  __jetbrains_intellij_escape_json "$(alias)"
+}
+
 __jetbrains_intellij_get_environment() {
   builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin compgen -A export)")"
   builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A keyword)")"
   builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A builtin)")"
   builtin local function_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A function)")"
   builtin local command_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A command)")"
-  builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
+  builtin local aliases_mapping="$(__jetbrains_intellij_get_aliases)"
 
   builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\",  \"aliases\": \"$aliases_mapping\"}"
   builtin printf '%s' "$result"

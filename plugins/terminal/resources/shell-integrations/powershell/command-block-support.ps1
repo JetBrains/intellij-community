@@ -198,13 +198,19 @@ function Global:__jetbrains_intellij_get_directory_files([string]$Path) {
   return $FilesString
 }
 
+function Global:__jetbrains_intellij_get_aliases() {
+  $Global:__JetBrainsIntellijGeneratorRunning = $true
+  $Aliases = Get-Alias | ForEach-Object { [PSCustomObject]@{ name = $_.Name; definition = $_.Definition } }
+  return $Aliases | ConvertTo-Json -Compress
+}
+
 function Global:__jetbrains_intellij_get_environment() {
   $Global:__JetBrainsIntellijGeneratorRunning = $true
   $FunctionTypes = @("Function", "Filter", "ExternalScript", "Script")
   $Functions = Get-Command -ListImported -CommandType $FunctionTypes
   $Cmdlets = Get-Command -ListImported -CommandType Cmdlet
   $Commands = Get-Command -ListImported -CommandType Application
-  $Aliases = Get-Alias | ForEach-Object { [PSCustomObject]@{ name = $_.Name; definition = $_.Definition } }
+  $Aliases = Global:__jetbrains_intellij_get_aliases
 
   $EnvObject = [PSCustomObject]@{
     envs = ""
@@ -212,7 +218,7 @@ function Global:__jetbrains_intellij_get_environment() {
     builtins = ($Cmdlets | ForEach-Object { $_.Name }) -join "`n"
     functions = ($Functions | ForEach-Object { $_.Name }) -join "`n"
     commands = ($Commands | ForEach-Object { $_.Name }) -join "`n"
-    aliases = $Aliases | ConvertTo-Json -Compress
+    aliases = $Aliases
   }
   $EnvJson = $EnvObject | ConvertTo-Json -Compress
   return $EnvJson
