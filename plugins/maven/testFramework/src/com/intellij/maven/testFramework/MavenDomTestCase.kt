@@ -13,6 +13,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase.*
+import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
@@ -43,6 +45,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.usages.UsageTargetUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.dom.MavenDomElement
@@ -89,6 +92,19 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     finally {
       myFixture = null
     }
+  }
+
+
+  override suspend fun importProjectsAsync(files: List<VirtualFile>) {
+    files.forEach {
+      checkNoFixtureTags(it)
+    }
+    super.importProjectsAsync(files)
+  }
+
+  private fun checkNoFixtureTags(file: VirtualFile) {
+    assertFalse("There should be no any <caret> tag in pom.xml during import", file.contentsToByteArray().toString().contains("<caret"))
+    assertFalse("There should be no any <error> tag in pom.xml during import", file.contentsToByteArray().toString().contains("<error"))
   }
 
   protected suspend fun findPsiFile(f: VirtualFile?): PsiFile {
@@ -243,7 +259,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     }
     while (--index >= 0)
 
-    val psiReference =  getReferenceAt(file, k)!!
+    val psiReference = getReferenceAt(file, k)!!
     return readAction { psiReference.resolve() }
   }
 
@@ -305,9 +321,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     assertUnorderedElementsAreEqual(actual, *expected)
   }
 
-  protected fun assertCompletionVariants(f: CodeInsightTestFixture,
-                                         lookupElementStringFunction: Function<LookupElement, String?>,
-                                         vararg expected: String?) {
+  protected fun assertCompletionVariants(
+    f: CodeInsightTestFixture,
+    lookupElementStringFunction: Function<LookupElement, String?>,
+    vararg expected: String?,
+  ) {
     val actual = getCompletionVariants(f, lookupElementStringFunction)
     assertNotEmpty(actual)
     assertUnorderedElementsAreEqual(actual!!.toList(), expected.toList())
@@ -383,8 +401,10 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return result
   }
 
-  protected fun getCompletionVariants(fixture: CodeInsightTestFixture,
-                                      lookupElementStringFunction: Function<LookupElement, String?>): List<String?>? {
+  protected fun getCompletionVariants(
+    fixture: CodeInsightTestFixture,
+    lookupElementStringFunction: Function<LookupElement, String?>,
+  ): List<String?>? {
     val variants = fixture.lookupElements
     if (variants == null) return null
 
@@ -577,7 +597,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   class Highlight(
     val severity: HighlightSeverity = HighlightSeverity.ERROR,
     val text: String? = null,
-    val description: String? = null
+    val description: String? = null,
   ) {
     fun matches(info: HighlightInfo): Boolean {
       return severity == info.severity
@@ -653,4 +673,32 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected val LOOKUP_STRING: Function<LookupElement, String?> = Function { obj: LookupElement -> obj.lookupString }
+
+  protected suspend fun withoutSync(test: suspend () -> Unit) {
+    val fixture = RealMavenPreventionFixture(project)
+    fixture.setUp()
+    try {
+      test()
+    }
+    finally {
+      fixture.tearDown()
+    }
+  }
+
+  protected fun runBlockingNoSync(test: suspend () -> Unit) {
+    val fixture = RealMavenPreventionFixture(project)
+    fixture.setUp()
+    try {
+      @Suppress("SSBasedInspection")
+      runBlocking {
+        test()
+      }
+
+    }
+    finally {
+      fixture.tearDown()
+    }
+  }
+
+
 }
