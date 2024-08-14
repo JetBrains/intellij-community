@@ -97,11 +97,13 @@ public final class JobLauncherImpl extends JobLauncher {
       runWhileForking.run();
 
       // help all others
-      safeIterate(globalCompleters, thrown, completer -> {
-        wrapper.checkCanceled();
-        // don't call .invoke() or other FJP-setting status functions
-        completer.wrapAndRun(() -> completer.execAll());
-      });
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        safeIterate(globalCompleters, thrown, completer -> {
+          wrapper.checkCanceled();
+          // don't call .invoke() or other FJP-setting status functions
+          completer.wrapAndRun(() -> completer.execAll());
+        });
+      }
       // all work is done or distributed; wait for in-flight appliers and manifest exceptions
       safeIterate(globalCompleters, thrown, completer -> {
         while (true) {
@@ -115,7 +117,9 @@ public final class JobLauncherImpl extends JobLauncher {
               completer.get();
             }
             else {
-              completer.get(1, TimeUnit.MILLISECONDS);
+              try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+                completer.get(1, TimeUnit.MILLISECONDS);
+              }
             }
             break;
           }
