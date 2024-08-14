@@ -6,7 +6,7 @@ package org.jetbrains.plugins.terminal.block.session.scraper
  */
 internal class DropTrailingNewLinesStringCollector(
   private val delegate: StringCollector,
-) : StringCollector by delegate {
+) : StringCollector {
   private var pendingNewLines: Int = 0
 
   override fun write(text: String) {
@@ -14,12 +14,20 @@ internal class DropTrailingNewLinesStringCollector(
       repeat(pendingNewLines) {
         delegate.newline()
       }
+      pendingNewLines = 0
     }
-    pendingNewLines = 0
     delegate.write(text)
   }
 
   override fun newline() {
     pendingNewLines++
+  }
+
+  override fun buildText(): String {
+    return delegate.buildText()
+  }
+
+  override fun length(): Int {
+    return delegate.length()
   }
 }
