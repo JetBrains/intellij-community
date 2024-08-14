@@ -48,6 +48,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -444,13 +445,15 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  public StringBuffer getOriginalDocument() {
+  @CalledInAny
+  public @Nullable StringBuffer getOriginalDocument() {
     if (myOriginalDocument == null) {
-      final Editor editor = getEditor();
+      Editor editor = getEditor();
       if (editor != null) {
         myOriginalDocument = new StringBuffer(editor.getDocument().getText());
       }
-    } else {
+    }
+    else {
       if (ConsoleBuffer.useCycleBuffer()) {
         resizeBuffer(myOriginalDocument, ConsoleBuffer.getCycleBufferSize());
       }
@@ -474,10 +477,13 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   }
 
+  @CalledInAny
   private @Nullable Editor getEditor() {
     ConsoleView console = getConsole();
     if (console == null) return null;
-    DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
+    // TODO This is a hack to get it working in BGT without a proper BGT-enabled document getter
+    DataContext dataContext = DataManager.getInstance().customizeDataContext(
+      DataContext.EMPTY_CONTEXT, console);
     return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
