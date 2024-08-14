@@ -46,7 +46,7 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     }
   }
 
-  override fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T {
+  override suspend fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T {
     @Suppress("UNCHECKED_CAST")
     return remoteApis[klass.toInstanceId]?.instance as? T
            ?: throw IllegalStateException("No remote API found for $klass")

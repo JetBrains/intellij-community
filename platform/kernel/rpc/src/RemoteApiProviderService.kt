@@ -7,10 +7,10 @@ import kotlin.reflect.KClass
 
 interface RemoteApiProviderService {
 
-  fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T
+  suspend fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T
 
   companion object {
-    fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T {
+    suspend fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T {
       return ApplicationManager.getApplication().getService(RemoteApiProviderService::class.java).resolve(klass)
     }
   }
