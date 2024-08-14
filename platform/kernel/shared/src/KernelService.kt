@@ -8,16 +8,15 @@ import kotlin.coroutines.CoroutineContext
 
 interface KernelService {
 
-  val coroutineContext: CoroutineContext
+  suspend fun coroutineContext(): CoroutineContext
 
-  val kernel: Kernel get() = coroutineContext.kernel
+  suspend fun kernel(): Kernel = coroutineContext().kernel
 
   companion object {
 
     val instance: KernelService
       get() = ApplicationManager.getApplication().getService(KernelService::class.java)
 
-    val kernelCoroutineContext: CoroutineContext
-      get() = instance.coroutineContext
+    suspend fun kernelCoroutineContext(): CoroutineContext = instance.coroutineContext()
   }
 }

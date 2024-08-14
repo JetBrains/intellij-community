@@ -4,6 +4,7 @@ package com.intellij.platform.kernel.backend
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.kernel.util.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
@@ -11,24 +12,33 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider.RemoteApiDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import fleet.kernel.change
 import fleet.kernel.rebase.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 @Service
-private class RemoteKernelScopeHolder(coroutineScope: CoroutineScope) {
-  val remoteKernelScope: CoroutineScope = coroutineScope.childScope("RemoteKernelScope", KernelService.kernelCoroutineContext)
+private class RemoteKernelScopeHolder(private val coroutineScope: CoroutineScope) {
+
+  suspend fun createRemoteKernel(): RemoteKernel {
+    val kernelService = KernelService.instance
+    return RemoteKernelImpl(
+      kernelService.kernel(),
+      coroutineScope.childScope("RemoteKernelScope", kernelService.coroutineContext()),
+      CommonInstructionSet.decoder(),
+      KernelRpcSerialization,
+    )
+  }
 }
 
 internal class RemoteKernelProvider : RemoteApiProvider {
 
   override fun getApis(): List<RemoteApiDescriptor<*>> {
     return listOf(RemoteApiDescriptor(RemoteKernel::class) {
-      RemoteKernelImpl(
-        KernelService.instance.kernel,
-        ApplicationManager.getApplication().service<RemoteKernelScopeHolder>().remoteKernelScope,
-        CommonInstructionSet.decoder(),
-        KernelRpcSerialization
-      )
+      runBlockingCancellable {
+        ApplicationManager.getApplication().service<RemoteKernelScopeHolder>().createRemoteKernel()
+      }
     })
   }
 }
@@ -37,10 +47,9 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
 
   private val contextDeferred: CompletableDeferred<CoroutineContext> = CompletableDeferred()
 
-  override val coroutineContext: CoroutineContext
-    get() = runBlocking {
-      contextDeferred.await()
-    }
+  override suspend fun coroutineContext(): CoroutineContext {
+    return contextDeferred.await()
+  }
 
   init {
     coroutineScope.launch {
