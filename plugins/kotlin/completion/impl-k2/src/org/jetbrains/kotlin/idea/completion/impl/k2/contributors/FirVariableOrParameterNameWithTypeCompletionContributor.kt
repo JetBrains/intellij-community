@@ -61,7 +61,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
         sink.restartCompletionOnPrefixChange(NameWithTypeCompletion.prefixEndsWithUppercaseLetterPattern)
 
-        val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
+        val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
         val lookupNamesAdded = mutableSetOf<String>()
         val scopeContext = originalKtFile.scopeContext(variableOrParameter)
 

@@ -31,7 +31,7 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
             .mapNotNull { it.staticScope }
             .forEach { scopeWithKind ->
                 val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
-                val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
+                val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
 
                 val classifiers = scopeWithKind.scope
                     .classifiers(scopeNameFilter)

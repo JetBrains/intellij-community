@@ -35,7 +35,7 @@ internal open class FirClassifierCompletionContributor(
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
-        val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
+        val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
 
         when (val receiver = positionContext.explicitReceiver) {
             null -> {

@@ -61,7 +61,7 @@ internal class FirWhenWithSubjectConditionContributor(
         val allConditionsExceptCurrent = whenExpression.entries.flatMap { entry -> entry.conditions.filter { it != whenCondition } }
         val subjectType = subject.expressionType ?: return
         val classSymbol = getClassSymbol(subjectType)
-        val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
+        val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
         when {
             classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {

@@ -54,7 +54,7 @@ internal class FirSuperMemberCompletionContributor(
         sessionParameters: FirCompletionSessionParameters,
     ) = with(positionContext) {
         val superReceiver = positionContext.superExpression
-        val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
+        val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
         val superType = superReceiver.expressionType ?: return
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
