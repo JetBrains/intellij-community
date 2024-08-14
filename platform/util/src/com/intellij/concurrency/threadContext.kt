@@ -8,6 +8,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.util.Processor
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.*
 import kotlinx.coroutines.*
@@ -15,8 +16,6 @@ import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
 import java.util.function.Consumer
 import java.util.function.Function
@@ -407,6 +406,27 @@ fun <T> captureThreadContext(c : Consumer<T>) : Consumer<T> {
 @ApiStatus.Internal
 fun <T, U> captureThreadContext(f : Function<T, U>) : Function<T, U> {
   return capturePropagationContext(f)
+}
+
+/**
+ * Same as [captureThreadContext] but for a Kotlin lambda
+ */
+@ApiStatus.Internal
+fun <T> captureThreadContext(action: () -> T): () -> T {
+  val c = captureCallableThreadContext(action)
+  return c::call
+}
+
+
+/**
+ * Same as [captureThreadContext] but for [Processor]
+ *
+ * Cannot be named as [captureThreadContext] due to a call-site clash with the overload with a [Function] argument
+ */
+@ApiStatus.Internal
+fun <T> captureThreadContextProcessor(processor: Processor<T>): Processor<T> {
+  val c = captureThreadContext(Function<T, Boolean> { processor.process(it) })
+  return Processor { c.apply(it) }
 }
 
 /**
