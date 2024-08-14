@@ -1,21 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.LightweightHint
 import java.awt.Cursor
 import java.awt.Point
+import java.awt.event.InputEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 
 class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
   private var areaUnderCursor: InlayMouseArea? = null
   private var inlayUnderCursor: WeakReference<Inlay<*>>? = null
+  private var inlayKeyListener: DeclarativeInlayHintsKeyListener? = null
   private var ctrlDown = false
   private var hint: LightweightHint? = null
 
@@ -66,10 +73,20 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
 
     if (inlay != inlayUnderCursor?.get()) {
       inlayUnderCursor = inlay?.let { WeakReference(it) }
+      inlayKeyListener?.let(Disposer::dispose)
+      inlayKeyListener = null
+
+      val editor = inlay?.editor
+      if (editor is EditorEx) {
+        val listener = DeclarativeInlayHintsKeyListener(editor)
+        editor.contentComponent.addKeyListener(listener)
+        EditorUtil.disposeWithEditor(editor, listener)
+        inlayKeyListener = listener
+      }
     }
   }
 
-  private fun isControlDown(e: MouseEvent): Boolean = (ClientSystemInfo.isMac() && e.isMetaDown) || e.isControlDown
+  private fun isControlDown(e: InputEvent): Boolean = (ClientSystemInfo.isMac() && e.isMetaDown) || e.isControlDown
 
   private fun getRenderer(inlay: Inlay<*>): DeclarativeInlayRenderer? {
     val renderer = inlay.renderer
@@ -89,5 +106,26 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
     val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)
 
     return renderer.getMouseArea(translated)
+  }
+
+  private inner class DeclarativeInlayHintsKeyListener(private val editor: EditorEx) : Disposable, KeyAdapter() {
+    override fun dispose() {
+      editor.contentComponent.removeKeyListener(this)
+    }
+
+    override fun keyReleased(e: KeyEvent?) {
+      if (e != null && !isControlDown(e)) {
+        editor.setCustomCursor(DeclarativeInlayHintsMouseMotionListener::class.java, null)
+
+        val entries = areaUnderCursor?.entries
+        if (entries != null) {
+          for (entry in entries) {
+            entry.isHoveredWithCtrl = false
+          }
+
+          inlayUnderCursor?.get()?.update()
+        }
+      }
+    }
   }
 }
