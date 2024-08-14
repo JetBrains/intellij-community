@@ -53,6 +53,7 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiStubSuppressor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.io.File;
@@ -1059,13 +1060,13 @@ public final class PyUtil {
           for (ContentEntry entry : model.getContentEntries()) {
             final VirtualFile file = entry.getFile();
             if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
-              entry.addSourceFolder(root, false);
+              entry.addSourceFolder(root.getUrl(), JavaSourceRootType.SOURCE, true);
               added = true;
             }
           }
 
           if (!added) {
-            model.addContentEntry(root).addSourceFolder(root, false);
+            model.addContentEntry(root).addSourceFolder(root.getUrl(), JavaSourceRootType.SOURCE, true);
           }
         }
         model.commit();
