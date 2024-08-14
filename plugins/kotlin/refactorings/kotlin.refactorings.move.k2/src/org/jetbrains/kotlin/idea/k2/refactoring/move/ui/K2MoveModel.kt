@@ -54,6 +54,10 @@ sealed class K2MoveModel {
     @RequiresReadLock
     abstract fun toDescriptor(): K2MoveOperationDescriptor<*>
 
+    /**
+     * Returns whether running the refactoring is meaningful.
+     * For example, moving a file to the package and directory it's already in is not meaningful.
+     */
     open fun isValidRefactoring(): Boolean {
         return source.elements.isNotEmpty()
     }

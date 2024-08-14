@@ -27,8 +27,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val barFile = myFixture.addFileToProject("Bar.kt", """
             import foo.Bar
         """.trimIndent()) as KtFile
-        val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)!!
         assertInstanceOf<K2MoveModel.Files>(moveModel)
+        assertTrue(moveModel.isValidRefactoring())
         val moveDeclarationsModel = moveModel as K2MoveModel.Files
         assertSize(2, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
@@ -42,8 +43,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val barFile = myFixture.addFileToProject("Bar.kt", """
             class Bar { }
         """.trimIndent()) as KtFile
-        val moveModel = K2MoveModel.create(arrayOf(fooFile), barFile)
+        val moveModel = K2MoveModel.create(arrayOf(fooFile), barFile)!!
         assertInstanceOf<K2MoveModel.Declarations>(moveModel)
+        assertTrue(moveModel.isValidRefactoring())
         val moveDeclarationsModel = moveModel as K2MoveModel.Declarations
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
@@ -58,8 +60,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val barClass = (myFixture.addFileToProject("Bar.kt", """
             class Bar { }
         """.trimIndent()) as KtFile).declarations.firstOrNull()
-        val moveModel = K2MoveModel.create(arrayOf(fooFile), barClass)
+        val moveModel = K2MoveModel.create(arrayOf(fooFile), barClass)!!
         assertInstanceOf<K2MoveModel.Declarations>(moveModel)
+        assertTrue(moveModel.isValidRefactoring())
         val moveDeclarationsModel = moveModel as K2MoveModel.Declarations
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
@@ -72,8 +75,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             class Foo { }
         """.trimIndent()) as KtFile
         val barDir = runWriteAction { fooFile.containingDirectory?.createSubdirectory("bar") }
-        val moveModel = K2MoveModel.create(arrayOf(fooFile), barDir)
+        val moveModel = K2MoveModel.create(arrayOf(fooFile), barDir)!!
         assertInstanceOf<K2MoveModel.Files>(moveModel)
+        assertTrue(moveModel.isValidRefactoring())
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(1, moveFilesModel.source.elements)
         val sourceElement = moveFilesModel.source.elements.firstOrNull()
@@ -88,8 +92,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val barClass = (myFixture.addFileToProject("Bar.kt", """
             class Bar { }
         """.trimIndent()) as KtFile).declarations.single()
-        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), null)
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), null)!!
         assertInstanceOf<K2MoveModel.Files>(moveModel)
+        assertFalse(moveModel.isValidRefactoring())
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
@@ -105,8 +110,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val barClass = (myFixture.addFileToProject("Bar.kt", """
             object Bar { }
         """.trimIndent()) as KtFile).declarations.single()
-        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), null)
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), null)!!
         assertInstanceOf<K2MoveModel.Files>(moveModel)
+        assertFalse(moveModel.isValidRefactoring())
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
@@ -122,8 +128,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val barClass = (myFixture.addFileToProject("Bar.kt", """
             object Bar { }
         """.trimIndent()) as KtFile).declarations.single()
-        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), null)
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), null)!!
         assertInstanceOf<K2MoveModel.Files>(moveModel)
+        assertFalse(moveModel.isValidRefactoring())
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
@@ -146,8 +153,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val barClass = (myFixture.addFileToProject("Bar.kt", """
             object Bar { }
         """.trimIndent()) as KtFile).declarations.single()
-        val moveModel = K2MoveModel.create(arrayOf(directory, barClass), null)
+        val moveModel = K2MoveModel.create(arrayOf(directory, barClass), null)!!
         assertInstanceOf<K2MoveModel.Files>(moveModel)
+        assertTrue(moveModel.isValidRefactoring())
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
@@ -167,8 +175,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             
             class Bar { }
         """.trimIndent()) as KtFile).declarations.single()
-        val moveModel = K2MoveModel.create(arrayOf(fooClass, barClass), null)
+        val moveModel = K2MoveModel.create(arrayOf(fooClass, barClass), null)!!
         assertInstanceOf<K2MoveModel.Files>(moveModel)
+        assertFalse(moveModel.isValidRefactoring())
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
@@ -186,8 +195,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             class Bar { }
         """.trimIndent()) as KtFile).declarations.single()
         val barDir = runWriteAction { fooFile.containingDirectory?.createSubdirectory("bar") }
-        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), barDir)
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), barDir)!!
         assertInstanceOf<K2MoveModel.Files>(moveModel)
+        assertTrue(moveModel.isValidRefactoring())
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val firstElem = moveFilesModel.source.elements.first()
@@ -205,8 +215,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             
             class Foo { }
         """.trimIndent()) as KtFile
-            val moveModel = K2MoveModel.create(arrayOf(fooFile), null)
+            val moveModel = K2MoveModel.create(arrayOf(fooFile), null)!!
             assertInstanceOf<K2MoveModel.Declarations>(moveModel)
+            assertFalse(moveModel.isValidRefactoring())
             val moveFilesModel = moveModel as K2MoveModel.Declarations
             assertSize(1, moveFilesModel.source.elements)
             val sourceElement = moveFilesModel.source.elements.firstOrNull()
@@ -231,8 +242,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             
             class Bar { }
         """.trimIndent()) as KtFile
-            val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
+            val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)!!
             assertInstanceOf<K2MoveModel.Files>(moveModel)
+            assertFalse(moveModel.isValidRefactoring())
             val moveFilesModel = moveModel as K2MoveModel.Files
             assertSize(2, moveFilesModel.source.elements)
             val sourceElement = moveFilesModel.source.elements.firstOrNull()
@@ -256,8 +268,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             
             class Bar { }
         """.trimIndent()) as KtFile
-            val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
+            val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)!!
             assertInstanceOf<K2MoveModel.Files>(moveModel)
+            assertTrue(moveModel.isValidRefactoring())
             val moveFilesModel = moveModel as K2MoveModel.Files
             assertSize(2, moveFilesModel.source.elements)
             val sourceElement = moveFilesModel.source.elements.firstOrNull()
@@ -269,14 +282,14 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test move top level declaration`() {
-        myFixture.configureByText(KotlinFileType.INSTANCE, """
+        val barClass = (myFixture.addFileToProject("NotBar.kt", """
             package foo
             
-            class B<caret>ar { }
-        """.trimIndent())
-        val barClass = myFixture.elementAtCaret as KtNamedDeclaration
-        val moveModel = K2MoveModel.create(arrayOf(barClass), null)
+            class Bar { }
+        """.trimIndent()) as KtFile).declarations.first()
+        val moveModel = K2MoveModel.create(arrayOf(barClass), null)!!
         assertInstanceOf<K2MoveModel.Declarations>(moveModel)
+        assertTrue(moveModel.isValidRefactoring())
         val moveDeclarationsModel = moveModel as K2MoveModel.Declarations
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
@@ -386,8 +399,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
         """.trimIndent()) as KtFile
-        val moveModel = K2MoveModel.create(arrayOf(fooFile, fooFile.declarations.first()), null)
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, fooFile.declarations.first()), null)!!
         assertInstanceOf<K2MoveModel.Declarations>(moveModel)
+        assertFalse(moveModel.isValidRefactoring())
         val moveDeclarationsModel = moveModel as K2MoveModel.Declarations
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
