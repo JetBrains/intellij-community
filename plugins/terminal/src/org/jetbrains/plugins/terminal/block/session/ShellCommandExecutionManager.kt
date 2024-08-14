@@ -29,7 +29,6 @@ internal interface ShellCommandExecutionManager  {
    * If the terminal is executing user command, then queued Key Bindings could be lost.
    * If a new command starts after the Key Binding execution is queued, then queued Key Binding could be lost and not applied.
    */
-  @ApiStatus.Internal
   fun sendKeyBinding(keyBinding: KeyBinding)
 
   fun addListener(listener: ShellCommandSentListener)
