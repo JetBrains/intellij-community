@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.json.JsonTokenSets.STRING_LITERALS;
+import static com.intellij.json.split.JsonBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
 
 /**
  * @author Mikhail Golubev
@@ -29,6 +30,8 @@ public final class JsonQuoteHandler extends SimpleTokenSetQuoteHandler implement
 
   @Override
   public @Nullable CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
+    if (shouldDoNothingInBackendMode()) return null;
+
     final IElementType tokenType = iterator.getTokenType();
     if (tokenType == TokenType.WHITE_SPACE) {
       final int index = iterator.getStart() - 1;
