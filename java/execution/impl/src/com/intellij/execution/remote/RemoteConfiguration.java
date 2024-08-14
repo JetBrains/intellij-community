@@ -74,6 +74,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     SettingsEditorGroup<RemoteConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new RemoteConfigurable(getProject()));
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
+    RemoteConfigurationExtensionManager.Companion.getInstance().appendEditors(this, group);
     return group;
   }
 
