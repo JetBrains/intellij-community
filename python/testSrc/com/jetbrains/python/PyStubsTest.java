@@ -1180,6 +1180,7 @@ public class PyStubsTest extends PyTestCase {
       final PyType fieldType = fieldTypeAndTotality.getType();
       assertEquals(fieldsTypesIterator.next(), fieldType == null ? null : fieldType.getName());
       assertFalse(fieldTypeAndTotality.getQualifiers().isRequired());
+      assertFalse(fieldTypeAndTotality.getQualifiers().isReadOnly());
     }
 
     assertFalse(fieldsNamesIterator.hasNext());

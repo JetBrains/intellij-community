@@ -33,10 +33,10 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
     stream.writeBoolean(isRequired)
     stream.writeVarInt(fields.size)
 
-    for (field in fields) {
-      stream.writeName(field.name)
-      stream.writeName(field.type.orElse(null))
-      stream.writeBoolean(field.isReadOnly)
+    for ((name, type, isReadOnly) in fields) {
+      stream.writeName(name)
+      stream.writeName(type.orElse(null))
+      stream.writeBoolean(isReadOnly)
     }
   }
 
