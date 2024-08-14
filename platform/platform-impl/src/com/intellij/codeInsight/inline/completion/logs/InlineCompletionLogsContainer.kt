@@ -59,7 +59,7 @@ class InlineCompletionLogsContainer {
   /**
    * Use [add] if there is no special need to use async variant. See [add] documentation for more info.
    */
-  fun addAsync(block: () -> List<EventPair<*>>) {
+  fun addAsync(block: suspend () -> List<EventPair<*>>) {
     val deferred = InlineCompletionLogsScopeProvider.getInstance().cs.async {
       block().forEach { add(it) }
     }
