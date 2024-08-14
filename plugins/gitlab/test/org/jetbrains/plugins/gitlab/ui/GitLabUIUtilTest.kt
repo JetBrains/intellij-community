@@ -3,10 +3,10 @@ package org.jetbrains.plugins.gitlab.ui
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
 import git4idea.repo.GitRepository
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
 import java.nio.file.Path
 
 class GitLabUIUtilTest : LightPlatformTestCase() {
@@ -18,11 +18,11 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
 
-    gitRootVf = mock {
-      whenever(mock.toNioPath()).thenReturn(Path.of(gitRoot))
+    gitRootVf = mockk {
+      every { toNioPath() } returns Path.of(gitRoot)
     }
-    gitRepository = mock {
-      whenever(mock.root).thenReturn(gitRootVf)
+    gitRepository = mockk {
+      every { root } returns gitRootVf
     }
   }
 
