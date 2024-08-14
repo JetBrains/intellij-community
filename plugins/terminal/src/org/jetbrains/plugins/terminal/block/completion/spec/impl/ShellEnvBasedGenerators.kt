@@ -10,7 +10,6 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions
-import org.jetbrains.plugins.terminal.block.shellintegration.ShellIntegrationGenerators
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
 internal object ShellEnvBasedGenerators {
@@ -22,8 +21,7 @@ internal object ShellEnvBasedGenerators {
    */
   fun aliasesGenerator(): ShellRuntimeDataGenerator<Map<String, String>> {
     return ShellRuntimeDataGenerator(cacheKeyAndDebugName = "aliases") { context ->
-      val shellEnv = getShellEnv(context) ?: return@ShellRuntimeDataGenerator emptyMap()
-      shellEnv.aliases
+      getAliases(context) ?: emptyMap<String, String>()
     }
   }
 
@@ -48,6 +46,16 @@ internal object ShellEnvBasedGenerators {
       commands = rawEnv.commands.splitIfNotEmpty("\n"),
       aliases = parseAliases(rawEnv.aliases, context.shellName.name)
     )
+  }
+
+  suspend fun getAliases(context: ShellRuntimeContext): Map<String, String>? {
+    val result = context.runShellCommand(ShellIntegrationFunctions.GET_ALIASES.functionName)
+    if (result.exitCode != 0) {
+      LOG.error("Get shell aliases command failed with exit code ${result.exitCode}, output: ${result.output}")
+      return null
+    }
+
+    return parseAliases(result.output, context.shellName.name)
   }
 
   private fun parseAliases(text: String, shellName: String): Map<String, String> {
