@@ -101,7 +101,6 @@ significantly off if other threads' work patterns are not similar to the
 main thread's work patterns.
 """
 # no-check-code
-from __future__ import absolute_import, division, print_function
 
 import collections
 import contextlib
@@ -155,7 +154,7 @@ def clock():
 ## Collection data structures
 
 
-class ProfileState(object):
+class ProfileState:
     def __init__(self, frequency=None):
         self.reset(frequency)
         self.track = b'cpu'
@@ -168,7 +167,7 @@ class ProfileState(object):
         # a float
         if frequency:
             self.sample_interval = 1.0 / frequency
-        elif not pycompat.hasattr(self, 'sample_interval'):
+        elif not hasattr(self, 'sample_interval'):
             # default to 1000 Hz
             self.sample_interval = 1.0 / 1000.0
         else:
@@ -203,7 +202,7 @@ class ProfileState(object):
 state = ProfileState()
 
 
-class CodeSite(object):
+class CodeSite:
     cache = {}
 
     __slots__ = ('path', 'lineno', 'function', 'source')
@@ -237,8 +236,8 @@ class CodeSite(object):
 
     def getsource(self, length):
         if self.source is None:
-            lineno = self.lineno - 1
             try:
+                lineno = self.lineno - 1  # lineno can be None
                 with open(self.path, b'rb') as fp:
                     for i, line in enumerate(fp):
                         if i == lineno:
@@ -261,7 +260,7 @@ class CodeSite(object):
         return '%s:%s' % (self.filename(), self.function)
 
 
-class Sample(object):
+class Sample:
     __slots__ = ('stack', 'time')
 
     def __init__(self, stack, time):
@@ -385,7 +384,7 @@ def save_data(path):
             time = sample.time
             stack = sample.stack
             sites = [
-                b'\1'.join([s.path, b'%d' % s.lineno, s.function])
+                b'\1'.join([s.path, b'%d' % s.lineno or -1, s.function])
                 for s in stack
             ]
             file.write(b"%d\0%s\n" % (time, b'\0'.join(sites)))
@@ -435,7 +434,7 @@ def profile():
 ## Reporting API
 
 
-class SiteStats(object):
+class SiteStats:
     def __init__(self, site):
         self.site = site
         self.selfcount = 0
@@ -475,7 +474,7 @@ class SiteStats(object):
                 if i == 0:
                     sitestat.addself()
 
-        return [s for s in pycompat.itervalues(stats)]
+        return [s for s in stats.values()]
 
 
 class DisplayFormats:
@@ -494,9 +493,9 @@ def display(fp=None, format=3, data=None, **kwargs):
         data = state
 
     if fp is None:
-        import sys
+        from .utils import procutil
 
-        fp = sys.stdout
+        fp = procutil.stdout
     if len(data.samples) == 0:
         fp.write(b'No samples recorded.\n')
         return
@@ -516,7 +515,7 @@ def display(fp=None, format=3, data=None, **kwargs):
     elif format == DisplayFormats.Chrome:
         write_to_chrome(data, fp, **kwargs)
     else:
-        raise Exception(b"Invalid display format")
+        raise Exception("Invalid display format")
 
     if format not in (DisplayFormats.Json, DisplayFormats.Chrome):
         fp.write(b'---\n')
@@ -541,7 +540,11 @@ def display_by_line(data, fp):
 
     for stat in stats:
         site = stat.site
-        sitelabel = b'%s:%d:%s' % (site.filename(), site.lineno, site.function)
+        sitelabel = b'%s:%d:%s' % (
+            site.filename(),
+            site.lineno or -1,
+            site.function,
+        )
         fp.write(
             b'%6.2f %9.2f %9.2f  %s\n'
             % (
@@ -574,7 +577,7 @@ def display_by_method(data, fp):
 
     # compute sums for each function
     functiondata = []
-    for fname, sitestats in pycompat.iteritems(grouped):
+    for fname, sitestats in grouped.items():
         total_cum_sec = 0
         total_self_sec = 0
         total_percent = 0
@@ -608,15 +611,13 @@ def display_by_method(data, fp):
             # only show line numbers for significant locations (>1% time spent)
             if stat.selfpercent() > 1:
                 source = stat.site.getsource(25)
-                if sys.version_info.major >= 3 and not isinstance(
-                    source, bytes
-                ):
+                if not isinstance(source, bytes):
                     source = pycompat.bytestr(source)
 
                 stattuple = (
                     stat.selfpercent(),
                     stat.selfseconds(),
-                    stat.site.lineno,
+                    stat.site.lineno or -1,
                     source,
                 )
 
@@ -625,7 +626,7 @@ def display_by_method(data, fp):
 
 def display_about_method(data, fp, function=None, **kwargs):
     if function is None:
-        raise Exception(b"Invalid function")
+        raise Exception("Invalid function")
 
     filename = None
     if b':' in function:
@@ -653,7 +654,7 @@ def display_about_method(data, fp, function=None, **kwargs):
                 else:
                     children[site] = 1
 
-    parents = [(parent, count) for parent, count in pycompat.iteritems(parents)]
+    parents = [(parent, count) for parent, count in parents.items()]
     parents.sort(reverse=True, key=lambda x: x[1])
     for parent, count in parents:
         fp.write(
@@ -662,7 +663,7 @@ def display_about_method(data, fp, function=None, **kwargs):
                 count / relevant_samples * 100,
                 pycompat.fsencode(parent.filename()),
                 pycompat.sysbytes(parent.function),
-                parent.lineno,
+                parent.lineno or -1,
                 pycompat.sysbytes(parent.getsource(50)),
             )
         )
@@ -697,21 +698,21 @@ def display_about_method(data, fp, function=None, **kwargs):
         )
     )
 
-    children = [(child, count) for child, count in pycompat.iteritems(children)]
+    children = [(child, count) for child, count in children.items()]
     children.sort(reverse=True, key=lambda x: x[1])
     for child, count in children:
         fp.write(
             b'        %6.2f%%   line %s: %s\n'
             % (
                 count / relevant_samples * 100,
-                child.lineno,
+                child.lineno or -1,
                 pycompat.sysbytes(child.getsource(50)),
             )
         )
 
 
 def display_hotpath(data, fp, limit=0.05, **kwargs):
-    class HotNode(object):
+    class HotNode:
         def __init__(self, site):
             self.site = site
             self.count = 0
@@ -746,9 +747,7 @@ def display_hotpath(data, fp, limit=0.05, **kwargs):
     def _write(node, depth, multiple_siblings):
         site = node.site
         visiblechildren = [
-            c
-            for c in pycompat.itervalues(node.children)
-            if c.count >= (limit * root.count)
+            c for c in node.children.values() if c.count >= (limit * root.count)
         ]
         if site:
             indent = depth * 2 - 1
@@ -778,15 +777,13 @@ def display_hotpath(data, fp, limit=0.05, **kwargs):
             codestring = codepattern % (
                 prefix,
                 b'line'.rjust(spacing_len),
-                site.lineno,
+                site.lineno if site.lineno is not None else -1,
                 b''.ljust(max(0, 4 - len(str(site.lineno)))),
                 site.getsource(30),
             )
 
             finalstring = liststring + codestring
-            childrensamples = sum(
-                [c.count for c in pycompat.itervalues(node.children)]
-            )
+            childrensamples = sum([c.count for c in node.children.values()])
             # Make frames that performed more than 10% of the operation red
             if node.count - childrensamples > (0.1 * root.count):
                 finalstring = b'\033[91m' + finalstring + b'\033[0m'
@@ -828,7 +825,7 @@ def write_to_flame(data, fp, scriptpath=None, outputfile=None, **kwargs):
     fd, path = pycompat.mkstemp()
 
     with open(path, b"w+") as file:
-        for line, count in pycompat.iteritems(lines):
+        for line, count in lines.items():
             file.write(b"%s %d\n" % (line, count))
 
     if outputfile is None:
@@ -868,7 +865,7 @@ def write_to_json(data, fp):
             stack.append(
                 (
                     pycompat.sysstr(frame.path),
-                    frame.lineno,
+                    frame.lineno or -1,
                     pycompat.sysstr(frame.function),
                 )
             )
@@ -957,7 +954,10 @@ def write_to_chrome(data, fp, minthreshold=0.005, maxthreshold=0.999):
             (
                 (
                     '%s:%d'
-                    % (simplifypath(pycompat.sysstr(frame.path)), frame.lineno),
+                    % (
+                        simplifypath(pycompat.sysstr(frame.path)),
+                        frame.lineno or -1,
+                    ),
                     pycompat.sysstr(frame.function),
                 )
                 for frame in sample.stack
@@ -1056,7 +1056,7 @@ def main(argv=None):
     # process options
     try:
         opts, args = pycompat.getoptb(
-            sys.argv[optstart:],
+            pycompat.sysargv[optstart:],
             b"hl:f:o:p:",
             [b"help", b"limit=", b"file=", b"output-file=", b"script-path="],
         )
@@ -1080,7 +1080,7 @@ def main(argv=None):
             printusage()
             return 0
         else:
-            assert False, b"unhandled option %s" % o
+            assert False, "unhandled option %s" % o
 
     if not path:
         print('must specify --file to load')

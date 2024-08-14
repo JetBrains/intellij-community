@@ -7,7 +7,6 @@
 # GNU General Public License version 2 or any later version.
 
 '''largefiles utility code: must not import other modules in this package.'''
-from __future__ import absolute_import
 
 import contextlib
 import copy
@@ -32,6 +31,7 @@ from mercurial import (
     vfs as vfsmod,
 )
 from mercurial.utils import hashutil
+from mercurial.dirstateutils import timestamp
 
 shortname = b'.hglf'
 shortnameslash = shortname + b'/'
@@ -159,6 +159,9 @@ def findfile(repo, hash):
 
 
 class largefilesdirstate(dirstate.dirstate):
+    _large_file_dirstate = True
+    _tr_key_suffix = b'-large-files'
+
     def __getitem__(self, key):
         return super(largefilesdirstate, self).__getitem__(unixpath(key))
 
@@ -191,10 +194,12 @@ class largefilesdirstate(dirstate.dirstate):
     def _ignore(self, f):
         return False
 
-    def write(self, tr=False):
+    def write(self, tr):
         # (1) disable PENDING mode always
         #     (lfdirstate isn't yet managed as a part of the transaction)
         # (2) avoid develwarn 'use dirstate.write with ....'
+        if tr:
+            tr.addbackup(b'largefiles/dirstate', location=b'plain')
         super(largefilesdirstate, self).write(None)
 
 
@@ -202,7 +207,13 @@ def openlfdirstate(ui, repo, create=True):
     """
     Return a dirstate object that tracks largefiles: i.e. its root is
     the repo root, but it is saved in .hg/largefiles/dirstate.
+
+    If a dirstate object already exists and is being used for a 'changing_*'
+    context, it will be returned.
     """
+    sub_dirstate = getattr(repo.dirstate, '_sub_dirstate', None)
+    if sub_dirstate is not None:
+        return sub_dirstate
     vfs = repo.vfs
     lfstoredir = longname
     opener = vfsmod.vfs(vfs.join(lfstoredir))
@@ -221,30 +232,40 @@ def openlfdirstate(ui, repo, create=True):
     # it. This ensures that we create it on the first meaningful
     # largefiles operation in a new clone.
     if create and not vfs.exists(vfs.join(lfstoredir, b'dirstate')):
-        matcher = getstandinmatcher(repo)
-        standins = repo.dirstate.walk(
-            matcher, subrepos=[], unknown=False, ignored=False
-        )
-
-        if len(standins) > 0:
-            vfs.makedirs(lfstoredir)
-
-        with lfdirstate.parentchange():
-            for standin in standins:
-                lfile = splitstandin(standin)
-                lfdirstate.update_file(
-                    lfile, p1_tracked=True, wc_tracked=True, possibly_dirty=True
+        try:
+            with repo.wlock(wait=False), lfdirstate.changing_files(repo):
+                matcher = getstandinmatcher(repo)
+                standins = repo.dirstate.walk(
+                    matcher, subrepos=[], unknown=False, ignored=False
                 )
+
+                if len(standins) > 0:
+                    vfs.makedirs(lfstoredir)
+
+                for standin in standins:
+                    lfile = splitstandin(standin)
+                    lfdirstate.hacky_extension_update_file(
+                        lfile,
+                        p1_tracked=True,
+                        wc_tracked=True,
+                        possibly_dirty=True,
+                    )
+        except error.LockError:
+            # Assume that whatever was holding the lock was important.
+            # If we were doing something important, we would already have
+            # either the lock or a largefile dirstate.
+            pass
     return lfdirstate
 
 
 def lfdirstatestatus(lfdirstate, repo):
     pctx = repo[b'.']
     match = matchmod.always()
-    unsure, s = lfdirstate.status(
+    unsure, s, mtime_boundary = lfdirstate.status(
         match, subrepos=[], ignored=False, clean=False, unknown=False
     )
     modified, clean = s.modified, s.clean
+    wctx = repo[None]
     for lfile in unsure:
         try:
             fctx = pctx[standin(lfile)]
@@ -254,7 +275,13 @@ def lfdirstatestatus(lfdirstate, repo):
             modified.append(lfile)
         else:
             clean.append(lfile)
-            lfdirstate.set_clean(lfile)
+            st = wctx[lfile].lstat()
+            mode = st.st_mode
+            size = st.st_size
+            mtime = timestamp.reliable_mtime_of(st, mtime_boundary)
+            if mtime is not None:
+                cache_data = (mode, size, mtime)
+                lfdirstate.set_clean(lfile, cache_data)
     return s
 
 
@@ -269,7 +296,7 @@ def listlfiles(repo, rev=None, matcher=None):
     return [
         splitstandin(f)
         for f in repo[rev].walk(matcher)
-        if rev is not None or repo.dirstate[f] != b'?'
+        if rev is not None or repo.dirstate.get_entry(f).any_tracked
     ]
 
 
@@ -403,6 +430,7 @@ def composestandinmatcher(repo, rmatcher):
     def composedmatchfn(f):
         return isstandin(f) and rmatcher.matchfn(splitstandin(f))
 
+    smatcher._was_tampered_with = True
     smatcher.matchfn = composedmatchfn
 
     return smatcher
@@ -524,10 +552,10 @@ def unixpath(path):
 
 def islfilesrepo(repo):
     '''Return true if the repo is a largefile repo.'''
-    if b'largefiles' in repo.requirements and any(
-        shortnameslash in f[1] for f in repo.store.datafiles()
-    ):
-        return True
+    if b'largefiles' in repo.requirements:
+        for entry in repo.store.data_entries():
+            if entry.is_revlog and shortnameslash in entry.target_id:
+                return True
 
     return any(openlfdirstate(repo.ui, repo, False))
 
@@ -556,33 +584,26 @@ def getstandinsstate(repo):
 def synclfdirstate(repo, lfdirstate, lfile, normallookup):
     lfstandin = standin(lfile)
     if lfstandin not in repo.dirstate:
-        lfdirstate.update_file(lfile, p1_tracked=False, wc_tracked=False)
+        lfdirstate.hacky_extension_update_file(
+            lfile,
+            p1_tracked=False,
+            wc_tracked=False,
+        )
     else:
-        stat = repo.dirstate._map[lfstandin]
-        state, mtime = stat.state, stat.mtime
-        if state == b'n':
-            if normallookup or mtime < 0 or not repo.wvfs.exists(lfile):
-                # state 'n' doesn't ensure 'clean' in this case
-                lfdirstate.update_file(
-                    lfile, p1_tracked=True, wc_tracked=True, possibly_dirty=True
-                )
-            else:
-                lfdirstate.update_file(lfile, p1_tracked=True, wc_tracked=True)
-        elif state == b'm':
-            lfdirstate.update_file(
-                lfile, p1_tracked=True, wc_tracked=True, merged=True
-            )
-        elif state == b'r':
-            lfdirstate.update_file(lfile, p1_tracked=True, wc_tracked=False)
-        elif state == b'a':
-            lfdirstate.update_file(lfile, p1_tracked=False, wc_tracked=True)
+        entry = repo.dirstate.get_entry(lfstandin)
+        lfdirstate.hacky_extension_update_file(
+            lfile,
+            wc_tracked=entry.tracked,
+            p1_tracked=entry.p1_tracked,
+            p2_info=entry.p2_info,
+            possibly_dirty=True,
+        )
 
 
 def markcommitted(orig, ctx, node):
     repo = ctx.repo()
 
-    lfdirstate = openlfdirstate(repo.ui, repo)
-    with lfdirstate.parentchange():
+    with repo.dirstate.changing_parents(repo):
         orig(node)
 
         # ATTENTION: "ctx.files()" may differ from "repo[node].files()"
@@ -594,11 +615,11 @@ def markcommitted(orig, ctx, node):
         # - have to be marked as "n" after commit, but
         # - aren't listed in "repo[node].files()"
 
+        lfdirstate = openlfdirstate(repo.ui, repo)
         for f in ctx.files():
             lfile = splitstandin(f)
             if lfile is not None:
                 synclfdirstate(repo, lfdirstate, lfile, False)
-    lfdirstate.write()
 
     # As part of committing, copy all of the largefiles into the cache.
     #
@@ -669,11 +690,16 @@ def updatestandinsbymatch(repo, match):
         # It can cost a lot of time (several seconds)
         # otherwise to update all standins if the largefiles are
         # large.
-        lfdirstate = openlfdirstate(ui, repo)
         dirtymatch = matchmod.always()
-        unsure, s = lfdirstate.status(
-            dirtymatch, subrepos=[], ignored=False, clean=False, unknown=False
-        )
+        with repo.dirstate.running_status(repo):
+            lfdirstate = openlfdirstate(ui, repo)
+            unsure, s, mtime_boundary = lfdirstate.status(
+                dirtymatch,
+                subrepos=[],
+                ignored=False,
+                clean=False,
+                unknown=False,
+            )
         modifiedfiles = unsure + s.modified + s.added + s.removed
         lfiles = listlfiles(repo)
         # this only loops through largefiles that exist (not
@@ -691,6 +717,7 @@ def updatestandinsbymatch(repo, match):
         return match
 
     lfiles = listlfiles(repo)
+    match._was_tampered_with = True
     match._files = repo._subdirlfs(match.files(), lfiles)
 
     # Case 2: user calls commit with specified patterns: refresh
@@ -713,7 +740,7 @@ def updatestandinsbymatch(repo, match):
     lfdirstate = openlfdirstate(ui, repo)
     for fstandin in standins:
         lfile = splitstandin(fstandin)
-        if lfdirstate[lfile] != b'r':
+        if lfdirstate.get_entry(lfile).tracked:
             updatestandin(repo, lfile, fstandin)
 
     # Cook up a new matcher that only matches regular files or
@@ -721,6 +748,7 @@ def updatestandinsbymatch(repo, match):
     # user.  Have to modify _files to prevent commit() from
     # complaining "not tracked" for big files.
     match = copy.copy(match)
+    match._was_tampered_with = True
     origmatchfn = match.matchfn
 
     # Check both the list of largefiles and the list of
@@ -737,10 +765,10 @@ def updatestandinsbymatch(repo, match):
         # standin removal, drop the normal file if it is unknown to dirstate.
         # Thus, skip plain largefile names but keep the standin.
         if f in lfiles or fstandin in standins:
-            if repo.dirstate[fstandin] != b'r':
-                if repo.dirstate[f] != b'r':
+            if not repo.dirstate.get_entry(fstandin).removed:
+                if not repo.dirstate.get_entry(f).removed:
                     continue
-            elif repo.dirstate[f] == b'?':
+            elif not repo.dirstate.get_entry(f).any_tracked:
                 continue
 
         actualfiles.append(f)
@@ -757,7 +785,7 @@ def updatestandinsbymatch(repo, match):
     return match
 
 
-class automatedcommithook(object):
+class automatedcommithook:
     """Stateful hook to update standins at the 1st commit of resuming
 
     For efficiency, updating standins in the working directory should
@@ -789,7 +817,7 @@ def getstatuswriter(ui, repo, forcibly=None):
     Otherwise, this returns the function to always write out (or
     ignore if ``not forcibly``) status.
     """
-    if forcibly is None and util.safehasattr(repo, b'_largefilesenabled'):
+    if forcibly is None and hasattr(repo, '_largefilesenabled'):
         return repo._lfstatuswriters[-1]
     else:
         if forcibly:

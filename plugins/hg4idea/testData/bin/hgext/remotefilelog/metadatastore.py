@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from mercurial.node import (
     hex,
     sha1nodeconstants,
@@ -143,7 +141,7 @@ class remotefilelogmetadatastore(basestore.basestore):
         )
 
 
-class remotemetadatastore(object):
+class remotemetadatastore:
     def __init__(self, ui, fileservice, shared):
         self._fileservice = fileservice
         self._shared = shared

@@ -5,10 +5,8 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
-from __future__ import absolute_import
 
 import collections
-import os
 
 from mercurial.node import bin
 from mercurial.i18n import _
@@ -16,21 +14,18 @@ from mercurial import (
     ancestor,
     error,
     mdiff,
-    pycompat,
     revlog,
-    util,
 )
 from mercurial.utils import storageutil
 from mercurial.revlogutils import flagutil
 
 from . import (
     constants,
-    fileserverclient,
     shallowutil,
 )
 
 
-class remotefilelognodemap(object):
+class remotefilelognodemap:
     def __init__(self, filename, store):
         self._filename = filename
         self._store = store
@@ -45,9 +40,8 @@ class remotefilelognodemap(object):
         return node
 
 
-class remotefilelog(object):
+class remotefilelog:
 
-    _generaldelta = True
     _flagserrorclass = error.RevlogError
 
     def __init__(self, opener, path, repo):
@@ -245,11 +239,11 @@ class remotefilelog(object):
     __bool__ = __nonzero__
 
     def __len__(self):
-        if self.filename == b'.hgtags':
-            # The length of .hgtags is used to fast path tag checking.
-            # remotefilelog doesn't support .hgtags since the entire .hgtags
-            # history is needed.  Use the excludepattern setting to make
-            # .hgtags a normal filelog.
+        if self.filename in (b'.hgtags', b'.hgsub', b'.hgsubstate'):
+            # Global tag and subrepository support require access to the
+            # file history for various performance sensitive operations.
+            # excludepattern should be used for repositories depending on
+            # those features to fallback to regular filelog.
             return 0
 
         raise RuntimeError(b"len not supported")
@@ -302,6 +296,7 @@ class remotefilelog(object):
         deltaprevious=False,
         deltamode=None,
         sidedata_helpers=None,
+        debug_info=None,
     ):
         # we don't use any of these parameters here
         del nodesorder, revisiondata, assumehaveparentrevisions, deltaprevious
@@ -360,17 +355,6 @@ class remotefilelog(object):
             )
         return rev
 
-    def _processflags(self, text, flags, operation, raw=False):
-        """deprecated entry point to access flag processors"""
-        msg = b'_processflag(...) use the specialized variant'
-        util.nouideprecwarn(msg, b'5.2', stacklevel=2)
-        if raw:
-            return text, flagutil.processflagsraw(self, text, flags)
-        elif operation == b'read':
-            return flagutil.processflagsread(self, text, flags)
-        else:  # write operation
-            return flagutil.processflagswrite(self, text, flags)
-
     def revision(self, node, raw=False):
         """returns the revlog contents at this node.
         this includes the meta data traditionally included in file revlogs.
@@ -401,33 +385,6 @@ class remotefilelog(object):
     def rawdata(self, node):
         return self.revision(node, raw=False)
 
-    def _read(self, id):
-        """reads the raw file blob from disk, cache, or server"""
-        fileservice = self.repo.fileservice
-        localcache = fileservice.localcache
-        cachekey = fileserverclient.getcachekey(
-            self.repo.name, self.filename, id
-        )
-        try:
-            return localcache.read(cachekey)
-        except KeyError:
-            pass
-
-        localkey = fileserverclient.getlocalkey(self.filename, id)
-        localpath = os.path.join(self.localpath, localkey)
-        try:
-            return shallowutil.readfile(localpath)
-        except IOError:
-            pass
-
-        fileservice.prefetch([(self.filename, id)])
-        try:
-            return localcache.read(cachekey)
-        except KeyError:
-            pass
-
-        raise error.LookupError(id, self.filename, _(b'no node'))
-
     def ancestormap(self, node):
         return self.repo.metadatastore.getancestors(self.filename, node)
 
@@ -436,7 +393,7 @@ class remotefilelog(object):
             return self.repo.nullid
 
         revmap, parentfunc = self._buildrevgraph(a, b)
-        nodemap = {v: k for (k, v) in pycompat.iteritems(revmap)}
+        nodemap = {v: k for (k, v) in revmap.items()}
 
         ancs = ancestor.ancestors(parentfunc, revmap[a], revmap[b])
         if ancs:
@@ -451,7 +408,7 @@ class remotefilelog(object):
             return self.repo.nullid
 
         revmap, parentfunc = self._buildrevgraph(a, b)
-        nodemap = {v: k for (k, v) in pycompat.iteritems(revmap)}
+        nodemap = {v: k for (k, v) in revmap.items()}
 
         ancs = ancestor.commonancestorsheads(parentfunc, revmap[a], revmap[b])
         return map(nodemap.__getitem__, ancs)
@@ -467,7 +424,7 @@ class remotefilelog(object):
         parentsmap = collections.defaultdict(list)
         allparents = set()
         for mapping in (amap, bmap):
-            for node, pdata in pycompat.iteritems(mapping):
+            for node, pdata in mapping.items():
                 parents = parentsmap[node]
                 p1, p2, linknode, copyfrom = pdata
                 # Don't follow renames (copyfrom).

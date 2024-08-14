@@ -9,20 +9,18 @@
 ### Extension helper                                              ###
 #####################################################################
 
-from __future__ import absolute_import
 
 from . import (
     commands,
     error,
     extensions,
-    pycompat,
     registrar,
 )
 
 from hgdemandimport import tracing
 
 
-class exthelper(object):
+class exthelper:
     """Helper for modular extension setup
 
     A single helper should be instantiated for each module of an
@@ -115,7 +113,7 @@ class exthelper(object):
         self._extcommandwrappers.extend(other._extcommandwrappers)
         self._functionwrappers.extend(other._functionwrappers)
         self.cmdtable.update(other.cmdtable)
-        for section, items in pycompat.iteritems(other.configtable):
+        for section, items in other.configtable.items():
             if section in self.configtable:
                 self.configtable[section].update(items)
             else:
@@ -327,7 +325,7 @@ class exthelper(object):
             # Required, otherwise the function will not be wrapped
             uisetup = eh.finaluisetup
 
-            @eh.wrapfunction(discovery, b'checkheads')
+            @eh.wrapfunction(discovery, 'checkheads')
             def wrapcheckheads(orig, *args, **kwargs):
                 ui.note(b'His head smashed in and his heart cut out')
                 return orig(*args, **kwargs)

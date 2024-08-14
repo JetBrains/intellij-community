@@ -5,17 +5,13 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import sys
 import weakref
 
+from concurrent import futures
 from .i18n import _
 from .node import bin
-from .pycompat import (
-    getattr,
-    setattr,
-)
 from . import (
     bundle2,
     changegroup as changegroupmod,
@@ -44,13 +40,9 @@ def batchable(f):
     def sample(self, one, two=None):
         # Build list of encoded arguments suitable for your wire protocol:
         encoded_args = [('one', encode(one),), ('two', encode(two),)]
-        # Create future for injection of encoded result:
-        encoded_res_future = future()
-        # Return encoded arguments and future:
-        yield encoded_args, encoded_res_future
-        # Assuming the future to be filled with the result from the batched
-        # request now. Decode it:
-        yield decode(encoded_res_future.value)
+        # Return it, along with a function that will receive the result
+        # from the batched request.
+        return encoded_args, decode
 
     The decorator returns a function which wraps this coroutine as a plain
     method, but adds the original method as an attribute called "batchable",
@@ -59,27 +51,17 @@ def batchable(f):
     """
 
     def plain(*args, **opts):
-        batchable = f(*args, **opts)
-        encoded_args_or_res, encoded_res_future = next(batchable)
-        if not encoded_res_future:
+        encoded_args_or_res, decode = f(*args, **opts)
+        if not decode:
             return encoded_args_or_res  # a local result in this case
         self = args[0]
         cmd = pycompat.bytesurl(f.__name__)  # ensure cmd is ascii bytestr
-        encoded_res_future.set(self._submitone(cmd, encoded_args_or_res))
-        return next(batchable)
+        encoded_res = self._submitone(cmd, encoded_args_or_res)
+        return decode(encoded_res)
 
     setattr(plain, 'batchable', f)
     setattr(plain, '__name__', f.__name__)
     return plain
-
-
-class future(object):
-    '''placeholder for a value to be set later'''
-
-    def set(self, value):
-        if util.safehasattr(self, b'value'):
-            raise error.RepoError(b"future is already set")
-        self.value = value
 
 
 def encodebatchcmds(req):
@@ -94,15 +76,14 @@ def encodebatchcmds(req):
         assert all(escapearg(k) == k for k in argsdict)
 
         args = b','.join(
-            b'%s=%s' % (escapearg(k), escapearg(v))
-            for k, v in pycompat.iteritems(argsdict)
+            b'%s=%s' % (escapearg(k), escapearg(v)) for k, v in argsdict.items()
         )
         cmds.append(b'%s %s' % (op, args))
 
     return b';'.join(cmds)
 
 
-class unsentfuture(pycompat.futures.Future):
+class unsentfuture(futures.Future):
     """A Future variation to represent an unsent command.
 
     Because we buffer commands and don't submit them immediately, calling
@@ -113,7 +94,7 @@ class unsentfuture(pycompat.futures.Future):
 
     def result(self, timeout=None):
         if self.done():
-            return pycompat.futures.Future.result(self, timeout)
+            return futures.Future.result(self, timeout)
 
         self._peerexecutor.sendcommands()
 
@@ -124,7 +105,7 @@ class unsentfuture(pycompat.futures.Future):
 
 
 @interfaceutil.implementer(repository.ipeercommandexecutor)
-class peerexecutor(object):
+class peerexecutor:
     def __init__(self, peer):
         self._peer = peer
         self._sent = False
@@ -168,7 +149,7 @@ class peerexecutor(object):
         # a batchable one and refuse to service it.
 
         def addcall():
-            f = pycompat.futures.Future()
+            f = futures.Future()
             self._futures.add(f)
             self._calls.append((command, args, fn, f))
             return f
@@ -208,7 +189,7 @@ class peerexecutor(object):
         # cycle between us and futures.
         for f in self._futures:
             if isinstance(f, unsentfuture):
-                f.__class__ = pycompat.futures.Future
+                f.__class__ = futures.Future
                 f._peerexecutor = None
 
         calls = self._calls
@@ -248,25 +229,18 @@ class peerexecutor(object):
                 continue
 
             try:
-                batchable = fn.batchable(
+                encoded_args_or_res, decode = fn.batchable(
                     fn.__self__, **pycompat.strkwargs(args)
                 )
             except Exception:
                 pycompat.future_set_exception_info(f, sys.exc_info()[1:])
                 return
 
-            # Encoded arguments and future holding remote result.
-            try:
-                encoded_args_or_res, fremote = next(batchable)
-            except Exception:
-                pycompat.future_set_exception_info(f, sys.exc_info()[1:])
-                return
-
-            if not fremote:
+            if not decode:
                 f.set_result(encoded_args_or_res)
             else:
                 requests.append((command, encoded_args_or_res))
-                states.append((command, f, batchable, fremote))
+                states.append((command, f, batchable, decode))
 
         if not requests:
             return
@@ -279,7 +253,7 @@ class peerexecutor(object):
         # hard and it is easy to encounter race conditions, deadlocks, etc.
         # concurrent.futures already solves these problems and its thread pool
         # executor has minimal overhead. So we use it.
-        self._responseexecutor = pycompat.futures.ThreadPoolExecutor(1)
+        self._responseexecutor = futures.ThreadPoolExecutor(1)
         self._responsef = self._responseexecutor.submit(
             self._readbatchresponse, states, wireresults
         )
@@ -319,7 +293,7 @@ class peerexecutor(object):
     def _readbatchresponse(self, states, wireresults):
         # Executes in a thread to read data off the wire.
 
-        for command, f, batchable, fremote in states:
+        for command, f, batchable, decode in states:
             # Grab raw result off the wire and teach the internal future
             # about it.
             try:
@@ -334,11 +308,8 @@ class peerexecutor(object):
                     )
                 )
             else:
-                fremote.set(remoteresult)
-
-                # And ask the coroutine to decode that value.
                 try:
-                    result = next(batchable)
+                    result = decode(remoteresult)
                 except Exception:
                     pycompat.future_set_exception_info(f, sys.exc_info()[1:])
                 else:
@@ -363,93 +334,112 @@ class wirepeer(repository.peer):
     # Begin of ipeercommands interface.
 
     def clonebundles(self):
-        self.requirecap(b'clonebundles', _(b'clone bundles'))
-        return self._call(b'clonebundles')
+        if self.capable(b'clonebundles_manifest'):
+            return self._call(b'clonebundles_manifest')
+        else:
+            self.requirecap(b'clonebundles', _(b'clone bundles'))
+            return self._call(b'clonebundles')
+
+    def _finish_inline_clone_bundle(self, stream):
+        pass  # allow override for httppeer
+
+    def get_cached_bundle_inline(self, path):
+        stream = self._callstream(b"get_cached_bundle_inline", path=path)
+        length = util.uvarintdecodestream(stream)
+
+        # SSH streams will block if reading more than length
+        for chunk in util.filechunkiter(stream, limit=length):
+            yield chunk
+
+        self._finish_inline_clone_bundle(stream)
 
     @batchable
     def lookup(self, key):
         self.requirecap(b'lookup', _(b'look up remote revision'))
-        f = future()
-        yield {b'key': encoding.fromlocal(key)}, f
-        d = f.value
-        success, data = d[:-1].split(b" ", 1)
-        if int(success):
-            yield bin(data)
-        else:
-            self._abort(error.RepoError(data))
+
+        def decode(d):
+            success, data = d[:-1].split(b" ", 1)
+            if int(success):
+                return bin(data)
+            else:
+                self._abort(error.RepoError(data))
+
+        return {b'key': encoding.fromlocal(key)}, decode
 
     @batchable
     def heads(self):
-        f = future()
-        yield {}, f
-        d = f.value
-        try:
-            yield wireprototypes.decodelist(d[:-1])
-        except ValueError:
-            self._abort(error.ResponseError(_(b"unexpected response:"), d))
+        def decode(d):
+            try:
+                return wireprototypes.decodelist(d[:-1])
+            except ValueError:
+                self._abort(error.ResponseError(_(b"unexpected response:"), d))
+
+        return {}, decode
 
     @batchable
     def known(self, nodes):
-        f = future()
-        yield {b'nodes': wireprototypes.encodelist(nodes)}, f
-        d = f.value
-        try:
-            yield [bool(int(b)) for b in pycompat.iterbytestr(d)]
-        except ValueError:
-            self._abort(error.ResponseError(_(b"unexpected response:"), d))
+        def decode(d):
+            try:
+                return [bool(int(b)) for b in pycompat.iterbytestr(d)]
+            except ValueError:
+                self._abort(error.ResponseError(_(b"unexpected response:"), d))
+
+        return {b'nodes': wireprototypes.encodelist(nodes)}, decode
 
     @batchable
     def branchmap(self):
-        f = future()
-        yield {}, f
-        d = f.value
-        try:
-            branchmap = {}
-            for branchpart in d.splitlines():
-                branchname, branchheads = branchpart.split(b' ', 1)
-                branchname = encoding.tolocal(urlreq.unquote(branchname))
-                branchheads = wireprototypes.decodelist(branchheads)
-                branchmap[branchname] = branchheads
-            yield branchmap
-        except TypeError:
-            self._abort(error.ResponseError(_(b"unexpected response:"), d))
+        def decode(d):
+            try:
+                branchmap = {}
+                for branchpart in d.splitlines():
+                    branchname, branchheads = branchpart.split(b' ', 1)
+                    branchname = encoding.tolocal(urlreq.unquote(branchname))
+                    branchheads = wireprototypes.decodelist(branchheads)
+                    branchmap[branchname] = branchheads
+                return branchmap
+            except TypeError:
+                self._abort(error.ResponseError(_(b"unexpected response:"), d))
+
+        return {}, decode
 
     @batchable
     def listkeys(self, namespace):
         if not self.capable(b'pushkey'):
-            yield {}, None
-        f = future()
+            return {}, None
         self.ui.debug(b'preparing listkeys for "%s"\n' % namespace)
-        yield {b'namespace': encoding.fromlocal(namespace)}, f
-        d = f.value
-        self.ui.debug(
-            b'received listkey for "%s": %i bytes\n' % (namespace, len(d))
-        )
-        yield pushkeymod.decodekeys(d)
+
+        def decode(d):
+            self.ui.debug(
+                b'received listkey for "%s": %i bytes\n' % (namespace, len(d))
+            )
+            return pushkeymod.decodekeys(d)
+
+        return {b'namespace': encoding.fromlocal(namespace)}, decode
 
     @batchable
     def pushkey(self, namespace, key, old, new):
         if not self.capable(b'pushkey'):
-            yield False, None
-        f = future()
+            return False, None
         self.ui.debug(b'preparing pushkey for "%s:%s"\n' % (namespace, key))
-        yield {
+
+        def decode(d):
+            d, output = d.split(b'\n', 1)
+            try:
+                d = bool(int(d))
+            except ValueError:
+                raise error.ResponseError(
+                    _(b'push failed (unexpected response):'), d
+                )
+            for l in output.splitlines(True):
+                self.ui.status(_(b'remote: '), l)
+            return d
+
+        return {
             b'namespace': encoding.fromlocal(namespace),
             b'key': encoding.fromlocal(key),
             b'old': encoding.fromlocal(old),
             b'new': encoding.fromlocal(new),
-        }, f
-        d = f.value
-        d, output = d.split(b'\n', 1)
-        try:
-            d = bool(int(d))
-        except ValueError:
-            raise error.ResponseError(
-                _(b'push failed (unexpected response):'), d
-            )
-        for l in output.splitlines(True):
-            self.ui.status(_(b'remote: '), l)
-        yield d
+        }, decode
 
     def stream_out(self):
         return self._callstream(b'stream_out')
@@ -459,7 +449,7 @@ class wirepeer(repository.peer):
         self.requirecap(b'getbundle', _(b'look up remote changes'))
         opts = {}
         bundlecaps = kwargs.get(b'bundlecaps') or set()
-        for key, value in pycompat.iteritems(kwargs):
+        for key, value in kwargs.items():
             if value is None:
                 continue
             keytype = wireprototypes.GETBUNDLE_ARGUMENTS.get(key)
@@ -505,7 +495,7 @@ class wirepeer(repository.peer):
         else:
             heads = wireprototypes.encodelist(heads)
 
-        if util.safehasattr(bundle, b'deltaheader'):
+        if hasattr(bundle, 'deltaheader'):
             # this a bundle10, do the old style call sequence
             ret, output = self._callpush(b"unbundle", bundle, heads=heads)
             if ret == b"":
@@ -541,7 +531,7 @@ class wirepeer(repository.peer):
     def between(self, pairs):
         batch = 8  # avoid giant requests
         r = []
-        for i in pycompat.xrange(0, len(pairs), batch):
+        for i in range(0, len(pairs), batch):
             n = b" ".join(
                 [
                     wireprototypes.encodelist(p, b'-')

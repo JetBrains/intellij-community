@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import re
 
@@ -19,7 +18,6 @@ from . import (
     encoding,
     error,
     phases,
-    pycompat,
     util,
 )
 from .utils import dateutil
@@ -58,7 +56,7 @@ bumpedfix = 1
 usingsha256 = 2
 
 
-class marker(object):
+class marker:
     """Wrap obsolete marker raw data"""
 
     def __init__(self, repo, data):
@@ -218,7 +216,7 @@ def exclusivemarkers(repo, nodes):
 
         or
 
-        # (A0 rewritten as AX; AX rewritten as A1; AX is unkown locally)
+        # (A0 rewritten as AX; AX rewritten as A1; AX is unknown locally)
         #
         # <-1- A0 <-2- AX <-3- A1 # Marker "2,3" are exclusive to A1
 
@@ -470,10 +468,10 @@ def geteffectflag(source, successors):
 
         # Check if other meta has changed
         changeextra = changectx.extra().items()
-        ctxmeta = list(filter(metanotblacklisted, changeextra))
+        ctxmeta = sorted(filter(metanotblacklisted, changeextra))
 
         sourceextra = source.extra().items()
-        srcmeta = list(filter(metanotblacklisted, sourceextra))
+        srcmeta = sorted(filter(metanotblacklisted, sourceextra))
 
         if ctxmeta != srcmeta:
             effects |= METACHANGED
@@ -998,7 +996,7 @@ def divergentsets(repo, ctx):
             base[tuple(nsuccset)] = n
     return [
         {b'divergentnodes': divset, b'commonpredecessor': b}
-        for divset, b in pycompat.iteritems(base)
+        for divset, b in base.items()
     ]
 
 

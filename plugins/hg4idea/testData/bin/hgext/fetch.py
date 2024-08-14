@@ -7,7 +7,6 @@
 
 '''pull, update and merge in one command (DEPRECATED)'''
 
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial.node import short
@@ -75,10 +74,9 @@ def fetch(ui, repo, source=b'default', **opts):
     Returns 0 on success.
     """
 
-    opts = pycompat.byteskwargs(opts)
-    date = opts.get(b'date')
+    date = opts.get('date')
     if date:
-        opts[b'date'] = dateutil.parsedate(date)
+        opts['date'] = dateutil.parsedate(date)
 
     parent = repo.dirstate.p1()
     branch = repo.dirstate.branch()
@@ -109,13 +107,13 @@ def fetch(ui, repo, source=b'default', **opts):
                 )
             )
 
-        path = urlutil.get_unique_pull_path(b'fetch', repo, ui, source)[0]
-        other = hg.peer(repo, opts, path)
-        ui.status(_(b'pulling from %s\n') % urlutil.hidepassword(path))
+        path = urlutil.get_unique_pull_path_obj(b'fetch', ui, source)
+        other = hg.peer(repo, pycompat.byteskwargs(opts), path)
+        ui.status(_(b'pulling from %s\n') % urlutil.hidepassword(path.loc))
         revs = None
-        if opts[b'rev']:
+        if opts['rev']:
             try:
-                revs = [other.lookup(rev) for rev in opts[b'rev']]
+                revs = [other.lookup(rev) for rev in opts['rev']]
             except error.CapabilityError:
                 err = _(
                     b"other repository doesn't support revision lookup, "
@@ -163,7 +161,7 @@ def fetch(ui, repo, source=b'default', **opts):
             # By default, we consider the repository we're pulling
             # *from* as authoritative, so we merge our changes into
             # theirs.
-            if opts[b'switch_parent']:
+            if opts['switch_parent']:
                 firstparent, secondparent = newparent, newheads[0]
             else:
                 firstparent, secondparent = newheads[0], newparent
@@ -180,14 +178,12 @@ def fetch(ui, repo, source=b'default', **opts):
 
         if not err:
             # we don't translate commit messages
-            message = cmdutil.logmessage(ui, opts) or (
+            message = cmdutil.logmessage(ui, pycompat.byteskwargs(opts)) or (
                 b'Automated merge with %s' % urlutil.removeauth(other.url())
             )
-            editopt = opts.get(b'edit') or opts.get(b'force_editor')
+            editopt = opts.get('edit') or opts.get('force_editor')
             editor = cmdutil.getcommiteditor(edit=editopt, editform=b'fetch')
-            n = repo.commit(
-                message, opts[b'user'], opts[b'date'], editor=editor
-            )
+            n = repo.commit(message, opts['user'], opts['date'], editor=editor)
             ui.status(
                 _(b'new changeset %d:%s merges remote changes with local\n')
                 % (repo.changelog.rev(n), short(n))
