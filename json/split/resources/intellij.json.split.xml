@@ -1,4 +1,10 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker"
+                    interface="com.intellij.json.codeinsight.JsonLiteralChecker"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <inspection.basicVisitor class="com.intellij.json.psi.JsonElementVisitor"/>
 
@@ -19,6 +25,9 @@
     <colorSettingsPage implementation="com.intellij.json.highlighting.JsonColorsPage"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
+    <json.jsonLiteralChecker implementation="com.intellij.json.codeinsight.StandardJsonLiteralChecker"/>
+    <json.jsonLiteralChecker implementation="com.intellij.json.json5.codeinsight.Json5JsonLiteralChecker"/>
+    <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>

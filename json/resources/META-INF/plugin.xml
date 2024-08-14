@@ -61,11 +61,6 @@
     <liveTemplateContext contextId="JSON_PROPERTY_KEYS" baseContextId="JSON" implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
 
     <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
-    <json.jsonLiteralChecker implementation="com.intellij.json.codeinsight.StandardJsonLiteralChecker"/>
-    <json.jsonLiteralChecker implementation="com.intellij.json.json5.codeinsight.Json5JsonLiteralChecker"/>
-
-    <!-- Annotators -->
-    <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
     <!-- Inspections -->
     <localInspection language="JSON" shortName="JsonStandardCompliance"
@@ -173,8 +168,6 @@
                     interface="com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonSchemaQuickFixSuppressor"
                     interface="com.jetbrains.jsonSchema.extension.JsonSchemaQuickFixSuppressor" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker" interface="com.intellij.json.codeinsight.JsonLiteralChecker"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.catalog.exclusion"
                     interface="com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.customStructureViewFactory"
