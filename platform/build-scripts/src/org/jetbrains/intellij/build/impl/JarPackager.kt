@@ -715,6 +715,7 @@ private data class AssetDescriptor(
   @JvmField val nativeFiles: List<String>?,
   @JvmField val useCacheAsTargetFile: Boolean = true,
 ) {
+  // must be sorted - we use it as is for Jar Cache
   @JvmField
   val sources: MutableList<Source> = mutableListOf()
 
@@ -839,7 +840,7 @@ private suspend fun buildJars(
                     digest.putString(layout.mainModule)
                   }
                   else {
-                    digest.putByte(0)
+                    digest.putInt(0)
                   }
                 }
 
@@ -967,7 +968,6 @@ private fun computeDistributionFileEntries(asset: AssetDescriptor, hasher: HashS
 
     var size = 0
     hasher.reset()
-    hasher.putInt(sources.size)
     for (source in sources) {
       size += source.size
       if (!dryRun) {
@@ -976,6 +976,7 @@ private fun computeDistributionFileEntries(asset: AssetDescriptor, hasher: HashS
         hasher.putInt(source.size)
       }
     }
+    hasher.putInt(sources.size)
 
     val hash = hasher.asLong
     list.add(

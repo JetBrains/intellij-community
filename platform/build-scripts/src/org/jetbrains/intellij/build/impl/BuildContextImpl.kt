@@ -360,7 +360,7 @@ class BuildContextImpl internal constructor(
           get() = false
 
         override fun updateDigest(digest: HashStream64) {
-          digest.putByte(Byte.MIN_VALUE)
+          digest.putInt(-1)
         }
 
         override suspend fun produce(targetFile: Path) {

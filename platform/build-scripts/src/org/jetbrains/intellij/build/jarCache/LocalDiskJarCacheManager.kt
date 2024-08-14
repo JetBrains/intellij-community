@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.jarCache
 
-import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -29,7 +28,7 @@ import kotlin.time.Duration.Companion.days
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".bin"
 
-private const val cacheVersion: Byte = 9
+private const val cacheVersion: Byte = 10
 
 internal class LocalDiskJarCacheManager(
   private val cacheDir: Path,
@@ -55,26 +54,29 @@ internal class LocalDiskJarCacheManager(
   ): Path {
     val items = createSourceAndCacheStrategyList(sources = sources, productionClassOutDir = productionClassOutDir)
 
+    val targetFileNamePrefix = targetFile.fileName.toString().removeSuffix(jarSuffix)
+
     val hash = Hashing.komihash5_0().hashStream()
-    hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
+    hash.putByte(cacheVersion)
     for (source in items) {
-      hash.putString(source.name)
       source.updateAssetDigest(hash)
     }
+    hash.putInt(items.size)
 
     val hash1 = java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
 
     // another 64-bit hash without `source.updateAssetDigest` to reduce the chance of collision
     hash.reset()
-    producer.updateDigest(hash)
-    for (source in items.asReversed()) {
-      hash.putString(source.name)
+    hash.putByte(cacheVersion)
+    for (source in items) {
+      hash.putLong(source.getHash())
     }
-    hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
+    hash.putInt(items.size)
+    producer.updateDigest(hash)
 
     val hash2 = java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
 
-    val cacheName = "${targetFile.fileName.toString().removeSuffix(jarSuffix)}-$hash1-$hash2"
+    val cacheName = "$targetFileNamePrefix-$hash1-$hash2"
     val cacheFileName = (cacheName + jarSuffix).takeLast(255)
     val cacheFile = cacheDir.resolve(cacheFileName)
     val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
@@ -100,7 +102,7 @@ internal class LocalDiskJarCacheManager(
       }
     }
 
-    val tempFile = cacheDir.resolve("$cacheName.temp-${java.lang.Long.toUnsignedString(Random.nextLong(), Character.MAX_RADIX)}".takeLast(255))
+    val tempFile = cacheDir.resolve("$cacheName.t-${Integer.toUnsignedString(Random.nextInt(), Character.MAX_RADIX)}".takeLast(255))
     var fileMoved = false
     try {
       producer.produce(tempFile)
@@ -118,14 +120,14 @@ internal class LocalDiskJarCacheManager(
       }
     }
 
-    val sourceCacheItems = items.map { source ->
+    val sourceCacheItems = Array(items.size) { index ->
+      val source = items.get(index)
       SourceCacheItem(
-        path = source.name,
         size = source.getSize().toInt(),
         hash = source.getHash(),
         nativeFiles = (source.source as? ZipSource)?.let { nativeFiles?.get(it) } ?: emptyList(),
       )
-    }
+    }.asList()
 
     if (!producer.useCacheAsTargetFile) {
       Files.createDirectories(targetFile.parent)
@@ -156,12 +158,6 @@ internal class LocalDiskJarCacheManager(
 
     Span.current().addEvent("zero hash for $source")
   }
-}
-
-private fun hashCommonMeta(hash: HashStream64, items: List<SourceAndCacheStrategy>, targetFile: Path) {
-  hash.putByte(cacheVersion)
-  hash.putInt(items.size)
-  hash.putString(targetFile.fileName.toString())
 }
 
 private fun checkCache(cacheMetadataFile: Path,
@@ -207,7 +203,7 @@ private fun checkSavedAndActualSources(metadata: JarCacheItem, sources: List<Sou
   }
 
   for ((index, metadataItem) in metadata.sources.withIndex()) {
-    if (items.get(index).name != metadataItem.path) {
+    if (items.get(index).getHash() != metadataItem.hash) {
       return false
     }
   }
@@ -236,7 +232,6 @@ private class JarCacheItem(
 
 @Serializable
 private class SourceCacheItem(
-  @JvmField val path: String,
   @JvmField val size: Int,
   @JvmField val hash: Long,
   @JvmField val nativeFiles: List<String> = emptyList(),
