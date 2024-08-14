@@ -119,9 +119,5 @@ public abstract class EventHandler {
   }
 
   private abstract static class MyAnAction extends AnAction {
-    @Override
-    public void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
-      super.setShortcutSet(shortcutSet);
-    }
   }
 }
