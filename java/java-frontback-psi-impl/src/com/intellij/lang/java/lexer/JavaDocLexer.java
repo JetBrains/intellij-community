@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.lexer;
 
-import com.intellij.lexer.DocCommentTokenTypes;
-import com.intellij.lexer.JavaDocTokenTypes;
-import com.intellij.lexer.LexerBase;
-import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.lexer.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.tree.IElementType;
@@ -18,7 +15,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
     this(JavaDocTokenTypes.INSTANCE, level.isAtLeast(LanguageLevel.JDK_1_5));
   }
 
-  private JavaDocLexer(DocCommentTokenTypes tokenTypes, boolean isJdk15Enabled) {
+  private JavaDocLexer(JavaDocCommentTokenTypes tokenTypes, boolean isJdk15Enabled) {
     super(new AsteriskStripperLexer(new _JavaDocLexer(isJdk15Enabled, tokenTypes), tokenTypes), tokenTypes.spaceCommentsTokenSet());
   }
 
