@@ -765,20 +765,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   @Nullable
   private static Ref<PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
-    final List<PyType> members = new ArrayList<>();
-    boolean foundAny = false;
     for (Pair<PyQualifiedNameOwner, PsiElement> pair : tryResolvingWithAliases(expression, context.getTypeContext())) {
       final Ref<PyType> typeRef = getTypeForResolvedElement(expression, pair.getFirst(), pair.getSecond(), context);
       if (typeRef != null) {
-        final PyType type = typeRef.get();
-        if (type == null) {
-          foundAny = true;
-        }
-        members.add(type);
+        return typeRef;
       }
     }
-    final PyType union = PyUnionType.union(members);
-    return union != null || foundAny ? Ref.create(union) : null;
+    return null;
   }
 
   @Nullable

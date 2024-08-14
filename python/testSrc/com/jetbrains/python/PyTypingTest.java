@@ -593,17 +593,55 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
-  // PY-18427
-  public void testConditionalType() {
-    doTest("int | str",
+  // PY-18427 PY-76243
+  public void testConditionalTypeAlias() {
+    doTest("int",
            """
              if something:
                  Type = int
              else:
                  Type = str
 
-             def f(expr: Type):
-                 pass
+             expr: Type
+             """);
+  }
+
+  public void testConditionalGenericTypeAlias() {
+    doTest("list[str]",
+           """
+             if something:
+                 Type = list
+             else:
+                 Type = set
+             
+             expr: Type[str]
+             """);
+  }
+
+  public void testTypeAliasOfUnionOfGenericTypes() {
+    doTest("list[str] | set[str]",
+           """
+             from typing import TypeVar
+             
+             T = TypeVar("T")
+             
+             Type = list[T] | set[T]
+             
+             expr: Type[str]
+             """);
+  }
+
+  public void testTypeAliasOfUnionOfGenericTypesWithDifferentArity() {
+    doTest("dict[str, int] | set[int]",
+           """
+             from typing import TypeVar
+             
+             T1 = TypeVar("T1")
+             T2 = TypeVar("T2")
+             
+             Type = dict[T1, T2] | set[T2]
+             
+             expr: Type[str, int]
              """);
   }
 
@@ -1950,28 +1988,24 @@ public class PyTypingTest extends PyTestCase {
              """
                from __future__ import annotations
                if something:
-                   Type = int
+                   x: int
                else:
-                   Type = str
-
-               def f(expr: Type):
-                   pass
+                   x: str
+               expr = x
                """);
     });
   }
 
   // PY-44974
-  public void testWithoutFromFutureImport() {
+  public void testBitwiseOrUnionWithoutFromFutureImport() {
     runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
       doTest("Union[int, str]",
              """
                if something:
-                   Type = int
+                   x: int
                else:
-                   Type = str
-
-               def f(expr: Type):
-                   pass
+                   x: str
+               expr = x
                """);
     });
   }
@@ -5785,6 +5819,17 @@ public class PyTypingTest extends PyTestCase {
       
       expr = x
       """);
+  }
+
+  // PY-76243
+  public void testGenericClassDeclaredInStubPackage() {
+    runWithAdditionalClassEntryInSdkRoots("types/" + getTestName(false) + "/site-packages", () -> {
+      doTest("MyClass[int]",
+             """
+               from pkg.mod import MyClass
+               expr: MyClass[int]
+               """);
+    });
   }
 
   private void doTestNoInjectedText(@NotNull String text) {
