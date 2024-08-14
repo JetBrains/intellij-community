@@ -142,11 +142,7 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
 
   @Override
   public Set<String> supportedFileAttributeViews() {
-    Set<String> result = new HashSet<>(myLocalFS.supportedFileAttributeViews());
-    for (Backend backend : myBackends.get()) {
-      result.addAll(backend.fileSystem.supportedFileAttributeViews());
-    }
-    return result;
+    return myLocalFS.supportedFileAttributeViews();
   }
 
   @NotNull

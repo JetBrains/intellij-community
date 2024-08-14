@@ -96,13 +96,7 @@ public final class MultiRoutingFileSystemProvider
   }
 
   public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
-    // TODO I wouldn't force using CorePosixFilteringFileSystemProvider at the top level.
-    if (ourForceDefaultFs || localFSProvider.getFileSystem(URI.create("file:///")).supportedFileAttributeViews().contains("posix")) {
-      myLocalProvider = localFSProvider;
-    }
-    else {
-      myLocalProvider = new CorePosixFilteringFileSystemProvider(localFSProvider);
-    }
+    myLocalProvider = localFSProvider;
     myFileSystem = new MultiRoutingFileSystem(this, myLocalProvider.getFileSystem(URI.create("file:///")));
   }
 
