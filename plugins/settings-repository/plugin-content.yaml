@@ -10,5 +10,3 @@
     libraries:
       eclipse.jgit.ssh.jsch:
       - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.jsch/6/org.eclipse.jgit.ssh.jsch-6.jar
-      JSch:
-      - name: $MAVEN_REPOSITORY$/com/jcraft/jsch/0/jsch-0.jar

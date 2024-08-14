@@ -828,8 +828,6 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/jruby/joni/blob/master/LICENSE"),
     LibraryLicense(name = "jps-javac-extension", libraryName = "jps-javac-extension", url = "https://github.com/JetBrains/jps-javac-extension/")
       .apache("https://github.com/JetBrains/jps-javac-extension/blob/master/LICENSE.txt"),
-    LibraryLicense(libraryName = "JSch", url = "http://www.jcraft.com/jsch/").newBsd("http://www.jcraft.com/jsch/LICENSE.txt")
-      .suppliedByPersons("Atsuhiko Yamanaka"),
     LibraryLicense(name = "jsch", libraryName = "eclipse.jgit.ssh.jsch", url = "http://www.jcraft.com/jsch/")
       .newBsd("http://www.jcraft.com/jsch/LICENSE.txt")
       .suppliedByPersons("Atsuhiko Yamanaka"),
