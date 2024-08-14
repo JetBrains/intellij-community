@@ -3,7 +3,6 @@ package com.intellij.platform.kernel.util
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.collectEntityClasses
 import fleet.kernel.*
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.modules.SerializersModule
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
 suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend CoroutineScope.() -> T) {
@@ -51,7 +49,6 @@ val CommonInstructionSet: InstructionSet =
 
 object ReadTracker {
   private val readTrackingIndex = ReadTrackingIndex()
-  private val lambdaCounter = AtomicInteger()
   suspend fun subscribeForChanges() {
     kernel().subscribe(Channel.UNLIMITED) { initial, changes ->
       changes
@@ -78,24 +75,6 @@ object ReadTracker {
           }
         }
     }
-  }
-
-  @RequiresEdt
-  fun forget(id: Int) {
-    readTrackingIndex.forget(id)
-  }
-
-  /**
-   * returns id of registered lambda, it should be passed to forget on disposing
-   */
-  @RequiresEdt
-  fun reactive(f: () -> Unit): Int {
-    val id = lambdaCounter.incrementAndGet()
-    val lambdaInfo = ReadTrackingIndex.LambdaInfo(id, f)
-    asOf(DbContext.threadBound.impl.withReadTrackingContext(readTrackingIndex)) {
-      readTrackingIndex.runLambda(lambdaInfo)
-    }
-    return id;
   }
 }
 
