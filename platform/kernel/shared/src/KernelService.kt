@@ -4,10 +4,6 @@ package com.intellij.platform.kernel
 import com.intellij.openapi.application.ApplicationManager
 import fleet.kernel.Kernel
 import fleet.kernel.kernel
-import fleet.kernel.withCondition
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import kotlin.coroutines.CoroutineContext
 
 interface KernelService {
@@ -23,11 +19,5 @@ interface KernelService {
 
     val kernelCoroutineContext: CoroutineContext
       get() = instance.coroutineContext
-
-    fun <T> CoroutineScope.saga(condition: () -> Boolean = { true }, block: suspend CoroutineScope.() -> T): Deferred<T> {
-      return async(kernelCoroutineContext) {
-        withCondition(condition, block)
-      }
-    }
   }
 }
