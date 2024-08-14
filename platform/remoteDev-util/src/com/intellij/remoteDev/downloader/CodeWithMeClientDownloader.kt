@@ -226,6 +226,7 @@ object CodeWithMeClientDownloader {
 
     val sessionInfo = JetBrainsClientDownloadInfo(
       hostBuildNumber = hostBuildNumber,
+      clientBuildNumber = clientBuildNumber, 
       compatibleClientUrl = clientDownloadUrl,
       compatibleJreUrl = jreDownloadUrl,
       downloadPgpPublicKeyUrl = pgpPublicKeyUrl
@@ -346,9 +347,9 @@ object CodeWithMeClientDownloader {
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.hostBuildNumber)
+    val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.clientBuildNumber)
     if (embeddedClientLauncher != null) {
-      return ExtractedJetBrainsClientData(Path(PathManager.getHomePath()), null, sessionInfoResponse.hostBuildNumber)
+      return ExtractedJetBrainsClientData(Path(PathManager.getHomePath()), null, sessionInfoResponse.clientBuildNumber)
     }
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
@@ -359,7 +360,7 @@ object CodeWithMeClientDownloader {
       url = clientUrl,
       tempDir = tempDir,
       cachesDir = config.clientCachesDir,
-      includeInManifest = getJetBrainsClientManifestFilter(sessionInfoResponse.hostBuildNumber),
+      includeInManifest = getJetBrainsClientManifestFilter(sessionInfoResponse.clientBuildNumber),
     )
 
     val jdkUrl = sessionInfoResponse.compatibleJreUrl?.let { URI(it) }
@@ -527,7 +528,7 @@ object CodeWithMeClientDownloader {
       if (!guestSucceeded || !jdkSucceeded) error("Guest or jdk was not downloaded")
 
       LOG.info("Download of guest and jdk succeeded")
-      return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = jdkData?.targetPath, version = sessionInfoResponse.hostBuildNumber)
+      return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = jdkData?.targetPath, version = sessionInfoResponse.clientBuildNumber)
     }
     catch(e: ProcessCanceledException) {
       LOG.info("Download was canceled")

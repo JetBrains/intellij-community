@@ -142,7 +142,7 @@ object CodeWithMeGuestLauncher {
       url = clientUrl,
       tempDir = tempDir,
       cachesDir = service<JetBrainsClientDownloaderConfigurationProvider>().clientCachesDir,
-      includeInManifest = CodeWithMeClientDownloader.getJetBrainsClientManifestFilter(sessionInfo.hostBuildNumber),
+      includeInManifest = CodeWithMeClientDownloader.getJetBrainsClientManifestFilter(sessionInfo.clientBuildNumber),
     )
     val lifetime = aLifetime ?: project?.createLifetime() ?: Lifetime.Eternal
     val clientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(
