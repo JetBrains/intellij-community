@@ -235,10 +235,12 @@ function addContexts(sessionDiv, popup, lookup) {
   const contextJson = lookup["additionalInfo"]["cc_context"]
   addButtonToCopyCompletionContext(contextJson, sessionDiv, popup, lookup)
 
-  const contextObject = JSON.parse(contextJson)
-  contextObject.contexts.items.forEach(context => {
-    popup.appendChild(createContextBlock(context))
-  })
+  if (contextJson !== "") {
+    const contextObject = JSON.parse(contextJson)
+    contextObject.contexts.items.forEach(context => {
+      popup.appendChild(createContextBlock(context))
+    })
+  }
 }
 
 function createContextBlock(context) {
