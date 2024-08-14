@@ -45,7 +45,7 @@ internal object InlineCompletionLogs : CounterUsagesCollector() {
 
     // group logs to the phase so that each phase has its own object field
     val phases: Map<Phase, ObjectEventField> = Phase.entries.associateWith { phase ->
-      ObjectEventField(phase.name, phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second }.toTypedArray())
+      ObjectEventField(phase.name.lowercase(), phase.description, *phaseToFieldList.filter { phase == it.first }.map { it.second }.toTypedArray())
     }
 
     val eventFieldNameToPhase: Map<String, Phase> = phaseToFieldList.associate { it.second.name to it.first }
