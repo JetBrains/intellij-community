@@ -17696,7 +17696,7 @@ f:com.intellij.ide.util.FileStructurePopup
 - showWithResult():org.jetbrains.concurrency.Promise
 c:com.intellij.ide.util.MemberChooser
 - com.intellij.openapi.ui.DialogWrapper
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - p:myAllowEmptySelection:Z
 - p:myComparator:java.util.Comparator
 - pf:myContainerNodes:java.util.ArrayList
@@ -17727,7 +17727,6 @@ c:com.intellij.ide.util.MemberChooser
 - p:doSort():V
 - p:fillToolbarActions(com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - p:getAllContainersNodeName():java.lang.String
-- getData(java.lang.String):java.lang.Object
 - p:getDimensionServiceKey():java.lang.String
 - getOptionControls():javax.swing.JComponent[]
 - getPreferredFocusedComponent():javax.swing.JComponent
@@ -17751,6 +17750,7 @@ c:com.intellij.ide.util.MemberChooser
 - setCopyJavadocVisible(Z):V
 - p:setShowClasses(Z):V
 - p:supportsNestedContainers():Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pf:com.intellij.ide.util.MemberChooser$ContainerNode
 - com.intellij.ide.util.MemberChooser$ParentNode
 - <init>(javax.swing.tree.DefaultMutableTreeNode,com.intellij.codeInsight.generation.MemberChooserObject,com.intellij.openapi.util.Ref):V

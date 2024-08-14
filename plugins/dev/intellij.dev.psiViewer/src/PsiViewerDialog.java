@@ -14,8 +14,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityKt;
 import com.intellij.openapi.application.ModalityState;
@@ -76,7 +76,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +100,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiViewerDialog extends DialogWrapper implements DataProvider {
+public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
   private static final Color BOX_COLOR = new JBColor(new Color(0xFC6C00), new Color(0xDE6C01));
   public static final Logger LOG = Logger.getInstance(PsiViewerDialog.class);
   private final Project myProject;
@@ -747,20 +746,12 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     }
   }
 
-
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      Object selection =
-        myPsiTree.hasFocus() ? TreeUtil.getLastUserObject(myPsiTree.getSelectionPath()) :
-        myRefs.hasFocus() ? myRefs.getSelectedValue() : null;
-      return selection == null ? null : (DataProvider)slowId -> getSlowData(slowId, selection);
-    }
-    return null;
-  }
-
-  private @Nullable PsiFile getSlowData(@NonNls String dataId, @NotNull Object selection) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    Object selection =
+      myPsiTree.hasFocus() ? TreeUtil.getLastUserObject(myPsiTree.getSelectionPath()) :
+      myRefs.hasFocus() ? myRefs.getSelectedValue() : null;
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       String fqn;
       if (selection instanceof ViewerNodeDescriptor descriptor) {
         Object elementObject = descriptor.getElement();
@@ -776,8 +767,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         fqn = null;
       }
       return fqn == null ? null : getContainingFileForClass(fqn);
-    }
-    return null;
+    });
   }
 
   private class MyPsiTreeSelectionListener implements TreeSelectionListener {

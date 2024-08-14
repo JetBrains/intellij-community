@@ -47,7 +47,7 @@ import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsLast;
 
-public class MemberChooser<T extends ClassMember> extends DialogWrapper implements DataProvider {
+public class MemberChooser<T extends ClassMember> extends DialogWrapper implements UiCompatibleDataProvider {
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
   protected JComponent[] myOptionControls;
@@ -660,12 +660,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      if (!(ContainerUtil.getFirstItem(mySelectedElements) instanceof ClassMemberWithElement member)) return null;
-      return (DataProvider) slowId -> CommonDataKeys.PSI_ELEMENT.is(slowId) ? member.getElement() : null;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (!(ContainerUtil.getFirstItem(mySelectedElements) instanceof ClassMemberWithElement member)) return;
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> member.getElement());
   }
 
   private final class MyTreeSelectionListener implements TreeSelectionListener {

@@ -15,6 +15,7 @@ import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.LangBundle;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -742,36 +743,28 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     sink.set(PlatformDataKeys.CUT_PROVIDER, myCopyPasteDelegator.getCutProvider());
     sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyPasteDelegator.getCopyProvider());
     sink.set(PlatformDataKeys.PASTE_PROVIDER, myCopyPasteDelegator.getPasteProvider());
+    sink.set(PlatformCoreDataKeys.HELP_ID, getHelpID());
 
     JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreePath::getLastPathComponent);
-    sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER,
-                dataId -> getSlowData(dataId, selection));
-    sink.set(PlatformCoreDataKeys.HELP_ID, getHelpID());
-  }
-
-  private static Object getSlowData(@NotNull String dataId, @NotNull JBIterable<Object> selection) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       PsiElement element = getSelectedValues(selection).filter(PsiElement.class).single();
       return element != null && element.isValid() ? element : null;
-    }
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       return PsiUtilCore.toPsiElementArray(getSelectedValues(selection).filter(PsiElement.class).toList());
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       List<Object> list = selection.map(StructureViewComponent::unwrapNavigatable).toList();
       Object[] selectedElements = list.isEmpty() ? null : ArrayUtil.toObjectArray(list);
       if (selectedElements == null || selectedElements.length == 0) return null;
-      if (selectedElements[0] instanceof Navigatable) {
-        return selectedElements[0];
-      }
-    }
-    if (CommonDataKeys.SYMBOLS.is(dataId)) {
+      return selectedElements[0] instanceof Navigatable o ? o : null;
+    });
+    sink.lazy(CommonDataKeys.SYMBOLS, () -> {
       return getSelectedValues(selection)
-        .filter(DelegatingPsiElementWithSymbolPointer.class)
-        .filterMap(it -> it.getSymbolPointer().dereference())
+        .filterMap(it -> it instanceof DelegatingPsiElementWithSymbolPointer o ? o.getSymbolPointer().dereference() : null)
+        .filter(Symbol.class)
         .toList();
-    }
-    return null;
+    });
   }
 
   @Override
