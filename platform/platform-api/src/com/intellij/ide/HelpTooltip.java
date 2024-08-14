@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -600,7 +601,7 @@ public class HelpTooltip {
       return;
     }
 
-    popupAlarm.request(delay, () -> {
+    popupAlarm.request(delay, () -> WriteIntentReadAction.run((Runnable)() ->{
       initialShowScheduled = false;
       if (masterPopupOpenCondition != null && !masterPopupOpenCondition.getAsBoolean()) {
         return;
@@ -629,7 +630,7 @@ public class HelpTooltip {
         int dismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
         scheduleHide(true, dismissDelay);
       }
-    });
+    }));
   }
 
   private void scheduleHide(boolean force, int delay) {

@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -38,7 +39,10 @@ abstract class CodeProcessorCheckinHandler(
         }
       }
     }
-    FileDocumentManager.getInstance().saveAllDocuments()
+
+    writeIntentReadAction {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
 
     return null
   }

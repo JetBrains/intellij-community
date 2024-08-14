@@ -152,11 +152,11 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         releaseEditor()
         removeAll()
         if (isDisposed) return@withContext
-        myEditor = createEditor(psiFile, document)
-        lineHeight = myEditor!!.lineHeight
-        myEditor!!.setBorder(if (myIsEditor) null else JBEmptyBorder(0, UIUtil.LARGE_VGAP, 0, 0))
         //maybe readaction
         writeIntentReadAction {
+          myEditor = createEditor(psiFile, document)
+          lineHeight = myEditor!!.lineHeight
+          myEditor!!.setBorder(if (myIsEditor) null else JBEmptyBorder(0, UIUtil.LARGE_VGAP, 0, 0))
           add(myEditor!!.component, BorderLayout.CENTER)
         }
         invalidate()

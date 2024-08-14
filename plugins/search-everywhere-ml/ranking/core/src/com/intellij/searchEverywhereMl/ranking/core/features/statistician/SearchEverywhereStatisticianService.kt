@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.ranking.core.features.statistician
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
@@ -26,7 +27,9 @@ class SearchEverywhereStatisticianService(private val coroutineScope: CoroutineS
       val manager = StatisticsManager.getInstance()
 
       withContext(Dispatchers.EDT) {
-        manager.incUseCount(info)
+        writeIntentReadAction {
+          manager.incUseCount(info)
+        }
       }
     }
   }

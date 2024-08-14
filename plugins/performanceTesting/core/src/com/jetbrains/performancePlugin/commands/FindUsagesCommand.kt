@@ -74,11 +74,12 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
           throw Exception("No editor is opened")
         }
 
-        val offset = writeIntentReadAction { editor.caretModel.offset }
+        val (offset, scope) = writeIntentReadAction {
+          Pair(editor.caretModel.offset, FindUsagesOptions.findScopeByName(project, null, options.scope))
+        }
 
         AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100; we need to find all usages to compare
         val popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
-        val scope = FindUsagesOptions.findScopeByName(project, null, options.scope)
 
         val element = smartReadAction(project) {
           if (GotoDeclarationAction.findElementToShowUsagesOf(editor, offset) == null) {

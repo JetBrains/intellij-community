@@ -3,6 +3,7 @@ package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -412,7 +413,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     if (myInputMap.get(stroke) != null) {
       final Action action = myActionMap.get(myInputMap.get(stroke));
       if (action != null && action.isEnabled()) {
-        action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()));
+        WriteIntentReadAction.run(
+          (Runnable)() -> action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()))
+        );
         event.consume();
         return true;
       }

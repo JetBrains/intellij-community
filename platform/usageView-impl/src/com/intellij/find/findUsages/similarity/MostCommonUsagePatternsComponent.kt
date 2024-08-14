@@ -184,7 +184,10 @@ internal class MostCommonUsagePatternsComponent(
             val previewComponent: UsagePreviewComponent?
             if (index < previewComponents.size) {
               previewComponent = previewComponents[index]
-              previewComponent.renderCluster(loadedSnippet.usageInfo, loadedSnippet.renderingData)
+              //maybe readaction
+              writeIntentReadAction {
+                previewComponent.renderCluster(loadedSnippet.usageInfo, loadedSnippet.renderingData)
+              }
             }
             else {
               previewComponent = writeIntentReadAction { create(usageView, loadedSnippet.usageInfo, loadedSnippet.renderingData, this) }

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.blockingContext
@@ -203,7 +204,7 @@ object EditSourceOnDoubleClickHandler {
           project.serviceAsync<NavigationService>().navigate(asyncContext, options)
           whenPerformed?.let { task ->
             withContext(Dispatchers.EDT) {
-              blockingContext {
+              writeIntentReadAction {
                 task.run()
               }
             }
