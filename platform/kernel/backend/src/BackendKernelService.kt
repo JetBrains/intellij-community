@@ -39,13 +39,10 @@ internal class RemoteKernelProvider : RemoteApiProvider {
 
 internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelService {
 
-  override val kernel: Kernel
-  override val rete: Rete
+  private val kernelDeferred: CompletableDeferred<Kernel> = CompletableDeferred()
+  private val reteDeferred: CompletableDeferred<Rete> = CompletableDeferred()
 
   init {
-    val kernelDeferred: CompletableDeferred<Kernel> = CompletableDeferred()
-    val reteDeferred : CompletableDeferred<Rete> = CompletableDeferred()
-
     coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
       withKernel(middleware = LeaderKernelMiddleware(KernelRpcSerialization, CommonInstructionSet.encoder())) {
         coroutineScope {
@@ -58,7 +55,15 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
         }
       }
     }
-    kernel = runBlocking { kernelDeferred.await() }
-    rete = runBlocking { reteDeferred.await() }
   }
+
+  override val kernel: Kernel
+    get() = runBlocking {
+      kernelDeferred.await()
+    }
+
+  override val rete: Rete
+    get() = runBlocking {
+      reteDeferred.await()
+    }
 }
