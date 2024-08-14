@@ -6,10 +6,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ComboboxSpeedSearch
-import com.intellij.ui.MutableCollectionComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
@@ -167,9 +164,9 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
                                     GitBundle.message("branch.direction.panel.head.repo.label"),
                                     ComboBox(repoModel).apply {
                                       renderer = SimpleListCellRenderer.create("") { it.repositoryPath }
-                                    }.also {
-                                      ComboboxSpeedSearch.installSpeedSearch(it, GitRepositoryMappingData::repositoryPath)
-                                    }) {
+                                      isSwingPopup = false
+                                    }
+      ) {
         applySelection(repoModel.selected, branchModel.selected)
       }
 
@@ -209,10 +206,9 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         row(GitBundle.message("branch.direction.panel.branch.label")) {
           branchComponent = comboBox(branchModel, SimpleListCellRenderer.create("", GitBranch::getName))
             .align(AlignX.FILL)
-            .also {
-              ComboboxSpeedSearch.installSpeedSearch(it.component, GitBranch::getName)
+            .component.apply {
+              isSwingPopup = false
             }
-            .component
         }
         row {
           button(GitBundle.message("branch.direction.panel.save.button")) {
