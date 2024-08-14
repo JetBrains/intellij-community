@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class DisableInspectionToolAction extends IntentionAndQuickFixAction implements Iconable {
+public class DisableInspectionToolAction extends IntentionAndQuickFixAction implements Iconable, DumbAware {
   private final String myToolId;
 
   public DisableInspectionToolAction(LocalInspectionTool tool) {

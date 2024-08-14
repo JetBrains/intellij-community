@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.function.Consumer;
 
-public final class EditInspectionToolsSettingsAction implements IntentionAction, Iconable, HighPriorityAction {
+public final class EditInspectionToolsSettingsAction implements IntentionAction, Iconable, HighPriorityAction, DumbAware {
   private final String myShortName;
 
   public EditInspectionToolsSettingsAction(@NotNull HighlightDisplayKey key) {

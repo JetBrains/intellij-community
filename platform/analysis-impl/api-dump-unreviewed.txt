@@ -934,6 +934,7 @@ a:com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspecti
 - p:setText(java.lang.String):V
 c:com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction
 - com.intellij.codeInspection.IntentionAndQuickFixAction
+- com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String):V
 - applyFix(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - getFamilyName():java.lang.String

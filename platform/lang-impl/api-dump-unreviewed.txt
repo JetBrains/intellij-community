@@ -9638,6 +9638,7 @@ f:com.intellij.codeInspection.ex.DescriptorComposer
 - s:quickFixTexts(com.intellij.codeInspection.reference.RefEntity,com.intellij.codeInspection.ui.InspectionToolPresentation):java.lang.String[]
 c:com.intellij.codeInspection.ex.DisableInspectionToolAction
 - com.intellij.codeInspection.IntentionAndQuickFixAction
+- com.intellij.openapi.project.DumbAware
 - com.intellij.openapi.util.Iconable
 - <init>(com.intellij.codeInsight.daemon.HighlightDisplayKey):V
 - <init>(com.intellij.codeInspection.LocalInspectionTool):V
@@ -9651,6 +9652,7 @@ c:com.intellij.codeInspection.ex.DisableInspectionToolAction
 f:com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction
 - com.intellij.codeInsight.intention.HighPriorityAction
 - com.intellij.codeInsight.intention.IntentionAction
+- com.intellij.openapi.project.DumbAware
 - com.intellij.openapi.util.Iconable
 - <init>(com.intellij.codeInsight.daemon.HighlightDisplayKey):V
 - s:editSettings(com.intellij.openapi.project.Project,com.intellij.codeInspection.ex.InspectionProfileImpl,java.util.function.Consumer):Z
