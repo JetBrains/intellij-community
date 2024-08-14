@@ -63,9 +63,11 @@ class PythonNewEnvironmentDialogNavigator {
   lateinit var newEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
   lateinit var existingEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
 
-  fun navigateTo(newMode: PythonInterpreterSelectionMode? = null,
-                 newMethod: PythonInterpreterSelectionMethod? = null,
-                 newManager: PythonSupportedEnvironmentManagers? = null) {
+  fun navigateTo(
+    newMode: PythonInterpreterSelectionMode? = null,
+    newMethod: PythonInterpreterSelectionMethod? = null,
+    newManager: PythonSupportedEnvironmentManagers? = null,
+  ) {
     newMode?.let { selectionMode?.set(it) }
     newMethod?.let { method ->
       selectionMethod.set(method)
@@ -106,12 +108,12 @@ class PythonNewEnvironmentDialogNavigator {
   /**
    * Loads all fields from storage ([selectionMode] is only loaded when included into `onlyAllowedSelectionModes`)
    */
-  internal fun restoreLastState(onlyAllowedSelectionModes: Collection<PythonInterpreterSelectionMode> = PythonInterpreterSelectionMode.entries.toSet()) {
+  internal fun restoreLastState(allowedInterpreterTypes: Collection<PythonInterpreterSelectionMode>) {
     val properties = PropertiesComponent.getInstance()
 
     val modeString = properties.getValue(FAV_MODE) ?: return
     val mode = PythonInterpreterSelectionMode.valueOf(modeString)
-    if (mode !in onlyAllowedSelectionModes) return
+    if (mode !in allowedInterpreterTypes) return
     selectionMode?.set(mode)
 
     if (mode == CUSTOM) {
@@ -194,9 +196,11 @@ class PythonEnvironmentComboBoxRenderer : ColoredListCellRenderer<Any>() {
   }
 }
 
-internal fun Row.pythonInterpreterComboBox(selectedSdkProperty: ObservableMutableProperty<PythonSelectableInterpreter?>, // todo not sdk
-                                           model: PythonAddInterpreterModel,
-                                           onPathSelected: (String) -> Unit, busyState: StateFlow<Boolean>? = null): Cell<PythonInterpreterComboBox> {
+internal fun Row.pythonInterpreterComboBox(
+  selectedSdkProperty: ObservableMutableProperty<PythonSelectableInterpreter?>, // todo not sdk
+  model: PythonAddInterpreterModel,
+  onPathSelected: (String) -> Unit, busyState: StateFlow<Boolean>? = null,
+): Cell<PythonInterpreterComboBox> {
 
   val comboBox = PythonInterpreterComboBox(selectedSdkProperty, model, onPathSelected)
   val cell = cell(comboBox)
@@ -221,9 +225,11 @@ internal fun Row.pythonInterpreterComboBox(selectedSdkProperty: ObservableMutabl
 
 }
 
-class PythonInterpreterComboBox(val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
-                                val controller: PythonAddInterpreterModel,
-                                val onPathSelected: (String) -> Unit) : ComboBox<PythonSelectableInterpreter?>() {
+class PythonInterpreterComboBox(
+  val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
+  val controller: PythonAddInterpreterModel,
+  val onPathSelected: (String) -> Unit,
+) : ComboBox<PythonSelectableInterpreter?>() {
 
   private lateinit var itemsFlow: StateFlow<List<PythonSelectableInterpreter>>
   val items: List<PythonSelectableInterpreter>
@@ -296,10 +302,12 @@ class PythonInterpreterComboBox(val backingProperty: ObservableMutableProperty<P
  * @param makeTemporaryEditable if the property is set then [this] ComboBox is made temporary editable while displaying
  *                              animated loader icon
  */
-private fun ComboBox<*>.displayLoaderWhen(loading: SharedFlow<Boolean>,
-                                          makeTemporaryEditable: Boolean = false,
-                                          scope: CoroutineScope,
-                                          uiContext: CoroutineContext) {
+private fun ComboBox<*>.displayLoaderWhen(
+  loading: SharedFlow<Boolean>,
+  makeTemporaryEditable: Boolean = false,
+  scope: CoroutineScope,
+  uiContext: CoroutineContext,
+) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     loading.collectLatest { currentValue ->
       withContext(uiContext) {
@@ -309,15 +317,19 @@ private fun ComboBox<*>.displayLoaderWhen(loading: SharedFlow<Boolean>,
   }
 }
 
-internal fun <T : TextFieldWithBrowseButton> Cell<T>.displayLoaderWhen(loading: StateFlow<Boolean>,
-                                                                       scope: CoroutineScope,
-                                                                       uiContext: CoroutineContext): Cell<T> =
+internal fun <T : TextFieldWithBrowseButton> Cell<T>.displayLoaderWhen(
+  loading: StateFlow<Boolean>,
+  scope: CoroutineScope,
+  uiContext: CoroutineContext,
+): Cell<T> =
   applyToComponent { displayLoaderWhen(loading, scope, uiContext) }
 
-internal fun <T, C : ComboBox<T>> Cell<C>.displayLoaderWhen(loading: SharedFlow<Boolean>,
-                                                            makeTemporaryEditable: Boolean = false,
-                                                            scope: CoroutineScope,
-                                                            uiContext: CoroutineContext): Cell<C> =
+internal fun <T, C : ComboBox<T>> Cell<C>.displayLoaderWhen(
+  loading: SharedFlow<Boolean>,
+  makeTemporaryEditable: Boolean = false,
+  scope: CoroutineScope,
+  uiContext: CoroutineContext,
+): Cell<C> =
   applyToComponent {
     if (makeTemporaryEditable && editor.editorComponent !is ExtendableTextField) {
       editor = object : BasicComboBoxEditor() {
@@ -375,11 +387,13 @@ private fun ExtendableTextComponent.removeLoadingExtension() {
 
 const val UNKNOWN_EXECUTABLE = "<unknown_executable>"
 
-fun Panel.executableSelector(executable: ObservableMutableProperty<String>,
-                             validationRequestor: DialogValidationRequestor,
-                             labelText: @Nls String,
-                             missingExecutableText: @Nls String,
-                             installAction: ActionLink? = null): Cell<TextFieldWithBrowseButton> {
+fun Panel.executableSelector(
+  executable: ObservableMutableProperty<String>,
+  validationRequestor: DialogValidationRequestor,
+  labelText: @Nls String,
+  missingExecutableText: @Nls String,
+  installAction: ActionLink? = null,
+): Cell<TextFieldWithBrowseButton> {
   var textFieldCell: Cell<TextFieldWithBrowseButton>? = null
   var validationPanel: JPanel? = null
 

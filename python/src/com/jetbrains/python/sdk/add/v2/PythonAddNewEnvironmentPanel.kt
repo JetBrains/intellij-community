@@ -120,8 +120,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
         updateVenvLocationHint()
       }
 
-      // todo don't forget allowedEnvs
-      model.navigator.restoreLastState()
+      model.navigator.restoreLastState(allowedInterpreterTypes)
     }
   }
 
