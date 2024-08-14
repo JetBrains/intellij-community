@@ -6588,6 +6588,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayEditorMouseLis
 - com.intellij.openapi.editor.event.EditorMouseListener
 - <init>():V
 - mouseClicked(com.intellij.openapi.editor.event.EditorMouseEvent):V
+- mouseReleased(com.intellij.openapi.editor.event.EditorMouseEvent):V
 f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsMouseMotionListener
 - com.intellij.openapi.editor.event.EditorMouseMotionListener
 - <init>():V
