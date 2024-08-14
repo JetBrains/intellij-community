@@ -52,6 +52,8 @@ object JBUIScale {
       thisLogger().error(Throwable("Must be not computed before that call", SYS_SCALE_ACCESS_STACK_TRACE.get()))
     }
 
+    JreHiDpiUtil.preload()
+
     val coroutineTracerShim = CoroutineTracerShim.coroutineTracer
     coroutineTracerShim.span("system scale factor computation") {
       systemScaleFactor.value = computeSystemScaleFactor(uiDefaults)
@@ -70,6 +72,7 @@ object JBUIScale {
     if (systemScaleFactor.isInitialized()) {
       thisLogger().error(Throwable("Must be not computed before that call", SYS_SCALE_ACCESS_STACK_TRACE.get()))
     }
+    JreHiDpiUtil.preload()
 
     val coroutineTracerShim = CoroutineTracerShim.coroutineTracer
     coroutineTracerShim.span("system scale factor computation") {
