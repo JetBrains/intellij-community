@@ -467,7 +467,7 @@ class ClientIdContextElement(val clientId: ClientId?) : AbstractCoroutineContext
 
   override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
-  override fun toString(): String = if (creationTrace != null) "$clientId. Created at:\r${creationTrace.stackTraceToString()}" else "$clientId"
+  override fun toString(): String = if (creationTrace != null) "${formatClientId()}. Created at:\r${creationTrace.stackTraceToString()}" else "${formatClientId()}"
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -481,6 +481,8 @@ class ClientIdContextElement(val clientId: ClientId?) : AbstractCoroutineContext
   override fun hashCode(): Int {
     return clientId?.hashCode() ?: 0
   }
+
+  private fun formatClientId(): String = "${clientId ?: "ClientId=<null>"}"
 }
 
 val CoroutineContext.clientIdContextElement: ClientIdContextElement?
