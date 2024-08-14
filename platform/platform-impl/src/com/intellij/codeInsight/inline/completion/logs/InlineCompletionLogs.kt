@@ -57,12 +57,10 @@ internal object InlineCompletionLogs : CounterUsagesCollector() {
     )
   }
 
-  class Listener : InlineCompletionEventAdapter {
-    private var editor: Editor? = null
+  class Listener(private val editor: Editor) : InlineCompletionEventAdapter {
 
     override fun onRequest(event: InlineCompletionEventType.Request) {
       InlineCompletionLogsContainer.create(event.request.editor)
-      editor = event.request.editor
       // TODO log request_id
       // todo async log context features
     }
@@ -72,8 +70,7 @@ internal object InlineCompletionLogs : CounterUsagesCollector() {
     }
 
     override fun onHide(event: InlineCompletionEventType.Hide) {
-      val curEditor = editor ?: return
-      val container = InlineCompletionLogsContainer.remove(curEditor) ?: return
+      val container = InlineCompletionLogsContainer.remove(editor) ?: return
       InlineCompletionLogsScopeProvider.getInstance().cs.launch {
         container.log()
       }

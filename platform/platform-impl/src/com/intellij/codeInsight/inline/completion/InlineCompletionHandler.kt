@@ -66,7 +66,7 @@ class InlineCompletionHandler(
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener()) // todo remove
-    addEventListener(InlineCompletionLogs.Listener())
+    addEventListener(InlineCompletionLogs.Listener(editor))
     InlineCompletionOnboardingListener.createIfOnboarding(editor)?.let(::addEventListener)
   }
 
