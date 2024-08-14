@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
@@ -55,12 +57,16 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
 
     val project = e.project
     if (project != null) {
-      openInEditor(file, project)
+      WriteIntentReadAction.run {
+        openInEditor(file, project)
+      }
     }
     else {
       val frame = WelcomeFrame.getInstance() as JFrame?
       if (frame != null) {
-        openInDialog(file, frame)
+        WriteIntentReadAction.run {
+          openInDialog(file, frame)
+        }
       }
     }
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.TextEditor
@@ -18,16 +20,19 @@ fun navigateAndHint(project: Project,
                     parameters: ShowUsagesParameters,
                     actionHandler: ShowUsagesActionHandler,
                     onReady: Runnable) {
-  (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Main) {
+  // Code below need EDT
+  (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
     NavigationService.getInstance(project).navigate(usage, NavigationOptions.defaultOptions().requestFocus(true))
-    val newEditor = getEditorFor(usage)
-    if (newEditor == null) {
-      onReady.run()
-      return@launch
-    }
+    writeIntentReadAction {
+      val newEditor = getEditorFor(usage)
+      if (newEditor == null) {
+        onReady.run()
+        return@writeIntentReadAction
+      }
 
-    ShowUsagesAction.hint(false, hint, parameters.withEditor(newEditor), actionHandler)
-    onReady.run()
+      ShowUsagesAction.hint(false, hint, parameters.withEditor(newEditor), actionHandler)
+      onReady.run()
+    }
   }
 }
 
