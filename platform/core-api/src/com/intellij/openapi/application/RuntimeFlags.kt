@@ -24,4 +24,4 @@ val isMessageBusThrowsWhenDisposed: Boolean =
  */
 @get:ApiStatus.Internal
 val isCoroutineWILEnabled: Boolean =
-  System.getProperty(COROUTINE_WIL_PROPERTY, "false").toBoolean()
+  System.getProperty(COROUTINE_WIL_PROPERTY, "ture").toBoolean()
