@@ -69,9 +69,12 @@ private class DocRenderNecromancer(
       if (DocRenderManager.isDocRenderingEnabled(editor)) {
         withContext(Dispatchers.EDT) {
           if (recipe.isValid()) {
-            DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
-            DocRenderPassFactory.forceRefreshOnNextPass(editor)
-            FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DOC_RENDER)
+            //maybe readaction
+            writeIntentReadAction {
+              DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
+              DocRenderPassFactory.forceRefreshOnNextPass(editor)
+              FUSProjectHotStartUpMeasurer.markupRestored(recipe, MarkupType.DOC_RENDER)
+            }
           }
         }
       }

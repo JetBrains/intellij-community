@@ -14,6 +14,8 @@ import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.actionSystem.impl.isEnterKeyStroke
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.IdeFocusManager
@@ -48,7 +50,10 @@ internal class MacNativeActionMenuItem(action: AnAction,
       EventQueue.invokeLater {
         if (presentation.isEnabledInModalContext || context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
           (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-            performAction(actionRef.getAction(), place, presentation.clone(), context)
+            //todo fix all clients and remove global lock here
+            WriteIntentReadAction.run {
+              performAction(actionRef.getAction(), place, presentation.clone(), context)
+            }
           }
         }
       }
