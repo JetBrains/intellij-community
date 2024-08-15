@@ -138,7 +138,7 @@
                         </constraints>
                         <properties>
                           <selected value="true"/>
-                          <text resource-bundle="messages/KotlinBundle" key="checkbox.text.search.references"/>
+                          <text resource-bundle="messages/KotlinBundle" key="checkbox.text.update.usages"/>
                         </properties>
                       </component>
                       <component id="cc60e" class="javax.swing.JCheckBox" binding="cbDeleteEmptySourceFiles">

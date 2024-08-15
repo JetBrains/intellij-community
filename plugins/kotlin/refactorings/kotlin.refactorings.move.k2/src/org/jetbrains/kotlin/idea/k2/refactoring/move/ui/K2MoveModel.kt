@@ -46,7 +46,7 @@ sealed class K2MoveModel {
 
     abstract val inSourceRoot: Boolean
 
-    val searchReferences: Setting = Setting.SEARCH_REFERENCES
+    val updateUsages: Setting = Setting.UPDATE_USAGES
 
     val mppDeclarations: Setting = Setting.MPP_DECLARATIONS
 
@@ -85,13 +85,13 @@ sealed class K2MoveModel {
         },
 
 
-        SEARCH_REFERENCES(KotlinBundle.message("checkbox.text.search.references")) {
+        UPDATE_USAGES(KotlinBundle.message("checkbox.text.update.usages")) {
             override var state: Boolean
                 get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
+                    return KotlinCommonRefactoringSettings.getInstance().MOVE_UPDATE_USAGES
                 }
                 set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES = value
+                    KotlinCommonRefactoringSettings.getInstance().MOVE_UPDATE_USAGES = value
                 }
         },
 
@@ -146,7 +146,7 @@ sealed class K2MoveModel {
         override fun toDescriptor(): K2MoveOperationDescriptor.Files {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
-            val searchReferences = if (inSourceRoot) searchReferences.state else false
+            val searchReferences = if (inSourceRoot) updateUsages.state else false
             val moveDescriptor = K2MoveDescriptor.Files(
                 project,
                 srcDescr,
@@ -196,7 +196,7 @@ sealed class K2MoveModel {
                 target.fileName,
                 target.pkgName,
                 searchForText.state,
-                if (inSourceRoot) searchReferences.state else false,
+                if (inSourceRoot) updateUsages.state else false,
                 searchInComments.state,
                 true,
                 mppDeclarations.state,

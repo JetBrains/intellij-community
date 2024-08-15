@@ -16,7 +16,7 @@ interface KotlinMoveRefactoringAction : AbstractMultifileRefactoringTest.Refacto
         ?: KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
 
     fun JsonObject.searchReferences() = get("searchReferences")?.asBoolean?.equals(true)
-        ?: KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
+        ?: KotlinCommonRefactoringSettings.getInstance().MOVE_UPDATE_USAGES
 
     fun JsonObject.moveExpectedActuals() = get("moveExpectedActuals")?.asBoolean?.equals(true)
         ?: KotlinCommonRefactoringSettings.getInstance().MOVE_MPP_DECLARATIONS

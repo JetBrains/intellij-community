@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.openapi.components.service
@@ -22,7 +22,7 @@ interface KotlinCommonRefactoringSettings {
     var MOVE_PREVIEW_USAGES: Boolean
     var MOVE_SEARCH_IN_COMMENTS: Boolean
     var MOVE_SEARCH_FOR_TEXT: Boolean
-    var MOVE_SEARCH_REFERENCES: Boolean
+    var MOVE_UPDATE_USAGES: Boolean
     var MOVE_MPP_DECLARATIONS: Boolean
     var INTRODUCE_DECLARE_WITH_VAR: Boolean
     var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
