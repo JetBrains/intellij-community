@@ -980,7 +980,7 @@ internal class SoftwareBillOfMaterialsImpl(
             context.messages.error(
               """
                Generated SBOM $document is not NTIA-conformant. 
-               Please look for 'Components missing an supplier' in the suppressed exceptions and specify all missing suppliers.
+               Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
                You may use https://package-search.jetbrains.com/ to search for them.
             """.trimIndent(), e
             )
