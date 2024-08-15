@@ -386,21 +386,23 @@ class StructureViewWrapperImpl(private val project: Project,
         val structureViewBuilder = if (editor != null && editor.isValid)
           readAction { editor.structureViewBuilder } else createStructureViewBuilder(file)
         if (structureViewBuilder != null) {
-          val structureView = structureViewBuilder.createStructureView(editor, project)
-          myStructureView = structureView
+          writeIntentReadAction {
+            val structureView = structureViewBuilder.createStructureView(editor, project)
+            myStructureView = structureView
 
-          myFileEditor = editor
-          Disposer.register(this@StructureViewWrapperImpl, structureView)
-          if (structureView is StructureViewComposite) {
-            val views: Array<StructureViewDescriptor> = structureView.structureViews
-            names = views.map { it.title }.toTypedArray()
-            panels = views.map { createContentPanel(it.structureView.component) }
+            myFileEditor = editor
+            Disposer.register(this@StructureViewWrapperImpl, structureView)
+            if (structureView is StructureViewComposite) {
+              val views: Array<StructureViewDescriptor> = structureView.structureViews
+              names = views.map { it.title }.toTypedArray()
+              panels = views.map { createContentPanel(it.structureView.component) }
+            }
+            else {
+              createSinglePanel(structureView.component)
+            }
+            structureView.restoreState()
+            structureView.centerSelectedRow()
           }
-          else {
-            createSinglePanel(structureView.component)
-          }
-          structureView.restoreState()
-          structureView.centerSelectedRow()
         }
       }
     }
