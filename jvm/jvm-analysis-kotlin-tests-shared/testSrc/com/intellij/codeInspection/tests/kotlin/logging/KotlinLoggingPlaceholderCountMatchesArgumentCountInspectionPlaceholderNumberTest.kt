@@ -203,4 +203,65 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
       }
          """.trimIndent())
   }
+
+  fun `test lazy init`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.apache.logging.log4j.LogBuilder
+      import org.apache.logging.log4j.LogManager
+      import org.apache.logging.log4j.Logger
+
+      class LazyInitializer {
+
+          internal class StaticInitializerBuilder2 {
+              init {
+                  log.log("{}")
+              }
+
+              companion object {
+                  private val log: LogBuilder
+
+                  init {
+                      if (1 == 1) {
+                          log   = LogManager.getLogger().atDebug()
+                      } else {
+                          log = LogManager.getFormatterLogger().atDebug()
+                      }
+                  }
+              }
+          }
+
+          internal class ConstructorInitializer {
+              private val log: Logger
+
+              constructor() {
+                  log = LogManager.getLogger()
+              }
+
+              constructor(<warning descr="[UNUSED_PARAMETER] Parameter 'i' is never used">i</warning>: Int) {
+                  log = LogManager.getLogger()
+              }
+
+              fun test() {
+                log.info(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"{}"</warning>)
+              }
+          }
+
+          internal class ConstructorInitializer2 {
+              private val log: Logger
+
+              constructor() {
+                  log = LogManager.getFormatterLogger()
+              }
+
+              constructor(<warning descr="[UNUSED_PARAMETER] Parameter 'i' is never used">i</warning>: Int) {
+                  log = LogManager.getLogger()
+              }
+
+              fun test() {
+                log.info("{}")
+              }
+          }
+      }
+      """.trimIndent())
+  }
 }

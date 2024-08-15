@@ -614,6 +614,91 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       """.trimIndent())
   }
 
+  fun `test lazy init`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.apache.logging.log4j.LogBuilder;
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+
+      class LazyInitializer {
+      
+          static class StaticInitializer {
+              private static final Logger log;
+      
+              static {
+                  log = LogManager.getLogger();
+              }
+      
+              public StaticInitializer() {
+                log.info(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"{}"</warning>);
+              }
+          }
+      
+          static class StaticInitializerBuilder {
+              private static final LogBuilder log;
+      
+              static {
+                  log = LogManager.getLogger().atDebug();
+              }
+      
+              public StaticInitializerBuilder() {
+                log.log(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"{}"</warning>);
+              }
+          }
+      
+          static class StaticInitializerBuilder2 {
+              private static final LogBuilder log;
+      
+              static {
+                  if (1 == 1) {
+                      log = LogManager.getLogger().atDebug();
+                  } else {
+                      log = LogManager.getFormatterLogger().atDebug();
+                  }
+              }
+      
+              public StaticInitializerBuilder2() {
+                  log.log("{}");
+              }
+          }
+      
+          static class ConstructorInitializer {
+              private final Logger log;
+      
+      
+              public ConstructorInitializer() {
+                  log = LogManager.getLogger();
+              }
+      
+              public ConstructorInitializer(int i) {
+                  log = LogManager.getLogger();
+              }
+      
+              public void test() {
+                log.info(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"{}"</warning>);
+              }
+          }
+      
+          static class ConstructorInitializer2 {
+              private final Logger log;
+      
+      
+              public ConstructorInitializer2() {
+                  log = LogManager.getFormatterLogger();
+              }
+      
+              public ConstructorInitializer2(int i) {
+                  log = LogManager.getLogger();
+              }
+      
+              public void test() {
+                  log.info("{}");
+              }
+          }
+      }
+      """.trimIndent())
+  }
+
   fun `test slf4j structured logging`() {
     inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
     myFixture.testHighlighting(JvmLanguage.JAVA, """
