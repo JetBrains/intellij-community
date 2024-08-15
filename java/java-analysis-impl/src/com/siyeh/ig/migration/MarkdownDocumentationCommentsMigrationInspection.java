@@ -153,13 +153,15 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
             continue;
           }
           else if (c == '>') {
-            String name = html.substring(tag + (endTag ? 2 : 1), (html.charAt(i-1) == '/') ? i - 1 : i).trim().toLowerCase(Locale.ENGLISH);
+            int start = tag + (endTag ? 2 : 1);
+            int end = (!endTag && html.charAt(i - 1) == '/') ? i - 1 : i;
+            String name = html.substring(start, end).trim().toLowerCase(Locale.ENGLISH);
             if ("li".equals(name)) {
               if (endTag) {
                 inList = false;
               }
               else {
-                if ("    ".equals(result.substring(result.length() - 4))) {
+                if (result.length() > 4 && "    ".equals(result.substring(result.length() - 4))) {
                   result.delete(result.length() - 4, result.length());
                 }
                 result.append("  - ");

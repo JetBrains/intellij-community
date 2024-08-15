@@ -347,4 +347,17 @@ interface Nothing {}
 /// If **at least** one element has priority, elements would be prioritized. No priority will be used otherwise
 ///
 /// @author Ilya.Kazakevich
-final class LookupWithIndentsBuilder {}
+final class LookupWithIndentsBuilder {
+
+  /// # 
+  /// Returns a hash code value for the object. This method is
+  /// supported for the benefit of hash tables such as those provided by
+  /// [java.util.HashMap].</>
+  public int hashCode() {
+    return 1;
+  }
+
+  ///   - one
+  ///   - two
+  void x() {}
+}
