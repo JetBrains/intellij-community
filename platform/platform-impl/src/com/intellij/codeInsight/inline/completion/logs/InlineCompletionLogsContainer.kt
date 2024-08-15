@@ -88,8 +88,14 @@ class InlineCompletionLogsContainer {
 
   companion object {
     private val KEY: Key<InlineCompletionLogsContainer> = Key("inline.completion.logs.container")
-    fun create(editor: Editor) {
-      editor.putUserData(KEY, InlineCompletionLogsContainer())
+
+    /**
+     * Create, store in editor and get log container
+     */
+    fun create(editor: Editor): InlineCompletionLogsContainer {
+      val container = InlineCompletionLogsContainer()
+      editor.putUserData(KEY, container)
+      return container
     }
 
     fun get(editor: Editor): InlineCompletionLogsContainer? {
