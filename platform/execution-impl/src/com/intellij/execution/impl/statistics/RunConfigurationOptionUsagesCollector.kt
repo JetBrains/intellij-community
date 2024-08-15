@@ -47,7 +47,8 @@ object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
                                                         "Session_name", "Arguments", "Solution_Configuration", "Executable_file",
                                                         "Default_arguments", "Optional_arguments", "browser.option.after.launch",
                                                         "browser.option.with.javascript.debugger", "browser.option.target.browser",
-                                                        "Use_Hot_Reload", "Roslyn_Target_Project", "Extra_mlaunch_Parameters", // Rider
+                                                        "Use_Hot_Reload", "Roslyn_Target_Project", "Extra_mlaunch_Parameters",
+                                                        "Project_Configuration", // Rider
                                                         "external.system.vm.parameters.fragment", "Runtime"
   ))  // maven
   private val projectSettingsAvailableField = EventFields.Boolean("projectSettingsAvailable")
