@@ -342,15 +342,14 @@ interface Nothing {}
 /// Create it, fill with [#addElement(LookupElementBuilder,String)] or [#addElement(LookupElementBuilder,String,int)]
 /// and obtain result with [#getResult()].
 /// 
-/// ## Priority
+/// ### Priority
 /// 
 /// If **at least** one element has priority, elements would be prioritized. No priority will be used otherwise
 ///
 /// @author Ilya.Kazakevich
 final class LookupWithIndentsBuilder {
 
-  /// # 
-  /// Returns a hash code value for the object. This method is
+  /// #  Returns a hash code value for the object. This method is
   /// supported for the benefit of hash tables such as those provided by
   /// [java.util.HashMap].</>
   public int hashCode() {
