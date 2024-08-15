@@ -388,7 +388,8 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
 
   private fun daemonFinishedOrCancelled(fileEditors: Collection<FileEditor>, isCancelled: Boolean, traceId: UUID) {
     val status = if (isCancelled) "cancelled" else "stopped"
-    CodeAnalysisStateListener.LOG.info("Daemon $status with ${fileEditors.size} unfiltered editors, traceId = $traceId")
+    printFileEditors(fileEditors, status, traceId)
+
     val worthy = fileEditors.getWorthy()
     if (worthy.isEmpty()) return
 
@@ -399,6 +400,17 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
 
     project.service<CodeAnalysisStateListener>().registerDaemonFinishedOrCancelled(highlightedEditors, status, traceId)
   }
+
+  fun printFileEditors(fileEditors: Collection<FileEditor>, status: String, traceId: UUID) {
+    try {
+      CodeAnalysisStateListener.LOG.info("Daemon $status with ${fileEditors.size} unfiltered editors, traceId = $traceId")
+      val editorsMessage = fileEditors.map { fileEditor -> fileEditor.description }.joinToString(separator = "\n")
+      CodeAnalysisStateListener.LOG.info("Editors to finish\n$editorsMessage")
+    }
+    catch (_: Exception) {
+    }
+  }
+
 }
 
 internal class WaitForFinishedCodeAnalysisFileEditorListener : FileOpenedSyncListener {
