@@ -29,7 +29,7 @@ class K2MoveDialog(project: Project, private val model: K2MoveModel) : Refactori
             row {
                 panel {
                     model.searchForText.createComboBox(this)
-                    if (model.inSourceRoot) model.searchReferences.createComboBox(this)
+                    model.searchReferences.createComboBox(this, model.inSourceRoot)
                 }.align(AlignY.TOP + AlignX.LEFT)
                 panel {
                     model.searchInComments.createComboBox(this)
