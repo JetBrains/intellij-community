@@ -16,11 +16,11 @@ import com.intellij.openapi.vfs.readText
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 
-private val KOTLIN_NOTEBOOKS_PRIMARY_PLUGIN_ID = "org.jetbrains.plugins.kotlin.jupyter"
+private const val KOTLIN_NOTEBOOKS_PRIMARY_PLUGIN_ID = "org.jetbrains.plugins.kotlin.jupyter"
 private val KOTLIN_NOTEBOOKS_ALL_PLUGIN_IDS = listOf("org.jetbrains.plugins.kotlin.jupyter", "intellij.jupyter")
-private val KOTLIN_NOTEBOOKS_PLUGIN_NAME: String = "Kotlin Notebook"
-private val KOTLIN_NOTEBOOKS_PLUGIN_FILES: String = "Kotlin Notebook (*.ipynb)"
-private val KOTLIN_NOTEBOOKS_PLUGIN_SUGGESTION_DISMISSED_KEY: String = "notebook.kotlin.suggestion.dismissed"
+private const val KOTLIN_NOTEBOOKS_PLUGIN_NAME: String = "Kotlin Notebook"
+private const val KOTLIN_NOTEBOOKS_PLUGIN_FILES: String = "Kotlin Notebook (*.ipynb)"
+private const val KOTLIN_NOTEBOOKS_PLUGIN_SUGGESTION_DISMISSED_KEY: String = "notebook.kotlin.suggestion.dismissed"
 
 /**
  * Suggestion provider for the Kotlin Notebooks plugin. It supports Jupyter Notebook files (*.ipynb) that
@@ -55,7 +55,7 @@ internal class KotlinNotebookSuggestionProvider : PluginSuggestionProvider {
         }
 
         // We should only consider notebooks configured to use the Kotlin kernel.
-        // Any error in JSON file or format will be ignored as it is handled as part
+        // Any error in the JSON file or format will be ignored as it is handled as part
         // of opening the file in the editor.
         try {
             val json = JsonParser.parseString(file.readText())
@@ -87,7 +87,7 @@ class KotlinNotebookPluginSuggestion(private val project: Project, private val i
     // See IJPL-149727
     override val pluginIds: List<String> = KOTLIN_NOTEBOOKS_ALL_PLUGIN_IDS
 
-    override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
+    override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
         val status = if (isCommunity) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
         val panel = EditorNotificationPanel(fileEditor, status)
         if (isCommunity) {
