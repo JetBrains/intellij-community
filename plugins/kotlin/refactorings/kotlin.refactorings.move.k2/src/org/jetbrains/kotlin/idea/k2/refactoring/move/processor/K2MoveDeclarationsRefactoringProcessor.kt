@@ -32,7 +32,7 @@ class K2MoveDeclarationsRefactoringProcessor(
         if (!operationDescriptor.searchReferences) return emptyArray()
         return operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
             moveDescriptor.source.elements.flatMap { elem ->
-                elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target.pkgName)
+                elem.findUsages(operationDescriptor.searchForText, moveDescriptor.target.pkgName)
             }
         }.toTypedArray()
     }

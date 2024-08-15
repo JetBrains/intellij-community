@@ -9,9 +9,6 @@ import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 
 interface KotlinMoveRefactoringAction : AbstractMultifileRefactoringTest.RefactoringAction {
-    fun JsonObject.searchInComments() = get("searchInCommentsAndStrings")?.asBoolean?.equals(true)
-        ?: KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS
-
     fun JsonObject.searchForText() = get("searchInNonCode")?.asBoolean?.equals(true)
         ?: KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES
 

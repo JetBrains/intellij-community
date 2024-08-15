@@ -29,12 +29,11 @@ class K2MoveDialog(project: Project, private val model: K2MoveModel) : Refactori
             model.source.buildPanel(this, ::setErrorText, ::validateRefactorButton)
             row {
                 panel {
-                    model.updateTextOccurrences.createComboBox(this)
                     model.updateUsages.createComboBox(this, model.inSourceRoot)
+                    model.mppDeclarations.createComboBox(this, model.inSourceRoot && model is K2MoveModel.Declarations)
                 }.align(AlignY.TOP + AlignX.LEFT)
                 panel {
-                    model.searchInComments.createComboBox(this)
-                    model.mppDeclarations.createComboBox(this, model.inSourceRoot && model is K2MoveModel.Declarations)
+                    model.updateTextOccurrences.createComboBox(this)
                 }.align(AlignY.TOP + AlignX.RIGHT)
             }
         }

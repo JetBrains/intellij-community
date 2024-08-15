@@ -42,8 +42,6 @@ sealed class K2MoveModel {
 
     val updateTextOccurrences: Setting = Setting.UPDATE_TEXT_OCCURRENCES
 
-    val searchInComments: Setting = Setting.SEARCH_IN_COMMENTS
-
     abstract val inSourceRoot: Boolean
 
     val updateUsages: Setting = Setting.UPDATE_USAGES
@@ -73,17 +71,6 @@ sealed class K2MoveModel {
                     KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES = value
                 }
         },
-
-        SEARCH_IN_COMMENTS(KotlinBundle.message("search.in.comments.and.strings"),) {
-            override var state: Boolean
-                get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS
-                }
-                set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS = value
-                }
-        },
-
 
         UPDATE_USAGES(KotlinBundle.message("checkbox.text.update.usages")) {
             override var state: Boolean
@@ -157,7 +144,6 @@ sealed class K2MoveModel {
                 listOf(moveDescriptor),
                 updateTextOccurrences.state,
                 searchReferences,
-                searchInComments.state,
                 dirStructureMatchesPkg = true,
                 moveCallBack
             )
@@ -197,7 +183,6 @@ sealed class K2MoveModel {
                 target.pkgName,
                 updateTextOccurrences.state,
                 if (inSourceRoot) updateUsages.state else false,
-                searchInComments.state,
                 true,
                 mppDeclarations.state,
                 moveCallBack

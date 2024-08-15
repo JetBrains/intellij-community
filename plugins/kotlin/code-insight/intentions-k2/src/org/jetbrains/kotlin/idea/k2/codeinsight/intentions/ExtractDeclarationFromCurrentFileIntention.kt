@@ -97,7 +97,6 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
             project,
             listOf(moveDescriptor),
             searchForText = false,
-            searchInComments = false,
             searchReferences = true,
             dirStructureMatchesPkg = false,
             moveCallBack

@@ -20,7 +20,10 @@ interface KotlinCommonRefactoringSettings {
     var RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION: Boolean
     var RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER: Boolean
     var MOVE_PREVIEW_USAGES: Boolean
+
+    @Deprecated("Don't use, is removed in K2")
     var MOVE_SEARCH_IN_COMMENTS: Boolean
+
     var UPDATE_TEXT_OCCURENCES: Boolean
     var MOVE_UPDATE_USAGES: Boolean
     var MOVE_MPP_DECLARATIONS: Boolean

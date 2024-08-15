@@ -32,8 +32,8 @@ internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var MOVE_PREVIEW_USAGES: Boolean
             by delegateTo { it::MOVE_PREVIEW_USAGES }
 
-    override var MOVE_SEARCH_IN_COMMENTS: Boolean
-            by delegateTo { it::MOVE_SEARCH_IN_COMMENTS }
+    @Suppress("OVERRIDE_DEPRECATION")
+    override var MOVE_SEARCH_IN_COMMENTS: Boolean = false
 
     override var UPDATE_TEXT_OCCURENCES: Boolean
             by delegateTo { it::MOVE_SEARCH_FOR_TEXT }
