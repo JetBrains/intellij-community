@@ -124,6 +124,10 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     }
 
     if (commandArguments.isEmpty()) {
+      if (context.shellType == ShellType.POWERSHELL) {
+        // Return no completions for command name to pass the completion to the PowerShell
+        return emptyList()
+      }
       return computeSuggestionsIfNoArguments(fileProducer, availableCommandsProvider)
     }
     else {
