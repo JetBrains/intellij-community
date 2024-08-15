@@ -4,6 +4,7 @@
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.ktor.client.cio"/>
     <module name="intellij.libraries.skiko" />
+    <module name="intellij.libraries.compose.desktop" />
     <module name="intellij.platform.compose" />
 
     <module name="intellij.platform.rpc.backend"/>
