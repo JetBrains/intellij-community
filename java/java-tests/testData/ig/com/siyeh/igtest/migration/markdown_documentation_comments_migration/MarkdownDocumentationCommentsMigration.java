@@ -358,7 +358,7 @@ interface Nothing {}
  * Create it, fill with {@link #addElement(LookupElementBuilder, String)} or {@link #addElement(LookupElementBuilder, String, int)}
  * and obtain result with {@link #getResult()}.
  * </p>
- * <h2>Priority</h2>
+ * <h3>Priority</h3>
  * <p>If <strong>at least</strong> one element has priority, elements would be prioritized. No priority will be used otherwise</p>
  *
  * @author Ilya.Kazakevich
