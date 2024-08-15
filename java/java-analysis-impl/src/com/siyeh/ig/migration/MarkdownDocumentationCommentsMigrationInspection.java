@@ -45,11 +45,10 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
     @Override
     public void visitDocComment(@NotNull PsiDocComment comment) {
       super.visitDocComment(comment);
-      PsiElement child = comment.getFirstChild();
-      if (!"/**".equals(child.getText())) {
+      if (comment.isMarkdownComment()) {
         return;
       }
-      registerError(isVisibleHighlight(comment) ? child : comment);
+      registerError(isVisibleHighlight(comment) ? comment.getFirstChild() : comment);
     }
   }
 
