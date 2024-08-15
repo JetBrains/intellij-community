@@ -16,7 +16,6 @@ import com.intellij.util.Consumer
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.generateDisplayName
 import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getLogProviders
 import com.intellij.vcs.log.ui.MainVcsLogUi
@@ -90,7 +89,7 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
 
   private fun updateDisplayName() {
     if (tabContent != null && ui != null) {
-      tabContent!!.displayName = generateDisplayName(ui!!)
+      tabContent!!.displayName = VcsLogTabsUtil.generateDisplayName(ui!!)
     }
   }
 
