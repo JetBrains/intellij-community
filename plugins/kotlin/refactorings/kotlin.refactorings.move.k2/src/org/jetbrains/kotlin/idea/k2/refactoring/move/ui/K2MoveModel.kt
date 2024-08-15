@@ -17,6 +17,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -106,9 +107,14 @@ sealed class K2MoveModel {
 
         abstract var state: Boolean
 
-        fun createComboBox(panel: Panel) {
+        fun createComboBox(panel: Panel, enabled: Boolean = true) {
             panel.row {
-                checkBox(text).bindSelected(::state)
+                val checkBox = checkBox(text).enabled(enabled)
+                if (enabled) {
+                    checkBox.bindSelected(::state)
+                } else {
+                    checkBox.selected(false)
+                }
             }.layout(RowLayout.PARENT_GRID)
         }
     }

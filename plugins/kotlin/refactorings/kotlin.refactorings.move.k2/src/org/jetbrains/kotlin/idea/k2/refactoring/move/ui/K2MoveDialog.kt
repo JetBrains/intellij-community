@@ -33,7 +33,7 @@ class K2MoveDialog(project: Project, private val model: K2MoveModel) : Refactori
                 }.align(AlignY.TOP + AlignX.LEFT)
                 panel {
                     model.searchInComments.createComboBox(this)
-                    model.mppDeclarations.createComboBox(this)
+                    model.mppDeclarations.createComboBox(this, model.inSourceRoot && model is K2MoveModel.Declarations)
                 }.align(AlignY.TOP + AlignX.RIGHT)
             }
         }
