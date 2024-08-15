@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -335,7 +336,10 @@ final class PassExecutorService implements Disposable {
         catch (CancellationException | InterruptedException ignored) {
         }
         catch (ExecutionException e) {
-          LOG.error(e.getCause());
+          Throwable cause = e.getCause();
+          if (!(cause instanceof ControlFlowException)) {
+            LOG.error(cause);
+          }
         }
       });
       mySubmittedPasses.put(pass, job);
