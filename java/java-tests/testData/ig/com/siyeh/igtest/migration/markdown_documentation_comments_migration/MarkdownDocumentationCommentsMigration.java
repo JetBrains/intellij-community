@@ -363,4 +363,21 @@ interface Nothing {}
  *
  * @author Ilya.Kazakevich
  */
-final class LookupWithIndentsBuilder {}
+final class LookupWithIndentsBuilder {
+
+  <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   * <h1>
+   * Returns a hash code value for the object. This method is
+   * supported for the benefit of hash tables such as those provided by
+   * {@link java.util.HashMap}.</>
+   */
+  public int hashCode() {
+    return 1;
+  }
+
+  <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   * <li>one</li>
+   * <li>two</li>
+   */
+  void x() {}
+}
