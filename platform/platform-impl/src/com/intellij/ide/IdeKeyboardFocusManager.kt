@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.ide.ui.ShowingContainer
 import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.isCoroutineWILEnabled
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.logger
@@ -42,7 +43,7 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
     val dispatch = { getAssociatedClientId(e).use { super.dispatchEvent(e) } }
     if (EventQueue.isDispatchThread()) {
       var result = false
-      performActivity(e) { result = dispatch() }
+      performActivity(e, isCoroutineWILEnabled) { result = dispatch() }
       return result
     }
     else {

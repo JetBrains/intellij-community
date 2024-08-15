@@ -30,6 +30,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -401,7 +402,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
               myRightPanelUpdater.execute(() -> {
                 final var entity = node.getContainingFileLocalEntity();
                 SwingUtilities.invokeLater(() -> {
-                  ReadAction.run(() -> {
+                  WriteIntentReadAction.run((Runnable)() -> {
                     TreePath newPath = myTree.getSelectionModel().getLeadSelectionPath();
                     if (newPath == pathSelected) showInRightPanel(entity);
                   });

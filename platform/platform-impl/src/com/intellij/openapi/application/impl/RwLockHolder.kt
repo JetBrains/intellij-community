@@ -53,6 +53,8 @@ internal object RwLockHolder: ThreadingSupport {
   private var myWriteActionPending = false
   private var myNoWriteActionCounter = AtomicInteger()
 
+  private var isWriteIntentUnlocked = false
+
   @Internal
   override fun postInit(writeThread: Thread) {
     lock = ReadMostlyRWLock(writeThread)
@@ -219,15 +221,23 @@ internal object RwLockHolder: ThreadingSupport {
     // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
     return if (isWriteIntentLocked() && isImplicitReadOnEDTDisabled) {
       releaseWriteIntentLock()
+      isWriteIntentUnlocked = true
       try {
         action.compute()
       }
       finally {
+        isWriteIntentUnlocked = false
         acquireWriteIntentLock(action.javaClass.name)
       }
     }
     else {
-      action.compute()
+      try {
+        isWriteIntentUnlocked = true
+        action.compute()
+      }
+      finally {
+        isWriteIntentUnlocked = false
+      }
     }
   }
 
@@ -495,6 +505,10 @@ internal object RwLockHolder: ThreadingSupport {
   override fun isInImpatientReader(): Boolean {
     val l = lock ?: notReady()
     return l.isInImpatientReader
+  }
+
+  override fun isInsideUnlockedWriteIntentLock(): Boolean {
+    return isWriteIntentUnlocked
   }
 
   private fun startWrite(clazz: Class<*>) {

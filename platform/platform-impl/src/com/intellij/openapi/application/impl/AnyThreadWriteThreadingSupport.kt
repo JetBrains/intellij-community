@@ -41,7 +41,7 @@ private class ThreadState(var permit: Permit? = null, var prevPermit: WriteInten
     permit = prevPermit
     prevPermit = null
   }
-
+  var writeIntentReleased = false
   val hasPermit get() = permit != null
   val hasRead get() = permit is ReadPermit
   val hasWriteIntent get() = permit is WriteIntentPermit
@@ -190,13 +190,21 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   override fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T {
     val ts = myState.get()
     if (!ts.hasWriteIntent) {
-      return action.compute()
+      try {
+        ts.writeIntentReleased = true
+        return action.compute()
+      }
+      finally {
+        ts.writeIntentReleased = false
+      }
     }
     ts.release()
+    ts.writeIntentReleased = true
     try {
       return action.compute()
     }
     finally {
+      ts.writeIntentReleased = false
       ts.permit = getWriteIntentPermit()
     }
   }
@@ -492,6 +500,8 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   override fun isInImpatientReader(): Boolean = myState.get().impatientReader
+
+  override fun isInsideUnlockedWriteIntentLock(): Boolean = myState.get().writeIntentReleased
 
   private fun measureWriteLock(acquisitor: () -> WritePermit) : WritePermit {
     val delay = ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting

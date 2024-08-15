@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -214,7 +215,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
     if (!myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(() -> ReadAction.run(this::initInEDT));
+      UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run((Runnable)this::initInEDT));
     }
     myExclusionHandler = new ExclusionHandlerEx<>() {
       @Override

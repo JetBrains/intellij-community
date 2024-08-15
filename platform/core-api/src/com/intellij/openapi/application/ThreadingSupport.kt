@@ -360,4 +360,10 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   fun isInImpatientReader(): Boolean
+
+  /**
+   * DO NOT USE
+   */
+  @ApiStatus.Internal
+  fun isInsideUnlockedWriteIntentLock(): Boolean
 }

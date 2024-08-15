@@ -346,7 +346,7 @@ class IdeEventQueue private constructor() : EventQueue() {
           val progressManager = ProgressManager.getInstanceOrNull()
           try {
             runCustomProcessors(finalEvent, preProcessors)
-            performActivity(finalEvent) {
+            performActivity(finalEvent, isCoroutineWILEnabled && !threadingSupport.isInsideUnlockedWriteIntentLock()) {
               if (progressManager == null) {
                 _dispatchEvent(finalEvent)
               }
@@ -1028,7 +1028,7 @@ private fun isInputEvent(e: AWTEvent): Boolean {
   return e is InputEvent || e is InputMethodEvent || e is WindowEvent || e is ActionEvent
 }
 
-internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
+internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit) {
   var transactionGuard = transactionGuard
   if (transactionGuard == null && appIsLoaded()) {
     val app = ApplicationManager.getApplication()
@@ -1042,7 +1042,7 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
     runnable()
   }
   else {
-    val runnableWithWIL = if (isCoroutineWILEnabled) { { WriteIntentReadAction.run(runnable) } } else { runnable }
+    val runnableWithWIL = if (needWIL) { { WriteIntentReadAction.run(runnable) } } else { runnable }
     transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnableWithWIL)
   }
 }
