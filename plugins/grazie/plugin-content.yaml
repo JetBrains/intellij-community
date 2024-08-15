@@ -65,7 +65,6 @@
       ai.grazie.nlp.detect:
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0/nlp-detect-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-json-jvm/0/utils-json-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0/model-text-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
