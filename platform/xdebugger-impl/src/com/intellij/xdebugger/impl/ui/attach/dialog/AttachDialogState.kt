@@ -23,7 +23,7 @@ class AttachDialogState(val dialogDisposable: Disposable, val dataContext: DataC
     val COLUMN_MINIMUM_WIDTH: Int
       get() = JBUI.scale(20)
     val DEFAULT_ROW_HEIGHT: Int
-      get() = JBUI.scale(20)
+      get() = JBUI.scale(24)
   }
 
   val searchFieldValue = AtomicLazyProperty { "" }
