@@ -416,7 +416,7 @@ internal tailrec fun psiForUast(symbol: KaSymbol): PsiElement? {
     if (symbol is KaCallableSymbol) {
         if (symbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KaSymbolOrigin.SUBSTITUTION_OVERRIDE) {
             val originalSymbol = symbol.fakeOverrideOriginal
-            if (originalSymbol !== symbol) {
+            if (originalSymbol != symbol) {
                 return psiForUast(originalSymbol)
             }
         }
