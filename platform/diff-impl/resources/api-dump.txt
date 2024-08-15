@@ -363,6 +363,7 @@ a:com.intellij.diff.editor.DiffVirtualFileBase
 - createEscapeHandler():com.intellij.openapi.actionSystem.AnAction
 - isIncludedInDocumentHistory(com.intellij.openapi.project.Project):Z
 - isIncludedInEditorHistory(com.intellij.openapi.project.Project):Z
+- isPersistedInEditorHistory():Z
 - isWritable():Z
 f:com.intellij.diff.editor.DiffVirtualFileBase$Companion
 - f:turnOffReopeningWindow(com.intellij.openapi.vfs.VirtualFile):V

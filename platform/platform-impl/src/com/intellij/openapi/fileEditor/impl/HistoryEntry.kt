@@ -28,6 +28,7 @@ internal class HistoryEntry(
    */
   @JvmField var selectedProvider: FileEditorProvider?,
   @JvmField var isPreview: Boolean,
+  val isPersisted: Boolean,
   // ordered
   private var providerToState: Map<FileEditorProvider, FileEditorState>,
   private val disposable: Disposable?,
@@ -54,6 +55,7 @@ internal class HistoryEntry(
         selectedProvider = entryData.selectedProvider,
         isPreview = entryData.preview,
         disposable = disposable,
+        isPersisted = true,
         providerToState = stateMap,
       )
     }

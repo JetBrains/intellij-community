@@ -89,6 +89,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   @ApiStatus.Experimental
   interface OptionallyIncluded {
     fun isIncludedInEditorHistory(project: Project): Boolean
+    fun isPersistedInEditorHistory(): Boolean = true
   }
 
   private fun isIncludedInHistory(file: VirtualFile): Boolean {
@@ -150,11 +151,14 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
     val disposable = Disposer.newDisposable()
     val pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null)
+    val isPersisted = if (file is OptionallyIncluded) file.isPersistedInEditorHistory() else true
+
     val entry = HistoryEntry(
       filePointer = pointer,
       selectedProvider = selected.provider,
       isPreview = editorComposite != null && editorComposite.isPreview,
       disposable = disposable,
+      isPersisted = isPersisted,
       providerToState = stateMap,
     )
     synchronized(this) {
@@ -347,7 +351,9 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       }
     }
     for (entry in entries) {
-      element.addContent(entry.writeExternal(project))
+      if (entry.isPersisted) {
+        element.addContent(entry.writeExternal(project))
+      }
     }
     return element
   }
