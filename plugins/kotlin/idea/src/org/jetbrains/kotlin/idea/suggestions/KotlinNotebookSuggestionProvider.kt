@@ -35,7 +35,7 @@ internal class KotlinNotebookSuggestionProvider : PluginSuggestionProvider {
     private fun requiredPluginsInstalled(): Boolean {
         return KOTLIN_NOTEBOOKS_ALL_PLUGIN_IDS.all { pluginIdStr ->
             val pluginId = PluginId.getId(pluginIdStr)
-            !PluginManagerCore.isDisabled(pluginId)
+            PluginManager.isPluginInstalled(pluginId) && !PluginManagerCore.isDisabled(pluginId)
         }
     }
 
