@@ -8,13 +8,13 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.rpc.backend.RemoteApiProvider.Companion.EP_NAME
 import com.intellij.util.containers.ContainerUtil
 import fleet.rpc.RemoteApi
+import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.core.InstanceId
 import fleet.rpc.server.RpcServiceLocator
 import fleet.rpc.server.ServiceImplementation
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
-import kotlin.reflect.KClass
 
 internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProviderService, RpcServiceLocator {
 
@@ -22,14 +22,14 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
   private val visitedEPs = ContainerUtil.createConcurrentWeakKeyWeakValueMap<RemoteApiProvider, Unit>()
 
   private val registeringSink = object : RemoteApiProvider.Sink {
-    override fun <T : RemoteApi<Unit>> remoteApi(klass: KClass<T>, implementation: () -> T) {
-      remoteApis[klass.java.name] = ServiceImplementation(klass, implementation())
+    override fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T) {
+      remoteApis[descriptor.getApiFqn()] = ServiceImplementation(descriptor, implementation())
     }
   }
 
   private val unregisteringSink = object : RemoteApiProvider.Sink {
-    override fun <T : RemoteApi<Unit>> remoteApi(klass: KClass<T>, implementation: () -> T) {
-      remoteApis.remove(klass.java.name)
+    override fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T) {
+      remoteApis.remove(descriptor.getApiFqn())
     }
   }
 
@@ -61,10 +61,10 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
     }
   }
 
-  override suspend fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T {
+  override suspend fun <T : RemoteApi<Unit>> resolve(descriptor: RemoteApiDescriptor<T>): T {
     @Suppress("UNCHECKED_CAST")
-    return remoteApis[klass.java.name]?.instance as? T
-           ?: throw IllegalStateException("No remote API found for $klass")
+    return remoteApis[descriptor.getApiFqn()]?.instance as? T
+           ?: throw IllegalStateException("No remote API found for $descriptor")
   }
 
   override fun resolve(serviceId: InstanceId): ServiceImplementation {

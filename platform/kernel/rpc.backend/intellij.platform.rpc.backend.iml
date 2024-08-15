@@ -14,29 +14,31 @@
     <orderEntry type="module" module-name="intellij.platform.rpc" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.fleet.rpc.server" type="repository">
-        <properties maven-id="org.jetbrains.fleet:rpc-server:1.33.0-temporaryHack.6">
+        <properties maven-id="org.jetbrains.fleet:rpc-server:1.40.0-FL24724_04887ff57dcb6.12">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc-server/1.33.0-temporaryHack.6/rpc-server-1.33.0-temporaryHack.6.jar">
-              <sha256sum>26639fd5a150c0d46ad91b83a3d8c872946c4a6e79b115e5453e62d6a7257ab0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc-server/1.40.0-FL24724_04887ff57dcb6.12/rpc-server-1.40.0-FL24724_04887ff57dcb6.12.jar">
+              <sha256sum>2ac577e87e4714c6d01fe2b7c2fb7381d452b255af2a36bd097a62e580600660</sha256sum>
             </artifact>
           </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="com.intellij.platform:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-sdk" />
+            <dependency maven-id="io.opentelemetry.semconv:opentelemetry-semconv" />
             <dependency maven-id="org.jetbrains.fleet:rpc" />
             <dependency maven-id="org.jetbrains.fleet:reporting-api" />
             <dependency maven-id="org.jetbrains.fleet:util-core" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc-server/1.33.0-temporaryHack.6/rpc-server-1.33.0-temporaryHack.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc-server/1.40.0-FL24724_04887ff57dcb6.12/rpc-server-1.40.0-FL24724_04887ff57dcb6.12.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc-server/1.33.0-temporaryHack.6/rpc-server-1.33.0-temporaryHack.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc-server/1.40.0-FL24724_04887ff57dcb6.12/rpc-server-1.40.0-FL24724_04887ff57dcb6.12-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

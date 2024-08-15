@@ -3,15 +3,15 @@ package com.intellij.platform.rpc
 
 import com.intellij.openapi.application.ApplicationManager
 import fleet.rpc.RemoteApi
-import kotlin.reflect.KClass
+import fleet.rpc.RemoteApiDescriptor
 
 interface RemoteApiProviderService {
 
-  suspend fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T
+  suspend fun <T : RemoteApi<Unit>> resolve(descriptor: RemoteApiDescriptor<T>): T
 
   companion object {
-    suspend fun <T : RemoteApi<Unit>> resolve(klass: KClass<T>): T {
-      return ApplicationManager.getApplication().getService(RemoteApiProviderService::class.java).resolve(klass)
+    suspend fun <T : RemoteApi<Unit>> resolve(descriptor: RemoteApiDescriptor<T>): T {
+      return ApplicationManager.getApplication().getService(RemoteApiProviderService::class.java).resolve(descriptor)
     }
   }
 }

@@ -3,13 +3,13 @@ package com.intellij.platform.rpc.backend
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import fleet.rpc.RemoteApi
+import fleet.rpc.RemoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus.Internal
-import kotlin.reflect.KClass
 
 interface RemoteApiProvider {
 
   interface Sink {
-    fun <T : RemoteApi<Unit>> remoteApi(klass: KClass<T>, implementation: () -> T)
+    fun <T : RemoteApi<Unit>> remoteApi(descriptor: RemoteApiDescriptor<T>, implementation: () -> T)
   }
 
   fun Sink.remoteApis()

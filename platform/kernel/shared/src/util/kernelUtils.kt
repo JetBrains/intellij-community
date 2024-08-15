@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.kernel.util
 
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.jetbrains.rhizomedb.*
@@ -21,7 +22,9 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlin.coroutines.CoroutineContext
 
 suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend CoroutineScope.() -> T) {
-  val entityClasses = listOf(Kernel::class.java.classLoader).flatMap(::collectEntityClasses)
+  val entityClasses = listOf(Kernel::class.java.classLoader).flatMap {
+    collectEntityClasses(it, PluginUtil.getPluginId(it).idString)
+  }
   fleet.kernel.withKernel(entityClasses, middleware = middleware) { currentKernel ->
     withRete {
       body()
@@ -30,7 +33,7 @@ suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend Coroutine
 }
 
 fun CoroutineContext.kernelCoroutineContext(): CoroutineContext {
-  return kernel + this[Rete]!! + this[DbSource]!!
+  return kernel + this[Rete]!! + this[DbSource.ContextElement]!!
 }
 
 val CommonInstructionSet: InstructionSet =
@@ -68,7 +71,7 @@ object ReadTracker {
                   readTrackingIndex.runLambda(it)
                 }
               }
-              DbContext.set(db)
+              DbContext.threadLocal.set(DbContext<DB>(db, null))
             }
           }
           catch (e: Throwable) {
@@ -78,6 +81,6 @@ object ReadTracker {
   }
 }
 
-val KernelRpcSerialization = Serialization(SerializersModule {
+val KernelRpcSerialization = Serialization(lazyOf(SerializersModule {
   registerCRUDInstructions()
-})
+}))

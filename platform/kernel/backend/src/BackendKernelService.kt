@@ -11,6 +11,7 @@ import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
 import fleet.kernel.change
 import fleet.kernel.rebase.*
+import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -33,7 +34,7 @@ private class RemoteKernelScopeHolder(private val coroutineScope: CoroutineScope
 
 internal class RemoteKernelProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
-    remoteApi(RemoteKernel::class) {
+    remoteApi(remoteApiDescriptor<RemoteKernel>()) {
       runBlockingCancellable {
         ApplicationManager.getApplication().service<RemoteKernelScopeHolder>().createRemoteKernel()
       }

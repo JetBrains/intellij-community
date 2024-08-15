@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="rpc-compiler-plugin" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fleet:rpc-compiler-plugin:1.9.20-0.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/1.9.20-0.1/rpc-compiler-plugin-1.9.20-0.1.jar">
+          <sha256sum>77902913ef53c22ebd8f4e01a6479aa23f8d6f92d2deb6c29bdc1237ebdc1f4d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/1.9.20-0.1/rpc-compiler-plugin-1.9.20-0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/1.9.20-0.1/rpc-compiler-plugin-1.9.20-0.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

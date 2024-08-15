@@ -36,19 +36,19 @@
     <orderEntry type="library" scope="PROVIDED" name="rhizomedb-compiler-plugin" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.fleet.kernel" type="repository">
-        <properties maven-id="org.jetbrains.fleet:kernel:1.33.0-temporaryHack.6">
+        <properties maven-id="org.jetbrains.fleet:kernel:1.40.0-FL24724_04887ff57dcb6.12">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.33.0-temporaryHack.6/kernel-1.33.0-temporaryHack.6.jar">
-              <sha256sum>36bf84fda3f027d436fbff578d178cb3d6bde3d9dc4130e80d250d9f5177ce17</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.40.0-FL24724_04887ff57dcb6.12/kernel-1.40.0-FL24724_04887ff57dcb6.12.jar">
+              <sha256sum>d581a3eea7f3c10113e19cb7c70b3cff712a5599326ebd48bddb2fbe42d3eba6</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.33.0-temporaryHack.6/rhizomedb-1.33.0-temporaryHack.6.jar">
-              <sha256sum>53898ac9ef1c8162ed000ebcb012205faed1703ac0204a72d257e80d12ad4ca1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.40.0-FL24724_04887ff57dcb6.12/rhizomedb-1.40.0-FL24724_04887ff57dcb6.12.jar">
+              <sha256sum>816522d69a85b20b7a49fc54b1c2a38cad6a1918bf795dcd3a510e223c25f85c</sha256sum>
             </artifact>
           </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="com.intellij.platform:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
             <dependency maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil" />
@@ -60,13 +60,13 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.33.0-temporaryHack.6/kernel-1.33.0-temporaryHack.6.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.33.0-temporaryHack.6/rhizomedb-1.33.0-temporaryHack.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.40.0-FL24724_04887ff57dcb6.12/kernel-1.40.0-FL24724_04887ff57dcb6.12.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.40.0-FL24724_04887ff57dcb6.12/rhizomedb-1.40.0-FL24724_04887ff57dcb6.12.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.33.0-temporaryHack.6/kernel-1.33.0-temporaryHack.6-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.33.0-temporaryHack.6/rhizomedb-1.33.0-temporaryHack.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.40.0-FL24724_04887ff57dcb6.12/kernel-1.40.0-FL24724_04887ff57dcb6.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.40.0-FL24724_04887ff57dcb6.12/rhizomedb-1.40.0-FL24724_04887ff57dcb6.12-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
