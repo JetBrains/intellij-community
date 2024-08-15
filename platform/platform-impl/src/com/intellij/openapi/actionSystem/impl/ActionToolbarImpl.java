@@ -1084,7 +1084,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     boolean fullReset = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
     myVisibleActions = newVisibleActions;
 
-    boolean skipSizeAdjustments = mySkipWindowAdjustments;
+    boolean skipSizeAdjustments = mySkipWindowAdjustments || skipSizeAdjustments();
     Component compForSize = guessBestParentForSizeAdjustment();
     Dimension oldSize = skipSizeAdjustments ? null : compForSize.getPreferredSize();
 
@@ -1137,6 +1137,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       button.validate();
     }
     return true;
+  }
+
+  // don't call getPreferredSize for "best parent" if it isn't popup or lightweight hint
+  private boolean skipSizeAdjustments() {
+    return PopupUtil.getPopupContainerFor(this) == null && getParentLightweightHintComponent(this) == null;
   }
 
   private void adjustContainerWindowSize(boolean fullReset,
