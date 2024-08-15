@@ -268,6 +268,7 @@ private val asyncAppListenerAllowListForNonCorePlugin = java.util.Set.of(
   "org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner",
   "com.intellij.stats.completion.sender.SenderPreloadingActivity",
   "com.jetbrains.rider.editorActions.RiderTypedHandlersPreloader",
+  "com.jetbrains.rider.util.idea.LogCleanupActivity",
   "com.intellij.ide.AgreementUpdater",
   "com.intellij.internal.statistic.updater.StatisticsJobsScheduler",
   "com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler",
