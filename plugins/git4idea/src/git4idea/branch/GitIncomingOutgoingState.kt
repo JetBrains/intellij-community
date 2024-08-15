@@ -4,6 +4,8 @@ package git4idea.branch
 import com.intellij.dvcs.ui.BranchActionGroup
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import icons.DvcsImplIcons
@@ -84,4 +86,12 @@ internal fun IncomingOutgoingState.calcTooltip(): @NlsContexts.Tooltip String? {
     }
   }
   return html.toString()
+}
+
+object GitIncomingOutgoingColors {
+  internal val INCOMING_FOREGROUND
+    get() = JBColor(ColorUtil.fromHex("#3574F0"), ColorUtil.fromHex("#548AF7"))
+
+  internal val OUTGOING_FOREGROUND
+    get() = JBColor(ColorUtil.fromHex("#369650"), ColorUtil.fromHex("#57965C"))
 }

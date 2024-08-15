@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
 import git4idea.GitLocalBranch
@@ -19,6 +21,7 @@ import git4idea.branch.*
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import icons.DvcsImplIcons
 import java.awt.Container
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -41,8 +44,12 @@ abstract class GitBranchesWithDetailsTreeRenderer(
   private val arrowLabel = JLabel().apply {
     border = JBUI.Borders.emptyLeft(4) // 6 px in spec, but label width is differed
   }
-  private val incomingOutgoingLabel = JLabel().apply {
-    border = JBUI.Borders.emptyLeft(10)
+  private val incomingLabel = createIncomingLabel().apply {
+    border = JBUI.Borders.empty(1, 10, 0, 1)
+  }
+
+  private val outgoingLabel = createOutgoingLabel().apply {
+    border = JBUI.Borders.empty(1, 2, 0, 10)
   }
 
   override val mainPanel: BorderLayoutPanel = MyMainPanel()
@@ -58,11 +65,15 @@ abstract class GitBranchesWithDetailsTreeRenderer(
                                           row: Int,
                                           hasFocus: Boolean) {
     val incomingOutgoingState = getIncomingOutgoingState(userObject)
-    tree.toolTipText = incomingOutgoingState.calcTooltip()
 
-    incomingOutgoingLabel.apply {
-      icon = incomingOutgoingState.getIcon()
-      isVisible = icon != null
+    if (incomingOutgoingState != IncomingOutgoingState.EMPTY) {
+      updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
+      updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
+      tree.toolTipText = incomingOutgoingState.calcTooltip()
+    } else {
+      incomingLabel.isVisible = false
+      outgoingLabel.isVisible = false
+      tree.toolTipText = null
     }
 
     arrowLabel.apply {
@@ -87,6 +98,7 @@ abstract class GitBranchesWithDetailsTreeRenderer(
       }
     }
   }
+
 
   private fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
     return when (treeNode) {
@@ -139,23 +151,23 @@ abstract class GitBranchesWithDetailsTreeRenderer(
   private inner class MyMainPanel : BorderLayoutPanel() {
     private val branchInfoPanel = JBUI.Panels.simplePanel(mainTextComponent)
       .addToLeft(mainIconComponent)
-      .addToRight(incomingOutgoingLabel)
       .andTransparent()
 
     private val textPanel = JPanel(GridBagLayout()).apply {
       isOpaque = false
 
-      add(branchInfoPanel,
-          GridBagConstraints().apply {
-            anchor = GridBagConstraints.LINE_START
-            weightx = 0.0
-          })
+      val gbc = GridBagConstraints().apply {
+        anchor = GridBagConstraints.LINE_START
+        weightx = 0.0
+      }
 
-      add(secondaryLabel,
-          GridBagConstraints().apply {
-            anchor = GridBagConstraints.LINE_END
-            weightx = 0.75
-          })
+      add(branchInfoPanel, gbc)
+      add(incomingLabel,gbc)
+      add(outgoingLabel, gbc)
+
+      gbc.anchor = GridBagConstraints.LINE_END
+      gbc.weightx = 0.75
+      add(secondaryLabel, gbc)
     }
 
     init {
@@ -178,4 +190,47 @@ abstract class GitBranchesWithDetailsTreeRenderer(
       return accessibleContext
     }
   }
+}
+
+internal fun createIncomingLabel(): JLabel = JBLabel().apply {
+  icon = DvcsImplIcons.Incoming
+  iconTextGap = ICON_TEXT_GAP
+  componentStyle = ComponentStyle.SMALL
+  foreground = GitIncomingOutgoingColors.INCOMING_FOREGROUND
+}
+
+internal fun createOutgoingLabel(): JLabel = JBLabel().apply {
+  icon = DvcsImplIcons.Outgoing
+  iconTextGap = ICON_TEXT_GAP
+  componentStyle = ComponentStyle.SMALL
+  foreground = GitIncomingOutgoingColors.OUTGOING_FOREGROUND
+}
+
+private val ICON_TEXT_GAP
+  get() = JBUI.scale(1)
+
+internal fun updateIncomingCommitLabel(label: JLabel, incomingOutgoingState: IncomingOutgoingState) {
+  val isEmpty = incomingOutgoingState == IncomingOutgoingState.EMPTY
+  val totalIncoming = incomingOutgoingState.totalIncoming()
+
+  label.isVisible = !isEmpty && (totalIncoming > 0 || incomingOutgoingState.hasUnfetched())
+  if (!label.isVisible) return
+
+  label.text = if (totalIncoming > 0) shrinkTo99(totalIncoming) else ""
+}
+
+internal fun updateOutgoingCommitLabel(label: JLabel, state: IncomingOutgoingState) {
+  val isEmpty = state == IncomingOutgoingState.EMPTY
+  val totalOutgoing = state.totalOutgoing()
+
+  label.isVisible = !isEmpty && totalOutgoing > 0
+  if (!label.isVisible) return
+
+  label.text = if (totalOutgoing > 0) shrinkTo99(totalOutgoing) else ""
+}
+
+
+private fun shrinkTo99(commits: Int): @NlsSafe String {
+  if (commits > 99) return "99+"
+  return commits.toString()
 }

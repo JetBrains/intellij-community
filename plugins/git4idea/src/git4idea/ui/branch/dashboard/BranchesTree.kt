@@ -29,6 +29,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.FList
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.branch.BranchData
@@ -37,20 +38,23 @@ import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.branch.calcTooltip
-import git4idea.branch.getIcon
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchesMatcherWrapper
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
+import git4idea.ui.branch.tree.createIncomingLabel
+import git4idea.ui.branch.tree.createOutgoingLabel
+import git4idea.ui.branch.tree.updateIncomingCommitLabel
+import git4idea.ui.branch.tree.updateOutgoingCommitLabel
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.NonNls
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
 import java.util.*
 import java.util.function.Supplier
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.TransferHandler
@@ -79,15 +83,18 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     private val colorManager = getColorManager(project)
     private val branchManager = project.service<GitBranchManager>()
 
-    private var incomingOutgoingIcon: NodeIcon? = null
+    private val incomingLabel = createIncomingLabel()
+    private val outgoingLabel = createOutgoingLabel()
 
-    override fun customizeCellRenderer(tree: JTree,
+    override fun customizeCellRenderer(
+      tree: JTree,
       value: Any?,
       selected: Boolean,
       expanded: Boolean,
       leaf: Boolean,
       row: Int,
-                                       hasFocus: Boolean) {
+      hasFocus: Boolean,
+    ) {
       if (value !is BranchTreeNode) return
       val descriptor = value.getNodeDescriptor()
 
@@ -119,7 +126,18 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       }
 
       val incomingOutgoingState = branchInfo?.incomingOutgoingState
-      incomingOutgoingIcon = incomingOutgoingState?.getIcon()?.let { NodeIcon(it, preferredSize.width + tree.insets.left) }
+      if (incomingOutgoingState != null) {
+        updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
+        updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
+        val fontMetrics = incomingLabel.getFontMetrics(incomingLabel.font)
+
+        incomingLabel.size = Dimension(fontMetrics.stringWidth(incomingLabel.text) + JBUI.scale(1) + incomingLabel.icon.iconWidth, fontMetrics.height)
+        outgoingLabel.size = Dimension(fontMetrics.stringWidth(outgoingLabel.text) + JBUI.scale(1) + outgoingLabel.icon.iconWidth, fontMetrics.height)
+      }
+      else {
+        incomingLabel.isVisible = false
+        outgoingLabel.isVisible = false
+      }
 
       tree.toolTipText = incomingOutgoingState?.calcTooltip()
     }
@@ -137,13 +155,25 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
     override fun paint(g: Graphics) {
       super.paint(g)
-      incomingOutgoingIcon?.let { (icon, locationX) ->
-        icon.paintIcon(this@BranchTreeCellRenderer, g, locationX, (size.height - icon.iconHeight) / 2)
+
+      var xOffset = preferredSize.width + tree.insets.left
+      var yShifted = false
+      if (incomingLabel.isVisible) {
+        val incIcon = incomingLabel.icon
+        g.translate(xOffset, (size.height - incIcon.iconHeight) / 2)
+        yShifted = true
+
+        incomingLabel.paint(g)
+        xOffset = incomingLabel.width + JBUI.scale(3)
+      }
+
+      if (outgoingLabel.isVisible) {
+        val outIcon = outgoingLabel.icon
+        g.translate(xOffset, if (yShifted) 0 else (size.height - outIcon.iconHeight) / 2)
+        outgoingLabel.paint(g)
       }
     }
   }
-
-  private data class NodeIcon(val icon: Icon, val locationX: Int)
 
   override fun hasFocus() = super.hasFocus() || searchField?.textEditor?.hasFocus() ?: false
 
