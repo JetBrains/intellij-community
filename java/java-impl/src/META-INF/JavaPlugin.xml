@@ -371,6 +371,9 @@
 
     <extensionPoint qualifiedName="com.intellij.openapi.projectRoots.externalJavaConfigurationProvider"
                     interface="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.gotoByName.defaultProvider.ignoreLanguage" dynamic="true"
+                    beanClass="com.intellij.ide.util.gotoByName.IgnoreLanguageInDefaultProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

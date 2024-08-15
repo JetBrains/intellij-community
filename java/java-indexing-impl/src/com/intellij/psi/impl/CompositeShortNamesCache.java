@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -13,7 +14,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
-import org.jetbrains.annotations.ApiStatus;
+import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,21 +26,23 @@ import java.util.Set;
 
 public final class CompositeShortNamesCache extends PsiShortNamesCache {
   private final Project myProject;
-  private final boolean myForDefaultGotoContributor;
+  private final Set<Language> myExcludeLanguages;
 
   public CompositeShortNamesCache(Project project) {
-    this(project, /*forGotoContributor*/false);
+    this(project, /*withoutLanguages*/Collections.emptySet());
   }
 
-  private CompositeShortNamesCache(Project project, boolean forDefaultGotoContributor) {
+  private CompositeShortNamesCache(Project project, Set<Language> excludeLanguages) {
     myProject = project;
-    myForDefaultGotoContributor = forDefaultGotoContributor;
+    myExcludeLanguages = excludeLanguages;
   }
 
-  @ApiStatus.Internal
   @Override
-  public @NotNull PsiShortNamesCache forDefaultGotoContributor() {
-    return new CompositeShortNamesCache(myProject, /*forGotoContributor*/true);
+  public @NotNull PsiShortNamesCache withoutLanguages(Set<Language> excludeLanguages) {
+    if (excludeLanguages.isEmpty()) return this;
+
+    Set<Language> newExcludeLanguages = CollectionsKt.union(myExcludeLanguages, excludeLanguages);
+    return new CompositeShortNamesCache(myProject, newExcludeLanguages);
   }
 
   @NotNull
@@ -47,10 +50,10 @@ public final class CompositeShortNamesCache extends PsiShortNamesCache {
     if (myProject.isDefault()) return Collections.emptyList();
 
     List<@NotNull PsiShortNamesCache> extensionList = EP_NAME.getExtensionList(myProject);
-    if (myForDefaultGotoContributor) {
+    if (!myExcludeLanguages.isEmpty()) {
       return extensionList
         .stream()
-        .filter(cache -> cache.serveDefaultGotoContributor())
+        .filter(cache -> !myExcludeLanguages.contains(cache.getLanguage()))
         .toList();
     } else {
       return extensionList;

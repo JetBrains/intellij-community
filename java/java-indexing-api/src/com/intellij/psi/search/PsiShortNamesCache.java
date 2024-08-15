@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * Allows to retrieve files and Java classes, methods and fields in a project by non-qualified names.
@@ -147,47 +150,33 @@ public abstract class PsiShortNamesCache {
     return ContainerUtil.process(getClassesByName(name, scope), processor);
   }
 
-  /**
-   * <p>
-   * Determines whether the specific {@link PsiShortNamesCache} should be used in the default implementation of the goto contributor,
-   * specifically the {@link com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor} and {@link com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor}.
-   * </p>
-   *
-   * <p>
-   * Alternatively, a language for which <code>serveDefaultGotoContributor()</code> returns <code>false</code>,
-   * provides its own contributors,
-   * and supplies its own instances of {@link com.intellij.navigation.ChooseByNameContributor} and {@link com.intellij.navigation.GotoClassContributor}.
-   * </p>
-   *
-   * @return <code>true</code> (default) if a language should rely on Java-based PSI (e.g., {@link PsiClass}, {@link PsiMethod}, etc.) for goto contributors,
-   * and <code>false</code> if a language has its own contributors.
-   */
-  @ApiStatus.Internal
-  public boolean serveDefaultGotoContributor() {
-    return true;
-  }
 
   /**
+   * Determines for which language the current {@link PsiShortNamesCache} provides the declarations.
    * <p>
-   * Returns a new instance
-   * of {@link PsiShortNamesCache} to be used in the {@link com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor}
-   * and {@link com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor}
-   * for providing default Java-based PSI declarations such as {@link PsiClass}, {@link PsiMethod}, etc.
-   * </p>
-   *
-   * <p>
-   * Languages that have implemented {@link #serveDefaultGotoContributor} have their own goto contributors, and these languages are not processed by the returned {@link PsiShortNamesCache}.
-   * </p>
-   *
+   * The default is {@link Language#ANY}
+   */
+  @ApiStatus.Internal
+  public @NotNull Language getLanguage() {
+    return Language.ANY;
+  }
+
+
+  /**
+   * Returns a new instance of {@link PsiShortNamesCache} which will provide declarations for all the languages except for the ones specified via {@code languages}
    * <p>
    * This method is implemented only in the {@link PsiShortNamesCache}, which is registered as a project service.
    * For other implementations, it throws a {@link UnsupportedOperationException}.
-   * </p>
    *
-   * @see #serveDefaultGotoContributor
+   * @see #getLanguage
    */
   @ApiStatus.Internal
-  public @NotNull PsiShortNamesCache forDefaultGotoContributor() {
-    throw new UnsupportedOperationException("Works only in `PsiShortNamesCache` which is registered as a project service");
+  public @NotNull PsiShortNamesCache withoutLanguages(Set<Language> languages) {
+    throw new UnsupportedOperationException();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull PsiShortNamesCache withoutLanguages(Language... languages) {
+    return withoutLanguages(Set.of(languages));
   }
 }
