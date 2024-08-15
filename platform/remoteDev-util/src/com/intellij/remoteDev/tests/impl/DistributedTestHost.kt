@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspendPreserveClientId
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
@@ -386,7 +387,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
     else {
       val windowString = "window '${projectIdeFrame.name}'"
-      if (projectIdeFrame.isFocused) {
+      if (projectIdeFrame.isFocused && !SystemInfo.isWindows) {
         LOG.info("$actionTitle: Window '$windowString' is already focused")
         return true
       }
