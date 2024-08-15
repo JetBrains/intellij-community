@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.UnmodifiableTextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.NlsContexts;
@@ -54,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements PossiblyDumbAware {
   private static final Logger LOG = Logger.getInstance(LocalInspectionsPass.class);
   private final TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
@@ -490,6 +490,11 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
   @Override
   public @NotNull List<HighlightInfo> getInfos() {
     return Collections.unmodifiableList(myInfos);
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return Registry.is("ide.dumb.aware.inspections");
   }
 
   private static final class InspectionHighlightInfoType extends HighlightInfoType.HighlightInfoTypeImpl {

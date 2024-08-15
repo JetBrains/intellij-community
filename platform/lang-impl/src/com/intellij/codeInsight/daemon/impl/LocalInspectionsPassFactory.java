@@ -6,7 +6,7 @@ import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -14,7 +14,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-final class LocalInspectionsPassFactory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
+final class LocalInspectionsPassFactory implements MainHighlightingPassFactory,
+                                                   TextEditorHighlightingPassFactoryRegistrar,
+                                                   PossiblyDumbAware {
+
   private static final Logger LOG = Logger.getInstance(LocalInspectionsPassFactory.class);
 
   @Override
