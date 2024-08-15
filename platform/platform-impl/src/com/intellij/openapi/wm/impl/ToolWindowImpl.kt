@@ -90,7 +90,7 @@ internal class ToolWindowImpl(
   var windowInfoDuringInit: WindowInfoImpl? = null
 
   private val focusTask by lazy { FocusTask(this) }
-  val focusAlarm: SingleAlarm by lazy { SingleAlarm(focusTask, 0, disposable) }
+  val focusAlarm: SingleAlarm by lazy { SingleAlarm(focusTask, 0, parentDisposable) }
 
   private var stripeShortTitleProvider: Supplier<@NlsContexts.TabTitle String>? = null
 
@@ -166,7 +166,7 @@ internal class ToolWindowImpl(
     }.cancelOnDispose(disposable)
   }
 
-  private class UpdateBackgroundContentManager() : ContentManagerListener {
+  private class UpdateBackgroundContentManager : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
       InternalDecoratorImpl.setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
     }
@@ -236,6 +236,7 @@ internal class ToolWindowImpl(
     toolWindowFocusWatcher = ToolWindowFocusWatcher(toolWindow = this, component = decorator)
     contentManager.addContentManagerListener(object : ContentManagerListener {
       override fun selectionChanged(event: ContentManagerEvent) {
+        @Suppress("DEPRECATION")
         this@ToolWindowImpl.decorator?.headerToolbar?.updateActionsImmediately()
       }
     })
@@ -669,7 +670,6 @@ internal class ToolWindowImpl(
     }
   }
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use. Tool window content will be initialized automatically.", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
   fun ensureContentInitialized() {
@@ -700,7 +700,7 @@ internal class ToolWindowImpl(
   }
 
   override fun showContentPopup(inputEvent: InputEvent) {
-    // called only when tool window is already opened, so, content should be already created
+    // called only when a tool window is already opened, so, content should be already created
     ToolWindowContentUi.toggleContentPopup(contentUi!!, contentManager.value)
   }
 
@@ -884,7 +884,7 @@ internal class ToolWindowImpl(
 
   fun requestFocusInToolWindow() {
     focusTask.resetStartTime()
-    focusAlarm.cancelAllRequests()
+    focusAlarm.cancel()
     focusTask.run()
   }
 }
