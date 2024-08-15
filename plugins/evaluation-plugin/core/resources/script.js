@@ -237,8 +237,8 @@ function addContexts(sessionDiv, popup, lookup) {
 
   if (contextJson !== "") {
     const contextObject = JSON.parse(contextJson)
-    contextObject.contexts.items.forEach(context => {
-      popup.appendChild(createContextBlock(context))
+    contextObject.context.forEach(item => {
+      popup.appendChild(createContextBlock(item))
     })
   }
 }
