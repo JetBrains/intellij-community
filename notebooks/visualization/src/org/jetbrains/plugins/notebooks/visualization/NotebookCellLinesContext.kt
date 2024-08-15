@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
@@ -34,7 +35,7 @@ private class EditorsWithOffsetsDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val contextComponent = snapshot[PlatformCoreDataKeys.CONTEXT_COMPONENT]
     val editor = snapshot[PlatformDataKeys.EDITOR]
-    val result = getEditorsWithOffsets(editor, contextComponent)
+    val result = runReadAction { getEditorsWithOffsets(editor, contextComponent) }
     sink[EDITORS_WITH_OFFSETS_DATA_KEY] = result.takeIf(List<*>::isNotEmpty)
   }
 }
@@ -49,8 +50,9 @@ private fun getEditorsWithOffsets(editor: Editor?, contextComponent: Component?)
       ?.asSafely<EditorComponentImpl>()
       ?.editor
       ?.let { contextEditor ->
-        if (NotebookCellLinesProvider.get(contextEditor.document) != null) contextEditor to contextEditor.getOffsetFromCaretImpl()
-        else null
+        if (NotebookCellLinesProvider.get(contextEditor.document) != null) {
+          contextEditor to contextEditor.getOffsetFromCaretImpl()
+        } else null
       })
 
   // Otherwise, some component inside an editor can be focused. In that case it's assumed that the current cell is the cell closest
