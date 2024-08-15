@@ -131,6 +131,11 @@ object ToolbarUtil {
       ActionUtil.copyFrom(this, holder.id)
       fallbackDescription = templatePresentation.description
       fallbackIcon = templatePresentation.icon
+
+      if (templateText.isNullOrBlank()) {
+        // Note: not a typo. Effectively this means "use description instead of text if the latest is null"
+        templatePresentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)
+      }
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -148,11 +153,6 @@ object ToolbarUtil {
         e.presentation.icon = createIcon(isEnabled)
         e.presentation.description = createDescription(isEnabled)
       }
-    }
-
-    override fun displayTextInToolbar(): Boolean {
-      // Note: not a typo. Effectively this means "use description instead of text if the latest is null"
-      return templateText.isNullOrBlank()
     }
 
     private fun createIcon(isEnabled: Boolean): Icon? {
