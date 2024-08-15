@@ -220,7 +220,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         toolHighlights.elementHighlights.put(psiElement, newInfos);
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("removeFromDataAtomically: " + psi + ": old=" + oldInfos + "; new=" + newInfos+ currentProgressInfo());
+        LOG.debug("removeFromDataAtomically: " + psi + ": old=" + (oldInfos == null ? 0 : oldInfos.size()) + "; new=" + newInfos.size()+ currentProgressInfo());
       }
     }
   }
@@ -1022,7 +1022,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         }
         if (recycled != null) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("remap: filelevel recycled " + recycled + " from " + from);
+            LOG.debug("remap: recycled " + recycled + " from " + from);
           }
         }
         newInfo.setGroup(-1);
