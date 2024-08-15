@@ -9,6 +9,7 @@ import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.WAS_SHOWN
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_ID
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
@@ -24,7 +25,9 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     val container = InlineCompletionLogsContainer.create(event.request.editor)
     container.add(REQUEST_ID with event.request.requestId)
     container.addAsync {
-      emptyList() // todo context features
+      readAction {
+        InlineCompletionContextLogs.getFor(event.request)
+      }
     }
   }
 
