@@ -51,5 +51,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
   </component>
 </module>

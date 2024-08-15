@@ -21,8 +21,6 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 /**
  * Origin of [KaSymbol] used in completion suggestion
@@ -200,18 +198,6 @@ private fun ((Name) -> Boolean).getAndSetAware(): (Name) -> Boolean = { name ->
 
 private fun Name.toJavaGetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.getterName(it)) }
 private fun Name.toJavaSetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.setterName(it)) }
-
-internal fun KtDeclaration.canDefinitelyNotBeSeenFromOtherFile(): Boolean {
-    return when {
-        isPrivate() -> true
-        hasModifier(KtTokens.INTERNAL_KEYWORD) && containingKtFile.isCompiled -> {
-            // internal declarations from library are invisible from source modules
-            true
-        }
-
-        else -> false
-    }
-}
 
 context(KaSession)
 private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {

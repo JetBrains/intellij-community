@@ -212,7 +212,7 @@ internal open class FirCallableCompletionContributor(
 
         if (shouldCompleteTopLevelCallablesFromIndex) {
             val topLevelCallablesFromIndex = symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(scopeNameFilter) {
-                !it.canDefinitelyNotBeSeenFromOtherFile() && it.canBeAnalysed()
+                !visibilityChecker.isDefinitelyInvisibleByPsi(it) && it.canBeAnalysed()
             }
 
             topLevelCallablesFromIndex
@@ -433,7 +433,7 @@ internal open class FirCallableCompletionContributor(
         val extensionsFromIndex = symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(
             scopeNameFilter,
             receiverTypes,
-        ) { !it.canDefinitelyNotBeSeenFromOtherFile() && it.canBeAnalysed() }
+        ) { !visibilityChecker.isDefinitelyInvisibleByPsi(it) && it.canBeAnalysed() }
 
         return extensionsFromIndex
             .filter { filter(it, sessionParameters) }

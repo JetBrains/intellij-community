@@ -151,7 +151,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         weighingContext: WeighingContext
     ) {
         for ((nameFilter, userPrefix) in nameFiltersWithUserPrefixes) {
-            getAvailableClassifiersFromIndex(symbolFromIndexProvider, nameFilter, visibilityChecker).forEach { classifier ->
+            getAvailableClassifiersFromIndex(parameters, symbolFromIndexProvider, nameFilter, visibilityChecker).forEach { classifier ->
                 val symbolOrigin = CompletionSymbolOrigin.Index
                 addSuggestions(variableOrParameter, classifier, userPrefix, lookupNamesAdded, weighingContext, symbolOrigin)
             }

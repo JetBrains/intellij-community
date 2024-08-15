@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.completion.checkers
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
@@ -11,7 +13,10 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionCo
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 @OptIn(KaExperimentalApi::class)
@@ -19,6 +24,30 @@ internal class CompletionVisibilityChecker(
     private val basicContext: FirBasicCompletionContext,
     private val positionContext: KotlinRawPositionContext
 ) {
+    fun isDefinitelyInvisibleByPsi(declaration: KtDeclaration): Boolean = forbidAnalysis("isDefinitelyInvisibleByPsi") {
+        if (basicContext.parameters.invocationCount >= 2) return false
+        if (basicContext.originalKtFile is KtCodeFragment) return false
+
+        val declarationContainingFile = declaration.containingKtFile
+        if (declaration.isPrivate()) {
+            if (declarationContainingFile != basicContext.originalKtFile && declarationContainingFile != basicContext.fakeKtFile) {
+                return true
+            }
+        }
+        if (declaration.hasModifier(KtTokens.INTERNAL_KEYWORD)) {
+            if (declarationContainingFile.isCompiled) {
+                return true
+            }
+            val useSiteModule = basicContext.useSiteModule
+
+            val declarationModule = KaModuleProvider.getModule(basicContext.project, declarationContainingFile, useSiteModule = useSiteModule)
+            if (declarationModule != useSiteModule && declarationModule !in useSiteModule.directFriendDependencies) {
+                return true
+            }
+        }
+        return false
+    }
+
     context(KaSession)
     fun isVisible(symbol: KaDeclarationSymbol): Boolean {
         if (positionContext is KDocNameReferencePositionContext) return true

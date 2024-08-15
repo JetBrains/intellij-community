@@ -95,6 +95,7 @@ internal open class FirClassifierCompletionContributor(
 
         if (prefixMatcher.prefix.isNotEmpty()) {
             getAvailableClassifiersFromIndex(
+                parameters,
                 symbolFromIndexProvider,
                 scopeNameFilter,
                 visibilityChecker

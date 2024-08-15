@@ -7,6 +7,8 @@ import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
@@ -31,6 +33,8 @@ internal class FirBasicCompletionContext(
 
     val project: Project
         get() = originalKtFile.project
+
+    val useSiteModule: KaModule = KaModuleProvider.getModule(project, originalKtFile, useSiteModule = null)
 
     val importStrategyDetector = ImportStrategyDetector(originalKtFile, project)
 

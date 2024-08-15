@@ -125,7 +125,7 @@ internal class FirWhenWithSubjectConditionContributor(
             }
 
         if (prefixMatcher.prefix.isNotEmpty()) {
-            getAvailableClassifiersFromIndex(symbolFromIndexProvider, scopeNameFilter, visibilityChecker)
+            getAvailableClassifiersFromIndex(parameters, symbolFromIndexProvider, scopeNameFilter, visibilityChecker)
                 .forEach { classifier ->
                     if (classifier !is KaNamedSymbol || classifier in availableFromScope) return@forEach
 
