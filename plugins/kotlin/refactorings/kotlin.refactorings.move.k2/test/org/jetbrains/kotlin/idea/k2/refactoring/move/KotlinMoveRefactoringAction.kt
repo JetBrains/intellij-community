@@ -13,7 +13,7 @@ interface KotlinMoveRefactoringAction : AbstractMultifileRefactoringTest.Refacto
         ?: KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS
 
     fun JsonObject.searchForText() = get("searchInNonCode")?.asBoolean?.equals(true)
-        ?: KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
+        ?: KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES
 
     fun JsonObject.searchReferences() = get("searchReferences")?.asBoolean?.equals(true)
         ?: KotlinCommonRefactoringSettings.getInstance().MOVE_UPDATE_USAGES

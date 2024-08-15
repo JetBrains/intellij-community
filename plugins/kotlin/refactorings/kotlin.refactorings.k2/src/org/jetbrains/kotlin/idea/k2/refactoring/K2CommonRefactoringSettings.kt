@@ -35,7 +35,7 @@ internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var MOVE_SEARCH_IN_COMMENTS: Boolean
             by delegateTo { it::MOVE_SEARCH_IN_COMMENTS }
 
-    override var MOVE_SEARCH_FOR_TEXT: Boolean
+    override var UPDATE_TEXT_OCCURENCES: Boolean
             by delegateTo { it::MOVE_SEARCH_FOR_TEXT }
 
     override var MOVE_UPDATE_USAGES: Boolean

@@ -40,7 +40,7 @@ sealed class K2MoveModel {
 
     abstract val target: K2MoveTargetModel
 
-    val searchForText: Setting = Setting.SEARCH_FOR_TEXT
+    val updateTextOccurrences: Setting = Setting.UPDATE_TEXT_OCCURRENCES
 
     val searchInComments: Setting = Setting.SEARCH_IN_COMMENTS
 
@@ -64,13 +64,13 @@ sealed class K2MoveModel {
     }
 
     enum class Setting(private val text: @NlsContexts.Checkbox String) {
-        SEARCH_FOR_TEXT(KotlinBundle.message("search.for.text.occurrences")) {
+        UPDATE_TEXT_OCCURRENCES(KotlinBundle.message("update.text.occurrences")) {
             override var state: Boolean
                 get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
+                    return KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES
                 }
                 set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT = value
+                    KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES = value
                 }
         },
 
@@ -155,7 +155,7 @@ sealed class K2MoveModel {
             val operationDescriptor = K2MoveOperationDescriptor.Files(
                 project,
                 listOf(moveDescriptor),
-                searchForText.state,
+                updateTextOccurrences.state,
                 searchReferences,
                 searchInComments.state,
                 dirStructureMatchesPkg = true,
@@ -195,7 +195,7 @@ sealed class K2MoveModel {
                 target.directory,
                 target.fileName,
                 target.pkgName,
-                searchForText.state,
+                updateTextOccurrences.state,
                 if (inSourceRoot) updateUsages.state else false,
                 searchInComments.state,
                 true,

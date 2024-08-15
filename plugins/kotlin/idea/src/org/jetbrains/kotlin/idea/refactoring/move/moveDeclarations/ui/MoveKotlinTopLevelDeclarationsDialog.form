@@ -129,7 +129,7 @@
                         </constraints>
                         <properties>
                           <selected value="true"/>
-                          <text resource-bundle="messages/KotlinBundle" key="search.for.text.occurrences"/>
+                          <text resource-bundle="messages/KotlinBundle" key="update.text.occurrences"/>
                         </properties>
                       </component>
                       <component id="cc60c" class="javax.swing.JCheckBox" binding="cbSearchReferences">
