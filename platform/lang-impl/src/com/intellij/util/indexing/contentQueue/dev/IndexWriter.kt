@@ -92,6 +92,8 @@ abstract class IndexWriter {
   )
 
   companion object {
+    private val LOG = Logger.getInstance(IndexWriter::class.java)
+
     /**
      * When disabled, each indexing thread writes its produced updates to the indexes by itself.
      * When enabled, indexing threads are preparing updates and submitting writing to the dedicated threads:
@@ -107,14 +109,22 @@ abstract class IndexWriter {
     val WRITE_INDEXES_ON_SEPARATE_THREAD = getBooleanProperty("idea.write.indexes.on.separate.thread",
                                                               UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() > 5)
 
-    private val USE_FAKE_WRITER: Boolean = getBooleanProperty("IndexWriter.USE_FAKE_WRITER", false)
-    private val USE_COROUTINES: Boolean = getBooleanProperty("IndexWriter.USE_COROUTINES", false)
+    private val PARALLEL_WRITER_IMPL: String? = System.getProperty("IndexWriter.parallel.impl")
 
-    private val defaultParallelWriter: ParallelIndexWriter = when {
-      USE_FAKE_WRITER -> FakeIndexWriter
-      USE_COROUTINES -> ApplyViaCoroutinesWriter()
-      else -> MultiThreadedWithSuspendIndexWriter()
-      //LegacyMultiThreadedIndexWriter()
+    private val defaultParallelWriter: ParallelIndexWriter = when (PARALLEL_WRITER_IMPL) {
+      "FakeIndexWriter" -> FakeIndexWriter
+      "ApplyViaCoroutinesWriter" -> ApplyViaCoroutinesWriter()
+      "LegacyMultiThreadedIndexWriter" -> LegacyMultiThreadedIndexWriter()
+
+      "MultiThreadedWithSuspendIndexWriter", null -> MultiThreadedWithSuspendIndexWriter()
+      else -> {
+        LOG.info("Unrecognized value [IndexWriter.parallel.impl='$PARALLEL_WRITER_IMPL'] -- use default MultiThreadedWithSuspendIndexWriter")
+        MultiThreadedWithSuspendIndexWriter()
+      }
+    }
+
+    init {
+      LOG.info("Use $defaultParallelWriter as (parallel) index writer implementation")
     }
 
     @JvmStatic
