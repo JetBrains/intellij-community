@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -18,7 +19,7 @@ val NOTEBOOK_INTERVAL_POINTER_KEY = DataKey.create<NotebookIntervalPointer>("NOT
  * It may become valid again when action is undone or redone.
  * Invalid pointer returns null.
  */
-interface NotebookIntervalPointer {
+interface NotebookIntervalPointer : UserDataHolder {
   /** thread-safe */
   fun get(): NotebookCellLines.Interval?
 }
