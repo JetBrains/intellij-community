@@ -32,7 +32,6 @@ fun FQNamesProvider.isNameMatches(qualifiedNameOwner: PyQualifiedNameOwner): Boo
   // Relaxed check: package and name
   val elementQualifiedName = QualifiedName.fromDottedString(qualifiedName)
   return getQualifiedNames().any {
-    return it.firstComponent == elementQualifiedName.firstComponent &&
-           it.lastComponent == elementQualifiedName.lastComponent
+    it.firstComponent == elementQualifiedName.firstComponent && it.lastComponent == elementQualifiedName.lastComponent
   }
 }
