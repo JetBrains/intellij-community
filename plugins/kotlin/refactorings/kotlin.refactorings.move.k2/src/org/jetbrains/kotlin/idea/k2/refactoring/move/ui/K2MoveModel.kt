@@ -133,7 +133,7 @@ sealed class K2MoveModel {
         override fun toDescriptor(): K2MoveOperationDescriptor.Files {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
-            val searchReferences = if (inSourceRoot) updateUsages.state else false
+            val updateUsages = if (inSourceRoot) updateUsages.state else false
             val moveDescriptor = K2MoveDescriptor.Files(
                 project,
                 srcDescr,
@@ -143,7 +143,7 @@ sealed class K2MoveModel {
                 project,
                 listOf(moveDescriptor),
                 updateTextOccurrences.state,
-                searchReferences,
+                updateUsages,
                 dirStructureMatchesPkg = true,
                 moveCallBack
             )

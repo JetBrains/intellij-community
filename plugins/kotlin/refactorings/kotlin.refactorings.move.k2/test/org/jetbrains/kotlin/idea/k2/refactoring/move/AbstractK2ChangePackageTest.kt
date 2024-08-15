@@ -26,7 +26,7 @@ internal object K2ChangePackageRefactoringAction : KotlinMoveRefactoringAction {
             mainFile.project,
             setOf(mainFile as KtFile),
             FqName(newPkgName),
-            searchForText = config.searchForText()
+            updateTextOccurrences = config.updateTextOccurrences()
         )
         K2ChangePackageRefactoringProcessor(descriptor).run()
     }

@@ -94,12 +94,12 @@ internal val KtNamedDeclaration.needsReferenceUpdate: Boolean
     }
 
 internal fun KtFile.findUsages(
-    searchForText: Boolean,
+    searchTextOccurrences: Boolean,
     newPkgName: FqName
 ): List<UsageInfo> {
     markInternalUsages(this, this)
     return topLevelDeclarationsToUpdate.flatMap { decl ->
-        K2MoveRenameUsageInfo.findExternalUsages(decl) + decl.findNonCodeUsages(searchForText, newPkgName)
+        K2MoveRenameUsageInfo.findExternalUsages(decl) + decl.findNonCodeUsages(searchTextOccurrences, newPkgName)
     }
 }
 
@@ -110,10 +110,10 @@ internal fun KtFile.findUsages(
  * @return external usages of the declaration to move
  */
 internal fun KtNamedDeclaration.findUsages(
-    searchForText: Boolean,
+    searchTextOccurrences: Boolean,
     newPkgName: FqName
 ): List<UsageInfo> {
-    return K2MoveRenameUsageInfo.find(this) + findNonCodeUsages(searchForText, newPkgName)
+    return K2MoveRenameUsageInfo.find(this) + findNonCodeUsages(searchTextOccurrences, newPkgName)
 }
 
 /**
@@ -121,7 +121,7 @@ internal fun KtNamedDeclaration.findUsages(
  * @return non-code usages like occurrences in documentation, kdoc references (references in square brackets) are considered
  * code usages and won't be found when calling this method.
  */
-private fun KtNamedDeclaration.findNonCodeUsages(searchForText: Boolean, newPkgName: FqName): List<UsageInfo> {
+private fun KtNamedDeclaration.findNonCodeUsages(searchTextOccurrences: Boolean, newPkgName: FqName): List<UsageInfo> {
     return name?.let { elementName ->
         val usages = mutableListOf<UsageInfo>()
         fun addNonCodeUsages(oldFqn: String, newFqn: String) {
@@ -129,8 +129,8 @@ private fun KtNamedDeclaration.findNonCodeUsages(searchForText: Boolean, newPkgN
                 this,
                 resolveScope,
                 oldFqn,
-                searchForText, // there is no option to search specifically in comments and strings for K2
-                searchForText,
+                searchTextOccurrences, // there is no option to search specifically in comments and strings for K2
+                searchTextOccurrences,
                 newFqn,
                 usages
             )

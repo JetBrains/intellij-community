@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     val project: Project,
     val moveDescriptors: List<T>,
-    val searchForText: Boolean,
-    val searchReferences: Boolean,
+    val updateTextOccurrences: Boolean,
+    val updateUsages: Boolean,
     val dirStructureMatchesPkg: Boolean,
     val moveCallBack: MoveCallback? = null
 ) {
@@ -37,15 +37,15 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     class Files(
         project: Project,
         moveDescriptors: List<K2MoveDescriptor.Files>,
-        searchForText: Boolean,
-        searchReferences: Boolean,
+        updateTextOccurrences: Boolean,
+        updateUsages: Boolean,
         dirStructureMatchesPkg: Boolean,
         moveCallBack: MoveCallback? = null
     ) : K2MoveOperationDescriptor<K2MoveDescriptor.Files>(
         project,
         moveDescriptors,
-        searchForText,
-        searchReferences,
+        updateTextOccurrences,
+        updateUsages,
         dirStructureMatchesPkg,
         moveCallBack
     ) {
@@ -59,15 +59,15 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     class Declarations(
         project: Project,
         moveDescriptors: List<K2MoveDescriptor.Declarations>,
-        searchForText: Boolean,
-        searchReferences: Boolean,
+        updateTextOccurrences: Boolean,
+        updateUsages: Boolean,
         dirStructureMatchesPkg: Boolean,
         moveCallBack: MoveCallback? = null
     ) : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
         project,
         moveDescriptors,
-        searchForText,
-        searchReferences,
+        updateTextOccurrences,
+        updateUsages,
         dirStructureMatchesPkg,
         moveCallBack
     ) {
@@ -86,8 +86,8 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
             baseDir: PsiDirectory,
             fileName: String,
             pkgName: FqName,
-            searchForText: Boolean,
-            searchReferences: Boolean,
+            updateTextOccurrences: Boolean,
+            updateUsages: Boolean,
             mppDeclarations: Boolean,
             dirStructureMatchesPkg: Boolean,
             moveCallBack: MoveCallback? = null
@@ -104,14 +104,14 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
                     K2MoveDescriptor.Declarations(project, srcDescriptor, targetDescriptor)
                 }
                 return Declarations(
-                    project, descriptors, searchForText, searchReferences, dirStructureMatchesPkg, moveCallBack
+                    project, descriptors, updateTextOccurrences, updateUsages, dirStructureMatchesPkg, moveCallBack
                 )
             } else {
                 val srcDescr = K2MoveSourceDescriptor.ElementSource(declarations)
                 val targetDescr = K2MoveTargetDescriptor.File(fileName, pkgName, baseDir)
                 val moveDescriptor = K2MoveDescriptor.Declarations(project, srcDescr, targetDescr)
                 return Declarations(
-                    project, listOf(moveDescriptor), searchForText, searchReferences, dirStructureMatchesPkg, moveCallBack
+                    project, listOf(moveDescriptor), updateTextOccurrences, updateUsages, dirStructureMatchesPkg, moveCallBack
                 )
             }
         }

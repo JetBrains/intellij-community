@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 
 interface KotlinMoveRefactoringAction : AbstractMultifileRefactoringTest.RefactoringAction {
-    fun JsonObject.searchForText() = get("searchInNonCode")?.asBoolean?.equals(true)
+    fun JsonObject.updateTextOccurrences() = get("searchInNonCode")?.asBoolean?.equals(true)
         ?: KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES
 
-    fun JsonObject.searchReferences() = get("searchReferences")?.asBoolean?.equals(true)
+    fun JsonObject.updateUsages() = get("updateUsages")?.asBoolean?.equals(true)
         ?: KotlinCommonRefactoringSettings.getInstance().MOVE_UPDATE_USAGES
 
     fun JsonObject.moveExpectedActuals() = get("moveExpectedActuals")?.asBoolean?.equals(true)
@@ -22,6 +22,6 @@ interface KotlinMoveRefactoringAction : AbstractMultifileRefactoringTest.Refacto
         fun PsiElement.virtualFile() = if (this is PsiDirectory) virtualFile else containingFile.virtualFile
         val fileIndex = ProjectFileIndex.getInstance(source.project)
         if (!fileIndex.isInSource(source.virtualFile()) || !fileIndex.isInSource(target.virtualFile())) return false
-        return config.searchReferences()
+        return config.updateUsages()
     }
 }
