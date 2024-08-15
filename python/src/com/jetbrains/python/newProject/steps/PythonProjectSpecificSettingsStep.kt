@@ -30,6 +30,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
 import com.jetbrains.python.newProject.PythonPromoProjectGenerator
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -42,7 +43,7 @@ import java.nio.file.Path
 import java.util.*
 import javax.swing.JPanel
 
-class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGenerator<T>,
+class PythonProjectSpecificSettingsStep<T: PyNewProjectSettings>(projectGenerator: DirectoryProjectGenerator<T>,
                                            callback: AbstractNewProjectStep.AbstractCallback<T>)
   : ProjectSpecificSettingsStep<T>(projectGenerator, callback), DumbAware {
 

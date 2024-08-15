@@ -30,20 +30,20 @@ import java.util.Arrays;
 import java.util.Optional;
 
 
-public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.AbstractCallback<T> {
+public final class PythonGenerateProjectCallback<T extends PyNewProjectSettings> extends AbstractNewProjectStep.AbstractCallback<T> {
 
   @Override
   public void consume(@Nullable ProjectSettingsStepBase<T> step, @NotNull ProjectGeneratorPeer<T> projectGeneratorPeer) {
     if (!(step instanceof ProjectSpecificSettingsStep settingsStep)) return;
 
     // FIXME: pass welcome script creation via settings
-    if (step instanceof PythonProjectSpecificSettingsStep) {
+    if (settingsStep instanceof PythonProjectSpecificSettingsStep) {
       // has to be set before project generation
       boolean welcomeScript = PropertiesComponent.getInstance().getBoolean("PyCharm.NewProject.Welcome", false);
       PyWelcomeSettings.getInstance().setCreateWelcomeScriptForEmptyProject(welcomeScript);
     }
 
-    final DirectoryProjectGenerator generator = settingsStep.getProjectGenerator();
+    final DirectoryProjectGenerator<?> generator = settingsStep.getProjectGenerator();
     Sdk sdk = settingsStep.getSdk();
 
     final Object settings = computeProjectSettings(generator, settingsStep, projectGeneratorPeer);
@@ -63,7 +63,7 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
       ((PythonProjectGenerator<?>)generator).afterProjectGenerated(newProject);
     }
 
-    if (step instanceof PythonProjectSpecificSettingsStep newStep) {
+    if (settingsStep instanceof PythonProjectSpecificSettingsStep newStep) {
       // init git repostory
       if (PropertiesComponent.getInstance().getBoolean("PyCharm.NewProject.Git", false)) {
         ModuleManager moduleManager = ModuleManager.getInstance(newProject);
