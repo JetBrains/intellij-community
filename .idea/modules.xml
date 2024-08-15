@@ -999,6 +999,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/tests/plugin/intellij.mcpserver.tests.plugin.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/tests/plugin/intellij.mcpserver.tests.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ml-local-models/intellij.ml.models.local.iml" filepath="$PROJECT_DIR$/plugins/ml-local-models/intellij.ml.models.local.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ml-local-models/java/intellij.ml.models.local.java.iml" filepath="$PROJECT_DIR$/plugins/ml-local-models/java/intellij.ml.models.local.java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mps/build/intellij.mps.build.iml" filepath="$PROJECT_DIR$/mps/build/intellij.mps.build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mps/build/intellij.mps.resources/intellij.mps.resources.iml" filepath="$PROJECT_DIR$/mps/build/intellij.mps.resources/intellij.mps.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/jupyter/intellij.notebooks.jupyter.core.iml" filepath="$PROJECT_DIR$/jupyter/intellij.notebooks.jupyter.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/notebooks/notebook-ui/intellij.notebooks.ui.iml" filepath="$PROJECT_DIR$/notebooks/notebook-ui/intellij.notebooks.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.iml" filepath="$PROJECT_DIR$/notebooks/visualization/intellij.notebooks.visualization.iml" />

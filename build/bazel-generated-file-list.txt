@@ -498,6 +498,8 @@ libraries/xml-rpc
 libraries/xstream
 libraries/xtext-xbase
 libraries/xz
+mps/build
+mps/build/intellij.mps.resources
 notebooks/notebook-ui
 notebooks/visualization
 platform/analysis-api
