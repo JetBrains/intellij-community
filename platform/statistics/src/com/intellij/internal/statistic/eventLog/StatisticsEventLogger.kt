@@ -171,7 +171,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
  * */
 abstract class StatisticsEventLoggerProviderExt(recorderId: String, version: Int, sendFrequencyMs: Long,
                                                 maxFileSizeInBytes: Int, sendLogsOnIdeClose: Boolean = false) :
-  StatisticsEventLoggerProvider(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, sendLogsOnIdeClose) {
+  StatisticsEventLoggerProvider(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, sendLogsOnIdeClose, false) {
   override fun isLoggingAlwaysActive(): Boolean = StatisticsEventLogProviderUtil.forceLoggingAlwaysEnabled()
 }
 

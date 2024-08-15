@@ -12,7 +12,11 @@ import com.intellij.util.PlatformUtils
 import java.util.concurrent.TimeUnit
 
 internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProviderExt(
-  "FUS", 75, sendFrequencyMs = TimeUnit.MINUTES.toMillis(15), DEFAULT_MAX_FILE_SIZE_BYTES, sendLogsOnIdeClose = true) {
+  recorderId = "FUS",
+  version = 76,
+  sendFrequencyMs = TimeUnit.MINUTES.toMillis(15),
+  maxFileSizeInBytes = DEFAULT_MAX_FILE_SIZE_BYTES,
+  sendLogsOnIdeClose = true) {
 
   override fun isRecordEnabled(): Boolean {
     return !ApplicationManager.getApplication().isUnitTestMode &&
