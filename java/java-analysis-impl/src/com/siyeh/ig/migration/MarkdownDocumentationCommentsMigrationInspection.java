@@ -20,6 +20,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Bas Leijdekkers
@@ -53,7 +55,8 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
 
   private static class MarkdownDocumentationCommentsMigrationFix extends PsiUpdateModCommandQuickFix {
 
-    public static final TokenSet SKIP_TOKENS = TokenSet.create(JavaDocTokenType.DOC_COMMENT_START, JavaDocTokenType.DOC_COMMENT_END);
+    private static final TokenSet SKIP_TOKENS = TokenSet.create(JavaDocTokenType.DOC_COMMENT_START, JavaDocTokenType.DOC_COMMENT_END);
+    private static final Pattern HEADING = Pattern.compile("[hH]([1-6])");
 
     @Override
     public @NotNull String getFamilyName() {
@@ -154,6 +157,7 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
             int start = tag + (endTag ? 2 : 1);
             int end = (!endTag && html.charAt(i - 1) == '/') ? i - 1 : i;
             String name = html.substring(start, end).trim().toLowerCase(Locale.ENGLISH);
+            Matcher matcher; 
             if ("li".equals(name)) {
               if (endTag) {
                 inList = false;
@@ -185,34 +189,11 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
             else if ("ul".equals(name)) {
               if (endTag) inList = false;
             }
-            else if ("h1".equals(name)) {
+            else if ((matcher = HEADING.matcher(name)).matches()) {
               if (!endTag) {
-                result.append("# ");
-              }
-            }
-            else if ("h2".equals(name)) {
-              if (!endTag) {
-                result.append("## ");
-              }
-            }
-            else if ("h3".equals(name)) {
-              if (!endTag) {
-                result.append("### ");
-              }
-            }
-            else if ("h4".equals(name)) {
-              if (!endTag) {
-                result.append("#### ");
-              }
-            }
-            else if ("h5".equals(name)) {
-              if (!endTag) {
-                result.append("##### ");
-              }
-            }
-            else if ("h6".equals(name)) {
-              if (!endTag) {
-                result.append("####### ");
+                int number = matcher.group(1).charAt(0) - '0';
+                result.append("#".repeat(number)).append(' ');
+                if (i + 1 < length && html.charAt(i + 1) == '\n') i++;
               }
             }
             else {
