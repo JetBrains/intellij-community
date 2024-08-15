@@ -510,6 +510,7 @@ private val excludedPaths = java.util.Set.of(
   "/META-INF/RdServer.xml",
   "/META-INF/unattendedHost.xml",
   "/META-INF/codeWithMe.xml",
+  "/META-INF/codeWithMeFrontend.xml",
 )
 
 fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>, context: BuildContext): XIncludePathResolver {
