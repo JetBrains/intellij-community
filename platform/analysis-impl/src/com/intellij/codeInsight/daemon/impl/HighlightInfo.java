@@ -499,6 +499,9 @@ public class HighlightInfo implements Segment {
   @Override
   public @NonNls String toString() {
     String s = "HighlightInfo(" + getStartOffset() + "," + getEndOffset() + ")";
+    if (isFileLevelAnnotation()) {
+      s+=" (file level)";
+    }
     if (getStartOffset() != startOffset || getEndOffset() != endOffset) {
       s += "; created as: (" + startOffset + "," + endOffset + ")";
     }
