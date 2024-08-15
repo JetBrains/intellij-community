@@ -105,7 +105,7 @@
   projectLibraries:
   - name: jps-javac-extension
     files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/9/jps-javac-extension-9.jar
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/10/jps-javac-extension-10.jar
     reason: withProjectLibrary
 - name: lib/jps-launcher.jar
   modules:

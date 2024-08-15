@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="jps-javac-extension" type="repository">
-    <properties maven-id="org.jetbrains.jps:jps-javac-extension:9">
+    <properties maven-id="org.jetbrains.jps:jps-javac-extension:10">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/9/jps-javac-extension-9.jar">
-          <sha256sum>221fe6fbee5d47c00104716f94401b0b4119d1c5b558e09f64ad874d35cf3870</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/10/jps-javac-extension-10.jar">
+          <sha256sum>86b9d2a2378cff951f3bd0750d56ff4cef64f78dbb33e9f7abd9c7e6e14d99de</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/9/jps-javac-extension-9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jps/jps-javac-extension/10/jps-javac-extension-10.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
