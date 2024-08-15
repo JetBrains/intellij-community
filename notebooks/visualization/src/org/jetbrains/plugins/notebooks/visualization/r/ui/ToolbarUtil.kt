@@ -7,7 +7,6 @@ package org.jetbrains.plugins.notebooks.visualization.r.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
@@ -82,7 +81,7 @@ object ToolbarUtil {
       addAll(actions)
       isPopup = true
       with(templatePresentation) {
-        putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+        putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
         icon = AllIcons.Actions.More
       }
     }
