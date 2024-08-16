@@ -7,11 +7,11 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -36,12 +36,12 @@ class InlineCompletionLogsContainer {
     ConcurrentCollectionFactory.createConcurrentSet<EventPair<*>>()
   }
 
-  private val asyncAdds = Channel<Deferred<*>>(capacity = Channel.UNLIMITED)
+  private val asyncAdds = Channel<Job>(capacity = Channel.UNLIMITED)
 
   private suspend fun waitForAsyncAdds() {
     while (currentCoroutineContext().isActive) {
       val job = asyncAdds.tryReceive().getOrNull() ?: break
-      job.await()
+      job.join()
     }
   }
 
@@ -68,10 +68,10 @@ class InlineCompletionLogsContainer {
    * Use [add] if there is no special need to use async variant. See [add] documentation for more info.
    */
   fun addAsync(block: suspend () -> List<EventPair<*>>) {
-    val deferred = InlineCompletionLogsScopeProvider.getInstance().cs.async {
+    val job = InlineCompletionLogsScopeProvider.getInstance().cs.launch {
       block().forEach { add(it) }
     }
-    asyncAdds.trySend(deferred)
+    asyncAdds.trySend(job)
   }
 
   /**
