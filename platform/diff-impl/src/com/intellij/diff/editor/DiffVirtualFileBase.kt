@@ -32,7 +32,7 @@ abstract class DiffVirtualFileBase(name: String) :
       IncludeInNavigationHistory.Never -> false
       IncludeInNavigationHistory.Always -> true
       IncludeInNavigationHistory.OnlyIfOpen ->
-        FileEditorManager.getInstance(project).isFileOpen(this) // TODO: Check performance
+        FileEditorManager.getInstance(project).isFileOpen(this)
     }
 
   override fun isPersistedInEditorHistory(): Boolean = false
