@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
+import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.ConfigurationContainer
@@ -13,6 +14,7 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.gradle.BasicGradleProject
+import org.gradle.tooling.model.gradle.GradleBuild
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -94,25 +96,23 @@ abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
 
 private const val REQUEST_FOR_NON_ANDROID_MODULES_ONLY = "*"
 
-class AndroidAwareGradleModelProvider<TModel>(
-    private val modelClass: Class<TModel>,
+class AndroidAwareGradleModelProvider(
     private val androidPluginIsRequestingVariantSpecificModels: Boolean
 ) : ProjectImportModelProvider {
-
-    override fun populateProjectModels(
-        controller: BuildController,
-        projectModel: BasicGradleProject,
-        modelConsumer: GradleModelConsumer
-    ) {
-        val model = if (androidPluginIsRequestingVariantSpecificModels) {
-            controller.findModel(projectModel, modelClass, ModelBuilderService.Parameter::class.java) {
+    private val modelClass = KotlinGradleModel::class.java
+    override fun populateBuildModels(controller: BuildController, buildModel: GradleBuild, modelConsumer: GradleModelConsumer) {
+        if (androidPluginIsRequestingVariantSpecificModels) {
+            GradleModelProviderUtil.buildModelsWithParameter(
+                controller,
+                buildModel,
+                modelClass,
+                modelConsumer,
+                ModelBuilderService.Parameter::class.java
+            ) {
                 it.value = REQUEST_FOR_NON_ANDROID_MODULES_ONLY
             }
         } else {
-            controller.findModel(projectModel, modelClass)
-        }
-        if (model != null) {
-            modelConsumer.consumeProjectModel(projectModel, model, modelClass)
+            GradleModelProviderUtil.buildModels(controller, buildModel, modelClass, modelConsumer)
         }
     }
 
