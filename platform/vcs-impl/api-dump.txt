@@ -6372,6 +6372,7 @@ f:com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 - getLineStatusTracker(com.intellij.openapi.editor.Document):com.intellij.openapi.vcs.ex.LineStatusTracker
 - getLineStatusTracker(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.ex.LineStatusTracker
 - f:getTrackers():java.util.List
+- f:hasPendingUpdate(com.intellij.openapi.editor.Document):Z
 - invokeAfterUpdate(java.lang.Runnable):V
 - f:releaseAllTrackers():V
 - releaseTrackerFor(com.intellij.openapi.editor.Document,java.lang.Object):V
