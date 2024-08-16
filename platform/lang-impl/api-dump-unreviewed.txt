@@ -6719,7 +6719,8 @@ f:com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 - text(java.lang.String,com.intellij.codeInsight.hints.declarative.InlayActionData):V
 - toggleButton(kotlin.jvm.functions.Function1):V
 f:com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl$Companion
-- f:createRoot():com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
+- f:createRoot(com.intellij.codeInsight.hints.declarative.InlayPosition):com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
+- bs:createRoot$default(com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl$Companion,com.intellij.codeInsight.hints.declarative.InlayPosition,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 f:com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry
 - <init>(java.lang.String,B,com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea):V
 - b:<init>(java.lang.String,B,com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea,I,kotlin.jvm.internal.DefaultConstructorMarker):V
