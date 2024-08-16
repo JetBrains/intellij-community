@@ -343,10 +343,11 @@ class PyTypedDictInspection : PyInspection() {
         var notRequiredPresented = false
         expression.accept(object: PyRecursiveElementVisitor() {
           override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
-            if (PyTypedDictTypeProvider.parseTypedDictFieldQualifiers(node.operand, myTypeEvalContext).isRequired == true) {
+            val typedDictFieldQualifiers = PyTypedDictTypeProvider.parseTypedDictFieldQualifiers(node, myTypeEvalContext)
+            if (typedDictFieldQualifiers.isRequired == true) {
               requiredPresented = true
             }
-            if (PyTypedDictTypeProvider.parseTypedDictFieldQualifiers(node.operand, myTypeEvalContext).isRequired == false) {
+            if (typedDictFieldQualifiers.isRequired == false) {
               notRequiredPresented = true
             }
             if (requiredPresented && notRequiredPresented) {
