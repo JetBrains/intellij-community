@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.core.script.k2
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
@@ -17,18 +16,20 @@ import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
  * Returns default definition if update did not happen.
  */
 class K2ScriptDefinitionProvider(val project: Project) : LazyScriptDefinitionProvider() {
-    private val allDefinitions: AtomicReference<List<ScriptDefinition>?> = AtomicReference()
+    private val allDefinitions: AtomicReference<List<ScriptDefinition>> = AtomicReference(emptyList())
 
-    fun getAllDefinitions(): List<ScriptDefinition> = allDefinitions.get() ?: emptyList()
+    init {
+        reloadDefinitionsFromSources()
+    }
+
+    fun getAllDefinitions(): List<ScriptDefinition> = allDefinitions.get()
 
     public override val currentDefinitions: Sequence<ScriptDefinition>
         get() {
             val settingsByDefinitionId =
                 ScriptDefinitionPersistentSettings.getInstance(project).getIndexedSettingsPerDefinition()
 
-            val definitions = allDefinitions.get() ?: return emptySequence()
-
-            return definitions
+            return allDefinitions.get()
                 .filter { settingsByDefinitionId[it.definitionId]?.setting?.enabled != false }
                 .sortedBy { settingsByDefinitionId[it.definitionId]?.index }
                 .asSequence()
@@ -48,8 +49,5 @@ class K2ScriptDefinitionProvider(val project: Project) : LazyScriptDefinitionPro
     companion object {
         fun getInstance(project: Project): K2ScriptDefinitionProvider =
             project.service<ScriptDefinitionProvider>() as K2ScriptDefinitionProvider
-
-        fun getInstanceIfCreated(project: Project): K2ScriptDefinitionProvider? =
-            project.serviceIfCreated<ScriptDefinitionProvider>() as? K2ScriptDefinitionProvider
     }
 }
