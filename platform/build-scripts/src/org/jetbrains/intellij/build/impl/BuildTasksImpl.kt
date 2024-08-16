@@ -361,7 +361,7 @@ internal fun collectModulesToCompileForDistribution(context: BuildContext): Muta
   }
 
   val productProperties = context.productProperties
-  result.addAll(productProperties.productLayout.mainModules)
+  result.add(productProperties.applicationInfoModule)
 
   val mavenArtifacts = productProperties.mavenArtifacts
   result.addAll(mavenArtifacts.additionalModules)
@@ -659,7 +659,6 @@ private fun checkProductLayout(context: BuildContext) {
   checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules", context)
   checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules", context)
   checkModules(layout.moduleExcludes.keys, "productProperties.productLayout.moduleExcludes", context)
-  checkModules(layout.mainModules, "productProperties.productLayout.mainModules", context)
   for (plugin in pluginLayouts) {
     checkBaseLayout(plugin, "\'${plugin.mainModule}\' plugin", context)
   }

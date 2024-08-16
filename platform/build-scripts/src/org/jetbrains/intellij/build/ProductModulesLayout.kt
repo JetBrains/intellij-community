@@ -5,10 +5,7 @@ package org.jetbrains.intellij.build
 
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.*
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -84,7 +81,7 @@ class ProductModulesLayout {
   internal var platformLayoutSpec = persistentListOf<(PlatformLayout, BuildContext) -> Unit>()
 
   fun addPlatformSpec(customizer: (PlatformLayout, BuildContext) -> Unit) {
-    platformLayoutSpec = platformLayoutSpec.add(customizer)
+    platformLayoutSpec += customizer
   }
 
   fun excludeModuleOutput(module: String, path: String) {
@@ -94,12 +91,6 @@ class ProductModulesLayout {
   fun excludeModuleOutput(module: String, path: Collection<String>) {
     moduleExcludes.computeIfAbsent(module) { mutableListOf() }.addAll(path)
   }
-
-  /**
-   * Names of the modules which classpath will be used to build searchable options index <br>
-   * //todo get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
-   */
-  var mainModules: List<String> = emptyList()
 
   /**
    * If `true` a special xml descriptor in custom plugin repository format will be generated for [pluginModulesToPublish] plugins.

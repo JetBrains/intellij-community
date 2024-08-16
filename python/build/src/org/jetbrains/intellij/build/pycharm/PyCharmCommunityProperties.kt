@@ -22,7 +22,6 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     scrambleMainJar = false
     buildSourcesArchive = true
 
-    productLayout.mainModules = listOf("intellij.pycharm.community.main")
     productLayout.productApiModules = listOf("intellij.xml.dom")
     productLayout.productImplementationModules = listOf(
       "intellij.platform.starter",
