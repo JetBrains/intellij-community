@@ -7,6 +7,7 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -128,12 +129,15 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
         super.postProcess(module, mavenProject, changes, modifiableModelsProvider)
         val project = module.project
         project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
-            KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
-                project,
-                version.rawVersion,
-                isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven,
-                externalSystemId = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
-            )
+            // Need to execute this and wait to avoid a race condition
+            invokeAndWaitIfNeeded {
+                KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
+                    project,
+                    version.rawVersion,
+                    isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven,
+                    externalSystemId = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
+                )
+            }
 
             project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
         }

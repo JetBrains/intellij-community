@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
@@ -99,12 +100,15 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
 
         //detect version
         project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
-            KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
-                project,
-                version.rawVersion,
-                isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven,
-                externalSystemId = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
-            )
+            // Need to execute this and wait to avoid a race condition
+            ApplicationManager.getApplication().invokeAndWait {
+                KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
+                    project,
+                    version.rawVersion,
+                    isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven,
+                    externalSystemId = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
+                )
+            }
 
             project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
         }
