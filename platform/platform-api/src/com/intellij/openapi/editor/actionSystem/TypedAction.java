@@ -109,7 +109,7 @@ public abstract class TypedAction {
   private static final class Handler implements TypedActionHandler {
     @Override
     public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-      if (editor.isViewer()) {
+      if (!EditorModificationUtil.checkModificationAllowed(editor)) {
         return;
       }
 

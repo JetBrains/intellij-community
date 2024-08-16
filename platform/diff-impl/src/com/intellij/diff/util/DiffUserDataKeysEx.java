@@ -77,6 +77,8 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
 
   Key<ActionToolbar> LEFT_TOOLBAR = Key.create("Diff.LeftToolbar");
 
+  Key<Runnable> PATCH_FILE_PREVIEW_MODIFICATION_SWITCH = Key.create("Diff.PatchFilePreviewModificationSwitch");
+
   /**
    * Add panel to the bottom of diff window.
    * If passed panel implements Disposable, it will be disposed when window is closed.
