@@ -816,9 +816,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
     // migrate old state of Search Everywhere preview
-    if (PropertiesComponent.getInstance().isValueSet("SearchEverywhere.previewPropertyKey")) {
+    if (PropertiesComponent.getInstance().isTrueValue(SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY)) {
       state.showPreviewInSearchEverywhere = true
-      PropertiesComponent.getInstance().unsetValue("SearchEverywhere.previewPropertyKey")
     }
   }
 
@@ -867,3 +866,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   var EDITOR_TAB_LIMIT: Int = editorTabLimit
   //</editor-fold>
 }
+
+@Internal
+const val SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY = "SearchEverywhere.previewPropertyKey"

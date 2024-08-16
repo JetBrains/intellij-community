@@ -5,8 +5,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.SEHeaderActionListener.Companion.SE_HEADER_ACTION_TOPIC
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.isPreviewEnabled
-import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.PREVIEW_CLOSED
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.PREVIEW_SWITCHED
+import com.intellij.ide.ui.SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -45,6 +48,8 @@ private fun toggleSearchPreview(state: Boolean) {
 
   ApplicationManager.getApplication().messageBus.syncPublisher<SEHeaderActionListener>(SE_HEADER_ACTION_TOPIC)
     .performed(SEHeaderActionListener.SearchEverywhereActionEvent(PREVIEW_ACTION_ID))
+
+  PropertiesComponent.getInstance().unsetValue(SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY)
 }
 
 internal class CloseSearchEverywherePreview : DumbAwareAction() {
