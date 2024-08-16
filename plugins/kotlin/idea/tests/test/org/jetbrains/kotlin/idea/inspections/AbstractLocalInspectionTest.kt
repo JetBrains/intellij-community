@@ -120,7 +120,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
       These "extra" file names should be of the form: "xxx.1.blah", "xxx.2.foo", "xxx.3.xml" etc.
       I.e., they should start with the main file name, followed by sequential number 1,2,3..., followed by any extension.
      */
-    private fun findExtraFilesForTest(mainFile: File): List<String> {
+    protected fun findExtraFilesForTest(mainFile: File): List<String> {
         var i = 1
         val extraFileNames = mutableListOf<String>()
         extraFileLoop@ while (true) {

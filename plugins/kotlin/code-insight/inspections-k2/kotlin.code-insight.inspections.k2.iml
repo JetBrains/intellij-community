@@ -61,5 +61,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" />
   </component>
 </module>
