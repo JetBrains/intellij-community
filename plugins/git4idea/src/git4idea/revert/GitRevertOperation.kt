@@ -42,7 +42,7 @@ class GitRevertOperation(private val project: Project,
                              doRevert(autoCommit, repository, commit.id, listeners)
                            },
                            GitAbortOperationAction.Revert(),
-                           emptyCommitDetector = { result -> result.outputAsJoinedString.contains("nothing to commit") },
+                           emptyCommitDetector = { result -> isNothingToCommitMessage(result) },
                            defaultCommitMessageGenerator = { _, commit ->
                              """
                              Revert "${commit.subject}"
@@ -59,5 +59,11 @@ class GitRevertOperation(private val project: Project,
                        hash: Hash,
                        listeners: List<GitLineHandlerListener>): GitCommandResult {
     return git.revert(repository, hash.asString(), autoCommit, *listeners.toTypedArray())
+  }
+
+  private fun isNothingToCommitMessage(result: GitCommandResult): Boolean {
+    val stdout = result.outputAsJoinedString
+    return stdout.contains("nothing to commit") ||
+           stdout.contains("nothing added to commit but untracked files present");
   }
 }

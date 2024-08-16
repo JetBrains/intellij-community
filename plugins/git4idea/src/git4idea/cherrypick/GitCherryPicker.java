@@ -127,7 +127,10 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   private static boolean isNothingToCommitMessage(@NotNull GitCommandResult result) {
     String stdout = result.getOutputAsJoinedString();
-    return stdout.contains("nothing to commit") || stdout.contains("previous cherry-pick is now empty");
+    String stderr = result.getErrorOutputAsJoinedString();
+    return stdout.contains("nothing to commit") ||
+           stdout.contains("nothing added to commit but untracked files present") ||
+           stderr.contains("previous cherry-pick is now empty");
   }
 
   private @NotNull String createCommitMessage(@NotNull GitRepository repository, @NotNull VcsCommitMetadata commit) {
