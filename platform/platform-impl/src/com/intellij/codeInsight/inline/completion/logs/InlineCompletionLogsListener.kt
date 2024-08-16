@@ -11,7 +11,6 @@ import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_ID
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
@@ -41,9 +40,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     val container = InlineCompletionLogsContainer.remove(editor) ?: return
     container.add(WAS_SHOWN with wasShown.get())
     container.add(FINISH_TYPE with event.finishType)
-    InlineCompletionLogsScopeProvider.getInstance().cs.launch {
-      container.log()
-    }
+    container.logCurrent() // we wait for its completion intentionally
   }
 }
 

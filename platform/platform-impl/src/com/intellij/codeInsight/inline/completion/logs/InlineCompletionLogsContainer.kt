@@ -45,6 +45,14 @@ class InlineCompletionLogsContainer {
     }
   }
 
+  private fun cancelAsyncAdds() {
+    asyncAdds.close()
+    while (true) {
+      val job = asyncAdds.tryReceive().getOrNull() ?: break
+      job.cancel()
+    }
+  }
+
   /**
    * Use to add log to log container.
    * If you have to launch expensive computation and don't want to pause your main execution (especially if you are on EDT) use [addAsync].
@@ -63,25 +71,28 @@ class InlineCompletionLogsContainer {
     val deferred = InlineCompletionLogsScopeProvider.getInstance().cs.async {
       block().forEach { add(it) }
     }
-    asyncAdds.trySend(deferred).getOrThrow()
+    asyncAdds.trySend(deferred)
   }
 
   /**
-   * Send log container.
+   * Cancel all [asyncAdds] and send current log container.
+   * Await for this function completion before exit from the inline completion request and process next typings or next requests.
+   * Should be very fast.
    */
-  suspend fun log() {
-    waitForAsyncAdds()
-    InlineCompletionLogs.Session.SESSION_EVENT.log(
+  fun logCurrent() {
+    cancelAsyncAdds()
+    InlineCompletionLogs.Session.SESSION_EVENT.log( // log function is asynchronous, so it's ok to launch it even on EDT
       logs.filter { it.value.isNotEmpty() }.map { (phase, events) ->
         InlineCompletionLogs.Session.phases[phase]!!.with(ObjectEventData(events.toList()))
       }
     )
+    logs.forEach { (_, events) -> events.clear() }
   }
 
   /**
-   * Get current logs to use as a feature for some model.
+   * Wait for all [asyncAdds] and return current logs to use as features for some model.
    */
-  suspend fun currentLogs(): List<EventPair<*>> {
+  suspend fun getCollectedLogs(): List<EventPair<*>> {
     waitForAsyncAdds()
     return logs.values.flatten()
   }
