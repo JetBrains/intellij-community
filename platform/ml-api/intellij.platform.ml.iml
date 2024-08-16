@@ -11,5 +11,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="library" exported="" name="jetbrains.mlapi.extension" level="project" />
   </component>
 </module>

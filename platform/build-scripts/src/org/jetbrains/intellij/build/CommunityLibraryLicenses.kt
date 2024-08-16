@@ -1204,6 +1204,8 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.fleet.rpc"),
     jetbrainsLibrary("jetbrains.fleet.rpc.server"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
+    jetbrainsLibrary("jetbrains.mlapi.extension"),
+    jetbrainsLibrary("jetbrains.mlapi.usage"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),
