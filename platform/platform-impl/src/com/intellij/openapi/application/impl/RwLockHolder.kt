@@ -68,10 +68,13 @@ internal object RwLockHolder: ThreadingSupport {
   override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
     val l = lock ?: notReady()
     val writeIntentLock = acquireWriteIntentLock(computation.javaClass.getName())
+    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
+    ThreadingAssertions.setImplicitLockOnEDT(false)
     try {
       return computation.compute()
     }
     finally {
+      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
       if (writeIntentLock) {
         l.writeIntentUnlock()
       }
@@ -259,12 +262,15 @@ internal object RwLockHolder: ThreadingSupport {
     val l = lock ?: notReady()
     fireBeforeReadActionStart(action.javaClass)
     val permit = l.startRead()
+    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
+    ThreadingAssertions.setImplicitLockOnEDT(false)
     try {
       fireReadActionStarted(action.javaClass)
       action.run()
       fireReadActionFinished(action.javaClass)
     }
     finally {
+      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
       if (permit != null) {
         l.endRead(permit)
         fireAfterReadActionFinished(action.javaClass)
@@ -276,6 +282,8 @@ internal object RwLockHolder: ThreadingSupport {
     val l = lock ?: notReady()
     fireBeforeReadActionStart(computation.javaClass)
     val permit = l.startRead()
+    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
+    ThreadingAssertions.setImplicitLockOnEDT(false)
     try {
       fireReadActionStarted(computation.javaClass)
       val rv = computation.compute()
@@ -283,6 +291,7 @@ internal object RwLockHolder: ThreadingSupport {
       return rv;
     }
     finally {
+      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
       if (permit != null) {
         l.endRead(permit)
         fireAfterReadActionFinished(computation.javaClass)
@@ -294,6 +303,8 @@ internal object RwLockHolder: ThreadingSupport {
     val l = lock ?: notReady()
     fireBeforeReadActionStart(computation.javaClass)
     val permit = l.startRead()
+    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
+    ThreadingAssertions.setImplicitLockOnEDT(false)
     try {
       fireReadActionStarted(computation.javaClass)
       val rv = computation.compute()
@@ -301,6 +312,7 @@ internal object RwLockHolder: ThreadingSupport {
       return rv;
     }
     finally {
+      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
       if (permit != null) {
         l.endRead(permit)
         fireAfterReadActionFinished(computation.javaClass)
@@ -315,12 +327,15 @@ internal object RwLockHolder: ThreadingSupport {
     if (permit != null && !permit.readRequested) {
       return false
     }
+    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
+    ThreadingAssertions.setImplicitLockOnEDT(false)
     try {
       fireReadActionStarted(action.javaClass)
       action.run()
       fireReadActionFinished(action.javaClass)
     }
     finally {
+      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
       if (permit != null) {
         l.endRead(permit)
         fireAfterReadActionFinished(action.javaClass)

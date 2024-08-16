@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.platform.ide.bootstrap.isImplicitReadOnEDTDisabled
 import com.intellij.ui.ComponentUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
@@ -1023,7 +1024,20 @@ internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit
     runnable()
   }
   else {
-    val runnableWithWIL = if (needWIL) { { WriteIntentReadAction.run(runnable) } } else { runnable }
+    val runnableWithWIL =
+      if (needWIL) {
+        {
+          ThreadingAssertions.setImplicitLockOnEDT(true)
+          try {
+            WriteIntentReadAction.run(runnable)
+          } finally {
+            ThreadingAssertions.setImplicitLockOnEDT(false)
+          }
+        }
+      }
+      else {
+        runnable
+      }
     transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnableWithWIL)
   }
 }
