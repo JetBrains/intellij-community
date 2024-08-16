@@ -465,9 +465,10 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown", "Jayson Minard",
                          "Drew Stephens", "Vyacheslav Artemyev", "Dmitry Spikhalskiy"),
 
-    LibraryLicense(name = "JaCoCo", libraryName = "JaCoCo", url = "https://www.eclemma.org/jacoco/").eplV1(),
-    LibraryLicense(name = "Jakarta ORO", libraryName = "OroMatcher",
-                   url = "https://jakarta.apache.org/oro/")
+    LibraryLicense(name = "JaCoCo", libraryName = "JaCoCo", url = "https://www.eclemma.org/jacoco/")
+      .suppliedByOrganizations("Mountainminds GmbH & Co. KG and Contributors")
+      .eplV1(),
+    LibraryLicense(name = "Jakarta ORO", libraryName = "OroMatcher", url = "https://jakarta.apache.org/oro/")
       .apache("https://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE")
       .suppliedByPersons(
         "Daniel Savarese",
@@ -786,8 +787,8 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/lz4/lz4-java")
       .apache("https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
     LibraryLicense(name = "MathJax", attachedTo = "intellij.python", version = "2.6.1",
-                   url = "https://github.com/mathjax/MathJax",
-                   licenseUrl = "https://github.com/mathjax/MathJax/blob/master/LICENSE").apache(),
+                   url = "https://github.com/mathjax/MathJax")
+      .apache("https://github.com/mathjax/MathJax/blob/master/LICENSE"),
 
 
     LibraryLicense(name = "Maven archetype catalog", libraryName = "apache.maven.archetype.catalog-no-trans:321",
@@ -835,12 +836,10 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/willemv/mercurial_prompthooks",
                    licenseUrl = "https://github.com/willemv/mercurial_prompthooks/blob/master/LICENSE.txt"),
     LibraryLicense(name = "microba", attachedTo = "intellij.libraries.microba", version = LibraryLicense.CUSTOM_REVISION,
-                   url = "https://microba.sourceforge.net/",
-                   licenseUrl = "https://microba.sourceforge.net/license.txt").newBsd()
+                   url = "https://microba.sourceforge.net/").newBsd("https://microba.sourceforge.net/license.txt")
       .suppliedByPersons("Michael Baranov"),
     LibraryLicense(name = "MigLayout", libraryName = "miglayout-swing",
-                   url = "https://github.com/mikaelgrev/miglayout/",
-                   licenseUrl = "https://github.com/mikaelgrev/miglayout/blob/master/src/site/resources/docs/license.txt").newBsd()
+                   url = "https://github.com/mikaelgrev/miglayout/").newBsd("https://github.com/mikaelgrev/miglayout/blob/master/src/site/resources/docs/license.txt")
       .suppliedByOrganizations("MiG InfoCom AB"),
     LibraryLicense(name = "morfologik-fsa", libraryName = "org.carrot2:morfologik-fsa",
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd()
@@ -1025,8 +1024,8 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/adobe-fonts/source-code-pro",
                    licenseUrl = "https://github.com/adobe-fonts/source-code-pro/blob/master/LICENSE.md"),
     LibraryLicense(name = "sphinxcontrib-napoleon", attachedTo = "intellij.python", version = "0.7",
-                   url = "https://sphinxcontrib-napoleon.readthedocs.io/",
-                   licenseUrl = "https://github.com/sphinx-contrib/napoleon/blob/master/LICENSE").simplifiedBsd(),
+                   url = "https://sphinxcontrib-napoleon.readthedocs.io/")
+      .simplifiedBsd("https://github.com/sphinx-contrib/napoleon/blob/master/LICENSE"),
     LibraryLicense(name = "Squareup Okio", libraryName = "squareup.okio.jvm", url = "https://github.com/square/okio")
       .apache("https://github.com/square/okio/blob/master/LICENSE.txt")
       .suppliedByOrganizations("Square, Inc."),
@@ -1132,8 +1131,8 @@ object CommunityLibraryLicenses {
                    url = "https://xerces.apache.org/xml-commons/components/resolver/").apache()
       .suppliedByOrganizations("The Apache Software Foundation"),
     LibraryLicense(name = "XMLBeans", libraryName = "XmlBeans",
-                   url = "https://xmlbeans.apache.org/",
-                   licenseUrl = "https://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/xmlbeans-2.3.0/xmlbeans.LICENSE").apache()
+                   url = "https://xmlbeans.apache.org/")
+      .apache("https://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/xmlbeans-2.3.0/xmlbeans.LICENSE")
       .suppliedByPersons("Cezar Andrei", "Radu Preotiuc", "Radu Preotiuc", "Wing Yew Poon", "Jacob Danner", "POI Team"),
     LibraryLicense(name = "XmlRPC", libraryName = "XmlRPC",
                    url = "https://ws.apache.org/xmlrpc/xmlrpc2/")
