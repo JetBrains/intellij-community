@@ -17,12 +17,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.junit.jupiter.api.TestInfo
 import org.opentest4j.TestAbortedException
@@ -32,7 +32,12 @@ import java.nio.file.Path
 
 fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, skipDependencySetup: Boolean = false, testInfo: TestInfo? = null): BuildOptions {
   val outDir = createTestBuildOutDir(productProperties)
-  val options = BuildOptions(cleanOutDir = false, useCompiledClassesFromProjectOutput = true, jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"))
+  val options = BuildOptions(
+    cleanOutDir = false,
+    useCompiledClassesFromProjectOutput = true,
+    jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
+    compressZipFiles = false,
+  )
   customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup, testInfo = testInfo)
   return options
 }
