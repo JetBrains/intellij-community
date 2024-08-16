@@ -7,9 +7,6 @@
     <extensionPoint qualifiedName="com.intellij.datavis.r.inlays.components.graphicsManagerProvider"
                     interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsManagerProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayOutputProvider"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutputProvider"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation.uiCustomizer"
                     interface="org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer"
                     dynamic="true"/>
