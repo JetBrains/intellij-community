@@ -5,7 +5,6 @@
 package org.jetbrains.plugins.notebooks.visualization.r.inlays.components
 
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.JupyterProgressStatus
-import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -30,7 +29,7 @@ class ToolbarPane(val inlayOutput: InlayOutput) : JPanel(BorderLayout()) {
       field = value
       updateMainComponent()
       updateChildrenBounds()
-      UiCustomizer.instance.toolbarPaneProgressComponentChanged(this, value)
+      inlayOutput.toolbarPaneChanged(value)
     }
 
   var toolbarComponent: JComponent? = null
@@ -38,13 +37,13 @@ class ToolbarPane(val inlayOutput: InlayOutput) : JPanel(BorderLayout()) {
       field = value
       updateMainComponent()
       updateChildrenBounds()
-      UiCustomizer.instance.toolbarPaneToolbarComponentChanged(this, value)
+      inlayOutput.toolbarPaneChanged(value)
     }
 
   private fun updateMainComponent() {
     if (mainPanel == null) {
       mainPanel = JPanel(BorderLayout()).also { mainPanel ->
-        UiCustomizer.instance.toolbarPaneMainPanelCreated(this, mainPanel)
+        inlayOutput.toolbarPaneChanged(mainPanel)
         add(NotebookInlayMouseListener.wrapPanel(mainPanel, inlayOutput.editor), BorderLayout.CENTER)
       }
     }

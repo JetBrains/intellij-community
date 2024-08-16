@@ -124,6 +124,8 @@ abstract class InlayOutput(
     InlayOutputUtil.saveWithFileChooser(project, title, description, extension, defaultName, true, onChoose)
   }
 
+  open fun toolbarPaneChanged(component: JComponent?) {}
+
   /** marker interface for [SaveOutputAction] */
   interface WithSaveAs {
     fun saveAs()

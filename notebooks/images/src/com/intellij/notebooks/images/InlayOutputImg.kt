@@ -8,6 +8,7 @@ import org.jetbrains.plugins.notebooks.visualization.r.inlays.InlayDimensions
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.*
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.runAsyncInlay
 import java.io.File
+import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 class InlayOutputImg(parent: Disposable, editor: Editor)
@@ -73,5 +74,9 @@ class InlayOutputImg(parent: Disposable, editor: Editor)
     graphicsPanel.image?.let { image ->
       ClipboardUtils.copyImageToClipboard(image)
     }
+  }
+
+  override fun toolbarPaneChanged(component: JComponent?) {
+    component?.background = editor.colorsScheme.defaultBackground
   }
 }
