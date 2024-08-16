@@ -150,7 +150,6 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
     super.initGeneratorListeners();
     if (myProjectGenerator instanceof PythonProjectGenerator) {
       ((PythonProjectGenerator<?>)myProjectGenerator).addSettingsStateListener(this::checkValid);
-      myErrorLabel.addMouseListener(((PythonProjectGenerator<?>)myProjectGenerator).getErrorLabelMouseListener());
     }
   }
 
