@@ -5,10 +5,7 @@ package com.intellij.ide
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
-import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.installThreadContext
-import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.*
 import com.intellij.diagnostic.EventWatcher
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
@@ -857,14 +854,20 @@ class IdeEventQueue private constructor() : EventQueue() {
       if (runnable == null || runnable is ContextAwareRunnable) {
         return null
       }
-      val captured = currentThreadContext()
-      return InvocationEvent(event.source) {
-        // TODO: daniil: if just to pass `runnable` into the InvocationEvent instead of calling `dispatchEvent`
-        // the event isn't marked as dispatched and `com.intellij.testFramework.UITestUtil.replaceIdeEventQueueSafely`
-        // hangs forever on `EventQueue.invokeAndWait(EmptyRunnable.getInstance());`
-        installThreadContext(captured).use {
-          dispatchEvent(event)
-        }
+      if (InvocationUtil.replaceRunnable(event, captureThreadContext(runnable))) {
+        return event
+      }
+      else {
+        val captured = currentThreadContext()
+        // capture context with a fallback way, but it produces the second InvocationEvent which has to delegate to the former one
+        return InvocationEvent(event.source, ContextAwareRunnable {
+          // the manual call of the former event's dispatch() is required here because EventQueue.invokeAndWait() expects
+          // that the invocation event's notifier is signaled and isDispatched() == true.
+          // If not dispatch the original event, it hangs forever
+          installThreadContext(captured).use {
+            event.dispatch()
+          }
+        })
       }
     }
     if (event.id in ComponentEvent.COMPONENT_FIRST..ComponentEvent.COMPONENT_LAST) {

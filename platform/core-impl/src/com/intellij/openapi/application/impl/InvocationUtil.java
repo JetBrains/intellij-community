@@ -33,6 +33,16 @@ public final class InvocationUtil {
     return null;
   }
 
+  public static boolean replaceRunnable(@NotNull InvocationEvent event, @NotNull Runnable newRunnable) {
+    try {
+      INVOCATION_EVENT_RUNNABLE_FIELD.set(event, newRunnable);
+      return true;
+    }
+    catch (IllegalAccessException ignored) {
+      return false;
+    }
+  }
+
   private static @NotNull Class<? extends Runnable> findProcessingClass() {
     try {
       return Class.forName(
