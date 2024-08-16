@@ -9,10 +9,7 @@ import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
-import com.intellij.codeInsight.multiverse.EditorContextManager;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.*;
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeWithMe.ClientId;
@@ -993,16 +990,33 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     });
   }
 
-  public @Nullable HighlightInfo findHighlightByOffset(@NotNull Document document, int offset, boolean includeFixRange) {
-    return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION);
+  public @Nullable HighlightInfo findHighlightByOffset(@NotNull Document document,
+                                                       int offset,
+                                                       boolean includeFixRange,
+                                                       @NotNull CodeInsightContext context) {
+    return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION, context);
   }
 
   @Nullable
   HighlightInfo findHighlightByOffset(@NotNull Document document,
                                       int offset,
                                       boolean includeFixRange,
-                                      @NotNull HighlightSeverity minSeverity) {
-    return findHighlightsByOffset(document, offset, includeFixRange, true, minSeverity);
+                                      @NotNull HighlightSeverity minSeverity,
+                                      @NotNull CodeInsightContext context) {
+    return findHighlightsByOffset(document, offset, includeFixRange, true, minSeverity, true, context);
+  }
+
+  /**
+   * Collects HighlightInfo intersecting with a certain offset.
+   *
+   * @deprecated This method is deprecated because it does not support contexts.
+   *             Use {@link #findHighlightByOffset(Document, int, boolean, CodeInsightContext)} instead.
+   */
+  @Deprecated
+  public @Nullable HighlightInfo findHighlightByOffset(@NotNull Document document,
+                                                       int offset,
+                                                       boolean includeFixRange) {
+    return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION, CodeInsightContextKt.anyContext());
   }
 
   /**
@@ -1023,6 +1037,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                         @NotNull HighlightSeverity minSeverity) {
     return findHighlightsByOffset(document, offset, includeFixRange, highestPriorityOnly, minSeverity, true);
   }
+
   @ApiStatus.Internal
   public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
                                                         int offset,
@@ -1030,7 +1045,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                         boolean highestPriorityOnly,
                                                         @NotNull HighlightSeverity minSeverity,
                                                         boolean includeFileLevel) {
-    HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly, includeFileLevel);
+    return findHighlightsByOffset(document, offset, includeFixRange, highestPriorityOnly, minSeverity, includeFileLevel,
+                                  CodeInsightContextKt.anyContext());
+  }
+
+  @ApiStatus.Internal
+  public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
+                                                        int offset,
+                                                        boolean includeFixRange,
+                                                        boolean highestPriorityOnly,
+                                                        @NotNull HighlightSeverity minSeverity,
+                                                        boolean includeFileLevel,
+                                                        @NotNull CodeInsightContext context) {
+    HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly, includeFileLevel, context);
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor);
     return processor.getResult();
   }
@@ -1073,10 +1100,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     private final List<HighlightInfo> foundInfoList = new SmartList<>();
     private final boolean highestPriorityOnly;
     private final boolean myIncludeFileLevel;
+    private final @NotNull CodeInsightContext highlightingContext;
 
-    HighlightByOffsetProcessor(boolean highestPriorityOnly, boolean includeFileLevel) {
+    HighlightByOffsetProcessor(boolean highestPriorityOnly, boolean includeFileLevel, @NotNull CodeInsightContext context) {
       this.highestPriorityOnly = highestPriorityOnly;
       myIncludeFileLevel = includeFileLevel;
+      highlightingContext = context;
     }
 
     @Override
@@ -1097,6 +1126,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         else if (compare > 0) {
           return true;
         }
+      }
+      if (info.getHighlighter() != null && !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(highlightingContext, info.getHighlighter())) {
+        return true;
       }
       foundInfoList.add(info);
       return true;
