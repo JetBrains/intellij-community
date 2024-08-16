@@ -130,6 +130,10 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       layout.withProjectLibrary("assertJ", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
       layout.withProjectLibrary("hamcrest", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
 
+      // b/358035533: plexus-utils is used by maven-resolver-provider from core, thus plexus-utils must be in core too.
+      // This is consistent with the layout of IntelliJ IDEA CE 2024.2.
+      layout.withProjectLibrary("plexus-utils")
+
       layout.withPatch { patcher, context ->
         // Patch AndroidStudioProperties.xml: set the platform API version to match the 3-component
         // IntelliJ IDEA build number. At runtime, it will be used by ApplicationInfo.getApiVersion()
