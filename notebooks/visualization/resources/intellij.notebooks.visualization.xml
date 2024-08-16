@@ -29,10 +29,6 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellInlayController"
                     interface="org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController$Factory"
                     dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayStateCustomizer"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayStateCustomizer"
-                    dynamic="true"/>
   </extensionPoints>
 
   <actions resource-bundle="messages.VisualizationBundle">
