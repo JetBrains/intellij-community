@@ -29,7 +29,26 @@ internal class LcrListPanel : UISandboxPanel {
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
       row {
-        jbList(listOf("First", "Second", "Last"), textListCellRenderer { it })
+        jbList(listOf("Text", "With Icon", "Italic", "Commented"), listCellRenderer {
+          when (index) {
+            0 -> text(value)
+            1 -> {
+              icon(AllIcons.General.Information)
+              text(value)
+            }
+            2 -> text(value) {
+              attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, UIUtil.getLabelForeground())
+            }
+            3 -> {
+              text(value) {
+                align = LcrInitParams.Align.LEFT
+              }
+              text("Commented") {
+                foreground = greyForeground
+              }
+            }
+          }
+        })
         jbList((1..99).map { "Item $it" }, textListCellRenderer { it })
         jbList((1..99).toList(), listCellRenderer {
           icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
