@@ -95,6 +95,25 @@ public class JavaFoldingTest extends JavaFoldingTestCase {
     assertEquals(text.indexOf("}", text.indexOf("i++")), myFixture.getEditor().getCaretModel().getOffset());
   }
 
+  public void testExpandCollapseRegionTogglesFold() {
+    String text = """
+      class Test {
+          void test(int i) {
+              if (i > 1) {
+                  <caret>i++;
+              }
+          }
+      }
+      """;
+    configure(text);
+    assertEquals(2, getExpandedFoldRegionsCount());
+
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_COLLAPSE_TOGGLE_REGION);
+    assertEquals(1, getExpandedFoldRegionsCount());
+
+    myFixture.performEditorAction(IdeActions.ACTION_EXPAND_COLLAPSE_TOGGLE_REGION);
+    assertEquals(2, getExpandedFoldRegionsCount());
+  }
   public void testFoldGroup() {
     // Implied by IDEA-79420
     myFoldingSettings.setCollapseLambdas(true);
