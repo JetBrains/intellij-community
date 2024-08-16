@@ -2,7 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Experiments.Companion.getInstance
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -17,7 +17,7 @@ import javax.swing.ListCellRenderer
 class MixingMultiThreadSearchTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
-    val experiments = getInstance()
+    val experiments = Experiments.getInstance()
     val mixedResultsWereEnabled = experiments.isFeatureEnabled(MIXED_RESULTS_FEATURE)
     experiments.setFeatureEnabled(MIXED_RESULTS_FEATURE, true)
     Disposer.register(testRootDisposable, Disposable { experiments.setFeatureEnabled(MIXED_RESULTS_FEATURE, mixedResultsWereEnabled) })
