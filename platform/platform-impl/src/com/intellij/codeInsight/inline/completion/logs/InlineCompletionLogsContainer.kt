@@ -102,6 +102,10 @@ class InlineCompletionLogsContainer {
       return editor.getUserData(KEY)
     }
 
+    /**
+     * Remove container from editor and return it. This function intentionally does not cancel tasks added from [addAsync].
+     * You still can await for logs to be collected and log all of them.
+     */
     fun remove(editor: Editor): InlineCompletionLogsContainer? {
       return editor.removeUserData(KEY)
     }
