@@ -3,7 +3,7 @@
 package com.intellij.ide
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientId.Companion.current
+import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.concurrency.*
 import com.intellij.diagnostic.EventWatcher
@@ -871,13 +871,13 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
     }
     if (event.id in ComponentEvent.COMPONENT_FIRST..ComponentEvent.COMPONENT_LAST) {
-      return ComponentEventWithClientId((event as ComponentEvent).component, event.id, current)
+      return ComponentEventWithClientId((event as ComponentEvent).component, event.id, currentOrNull)
     }
     return null
   }
 
   private fun withAttachedClientId(event: AWTEvent): AccessToken {
-    return if (event is ComponentEventWithClientId) withClientId(event.clientId) else AccessToken.EMPTY_ACCESS_TOKEN
+    return if (event is ClientIdAwareEvent) withClientId(event.clientId) else AccessToken.EMPTY_ACCESS_TOKEN
   }
 
   @Deprecated("Does nothing currently")
@@ -1270,7 +1270,11 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
   }
 }
 
-private class ComponentEventWithClientId(source: Component, id: Int, val clientId: ClientId) : ComponentEvent(source, id)
+interface ClientIdAwareEvent {
+  val clientId: ClientId?
+}
+
+private class ComponentEventWithClientId(source: Component, id: Int, override val clientId: ClientId?) : ComponentEvent(source, id), ClientIdAwareEvent
 
 @Suppress("SpellCheckingInspection")
 private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
