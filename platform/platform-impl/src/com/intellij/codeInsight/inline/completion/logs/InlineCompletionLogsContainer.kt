@@ -8,11 +8,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.LinkedBlockingQueue
 
 @ApiStatus.Internal
 class InlineCompletionLogsContainer {
@@ -36,19 +36,18 @@ class InlineCompletionLogsContainer {
     ConcurrentCollectionFactory.createConcurrentSet<EventPair<*>>()
   }
 
-  private val asyncAdds = Channel<Job>(capacity = Channel.UNLIMITED)
+  private val asyncAdds = LinkedBlockingQueue<Job>()
 
-  private suspend fun waitForAsyncAdds() {
+  private suspend fun awaitAllAlreadyRunningAsyncAdds() {
     while (currentCoroutineContext().isActive) {
-      val job = asyncAdds.tryReceive().getOrNull() ?: break
+      val job = asyncAdds.poll() ?: return
       job.join()
     }
   }
 
   private fun cancelAsyncAdds() {
-    asyncAdds.close()
     while (true) {
-      val job = asyncAdds.tryReceive().getOrNull() ?: break
+      val job = asyncAdds.poll() ?: break
       job.cancel()
     }
   }
@@ -71,7 +70,7 @@ class InlineCompletionLogsContainer {
     val job = InlineCompletionLogsScopeProvider.getInstance().cs.launch {
       block().forEach { add(it) }
     }
-    asyncAdds.trySend(job)
+    asyncAdds.add(job)
   }
 
   /**
@@ -93,7 +92,7 @@ class InlineCompletionLogsContainer {
    * Wait for all [asyncAdds] and return current logs to use as features for some model.
    */
   suspend fun getCollectedLogs(): List<EventPair<*>> {
-    waitForAsyncAdds()
+    awaitAllAlreadyRunningAsyncAdds()
     return logs.values.flatten()
   }
 
