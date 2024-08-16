@@ -10,8 +10,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.IdeBundle;
@@ -89,14 +87,11 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private HighlightInfo findInfo(@NotNull Project project, @NotNull Editor editor, int caretOffset, @NotNull HighlightSeverity minSeverity) {
     Document document = editor.getDocument();
     HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
-    EditorContextManager editorContextManager = EditorContextManager.getInstance(project);
-    CodeInsightContext documentContext = editorContextManager.getEditorContexts(editor).getMainContext();
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
-    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), info -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), context, info -> {
       if (mySeverity != null && info.getSeverity() != mySeverity) return true;
       int startOffset = getNavigationPositionFor(info, document);
-      CodeInsightContext infoContext = CodeInsightContextHighlightingUtil.getCodeInsightContext(info.getHighlighter());
-      if (!CodeInsightContextKt.anyContext().equals(infoContext) && !documentContext.equals(infoContext)) {return true;}
       if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
         infoToGo[0][0] = getBetterInfoThan(infoToGo[0][0], caretOffset, startOffset, info);
         infoToGo[1][0] = getBetterInfoThan(infoToGo[1][0], caretOffsetIfNoLuck, startOffset, info);

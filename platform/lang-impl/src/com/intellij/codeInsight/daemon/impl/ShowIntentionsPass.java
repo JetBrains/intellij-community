@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -302,8 +302,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     intentions.setOffset(offset);
 
     List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
-    EditorContextManager editorContextManager = EditorContextManager.getInstance(hostFile.getProject());
-    CodeInsightContext context = editorContextManager.getEditorContexts(hostEditor).getMainContext();
+    CodeInsightContext context = EditorContextManager.getEditorContext(hostEditor, hostFile.getProject());
     DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true, true, context);
     List<HighlightInfo> infos = new ArrayList<>();
     List<HighlightInfo> additionalInfos = new ArrayList<>();
@@ -312,7 +311,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     // assumption: HighlightInfo.fixRange does not extend beyond that the containing lines, otherwise it would look silly, and searching for these infos would be expensive
-    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, info -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, context, info -> {
       if (info.containsOffset(offset, true)) {
         infos.add(info);
       }
