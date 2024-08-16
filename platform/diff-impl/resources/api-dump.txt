@@ -2701,6 +2701,7 @@ com.intellij.diff.util.DiffUserDataKeysEx
 - sf:MERGE_CANCEL_HANDLER:com.intellij.openapi.util.Key
 - sf:MERGE_CANCEL_MESSAGE:com.intellij.openapi.util.Key
 - sf:NAVIGATION_CONTEXT:com.intellij.openapi.util.Key
+- sf:PATCH_FILE_PREVIEW_MODIFICATION_SWITCH:com.intellij.openapi.util.Key
 - sf:SCROLL_TO_CHANGE:com.intellij.openapi.util.Key
 - sf:SHOW_READ_ONLY_LOCK:com.intellij.openapi.util.Key
 - sf:TWO_SIDE_SPLITTER_PROPORTION:com.intellij.openapi.util.Key
