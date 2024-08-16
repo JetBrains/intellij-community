@@ -604,6 +604,8 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
       PsiElement element = context.getFile().findElementAt(signatureOffset - 1);
       final CodeStyleSettings styleSettings = CodeStyle.getSettings(context.getFile());
       PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
+      final PsiMarkdownReferenceLink link = tag == null ? PsiTreeUtil.getParentOfType(element, PsiMarkdownReferenceLink.class) : null;
+
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR && tag != null) {
         PsiDocTagValue valueElement = tag.getValueElement();
         int valueEnd = valueElement != null ? valueElement.getTextRange().getEndOffset() : -1;
@@ -620,22 +622,33 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
       String methodName = method.getName();
       int beforeParenth = signatureOffset + methodName.length();
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      String signature = "(" +
-                         StringUtil.join(parameters,
-                                         p -> TypeConversionUtil.erasure(p.getType()).getCanonicalText(),
-                                         "," + (styleSettings.getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA ? " " : "")) +
-                         ")";
+
+      String signatureSeparator = "," + (styleSettings.getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA ? " " : "");
+      String signatureContent = link == null
+                                 ? StringUtil.join(parameters,
+                                                   p -> TypeConversionUtil.erasure(p.getType()).getCanonicalText(),
+                                                   signatureSeparator)
+                                 : StringUtil.join(parameters,
+                                                   p -> escapeBrackets(TypeConversionUtil.erasure(p.getType()).getCanonicalText()),
+                                                   signatureSeparator);
+      String signature = "(" + signatureContent + ")";
+
       String insertString = methodName + signature;
-      if (!(tag instanceof PsiInlineDocTag)) {
-        insertString += " ";
-      }
-      else {
+      if (tag instanceof PsiInlineDocTag) {
         if (chars.charAt(signatureOffset) == '}') {
           afterSharp++;
         }
         else {
           insertString += "} ";
         }
+      }
+      else if (link != null) {
+        if(chars.charAt(signatureOffset) == ']') {
+          afterSharp++;
+        }
+      }
+      else {
+        insertString += " ";
       }
 
       document.insertString(signatureOffset, insertString);
@@ -649,6 +662,11 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
       if (parameters.length > 0) {
         startParameterListTemplate(context, editor, document, project, paramListMarker);
       }
+    }
+
+    /** @return Escaped brackets to conform with the JEP-467 */
+    private static String escapeBrackets(String input) {
+      return input.replace("[", "\\[").replace("]", "\\]");
     }
 
     private static void startParameterListTemplate(@NotNull InsertionContext context,
