@@ -94,6 +94,32 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
   }
 
   @Test
+  fun DownloadingDependencySourcesWithClassifier() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>org.primefaces</groupId>
+                        <artifactId>primefaces</artifactId>
+                        <version>14.0.4</version>
+                        <classifier>jakarta</classifier>
+                      </dependency>
+                    </dependencies>
+                    """.trimIndent())
+
+    val sources = File(repositoryPath, "/org/primefaces/primefaces/14.0.4/primefaces-14.0.4-jakarta-sources.jar")
+    assertFalse(sources.exists())
+
+    val project = projectsTree.rootProjects[0]
+    val dep = project.dependencies[0]
+    projectsManager.downloadArtifacts(listOf(project), listOf(dep), true, false)
+
+    assertTrue(sources.exists())
+  }
+
+  @Test
   fun DownloadingSpecificDependency() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>

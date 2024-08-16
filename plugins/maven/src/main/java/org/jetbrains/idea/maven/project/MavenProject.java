@@ -1197,6 +1197,9 @@ public class MavenProject {
       Pair<String, String> result = each.getExtraArtifactClassifierAndExtension(artifact, type);
       if (result != null) return result;
     }
+    if (MavenExtraArtifactType.SOURCES.equals(type) && !StringUtil.isEmptyOrSpaces(artifact.getClassifier())) {
+      return Pair.create(artifact.getClassifier() + "-" + type.getDefaultClassifier(), type.getDefaultExtension());
+    }
     return Pair.create(type.getDefaultClassifier(), type.getDefaultExtension());
   }
 

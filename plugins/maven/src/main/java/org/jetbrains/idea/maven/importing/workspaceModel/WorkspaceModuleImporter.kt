@@ -187,7 +187,7 @@ internal class WorkspaceModuleImporter(
     val libraryRootsProvider = {
       val classes = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)
       val javadoc = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")
-      val sources = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")
+      val sources = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact,  if (artifact.classifier.isNullOrBlank()) "sources" else (artifact.classifier + "-sources"), "jar")
 
       // Keep the list of roots sorted by url to avoid extra "roots changed" events after loading the `.iml` files.
       // The `.iml` files keep the order of roots sorted.
