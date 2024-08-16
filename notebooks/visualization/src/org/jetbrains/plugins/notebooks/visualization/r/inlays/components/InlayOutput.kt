@@ -9,8 +9,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowser
@@ -23,7 +21,6 @@ import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import org.jetbrains.plugins.notebooks.visualization.r.ui.ToolbarUtil
 import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
-import java.awt.Graphics
 import java.io.File
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -131,18 +128,6 @@ abstract class InlayOutput(
       return ids.mapNotNull { actionManager.getAction(it) }
     }
   }
-}
-
-object EmptySoftWrapPainter : SoftWrapPainter {
-  override fun paint(g: Graphics, drawingType: SoftWrapDrawingType, x: Int, y: Int, lineHeight: Int) = 0
-
-  override fun getDrawingHorizontalOffset(g: Graphics, drawingType: SoftWrapDrawingType, x: Int, y: Int, lineHeight: Int) = 0
-
-  override fun getMinDrawingWidth(drawingType: SoftWrapDrawingType) = 0
-
-  override fun canUse() = true
-
-  override fun reinit() {}
 }
 
 
