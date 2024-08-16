@@ -5,10 +5,13 @@ package org.jetbrains.kotlin.idea.multiplatform
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemSourceSet
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
@@ -51,6 +54,7 @@ fun AbstractMultiModuleTest.setupMppProjectFromDirStructure(testRoot: File) {
     val dirs = testRoot.listFiles().filter { it.isDirectory }
     val rootInfos = dirs.map { parseDirName(it) }
     doSetupProject(rootInfos)
+    setupKotlinBuildSystemFacade()
 }
 
 fun AbstractMultiModuleTest.setupMppProjectFromTextFile(testRoot: File) {
@@ -175,15 +179,21 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                         platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlib)
                         platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
                         platform.isWasmJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmJs, kind = KotlinWasmJsLibraryKind)
-                        platform.isWasmWasi() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmWasi, kind = KotlinWasmWasiLibraryKind)
+                        platform.isWasmWasi() -> module.addLibrary(
+                            TestKotlinArtifacts.kotlinStdlibWasmWasi,
+                            kind = KotlinWasmWasiLibraryKind
+                        )
+
                         else -> error("Unknown platform $this")
                     }
                 }
+
                 is FullJdkDependency -> {
                     ConfigLibraryUtil.configureSdk(module, PluginTestCaseBase.addJdk(testRootDisposable) {
                         PluginTestCaseBase.jdk(TestJdkKind.FULL_JDK)
                     })
                 }
+
                 is CoroutinesDependency -> module.enableCoroutines()
                 is KotlinTestDependency -> when {
                     platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinTestJunit)
@@ -231,6 +241,20 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
         }
         module.enableMultiPlatform()
     }
+}
+
+/**
+ * See [KotlinBuildSystemFacade]:
+ * - Will use the Module's name as Source Set Name
+ * - Will use the module source roots as source directories
+ */
+private fun AbstractMultiModuleTest.setupKotlinBuildSystemFacade() {
+    KotlinBuildSystemFacade.EP_NAME.point.registerExtension(object : KotlinBuildSystemFacade {
+        override fun findSourceSet(module: Module) = KotlinBuildSystemSourceSet(
+            name = module.name,
+            sourceDirectories = module.sourceRoots.map { it.toNioPath() }
+        )
+    }, testRootDisposable)
 }
 
 private fun AbstractMultiModuleTest.createModuleWithRoots(
