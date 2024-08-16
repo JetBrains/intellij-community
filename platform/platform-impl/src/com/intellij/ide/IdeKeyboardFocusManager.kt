@@ -1,11 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.concurrency.resetThreadContext
+import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.ide.ui.ShowingContainer
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.isCoroutineWILEnabled
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import java.awt.*
 import java.awt.event.FocusEvent
 import java.awt.event.HierarchyEvent
@@ -15,6 +20,8 @@ import java.awt.event.WindowEvent
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import javax.swing.DefaultFocusManager
+
+private val logger = logger<IdeKeyboardFocusManager>()
 
 /**
  * We extend the obsolete [DefaultFocusManager] class here instead of [KeyboardFocusManager] to prevent unwanted overwriting of
@@ -50,21 +57,30 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
   }
 
   private fun getAssociatedClientId(e: AWTEvent) : AccessToken {
+    if (!AppMode.isRemoteDevHost()) return AccessToken.EMPTY_ACCESS_TOKEN
     val id = e.id
     if (id == WindowEvent.WINDOW_GAINED_FOCUS ||
         id == WindowEvent.WINDOW_LOST_FOCUS ||
         id == FocusEvent.FOCUS_GAINED ||
         id == FocusEvent.FOCUS_LOST) {
-      return resetThreadContext()
+      if (e is ClientIdAwareEvent) {
+        logger.debug { "$e is ${ClientIdAwareEvent::class.simpleName}. Wrapping with ${e.clientId}" }
+        return withClientId(e.clientId)
+      }
+      else {
+        logger.debug { "$e is not ${ClientIdAwareEvent::class.simpleName}. Falling back to wrapping with a controller's ClientId" }
+        ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).firstOrNull()?.let {
+          return withClientId(it.clientId)
+        }
+      }
     }
     return AccessToken.EMPTY_ACCESS_TOKEN
   }
 
   override fun setDefaultFocusTraversalPolicy(defaultPolicy: FocusTraversalPolicy) {
     if (parentConstructorExecuted) {
-      val log = logger<IdeKeyboardFocusManager>()
-      if (log.isDebugEnabled) {
-        log.debug("setDefaultFocusTraversalPolicy: $defaultPolicy", Throwable())
+      if (logger.isDebugEnabled) {
+        logger.debug("setDefaultFocusTraversalPolicy: $defaultPolicy", Throwable())
       }
       super.setDefaultFocusTraversalPolicy(defaultPolicy)
     }
@@ -121,7 +137,7 @@ internal fun replaceDefaultKeyboardFocusManager() {
     }
   }
   catch (e: Exception) {
-    logger<IdeKeyboardFocusManager>().error(e)
+    logger.error(e)
   }
   DefaultFocusManager.setCurrentKeyboardFocusManager(newManager)
 }
