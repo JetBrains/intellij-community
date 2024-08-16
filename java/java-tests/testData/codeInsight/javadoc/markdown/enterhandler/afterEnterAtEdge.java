@@ -4,5 +4,5 @@
 /// - [a class][String]
 /// - [a field][String#CASE_INSENSITIVE_ORDER]
 /// - [a method][String#chars()]
-///<caret>
+/// <caret>
 class C{}

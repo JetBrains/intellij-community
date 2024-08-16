@@ -203,6 +203,9 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   public void testMethodBeforeSharp() {
     doTest();
   }
+  public void testMethodInMarkdownReferenceLink() {
+    doTest();
+  }
 
   public void testFieldReferenceInInnerClassJavadoc() {
     doTest();
@@ -933,4 +936,6 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     List<String> strings = myFixture.getLookupElementStrings();
     assertTrue(strings.containsAll(Arrays.asList("java", "JShellLanguage", "JVM")));
   }
+
+
 }

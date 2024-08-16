@@ -196,6 +196,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
     verifyJavaDoc(outerClass.getMethods()[0]);
   }
+  public void testMarkdownJepExample(){
+    doTestMethod();
+  }
 
   public void testRepeatableAnnotations() {
     useJava8();

@@ -2353,7 +2353,7 @@ public class JavaDocInfoGenerator {
   }
 
   private static String markdownToHtml(String markdownInput) {
-    return ourMarkdownConverter.convertMarkdownToHtml(markdownInput, null);
+    return ourMarkdownConverter.convertMarkdownToHtml(markdownInput.stripIndent(), null);
   }
 
   protected boolean isLeadingAsterisks(@Nullable PsiElement element) {
