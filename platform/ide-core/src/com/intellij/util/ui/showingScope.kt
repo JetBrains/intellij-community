@@ -58,10 +58,10 @@ fun Component.showingScope(
  * @param uiData a function, which is called in the same EDT event when the component becomes showing
  */
 @Experimental
-fun <T : Any> Component.showingScope(
+fun <T : Any, C : Component> C.showingScope(
   debugName: String,
   context: CoroutineContext = EmptyCoroutineContext,
-  uiData: (component: Component) -> T?,
+  uiData: (component: C) -> T?,
   block: suspend CoroutineScope.(T) -> Unit,
 ): Job {
   // Removal from the hierarchy triggers `state.value = Pair(0, null)`, which cancels the `uiCoroutine`
