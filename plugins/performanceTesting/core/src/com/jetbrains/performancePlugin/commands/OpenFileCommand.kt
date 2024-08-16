@@ -124,12 +124,14 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
   private suspend fun waitForAnalysisWithNewApproach(project: Project, spanRef: Ref<Span>, timeout: Long, suppressErrors: Boolean) {
     val timeoutDuration = if (timeout == 0L) 5.minutes else timeout.seconds
-    runCatching {
+    try {
       project.service<CodeAnalysisStateListener>().waitAnalysisToFinish(timeoutDuration, !suppressErrors)
-    }.onFailure { throwable ->
-      if (throwable is TimeoutException) {
-        spanRef.get()?.setAttribute("timeout", "true")
-      }
+    }
+    catch (e: TimeoutException) {
+      spanRef.get()?.setAttribute("timeout", "true")
+    }
+    finally {
+      spanRef.get()?.end()
     }
   }
 }
