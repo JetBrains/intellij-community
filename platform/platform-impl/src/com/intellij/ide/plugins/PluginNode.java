@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
@@ -72,7 +72,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<String> screenShots;
   private String externalPluginIdForScreenShots;
   private String mySuggestedCommercialIde = null;
-  private Collection<String> mySuggestedFeatures;
+  private @NotNull Collection<String> suggestedFeatures = Collections.emptyList();
   private boolean myConverted;
   private Collection<String> dependencyNames;
 
@@ -645,12 +645,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     mySuggestedCommercialIde = commercialIdeCode;
   }
 
-  public Collection<String> getSuggestedFeatures() {
-    return mySuggestedFeatures;
+  public @NotNull Collection<String> getSuggestedFeatures() {
+    return suggestedFeatures;
   }
 
   public void setSuggestedFeatures(@NotNull Collection<String> features) {
-    mySuggestedFeatures = features;
+    suggestedFeatures = features;
   }
 
   public @Nullable Collection<String> getDependencyNames() {

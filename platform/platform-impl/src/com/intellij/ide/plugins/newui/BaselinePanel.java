@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -6,6 +6,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,9 +15,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public final class BaselinePanel extends NonOpaquePanel {
   private Component myBaseComponent;
   private final List<Component> myButtonComponents = new ArrayList<>();
