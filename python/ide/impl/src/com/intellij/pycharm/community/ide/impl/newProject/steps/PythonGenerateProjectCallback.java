@@ -87,7 +87,7 @@ public final class PythonGenerateProjectCallback<T extends PyNewProjectSettings>
   }
 
   @Nullable
-  public static Object computeProjectSettings(DirectoryProjectGenerator<?> generator,
+  private static Object computeProjectSettings(DirectoryProjectGenerator<?> generator,
                                               final ProjectSpecificSettingsStep settingsStep,
                                               @NotNull final ProjectGeneratorPeer projectGeneratorPeer) {
     Object projectSettings = null;
