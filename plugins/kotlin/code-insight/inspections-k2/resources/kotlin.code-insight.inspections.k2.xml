@@ -1,5 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.inspections">
   <dependencies>
+    <module name="kotlin.base.external-build-system"/>
     <module name="kotlin.code-insight.intentions.k2"/>
     <module name="kotlin.code-insight.inspections.shared"/>
     <module name="kotlin.searching.k2"/>

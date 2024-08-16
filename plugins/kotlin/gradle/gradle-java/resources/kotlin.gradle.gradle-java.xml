@@ -5,6 +5,7 @@
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.code-insight-common"/>
     <module name="kotlin.project-wizard.idea"/>
+    <module name="kotlin.base.external-build-system"/>
   </dependencies>
 
   <projectListeners>
@@ -30,6 +31,10 @@
             interface="org.jetbrains.kotlin.idea.gradleJava.extensions.KotlinMultiplatformCommonProducersProvider"
             dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea.base.externalSystem">
+    <kotlinBuildSystemFacade implementation="org.jetbrains.kotlin.idea.gradleJava.KotlinGradleBuildSystemFacade"/>
+  </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
 
