@@ -1204,6 +1204,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_EXPAND_ALL:java.lang.String
 - sf:ACTION_EXPAND_ALL_REGIONS:java.lang.String
 - sf:ACTION_EXPAND_ALL_TO_LEVEL_1:java.lang.String
+- sf:ACTION_EXPAND_COLLAPSE_TOGGLE_REGION:java.lang.String
 - sf:ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB:java.lang.String
 - sf:ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM:java.lang.String
 - sf:ACTION_EXPAND_REGION:java.lang.String
