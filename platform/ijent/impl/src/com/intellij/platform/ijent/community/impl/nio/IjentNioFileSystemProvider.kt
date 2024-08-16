@@ -294,7 +294,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
           sourcePath,
           targetPath,
           replaceExisting = true,
-          followLinks = LinkOption.NOFOLLOW_LINKS !in options)
+          // In NIO, `move` does not follow links regardless of NOFOLLOW_LINKS in CopyOptions
+          // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
+          followLinks = false)
       } catch (e : IjentFileSystemApi.MoveException) {
         e.throwFileSystemException()
       }
@@ -326,8 +328,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     fsBlocking {
       when (val ijentFs = fs.ijentFs) {
         is IjentFileSystemPosixApi -> {
-          // According to the javadoc, this method must follow symlinks.
-          val fileInfo = ijentFs.stat(ensurePathIsAbsolute(path.ijentPath), resolveSymlinks = true).getOrThrowFileSystemException()
+          val fileInfo = ijentFs
+            // According to the javadoc, this method must follow symlinks.
+            .stat(ensurePathIsAbsolute(path.ijentPath), IjentFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
+            .getOrThrowFileSystemException()
           // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
           val filePermissionBranch = when {
             ijentFs.user.uid == fileInfo.permissions.owner -> OWNER
@@ -378,10 +382,17 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     val fs = ensureIjentNioPath(path).nioFs
 
+    val linkPolicy = if (LinkOption.NOFOLLOW_LINKS in options) {
+      IjentFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
+    }
+    else {
+      IjentFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW
+    }
+
     val result = when (val ijentFs = fs.ijentFs) {
       is IjentFileSystemPosixApi ->
         IjentNioPosixFileAttributes(fsBlocking {
-          statPosix(path.ijentPath, ijentFs, LinkOption.NOFOLLOW_LINKS in options)
+          ijentFs.stat(ensurePathIsAbsolute(path.ijentPath), linkPolicy).getOrThrowFileSystemException()
         })
 
       is IjentFileSystemWindowsApi -> TODO()
@@ -389,14 +400,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     @Suppress("UNCHECKED_CAST")
     return result as A
-  }
-
-  private tailrec suspend fun statPosix(path: IjentPath, fsApi: IjentFileSystemPosixApi, resolveSymlinks: Boolean): IjentPosixFileInfo {
-    val stat = fsApi.stat(ensurePathIsAbsolute(path), resolveSymlinks = resolveSymlinks).getOrThrowFileSystemException()
-    return when (val type = stat.type) {
-      is Directory, is Other, is Regular, is Symlink.Unresolved -> stat
-      is Symlink.Resolved -> statPosix(type.result, fsApi, resolveSymlinks)
-    }
   }
 
   override fun readAttributes(path: Path, attributes: String, vararg options: LinkOption): MutableMap<String, Any> {
@@ -445,8 +448,19 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     TODO("Not yet implemented")
   }
 
-  override fun readSymbolicLink(link: Path?): Path {
-    TODO("Not yet implemented")
+  override fun readSymbolicLink(link: Path): Path {
+    val fs = ensureIjentNioPath(link).nioFs
+    val absolutePath = ensurePathIsAbsolute(link.ijentPath)
+    return fsBlocking {
+      when (val ijentFs = fs.ijentFs) {
+        is IjentFileSystemPosixApi -> when (val type = ijentFs.stat(absolutePath, IjentFileSystemApi.SymlinkPolicy.JUST_RESOLVE).getOrThrowFileSystemException().type) {
+          is Symlink.Resolved -> IjentNioPath(type.result, link.nioFs)
+          is Directory, is Regular, is Other -> throw NotLinkException(link.toString())
+          is Symlink.Unresolved -> error("Impossible, the link should be resolved")
+        }
+        is IjentFileSystemWindowsApi -> TODO()
+      }
+    }
   }
 
   internal fun close(uri: URI) {

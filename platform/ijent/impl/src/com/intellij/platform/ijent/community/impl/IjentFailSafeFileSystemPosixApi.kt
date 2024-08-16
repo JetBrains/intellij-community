@@ -117,10 +117,10 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
-    resolveSymlinks: Boolean,
+    symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<Collection<Pair<String, IjentPosixFileInfo>>, IjentFileSystemApi.ListDirectoryError> {
     return holder.withDelegateRetrying {
-      listDirectoryWithAttrs(path, resolveSymlinks)
+      listDirectoryWithAttrs(path, symlinkPolicy)
     }
   }
 
@@ -133,10 +133,10 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 
   override suspend fun stat(
     path: IjentPath.Absolute,
-    resolveSymlinks: Boolean,
+    symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<IjentPosixFileInfo, IjentFileSystemApi.StatError> =
     holder.withDelegateRetrying {
-      stat(path, resolveSymlinks)
+      stat(path, symlinkPolicy)
     }
 
   override suspend fun sameFile(

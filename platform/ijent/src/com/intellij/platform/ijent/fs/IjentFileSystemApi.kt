@@ -47,7 +47,7 @@ sealed interface IjentFileSystemApi {
   @Throws(IjentUnavailableException::class)
   suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
-    resolveSymlinks: Boolean = true,
+    symlinkPolicy: SymlinkPolicy,
   ): IjentFsResult<
     out Collection<Pair<String, IjentFileInfo>>,
     ListDirectoryError>
@@ -80,7 +80,29 @@ sealed interface IjentFileSystemApi {
    * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [IjentFileInfo.fileType] if [path] points on a symlink.
    */
   @Throws(IjentUnavailableException::class)
-  suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<out IjentFileInfo, StatError>
+  suspend fun stat(path: IjentPath.Absolute, symlinkPolicy: SymlinkPolicy): IjentFsResult<out IjentFileInfo, StatError>
+
+  /**
+   * Defines the behavior of FS operations on symbolic links
+   */
+  enum class SymlinkPolicy {
+    /**
+     * Leaves symlinks unresolved.
+     * This option makes the operation a bit more efficient if it is not interested in symlinks.
+     */
+    DO_NOT_RESOLVE,
+
+    /**
+     * Resolves a symlink and returns the information about the target of the symlink,
+     * But does not perform anything on the target of the symlink itself.
+     */
+    JUST_RESOLVE,
+
+    /**
+     * Resolves a symlink, follows it, and performs the required operation on target.
+     */
+    RESOLVE_AND_FOLLOW,
+  }
 
   sealed interface StatError : IjentFsError {
     interface DoesNotExist : StatError, IjentFsError.DoesNotExist
@@ -425,15 +447,16 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
   @Throws(IjentUnavailableException::class)
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
-    resolveSymlinks: Boolean,
+    symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<
     Collection<Pair<String, IjentPosixFileInfo>>,
     IjentFileSystemApi.ListDirectoryError>
 
   @Throws(IjentUnavailableException::class)
-  override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<
+  override suspend fun stat(path: IjentPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
     IjentPosixFileInfo,
     IjentFileSystemApi.StatError>
+
 
   /**
    * Notice that the first argument is the target of the symlink,
@@ -491,13 +514,13 @@ interface IjentFileSystemWindowsApi : IjentFileSystemApi {
   @Throws(IjentUnavailableException::class)
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
-    resolveSymlinks: Boolean,
+    symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<
     Collection<Pair<String, IjentWindowsFileInfo>>,
     IjentFileSystemApi.ListDirectoryError>
 
   @Throws(IjentUnavailableException::class)
-  override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFsResult<
+  override suspend fun stat(path: IjentPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
     IjentWindowsFileInfo,
     IjentFileSystemApi.StatError>
 }
