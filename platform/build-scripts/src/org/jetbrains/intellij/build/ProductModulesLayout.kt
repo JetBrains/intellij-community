@@ -39,7 +39,7 @@ class ProductModulesLayout {
    * This property can be used for writing only. 
    * If you need to read the list of plugins which should be bundled, use [BuildContext.bundledPluginModules] instead.  
    */
-  var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
+  var bundledPluginModules: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS
 
   /**
    * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
