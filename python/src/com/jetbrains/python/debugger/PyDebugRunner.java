@@ -103,7 +103,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   protected static final @NonNls String PYCHARM_DEBUG = "PYCHARM_DEBUG";
   protected static final @NonNls String USE_LOW_IMPACT_MONITORING = "USE_LOW_IMPACT_MONITORING";
   protected static final @NonNls String HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME = "HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME";
-  protected static final @NonNls String SINGLE_PORT_MODE = "SINGLE_PORT_MODE";
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
@@ -704,10 +703,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
     if (registryManager.is("python.debug.halt.variable.resolve.threads.on.step.resume")) {
       environmentController.putFixedValue(HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME, "True");
-    }
-
-    if (registryManager.is("python.debug.use.single.port")) {
-      environmentController.putFixedValue(SINGLE_PORT_MODE, "True");
     }
   }
 
