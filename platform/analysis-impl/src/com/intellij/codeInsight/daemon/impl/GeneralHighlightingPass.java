@@ -61,7 +61,6 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   protected volatile boolean myHasErrorElement;
   private volatile boolean myHasErrorSeverity;
-  private volatile boolean myOldErrorFound;
   private final boolean myRunAnnotators;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
   private final HighlightVisitorRunner myHighlightVisitorRunner;
@@ -86,9 +85,6 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     PsiUtilCore.ensureValid(psiFile);
     boolean wholeFileHighlighting = isWholeFileHighlighting();
     myHasErrorElement = !wholeFileHighlighting && Boolean.TRUE.equals(getFile().getUserData(HAS_ERROR_ELEMENT));
-    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-    myOldErrorFound = !wholeFileHighlighting && fileStatusMap.wasErrorFound(getDocument());
 
     // initial guess to show correct progress in the traffic light icon
     setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
