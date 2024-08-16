@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -25,16 +24,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
-import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,13 +35,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
 
   private ClasspathPanelImpl myPanel;
-  private ClasspathFormatPanel myClasspathFormatPanel;
+  private ClasspathFormatUI myClasspathFormatUI;
   private boolean myDisposed;
 
   public ClasspathEditor(final ModuleConfigurationState state) {
@@ -61,7 +52,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   @Override
   public boolean isModified() {
-    return super.isModified() || (myClasspathFormatPanel != null && myClasspathFormatPanel.isModified());
+    return super.isModified() || (myClasspathFormatUI != null && myClasspathFormatUI.isModified());
   }
 
   @Override
@@ -81,16 +72,16 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myClasspathFormatPanel != null) {
-      myClasspathFormatPanel.apply();
+    if (myClasspathFormatUI != null) {
+      myClasspathFormatUI.apply();
     }
   }
 
   @Override
   public void canApply() throws ConfigurationException {
     super.canApply();
-    if (myClasspathFormatPanel != null) {
-      myClasspathFormatPanel.canApply();
+    if (myClasspathFormatUI != null) {
+      myClasspathFormatUI.canApply();
     }
   }
 
@@ -114,8 +105,8 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
     ClasspathStorageProvider[] providers = ClasspathStorageProvider.EXTENSION_POINT_NAME.getExtensions();
     if (providers.length > 0) {
-      myClasspathFormatPanel = new ClasspathFormatPanel(providers, getState());
-      panel.add(myClasspathFormatPanel, BorderLayout.SOUTH);
+      myClasspathFormatUI = new ClasspathFormatUI(providers, getState());
+      panel.add(myClasspathFormatUI.getPanel(), BorderLayout.SOUTH);
     }
 
     return panel;
@@ -164,57 +155,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
     if (myPanel != null) {
       myPanel.forceInitFromModel();
-    }
-  }
-
-  private static final class ClasspathFormatPanel extends JPanel {
-    private final @NotNull ModuleConfigurationState myState;
-    private final JComboBox<String> comboBoxClasspathFormat;
-
-    private ClasspathFormatPanel(ClasspathStorageProvider[] providers, @NotNull ModuleConfigurationState state) {
-      super(new GridBagLayout());
-      myState = state;
-
-      JLabel comboBoxClasspathFormatLabel = new JLabel(JavaUiBundle.message("project.roots.classpath.format.label"));
-      add(comboBoxClasspathFormatLabel,
-          new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(10, 6, 6, 0), 0, 0));
-
-      Map<String, String> formatIdToDescription = new LinkedHashMap<>();
-      formatIdToDescription.put(ClassPathStorageUtil.DEFAULT_STORAGE, JavaUiBundle.message("project.roots.classpath.format.default.descr"));
-      for (ClasspathStorageProvider provider : providers) {
-        formatIdToDescription.put(provider.getID(), provider.getDescription());
-      }
-      comboBoxClasspathFormat = new ComboBox<>(ArrayUtilRt.toStringArray(formatIdToDescription.keySet()));
-      comboBoxClasspathFormat.setRenderer(SimpleListCellRenderer.create("", formatIdToDescription::get));
-      comboBoxClasspathFormat.setSelectedItem(getModuleClasspathFormat());
-      comboBoxClasspathFormatLabel.setLabelFor(comboBoxClasspathFormat);
-      add(comboBoxClasspathFormat,
-          new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(6, 6, 6, 0), 0, 0));
-    }
-
-    private String getSelectedClasspathFormat() {
-      return (String)comboBoxClasspathFormat.getSelectedItem();
-    }
-
-    private @NlsContexts.Label String getModuleClasspathFormat() {
-      @NlsSafe final String type = ClassPathStorageUtil.getStorageType(myState.getCurrentRootModel().getModule());
-      return type;
-    }
-
-    private boolean isModified() {
-      return !getSelectedClasspathFormat().equals(getModuleClasspathFormat());
-    }
-
-    public void canApply() throws ConfigurationException {
-      ClasspathStorageProvider provider = ClasspathStorage.getProvider(getSelectedClasspathFormat());
-      if (provider != null) {
-        provider.assertCompatible(myState.getCurrentRootModel());
-      }
-    }
-
-    private void apply() throws ConfigurationException {
-      canApply();
-      ClasspathStorage.setStorageType(myState.getCurrentRootModel(), getSelectedClasspathFormat());
     }
   }
 
