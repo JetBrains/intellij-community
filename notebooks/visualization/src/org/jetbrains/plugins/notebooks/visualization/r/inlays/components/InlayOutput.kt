@@ -30,7 +30,6 @@ import org.cef.handler.CefLoadHandlerAdapter
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.dataframe.DataFrameCSVAdapter
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.runAsyncInlay
 import org.jetbrains.plugins.notebooks.visualization.r.ui.ToolbarUtil
 import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
@@ -341,27 +340,4 @@ class InlayOutputHtml(parent: Disposable, editor: Editor)
                                              jbBrowser.cefBrowser.url, 0)
     }
   }
-}
-
-class InlayOutputTable(val parent: Disposable, editor: Editor)
-  : InlayOutput(parent, editor, loadActions()) {
-
-  private val inlayTablePage: InlayTablePage = InlayTablePage()
-
-  init {
-    toolbarPane.dataComponent = inlayTablePage
-  }
-
-  override fun clear() {}
-
-  override fun addData(data: String, type: String) {
-    val dataFrame = DataFrameCSVAdapter.fromCsvString(data)
-    inlayTablePage.setDataFrame(dataFrame)
-  }
-
-  override fun scrollToTop() {}
-
-  override fun getCollapsedDescription(): String = "Table output"
-
-  override fun acceptType(type: String): Boolean = type == "TABLE"
 }
