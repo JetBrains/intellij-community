@@ -10,8 +10,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 internal object InlineCompletionContextLogs {
+  @RequiresReadLock
   fun getFor(request: InlineCompletionRequest): List<EventPair<*>> {
     return doCapture(request.file, request.editor, request.startOffset)
   }
