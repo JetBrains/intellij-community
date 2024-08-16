@@ -40,7 +40,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     val container = InlineCompletionLogsContainer.remove(editor) ?: return
     container.add(WAS_SHOWN with wasShown.get())
     container.add(FINISH_TYPE with event.finishType)
-    container.logCurrent() // we wait for its completion intentionally
+    container.logCurrent() // see doc of this function, it's very fast, and we should wait for its completion
   }
 }
 
