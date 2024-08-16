@@ -38,7 +38,6 @@ private val PLATFORM_API_MODULES = java.util.List.of(
   "intellij.platform.ml",
   "intellij.platform.remote.core",
   "intellij.platform.remoteServers.agent.rt",
-  "intellij.platform.remoteServers",
   "intellij.platform.usageView",
   "intellij.platform.execution",
   "intellij.xml",
