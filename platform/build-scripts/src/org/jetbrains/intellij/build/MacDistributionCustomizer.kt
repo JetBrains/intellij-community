@@ -4,13 +4,11 @@ package org.jetbrains.intellij.build
 import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.plus
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 import java.util.function.Predicate
 
-abstract class MacDistributionCustomizer {
+open class MacDistributionCustomizer {
   companion object {
     /**
      * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
@@ -101,7 +99,7 @@ abstract class MacDistributionCustomizer {
   /**
    * If `true`, `*.ipr` files will be associated with the product in `Info.plist`.
    */
-  var associateIpr = false
+  var associateIpr: Boolean = false
 
   /**
    * Filter for files that is going to be put to `<distribution>/bin` directory.
@@ -138,21 +136,15 @@ abstract class MacDistributionCustomizer {
    */
   open fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> = emptyMap()
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
-  open fun copyAdditionalFiles(context: BuildContext, targetDir: Path) { }
-
   /**
    * Override this method to copy additional files to the macOS distribution of the product.
    */
   open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
-    @Suppress("DEPRECATION")
-    copyAdditionalFiles(context, targetDir)
     RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, targetDir)
   }
 
-  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
-    val basePatterns = persistentListOf(
+  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
+    val basePatterns = sequenceOf(
       "bin/*.sh",
       "plugins/**/*.sh",
       "bin/fsnotifier",
@@ -161,9 +153,12 @@ abstract class MacDistributionCustomizer {
       "MacOS/*"
     )
 
-    val rtPatterns =
-      if (includeRuntime) context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)
-      else emptyList()
+    val rtPatterns = if (includeRuntime) {
+      context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)
+    }
+    else {
+      emptySequence()
+    }
 
     return basePatterns +
            rtPatterns +

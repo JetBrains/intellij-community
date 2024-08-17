@@ -135,7 +135,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String) = "idea-IC-$buildNumber"
 
-    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
       return super.generateExecutableFilesPatterns(context, includeRuntime, arch)
         .plus(KotlinBinaries.kotlinCompilerExecutables)
         .filterNot { it == "plugins/**/*.sh" }
@@ -162,11 +162,10 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       }
     }
 
-    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
-      return super.generateExecutableFilesPatterns(context, includeRuntime, arch).asSequence()
+    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
+      return super.generateExecutableFilesPatterns(context, includeRuntime, arch)
         .plus(KotlinBinaries.kotlinCompilerExecutables)
         .filterNot { it == "plugins/**/*.sh" }
-        .toList()
     }
   }
 

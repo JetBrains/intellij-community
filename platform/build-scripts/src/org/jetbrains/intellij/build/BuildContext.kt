@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentMap
@@ -12,6 +11,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
@@ -149,7 +149,7 @@ interface BuildContext : CompilationContext {
   suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
 
   suspend fun runProcess(
-    vararg args: String,
+    args: List<String>,
     workingDir: Path? = null,
     timeout: Duration = DEFAULT_TIMEOUT,
     additionalEnvVariables: Map<String, String> = emptyMap(),
@@ -209,7 +209,7 @@ sealed interface DistFileContent {
 }
 
 data class LocalDistFileContent(@JvmField val file: Path, val isExecutable: Boolean = false) : DistFileContent {
-  override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).toString(Charsets.UTF_8)
+  override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).decodeToString()
 
   override fun toString(): String = "LocalDistFileContent(file=$file, isExecutable=$isExecutable)"
 }

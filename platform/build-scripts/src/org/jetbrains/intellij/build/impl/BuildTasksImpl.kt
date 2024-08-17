@@ -80,7 +80,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     val currentOs = OsFamily.currentOs
     context.paths.distAllDir = targetDirectory
     context.options.targetOs = persistentListOf(currentOs)
-    context.options.buildStepsToSkip += listOf(
+    context.options.buildStepsToSkip += sequenceOf(
       BuildOptions.GENERATE_JAR_ORDER_STEP,
       SoftwareBillOfMaterials.STEP_ID,
     )
@@ -349,7 +349,7 @@ private suspend fun buildSourcesArchive(contentReport: ContentReport, context: B
     modules = openSourceModules,
     targetFile = context.paths.artifactDir.resolve(archiveName),
     includeLibraries = true,
-    context = context
+    context = context,
   )
 }
 
@@ -391,6 +391,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       it.addEvent("skipped, no need to build distributions")
       return@executeStep null
     }
+
     val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
     val platform = createPlatformLayout(context = context)
     val moduleNames = getModulesForPluginsToPublish(platform = platform, pluginsToPublish = pluginsToPublish)
@@ -399,7 +400,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     val builtinModuleData = spanBuilder("build provided module list").useWithScope {
       Files.deleteIfExists(providedModuleFile)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      context.createProductRunner().runProduct(args = listOf("listBundledPlugins", providedModuleFile.toString()))
+      context.createProductRunner().runProduct(listOf("listBundledPlugins", providedModuleFile.toString()))
 
       context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
       try {
@@ -422,7 +423,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, result = pluginsToPublish, context = context)
       filterPluginsToPublish(plugins = pluginsToPublish, context = context)
 
-      // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
+        // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
       val enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
       distributionState(context, pluginsToPublish, projectLibrariesUsedByPlugins, enabledPluginModules)
     }
@@ -873,17 +874,17 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
     return
   }
 
-  context.executeStep(spanBuilder("checkClassFiles"), BuildOptions.VERIFY_CLASS_FILE_VERSIONS) {
+  context.executeStep(spanBuilder("checkClassFiles"), BuildOptions.VERIFY_CLASS_FILE_VERSIONS) { span ->
     val versionCheckerConfig = context.productProperties.versionCheckerConfig
     val forbiddenSubPaths = context.productProperties.forbiddenClassFileSubPaths
     val forbiddenSubPathExceptions = context.productProperties.forbiddenClassFileSubPathExceptions
     if (forbiddenSubPaths.isNotEmpty()) {
       val forbiddenString = forbiddenSubPaths.let { "(${it.size}): ${it.joinToString()}" }
       val exceptionsString = forbiddenSubPathExceptions.let { "(${it.size}): ${it.joinToString()}" }
-      it.addEvent("forbiddenSubPaths $forbiddenString, exceptions $exceptionsString")
+      span.addEvent("forbiddenSubPaths $forbiddenString, exceptions $exceptionsString")
     }
     else {
-      it.addEvent("forbiddenSubPaths: EMPTY (no scrambling checks will be done)")
+      span.addEvent("forbiddenSubPaths: EMPTY (no scrambling checks will be done)")
     }
 
     if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
@@ -891,7 +892,7 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
     }
 
     if (forbiddenSubPaths.isNotEmpty()) {
-      it.addEvent("SUCCESS for forbiddenSubPaths at '$root': ${forbiddenSubPaths.joinToString()}")
+      span.addEvent("SUCCESS for forbiddenSubPaths at '$root': ${forbiddenSubPaths.joinToString()}")
     }
   }
 }

@@ -59,7 +59,7 @@ sealed class BaseLayout {
   fun includedProjectLibraryNames(): Sequence<String> = includedProjectLibraries.asSequence().map { it.libraryName }
 
   fun filteredIncludedModuleNames(excludedRelativeJarPath: String, includeFromSubdirectories: Boolean = true): Sequence<String> {
-    return _includedModules.asSequence().filter { 
+    return _includedModules.asSequence().filter {
       it.relativeOutputFile != excludedRelativeJarPath && (includeFromSubdirectories || !it.relativeOutputFile.contains('/')) 
     }.map { it.moduleName }
   }
@@ -189,10 +189,12 @@ sealed class BaseLayout {
    * @param relativeOutputPath target path relative to the plugin root directory
    */
   fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-    resourcePaths = resourcePaths.add(ModuleResourceData(moduleName = moduleName,
-                                                         resourcePath = resourcePath,
-                                                         relativeOutputPath = relativeOutputPath,
-                                                         packToZip = false))
+    resourcePaths += ModuleResourceData(
+      moduleName = moduleName,
+      resourcePath = resourcePath,
+      relativeOutputPath = relativeOutputPath,
+      packToZip = false
+    )
   }
 }
 

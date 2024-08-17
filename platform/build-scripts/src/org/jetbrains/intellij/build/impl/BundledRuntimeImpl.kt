@@ -3,13 +3,13 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import org.jetbrains.intellij.build.telemetry.use
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -145,17 +145,17 @@ class BundledRuntimeImpl : BundledRuntime {
   /**
    * When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
    */
-  override fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): List<String> {
+  override fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): Sequence<String> {
     val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home" else "jbr"
     @Suppress("SpellCheckingInspection")
-    return buildList {
-      add("$pathPrefix/bin/*")
+    return sequence {
+      yield("$pathPrefix/bin/*")
       if (os == OsFamily.LINUX) {
-        add("$pathPrefix/lib/jexec")
-        add("$pathPrefix/lib/jspawnhelper")
+        yield("$pathPrefix/lib/jexec")
+        yield("$pathPrefix/lib/jspawnhelper")
         if (distribution == JetBrainsRuntimeDistribution.JCEF) {
-          add("$pathPrefix/lib/chrome-sandbox")
-          add("$pathPrefix/lib/jcef_helper")
+          yield("$pathPrefix/lib/chrome-sandbox")
+          yield("$pathPrefix/lib/jcef_helper")
         }
       }
     }
@@ -184,7 +184,7 @@ private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
 private fun unTar(archive: Path, destination: Path) {
   // CompressorStreamFactory requires stream with mark support
   val rootDir = createTarGzInputStream(archive).use {
-    it.nextTarEntry?.name
+    it.nextEntry?.name
   }
   if (rootDir == null) {
     throw IllegalStateException("Unable to detect root dir of $archive")

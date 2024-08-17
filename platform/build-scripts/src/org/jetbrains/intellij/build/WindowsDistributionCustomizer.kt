@@ -7,14 +7,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
-abstract class WindowsDistributionCustomizer {
+open class WindowsDistributionCustomizer {
   /**
    * Path to 256x256 *.ico file for Windows distribution.
    */
   var icoPath: String? = null
 
   /**
-   * Path to ico file for EAP builds (if `null` [icoPath] will be used).
+   * Path to an ico file for EAP builds (if `null` [icoPath] will be used).
    */
   var icoPathForEAP: String? = null
 

@@ -3,21 +3,20 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.NativeBinaryDownloader
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
+import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -140,8 +139,7 @@ class LinuxDistributionBuilder(
     generateProductJson(targetDir, arch)
   }
 
-  override fun writeVmOptions(distBinDir: Path): Path =
-    writeLinuxVmOptions(distBinDir, context)
+  override fun writeVmOptions(distBinDir: Path): Path = writeLinuxVmOptions(distBinDir, context)
 
   private fun generateReadme(unixDistPath: Path) {
     val fullName = context.applicationInfo.fullProductName
@@ -157,8 +155,9 @@ class LinuxDistributionBuilder(
     )
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> =
-    customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
+    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
+  }
 
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
