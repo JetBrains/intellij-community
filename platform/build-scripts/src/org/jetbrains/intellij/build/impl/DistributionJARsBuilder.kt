@@ -128,13 +128,10 @@ internal suspend fun buildDistribution(
     launch(Dispatchers.IO) {
       spanBuilder("generate content report").useWithScope {
         Files.createDirectories(context.paths.artifactDir)
-        val contentMappingJson = context.paths.artifactDir.resolve("content-mapping.json")
-        writeProjectStructureReport(contentReport = contentReport, file = contentMappingJson, buildPaths = context.paths)
         val contentReportFile = context.paths.artifactDir.resolve("content-report.zip")
         writeNewZipWithoutIndex(contentReportFile) { zipFileWriter ->
           buildJarContentReport(contentReport = contentReport, zipFileWriter = zipFileWriter, buildPaths = context.paths, context = context)
         }
-        context.notifyArtifactBuilt(contentMappingJson)
         context.notifyArtifactBuilt(contentReportFile)
       }
     }

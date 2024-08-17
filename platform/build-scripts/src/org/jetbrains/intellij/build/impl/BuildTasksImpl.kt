@@ -20,7 +20,6 @@ import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
-import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
 import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
@@ -111,14 +110,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch)
     }
   }
-}
-
-/**
- * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
- */
-suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val report = generateProjectStructureMapping(context = context, platformLayout = createPlatformLayout(context = context))
-  writeProjectStructureReport(contentReport = report, file = targetFile, buildPaths = context.paths)
 }
 
 data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
