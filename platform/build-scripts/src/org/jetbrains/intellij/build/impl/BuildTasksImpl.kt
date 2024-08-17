@@ -342,7 +342,7 @@ private fun checkProjectLibraries(names: Collection<String>, fieldName: String, 
 private suspend fun buildSourcesArchive(contentReport: ContentReport, context: BuildContext) {
   val productProperties = context.productProperties
   val archiveName = "${productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)}-sources.zip"
-  val openSourceModules = getIncludedModules(contentReport.combined()).filter { moduleName ->
+  val openSourceModules = getIncludedModules(contentReport.all()).filter { moduleName ->
     productProperties.includeIntoSourcesArchiveFilter.test(context.findRequiredModule(moduleName), context)
   }.toList()
   zipSourcesOfModules(
@@ -493,7 +493,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
     val distDirs = buildOsSpecificDistributions(context)
     launch(Dispatchers.IO) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
-        SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = contentReport.combined().toList()).generate()
+        SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = contentReport.all().toList()).generate()
       }
     }
     if (context.productProperties.buildCrossPlatformDistribution) {

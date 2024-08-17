@@ -152,7 +152,7 @@ internal fun writeProjectStructureReport(contentReport: ContentReport, file: Pat
     val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
     writer.use {
       writer.writeStartArray()
-      for (entry in contentReport.combined()) {
+      for (entry in contentReport.all()) {
         writer.writeStartObject()
         writer.writeStringField("path", shortenAndNormalizePath(entry.path, buildPaths, extraRoot))
 
