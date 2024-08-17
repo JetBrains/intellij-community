@@ -138,11 +138,11 @@ internal suspend fun buildDistribution(
         context.notifyArtifactBuilt(contentReportFile)
       }
     }
-    createBuildThirdPartyLibraryListJob(contentReport.all(), context)
+    createBuildThirdPartyLibraryListJob(contentReport.bundled(), context)
     if (context.useModularLoader || context.generateRuntimeModuleRepository) {
       launch(Dispatchers.IO) {
         spanBuilder("generate runtime module repository").useWithScope {
-          generateRuntimeModuleRepository(contentReport.all(), context)
+          generateRuntimeModuleRepository(contentReport.bundled(), context)
         }
       }
     }

@@ -17,6 +17,13 @@ internal data class ContentReport(
       yieldAll(nonBundledPlugins.flatMap { it.second })
     }
   }
+
+  fun bundled(): Sequence<DistributionFileEntry> {
+    return sequence {
+      yieldAll(platform)
+      yieldAll(bundledPlugins.flatMap { it.second })
+    }
+  }
 }
 
 sealed interface DistributionFileEntry {
