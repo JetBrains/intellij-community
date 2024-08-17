@@ -124,7 +124,7 @@ fun runTestBuild(
               productProperties = productProperties,
               proprietaryBuildTools = buildTools,
               setupTracer = false,
-              options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo, customizer = buildOptionsCustomizer).also {
+              options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo, customizer = buildOptionsCustomizer).also {
                 reproducibilityTest.configure(it)
               },
             )
@@ -148,7 +148,7 @@ fun runTestBuild(
           productProperties = productProperties,
           proprietaryBuildTools = buildTools,
           setupTracer = false,
-          options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo, customizer = buildOptionsCustomizer),
+          options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo, customizer = buildOptionsCustomizer),
         )
       },
       writeTelemetry = true,

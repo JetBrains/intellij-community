@@ -12,9 +12,7 @@ import java.util.concurrent.TimeUnit
 internal val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 
 internal fun OkHttpClient.head(url: String, authHeader: String): Int {
-  return newCall(Request.Builder().url(url).head()
-                   .header("Authorization", authHeader)
-                   .build()).execute().use { response ->
+  return newCall(Request.Builder().url(url).head().header("Authorization", authHeader).build()).execute().use { response ->
     if (response.code != 200 && response.code != 404) {
       throw IOException("Unexpected code $response")
     }
@@ -23,9 +21,7 @@ internal fun OkHttpClient.head(url: String, authHeader: String): Int {
 }
 
 internal fun <T> OkHttpClient.get(url: String, authHeader: String, task: (Response) -> T): T {
-  return newCall(Request.Builder().url(url)
-                   .header("Authorization", authHeader)
-                   .build()).execute().useSuccessful(task)
+  return newCall(Request.Builder().url(url).header("Authorization", authHeader).build()).execute().useSuccessful(task)
 }
 
 internal inline fun <T> Response.useSuccessful(task: (Response) -> T): T {
@@ -48,9 +44,7 @@ internal val httpClient: OkHttpClient by lazy {
     .addInterceptor { chain ->
       var request = chain.request()
       if (request.header("User-Agent").isNullOrBlank()) {
-        request = request.newBuilder()
-          .header("User-Agent", "IJ Builder")
-          .build()
+        request = request.newBuilder().header("User-Agent", "IJ Builder").build()
       }
       chain.proceed(request)
     }

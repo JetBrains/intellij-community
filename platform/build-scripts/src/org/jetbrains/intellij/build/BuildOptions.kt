@@ -8,14 +8,15 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 data class BuildOptions(
   @ApiStatus.Internal @JvmField val jarCacheDir: Path? = null,
@@ -93,6 +94,11 @@ data class BuildOptions(
   @JvmField internal val validateModuleStructure: Boolean = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false")),
 
   @JvmField internal val isUnpackedDist: Boolean = false,
+
+  /**
+   * If `true`, the project modules will be compiled incrementally.
+   */
+  var incrementalCompilation: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false),
 ) {
   companion object {
     /**
@@ -375,11 +381,6 @@ data class BuildOptions(
   var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin", "20").toLong()
 
   /**
-   * If `true`, the project modules will be compiled incrementally.
-   */
-  var incrementalCompilation: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
-
-  /**
    * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
    */
   var incrementalCompilationFallbackRebuild: Boolean = SystemProperties.getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
@@ -493,16 +494,12 @@ data class BuildOptions(
       targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
+
     val targetArchProperty = System.getProperty(TARGET_ARCH_PROPERTY)?.takeIf { it.isNotBlank() }
     targetArch = if (targetArchProperty == ARCH_CURRENT) JvmArchitecture.currentJvmArch else targetArchProperty?.let(JvmArchitecture::valueOf)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
-    randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {
-      ThreadLocalRandom.current().nextLong()
-    }
-    else {
-      randomSeedString.toLong()
-    }
+    randomSeedNumber = if (randomSeedString.isNullOrBlank()) Random.nextLong() else randomSeedString.toLong()
   }
-
-  private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.split(',')?.toSet() ?: emptySet()
 }
+
+private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.splitToSequence(',')?.toSet() ?: emptySet()

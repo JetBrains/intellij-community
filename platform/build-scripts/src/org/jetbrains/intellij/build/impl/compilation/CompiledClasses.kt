@@ -24,8 +24,7 @@ internal object CompiledClasses {
     val options = context.options
     val messages = context.messages
     if (options.useCompiledClassesFromProjectOutput && options.incrementalCompilation) {
-      val message = "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
-                    "so 'incremental compilation' option cannot be enabled"
+      val message = "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so 'incremental compilation' option cannot be enabled"
       if (options.isInDevelopmentMode) {
         messages.warning(message)
         options.incrementalCompilation = false
@@ -42,8 +41,7 @@ internal object CompiledClasses {
                      "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
     }
     if (options.pathToCompiledClassesArchive != null && options.incrementalCompilation) {
-      messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
-                     "so 'incremental compilation' option cannot be enabled")
+      messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, so 'incremental compilation' option cannot be enabled")
     }
 
     if (options.useCompiledClassesFromProjectOutput) {
@@ -71,8 +69,7 @@ internal object CompiledClasses {
                      "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
     }
     if (options.forceRebuild && options.incrementalCompilation) {
-      messages.warning("'${BuildOptions.FORCE_REBUILD_PROPERTY}' is specified, " +
-                       "so 'incremental compilation' option will be ignored")
+      messages.warning("'${BuildOptions.FORCE_REBUILD_PROPERTY}' is specified, so 'incremental compilation' option will be ignored")
       options.incrementalCompilation = false
     }
     if (options.forceRebuild && options.useCompiledClassesFromProjectOutput) {

@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.Zstd
 import com.github.luben.zstd.ZstdDirectBufferCompressingStreamNoFinalizer
-import org.jetbrains.intellij.build.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -20,6 +19,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
 import okio.use
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -111,8 +111,8 @@ internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -
   reportStatisticValue("compile-parts:total:count", (reusedCount.get() + uploadedCount.get()).toString())
 }
 
-private fun getFoundAndMissingFiles(metadataJson: String, serverUrl: String, client: OkHttpClient): CheckFilesResponse {
-  client.newCall(Request.Builder()
+private fun getFoundAndMissingFiles(metadataJson: String, serverUrl: String, httpClient: OkHttpClient): CheckFilesResponse {
+  httpClient.newCall(Request.Builder()
                    .url("$serverUrl/check-files")
                    .post(metadataJson.toRequestBody(MEDIA_TYPE_JSON))
                    .build()).execute().useSuccessful {
@@ -121,7 +121,7 @@ private fun getFoundAndMissingFiles(metadataJson: String, serverUrl: String, cli
 }
 
 // Using ZSTD dictionary doesn't make the difference, even slightly worse (default compression level 3).
-// That's because in our case we compress a relatively large archive of class files.
+// That's because in our case, we compress a relatively large archive of class files.
 private fun uploadFile(url: String,
                        file: Path,
                        useHead: Boolean,
@@ -277,6 +277,6 @@ private fun compressFile(file: Path, output: BufferedSink, bufferPool: DirectFix
 
 @Serializable
 private data class CheckFilesResponse(
-  val found: List<String> = emptyList(),
-  val missing: List<String> = emptyList(),
+  @JvmField val found: List<String> = emptyList(),
+  @JvmField val missing: List<String> = emptyList(),
 )
