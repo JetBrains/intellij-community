@@ -12,7 +12,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @ApiStatus.Internal
 class InlineCompletionLogsContainer {
@@ -36,7 +36,7 @@ class InlineCompletionLogsContainer {
     ConcurrentCollectionFactory.createConcurrentSet<EventPair<*>>()
   }
 
-  private val asyncAdds = LinkedBlockingQueue<Job>()
+  private val asyncAdds = ConcurrentLinkedQueue<Job>()
 
   private suspend fun awaitAllAlreadyRunningAsyncAdds() {
     while (currentCoroutineContext().isActive) {
