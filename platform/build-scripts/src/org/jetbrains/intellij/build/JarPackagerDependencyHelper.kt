@@ -44,7 +44,7 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
            moduleName != "intellij.rider.test.api.teamcity"
   }
 
-  fun getPluginXmlContent(pluginModule: JpsModule): String {
+  suspend fun getPluginXmlContent(pluginModule: JpsModule): String {
     val moduleOutput = context.getModuleOutputDir(pluginModule, forTests = isTestPluginModule(pluginModule.name))
     if (moduleOutput.toString().endsWith(".jar")) {
       return getPluginXmlContentFromJar(moduleOutput)
@@ -69,19 +69,19 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     return pluginXmlContent ?: throw IllegalStateException("META-INF/plugin.xml not found in ${moduleJar} module")
   }
 
-  fun getPluginIdByModule(pluginModule: JpsModule): String {
+  suspend fun getPluginIdByModule(pluginModule: JpsModule): String {
     // it is ok to read the plugin descriptor with unresolved x-include as the ID should be specified at the root
     val root = readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")
     return element.content!!
   }
 
-  fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<String> {
+  suspend fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<String> {
     return readPluginContentFromDescriptor(getResolvedPluginDescriptor(pluginModule, moduleOutputPatcher))
   }
 
   // plugin patcher should be executed before
-  private fun getResolvedPluginDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): XmlElement {
+  private suspend fun getResolvedPluginDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): XmlElement {
     return moduleOutputPatcher.getPatchedPluginXmlIfExists(pluginModule.name)?.let { readXmlAsModel(it) } ?: readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
   }
 

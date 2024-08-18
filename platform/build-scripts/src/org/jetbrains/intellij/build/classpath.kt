@@ -3,13 +3,11 @@
 
 package org.jetbrains.intellij.build
 
-import org.jetbrains.intellij.build.telemetry.use
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -17,6 +15,8 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.InputStream
@@ -47,7 +47,7 @@ private val sourceToNames: Map<String, MutableList<String>> by lazy {
   sourceToNames
 }
 
-fun reorderJar(relativePath: String, file: Path) {
+suspend fun reorderJar(relativePath: String, file: Path) {
   val orderedNames = sourceToNames.get(relativePath) ?: return
   spanBuilder("reorder jar")
     .setAttribute("relativePath", relativePath)
@@ -59,8 +59,8 @@ fun reorderJar(relativePath: String, file: Path) {
 
 internal val excludedLibJars: Set<String> = java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR)
 
-internal fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
-  spanBuilder("generate classpath")
+internal suspend fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
+  return spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
     .use { span ->
       val existing = HashSet<Path>()
@@ -70,7 +70,7 @@ internal fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
       val files = computeAppClassPath(libDir = libDir, existing = existing, homeDir = homeDir)
       val result = files.map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
-      return result
+      result
     }
 }
 

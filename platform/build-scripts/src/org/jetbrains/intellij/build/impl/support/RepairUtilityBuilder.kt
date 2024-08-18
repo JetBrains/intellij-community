@@ -160,7 +160,7 @@ class RepairUtilityBuilder {
           }
           buildLock.withLock {
             withContext(Dispatchers.IO) {
-              suspendingRetryWithExponentialBackOff {
+              retryWithExponentialBackOff {
                 runProcess(args = listOf("bash", "build.sh"), workingDir = projectHome,
                            additionalEnvVariables = distributionUrls,
                            timeout = 5.minutes,

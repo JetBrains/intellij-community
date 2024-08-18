@@ -1,30 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.intellij.build.telemetry.use
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.*
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
 import okio.source
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -47,11 +47,11 @@ internal class PortableCompilationCacheUploader(
   private val s3Folder = Path.of(s3Folder)
 
   init {
-    FileUtil.delete(this.s3Folder)
+    NioFiles.deleteRecursively(this.s3Folder)
     Files.createDirectories(this.s3Folder)
   }
 
-  fun upload(messages: BuildMessages) {
+  suspend fun upload(messages: BuildMessages) {
     check(Files.exists(sourcesStateProcessor.sourceStateFile)) {
       "Compilation outputs doesn't contain source state file, " +
       "please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag"
@@ -59,13 +59,17 @@ internal class PortableCompilationCacheUploader(
 
     val start = System.nanoTime()
     val totalUploadedBytes = AtomicLong()
-    val tasks = mutableListOf<ForkJoinTask<*>>()
-    // Jps Caches upload is started first because of significant size
-    tasks.add(forkJoinTask(spanBuilder("upload jps cache")) { uploadJpsCaches() })
-
+    val tasks = mutableListOf<Deferred<*>>()
     val currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
-    uploadCompilationOutputs(currentSourcesState, uploader, tasks)
-    val failed = ForkJoinTask.invokeAll(tasks).mapNotNull { it.exception }
+    withContext(Dispatchers.IO) {
+      // Jps Caches upload is started first because of significant size
+      tasks.add(async {
+        spanBuilder("upload jps cache").use { uploadJpsCaches() }
+      })
+
+      uploadCompilationOutputs(currentSourcesState = currentSourcesState, uploader = uploader, tasks = tasks)
+    }
+    val failed = tasks.mapNotNull { it.getCompletionExceptionOrNull() }
 
     messages.reportStatisticValue("jps-cache:upload:time", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toString())
     messages.reportStatisticValue("jps-cache:uploaded:count", "${tasks.size - failed.size}")
@@ -79,13 +83,13 @@ internal class PortableCompilationCacheUploader(
     uploadToS3()
   }
 
-  private fun uploadToS3() {
+  private suspend fun uploadToS3() {
     spanBuilder("aws s3 sync").use {
       awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", "$s3Folder", "s3://intellij-jps-cache", returnStdOut = false)
     }
   }
 
-  private fun uploadJpsCaches() {
+  private suspend fun uploadJpsCaches() {
     val dataStorageRoot = context.compilationData.dataStorageRoot
     val zipFile = dataStorageRoot.parent.resolve(commitHash)
     Compressor.Zip(zipFile).use { zip ->
@@ -98,7 +102,7 @@ internal class PortableCompilationCacheUploader(
     moveFile(zipFile, s3Folder.resolve(cachePath))
   }
 
-  private fun uploadMetadata() {
+  private suspend fun uploadMetadata() {
     val metadataPath = "metadata/$commitHash"
     spanBuilder("upload metadata").setAttribute("path", metadataPath).use {
       val sourceStateFile = sourcesStateProcessor.sourceStateFile
@@ -107,35 +111,41 @@ internal class PortableCompilationCacheUploader(
     }
   }
 
-  private fun uploadCompilationOutputs(currentSourcesState: Map<String, Map<String, BuildTargetState>>,
-                                       uploader: Uploader,
-                                       tasks: MutableList<ForkJoinTask<*>>): List<ForkJoinTask<*>> {
+  private fun CoroutineScope.uploadCompilationOutputs(
+    currentSourcesState: Map<String, Map<String, BuildTargetState>>,
+    uploader: Uploader,
+    tasks: MutableList<Deferred<*>>,
+  ): List<Deferred<*>> {
     return sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).mapTo(tasks) { compilationOutput ->
-      forkJoinTask(spanBuilder("upload output part").setAttribute("part", compilationOutput.remotePath)) { span ->
-        val sourcePath = compilationOutput.remotePath
-        val outputFolder = Path.of(compilationOutput.path)
-        if (!Files.exists(outputFolder)) {
-          span.addEvent("$outputFolder doesn't exist, was a respective module removed?", Attributes.of(
-            AttributeKey.stringKey("path"), "$outputFolder"
-          ))
-          return@forkJoinTask
-        }
+      async {
+        spanBuilder("upload output part").setAttribute("part", compilationOutput.remotePath).use { span ->
+          val sourcePath = compilationOutput.remotePath
+          val outputFolder = Path.of(compilationOutput.path)
+          if (!Files.exists(outputFolder)) {
+            span.addEvent(
+              "$outputFolder doesn't exist, was a respective module removed?", Attributes.of(
+              AttributeKey.stringKey("path"), "$outputFolder"
+            )
+            )
+            return@use
+          }
 
-        val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
-        zipWithCompression(zipFile, mapOf(outputFolder to ""))
-        if (forcedUpload || !uploader.isExist(sourcePath)) {
-          uploader.upload(sourcePath, zipFile)
-          uploadedOutputCount.incrementAndGet()
+          val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
+          zipWithCompression(zipFile, mapOf(outputFolder to ""))
+          if (forcedUpload || !uploader.isExist(sourcePath)) {
+            uploader.upload(sourcePath, zipFile)
+            uploadedOutputCount.incrementAndGet()
+          }
+          moveFile(zipFile, s3Folder.resolve(sourcePath))
         }
-        moveFile(zipFile, s3Folder.resolve(sourcePath))
       }
     }
   }
 
   /**
-   * Upload and publish file with commits history
+   * Upload and publish a file with commits history
    */
-  fun updateCommitHistory(commitHistory: CommitsHistory = this.commitHistory, overrideRemoteHistory: Boolean = false) {
+  suspend fun updateCommitHistory(commitHistory: CommitsHistory = this.commitHistory, overrideRemoteHistory: Boolean = false) {
     for (commitHash in commitHistory.commitsForRemote(remoteGitUrl)) {
       val cacheUploaded = uploader.isExist("caches/$commitHash")
       val metadataUploaded = uploader.isExist("metadata/$commitHash")
@@ -163,7 +173,7 @@ internal class PortableCompilationCacheUploader(
     }
   }
 
-  private fun remoteCommitHistory(): CommitsHistory {
+  private suspend fun remoteCommitHistory(): CommitsHistory {
     return if (uploader.isExist(CommitsHistory.JSON_FILE)) {
       CommitsHistory(uploader.getAsString(CommitsHistory.JSON_FILE, remoteCache.authHeader))
     }
@@ -185,7 +195,7 @@ internal class PortableCompilationCacheUploader(
 private class Uploader(serverUrl: String, val authHeader: String) {
   private val serverUrl = serverUrl.trimEnd('/')
 
-  fun upload(path: String, file: Path) {
+  suspend fun upload(path: String, file: Path) {
     val url = pathToUrl(path)
     spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).use {
       check(Files.exists(file)) {
@@ -202,39 +212,45 @@ private class Uploader(serverUrl: String, val authHeader: String) {
             override fun writeTo(sink: BufferedSink) {
               file.source().use(sink::writeAll)
             }
-          }).build()).execute().useSuccessful {}
+          }).build()).executeAsync().useSuccessful {}
       }
     }
   }
 
-  fun isExist(path: String, logIfExists: Boolean = false): Boolean {
+  suspend fun isExist(path: String, logIfExists: Boolean = false): Boolean {
     val url = pathToUrl(path)
-    spanBuilder("head").setAttribute("url", url).use { span ->
+    return spanBuilder("head").setAttribute("url", url).use { span ->
       val code = retryWithExponentialBackOff {
         httpClient.head(url, authHeader)
       }
-      if (code == 200) {
-        try {
-          /**
-           * FIXME dirty workaround for unreliable [serverUrl]
-           */
-          httpClient.get(url, authHeader) {
-            it.peekBody(byteCount = 1)
-          }
-        }
-        catch (ignored: Exception) {
-          return false
-        }
-        if (logIfExists) {
-          span.addEvent("File '$path' already exists on server, nothing to upload")
-        }
-        return true
+
+      if (code != 200) {
+        return@use false
       }
+
+      try {
+        /**
+         * FIXME dirty workaround for unreliable [serverUrl]
+         */
+        /**
+         * FIXME dirty workaround for unreliable [serverUrl]
+         */
+        httpClient.get(url, authHeader) {
+          it.peekBody(byteCount = 1)
+        }
+      }
+      catch (ignored: Exception) {
+        return@use false
+      }
+
+      if (logIfExists) {
+        span.addEvent("File '$path' already exists on server, nothing to upload")
+      }
+      true
     }
-    return false
   }
 
-  fun getAsString(path: String, authHeader: String) = retryWithExponentialBackOff {
+  suspend fun getAsString(path: String, authHeader: String) = retryWithExponentialBackOff {
     httpClient.get(pathToUrl(path), authHeader) { it.body.string() }
   }
 

@@ -957,7 +957,7 @@ internal class SoftwareBillOfMaterialsImpl(
     }
 
     val ntiaChecker = "ntia-checker"
-    suspendingRetryWithExponentialBackOff {
+    retryWithExponentialBackOff {
       context.runProcess(
         args = listOf("docker", "build", ".", "--tag", ntiaChecker),
         workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),

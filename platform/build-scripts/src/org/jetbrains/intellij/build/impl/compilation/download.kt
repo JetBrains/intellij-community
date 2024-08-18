@@ -2,18 +2,21 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.ZstdDirectBufferDecompressingStreamNoFinalizer
-import org.jetbrains.intellij.build.telemetry.use
+import com.intellij.platform.util.coroutines.mapConcurrent
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okio.IOException
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.net.HttpURLConnection
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -22,34 +25,32 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
 import java.util.*
-import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.name
 
 private val OVERWRITE_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 
-internal fun downloadCompilationCache(serverUrl: String,
-                                      prefix: String,
-                                      toDownload: List<FetchAndUnpackItem>,
-                                      client: OkHttpClient,
-                                      bufferPool: DirectFixedSizeByteBufferPool,
-                                      downloadedBytes: AtomicLong,
-                                      skipUnpack: Boolean,
-                                      saveHash: Boolean): List<Throwable> {
+internal suspend fun downloadCompilationCache(
+  serverUrl: String,
+  prefix: String,
+  toDownload: List<FetchAndUnpackItem>,
+  client: OkHttpClient,
+  bufferPool: DirectFixedSizeByteBufferPool,
+  downloadedBytes: AtomicLong,
+  skipUnpack: Boolean,
+  saveHash: Boolean,
+): List<Throwable> {
   var urlWithPrefix = "$serverUrl/$prefix/"
   // first let's check for initial redirect (mirror selection)
   spanBuilder("mirror selection").use { span ->
-    client.newCall(Request.Builder()
-                     .url(urlWithPrefix)
-                     .head()
-                     .build()).execute().use { response ->
+    client.newCall(Request.Builder().url(urlWithPrefix).head().build()).executeAsync().use { response ->
       val statusCode = response.code
       val locationHeader = response.header("location")
-      if ((statusCode == HttpURLConnection.HTTP_MOVED_TEMP ||
-           statusCode == HttpURLConnection.HTTP_MOVED_PERM ||
-           statusCode == 307 ||
-           statusCode == HttpURLConnection.HTTP_SEE_OTHER)
-          && locationHeader != null) {
+      if (locationHeader != null && (statusCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                                     statusCode == HttpURLConnection.HTTP_MOVED_PERM ||
+                                     statusCode == 307 ||
+                                     statusCode == HttpURLConnection.HTTP_SEE_OTHER)) {
         urlWithPrefix = locationHeader
         span.addEvent("redirected to mirror", Attributes.of(AttributeKey.stringKey("url"), urlWithPrefix))
       }
@@ -59,42 +60,72 @@ internal fun downloadCompilationCache(serverUrl: String,
     }
   }
 
-  return ForkJoinTask.invokeAll(toDownload.map { item ->
-    val url = "${urlWithPrefix}${item.name}/${item.file.fileName}"
-    forkJoinTask(spanBuilder("download").setAttribute("name", item.name).setAttribute("url", url)) {
-      try {
-        downloadedBytes.getAndAdd(retryWithExponentialBackOff(onException = ::onDownloadException) {
-          client.newCall(Request.Builder().url(url).build()).execute().useSuccessful { response ->
-            val digest = sha256()
-            writeFile(item.file, response, bufferPool, url, digest)
-            val computedHash = digestToString(digest)
-            if (computedHash != item.hash) {
-              throw HashMismatchException("hash mismatch") { span, attempt ->
-                span.addEvent("hash mismatch", Attributes.of(
-                  AttributeKey.longKey("attemptNumber"), attempt.toLong(),
-                  AttributeKey.stringKey("name"), item.file.name,
-                  AttributeKey.stringKey("expected"), item.hash,
-                  AttributeKey.stringKey("computed"), computedHash,
-                ))
-              }
-            }
-            response.body.contentLength()
-          }
-        })
-        if (!skipUnpack) {
-          spanBuilder("unpack").setAttribute("name", item.name).use {
-            unpackArchive(item, saveHash)
-          }
+  return withContext(Dispatchers.IO) {
+    toDownload.mapConcurrent(downloadParallelism) { item ->
+      val url = "$urlWithPrefix${item.name}/${item.file.fileName}"
+      spanBuilder("download").setAttribute("name", item.name).setAttribute("url", url).use {
+        try {
+          downloadedBytes.getAndAdd(
+            download(
+              item = item,
+              url = url,
+              bufferPool = bufferPool,
+              skipUnpack = skipUnpack,
+              saveHash = saveHash,
+              client = client,
+            )
+          )
         }
-      }
-      catch (e: Throwable) {
-        throw CompilePartDownloadFailedError(item, e)
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          return@use CompilePartDownloadFailedError(item, e)
+        }
+        null
       }
     }
-  }).mapNotNull { it.exception }
+  }.filterNotNull()
 }
 
-private fun onDownloadException(attempt: Int, e: Exception) {
+private suspend fun download(
+  item: FetchAndUnpackItem,
+  url: String,
+  bufferPool: DirectFixedSizeByteBufferPool,
+  skipUnpack: Boolean,
+  saveHash: Boolean,
+  client: OkHttpClient,
+): Long {
+  val downloaded = retryWithExponentialBackOff(onException = ::onDownloadException) {
+    client.newCall(Request.Builder().url(url).build()).executeAsync().useSuccessful { response ->
+      val digest = sha256()
+      writeFile(file = item.file, response = response, bufferPool = bufferPool, url = url, digest = digest)
+      val computedHash = digestToString(digest)
+      if (computedHash != item.hash) {
+        throw HashMismatchException("hash mismatch") { span, attempt ->
+          span.addEvent(
+            "hash mismatch",
+            Attributes.of(
+              AttributeKey.longKey("attemptNumber"), attempt.toLong(),
+              AttributeKey.stringKey("name"), item.file.name,
+              AttributeKey.stringKey("expected"), item.hash,
+              AttributeKey.stringKey("computed"), computedHash,
+            )
+          )
+        }
+      }
+      response.body.contentLength()
+    }
+  }
+  if (!skipUnpack) {
+    spanBuilder("unpack").setAttribute("name", item.name).use {
+      unpackArchive(item, saveHash)
+    }
+  }
+  return downloaded
+}
+
+private suspend fun onDownloadException(attempt: Int, e: Exception) {
   spanBuilder("Retrying download with exponential back off").use { span ->
     if (e is HashMismatchException) {
       e.eventLogger.invoke(span, attempt)
@@ -108,8 +139,9 @@ private fun onDownloadException(attempt: Int, e: Exception) {
   }
 }
 
-internal class CompilePartDownloadFailedError(val item: FetchAndUnpackItem, cause: Throwable) : RuntimeException(cause)
-internal class HashMismatchException(message: String, val eventLogger: (Span, Int) -> Unit) : IOException(message)
+internal class CompilePartDownloadFailedError(@JvmField val item: FetchAndUnpackItem, cause: Throwable) : RuntimeException(cause)
+
+internal class HashMismatchException(message: String, @JvmField val eventLogger: (Span, Int) -> Unit) : IOException(message)
 
 internal fun unpackArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
   HashMapZipFile.load(item.file).use { zipFile ->
@@ -201,4 +233,3 @@ private fun writeFile(file: Path, response: Response, bufferPool: DirectFixedSiz
     }
   }
 }
-

@@ -349,7 +349,7 @@ class JarPackager private constructor(
     }
   }
 
-  private fun addSearchableOptionSources(
+  private suspend fun addSearchableOptionSources(
     layout: BaseLayout?,
     moduleName: String,
     module: JpsModule,

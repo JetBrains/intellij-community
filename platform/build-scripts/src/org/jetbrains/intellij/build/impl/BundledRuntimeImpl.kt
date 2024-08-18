@@ -169,7 +169,7 @@ private fun getArchSuffix(arch: JvmArchitecture): String {
   }
 }
 
-private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
+private suspend fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
   spanBuilder("extract JBR")
     .setAttribute("archive", archive.toString())
     .setAttribute("os", os.osName)

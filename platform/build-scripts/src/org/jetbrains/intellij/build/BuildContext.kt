@@ -136,7 +136,7 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  fun createCopyForProduct(productProperties: ProductProperties,
+  suspend fun createCopyForProduct(productProperties: ProductProperties,
                            projectHomeForCustomizers: Path,
                            prepareForBuild: Boolean = true): BuildContext
 

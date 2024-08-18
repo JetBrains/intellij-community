@@ -582,7 +582,7 @@ internal suspend fun buildPlugins(
   context: BuildContext,
   buildPlatformJob: Job?,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> Unit)? = null,
+  pluginBuilt: (suspend (PluginLayout, pluginDirOrFile: Path) -> Unit)? = null,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
@@ -789,7 +789,7 @@ suspend fun layoutPlatformDistribution(
     }
 }
 
-private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
+private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
   if (!context.productProperties.reassignAltClickToMultipleCarets) {
     return
   }
@@ -807,13 +807,20 @@ fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture,
   return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
 }
 
-private fun checkOutputOfPluginModules(mainPluginModule: String, includedModules: Collection<ModuleItem>, moduleExcludes: Map<String, List<String>>, context: BuildContext) {
+private suspend fun checkOutputOfPluginModules(
+  mainPluginModule: String,
+  includedModules: Collection<ModuleItem>,
+  moduleExcludes: Map<String, List<String>>,
+  context: BuildContext,
+) {
   for (module in includedModules.asSequence().map { it.moduleName }.distinct()) {
     if (module == "intellij.java.guiForms.rt" ||
-        !containsFileInOutput(moduleName = module,
-                              filePath = "com/intellij/uiDesigner/core/GridLayoutManager.class",
-                              excludes = moduleExcludes[module] ?: emptyList(),
-                              context = context)) {
+        !containsFileInOutput(
+          moduleName = module,
+          filePath = "com/intellij/uiDesigner/core/GridLayoutManager.class",
+          excludes = moduleExcludes[module] ?: emptyList(),
+          context = context,
+        )) {
       "Runtime classes of GUI designer must not be packaged to \'$module\' module in \'$mainPluginModule\' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
       "to the output directory' is disabled in Settings | Editor | GUI Designer."
@@ -821,10 +828,12 @@ private fun checkOutputOfPluginModules(mainPluginModule: String, includedModules
   }
 }
 
-private fun containsFileInOutput(moduleName: String,
-                                 filePath: String,
-                                 excludes: Collection<String>,
-                                 context: BuildContext): Boolean {
+private suspend fun containsFileInOutput(
+  moduleName: String,
+  filePath: String,
+  excludes: Collection<String>,
+  context: BuildContext,
+): Boolean {
   val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(moduleName))
   if (Files.notExists(moduleOutput.resolve(filePath))) {
     return false
@@ -1225,7 +1234,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
   }
 }
 
-private fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: CompilationContext) {
+private suspend fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: CompilationContext) {
   for (module in moduleExcludes.keys) {
     check(Files.exists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
       "There are excludes defined for module '${module}', but the module wasn't compiled;" +

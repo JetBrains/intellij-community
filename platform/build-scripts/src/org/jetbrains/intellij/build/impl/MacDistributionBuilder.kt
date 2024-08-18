@@ -176,7 +176,7 @@ class MacDistributionBuilder(
     }
   }
 
-  override fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
+  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
     val json = generateProductJson(context, arch, withRuntime = true)
     writeProductInfoJson(targetDir.resolve("Resources/${PRODUCT_INFO_FILE_NAME}"), json, context)
   }
@@ -341,12 +341,17 @@ class MacDistributionBuilder(
 
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
-  private fun generateProductJson(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean): String {
-    return generateProductInfoJson("../bin", context.builtinModule, launch = listOf(createProductInfoLaunchData(context, arch, withRuntime)), context)
+  private suspend fun generateProductJson(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean): String {
+    return generateProductInfoJson(
+      relativePathToBin = "../bin",
+      builtinModules = context.builtinModule,
+      launch = listOf(createProductInfoLaunchData(context, arch, withRuntime)),
+      context = context,
+    )
   }
 
-  private fun createProductInfoLaunchData(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean): ProductInfoLaunchData {
-    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.MACOS) {
+  private suspend fun createProductInfoLaunchData(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean): ProductInfoLaunchData {
+    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(arch, OsFamily.MACOS, context) {
       "../bin/${it.productProperties.baseFileName}.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS)
@@ -447,7 +452,7 @@ class MacDistributionBuilder(
 
   private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val executable = context.productProperties.baseFileName
-    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context) + listOf("-Dapple.awt.application.appearance=system")
+    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context).asSequence() + sequenceOf("-Dapple.awt.application.appearance=system")
     val vmOptionsPath = distBinDir.resolve("$executable.vmoptions")
     writeVmOptions(file = vmOptionsPath, vmOptions = fileVmOptions, separator = "\n")
     return vmOptionsPath

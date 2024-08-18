@@ -493,7 +493,7 @@ data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @Jv
  * Think twice before using this API.
  */
 fun interface PluginVersionEvaluator {
-  fun evaluate(pluginXmlSupplier: () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
+  suspend fun evaluate(pluginXmlSupplier: suspend () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
 }
 
 private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

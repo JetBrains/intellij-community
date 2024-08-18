@@ -51,10 +51,12 @@ object VmOptionsGenerator {
     if (customPluginRepositoryUrl != null) {
       additionalVmOptions = additionalVmOptions.add("-D$CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY=$customPluginRepositoryUrl")
     }
-    return computeVmOptions(isEAP = context.applicationInfo.isEAP,
-                            bundledRuntime = context.bundledRuntime,
-                            customJvmMemoryOptions = context.productProperties.customJvmMemoryOptions,
-                            additionalVmOptions = additionalVmOptions)
+    return computeVmOptions(
+      isEAP = context.applicationInfo.isEAP,
+      bundledRuntime = context.bundledRuntime,
+      customJvmMemoryOptions = context.productProperties.customJvmMemoryOptions,
+      additionalVmOptions = additionalVmOptions,
+    )
   }
 
   private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
@@ -71,10 +73,12 @@ object VmOptionsGenerator {
   }
 }
 
-internal fun computeVmOptions(isEAP: Boolean,
-                              bundledRuntime: BundledRuntime,
-                              customJvmMemoryOptions: Map<String, String>?,
-                              additionalVmOptions: List<String>? = null): List<String> {
+internal fun computeVmOptions(
+  isEAP: Boolean,
+  bundledRuntime: BundledRuntime,
+  customJvmMemoryOptions: Map<String, String>?,
+  additionalVmOptions: List<String>? = null,
+): List<String> {
   val result = ArrayList<String>()
 
   if (customJvmMemoryOptions != null) {
@@ -104,7 +108,7 @@ internal fun computeVmOptions(isEAP: Boolean,
   return result
 }
 
-internal fun writeVmOptions(file: Path, vmOptions: List<String>, separator: String) {
+internal fun writeVmOptions(file: Path, vmOptions: Sequence<String>, separator: String) {
   Files.writeString(file, vmOptions.joinToString(separator = separator, postfix = separator), StandardCharsets.US_ASCII)
 }
 

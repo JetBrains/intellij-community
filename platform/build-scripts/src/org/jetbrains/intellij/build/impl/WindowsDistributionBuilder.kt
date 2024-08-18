@@ -11,7 +11,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
@@ -19,6 +18,7 @@ import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.nio.file.Files
 import java.nio.file.Path
@@ -150,8 +150,8 @@ internal class WindowsDistributionBuilder(
     }
   }
 
-  override fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
-    generateProductJson(targetDir, context, arch)
+  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
+    generateProductJson(targetDir = targetDir, context = context, arch = arch)
   }
 
   private fun generateScripts(distBinDir: Path, arch: JvmArchitecture) {
@@ -415,16 +415,16 @@ internal class WindowsDistributionBuilder(
 
   private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
-    var vmOptions = VmOptionsGenerator.computeVmOptions(context)
+    var vmOptions = VmOptionsGenerator.computeVmOptions(context).asSequence()
     if (isIjentWslFsEnabledByDefaultForProduct(context.productProperties.platformPrefix)) {
-      vmOptions = vmOptions + ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
+      vmOptions += ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
     }
-    writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
+    writeVmOptions(file = vmOptionsFile, vmOptions = vmOptions, separator = "\r\n")
     return vmOptionsFile
   }
 
-  private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
-    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.WINDOWS) {
+  private suspend fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(arch = arch, os = OsFamily.WINDOWS, ideContext = context) {
       "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.WINDOWS)
@@ -449,6 +449,5 @@ internal class WindowsDistributionBuilder(
     return json
   }
 
-  private fun toDosLineEndings(x: String): String =
-    x.replace("\r", "").replace("\n", "\r\n")
+  private fun toDosLineEndings(x: String): String = x.replace("\r", "").replace("\n", "\r\n")
 }

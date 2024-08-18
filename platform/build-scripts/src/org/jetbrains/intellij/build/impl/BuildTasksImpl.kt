@@ -779,7 +779,7 @@ private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
   }
 }
 
-private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
+private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
   val productJson = generateProductInfoJson(

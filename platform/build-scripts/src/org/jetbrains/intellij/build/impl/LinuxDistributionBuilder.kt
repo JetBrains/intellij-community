@@ -135,7 +135,7 @@ class LinuxDistributionBuilder(
     }
   }
 
-  override fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
+  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
     generateProductJson(targetDir, arch)
   }
 
@@ -326,12 +326,11 @@ class LinuxDistributionBuilder(
 
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
-  private fun generateProductJson(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean = true): String {
-    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.LINUX) {
+  private suspend fun generateProductJson(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(arch = arch, os = OsFamily.LINUX, ideContext = context) {
       "bin/${it.productProperties.baseFileName}64.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.LINUX)
-
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,
@@ -351,7 +350,7 @@ class LinuxDistributionBuilder(
       ),
       context
     )
-    writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
+    writeProductInfoJson(targetFile = targetDir.resolve(PRODUCT_INFO_FILE_NAME), json = json, context = context)
     return json
   }
 
@@ -447,8 +446,8 @@ class LinuxDistributionBuilder(
     val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
 
     @Suppress("SpellCheckingInspection")
-    val vmOptions = VmOptionsGenerator.computeVmOptions(context) + listOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true")
-    writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
+    val vmOptions = VmOptionsGenerator.computeVmOptions(context).asSequence() + sequenceOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true")
+    writeVmOptions(file = vmOptionsPath, vmOptions = vmOptions, separator = "\n")
 
     return vmOptionsPath
   }

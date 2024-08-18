@@ -19,11 +19,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -149,7 +146,12 @@ class CompilationContextImpl private constructor(
     JdkDownloader.getJavaExecutable(jdkHome)
   }
 
-  override val originalModuleRepository: OriginalModuleRepository by lazy { OriginalModuleRepositoryImpl(this) }
+  override val originalModuleRepository: OriginalModuleRepository by lazy {
+    runBlocking(Dispatchers.Default) {
+      CompilationTasks.create(this@CompilationContextImpl).generateRuntimeModuleRepository()
+    }
+    OriginalModuleRepositoryImpl(this)
+  }
 
   init {
     val modules = project.modules
@@ -239,7 +241,7 @@ class CompilationContextImpl private constructor(
     return copy
   }
 
-  override fun prepareForBuild() {
+  override suspend fun prepareForBuild() {
     CompiledClasses.checkOptions(this)
 
     val logDir = paths.logDir
@@ -273,7 +275,7 @@ class CompilationContextImpl private constructor(
     suppressWarnings(project)
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
     if (options.cleanOutDir || options.forceRebuild) {
-      cleanOutput()
+      cleanOutput(this@CompilationContextImpl)
     }
     else {
       Span.current().addEvent("skip output cleaning", Attributes.of(
@@ -305,7 +307,7 @@ class CompilationContextImpl private constructor(
 
   override fun findModule(name: String): JpsModule? = nameToModule.get(name)
 
-  override fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
+  override suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(/* module = */ module, /* forTests = */ forTests)
     requireNotNull(url) {
       "Output directory for ${module.name} isn\'t set"
@@ -463,20 +465,23 @@ private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome
   }
 }
 
-internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = CompiledClasses.keepCompilationState(options)) {
+internal suspend fun cleanOutput(
+  compilationContext: CompilationContext,
+  keepCompilationState: Boolean = CompiledClasses.keepCompilationState(compilationContext.options),
+) {
   val compilationState = setOf(
-    compilationData.dataStorageRoot,
-    classesOutputDirectory,
-    paths.jpsArtifacts,
+    compilationContext.compilationData.dataStorageRoot,
+    compilationContext.classesOutputDirectory,
+    compilationContext.paths.jpsArtifacts,
   )
   val outputDirectoriesToKeep = buildSet {
-    add(paths.logDir)
+    this.add(compilationContext.paths.logDir)
     if (keepCompilationState) {
-      addAll(compilationState)
+      this.addAll(compilationState)
     }
   }
   spanBuilder("clean output").use { span ->
-    val outDir = paths.buildOutputDir
+    val outDir = compilationContext.paths.buildOutputDir
     outputDirectoriesToKeep.forEach {
       val path = it.relativeToOrNull(outDir) ?: it
       span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), path.toString()))
@@ -499,7 +504,7 @@ internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = Comp
         NioFiles.deleteRecursively(path)
       }
     }
-    Files.createDirectories(paths.tempDir)
+    Files.createDirectories(compilationContext.paths.tempDir)
   }
 }
 

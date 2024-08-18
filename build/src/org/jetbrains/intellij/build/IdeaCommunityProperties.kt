@@ -95,7 +95,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     bundleExternalPlugins(context, targetDir)
   }
 
-  protected open fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {
+  protected open suspend fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {
     //temporary unbundle VulnerabilitySearch
     //ExternalPluginBundler.bundle('VulnerabilitySearch',
     //                             "$buildContext.paths.communityHome/build/dependencies",

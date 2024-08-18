@@ -220,7 +220,7 @@ class BuildContextImpl internal constructor(
     return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
   }
 
-  override fun createCopyForProduct(
+  override suspend fun createCopyForProduct(
     productProperties: ProductProperties,
     projectHomeForCustomizers: Path,
     prepareForBuild: Boolean,

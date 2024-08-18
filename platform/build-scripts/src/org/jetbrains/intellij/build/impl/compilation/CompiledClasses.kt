@@ -13,9 +13,12 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -118,56 +121,54 @@ internal object CompiledClasses {
             options.incrementalCompilation)
   }
 
-  @Synchronized
-  fun reuseOrCompile(context: CompilationContext, moduleNames: Collection<String>? = null, includingTestsInModules: List<String>? = null) {
+  suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Collection<String>? = null, includingTestsInModules: List<String>? = null) {
     val span = Span.current()
     when {
       context.options.useCompiledClassesFromProjectOutput -> {
-        span.addEvent("compiled classes reused", Attributes.of(
-          AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString(),
-        ))
+        span.addEvent("compiled classes reused", Attributes.of(AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString()))
       }
       context.options.pathToCompiledClassesArchive != null -> {
-        span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"),
-                                                           context.options.pathToCompiledClassesArchive.toString()))
+        span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"), context.options.pathToCompiledClassesArchive.toString()))
         unpackCompiledClasses(classOutput = context.classesOutputDirectory, context = context)
       }
       context.options.pathToCompiledClassesArchivesMetadata != null -> {
-        span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"),
-                                                           context.options.pathToCompiledClassesArchivesMetadata.toString()))
+        span.addEvent("compilation skipped", Attributes.of(AttributeKey.stringKey("reuseFrom"), context.options.pathToCompiledClassesArchivesMetadata.toString()))
         val forInstallers = System.getProperty("intellij.fetch.compiled.classes.for.installers", "false").toBoolean()
-        fetchAndUnpackCompiledClasses(
-          reportStatisticValue = context.messages::reportStatisticValue,
-          withScope = { name, operation -> context.messages.block(name, operation) },
-          classOutput = context.classesOutputDirectory,
-          metadataFile = Path.of(context.options.pathToCompiledClassesArchivesMetadata!!),
-          skipUnpack = !context.options.unpackCompiledClassesArchives,
-          /**
-           * [FetchAndUnpackItem.output].hash file shouldn't leak to installer distribution
-           */
-          saveHash = !forInstallers,
-        )
+        spanBuilder("fetch and unpack compiled classes").use {
+          fetchAndUnpackCompiledClasses(
+            reportStatisticValue = context.messages::reportStatisticValue,
+            classOutput = context.classesOutputDirectory,
+            metadataFile = Path.of(context.options.pathToCompiledClassesArchivesMetadata!!),
+            skipUnpack = !context.options.unpackCompiledClassesArchives,
+            /**
+             * [FetchAndUnpackItem.output].hash files shouldn't leak to installer distribution
+             */
+            saveHash = !forInstallers,
+          )
+        }
       }
       PortableCompilationCache.IS_ENABLED -> {
         span.addEvent("JPS remote cache will be used for compilation")
-        context.portableCompilationCache.downloadCacheAndCompileProject()
+        runBlocking(Dispatchers.Default) {
+          context.portableCompilationCache.downloadCacheAndCompileProject()
+        }
       }
       else -> {
-        compile(context, moduleNames, includingTestsInModules, isPortableCacheDownloaded = false)
+        compile(moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, isPortableCacheDownloaded = false, context = context)
         return
       }
     }
-    if (!context.options.useCompiledClassesFromProjectOutput) {
+    if (context.options.useCompiledClassesFromProjectOutput) {
+      context.compilationData.runtimeModuleRepositoryGenerated = true
+    }
+    else {
       CompilationTasks.create(context).generateRuntimeModuleRepository()
       context.options.useCompiledClassesFromProjectOutput = true
     }
-    else {
-      context.compilationData.runtimeModuleRepositoryGenerated = true
-    }
   }
 
-  private fun unpackCompiledClasses(classOutput: Path, context: CompilationContext) {
-    context.messages.block("unpack compiled classes archive") {
+  private suspend fun unpackCompiledClasses(classOutput: Path, context: CompilationContext) {
+    spanBuilder("unpack compiled classes archive").use {
       NioFiles.deleteRecursively(classOutput)
       Decompressor.Zip(context.options.pathToCompiledClassesArchive ?: error("intellij.build.compiled.classes.archive is not set"))
         .extract(classOutput)
@@ -180,11 +181,11 @@ internal object CompiledClasses {
            context.compilationData.isIncrementalCompilationDataAvailable()
   }
 
-  fun compile(
-    context: CompilationContext,
+  suspend fun compile(
     moduleNames: Collection<String>? = null,
     includingTestsInModules: List<String>? = null,
     isPortableCacheDownloaded: Boolean,
+    context: CompilationContext,
   ) {
     check(JavaVersion.current().isAtLeast(17)) {
       "Build script must be executed under Java 17 to compile intellij project but it's executed under Java ${JavaVersion.current()}"
@@ -206,44 +207,52 @@ internal object CompiledClasses {
       if (!isIncrementalCompilation) {
         Span.current().addEvent("no compiled classes can be reused")
       }
-      context.messages.block(status) {
+      spanBuilder(status).use {
         if (isIncrementalCompilation) {
           // workaround for KT-55695
-          runner.compileWithTimeout(
-            context, moduleNames, includingTestsInModules,
+          compileWithTimeout(
+            compilationRunner = runner,
+            context = context,
+            moduleNames = moduleNames,
+            includingTestsInModules = includingTestsInModules,
             timeout = context.options.incrementalCompilationTimeout.minutes
           )
         }
         else {
-          runner.compile(context, moduleNames, includingTestsInModules)
+          compile(jpsCompilationRunner = runner, context = context, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules)
         }
       }
       context.messages.buildStatus(status)
     }
+    catch (e: CancellationException) {
+      throw e
+    }
     catch (e: Exception) {
-      retryCompilation(context, runner, moduleNames, includingTestsInModules, e)
+      retryCompilation(context = context, runner = runner, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, e = e)
     }
   }
 
-  private fun JpsCompilationRunner.compileWithTimeout(
+  private suspend fun compileWithTimeout(
+    compilationRunner: JpsCompilationRunner,
     context: CompilationContext,
     moduleNames: Collection<String>?,
     includingTestsInModules: List<String>?,
     timeout: Duration,
   ) {
-    runBlocking {
-      withTimeout(timeout) {
-        launch {
-          compile(
-            context, moduleNames, includingTestsInModules,
-            CanceledStatus { !isActive }
-          )
-        }
+    withTimeout(timeout) {
+      launch {
+        compile(
+          jpsCompilationRunner = compilationRunner,
+          context = context,
+          moduleNames = moduleNames,
+          includingTestsInModules = includingTestsInModules,
+          canceledStatus = CanceledStatus { !isActive },
+        )
       }
     }
   }
 
-  private fun retryCompilation(
+  private suspend fun retryCompilation(
     context: CompilationContext,
     runner: JpsCompilationRunner,
     moduleNames: Collection<String>?,
@@ -254,7 +263,7 @@ internal object CompiledClasses {
       throw e
     }
     if (!context.options.incrementalCompilationFallbackRebuild) {
-      context.messages.warning("Incremental compilation failed. Not re-trying with clean build because " +
+      Span.current().addEvent("Incremental compilation failed. Not re-trying with clean build because " +
                                "'${BuildOptions.INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY}' is false.")
       throw e
     }
@@ -263,42 +272,45 @@ internal object CompiledClasses {
       e is TimeoutCancellationException -> {
         context.messages.reportBuildProblem("Incremental compilation timed out. Re-trying with clean build.")
         successMessage = "$successMessage after timeout"
-        context.cleanOutput(keepCompilationState = false)
+        cleanOutput(compilationContext = context, keepCompilationState = false)
         context.options.incrementalCompilation = false
       }
       PortableCompilationCache.IS_ENABLED -> {
         successMessage = context.portableCompilationCache.handleCompilationFailureBeforeRetry(successMessage)
       }
       else -> {
-        context.messages.warning("Incremental compilation failed. Re-trying with clean build.")
-        context.cleanOutput(keepCompilationState = false)
+        Span.current().addEvent("Incremental compilation failed. Re-trying with clean build.")
+        cleanOutput(compilationContext = context, keepCompilationState = false)
         context.options.incrementalCompilation = false
       }
     }
     context.compilationData.reset()
-    context.messages.block(successMessage) {
-      runner.compile(context, moduleNames, includingTestsInModules)
+    spanBuilder(successMessage).use {
+      compile(jpsCompilationRunner = runner, context = context, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules)
     }
-    context.messages.info("Compilation successful after clean build retry")
+    Span.current().addEvent("Compilation successful after clean build retry")
     context.messages.changeBuildStatusToSuccess(successMessage)
     context.messages.reportStatisticValue("Incremental compilation failures", "1")
   }
 
-  private fun JpsCompilationRunner.compile(context: CompilationContext,
-                                           moduleNames: Collection<String>?,
-                                           includingTestsInModules: List<String>?,
-                                           canceledStatus: CanceledStatus = CanceledStatus.NULL) {
+  private suspend fun compile(
+    jpsCompilationRunner: JpsCompilationRunner,
+    context: CompilationContext,
+    moduleNames: Collection<String>?,
+    includingTestsInModules: List<String>?,
+    canceledStatus: CanceledStatus = CanceledStatus.NULL
+  ) {
     when {
-      moduleNames != null -> buildModules(moduleNames.map(context::findRequiredModule), canceledStatus)
-      includingTestsInModules != null -> buildProduction(canceledStatus)
+      moduleNames != null -> jpsCompilationRunner.buildModules(moduleNames.map(context::findRequiredModule), canceledStatus)
+      includingTestsInModules != null -> jpsCompilationRunner.buildProduction(canceledStatus)
       else -> {
-        buildAll(canceledStatus)
+        jpsCompilationRunner.buildAll(canceledStatus)
         context.options.useCompiledClassesFromProjectOutput = true
       }
     }
     context.options.incrementalCompilation = true
     includingTestsInModules?.forEach {
-      buildModuleTests(context.findRequiredModule(it), canceledStatus)
+      jpsCompilationRunner.buildModuleTests(context.findRequiredModule(it), canceledStatus)
     }
   }
 }
