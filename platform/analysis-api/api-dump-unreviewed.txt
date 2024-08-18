@@ -522,6 +522,11 @@ a:com.intellij.codeInsight.highlighting.HighlightErrorFilter
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
 - <init>():V
 - a:shouldHighlightErrorElement(com.intellij.psi.PsiErrorElement):Z
+*:com.intellij.codeInsight.highlighting.PsiHighlightedReference
+- com.intellij.model.psi.PsiSymbolReference
+- highlightMessage():java.lang.String
+- highlightReference(com.intellij.lang.annotation.AnnotationBuilder):com.intellij.lang.annotation.AnnotationBuilder
+- highlightSeverity():com.intellij.lang.annotation.HighlightSeverity
 com.intellij.codeInsight.hint.QuestionAction
 - a:execute():Z
 a:com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
