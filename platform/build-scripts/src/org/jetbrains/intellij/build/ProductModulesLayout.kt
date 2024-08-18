@@ -78,9 +78,10 @@ class ProductModulesLayout {
   /**
    * Additional customizations of platform JARs. **This is a temporary property added to keep layout of some products.**
    */
-  internal var platformLayoutSpec = persistentListOf<(PlatformLayout, BuildContext) -> Unit>()
+  internal var platformLayoutSpec = persistentListOf<suspend (PlatformLayout, BuildContext) -> Unit>()
+    private set
 
-  fun addPlatformSpec(customizer: (PlatformLayout, BuildContext) -> Unit) {
+  fun addPlatformSpec(customizer: suspend (PlatformLayout, BuildContext) -> Unit) {
     platformLayoutSpec += customizer
   }
 
@@ -123,6 +124,7 @@ class ProductModulesLayout {
   var excludedModuleNames: PersistentSet<String> = persistentSetOf()
 }
 
+// the set is ordered (Linked)
 internal fun createPluginLayoutSet(expectedSize: Int): MutableSet<PluginLayout> {
   return ObjectLinkedOpenCustomHashSet(expectedSize, object : Hash.Strategy<PluginLayout?> {
     override fun hashCode(layout: PluginLayout?): Int {

@@ -180,13 +180,13 @@ class PluginLayout private constructor(
            if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions"
   }
 
-  override fun withModule(moduleName: String) {
+  override fun getRelativeJarPath(moduleName: String): String {
     if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
       // must be in a separate JAR
-      withModule(moduleName, "${convertModuleNameToFileName(moduleName)}.jar")
+      return "${convertModuleNameToFileName(moduleName)}.jar"
     }
     else {
-      withModule(moduleName, mainJarName)
+      return mainJarName
     }
   }
 
