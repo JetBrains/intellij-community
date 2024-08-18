@@ -782,6 +782,10 @@
     <codeInsight.linkHandler prefix="#javaClass/" handlerClass="com.intellij.codeInsight.daemon.impl.JavaClassTooltipLinkHandler"/>
 
     <lang.psiStructureViewFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaStructureViewBuilderFactory"/>
+    <lang.logicalStructureElementsProvider implementation="com.intellij.ide.structureView.logical.ClassOwnerLogicalStructureElementsProvider"/>
+    <lang.logicalStructureTreeElementProvider
+      id="javaPsiClassLogicalStructureTreeElementProvider"
+      implementation="com.intellij.ide.structureView.logical.JavaPsiClassLogicalStructureTreeElementProvider"/>
 
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
 

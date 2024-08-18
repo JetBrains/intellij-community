@@ -155,6 +155,9 @@
             order="first"
             key="KNM"
             factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <lang.logicalStructureTreeElementProvider
+            implementation="org.jetbrains.kotlin.idea.structureView.KotlinClassLogicalStructureTreeElementProvider"
+            order="before javaPsiClassLogicalStructureTreeElementProvider"/>
   </extensions>
 
   <!-- Line markers -->

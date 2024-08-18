@@ -19,6 +19,7 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.ide.logical.impl.LogicalStructureViewService;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewBuilderProvider;
 import com.intellij.lang.LanguageStructureViewBuilder;
@@ -42,6 +43,12 @@ public class LanguageFileTypeStructureViewBuilderProvider implements StructureVi
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) return null;
+
+    //boolean isLogicalViewAvailable = true; // TODO StructureTW: add logic
+    //if (isLogicalViewAvailable) {
+      StructureViewBuilder logicalViewBuilder = LogicalStructureViewService.Companion.getInstance(project).getLogicalStructureBuilder(psiFile);
+      if (logicalViewBuilder != null) return logicalViewBuilder;
+    //}
 
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiFile.getLanguage());
     return factory == null ?  null : factory.getStructureViewBuilder(psiFile);
