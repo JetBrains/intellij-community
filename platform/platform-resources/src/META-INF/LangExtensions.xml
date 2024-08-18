@@ -634,6 +634,8 @@
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector"/>
     <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
 
+    <registryKey defaultValue="false" description="Enables navigation for TODO comments" key="todo.navigation"/>
+
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentDateMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentTimeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentUserMacro"/>

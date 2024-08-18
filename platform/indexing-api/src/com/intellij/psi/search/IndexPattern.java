@@ -3,6 +3,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,15 @@ public final class IndexPattern {
 
   public @NotNull List<String> getWordsToFindFirst() {
     return myStringsToFindFirst;
+  }
+
+  /**
+   * @return the word to add link to for every _todo_ item in the file
+   */
+  @ApiStatus.Experimental
+  public @Nullable String getWordToHighlight() {
+    List<String> words = getWordsToFindFirst();
+    return words.isEmpty() ? null : words.get(0);
   }
 
   public boolean isCaseSensitive() {

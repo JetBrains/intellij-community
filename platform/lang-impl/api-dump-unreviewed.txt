@@ -17287,6 +17287,7 @@ a:com.intellij.ide.todo.TodoPanel
 - hasNextOccurence():Z
 - hasPreviousOccurence():Z
 - p:rebuildWithAlarm(com.intellij.util.Alarm):V
+- selectItem(com.intellij.psi.search.TodoItem):V
 - p:setDisplayName(java.lang.String):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction
@@ -17395,6 +17396,7 @@ c:com.intellij.ide.todo.TodoView
 - addCustomTodoView(com.intellij.ide.todo.TodoTreeBuilderFactory,java.lang.String,com.intellij.ide.todo.TodoPanelSettings):com.intellij.ui.content.Content
 - p:createAllTodoBuilder(javax.swing.JTree,com.intellij.openapi.project.Project):com.intellij.ide.todo.AllTodosTreeBuilder
 - dispose():V
+- getCurrentFilePanel():com.intellij.ide.todo.TodoPanel
 - getState():com.intellij.ide.todo.TodoView$State
 - initToolWindow(com.intellij.openapi.wm.ToolWindow):V
 - loadState(com.intellij.ide.todo.TodoView$State):V
