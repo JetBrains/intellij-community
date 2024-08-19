@@ -142,7 +142,7 @@ internal class IjentNioFileChannel private constructor(
     checkClosed()
     val file = when (ijentOpenedFile) {
       is IjentOpenedFile.Writer -> ijentOpenedFile
-      is IjentOpenedFile.Reader -> throw IOException("File ${ijentOpenedFile.path} is not open for writing")
+      is IjentOpenedFile.Reader -> throw NonWritableChannelException()
     }
     val currentSize = this.size()
     fsBlocking {

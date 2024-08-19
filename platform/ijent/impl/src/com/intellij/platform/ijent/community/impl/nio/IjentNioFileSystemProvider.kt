@@ -23,7 +23,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
-import java.nio.file.spi.FileSystemProvider.installedProviders
 import java.util.concurrent.ExecutorService
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
