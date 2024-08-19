@@ -274,7 +274,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Override
-  public @NotNull MapReduceIndex.IndexStorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
+  public @NotNull StorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
     UpdateData<Key, Value> updateData = new UpdateData<>(
       inputId,
       data.getKeyValues(),
@@ -385,7 +385,9 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
         //         ...but it is important to not allow same fileId data to be applied by different threads, because
         //         we need previous forwardIndex.get(fileId) to calculate diff! I.e. for each fileId forwardIndex[fileId]
         //         updates must be serialized, even though for different fileIds there is no serialization required
-        if (hasDifference) updateData.updateForwardIndex();
+        if (hasDifference) {
+          updateData.updateForwardIndex();
+        }
       }
       catch (ProcessCanceledException e) {
         LOG.error("ProcessCanceledException is not expected here!", e);
