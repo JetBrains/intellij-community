@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
@@ -35,7 +35,7 @@ sealed class BaseLayout {
     private set
 
   @JvmField
-  internal val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
+  internal val includedProjectLibraries: ObjectLinkedOpenHashSet<ProjectLibraryData> = ObjectLinkedOpenHashSet()
 
   internal var includedModuleLibraries = persistentSetOf<ModuleLibraryData>()
     private set
