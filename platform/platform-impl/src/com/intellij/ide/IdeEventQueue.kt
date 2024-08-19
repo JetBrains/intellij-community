@@ -1270,6 +1270,7 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
   }
 }
 
+@Internal
 interface ClientIdAwareEvent {
   val clientId: ClientId?
 }

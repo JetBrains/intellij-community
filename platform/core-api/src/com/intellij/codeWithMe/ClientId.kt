@@ -22,6 +22,7 @@ import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
@@ -228,6 +229,15 @@ data class ClientId(val value: String) {
       }
     }
 
+    /**
+     * The same as [withClientId] but it doesn't fire a log.error()
+     * when there is a ClientId on the current thread context, and you're trying to set a different ClientId using this method
+     *
+     * Use cases: CWM Following code when some activity should be executed for another client,
+     * or accessing some Host's IDE subsystems like settings from a controller.
+     * Otherwise, use ordinary [withClientId] to avoid hiding issues with lost/extra overridden ClientId
+     */
+    @Internal
     @JvmStatic
     @RequiresBlockingContext
     inline fun <T> withExplicitClientId(clientId: ClientId?, action: () -> T): T {
@@ -260,6 +270,15 @@ data class ClientId(val value: String) {
       return withClientId(clientId, errorOnMismatch = true)
     }
 
+    /**
+     * The same as [withClientId] but it doesn't fire a log.error()
+     * when there is a ClientId on the current thread context, and you're trying to set a different ClientId using this method
+     *
+     * Use cases: CWM Following code when some activity should be executed for another client,
+     * or accessing some Host's IDE subsystems like settings from a controller.
+     * Otherwise, use ordinary [withClientId] to avoid hiding issues with lost/extra overridden ClientId
+     */
+    @Internal
     @JvmStatic
     @RequiresBlockingContext
     fun withExplicitClientId(clientId: ClientId?): AccessToken {
@@ -290,6 +309,15 @@ data class ClientId(val value: String) {
       return withClientIdImpl(clientIdValue, errorOnMismatch = true)
     }
 
+    /**
+     * The same as [withClientId] but it doesn't fire a log.error()
+     * when there is a ClientId on the current thread context, and you're trying to set a different ClientId using this method
+     *
+     * Use cases: CWM Following code when some activity should be executed for another client,
+     * or accessing some Host's IDE subsystems like settings from a controller.
+     * Otherwise, use ordinary [withClientId] to avoid hiding issues with lost/extra overridden ClientId
+     */
+    @Internal
     @JvmStatic
     @RequiresBlockingContext
     fun withExplicitClientId(clientIdValue: String): AccessToken {

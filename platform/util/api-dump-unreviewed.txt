@@ -5758,7 +5758,6 @@ a:com.intellij.util.ui.EdtInvocationManager
 - a:invokeLater(java.lang.Runnable):V
 - s:invokeLaterIfNeeded(java.lang.Runnable):V
 - f:isEventDispatchThread():Z
-- s:setEdtInvocationManager(com.intellij.util.ui.EdtInvocationManager):com.intellij.util.ui.EdtInvocationManager
 c:com.intellij.util.ui.EdtInvocationManager$SwingEdtInvocationManager
 - com.intellij.util.ui.EdtInvocationManager
 - <init>():V

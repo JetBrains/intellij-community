@@ -138,15 +138,14 @@ f:com.intellij.codeWithMe.ClientId
 - sf:getCurrentOrNull():com.intellij.codeWithMe.ClientId
 - sf:getLocalId():com.intellij.codeWithMe.ClientId
 - sf:getOwnerId():com.intellij.codeWithMe.ClientId
-- sf:getPropagateAcrossThreads():Z
 - f:getValue():java.lang.String
 - hashCode():I
 - sf:isCurrentlyUnderLocalId():Z
 - sf:isLocal(com.intellij.codeWithMe.ClientId):Z
 - sf:overrideLocalId(com.intellij.codeWithMe.ClientId):V
-- sf:setPropagateAcrossThreads(Z):V
 - sf:withClientId(com.intellij.codeWithMe.ClientId):com.intellij.openapi.application.AccessToken
 - sf:withClientId(com.intellij.codeWithMe.ClientId,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:withClientId(com.intellij.codeWithMe.ClientId,Z):com.intellij.openapi.application.AccessToken
 - sf:withClientId(java.lang.String):com.intellij.openapi.application.AccessToken
 e:com.intellij.codeWithMe.ClientId$AbsenceBehavior
 - java.lang.Enum
@@ -170,18 +169,13 @@ f:com.intellij.codeWithMe.ClientId$Companion
 - f:getDefaultLocalId():com.intellij.codeWithMe.ClientId
 - f:getLocalId():com.intellij.codeWithMe.ClientId
 - f:getOwnerId():com.intellij.codeWithMe.ClientId
-- f:getPropagateAcrossThreads():Z
 - f:isCurrentlyUnderLocalId():Z
 - f:isLocal(com.intellij.codeWithMe.ClientId):Z
 - f:overrideLocalId(com.intellij.codeWithMe.ClientId):V
-- f:setPropagateAcrossThreads(Z):V
 - f:withClientId(com.intellij.codeWithMe.ClientId):com.intellij.openapi.application.AccessToken
 - f:withClientId(com.intellij.codeWithMe.ClientId,kotlin.jvm.functions.Function0):java.lang.Object
+- f:withClientId(com.intellij.codeWithMe.ClientId,Z):com.intellij.openapi.application.AccessToken
 - f:withClientId(java.lang.String):com.intellij.openapi.application.AccessToken
-f:com.intellij.codeWithMe.ClientId$Companion$ClientIdAccessToken
-- com.intellij.openapi.application.AccessToken
-- <init>(java.lang.String):V
-- finish():V
 f:com.intellij.codeWithMe.ClientIdExKt
 - sf:assertClientIdConsistency(com.intellij.codeWithMe.ClientId,java.lang.String):V
 - sf:isCurrent(com.intellij.codeWithMe.ClientId):Z
