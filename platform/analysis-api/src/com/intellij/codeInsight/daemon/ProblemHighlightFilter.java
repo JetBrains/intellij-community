@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import java.util.function.Supplier;
 
 /**
  * This filters can be used to prevent error highlighting (invalid code, unresolved references etc.) in files outside of project scope.
@@ -15,7 +13,6 @@ import java.util.function.Supplier;
  */
 public abstract class ProblemHighlightFilter {
   public static final ExtensionPointName<ProblemHighlightFilter> EP_NAME = ExtensionPointName.create("com.intellij.problemHighlightFilter");
-  private static final Logger LOG = Logger.getInstance(ProblemHighlightFilter.class);
 
   /**
    * @param psiFile file to decide about
@@ -36,19 +33,6 @@ public abstract class ProblemHighlightFilter {
   }
 
   private static boolean shouldProcess(@NotNull PsiFile psiFile, boolean onTheFly) {
-    return ContainerUtil.all(EP_NAME.getExtensionList(), filter -> {
-      var result = onTheFly ? filter.shouldHighlight(psiFile) : filter.shouldProcessInBatch(psiFile);
-      safeDebugLogging(() -> "onTheFly " + onTheFly + ", filter " + filter.getClass().getName() + ", result " + result);
-      return result;
-    });
-  }
-
-  private static void safeDebugLogging(Supplier<String> stringToPrintSupplier) {
-    try {
-      if (LOG.isDebugEnabled()) LOG.debug(stringToPrintSupplier.get());
-    }
-    catch (Exception ex) {
-      LOG.info("safeLogging failed by the reason of " + ex.getClass().getName());
-    }
+    return ContainerUtil.all(EP_NAME.getExtensionList(), filter -> onTheFly ? filter.shouldHighlight(psiFile) : filter.shouldProcessInBatch(psiFile));
   }
 }
