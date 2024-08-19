@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Collects FUS statistics for the lightweight new project wizard.
@@ -13,11 +14,12 @@ import com.intellij.openapi.project.Project
  *
  * @see com.intellij.ide.util.projectWizard.AbstractNewProjectDialog
  */
-internal object LightweightNewProjectWizardCollector : CounterUsagesCollector() {
+@ApiStatus.Internal
+object LightweightNewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("new.project.wizard", 4)
+  private val GROUP: EventLogGroup = EventLogGroup("new.project.wizard", 5)
 
   private val projectGeneratedEvent = GROUP.registerEvent("project.generated",
                                                           EventFields.Class("generator_id"),
