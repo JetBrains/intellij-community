@@ -81,7 +81,7 @@ class K2MoveDeclarationsRefactoringProcessor(
             }
         }
 
-        if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) { // for simplicity we re-use logic from move files
+        if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) { // for simplicity, we re-use logic from move files
             ApplicationManager.getApplication().invokeLater {
                 EditorHelper.openFilesInEditor(movedElements.toTypedArray())
             }
