@@ -2,9 +2,11 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.util.NlsContexts
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Serializable
 class CancellableTaskCancellation private constructor(
   val buttonText: @NlsContexts.Button String?,
   val tooltipText: @NlsContexts.Tooltip String?

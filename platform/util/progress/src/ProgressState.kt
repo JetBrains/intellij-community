@@ -2,7 +2,9 @@
 package com.intellij.platform.util.progress
 
 import com.intellij.platform.util.progress.impl.ProgressText
+import kotlinx.serialization.Serializable
 
+@Serializable
 sealed interface ProgressState {
 
   val fraction: Double?

@@ -2,12 +2,16 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.util.NlsContexts
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.Contract
 
+@Serializable
 sealed interface TaskCancellation {
 
+  @Serializable
   sealed interface NonCancellable : TaskCancellation
 
+  @Serializable
   sealed interface Cancellable : TaskCancellation {
     @Contract(value = "_ -> new", pure = true)
     fun withButtonText(buttonText: @NlsContexts.Button String): Cancellable

@@ -8,13 +8,20 @@ com.intellij.platform.ide.progress.TaskCancellation
 - s:nonCancellable():com.intellij.platform.ide.progress.TaskCancellation$NonCancellable
 com.intellij.platform.ide.progress.TaskCancellation$Cancellable
 - com.intellij.platform.ide.progress.TaskCancellation
+- sf:Companion:com.intellij.platform.ide.progress.TaskCancellation$Cancellable$Companion
 - a:withButtonText(java.lang.String):com.intellij.platform.ide.progress.TaskCancellation$Cancellable
 - a:withTooltipText(java.lang.String):com.intellij.platform.ide.progress.TaskCancellation$Cancellable
+f:com.intellij.platform.ide.progress.TaskCancellation$Cancellable$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.platform.ide.progress.TaskCancellation$Companion
 - f:cancellable():com.intellij.platform.ide.progress.TaskCancellation$Cancellable
 - f:nonCancellable():com.intellij.platform.ide.progress.TaskCancellation$NonCancellable
+- f:serializer():kotlinx.serialization.KSerializer
 com.intellij.platform.ide.progress.TaskCancellation$NonCancellable
 - com.intellij.platform.ide.progress.TaskCancellation
+- sf:Companion:com.intellij.platform.ide.progress.TaskCancellation$NonCancellable$Companion
+f:com.intellij.platform.ide.progress.TaskCancellation$NonCancellable$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.platform.ide.progress.TasksKt
 - sf:runWithModalProgressBlocking(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2):java.lang.Object
 - sf:runWithModalProgressBlocking(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):java.lang.Object
