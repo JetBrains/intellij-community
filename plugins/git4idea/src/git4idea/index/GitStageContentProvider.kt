@@ -25,7 +25,7 @@ internal class GitStageContentProvider(private val project: Project) : ChangesVi
   override fun initTabContent(content: Content) {
     val disposable = Disposer.newDisposable("Git Stage Content Provider")
     val tracker = GitStageTracker.getInstance(project)
-    val gitStagePanel = GitStagePanel(tracker, isVertical = ::isVertical, isEditorDiffPreview = ::isDiffPreviewInEditor, disposable) {
+    val gitStagePanel = GitStagePanel(tracker, isVertical = ::isVertical, disposable) {
       ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.activate(null)
     }
     GitStageTabTitleUpdater(tracker, gitStagePanel)
@@ -36,8 +36,6 @@ internal class GitStageContentProvider(private val project: Project) : ChangesVi
     content.component = gitStagePanel
     content.setDisposer(disposable)
   }
-
-  private fun isDiffPreviewInEditor() = ChangesViewContentManager.isCommitToolWindowShown(project)
 
   private fun isVertical() = ChangesViewContentManager.isToolWindowTabVertical(project, STAGING_AREA_TAB_NAME)
 

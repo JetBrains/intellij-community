@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
+import com.intellij.openapi.vcs.changes.ui.ChangesTree.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
@@ -64,7 +65,6 @@ import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
                              private val isVertical: () -> Boolean,
-                             private val isEditorDiffPreview: () -> Boolean,
                              disposableParent: Disposable,
                              private val activate: () -> Unit) :
   JPanel(BorderLayout()), UiDataProvider, Disposable {
@@ -84,7 +84,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   private val commitWorkflowHandler: GitStageCommitWorkflowHandler
 
   private var splitPreview: GitStageDiffRequestProcessor? = null
-  private var editorTabPreview: GitStageEditorDiffPreview? = null
+  private val editorTabPreview: GitStageEditorDiffPreview
 
   private val state: GitStageTracker.State
     get() = tracker.state
@@ -148,7 +148,20 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     add(commitDiffSplitter, BorderLayout.CENTER)
     add(changesStatusPanel, BorderLayout.SOUTH)
 
-    updateLayout(isInitial = true)
+    editorTabPreview = GitStageEditorDiffPreview(_tree, tracker, toolbar.component, activate)
+
+    // Override the handlers registered by editorTabPreview
+    tree.doubleClickHandler = Processor { e ->
+      if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
+      processDoubleClickEvent(e)
+      true
+    }
+    tree.enterKeyHandler = Processor {
+      processEnterEvent()
+      true
+    }
+
+    updateLayout()
 
     tracker.addListener(MyGitStageTrackerListener(), this)
     val busConnection = project.messageBus.connect(this)
@@ -202,59 +215,38 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     commitPanel.uiDataSnapshotFromProviders(sink)
   }
 
-  fun updateLayout() {
-    updateLayout(isInitial = false)
-  }
+  @Suppress("KotlinConstantConditions")
+  internal fun updateLayout() {
+    if (disposableFlag.isDisposed) return
 
-  private fun updateLayout(isInitial: Boolean) {
     val isVertical = isVertical()
-    val isEditorDiffPreview = isEditorDiffPreview()
-    val isInEditor = isEditorDiffPreview || isVertical
-    val isMessageSplitterVertical = !isEditorDiffPreview || isVertical
+    val isWithSplitPreview = !isVertical
+
+    val isMessageSplitterVertical = isVertical || isWithSplitPreview
     if (treeMessageSplitter.orientation != isMessageSplitterVertical) {
       treeMessageSplitter.orientation = isMessageSplitterVertical
     }
-    setDiffPreviewInEditor(isInEditor, isInitial)
-  }
 
-  private fun setDiffPreviewInEditor(isInEditor: Boolean, isInitial: Boolean) {
-    if (disposableFlag.isDisposed) return
-    val needUpdatePreviews = isInEditor != (editorTabPreview != null)
-    if (!isInitial && !needUpdatePreviews) return
+    val needUpdatePreviews = isWithSplitPreview != (splitPreview != null)
+    if (!needUpdatePreviews) return
 
-    if (isInEditor) {
-      editorTabPreview = GitStageEditorDiffPreview(_tree, tracker, toolbar.component, activate)
-
+    if (!isWithSplitPreview) {
       commitDiffSplitter.secondComponent = null
       splitPreview?.let { Disposer.dispose(it) }
       splitPreview = null
     }
     else {
-      editorTabPreview?.let { Disposer.dispose(it) }
-      editorTabPreview = null
-
       val processor = GitStageDiffRequestProcessor(_tree, tracker, false)
       processor.setToolbarVerticalSizeReferent(toolbar.component)
       commitDiffSplitter.secondComponent = processor.component
       splitPreview = processor
-    }
-
-    // Override the handlers registered by editorTabPreview
-    tree.doubleClickHandler = Processor { e ->
-      if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
-      processDoubleClickEvent(e)
-      true
-    }
-    tree.enterKeyHandler = Processor {
-      processEnterEvent()
-      true
     }
   }
 
   private fun processDoubleClickEvent(e: MouseEvent) {
     if (performMergeAction(project, _tree.selectedStatusNodes())) return
 
-    if (editorTabPreview?.handleDoubleClick(e) == true) return
+    if (editorTabPreview.handleDoubleClick(e) == true) return
 
     val dataContext = DataManager.getInstance().getDataContext(tree)
     OpenSourceUtil.openSourcesFrom(dataContext, true)
@@ -263,17 +255,17 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
   private fun processEnterEvent() {
     if (performMergeAction(project, _tree.selectedStatusNodes())) return
 
-    if (editorTabPreview?.handleEnterKey() == true) return
+    if (editorTabPreview.handleEnterKey() == true) return
 
     val dataContext = DataManager.getInstance().getDataContext(tree)
     OpenSourceUtil.openSourcesFrom(dataContext, true)
   }
 
   override fun dispose() {
+    Disposer.dispose(editorTabPreview)
+
     splitPreview?.let { Disposer.dispose(it) }
     splitPreview = null
-    editorTabPreview?.let { Disposer.dispose(it) }
-    editorTabPreview = null
   }
 
   private fun ChangesTree.setDefaultEmptyText() {
