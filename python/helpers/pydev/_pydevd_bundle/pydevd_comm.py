@@ -430,6 +430,7 @@ def start_server(port):
         sys.stderr.write("Could not bind to port: %s\n" % (port,))
         sys.stderr.flush()
         traceback.print_exc()
+        raise
 
 #=======================================================================================================================
 # start_client
