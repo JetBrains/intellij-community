@@ -71,9 +71,12 @@ from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
-    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, GlobalDebuggerHolder, \
-    get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, \
+    IS_PY2, IS_PY3K, \
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, \
+    GlobalDebuggerHolder, \
+    get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR, \
+    IS_WINDOWS
 from _pydev_bundle.pydev_override import overrides
 import json
 import weakref
@@ -422,8 +425,16 @@ def start_server(port):
         newSock, _addr = s.accept()
         pydevd_log(1, "Connection accepted")
         # closing server socket is not necessary but we don't need it
-        s.shutdown(SHUT_RDWR)
-        s.close()
+        try:
+            s.shutdown(SHUT_RDWR)
+        except OSError:
+            if IS_WINDOWS:
+                # For possible and likely harmless WinError 10057 on Windows.
+                pass
+            else:
+                raise
+        finally:
+            s.close()
         return newSock
 
     except:
