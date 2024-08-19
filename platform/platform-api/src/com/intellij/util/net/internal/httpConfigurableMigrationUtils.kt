@@ -16,6 +16,7 @@ import com.intellij.util.net.ProxySettings
 import com.intellij.util.proxy.CommonProxy
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
+import java.net.MalformedURLException
 import java.net.PasswordAuthentication
 import java.net.URL
 
@@ -25,7 +26,11 @@ fun HttpConfigurable.getProxyConfiguration(): ProxyConfiguration {
       USE_PROXY_PAC -> {
         val pacUrl = PAC_URL
         if (USE_PAC_URL && !pacUrl.isNullOrEmpty()) {
-          ProxyConfiguration.proxyAutoConfiguration(URL(pacUrl))
+          try {
+            ProxyConfiguration.proxyAutoConfiguration(URL(pacUrl))
+          } catch (_: MalformedURLException) {
+            ProxyConfiguration.autodetect
+          }
         }
         else {
           ProxyConfiguration.autodetect
