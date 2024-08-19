@@ -22,7 +22,7 @@ fun interface NotebookInlayMouseListener : EventListener {
     /**
      * Wraps panel with layer to catch all events
      */
-    internal fun wrapPanel(panel: JPanel, editor: Editor): JLayer<JPanel> =
+    fun wrapPanel(panel: JPanel, editor: Editor): JLayer<JPanel> =
       JLayer(panel).apply {
         layerEventMask = AWTEvent.MOUSE_EVENT_MASK
         setUI(object : LayerUI<JPanel>() {
