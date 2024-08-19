@@ -25,8 +25,6 @@ import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
-import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class VcsLogTabsManager internal constructor(private val project: Project,
@@ -90,7 +88,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   }
 
   fun openAnotherLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi {
-    val tabId = generateTabId(logManager)
+    val tabId = VcsLogTabsUtil.generateTabId(logManager)
     uiProperties.resetState(tabId)
     if (location === VcsLogTabLocation.EDITOR) {
       val editors = openEditorLogTab(tabId, true, filters)
@@ -147,16 +145,6 @@ class VcsLogTabsManager internal constructor(private val project: Project,
       properties.onPropertyChange(this) {
         if (it == MainVcsLogUiProperties.GRAPH_OPTIONS) block()
       }
-    }
-
-    private fun generateTabId(manager: VcsLogManager): @NonNls String {
-      val existingIds = manager.logUis.map { it.id }.toSet()
-      var newId: String
-      do {
-        newId = UUID.randomUUID().toString()
-      }
-      while (existingIds.contains(newId))
-      return newId
     }
   }
 }

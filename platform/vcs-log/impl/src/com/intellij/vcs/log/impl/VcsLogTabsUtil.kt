@@ -9,6 +9,8 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.util.GraphOptionsUtil.presentationForTabTitle
 import com.intellij.vcs.log.visible.filters.getPresentation
+import org.jetbrains.annotations.NonNls
+import java.util.*
 
 internal object VcsLogTabsUtil {
   fun getFullName(shortName: @TabTitle String): @TabTitle String {
@@ -28,5 +30,15 @@ internal object VcsLogTabsUtil {
     @NlsSafe
     val presentation = listOf(optionsPresentation, filtersPresentation).filter { it.isNotEmpty() }.joinToString(separator = " ")
     return StringUtil.shortenTextWithEllipsis(presentation, 150, 20)
+  }
+
+  fun generateTabId(manager: VcsLogManager): @NonNls String {
+    val existingIds = manager.logUis.map { it.id }.toSet()
+    var newId: String
+    do {
+      newId = UUID.randomUUID().toString()
+    }
+    while (existingIds.contains(newId))
+    return newId
   }
 }

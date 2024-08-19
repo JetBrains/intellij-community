@@ -612,11 +612,8 @@ f:com.intellij.vcs.log.impl.VcsLogTabLocation$Companion
 - f:findLogUi(com.intellij.vcs.log.impl.VcsLogManager,com.intellij.vcs.log.impl.VcsLogTabLocation,java.lang.Class,Z,kotlin.jvm.functions.Function1):com.intellij.vcs.log.VcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
-- sf:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
 - f:openAnotherLogTab(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.impl.VcsLogTabLocation):com.intellij.vcs.log.ui.MainVcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
-- f:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
-- f:getFullName(java.lang.String):java.lang.String
 - f:getTAB_GROUP_ID():com.intellij.ui.content.TabGroupId
 - f:onDisplayNameChange(com.intellij.vcs.log.ui.MainVcsLogUi,kotlin.jvm.functions.Function0):V
 com.intellij.vcs.log.impl.VcsLogTabsProperties
