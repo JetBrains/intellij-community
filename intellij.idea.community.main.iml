@@ -70,7 +70,7 @@
     <orderEntry type="module" module-name="intellij.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.guiForms.designer" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.dev.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.dev.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
