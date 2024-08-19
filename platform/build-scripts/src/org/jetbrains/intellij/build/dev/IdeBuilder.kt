@@ -11,6 +11,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
@@ -66,6 +67,8 @@ data class BuildRequest(
   @JvmField val writeCoreClasspath: Boolean = true,
 
   @JvmField val buildOptionsTemplate: BuildOptions? = null,
+
+  @JvmField val tracer: Tracer? = null
 ) {
   override fun toString(): String =
     "BuildRequest(platformPrefix='$platformPrefix', " +
