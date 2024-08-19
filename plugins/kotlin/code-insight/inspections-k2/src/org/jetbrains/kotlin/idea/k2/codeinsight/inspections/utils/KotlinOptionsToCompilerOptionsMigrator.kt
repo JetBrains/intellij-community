@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import java.util.function.Function
 
 internal data class Replacement(val expressionToReplace: KtExpression, val replacement: String, val classToImport: FqName? = null)
@@ -26,18 +27,24 @@ internal fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinary
     }
 
     var hasKotlinOptionsInDotQualifiedExpression = false
-    val optionName = if (leftPartOfBinaryExpression is KtDotQualifiedExpression) {
-        val partBeforeDot = textOfLeftPartOfBinaryExpression.substringBefore(".")
-        if (partBeforeDot != "kotlinOptions") return null
-        hasKotlinOptionsInDotQualifiedExpression = true
-        textOfLeftPartOfBinaryExpression.substringAfter(".")
-    } else if (leftPartOfBinaryExpression is KtReferenceExpression) {
-        textOfLeftPartOfBinaryExpression
-    } else {
-        return null
+    val optionName = when (leftPartOfBinaryExpression) {
+      is KtDotQualifiedExpression -> {
+          val partBeforeDot = leftPartOfBinaryExpression.receiverExpression.text
+          if (partBeforeDot != "kotlinOptions") return null
+          hasKotlinOptionsInDotQualifiedExpression = true
+          leftPartOfBinaryExpression.getCalleeExpressionIfAny()?.text ?: return null
+      }
+
+        is KtReferenceExpression -> {
+            textOfLeftPartOfBinaryExpression
+      }
+
+        else -> {
+            return null
+      }
     }
 
-    val optionValue = if (rightPartOfBinaryExpression is KtStringTemplateExpression) {
+    val optionValue = if (optionName != "freeCompilerArgs" && rightPartOfBinaryExpression is KtStringTemplateExpression) {
         rightPartOfBinaryExpression.text.removeSurrounding("\"", "\"")
     } else {
         textOfRightPartOfBinaryExpression
