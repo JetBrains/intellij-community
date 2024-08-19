@@ -17,6 +17,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -29,10 +30,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectTypeService;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -48,6 +46,7 @@ import com.intellij.util.containers.Interner;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -100,26 +99,9 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
       List<PsiFile> injectedFragments = List.of();
     };
 
-    // In dumb mode, we need to run dumb-aware inspections only.
-    // But we need to keep highlights from currently enabled but inactive smart-only inspections.
-    List<? extends LocalInspectionToolWrapper> activeToolWrappers;
-    List<? extends LocalInspectionToolWrapper> disabledSmartOnlyToolWrappers;
-    if (isDumbMode()) {
-      activeToolWrappers = toolWrappers.stream().parallel().filter(wrapper -> wrapper.isDumbAware()).toList();
+    DumbToolWrapperCondition dumbToolWrapperCondition = new DumbToolWrapperCondition(isDumbMode());
 
-      if (activeToolWrappers.isEmpty()) {
-        disabledSmartOnlyToolWrappers = toolWrappers;
-      }
-      else {
-        disabledSmartOnlyToolWrappers = ContainerUtil.filter(toolWrappers, wrapper -> !wrapper.isDumbAware());
-      }
-    }
-    else {
-      activeToolWrappers = toolWrappers;
-      disabledSmartOnlyToolWrappers = List.of();
-    }
-
-    if (!activeToolWrappers.isEmpty()) {
+    if (!toolWrappers.isEmpty()) {
       Consumer<? super ManagedHighlighterRecycler> withRecycler = invalidPsiRecycler -> {
         InspectionRunner.ApplyIncrementallyCallback applyIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) -> {
           List<HighlightInfo> allInfos = descriptors.isEmpty() ? null : new ArrayList<>(descriptors.size());
@@ -162,12 +144,15 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
         InspectionRunner runner = new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true,
                                                        isDumbMode(), progress, myIgnoreSuppressed, myProfileWrapper, mySuppressedElements);
 
-        result.resultContexts = runner.inspect(activeToolWrappers,
-                                        ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity(),
-                                        true,
-                                        applyIncrementallyCallback,
-                                        contextFinishedCallback,
-                                        wrapper -> !wrapper.getTool().isSuppressedFor(getFile()));
+
+        result.resultContexts = runner.inspect(toolWrappers,
+                                               ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity(),
+                                               true,
+                                               applyIncrementallyCallback,
+                                               contextFinishedCallback,
+                                               wrapper -> dumbToolWrapperCondition.value(wrapper) &&
+                                                          !wrapper.getTool().isSuppressedFor(getFile())
+        );
         myInfos = fileInfos;
         result.injectedFragments = runner.getInjectedFragments();
       };
@@ -178,9 +163,10 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
         ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), withRecycler);
       }
     }
+
     if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
       Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(result.resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-      impl.removeHighlightsForObsoleteTools(getFile(), getDocument(), result.injectedFragments, pairs, getHighlightingSession(), disabledSmartOnlyToolWrappers);
+      impl.removeHighlightsForObsoleteTools(getFile(), getDocument(), result.injectedFragments, pairs, getHighlightingSession(), dumbToolWrapperCondition.getInactiveToolWrapperIds());
       impl.removeWarningsInsideErrors(result.injectedFragments, getDocument(), getHighlightingSession());  // must be the last
     }
   }
@@ -445,7 +431,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
   private @NotNull List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = profile.getInspectionProfile().getInspectionTools(getFile());
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled() && runDuplicateCheck) {
       // this triggers heavy class loading of all inspections, do not run if DEBUG not enabled
       InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
     }
@@ -505,6 +491,44 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
     @Override
     public boolean isInspectionHighlightInfoType() {
       return true;
+    }
+  }
+
+  @TestOnly
+  static void forceNoDuplicateCheckInTests(@NotNull Disposable parent) {
+    Disposer.register(parent, () -> runDuplicateCheck = true);
+    runDuplicateCheck = false;
+  }
+
+  private static boolean runDuplicateCheck = true;
+
+  private static class DumbToolWrapperCondition implements Condition<LocalInspectionToolWrapper> {
+    private final boolean myDumbMode;
+    private final Set<String> myInactiveIds = ConcurrentHashMap.newKeySet();
+
+    private DumbToolWrapperCondition(boolean isDumbMode) {
+      myDumbMode = isDumbMode;
+    }
+
+    @Override
+    public boolean value(LocalInspectionToolWrapper wrapper) {
+      if (!myDumbMode) return true;
+
+      LocalInspectionTool tool = wrapper.getTool();
+      if (tool.isDumbAware()) {
+        return true;
+      }
+
+      myInactiveIds.add(tool.getShortName());
+      return false;
+    }
+
+    @NotNull Set<String> getInactiveToolWrapperIds() {
+      if (myInactiveIds.isEmpty()) {
+        return Collections.emptySet();
+      }
+
+      return new HashSet<>(myInactiveIds);
     }
   }
 }
