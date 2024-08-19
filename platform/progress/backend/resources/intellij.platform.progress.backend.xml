@@ -3,4 +3,12 @@
     <!--The plugin won't be included in frontend-only builds-->
     <plugin id="com.intellij.platform.experimental.backend"/>
   </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- IJPL-149684 -->
+    <!--suppress PluginXmlRegistrationCheck -->
+    <applicationService serviceInterface="com.intellij.platform.ide.progress.TaskStorage"
+                        serviceImplementation="com.intellij.platform.progress.backend.BackendTaskStorage" />
+  </extensions>
+
 </idea-plugin>
