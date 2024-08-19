@@ -45,7 +45,7 @@ class CwmMessageBusTest : LightPlatformTestCase() {
       eventsLog.add(MESSAGE_1_HANDLER_1)
       Assert.assertEquals(session1.clientId, ClientId.current)
 
-      ClientId.withClientId(session2.clientId) {
+      ClientId.withExplicitClientId(session2.clientId) {
         bus.syncPublisher(topic2).run()
       }
     }
