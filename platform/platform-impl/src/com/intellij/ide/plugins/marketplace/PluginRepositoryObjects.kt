@@ -197,7 +197,10 @@ data class SalesMetadata(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class CustomTrialPeriod(val productCode: String, val trialPeriod: Int)
+data class CustomTrialPeriod(
+  @JsonProperty("productCode") val productCode: String,
+  @JsonProperty("trialPeriod") val trialPeriod: Int
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijPluginMetadata(
