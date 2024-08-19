@@ -4040,6 +4040,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/quotedName.kt");
             }
 
+            @TestMetadata("receiverUsageEliminated.kt")
+            public void testReceiverUsageEliminated() throws Exception {
+                runTest("testData/refactoring/introduceParameter/receiverUsageEliminated.kt");
+            }
+
             @TestMetadata("resultedType.kt")
             public void testResultedType() throws Exception {
                 runTest("testData/refactoring/introduceParameter/resultedType.kt");

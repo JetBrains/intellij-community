@@ -427,6 +427,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/quotedName.kt");
             }
 
+            @TestMetadata("receiverUsageEliminated.kt")
+            public void testReceiverUsageEliminated() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/receiverUsageEliminated.kt");
+            }
+
             @TestMetadata("resultedType.kt")
             public void testResultedType() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/resultedType.kt");
