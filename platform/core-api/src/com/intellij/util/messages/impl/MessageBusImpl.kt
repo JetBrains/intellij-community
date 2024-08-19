@@ -4,6 +4,7 @@
 package com.intellij.util.messages.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.isMessageBusThrowsWhenDisposed
@@ -431,7 +432,7 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
 }
 
 private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Throwable?): Throwable? {
-  ClientId.withClientId(job.clientId).use {
+  ClientId.withExplicitClientId(job.clientId).use {
     jobQueue.current = job
     val handlers = job.handlers
     var error = prevError
