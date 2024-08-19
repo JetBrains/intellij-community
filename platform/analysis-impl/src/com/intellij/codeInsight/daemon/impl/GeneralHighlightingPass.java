@@ -44,7 +44,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware
-  permits ChameleonSyntaxHighlightingPass, NasueousGeneralHighlightingPass {
+  permits NasueousGeneralHighlightingPass {
   static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {

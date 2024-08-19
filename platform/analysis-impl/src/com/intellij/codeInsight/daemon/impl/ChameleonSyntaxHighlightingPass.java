@@ -26,6 +26,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
+final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighlightingPass {
+  @NotNull private final ProperTextRange myPriorityRange;
+  private volatile List<HighlightInfo> myHighlights = List.of();
+
   static final class Factory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
     @Override
     public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
@@ -63,8 +67,13 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
                                           @NotNull ProperTextRange restrictRange,
                                           @NotNull ProperTextRange priorityRange,
                                           @Nullable Editor editor) {
-    super(file, document, restrictRange.getStartOffset(), restrictRange.getEndOffset(), true, priorityRange, editor,
-          true, true, true, HighlightInfoUpdater.getInstance(file.getProject()));
+    super(file.getProject(), document, "chameleon", file, editor, restrictRange, false, HighlightInfoProcessor.getEmpty());
+    myPriorityRange = priorityRange;
+  }
+
+  @Override
+  public @NotNull List<HighlightInfo> getInfos() {
+    return myHighlights;
   }
 
   @Override
@@ -100,8 +109,7 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       outside.add(holderOutside.get(i));
     }
     BackgroundUpdateHighlightersUtil.setHighlightersOutsideRange(outside, myRestrictRange, myPriorityRange, getId(), getHighlightingSession());
-    myHighlights.addAll(inside);
-    myHighlights.addAll(outside);
+    myHighlights = ContainerUtil.concat(inside, outside);
     setProgressLimit(1);
     advanceProgress(1);
   }
