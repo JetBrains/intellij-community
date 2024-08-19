@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook.getIconPosition
+import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook.paintIconImpl
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
@@ -405,16 +407,17 @@ private class MoreRunToolbarActions : TogglePopupAction(
 }
 
 internal fun filterOutRunIfDebugResumeIsPresent(e: AnActionEvent, actions: List<AnAction>): List<AnAction> {
-  val hasPause = actions.find {
-    it.javaClass.simpleName.let {
-      it == "InlineXDebuggerResumeAction" ||
-      it == "ConfigurationXDebuggerResumeAction"
-    } ||
+  val hasPause = actions.any {
+    it.javaClass.simpleName.let { it == "InlineXDebuggerResumeAction" || it == "ConfigurationXDebuggerResumeAction" } ||
     e.actionManager.getId(it)?.contains("XDebuggerResumeAction") == true
-  } != null
-  if (!hasPause) return actions
-  return actions.filter {
-    ((it as? ExecutorAction)?.id ?: e.actionManager.getId(it)) != "Run"
+  }
+  val hasInlineStop = actions.any {
+    it.javaClass.simpleName.let { it == "StopConfigurationInlineAction" }
+  }
+  return when {
+    hasPause -> actions.filter { ((it as? ExecutorAction)?.id ?: e.actionManager.getId(it)) != "Run" }
+    hasInlineStop -> actions.filter { ((it as? ExecutorAction)?.id ?: e.actionManager.getId(it)) != "Debug" }
+    else -> actions
   }
 }
 
