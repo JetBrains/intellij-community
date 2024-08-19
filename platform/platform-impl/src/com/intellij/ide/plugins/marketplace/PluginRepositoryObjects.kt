@@ -196,6 +196,7 @@ data class SalesMetadata(
   val customTrialPeriods: List<CustomTrialPeriod>? = null
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class CustomTrialPeriod(val productCode: String, val trialPeriod: Int)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
