@@ -197,7 +197,7 @@ public abstract class AbstractModelBuilderTest {
     List<String> vmOptions = new ArrayList<>(3);
     vmOptions.add("-Xmx128m");
     vmOptions.add("-Dorg.gradle.warning.mode=fail");
-    vmOptions.add(isJava17UsedToRunGradle() ? "-XX:MaxMetaspaceSize=64m" : "-XX:MaxPermSize=64m");
+    vmOptions.add(isJava17UsedToRunGradle() ? "-XX:MaxMetaspaceSize=256m" : "-XX:MaxPermSize=64m");
     return ArrayUtil.toStringArray(vmOptions);
   }
 
