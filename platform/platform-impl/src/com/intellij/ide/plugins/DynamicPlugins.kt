@@ -753,9 +753,6 @@ object DynamicPlugins {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(module)
 
-    if (module.pluginId.idString == "com.intellij.jsp") {
-      println("Unloading")
-    }
     val openedProjects = ProjectUtil.getOpenProjects().asList()
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
