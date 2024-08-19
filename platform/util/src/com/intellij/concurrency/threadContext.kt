@@ -287,7 +287,11 @@ fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = 
     @OptIn(InternalCoroutinesApi::class)
     val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
     if (!replace && previousContext.snapshot === currentSnapshot && previousContext.context != null) {
-      LOG.error("Thread context was already set: $previousContext. \n Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack.")
+      LOG.error("Thread context was already set: $previousContext. \n " +
+                "Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack." +
+                "Also, if you have any kind of manual event queue draining/pumping/flushing/etc " +
+                "you have to wrap the loop with `resetThreadContext().use { // your queue draining code }`." +
+                "See usages of resetThreadContext().")
     }
     InstalledThreadContext(currentSnapshot, coroutineContext)
   }
