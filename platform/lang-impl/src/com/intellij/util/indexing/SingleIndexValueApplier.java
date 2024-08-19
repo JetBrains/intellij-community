@@ -41,8 +41,8 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
   }
 
   public boolean wasIndexProvidedByExtension() {
-    return storageUpdate instanceof IndexInfrastructureExtensionUpdateComputation &&
-           ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
+    return storageUpdate instanceof IndexInfrastructureExtensionUpdate &&
+           ((IndexInfrastructureExtensionUpdate)storageUpdate).isIndexProvided();
   }
 
   public boolean apply() {

@@ -117,9 +117,7 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
 
   @Override
   public @NotNull StorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
-    return () -> {
-      return true;
-    };
+    return StorageUpdate.NOOP;
   }
 
   @Override

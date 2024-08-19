@@ -64,18 +64,18 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
 
       return () -> {
         try {
-          Boolean result = indexUpdateComputable.update();
-          if (Boolean.TRUE.equals(result) && !StaleIndexesChecker.isStaleIdDeletion()) {
+          boolean updateSuccessful = indexUpdateComputable.update();
+          if (updateSuccessful && !StaleIndexesChecker.isStaleIdDeletion()) {
             ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
             if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
-              LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+              LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
             }
           }
           else {
             // this is valuable information. Log it even without TRACE_STUB_INDEX_UPDATES flag
-            LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+            LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
           }
-          return result;
+          return updateSuccessful;
         }
         catch (Throwable t) {
           // ProcessCanceledException is not expected here

@@ -4267,6 +4267,8 @@ f:com.intellij.util.indexing.StorageException
 - <init>(java.lang.String,java.lang.Throwable):V
 - <init>(java.lang.Throwable):V
 com.intellij.util.indexing.StorageUpdate
+- sf:NOOP:com.intellij.util.indexing.StorageUpdate
+- s:combine(com.intellij.util.indexing.StorageUpdate[]):com.intellij.util.indexing.StorageUpdate
 - a:update():Z
 a:com.intellij.util.indexing.ValueContainer
 - <init>():V

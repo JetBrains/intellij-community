@@ -277,7 +277,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Override
-  public @NotNull IndexUpdateComputable prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
+  public @NotNull MapReduceIndex.IndexStorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
     UpdateData<Key, Value> updateData = new UpdateData<>(
       inputId,
       data.getKeyValues(),
@@ -286,7 +286,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       () -> updateForwardIndex(inputId, data)
     );
 
-    return new IndexUpdateComputable(updateData, data);
+    return new IndexStorageUpdate(updateData, data);
   }
 
   @ApiStatus.Internal
@@ -384,6 +384,11 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       try {
         IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
         boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
+        //TODO RC: separate lock for forwardIndex? -- it seems it is used only in updates (?), i.e. only in one place,
+        //         so if it is out-of-sync with inverted index it is not a big deal since nobody able to see it?
+        //         ...but it is important to not allow same fileId data to be applied by different threads, because
+        //         we need previous forwardIndex.get(fileId) to calculate diff! I.e. for each fileId forwardIndex[fileId]
+        //         updates must be serialized, even though for different fileIds there is no serialization required
         if (hasDifference) updateData.updateForwardIndex();
       }
       catch (ProcessCanceledException e) {
@@ -400,29 +405,31 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Internal
-  public final class IndexUpdateComputable implements StorageUpdate {
-    private final UpdateData<Key, Value> myUpdateData;
-    private final InputData<Key, Value> myInputData;
+  public final class IndexStorageUpdate implements StorageUpdate {
+    private final InputData<Key, Value> inputData;
+    private final UpdateData<Key, Value> updateData;
 
-    private IndexUpdateComputable(@NotNull UpdateData<Key, Value> updateData, @NotNull InputData<Key, Value> inputData) {
-      myUpdateData = updateData;
-      myInputData = inputData;
+    private IndexStorageUpdate(@NotNull UpdateData<Key, Value> updateData,
+                               @NotNull InputData<Key, Value> inputData) {
+      this.updateData = updateData;
+      this.inputData = inputData;
     }
 
     public @NotNull InputData<Key, Value> getInputData() {
-      return myInputData;
+      return inputData;
     }
 
     @Override
     public boolean update() {
       checkNonCancellableSection();
       try {
-        MapReduceIndex.this.updateWithMap(myUpdateData);
+        MapReduceIndex.this.updateWithMap(updateData);
       }
       catch (StorageException | ProcessCanceledException ex) {
         String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
         //noinspection InstanceofCatchParameter
         if (ex instanceof ProcessCanceledException) {
+          //TODO RC: isn't it an error to log a PCE? (see Logger.ensureNotControlFlow)
           LOG.error(message, ex);
         }
         else {
@@ -441,6 +448,11 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
         throw t;
       }
       return true;
+    }
+
+    @Override
+    public String toString() {
+      return "IndexUpdate[" + myIndexId + "][fileId: " + updateData.getInputId() + "]{" + inputData.getKeyValues().size() + " values}";
     }
   }
 }
