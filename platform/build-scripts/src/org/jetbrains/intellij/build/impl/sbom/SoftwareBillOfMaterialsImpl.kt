@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.sha1Hex
@@ -25,7 +26,6 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.build.io.warn
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -164,6 +164,7 @@ internal class SoftwareBillOfMaterialsImpl(
       Span.current().addEvent("$skipReason, skipping")
       return
     }
+
     check(distributionFiles.any()) {
       "No distribution was built"
     }
@@ -177,10 +178,12 @@ internal class SoftwareBillOfMaterialsImpl(
       "No SBOM documents were generated"
     }
     for (doc in documents) {
-      Span.current().addEvent("SBOM document generated", Attributes.of(AttributeKey.stringKey("file"), "$doc"))
-      context.messages.artifactBuilt("$doc")
+      Span.current().addEvent("SBOM document generated", Attributes.of(AttributeKey.stringKey("file"), doc.toString()))
+      context.messages.artifactBuilt(doc.toString())
     }
-    checkNtiaConformance(documents, context)
+    withContext(Dispatchers.IO) {
+      checkNtiaConformance(documents, context)
+    }
   }
 
   private class Checksums(@JvmField val path: Path) {
@@ -964,32 +967,32 @@ internal class SoftwareBillOfMaterialsImpl(
         workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
       )
     }
-    coroutineScope {
-      for (document in documents) {
-        launch {
-          try {
-            context.runProcess(
-              args = listOf(
-                "docker", "run", "--rm",
-                "--volume=${document.parent}:${document.parent}:ro",
-                ntiaChecker, "--file", "${document.toAbsolutePath()}", "--verbose"
-              ),
-              attachStdOutToException = true,
-            )
-          }
-          catch (e: Exception) {
-            val message = """
-                 Generated SBOM $document is not NTIA-conformant. 
-                 Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
-                 You may use https://package-search.jetbrains.com/ to search for them.
-              """.trimIndent()
-            if (STRICT_MODE) {
-              context.messages.error(message, e)
-            }
-            else {
-              context.messages.warn("$message\n${e.stackTraceToString()}")
-            }
-          }
+    documents.forEachConcurrent { document ->
+      try {
+        context.runProcess(
+          args = listOf(
+            "docker", "run", "--rm",
+            "--volume=${document.parent}:${document.parent}:ro",
+            ntiaChecker, "--file", "${document.toAbsolutePath()}", "--verbose"
+          ),
+          attachStdOutToException = true,
+        )
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        val message =
+          """
+           Generated SBOM $document is not NTIA-conformant. 
+           Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
+           You may use https://package-search.jetbrains.com/ to search for them.
+          """.trimIndent()
+        if (STRICT_MODE) {
+          throw IllegalStateException(message, e)
+        }
+        else {
+          Span.current().addEvent("$message\n${e.stackTraceToString()}")
         }
       }
     }

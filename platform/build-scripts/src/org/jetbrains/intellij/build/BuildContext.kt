@@ -7,7 +7,6 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
@@ -15,6 +14,7 @@ import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import kotlin.time.Duration
 
 interface BuildContext : CompilationContext {
@@ -157,9 +157,11 @@ interface BuildContext : CompilationContext {
   )
 }
 
-suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
-                                                stepId: String,
-                                                crossinline step: suspend CoroutineScope.(Span) -> T): T? {
+suspend inline fun <T> BuildContext.executeStep(
+  spanBuilder: SpanBuilder,
+  stepId: String,
+  crossinline step: suspend CoroutineScope.(Span) -> T,
+): T? {
   return spanBuilder.useWithScope(Dispatchers.IO) { span ->
     try {
       options.buildStepListener.onStart(stepId, messages)
@@ -169,10 +171,11 @@ suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
         null
       }
       else {
-        coroutineScope {
-          step(span)
-        }
+        step(span)
       }
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (failure: Throwable) {
       options.buildStepListener.onFailure(stepId, failure, messages)
