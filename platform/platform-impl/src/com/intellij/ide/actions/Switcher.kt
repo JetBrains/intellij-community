@@ -29,7 +29,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.*
-import com.intellij.openapi.fileEditor.impl.getOpenMode
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.LightEditActionFactory
@@ -52,6 +51,7 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBScrollPane.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.popup.PopupUpdateProcessorBase
@@ -78,6 +78,7 @@ import java.awt.event.InputEvent
 import java.awt.event.ItemEvent
 import java.awt.event.ItemListener
 import java.awt.event.MouseEvent
+import java.io.File
 import java.util.*
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
@@ -563,9 +564,15 @@ object Switcher : BaseSwitcherAction(null) {
       )
       ReadAction.nonBlocking<List<ListItemData>> {
         items.map {
+          val result = project.basePath?.let { path ->
+            FileUtil.toSystemDependentName(path)
+            val filePath = FileUtil.toSystemDependentName(it.file.parent.path)
+            FileUtil.getRelativePath(path, filePath, File.separatorChar)
+          } ?: ""
+         
           ListItemData(item = it,
-                       mainText = VfsPresentationUtil.getUniquePresentableNameForUI(it.project, it.file),
-                       statusText = FileUtil.getLocationRelativeToUserHome((it.file.parent ?: it.file).presentableUrl),
+                       mainText = it.mainText,
+                       statusText = result, 
                        backgroundColor = VfsPresentationUtil.getFileBackgroundColor(it.project, it.file),
                        foregroundTextColor = FileStatusManager.getInstance(it.project).getStatus(it.file).color)
         }

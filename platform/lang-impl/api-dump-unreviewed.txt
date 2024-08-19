@@ -17809,7 +17809,6 @@ c:com.intellij.ide.util.NavigationItemListCellRenderer
 - <init>():V
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 f:com.intellij.ide.util.PSIRenderingUtils
-- s:cutContainerText(java.lang.String,I,java.awt.FontMetrics):java.lang.String
 - s:extractPresentablePath(com.intellij.psi.PsiElement):java.lang.String
 - s:getNavigationItemAttributesStatic(java.lang.Object):com.intellij.openapi.editor.markup.TextAttributes
 - s:getPSIElementText(com.intellij.psi.PsiElement):java.lang.String

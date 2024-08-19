@@ -2,12 +2,12 @@
 package com.intellij.ide.actions.searcheverywhere.remote
 
 import com.intellij.ide.actions.SearchEverywherePsiRenderer.SELayout
-import com.intellij.ide.util.PSIRenderingUtils
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.render.RendererPanelsUtils.Companion.iconTextGap
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.text.MatcherHolder
@@ -60,7 +60,7 @@ private class PSIPresentationRenderer : JPanel(SELayout()), ListCellRenderer<PSI
                                - rendererInsets.left - rendererInsets.right
                                - leftComponent.preferredSize.width)
       if (rightComponent != null) containerMaxWidth -= rightComponent.preferredSize.width
-      val containerText: @NlsSafe String? = PSIRenderingUtils.cutContainerText(presentation.containerText, containerMaxWidth, fm)
+      val containerText: @NlsSafe String? = PaintUtil.cutContainerText(presentation.containerText, containerMaxWidth, fm)
       val containerAttributes = if (presentation.containerTextAttributes != null) SimpleTextAttributes.fromTextAttributes(
         presentation.containerTextAttributes)
       else SimpleTextAttributes.GRAYED_ATTRIBUTES

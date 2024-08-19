@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
-import com.intellij.ide.util.PSIRenderingUtils;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.navigation.ItemPresentation;
@@ -20,6 +19,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
@@ -253,7 +253,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
                                     - getPreferredSize().width;
             if (locationLabel != null) containerMaxWidth -= locationLabel.getPreferredSize().width;
 
-            @NlsSafe String containerText = PSIRenderingUtils.cutContainerText(presentation.getContainerText(), containerMaxWidth, fm);
+            @NlsSafe String containerText = PaintUtil.cutContainerText(presentation.getContainerText(), containerMaxWidth, fm);
             SimpleTextAttributes containerAttributes = presentation.getContainerTextAttributes() != null
                                                        ? SimpleTextAttributes.fromTextAttributes(presentation.getContainerTextAttributes())
                                                        : SimpleTextAttributes.GRAYED_ATTRIBUTES;
