@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel
+import org.jetbrains.jewel.samples.standalone.viewmodel.forCurrentOs
 import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
@@ -32,9 +33,8 @@ fun DecoratedWindowScope.TitleBarView() {
                 MainViewModel.views.forEach {
                     selectableItem(
                         selected = MainViewModel.currentView == it,
-                        onClick = {
-                            MainViewModel.currentView = it
-                        },
+                        onClick = { MainViewModel.currentView = it },
+                        keybinding = it.keyboardShortcut?.forCurrentOs(),
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),

@@ -38,16 +38,19 @@ private val mainMenuItems =
         ViewInfo(
             title = "Welcome",
             iconKey = StandaloneSampleIcons.welcome,
+            keyboardShortcut = KeyBinding(macOs = setOf("⌥", "W"), windows = setOf("Alt", "W")),
             content = { WelcomeView() },
         ),
         ViewInfo(
             title = "Components",
             iconKey = StandaloneSampleIcons.componentsMenu,
+            keyboardShortcut = KeyBinding(macOs = setOf("⌥", "C"), windows = setOf("Alt", "C")),
             content = { ComponentsView() },
         ),
         ViewInfo(
             title = "Markdown",
             iconKey = StandaloneSampleIcons.markdown,
+            keyboardShortcut = KeyBinding(macOs = setOf("⌥", "M"), windows = setOf("Alt", "M"), linux = setOf("Alt", "M")),
             content = { MarkdownDemo() },
         ),
     )

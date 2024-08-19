@@ -190,4 +190,4 @@ fun Dropdowns() {
 }
 
 private val dropdownIconsSample = listOf(AllIconsKeys.Actions.Find, AllIconsKeys.Actions.Close, null)
-private val dropdownKeybindingsSample = setOf('A', 'B', '↑', '→', '␡')
+private val dropdownKeybindingsSample = setOf("A", "B", "↑", "→", "␡")
