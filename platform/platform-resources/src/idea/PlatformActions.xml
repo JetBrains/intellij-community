@@ -333,7 +333,11 @@
       <action id="Diff.ShowDiff" class="com.intellij.diff.actions.ShowDiffAction"
               icon="AllIcons.Actions.Diff"/> <!-- CommonShortcuts.getDiff() -->
       <action id="Diff.ShowStandaloneDiff" class="com.intellij.diff.actions.ShowStandaloneDiffAction" icon="AllIcons.Actions.Diff"/>
-      <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff"/>
+      <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff">
+        <synonym key="action.CompareTwoFiles.synonym1"/>
+        <synonym key="action.CompareTwoFiles.synonym2"/>
+        <synonym key="action.CompareTwoFiles.synonym3"/>
+      </action>
       <action id="CompareFileWithEditor" class="com.intellij.diff.actions.CompareFileWithEditorAction"/>
       <action id="CompareClipboardWithSelection" class="com.intellij.diff.actions.CompareClipboardWithSelectionAction"
               icon="AllIcons.Actions.DiffWithClipboard"/>
