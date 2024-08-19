@@ -20,20 +20,25 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
+import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.util.coroutines.flow.throttle
+import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
+import fleet.kernel.rete.collect
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
+import java.io.Closeable
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
@@ -53,6 +58,9 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   val progressStarted: SharedFlow<ProgressStartedEvent> = _progressStarted.asSharedFlow()
 
+  private val isRhizomeProgressEnabled
+    get() = Registry.`is`("rhizome.progress")
+
   private suspend fun progressStarted(title: @ProgressTitle String, cancellation: TaskCancellation, updates: Flow<ProgressState>) {
     val context = coroutineContext
     _progressStarted.emit(ProgressStartedEvent(title, cancellation, context, updates.finishWhenJobCompletes(context.job)))
@@ -68,6 +76,66 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   }
 
   override suspend fun <T> withBackgroundProgressInternal(
+    project: Project,
+    title: @ProgressTitle String,
+    cancellation: TaskCancellation,
+    action: suspend CoroutineScope.() -> T
+  ): T = coroutineScope {
+    if (!isRhizomeProgressEnabled) {
+      return@coroutineScope withBackgroundProgressInternalOld(project, title, cancellation, action)
+    }
+
+    val context = currentCoroutineContext()
+    val taskStorage = TaskStorage.getInstance()
+
+    val pipe = cs.createProgressPipe()
+    val taskInfoEntity = taskStorage.addTask(title, cancellation)
+
+    try {
+      cs.subscribeToTask(taskInfoEntity, context, pipe).use {
+        pipe.collectProgressUpdates(action)
+      }
+    }
+    finally {
+      cs.launch {
+        taskStorage.removeTask(taskInfoEntity)
+      }
+    }
+  }
+
+  private fun CoroutineScope.subscribeToTask(taskInfo: TaskInfoEntity, taskContext: CoroutineContext, pipe: ProgressPipe): Closeable {
+    val jobs = listOf(
+      subscribeToTaskStatus(taskInfo, taskContext),
+      subscribeToTaskUpdates(taskInfo, pipe)
+    )
+
+    return Closeable { jobs.forEach { it.cancel()} }
+  }
+
+  private fun CoroutineScope.subscribeToTaskStatus(taskInfo: TaskInfoEntity, context: CoroutineContext): Job {
+    return launch {
+      withContext(KernelService.kernelCoroutineContext()) {
+        taskInfo.statuses.collect { status ->
+          when (status) {
+            TaskStatus.RUNNING -> { /* TODO RDCT-1620 */ }
+            TaskStatus.PAUSED -> { /* TODO RDCT-1620 */ }
+            TaskStatus.CANCELED -> context.cancel()
+          }
+        }
+      }
+    }
+  }
+
+  private fun CoroutineScope.subscribeToTaskUpdates(taskInfo: TaskInfoEntity, pipe: ProgressPipe): Job {
+    val taskStorage = TaskStorage.getInstance()
+    return launch {
+      pipe.progressUpdates().collect {
+        taskStorage.updateTask(taskInfo, it)
+      }
+    }
+  }
+
+  private suspend fun <T> withBackgroundProgressInternalOld(
     project: Project,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
