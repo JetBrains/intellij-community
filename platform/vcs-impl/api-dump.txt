@@ -4794,6 +4794,7 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 - f:initLazyContent(com.intellij.ui.content.Content):V
 - sf:isCommitToolWindowShown(com.intellij.openapi.project.Project):Z
 - f:isContentSelected(java.lang.String):Z
+- sf:isToolWindowTabVertical(com.intellij.openapi.project.Project,java.lang.String):Z
 - removeContent(com.intellij.ui.content.Content):V
 - selectContent(java.lang.String):V
 - f:selectContent(java.lang.String,Z):V
@@ -4805,6 +4806,7 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$Companion
 - f:getToolWindowFor(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.wm.ToolWindow
 - f:getToolWindowIdFor(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
 - f:isCommitToolWindowShown(com.intellij.openapi.project.Project):Z
+- f:isToolWindowTabVertical(com.intellij.openapi.project.Project,java.lang.String):Z
 e:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
 - java.lang.Enum
 - sf:BRANCHES:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
@@ -4821,6 +4823,8 @@ e:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
 - f:getWeight():I
 - s:valueOf(java.lang.String):com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
 - s:values():com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight[]
+f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt
+- sf:subscribeOnVcsToolWindowLayoutChanges(com.intellij.util.messages.MessageBusConnection,java.lang.Runnable):V
 com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
