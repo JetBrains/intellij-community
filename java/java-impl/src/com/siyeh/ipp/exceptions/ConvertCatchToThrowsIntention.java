@@ -69,7 +69,7 @@ public final class ConvertCatchToThrowsIntention extends PsiBasedModCommandActio
                                  PsiFile containingFile = catchSection.getContainingFile();
                                  PsiFile copyCatchSectionContainingFile = copyCatchSection.getContainingFile();
                                  for (PsiMethod superMethod : superMethods) {
-                                   if (!superMethod.isWritable() || !superMethod.isPhysical()) continue;
+                                   if (!superMethod.isPhysical() || superMethod instanceof PsiCompiledElement) continue;
                                    if (superMethod.getContainingFile() == containingFile) {
                                      superMethodsToModify.add(
                                        PsiTreeUtil.findSameElementInCopy(superMethod, copyCatchSectionContainingFile));
