@@ -6,6 +6,7 @@ import com.intellij.platform.ijent.IjentInfo
 import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.IjentWindowsInfo
+import com.intellij.platform.ijent.fs.IjentFileSystemApi.StatError
 import java.nio.ByteBuffer
 
 // TODO Integrate case-(in)sensitiveness into the interface.
@@ -318,6 +319,14 @@ sealed interface IjentOpenedFile {
   enum class SeekWhence {
     START, CURRENT, END,
   }
+
+  /**
+   * Similar to `fstat(2)`.
+   *
+   * Sometimes, the files are inaccessible via [IjentFileSystemApi.stat] -- for example, if they are deleted.
+   * In this case, one can get the information about the opened file with the use of this function.
+   */
+  suspend fun stat(): IjentFsResult<IjentFileInfo, StatError>
 
 
   interface Reader : IjentOpenedFile {
