@@ -4130,6 +4130,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/superFunctionWithDeleteUnusedParameter.kt");
             }
 
+            @TestMetadata("thisSubstitution.kt")
+            public void testThisSubstitution() throws Exception {
+                runTest("testData/refactoring/introduceParameter/thisSubstitution.kt");
+            }
+
             @TestMetadata("throw.kt")
             public void testThrow() throws Exception {
                 runTest("testData/refactoring/introduceParameter/throw.kt");

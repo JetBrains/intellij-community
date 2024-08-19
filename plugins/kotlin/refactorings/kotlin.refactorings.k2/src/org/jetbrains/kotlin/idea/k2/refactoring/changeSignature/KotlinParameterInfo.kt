@@ -239,7 +239,8 @@ class KotlinParameterInfo(
                     ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingDeclaration }
                     ?.let { return Int.MAX_VALUE }
 
-                if (expression.parent is KtThisExpression && declarationSymbol.receiverParameter == null) {
+                val parent = expression.parent
+                if (parent is KtThisExpression && parent.getLabelName() == null && declarationSymbol.receiverParameter == null) {
                     return Int.MAX_VALUE
                 }
             }

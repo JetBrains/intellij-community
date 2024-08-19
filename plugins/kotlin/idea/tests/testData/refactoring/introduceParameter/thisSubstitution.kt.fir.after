@@ -1,0 +1,15 @@
+// WITH_DEFAULT_VALUE: false
+class A {
+    inner class B {
+        fun m(a: A) {
+            a
+        }
+    }
+
+    fun mmm(b: B) {
+        b.m(this@A)
+    }
+}
+fun mm(a: A) {
+    a.B().m(this@A) //bug
+}
