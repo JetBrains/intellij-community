@@ -7,9 +7,6 @@ import java.awt.Color
 interface UiCustomizer {
   fun getTextOutputBackground(editor: Editor): Color
 
-  val isResizeOutputToPreviewHeight: Boolean
-    get() = true
-
   companion object {
     val EP_NAME: ExtensionPointName<UiCustomizer> = ExtensionPointName("org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation.uiCustomizer")
 
