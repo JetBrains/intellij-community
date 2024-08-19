@@ -512,6 +512,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/superCallArgument.kt");
             }
 
+            @TestMetadata("superFunctionWithDeleteUnusedParameter.kt")
+            public void testSuperFunctionWithDeleteUnusedParameter() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/superFunctionWithDeleteUnusedParameter.kt");
+            }
+
             @TestMetadata("throw.kt")
             public void testThrow() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/throw.kt");
