@@ -142,7 +142,22 @@ public val LocalConsoleTextStyle: ProvidableCompositionLocal<TextStyle> =
         error("No ConsoleTextStyle provided. Have you forgotten the theme?")
     }
 
-/** Overrides the dark mode for the current composition scope. */
+/**
+ * Overrides the [isDark] value for the [content]. It is used to inject a
+ * different dark mode style in a sub-tree.
+ *
+ * Note: this does _not_ change the theme. If you want to change the theme,
+ * you need to do it by yourself. For example, in standalone:
+ * ```kotlin
+ * IntUiTheme(isDark = false) {
+ *   Text("I am light")
+ *
+ *   IntUiTheme(isDark = true) {
+ *     Text("I am dark")
+ *   }
+ * }
+ * ```
+ */
 @Composable
 public fun OverrideDarkMode(
     isDark: Boolean,
