@@ -128,7 +128,7 @@ public final class FUCounterUsageLogger {
   public CompletableFuture<Void> logRegisteredGroups() {
     List<CompletableFuture<Void>> futures = new ArrayList<>();
     for (EventLogGroup group : myGroups.values()) {
-      futures.add(FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
+      futures.add(FeatureUsageLogger.getInstance().log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
     }
     Map<String, StatisticsEventLogger> recorderLoggers = new HashMap<>();
     for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
@@ -177,7 +177,7 @@ public final class FUCounterUsageLogger {
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data.addProject(project).build());
+      FeatureUsageLogger.getInstance().log(group, eventId, data.addProject(project).build());
     }
   }
 
@@ -201,7 +201,7 @@ public final class FUCounterUsageLogger {
                        @NonNls @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId);
+      FeatureUsageLogger.getInstance().log(group, eventId);
     }
   }
 
@@ -226,7 +226,7 @@ public final class FUCounterUsageLogger {
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data.build());
+      FeatureUsageLogger.getInstance().log(group, eventId, data.build());
     }
   }
 

@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.logState
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker
 import com.intellij.internal.statistic.updater.allowExecution
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -142,8 +142,9 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
      * state events recorded by a scheduler [ApplicationUsagesCollector] or [ProjectUsagesCollector]
      */
     fun logStateEvent(group: EventLogGroup, event: String, data: FeatureUsageData) {
-      logState(group, event, data.build())
-      logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED)
+      val usageLogger = FeatureUsageLogger.getInstance()
+      usageLogger.logState(group, event, data.build())
+      usageLogger.logState(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED)
     }
   }
 
