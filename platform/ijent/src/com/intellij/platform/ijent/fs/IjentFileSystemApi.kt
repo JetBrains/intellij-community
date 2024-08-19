@@ -2,18 +2,15 @@
 package com.intellij.platform.ijent.fs
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.ijent.*
-import kotlinx.coroutines.CoroutineScope
+import com.intellij.platform.ijent.IjentInfo
+import com.intellij.platform.ijent.IjentPosixInfo
+import com.intellij.platform.ijent.IjentUnavailableException
+import com.intellij.platform.ijent.IjentWindowsInfo
 import java.nio.ByteBuffer
 
 // TODO Integrate case-(in)sensitiveness into the interface.
 
 sealed interface IjentFileSystemApi {
-  /**
-   * The same [CoroutineScope] as in the corresponding [com.intellij.platform.ijent.IjentApi].
-   */
-  @Deprecated("API should avoid exposing coroutine scopes")
-  val coroutineScope: CoroutineScope
 
   /**
    * The same as the user from [com.intellij.platform.ijent.IjentApi.info].

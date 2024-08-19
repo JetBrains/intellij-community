@@ -34,7 +34,7 @@ suspend fun IjentFailSafeFileSystemPosixApi(
 ): IjentFileSystemApi {
   val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, delegateFactory)
   val user = holder.withDelegateRetrying { user }
-  return IjentFailSafeFileSystemPosixApiImpl(coroutineScope, user, holder)
+  return IjentFailSafeFileSystemPosixApiImpl(user, holder)
 }
 
 private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
@@ -91,7 +91,6 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
  * so implementing a similar class for Windows will require a full copy-paste of this class.
  */
 private class IjentFailSafeFileSystemPosixApiImpl(
-  override val coroutineScope: CoroutineScope,
   override val user: IjentPosixInfo.User,
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
 ) : IjentFileSystemPosixApi {
