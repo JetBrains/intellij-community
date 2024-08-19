@@ -109,7 +109,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     try {
-      LOG.info("Waiting for connection on port " + myServerSocket.getLocalPort());
+      LOG.debug("Waiting for connection on port " + myServerSocket.getLocalPort());
       mySocket = myServerSocket.accept();
       final ExecutionException[] ex = new ExecutionException[1];
       NonBlockingReadAction<Void> readAction = ReadAction.nonBlocking(() -> performWithIncompleteIndex(this::search, ex));
