@@ -136,7 +136,7 @@ private fun ButtonImpl(
                     alignment = style.focusOutlineAlignment,
                     expand = style.metrics.focusOutlineExpand,
                 )
-                .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape),
+                .border(Stroke.Alignment.Inside, style.metrics.borderWidth, borderColor, shape),
         propagateMinConstraints = true,
     ) {
         val contentColor by colors.contentFor(buttonState)
