@@ -500,6 +500,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/InvokeToPlus.kt");
     }
 
+    @TestMetadata("JavaInheritor.kt")
+    public void testJavaInheritor() throws Exception {
+        runTest("testData/refactoring/rename/inplace/JavaInheritor.kt");
+    }
+
     @TestMetadata("LabelFromFunction.kt")
     public void testLabelFromFunction() throws Exception {
         runTest("testData/refactoring/rename/inplace/LabelFromFunction.kt");

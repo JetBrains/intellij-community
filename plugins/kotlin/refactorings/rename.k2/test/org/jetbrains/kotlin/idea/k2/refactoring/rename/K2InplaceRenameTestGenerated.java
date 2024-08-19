@@ -500,6 +500,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/InvokeToPlus.kt");
     }
 
+    @TestMetadata("JavaInheritor.kt")
+    public void testJavaInheritor() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/JavaInheritor.kt");
+    }
+
     @TestMetadata("LabelFromFunction.kt")
     public void testLabelFromFunction() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/LabelFromFunction.kt");
