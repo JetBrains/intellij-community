@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
@@ -11,6 +11,7 @@ public abstract class AbstractUpdateData<Key, Value> {
 
   protected AbstractUpdateData(int id) {myInputId = id;}
 
+  //TODO RC: iterateDifferences() is more clear name?..
   protected abstract boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
                                          @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
                                          @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException;

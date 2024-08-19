@@ -63,10 +63,10 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   }
 
   protected VfsAwareMapReduceIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                   @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
-                                   @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexMap,
+                                   @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storageFactory,
+                                   @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexFactory,
                                    @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
-    super(extension, storage, forwardIndexMap, forwardIndexAccessor);
+    super(extension, storageFactory, forwardIndexFactory, forwardIndexAccessor);
 
     if (FileBasedIndex.isCompositeIndexer(myIndexer)) {
       try {

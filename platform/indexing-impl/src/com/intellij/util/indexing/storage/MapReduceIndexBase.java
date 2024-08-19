@@ -33,10 +33,10 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   private final boolean mySingleEntryIndex;
 
   protected MapReduceIndexBase(@NotNull IndexExtension<Key, Value, FileContent> extension,
-                               @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
-                               @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndex,
+                               @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storageFactory,
+                               @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexFactory,
                                @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
-    super(extension, storage, forwardIndex, forwardIndexAccessor);
+    super(extension, storageFactory, forwardIndexFactory, forwardIndexAccessor);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }

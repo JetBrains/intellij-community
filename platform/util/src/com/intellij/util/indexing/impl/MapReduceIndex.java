@@ -41,7 +41,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   private final IndexExtension<Key, Value, Input> myExtension;
   private final @Nullable ForwardIndex myForwardIndex;
   private final ForwardIndexAccessor<Key, Value> myForwardIndexAccessor;
-  private final ReadWriteLock myLock;
+  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
   private final boolean myUseIntForwardIndex;
   private volatile boolean myDisposed;
   private final LowMemoryWatcher myLowMemoryFlusher;
@@ -62,15 +62,15 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
-                           @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
-                           @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndex,
+                           @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storageFactory,
+                           @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexFactory,
                            @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
-    myStorage = storage.compute();
+    myStorage = storageFactory.compute();
     try {
-      myForwardIndex = forwardIndex == null ? null : forwardIndex.compute();
+      myForwardIndex = forwardIndexFactory == null ? null : forwardIndexFactory.compute();
     }
     catch (IOException e) {
       tryDispose();
@@ -80,7 +80,6 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     myUseIntForwardIndex = myForwardIndex instanceof IntForwardIndex && myForwardIndexAccessor instanceof IntForwardIndexAccessor;
     LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
                    "Invalid index configuration for " + myIndexId);
-    myLock = new ReentrantReadWriteLock();
     myValueSerializationChecker = new ValueSerializationChecker<>(extension, getSerializationProblemReporter());
     myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
   }
@@ -379,7 +378,11 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
         IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
-        boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
+        boolean hasDifference = updateData.iterateKeys(
+          myAddedKeyProcessor,
+          myUpdatedKeyProcessor,
+          myRemovedKeyProcessor
+        );
         //TODO RC: separate lock for forwardIndex? -- it seems it is used only in updates (?), i.e. only in one place,
         //         so if it is out-of-sync with inverted index it is not a big deal since nobody able to see it?
         //         ...but it is important to not allow same fileId data to be applied by different threads, because

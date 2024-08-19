@@ -12,6 +12,7 @@ import java.io.Flushable;
 import java.io.IOException;
 
 /**
+ * Storage of inverted index data
  * @author Eugene Zhuravlev
  */
 public interface IndexStorage<Key, Value> extends Flushable, Closeable {
