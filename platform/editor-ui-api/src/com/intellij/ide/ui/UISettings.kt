@@ -761,6 +761,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   override fun noStateLoaded() {
     migrateFontParameters()
+    migrateSearchEverywherePreview()
   }
 
   override fun loadState(state: UISettingsState) {
@@ -772,6 +773,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       notRoamableOptions.fixFontSettings()
     }
     migrateFontParameters()
+    migrateSearchEverywherePreview()
 
     // check tab placement in the editor
     val editorTabPlacement = state.editorTabPlacement
@@ -814,10 +816,13 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       Registry.get("ide.allow.merge.buttons").setValue(false)
       state.allowMergeButtons = true
     }
+  }
 
-    // migrate old state of Search Everywhere preview
+  private fun migrateSearchEverywherePreview() {
     if (PropertiesComponent.getInstance().isTrueValue(SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY)) {
       state.showPreviewInSearchEverywhere = true
+      state._incrementModificationCount()
+      PropertiesComponent.getInstance().unsetValue(SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY)
     }
   }
 
@@ -867,5 +872,4 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   //</editor-fold>
 }
 
-@Internal
-const val SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY = "SearchEverywhere.previewPropertyKey"
+private const val SEARCH_EVERYWHERE_PREVIEW_LEGACY_STATE_KEY = "SearchEverywhere.previewPropertyKey"

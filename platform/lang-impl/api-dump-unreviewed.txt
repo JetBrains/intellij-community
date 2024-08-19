@@ -14522,10 +14522,8 @@ f:com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTrig
 - sf:ML_EXPERIMENT_VERSION:com.intellij.internal.statistic.eventLog.events.IntEventField
 - sf:MORE_ITEM_SELECTED:com.intellij.internal.statistic.eventLog.events.EventId
 - sf:MORE_ITEM_SHOWN:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:PREVIEW_CLOSED:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:PREVIEW_CLOSED_STATE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:PREVIEW_STATE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:PREVIEW_SWITCHED:com.intellij.internal.statistic.eventLog.events.VarargEventId
+- sf:PREVIEW_CLOSED:com.intellij.internal.statistic.eventLog.events.EventId1
+- sf:PREVIEW_SWITCHED:com.intellij.internal.statistic.eventLog.events.EventId1
 - sf:SELECTED_ITEM_NUMBER:com.intellij.internal.statistic.eventLog.events.IntEventField
 - sf:SESSION_FINISHED:com.intellij.internal.statistic.eventLog.events.VarargEventId
 - sf:TAB_SWITCHED:com.intellij.internal.statistic.eventLog.events.VarargEventId
