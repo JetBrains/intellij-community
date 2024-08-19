@@ -2,17 +2,18 @@
 package org.jetbrains.ide
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.util.Url
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import io.netty.bootstrap.Bootstrap
 import org.jetbrains.annotations.ApiStatus
-
 import java.net.URLConnection
 
 abstract class BuiltInServerManager {
   companion object {
     @JvmStatic
-    fun getInstance(): BuiltInServerManager = ApplicationManager.getApplication().getService(BuiltInServerManager::class.java)
+    @RequiresBlockingContext
+    fun getInstance(): BuiltInServerManager = service()
   }
 
   abstract val port: Int
