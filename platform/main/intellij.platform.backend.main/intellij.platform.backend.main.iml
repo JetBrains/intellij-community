@@ -8,5 +8,6 @@
     <orderEntry type="module" module-name="intellij.platform.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.kernel.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.navbar.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.progress.backend" scope="RUNTIME" />
   </component>
 </module>

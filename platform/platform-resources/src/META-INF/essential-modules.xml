@@ -9,6 +9,8 @@
 
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.progress.backend"/>
+
     <!-- todo navbar is not essential-->
     <module name="intellij.platform.navbar"/>
     <module name="intellij.platform.navbar.backend"/>
