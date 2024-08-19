@@ -121,7 +121,7 @@ internal class LcrListPanel : UISandboxPanel {
   }
 }
 
-private fun <T> Row.jbList(items: List<T>, renderer: ListCellRenderer<T>): Cell<JBScrollPane> {
+internal fun <T> Row.jbList(items: List<T>, renderer: ListCellRenderer<T>): Cell<JBScrollPane> {
   val list = JBList(items)
   list.setCellRenderer(renderer)
   val scroll = JBScrollPane(list)
