@@ -12,6 +12,4 @@ class DefaultUiCustomizer : UiCustomizer {
   override fun buildInlayProgressStatusComponent(progressStatus: InlayProgressStatus, editor: Editor): JComponent? {
     return JupyterProgressStatus.buildProgressStatusComponent(progressStatus, editor)
   }
-
-  override val showUpdateCellSeparator: Boolean = true
 }

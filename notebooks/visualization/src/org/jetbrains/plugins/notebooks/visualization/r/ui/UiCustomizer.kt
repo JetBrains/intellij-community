@@ -14,8 +14,6 @@ interface UiCustomizer {
   val isResizeOutputToPreviewHeight: Boolean
     get() = true
 
-  val showUpdateCellSeparator: Boolean
-
   companion object {
     val EP_NAME: ExtensionPointName<UiCustomizer> = ExtensionPointName("org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation.uiCustomizer")
 
