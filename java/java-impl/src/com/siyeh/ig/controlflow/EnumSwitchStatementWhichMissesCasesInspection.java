@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public final class EnumSwitchStatementWhichMissesCasesInspection extends Abstrac
         if (expression == null) return;
         final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
         if (aClass == null || !aClass.isEnum()) return;
-        Set<String> constants = StreamEx.of(aClass.getAllFields()).select(PsiEnumConstant.class).map(PsiEnumConstant::getName)
+        Set<String> constants = StreamEx.of(aClass.getFields()).select(PsiEnumConstant.class).map(PsiEnumConstant::getName)
           .toCollection(LinkedHashSet::new);
         if (constants.isEmpty()) return;
         boolean hasDefault = false;
