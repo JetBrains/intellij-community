@@ -192,8 +192,11 @@ data class ReviewCommentPlugin(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SalesMetadata(
-  val trialPeriod: Int? = null
+  val trialPeriod: Int? = null,
+  val customTrialPeriods: List<CustomTrialPeriod>? = null
 )
+
+data class CustomTrialPeriod(val productCode: String, val trialPeriod: Int)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijPluginMetadata(
@@ -220,7 +223,10 @@ data class IntellijPluginMetadata(
     pluginNode.documentationUrl = documentationUrl
     pluginNode.sourceCodeUrl = sourceCodeUrl
     pluginNode.reportPluginUrl = reportPluginUrl
-    pluginNode.trialPeriod = salesInfo?.trialPeriod
+    pluginNode.defaultTrialPeriod = salesInfo?.trialPeriod
+    pluginNode.setCustomTrialPeriodMap(salesInfo?.customTrialPeriods?.associate {
+      p -> p.productCode to p.trialPeriod
+    })
   }
 }
 

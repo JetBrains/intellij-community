@@ -25,6 +25,7 @@ import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginWrite
 import com.intellij.ide.plugins.newui.PluginsViewCustomizer.PluginDetailsCustomizer
 import com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction.OptionButtonController
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -1253,7 +1254,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       var requiresCommercialIde = false
 
       if (descriptor is PluginNode) {
-        val trialPeriod = descriptor.trialPeriod
+        val ideProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+
+        val trialPeriod = descriptor.getTrialPeriodByProductCode(ideProductCode)
         val isFreemium = descriptor.tags.contains(Tags.Freemium.name)
         requiresCommercialIde = descriptor.suggestedCommercialIde != null
 

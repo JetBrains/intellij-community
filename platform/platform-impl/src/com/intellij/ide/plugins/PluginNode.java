@@ -27,7 +27,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private @NotNull PluginId id;
   private String name;
   private boolean isPaid = false;
-  private Integer trialPeriod = null;
+  private Integer defaultTrialPeriod = null;
+  private Map<String, Integer> customTrialPeriods = null;
   private String productCode;
   private Date releaseDate;
   private int releaseVersion;
@@ -120,12 +121,25 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.isPaid = isPaid;
   }
 
-  public @Nullable Integer getTrialPeriod() {
-    return trialPeriod;
+  public @Nullable Integer getDefaultTrialPeriod() {
+    return defaultTrialPeriod;
   }
 
-  public void setTrialPeriod(@Nullable Integer trialPeriod) {
-    this.trialPeriod = trialPeriod;
+  public void setDefaultTrialPeriod(@Nullable Integer trialPeriod) {
+    this.defaultTrialPeriod = trialPeriod;
+  }
+
+  /*
+    Allows customising trial period duration per product for a plugin on Marketplace.
+    For the details, see: https://youtrack.jetbrains.com/issue/LLM-3752
+  */
+  public @Nullable Integer getTrialPeriodByProductCode(@Nullable String ideProductCode) {
+    if (ideProductCode == null || customTrialPeriods == null) return defaultTrialPeriod;
+    return customTrialPeriods.getOrDefault(ideProductCode, defaultTrialPeriod);
+  }
+
+  public void setCustomTrialPeriodMap(@Nullable Map<String, Integer> customTrialPeriodMap) {
+    this.customTrialPeriods = customTrialPeriodMap;
   }
 
   @Override
