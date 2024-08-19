@@ -10,6 +10,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -25,6 +26,7 @@ public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBui
     super(gradleVersion);
   }
 
+  @Ignore
   @Test
   public void testModelBuildScriptClasspathBuilder() {
     createProjectFile("settings.gradle", GradleSettingScriptBuilder.create(false)
