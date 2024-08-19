@@ -43,7 +43,7 @@ import kotlin.io.path.readLines
 private const val NO_TESTS_ERROR = 42
 
 internal class TestingTasksImpl(context: CompilationContext, private val options: TestingOptions) : TestingTasks {
-  private val context: CompilationContext = if (options.useArchivedCompiledClasses) ArchivedCompilationContext(context) else context
+  private val context: CompilationContext = if (options.useArchivedCompiledClasses) context.asArchived else context
 
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
     return try {

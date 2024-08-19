@@ -102,5 +102,15 @@ class ArchivedCompilationContext(
 val CompilationContext.asArchivedIfNeeded: CompilationContext
   get() {
     if (this is ArchivedCompilationContext) return this
-    return if (TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank()) ArchivedCompilationContext(this) else this
+    return if (TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank()) {
+      this.asArchived
+    }
+    else this
+  }
+
+val CompilationContext.asArchived: CompilationContext
+  get() {
+    if (this is ArchivedCompilationContext) return this
+    if (this is BuildContextImpl) return this.compilationContext.asArchived
+    return ArchivedCompilationContext(this)
   }

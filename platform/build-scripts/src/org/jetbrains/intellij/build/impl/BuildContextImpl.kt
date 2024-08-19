@@ -32,7 +32,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration
 
 class BuildContextImpl internal constructor(
-  private val compilationContext: CompilationContext,
+  internal val compilationContext: CompilationContext,
   override val productProperties: ProductProperties,
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
