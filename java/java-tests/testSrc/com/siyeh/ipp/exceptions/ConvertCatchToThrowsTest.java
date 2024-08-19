@@ -22,6 +22,9 @@ public class ConvertCatchToThrowsTest extends IPPTestCase {
   public void testInLoop() { doTest(); }
   public void testInLoopSingleLine() { doTest(); }
   public void testInLoopSingleLineDeclaration() { doTest(); }
+  public void testWithSuperMethods() {
+    doTest();
+  }
 
   @Override
   protected String getIntentionName() {
