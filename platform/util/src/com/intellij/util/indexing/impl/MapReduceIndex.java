@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -425,21 +426,9 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       try {
         MapReduceIndex.this.updateWithMap(updateData);
       }
-      catch (StorageException | ProcessCanceledException ex) {
-        String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
-        //noinspection InstanceofCatchParameter
-        if (ex instanceof ProcessCanceledException) {
-          //TODO RC: isn't it an error to log a PCE? (see Logger.ensureNotControlFlow)
-          LOG.error(message, ex);
-        }
-        else {
-          if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
-            LOG.error(message, ex);
-          }
-          else {
-            LOG.info(message, ex);
-          }
-        }
+      catch (StorageException | CancellationException ex) {
+        logStorageUpdateException(ex);
+
         MapReduceIndex.this.requestRebuild(ex);
         return false;
       }
@@ -448,6 +437,22 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
         throw t;
       }
       return true;
+    }
+
+    private void logStorageUpdateException(@NotNull Exception ex) {
+      String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
+      if (ex instanceof CancellationException) {
+        //It an error to log a (P)CE (see Logger.ensureNotControlFlow)
+        LOG.error(message + " (CancellationException: " + ex + ")");
+      }
+      else {
+        if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+          LOG.error(message, ex);
+        }
+        else {
+          LOG.info(message, ex);
+        }
+      }
     }
 
     @Override
