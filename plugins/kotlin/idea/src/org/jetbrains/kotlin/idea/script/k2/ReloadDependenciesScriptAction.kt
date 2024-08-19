@@ -16,14 +16,12 @@ import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
+import org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptReloadActionAvailability
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
-import java.util.concurrent.ConcurrentHashMap
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 
-internal class ReloadDependenciesMainKtsScriptAction : AnAction() {
-
-    private val lastModifiedPerScript = ConcurrentHashMap<VirtualFile, Long>()
-
+internal class ReloadDependenciesScriptAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
@@ -33,14 +31,13 @@ internal class ReloadDependenciesMainKtsScriptAction : AnAction() {
             project,
             KotlinBaseScriptingBundle.message("progress.title.loading.script.dependencies")
         ) {
-            MainKtsScriptDependenciesSource.getInstance(project)?.updateDependenciesAndCreateModules(
+            CustomScriptDependenciesSource.getInstance(project)?.updateDependenciesAndCreateModules(
                 listOf(BaseScriptModel(file))
             )
 
             ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
             HighlightingSettingsPerFile.getInstance(project).incModificationCount()
 
-            lastModifiedPerScript[file] = file.modificationStamp
             EditorNotifications.getInstance(project).updateNotifications(file)
         }
     }
@@ -57,13 +54,11 @@ internal class ReloadDependenciesMainKtsScriptAction : AnAction() {
         if (DiffUtil.isDiffEditor(editor)) return false
 
         val project = editor.project ?: return false
-
-        if (ScriptDefinitionProvider.getServiceIfCreated(project) == null) return false
         val file = getKotlinScriptFile(editor) ?: return false
 
-        val oldValue = lastModifiedPerScript[file]
+        ScriptDefinitionProvider.getInstance(project)?.findDefinition(VirtualFileScriptSource(file)) ?: return false
 
-        return oldValue == null || oldValue < file.modificationStamp
+        return KotlinScriptReloadActionAvailability.showReloadAction(project, file)
     }
 }
 
@@ -73,5 +68,4 @@ private fun getKotlinScriptFile(editor: Editor): VirtualFile? = FileDocumentMana
         it !is LightVirtualFileBase
                 && it.isValid
                 && it.isKotlinFileType()
-                && isMainKtsScript(it)
     }

@@ -1,6 +1,12 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptReloadActionAvailability"
+            interface="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptReloadActionAvailability"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"
             interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource"
             area="IDEA_PROJECT"
@@ -71,6 +77,7 @@
                          parentId="preferences.language.Kotlin"/>
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptNotificationProvider"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.k2.ScriptingSupportChecker"/>
 
     <registryKey defaultValue="false"
                  key="kotlin.k2.scripting.show.modules"
@@ -114,7 +121,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <newFileHook implementation="org.jetbrains.kotlin.idea.script.k2.NewMainKtsFileHook"/>
+    <newFileHook implementation="org.jetbrains.kotlin.idea.script.k2.NewCustomScriptHook"/>
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
 
     <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>
@@ -123,14 +130,16 @@
             implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDefinitionSource"/>
-    <scriptDependenciesSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDependenciesSource"/>
+    <scriptDependenciesSource implementation="org.jetbrains.kotlin.idea.script.k2.CustomScriptDependenciesSource"/>
+
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.ScriptTemplatesFromDependenciesDefinitionSource"/>
   </extensions>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
-      <action id="LoadMainKtsConfiguration"
-              class="org.jetbrains.kotlin.idea.script.k2.ReloadDependenciesMainKtsScriptAction"
-              icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
-        <add-to-group group-id="EditorContextBarMenu"/>
-      </action>
+    <action id="LoadMainKtsConfiguration"
+            class="org.jetbrains.kotlin.idea.script.k2.ReloadDependenciesScriptAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
+      <add-to-group group-id="EditorContextBarMenu"/>
+    </action>
   </actions>
 </idea-plugin>

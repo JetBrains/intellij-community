@@ -23,7 +23,7 @@ import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
-class MainKtsScriptDependenciesSource(override val project: Project) : ScriptDependenciesSource<BaseScriptModel>(project) {
+class CustomScriptDependenciesSource(override val project: Project) : ScriptDependenciesSource<BaseScriptModel>(project) {
     override fun resolveDependencies(scripts: Iterable<BaseScriptModel>): ScriptDependenciesData {
         val sdk = ProjectRootManager.getInstance(project).projectSdk
 
@@ -61,9 +61,9 @@ class MainKtsScriptDependenciesSource(override val project: Project) : ScriptDep
     }
 
     companion object {
-        fun getInstance(project: Project): MainKtsScriptDependenciesSource? =
+        fun getInstance(project: Project): CustomScriptDependenciesSource? =
             SCRIPT_DEPENDENCIES_SOURCES.getExtensions(project)
-                .filterIsInstance<MainKtsScriptDependenciesSource>().firstOrNull()
-                .safeAs<MainKtsScriptDependenciesSource>()
+                .filterIsInstance<CustomScriptDependenciesSource>().firstOrNull()
+                .safeAs<CustomScriptDependenciesSource>()
     }
 }

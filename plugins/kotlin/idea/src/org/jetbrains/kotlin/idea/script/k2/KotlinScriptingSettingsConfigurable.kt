@@ -1,14 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.script.k2
 
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.setEmptyState
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.ui.EditorNotifications
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.TableView
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
+import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDefinitionPersistentSettings
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDefinitionSetting
@@ -23,6 +28,7 @@ class KotlinScriptingSettingsConfigurable(val project: Project) : SearchableConf
     }
 
     private var model = calculateModel()
+    private val definitionsFromClassPathTitle: AtomicProperty<String> = AtomicProperty("")
 
     private fun calculateModel(): KotlinScriptDefinitionsModel {
         val settingsByDefinitionId = ScriptDefinitionPersistentSettings.getInstance(project)
@@ -31,7 +37,7 @@ class KotlinScriptingSettingsConfigurable(val project: Project) : SearchableConf
         val definitions = K2ScriptDefinitionProvider.getInstance(project).getAllDefinitions()
             .sortedBy { settingsByDefinitionId[it.definitionId]?.index }
             .map {
-                ModelDescriptor(
+                DefinitionModelDescriptor(
                     it,
                     settingsByDefinitionId[it.definitionId]?.setting?.enabled != false
                 )
@@ -46,6 +52,31 @@ class KotlinScriptingSettingsConfigurable(val project: Project) : SearchableConf
             cell(getDefinitionsTable())
                 .align(Align.FILL)
             rowComment(message("text.first.definition.that.matches.script.pattern.extension.applied.starting.from.top"))
+        }
+
+        row {
+            button(KotlinBaseScriptingBundle.message("button.scan.classpath")) {
+                val definitionsFromClassPath = runWithModalProgressBlocking(
+                    project,
+                    KotlinBaseScriptingBundle.message("looking.for.script.definitions.in.classpath")
+                ) {
+                    ScriptTemplatesFromDependenciesDefinitionSource.getInstance(project)?.scanAndLoadDefinitions()
+                } ?: emptyList()
+
+                if (definitionsFromClassPath.isEmpty()) {
+                    definitionsFromClassPathTitle.set(KotlinBaseScriptingBundle.message("label.kotlin.script.no.definitions.found"))
+                } else {
+                    definitionsFromClassPathTitle.set(
+                        KotlinBaseScriptingBundle.message(
+                            "label.kotlin.script.definitions.found",
+                            definitionsFromClassPath.size
+                        )
+                    )
+                }
+                enabled(false)
+                EditorNotifications.getInstance(project).updateAllNotifications()
+            }
+            label("").bindText(definitionsFromClassPathTitle)
         }
 
         for (provider in ScriptingSupportSpecificSettingsProvider.SETTINGS_PROVIDERS.getExtensionList(project)) {
