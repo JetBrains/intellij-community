@@ -25,6 +25,7 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.io.warn
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -977,13 +978,17 @@ internal class SoftwareBillOfMaterialsImpl(
             )
           }
           catch (e: Exception) {
-            context.messages.error(
-              """
-               Generated SBOM $document is not NTIA-conformant. 
-               Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
-               You may use https://package-search.jetbrains.com/ to search for them.
-            """.trimIndent(), e
-            )
+            val message = """
+                 Generated SBOM $document is not NTIA-conformant. 
+                 Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
+                 You may use https://package-search.jetbrains.com/ to search for them.
+              """.trimIndent()
+            if (STRICT_MODE) {
+              context.messages.error(message, e)
+            }
+            else {
+              context.messages.warn("$message\n${e.stackTraceToString()}")
+            }
           }
         }
       }
