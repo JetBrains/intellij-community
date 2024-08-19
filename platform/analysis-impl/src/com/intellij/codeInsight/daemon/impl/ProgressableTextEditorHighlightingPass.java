@@ -9,6 +9,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -79,6 +80,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   @Override
   public final void doCollectInformation(@NotNull ProgressIndicator progress) {
     GlobalInspectionContextBase.assertUnderDaemonProgress();
+    ProgressManager.checkCanceled();
     myFinished = false;
     try {
       collectInformationWithProgress(progress);

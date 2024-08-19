@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -235,6 +236,7 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     boolean forceHighlightParents,
                                     @NotNull ResultSink resultSink) {
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
+    ProgressManager.checkCanceled();
     Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
                                                             myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
