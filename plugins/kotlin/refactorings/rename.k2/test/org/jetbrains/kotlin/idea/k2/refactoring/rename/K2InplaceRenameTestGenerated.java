@@ -155,6 +155,21 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterVsTypeAlias.kt");
     }
 
+    @TestMetadata("DisableInplaceRenameOnThis.kt")
+    public void testDisableInplaceRenameOnThis() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/DisableInplaceRenameOnThis.kt");
+    }
+
+    @TestMetadata("DisableInplaceRenameOnThisExtension.kt")
+    public void testDisableInplaceRenameOnThisExtension() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/DisableInplaceRenameOnThisExtension.kt");
+    }
+
+    @TestMetadata("DisableInplaceRenameOnThisWithLabel.kt")
+    public void testDisableInplaceRenameOnThisWithLabel() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/DisableInplaceRenameOnThisWithLabel.kt");
+    }
+
     @TestMetadata("EnumEntries.kt")
     public void testEnumEntries() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/EnumEntries.kt");
