@@ -2,11 +2,13 @@
 package com.intellij.pycharm.community.ide.impl.newProject;
 
 import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.pycharm.community.ide.impl.newProject.steps.PyCharmNewProjectStep;
+import org.jetbrains.annotations.NotNull;
 
 public class PyCharmNewProjectDialog extends AbstractNewProjectDialog {
   @Override
-  protected PyCharmNewProjectStep createRootStep() {
+  protected @NotNull AbstractNewProjectStep<?> createNewProjectStep() {
     return new PyCharmNewProjectStep();
   }
 

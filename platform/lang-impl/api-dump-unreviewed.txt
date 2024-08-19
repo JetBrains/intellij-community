@@ -18436,14 +18436,15 @@ a:com.intellij.ide.util.gotoByName.SimpleChooseByNameModel
 a:com.intellij.ide.util.projectWizard.AbstractNewProjectDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>():V
-- p:createActions():javax.swing.Action[]
-- p:createCenterPanel():javax.swing.JComponent
-- pa:createRootStep():com.intellij.openapi.actionSystem.DefaultActionGroup
+- pf:createActions():javax.swing.Action[]
+- pf:createCenterPanel():javax.swing.JComponent
+- p:createNewProjectStep():com.intellij.ide.util.projectWizard.AbstractNewProjectStep
+- p:createRootStep():com.intellij.openapi.actionSystem.DefaultActionGroup
 - p:createSouthPanel():javax.swing.JComponent
 - p:getHelpId():java.lang.String
 - getPreferredFocusedComponent():javax.swing.JComponent
 - p:getStyle():com.intellij.openapi.ui.DialogWrapper$DialogStyle
-- p:init():V
+- pf:init():V
 a:com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.project.DumbAware
