@@ -97,12 +97,12 @@ abstract class InlayOutput(
 
   open fun toolbarPaneChanged(component: JComponent?) {}
 
-  /** marker interface for [SaveOutputAction] */
+  /** marker interface for [org.jetbrains.r.visualization.inlays.components.SaveOutputAction] */
   interface WithSaveAs {
     fun saveAs()
   }
 
-  /** marker interface for [CopyImageToClipboardAction] */
+  /** marker interface for [org.jetbrains.r.visualization.inlays.components.CopyImageToClipboardAction] */
   interface WithCopyImageToClipboard {
     fun copyImageToClipboard()
   }
