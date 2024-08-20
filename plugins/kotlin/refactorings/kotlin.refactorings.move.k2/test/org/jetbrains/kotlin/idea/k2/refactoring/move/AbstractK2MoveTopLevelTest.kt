@@ -43,8 +43,8 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
                 project,
                 classesToMove.toTypedArray(),
                 MultipleRootsMoveDestination(PackageWrapper(mainFile.manager, targetPackage)),
-                config.updateTextOccurrences(),
-                config.updateTextOccurrences(),
+                /* searchInComments = */ false,
+                /* searchInNonJavaFiles = */ true,
                 /* moveCallback = */ null
             ).run()
         } else {
@@ -70,8 +70,9 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
                     baseDir,
                     fileName,
                     pkgName,
-                    config.updateTextOccurrences(),
-                    config.updateUsages(),
+                    config.searchForText(),
+                    config.searchInComments(),
+                    config.searchReferences(),
                     config.moveExpectedActuals(),
                     dirStructureMatchesPkg = true
                 )

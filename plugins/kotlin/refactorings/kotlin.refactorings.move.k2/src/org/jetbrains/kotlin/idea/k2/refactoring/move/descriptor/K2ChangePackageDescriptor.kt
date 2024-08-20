@@ -9,5 +9,6 @@ class K2ChangePackageDescriptor(
     val project: Project,
     val files: Set<KtFile>,
     val target: FqName,
-    val updateTextOccurrences: Boolean
+    val searchForText: Boolean,
+    val searchInComments: Boolean
 )

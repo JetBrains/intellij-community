@@ -30,8 +30,8 @@ internal object K2MoveTopLevelToInnerRefactoringAction : KotlinMoveRefactoringAc
                 project,
                 classesToMove.toTypedArray(),
                 JavaPsiFacade.getInstance(project).findClass(targetClass, project.allScope())!!,
-                config.updateTextOccurrences(),
-                config.updateTextOccurrences(),
+                /* searchInComments = */ false,
+                /* searchInNonJavaFiles = */ true,
                 /* moveCallback = */ null
             ).run()
         }

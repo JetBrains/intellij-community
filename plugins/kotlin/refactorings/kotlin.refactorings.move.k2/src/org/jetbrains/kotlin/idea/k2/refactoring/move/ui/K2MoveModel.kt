@@ -40,11 +40,13 @@ sealed class K2MoveModel {
 
     abstract val target: K2MoveTargetModel
 
-    val updateTextOccurrences: Setting = Setting.UPDATE_TEXT_OCCURRENCES
+    val searchForText: Setting = Setting.SEARCH_FOR_TEXT
+
+    val searchInComments: Setting = Setting.SEARCH_IN_COMMENTS
 
     abstract val inSourceRoot: Boolean
 
-    val updateUsages: Setting = Setting.UPDATE_USAGES
+    val searchReferences: Setting = Setting.SEARCH_REFERENCES
 
     val mppDeclarations: Setting = Setting.MPP_DECLARATIONS
 
@@ -62,23 +64,34 @@ sealed class K2MoveModel {
     }
 
     enum class Setting(private val text: @NlsContexts.Checkbox String) {
-        UPDATE_TEXT_OCCURRENCES(KotlinBundle.message("update.text.occurrences")) {
+        SEARCH_FOR_TEXT(KotlinBundle.message("search.for.text.occurrences")) {
             override var state: Boolean
                 get() {
-                    return KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES
+                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
                 }
                 set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES = value
+                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT = value
                 }
         },
 
-        UPDATE_USAGES(KotlinBundle.message("checkbox.text.update.usages")) {
+        SEARCH_IN_COMMENTS(KotlinBundle.message("search.in.comments.and.strings"),) {
             override var state: Boolean
                 get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_UPDATE_USAGES
+                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS
                 }
                 set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_UPDATE_USAGES = value
+                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS = value
+                }
+        },
+
+
+        SEARCH_REFERENCES(KotlinBundle.message("checkbox.text.search.references")) {
+            override var state: Boolean
+                get() {
+                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
+                }
+                set(value) {
+                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES = value
                 }
         },
 
@@ -133,7 +146,7 @@ sealed class K2MoveModel {
         override fun toDescriptor(): K2MoveOperationDescriptor.Files {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
-            val updateUsages = if (inSourceRoot) updateUsages.state else false
+            val searchReferences = if (inSourceRoot) searchReferences.state else false
             val moveDescriptor = K2MoveDescriptor.Files(
                 project,
                 srcDescr,
@@ -142,8 +155,9 @@ sealed class K2MoveModel {
             val operationDescriptor = K2MoveOperationDescriptor.Files(
                 project,
                 listOf(moveDescriptor),
-                updateTextOccurrences.state,
-                updateUsages,
+                searchForText.state,
+                searchReferences,
+                searchInComments.state,
                 dirStructureMatchesPkg = true,
                 moveCallBack
             )
@@ -181,8 +195,9 @@ sealed class K2MoveModel {
                 target.directory,
                 target.fileName,
                 target.pkgName,
-                updateTextOccurrences.state,
-                if (inSourceRoot) updateUsages.state else false,
+                searchForText.state,
+                if (inSourceRoot) searchReferences.state else false,
+                searchInComments.state,
                 true,
                 mppDeclarations.state,
                 moveCallBack
@@ -234,7 +249,7 @@ sealed class K2MoveModel {
                 return this == file.declarations.singleOrNull()
             }
 
-            if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements.toList(), true)) return null;
+            if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements.toList(), true)) return null
 
             if (elementsToMove.any { it.parentOfType<KtNamedDeclaration>(withSelf = false) != null }) {
                 val message = RefactoringBundle.getCannotRefactorMessage(

@@ -29,10 +29,10 @@ class K2MoveDeclarationsRefactoringProcessor(
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor = operationDescriptor.usageViewDescriptor()
 
     override fun findUsages(): Array<UsageInfo> {
-        if (!operationDescriptor.updateUsages) return emptyArray()
+        if (!operationDescriptor.searchReferences) return emptyArray()
         return operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
             moveDescriptor.source.elements.flatMap { elem ->
-                elem.findUsages(operationDescriptor.updateTextOccurrences, moveDescriptor.target.pkgName)
+                elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target.pkgName)
             }
         }.toTypedArray()
     }

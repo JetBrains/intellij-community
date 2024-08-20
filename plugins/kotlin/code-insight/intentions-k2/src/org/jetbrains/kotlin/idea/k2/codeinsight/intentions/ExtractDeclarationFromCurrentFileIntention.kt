@@ -96,8 +96,9 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
         K2MoveOperationDescriptor.Declarations(
             project,
             listOf(moveDescriptor),
-            updateTextOccurrences = false,
-            updateUsages = true,
+            searchForText = false,
+            searchInComments = false,
+            searchReferences = true,
             dirStructureMatchesPkg = false,
             moveCallBack
         ).refactoringProcessor().run()

@@ -52,8 +52,8 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
                 project,
                 files.toTypedArray(),
                 newParent,
-                config.updateTextOccurrences(),
-                config.updateTextOccurrences(),
+                config.searchForText(),
+                config.searchForText(),
                 /* moveCallback = */ null,
                 /* prepareSuccessfulCallback = */ null
             ).run()
@@ -81,8 +81,9 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
                 project,
                 listOf(moveDescriptor),
                 shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
-                config.updateUsages(),
-                dirStructureMatchesPkg = true
+                config.searchReferences(),
+                dirStructureMatchesPkg = true,
+                searchReferences = config.searchReferences(),
             )
             K2MoveFilesOrDirectoriesRefactoringProcessor(moveOperationDescriptor).run()
         }

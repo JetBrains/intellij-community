@@ -23,9 +23,9 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOperationDe
     descriptor.project,
     descriptor.sourceElements.toTypedArray(),
     runWriteAction { descriptor.moveDescriptors.first().target.getOrCreateTarget(descriptor.dirStructureMatchesPkg) as PsiDirectory }, // TODO how to do multi target move?
-    descriptor.updateUsages,
-    descriptor.updateUsages,
-    descriptor.updateTextOccurrences,
+    descriptor.searchReferences,
+    descriptor.searchInComments,
+    descriptor.searchForText,
     descriptor.moveCallBack,
     Runnable { }
 )
@@ -60,7 +60,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
         return if (needsUpdate(psiFile)) {
             markRequiresUpdate(psiFile)
             val newPkgName = newParent.getFqNameWithImplicitPrefix() ?: return emptyList()
-            psiFile.findUsages(searchInNonJavaFiles, newPkgName)
+            psiFile.findUsages(searchInComments, searchInNonJavaFiles, newPkgName)
         } else emptyList() // don't need to update usages when package doesn't change
     }
 
