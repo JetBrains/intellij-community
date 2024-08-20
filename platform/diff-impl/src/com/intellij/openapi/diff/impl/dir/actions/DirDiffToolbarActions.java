@@ -76,4 +76,8 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myActions;
   }
+
+  public AnAction @NotNull [] getActions() {
+    return myActions;
+  }
 }

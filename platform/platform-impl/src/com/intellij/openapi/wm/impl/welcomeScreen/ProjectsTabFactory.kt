@@ -213,12 +213,14 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
   }
 
   private fun createActionsToolbar(): ActionToolbar {
+    val actionManager = ActionManager.getInstance()
     val mainAndMore = WelcomeScreenActionsUtil.splitAndWrapActions(
-      (ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE) as ActionGroup),
+      (actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE) as ActionGroup),
       { action: AnAction? -> ActionGroupPanelWrapper.wrapGroups(action!!, parentDisposable) },
       ProjectsTabFactory.PRIMARY_BUTTONS_NUM)
     val toolbarActionGroup = DefaultActionGroup(
-      mainAndMore.getFirst().getChildren(null).map { action: AnAction -> createButtonWrapper(action) })
+      mainAndMore.getFirst().getChildren(actionManager)
+        .map { action: AnAction -> createButtonWrapper(action) })
     val moreActionGroup: ActionGroup = mainAndMore.getSecond()
     val moreActionPresentation = moreActionGroup.templatePresentation
     moreActionPresentation.icon = AllIcons.Actions.More

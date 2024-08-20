@@ -382,8 +382,8 @@ public class DirDiffPanel implements Disposable {
     myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, extend);
   }
 
-  public AnAction[] getActions() {
-    return new DirDiffToolbarActions(myModel).getChildren(null);
+  public AnAction @NotNull [] getActions() {
+    return new DirDiffToolbarActions(myModel).getActions();
   }
 
   public JComponent extractFilterPanel() {
@@ -408,7 +408,7 @@ public class DirDiffPanel implements Disposable {
   }
 
   private static void registerCustomShortcuts(DirDiffToolbarActions actions, JComponent component) {
-    for (AnAction action : actions.getChildren(null)) {
+    for (AnAction action : actions.getActions()) {
       if (action instanceof ShortcutProvider) {
         final ShortcutSet shortcut = ((ShortcutProvider)action).getShortcut();
         if (shortcut != null) {

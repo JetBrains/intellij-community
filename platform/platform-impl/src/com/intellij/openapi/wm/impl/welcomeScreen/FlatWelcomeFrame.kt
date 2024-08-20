@@ -465,7 +465,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       panel.isOpaque = false
       frame.extendActionsGroup(mainPanel)
       mainPanel.add(panel)
-      for (item in group.getChildren(null)) {
+      for (item in group.getChildren(ActionManager.getInstance())) {
         var action = item
         val e = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this))
         action.update(e)

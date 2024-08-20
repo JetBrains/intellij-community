@@ -521,7 +521,8 @@ public final class DiffUtil {
       group.addSeparator();
     }
 
-    AnAction[] children = group.getChildren(ActionManager.getInstance());
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction[] children = group.getChildren(actionManager);
     for (AnAction action : actions) {
       if (action instanceof Separator ||
           !ArrayUtil.contains(action, children)) {
