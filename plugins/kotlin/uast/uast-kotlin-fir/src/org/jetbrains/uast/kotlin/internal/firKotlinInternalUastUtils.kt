@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
@@ -162,8 +163,18 @@ private fun toPsiMethodForDeserialized(
 ): PsiMethod? {
 
     fun equalSignatures(psiMethod: PsiMethod): Boolean {
-        val methodParameters: Array<PsiParameter> = psiMethod.parameterList.parameters
-        val symbolParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
+        var methodParameters: List<PsiParameter> = psiMethod.parameterList.parameters.toList()
+        val isSuspend = (functionSymbol as? KaNamedFunctionSymbol)?.isSuspend == true
+        if (isSuspend) {
+            // Drop the Continuation added by the compiler
+            methodParameters = methodParameters.dropLast(1)
+        }
+        val symbolParameters: List<KaParameterSymbol> =
+            if (functionSymbol.isExtension) {
+                listOfNotNull(functionSymbol.receiverParameter) + functionSymbol.valueParameters
+            } else {
+                functionSymbol.valueParameters
+            }
         if (methodParameters.size != symbolParameters.size) {
             return false
         }
@@ -183,15 +194,26 @@ private fun toPsiMethodForDeserialized(
             if (methodParameters[i].type != symbolParameterType) return false
         }
         val psiMethodReturnType = psiMethod.returnType ?: PsiTypes.voidType()
-        val symbolReturnType = toPsiType(
-            functionSymbol.returnType,
-            psiMethod,
-            context,
-            PsiTypeConversionConfiguration(
-                TypeOwnerKind.DECLARATION,
-                typeMappingMode = KaTypeMappingMode.RETURN_TYPE,
-            )
-        )
+        val symbolReturnType =
+            // The return type of compiled `suspend` function is [Object].
+            if (isSuspend) {
+                val psiFacade = JavaPsiFacade.getInstance(psiMethod.project)
+                val psiObjectClass =
+                    psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(psiFacade.project))
+                if (psiObjectClass != null) {
+                    PsiTypesUtil.getClassType(psiObjectClass)
+                } else PsiTypes.voidType()
+            } else {
+                toPsiType(
+                    functionSymbol.returnType,
+                    psiMethod,
+                    context,
+                    PsiTypeConversionConfiguration(
+                        TypeOwnerKind.DECLARATION,
+                        typeMappingMode = KaTypeMappingMode.RETURN_TYPE,
+                    )
+                )
+            }
 
         return psiMethodReturnType == symbolReturnType
     }

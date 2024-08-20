@@ -1030,6 +1030,50 @@ interface UastResolveApiFixtureTestBase {
         }
     }
 
+    fun checkParameterForArgument_extensionReceiver_suspend(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "test/pkg/HttpClient.kt", """
+                interface HttpClient
+
+                interface HttpRequestBuilder
+
+                interface DefaultClientWebSocketSession
+
+                public suspend fun HttpClient.webSocket(
+                    request: HttpRequestBuilder.() -> Unit,
+                    block: suspend DefaultClientWebSocketSession.() -> Unit
+                ) {}
+
+                public suspend fun HttpClient.webSocket(
+                    urlString: String,
+                    request: HttpRequestBuilder.() -> Unit = {},
+                    block: suspend DefaultClientWebSocketSession.() -> Unit
+                ) {}
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.pkg.*
+
+                suspend fun bar(client: HttpClient) {
+                    client.web<caret>Socket("http://localhost/abc") {}
+                }
+            """.trimIndent()
+        )
+
+        try {
+            val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+                .orFail("cant convert to UCallExpression")
+            val arg = uCallExpression.getArgumentForParameter(1)
+                .orFail("cant get the first argument (except for the extension receiver)")
+            val psiParam = uCallExpression.getParameterForArgument(arg)
+            TestCase.assertNotNull(psiParam)
+            TestCase.assertEquals("urlString", psiParam!!.name)
+        } finally {
+          mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
     fun checkSyntheticEnumMethods(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """

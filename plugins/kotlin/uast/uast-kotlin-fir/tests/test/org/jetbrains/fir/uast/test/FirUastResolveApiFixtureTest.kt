@@ -190,6 +190,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkArgumentMappingSAM_methodReference(myFixture)
     }
 
+    fun testParameterForArgument_extensionReceiver_suspend() {
+        checkParameterForArgument_extensionReceiver_suspend(myFixture)
+    }
+
     fun testSyntheticEnumMethods() {
         checkSyntheticEnumMethods(myFixture)
     }
