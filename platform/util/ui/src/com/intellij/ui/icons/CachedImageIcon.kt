@@ -319,9 +319,9 @@ open class CachedImageIcon private constructor(
   }
 
   val url: URL?
-    get() {
+    get() = synchronized(iconCache) {
       checkPathTransform()
-      return this.loader?.url
+      this.loader?.url
     }
 
   internal fun loadImage(scaleContext: ScaleContext, attributes: IconAttributes): Image? {
