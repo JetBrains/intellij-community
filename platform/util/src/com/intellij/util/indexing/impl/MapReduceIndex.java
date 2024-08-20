@@ -392,8 +392,8 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
           updateData.updateForwardIndex();
         }
       }
-      catch (ProcessCanceledException e) {
-        LOG.error("ProcessCanceledException is not expected here!", e);
+      catch (CancellationException e) {
+        LOG.error("CancellationException is not expected here! (" + e + ")");
         throw e;
       }
       catch (Throwable e) { // e.g. IOException, AssertionError

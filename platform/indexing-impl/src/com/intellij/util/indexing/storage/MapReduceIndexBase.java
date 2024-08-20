@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -12,7 +11,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.MapReduceIndex;
@@ -95,17 +93,6 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   @Override
   public void checkCanceled() {
     ProgressManager.checkCanceled();
-  }
-
-  @Override
-  public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
-    try {
-      super.updateWithMap(updateData);
-    }
-    catch (ProcessCanceledException e) {
-      getLogger().error("ProcessCanceledException is not expected here!", e);
-      throw e;
-    }
   }
 
   @Override
