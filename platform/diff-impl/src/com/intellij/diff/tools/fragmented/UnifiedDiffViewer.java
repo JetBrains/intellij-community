@@ -1650,10 +1650,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       Document sideDocument = UnifiedDiffViewer.this.getDocument(mySide);
       LineNumberConvertor lineConvertor = blockData.getLineNumberConvertor(mySide);
       int sideLine1 = lineConvertor.convertApproximate(Math.max(0, line1 - 1));
-      int sideLine2 = lineConvertor.convertApproximate(Math.min(DiffUtil.getLineCount(sideDocument), line2 + 1));
+      int sideLine2 = lineConvertor.convertApproximate(Math.min(DiffUtil.getLineCount(oneSideDocument), line2 + 1));
 
+      if (sideLine1 < 0 || sideLine2 < 0 || sideLine1 > sideLine2) {
+        return ProperTextRange.create(0, 0);
+      }
       TextRange sideRange = DiffUtil.getLinesRange(sideDocument, sideLine1, sideLine2, false);
-      return new ProperTextRange(sideRange.getStartOffset(), sideRange.getEndOffset());
+      return ProperTextRange.create(sideRange.getStartOffset(), sideRange.getEndOffset());
     }
 
     @Override
