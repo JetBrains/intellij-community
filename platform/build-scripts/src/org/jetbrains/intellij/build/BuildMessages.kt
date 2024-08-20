@@ -32,6 +32,9 @@ interface BuildMessages: System.Logger {
   @Obsolete
   fun block(blockName: String, task: Callable<Unit>)
 
+  /**
+   * Use [CompilationContext.notifyArtifactBuilt] instead since it respects [BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP]
+   */
   fun artifactBuilt(relativeArtifactPath: String)
 
   fun reportStatisticValue(key: String, value: String)

@@ -178,7 +178,7 @@ internal class SoftwareBillOfMaterialsImpl(
     }
     for (doc in documents) {
       Span.current().addEvent("SBOM document generated", Attributes.of(AttributeKey.stringKey("file"), doc.toString()))
-      context.messages.artifactBuilt(doc.toString())
+      context.notifyArtifactBuilt(doc)
     }
     withContext(Dispatchers.IO) {
       checkNtiaConformance(documents, context)
