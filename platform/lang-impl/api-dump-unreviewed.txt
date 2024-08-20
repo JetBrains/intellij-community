@@ -18479,7 +18479,7 @@ c:com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback
 - consume(com.intellij.ide.util.projectWizard.ProjectSettingsStepBase,com.intellij.platform.ProjectGeneratorPeer):V
 pa:com.intellij.ide.util.projectWizard.AbstractNewProjectStep$Customization
 - p:<init>():V
-- pa:createCallback():com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback
+- p:createCallback():com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback
 - pa:createEmptyProjectGenerator():com.intellij.platform.DirectoryProjectGenerator
 - p:createProjectSpecificAction(com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback):com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction
 - pa:createProjectSpecificSettingsStep(com.intellij.platform.DirectoryProjectGenerator,com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback):com.intellij.ide.util.projectWizard.ProjectSettingsStepBase

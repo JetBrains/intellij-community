@@ -112,7 +112,9 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
     }
 
-    protected abstract @NotNull AbstractCallback<T> createCallback();
+    protected @NotNull AbstractCallback<T> createCallback() {
+      return new AbstractCallback<>();
+    }
 
     protected abstract @NotNull DirectoryProjectGenerator<T> createEmptyProjectGenerator();
 
