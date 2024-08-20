@@ -102,9 +102,9 @@ public abstract class StubIndexEx extends StubIndex {
               }
             }
 
-            for (K oldKey : newKeys) {
-              if (!oldKeys.contains(oldKey)) {
-                addProcessor.process(oldKey, null, fileId);
+            for (K newKey : newKeys) {
+              if (!oldKeys.contains(newKey)) {
+                addProcessor.process(newKey, null, fileId);
                 if (!modified) modified = true;
               }
             }

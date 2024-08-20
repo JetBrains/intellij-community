@@ -407,6 +407,8 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   @Internal
   public final class IndexStorageUpdate implements StorageUpdate {
+    //RC: inputData is excessive here: it is used just to access inputMap, but that same map is also available inside UpdateData,
+    //    just there is no accessor to it
     private final InputData<Key, Value> inputData;
     private final UpdateData<Key, Value> updateData;
 
