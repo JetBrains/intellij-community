@@ -606,8 +606,10 @@ class IdeEventQueue private constructor() : EventQueue() {
     idleTracker()
     synchronized(lock) {
       lastActiveTime = System.nanoTime()
-      for (activityListener in activityListeners) {
-        activityListener.run()
+      resetThreadContext().use {
+        for (activityListener in activityListeners) {
+          activityListener.run()
+        }
       }
     }
   }
