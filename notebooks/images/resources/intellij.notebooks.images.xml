@@ -5,13 +5,4 @@
     <module name="intellij.notebooks.visualization"/>
   </dependencies>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.notebooks.images.imageEditorFactory"
-                    interface="com.intellij.notebooks.images.ImageEditorFactory"
-                    dynamic="true"/>
-  </extensionPoints>
-
-  <extensions defaultExtensionNs="com.intellij.notebooks.images">
-    <imageEditorFactory implementation="com.intellij.notebooks.images.DefaultImageEditorFactory"/>
-  </extensions>
 </idea-plugin>
