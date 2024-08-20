@@ -29,11 +29,6 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBa
   }
 
   @Override
-  public boolean isPrimaryGenerator() {
-    return true;
-  }
-
-  @Override
   public abstract @DetailedDescription String getDescription();
 
   /**

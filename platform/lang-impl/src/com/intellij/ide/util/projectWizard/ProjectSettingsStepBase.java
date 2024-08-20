@@ -300,7 +300,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   protected @Nullable JPanel createAdvancedSettings() {
     final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
-    jPanel.add(getPeer().getComponent(myLocationField, () -> checkValid()));
+    jPanel.add(getPeer().getComponent());
     return jPanel;
   }
 
@@ -342,11 +342,11 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   @Override
   public void dispose() { }
 
-  void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
+  final void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
     myProjectStep = projectStep;
   }
 
-  @Nullable WizardContext getWizardContext() {
+  final @Nullable WizardContext getWizardContext() {
     return myProjectStep != null ? myProjectStep.getWizardContext() : null;
   }
 }

@@ -18,7 +18,6 @@ import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -74,11 +73,6 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   @Override
   public @NotNull GithubProjectGeneratorPeer createPeer() {
     return new GithubProjectGeneratorPeer(this);
-  }
-
-  @Override
-  public boolean isPrimaryGenerator() {
-    return PlatformUtils.isWebStorm();
   }
 
   private void unpackToDir(@Nullable Project project,

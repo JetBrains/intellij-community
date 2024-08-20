@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public interface ProjectGeneratorPeer<T> {
-  default @NotNull JComponent getComponent(final @NotNull TextFieldWithBrowseButton myLocationField, final @NotNull Runnable checkValid) {
-    return getComponent();
-  }
 
   /**
    * Returns new project settings component

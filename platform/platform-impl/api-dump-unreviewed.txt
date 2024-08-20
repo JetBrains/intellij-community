@@ -19639,7 +19639,6 @@ com.intellij.platform.ProjectGeneratorPeer
 - addSettingsStateListener(com.intellij.platform.WebProjectGenerator$SettingsStateListener):V
 - a:buildUI(com.intellij.ide.util.projectWizard.SettingsStep):V
 - a:getComponent():javax.swing.JComponent
-- getComponent(com.intellij.openapi.ui.TextFieldWithBrowseButton,java.lang.Runnable):javax.swing.JComponent
 - a:getSettings():java.lang.Object
 - a:isBackgroundJobRunning():Z
 - a:validate():com.intellij.openapi.ui.ValidationInfo
@@ -19664,7 +19663,6 @@ a:com.intellij.platform.WebProjectGenerator
 - com.intellij.platform.DirectoryProjectGeneratorBase
 - <init>():V
 - a:getDescription():java.lang.String
-- isPrimaryGenerator():Z
 - f:validate(java.lang.String):com.intellij.facet.ui.ValidationResult
 com.intellij.platform.WebProjectGenerator$GeneratorPeer
 - com.intellij.platform.ProjectGeneratorPeer
