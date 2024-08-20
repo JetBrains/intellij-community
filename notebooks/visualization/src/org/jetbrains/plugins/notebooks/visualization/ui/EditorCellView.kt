@@ -99,7 +99,6 @@ class EditorCellView(
     _controllers.forEach { controller ->
       disposeController(controller)
     }
-    input.dispose()
     outputs?.let { Disposer.dispose(it) }
     removeCellHighlight()
   }

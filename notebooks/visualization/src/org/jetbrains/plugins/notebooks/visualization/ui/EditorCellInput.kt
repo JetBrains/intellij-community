@@ -61,7 +61,6 @@ class EditorCellInput(
 
   override fun doDispose() {
     folding.dispose()
-    component.dispose()
   }
 
   fun update() {

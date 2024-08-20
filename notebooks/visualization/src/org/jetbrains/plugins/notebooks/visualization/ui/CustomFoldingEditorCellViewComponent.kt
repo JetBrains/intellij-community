@@ -12,11 +12,14 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.visualization.UpdateContext
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorEmbeddedComponentLayoutManager.CustomFoldingConstraint
+import java.awt.AWTEvent.MOUSE_EVENT_MASK
+import java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
+import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
 import javax.swing.BoxLayout
 import javax.swing.JComponent
@@ -34,6 +37,7 @@ class CustomFoldingEditorCellViewComponent(
 
   private val bottomContainer = JPanel().apply {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    background = EditorGutterColor.getEditorGutterBackgroundColor(editor as EditorImpl, false)
   }
   private val mainComponent = JPanel().also {
     it.layout = BorderLayout()
@@ -63,6 +67,7 @@ class CustomFoldingEditorCellViewComponent(
           editor.foldingModel.removeFoldRegion(it)
         }
       }
+      foldingRegion = null
     }
   }
 
@@ -101,19 +106,37 @@ class CustomFoldingEditorCellViewComponent(
 
   override fun addInlayBelow(presentation: InlayPresentation) {
     val inlayComponent = object : JComponent() {
+
+      init {
+        enableEvents(MOUSE_EVENT_MASK or MOUSE_MOTION_EVENT_MASK)
+      }
+
       override fun getPreferredSize(): Dimension? {
         return Dimension(presentation.width, presentation.height)
       }
 
-      override fun paint(g: Graphics) {
+      override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
         g as Graphics2D
-        val attributes = TextAttributes().apply {
-          backgroundColor = EditorGutterColor.getEditorGutterBackgroundColor(editor as EditorImpl, false)
-        }
+        val attributes = TextAttributes()
         presentation.paint(g, attributes)
       }
+
+      override fun processMouseMotionEvent(e: MouseEvent) {
+        when(e.id) {
+          MouseEvent.MOUSE_MOVED -> presentation.mouseMoved(e, e.point)
+        }
+      }
+
+      override fun processMouseEvent(e: MouseEvent) {
+        when(e.id) {
+          MouseEvent.MOUSE_EXITED -> presentation.mouseExited()
+          MouseEvent.MOUSE_CLICKED -> presentation.mouseClicked(e, e.point)
+          MouseEvent.MOUSE_PRESSED -> presentation.mousePressed(e, e.point)
+          MouseEvent.MOUSE_RELEASED -> presentation.mouseReleased(e, e.point)
+        }
+      }
     }
-    inlayComponent.background = EditorGutterColor.getEditorGutterBackgroundColor(editor as EditorImpl, false)
     presentationToComponent[presentation] = inlayComponent
     bottomContainer.add(inlayComponent)
   }

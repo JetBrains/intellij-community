@@ -216,7 +216,7 @@ class NotebookCellInlayManager private constructor(
       override fun onFoldProcessingEnd() {
         val changedRegions = changedRegions.filter { it.getUserData(FOLDING_MARKER_KEY) == true }
         this.changedRegions.clear()
-        val removedRegions = removedRegions.toList()
+        val removedRegions = removedRegions.filter { editor.foldingModel.getCollapsedRegionAtOffset(it.startOffset) == null }
         this.removedRegions.clear()
         update { ctx ->
           changedRegions.forEach { region ->
