@@ -63,13 +63,6 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  fun blockingGetAvailableCommitDepth(): Int {
-    val availableCachesKeys = blockingAvailableCachesKeys
-    return lastCommits.indexOfFirst {
-      availableCachesKeys.contains(it)
-    }
-  }
-
   @OptIn(DelicateCoroutinesApi::class)
   private val availableCachesKeysLazyTask = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
     val commitHistory = "$remoteCacheUrl/${CommitsHistory.JSON_FILE}"

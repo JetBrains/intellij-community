@@ -36,10 +36,10 @@ internal object CompiledClasses {
         messages.error(message)
       }
     }
-    if (options.pathToCompiledClassesArchive != null && PortableCompilationCache.IS_ENABLED) {
+    if (options.pathToCompiledClassesArchive != null && PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
       messages.error("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
     }
-    if (options.pathToCompiledClassesArchivesMetadata != null && PortableCompilationCache.IS_ENABLED) {
+    if (options.pathToCompiledClassesArchivesMetadata != null && PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
       messages.error("JPS Cache is enabled " +
                      "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
     }
@@ -114,7 +114,7 @@ internal object CompiledClasses {
 
   fun keepCompilationState(options: BuildOptions): Boolean {
     return !options.forceRebuild &&
-           (PortableCompilationCache.IS_ENABLED ||
+           (PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED ||
             options.useCompiledClassesFromProjectOutput ||
             options.pathToCompiledClassesArchive == null ||
             options.pathToCompiledClassesArchivesMetadata != null ||
@@ -147,14 +147,14 @@ internal object CompiledClasses {
           )
         }
       }
-      PortableCompilationCache.IS_ENABLED -> {
+      PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
         span.addEvent("JPS remote cache will be used for compilation")
         runBlocking(Dispatchers.Default) {
           context.portableCompilationCache.downloadCacheAndCompileProject()
         }
       }
       else -> {
-        compile(moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, isPortableCacheDownloaded = false, context = context)
+        compile(moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, availableCommitDepth = -1, context = context)
         return
       }
     }
@@ -183,7 +183,7 @@ internal object CompiledClasses {
   suspend fun compile(
     moduleNames: Collection<String>? = null,
     includingTestsInModules: List<String>? = null,
-    isPortableCacheDownloaded: Boolean,
+    availableCommitDepth: Int,
     context: CompilationContext,
   ) {
     check(JavaVersion.current().isAtLeast(17)) {
@@ -198,7 +198,7 @@ internal object CompiledClasses {
     try {
       val (status, isIncrementalCompilation) = when {
         context.options.forceRebuild -> "Forced rebuild" to false
-        isPortableCacheDownloaded -> context.portableCompilationCache.usageStatus() to true
+        availableCommitDepth >= 0 -> context.portableCompilationCache.usageStatus(availableCommitDepth) to true
         isIncrementalCompilationDataAvailable(context) -> "Compiled using local cache" to true
         else -> "Clean build" to false
       }
@@ -214,7 +214,7 @@ internal object CompiledClasses {
             context = context,
             moduleNames = moduleNames,
             includingTestsInModules = includingTestsInModules,
-            timeout = context.options.incrementalCompilationTimeout.minutes
+            timeout = context.options.incrementalCompilationTimeout.minutes,
           )
         }
         else {
@@ -274,7 +274,7 @@ internal object CompiledClasses {
         cleanOutput(compilationContext = context, keepCompilationState = false)
         context.options.incrementalCompilation = false
       }
-      PortableCompilationCache.IS_ENABLED -> {
+      PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
         successMessage = context.portableCompilationCache.handleCompilationFailureBeforeRetry(successMessage)
       }
       else -> {
