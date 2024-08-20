@@ -71,8 +71,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     val WINDOW_DIMENSION_KEY: Key<String> = Key.create("WINDOW_DIMENSION_KEY")
     @JvmField
     val REOPEN_WINDOW: Key<Boolean> = Key.create("REOPEN_WINDOW")
-    @JvmField
-    val ALLOW_DOCK_TOOL_WINDOWS: Key<Boolean> = Key.create("ALLOW_DOCK_TOOL_WINDOWS")
 
     private fun getWindowDimensionKey(content: DockableContent<*>): String? {
       return if (content is DockableEditor) getWindowDimensionKey(content.file) else null
@@ -358,8 +356,8 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     if (isNorthPanelAvailable) {
       window.setupNorthPanel()
     }
-    val canDockToolWindows = content.presentation.getClientProperty(ALLOW_DOCK_TOOL_WINDOWS)
-    if (canDockToolWindows == null || canDockToolWindows) {
+    val isSingletonEditorInWindow = (content as? DockableEditor)?.isSingletonEditorInWindow ?: false
+    if (!isSingletonEditorInWindow) {
       window.setupToolWindowPane()
     }
     val size = content.preferredSize
@@ -406,6 +404,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
     val editorWindow = container.splitters.getOrCreateCurrentWindow(file)
     val result = openFile(editorWindow)
+
     if (!isSingletonEditorInWindow) {
       window.setupToolWindowPane()
     }

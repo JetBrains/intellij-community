@@ -438,7 +438,6 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     presentation.icon = info.icon
     val editors = info.composite.allEditors
     val isSingletonEditorInWindow = isSingletonEditorInWindow(editors)
-    presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow)
     session = DockManager.getInstance(window.manager.project).createDragSession(
       mouseEvent,
       DockableEditor(
@@ -747,5 +746,5 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
 }
 
 internal fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
-  return editors.any { FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(it, false) || EditorWindow.HIDE_TABS.get(it, false) }
+  return editors.any { FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(it, false) }
 }

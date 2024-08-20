@@ -59,8 +59,6 @@ import java.awt.geom.RoundRectangle2D
 import java.time.Instant
 import java.util.function.Function
 import javax.swing.*
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.math.roundToInt
 
 private val LOG = logger<EditorWindow>()
@@ -74,7 +72,8 @@ class EditorWindow internal constructor(
     val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")
 
     @JvmField
-    val HIDE_TABS: Key<Boolean> = Key.create("HIDE_TABS")
+    @Deprecated("Use SINGLETON_EDITOR_IN_WINDOW instead")
+    val HIDE_TABS: Key<Boolean> = FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW
 
     // Metadata to support editor tab drag&drop process: initial index
     internal val DRAG_START_INDEX_KEY: Key<Int> = KeyWithDefaultValue.create("drag start editor index", -1)
@@ -606,7 +605,7 @@ class EditorWindow internal constructor(
   }
 
   internal fun updateTabsVisibility(uiSettings: UISettings = UISettings.getInstance()) {
-    tabbedPane.editorTabs.isHideTabs = (owner.isFloating && tabCount == 1 && (owner.isSingletonEditorInWindow || shouldHideTabs(selectedComposite))) ||
+    tabbedPane.editorTabs.isHideTabs = (owner.isFloating && tabCount == 1 && owner.isSingletonEditorInWindow) ||
                                        uiSettings.editorTabPlacement == UISettings.TABS_NONE ||
                                        (uiSettings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
   }
@@ -1176,10 +1175,6 @@ private fun swapComponents(parent: JPanel, toAdd: JComponent, toRemove: JCompone
     parent.remove(toRemove)
     parent.add(toAdd, BorderLayout.CENTER)
   }
-}
-
-private fun shouldHideTabs(composite: EditorComposite?): Boolean {
-  return composite != null && composite.allEditors.any { EditorWindow.HIDE_TABS.get(it, false) }
 }
 
 private class MySplitPainter(

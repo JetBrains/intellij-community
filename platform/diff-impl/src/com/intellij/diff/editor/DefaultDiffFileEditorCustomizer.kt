@@ -20,7 +20,6 @@ private class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustom
     registerEscapeAction(editor)
 
     editor.putUserData(IS_DIFF_FILE_EDITOR, true)
-    editor.putUserData(EditorWindow.HIDE_TABS, true)
     editor.putUserData(FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW, true)
     editor.putUserData(DockManagerImpl.SHOW_NORTH_PANEL, false)
   }
