@@ -209,7 +209,11 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     }
     myDetailsLabel = JBLabel()
     myDetailsLabel.foreground = UIUtil.getContextHelpForeground()
-    myForeignPluginWarningLabel = SwingHelper.createHtmlViewer(false, null, null, null)
+    myForeignPluginWarningLabel = SwingHelper.createHtmlViewer(false, null, null, null).apply {
+      addHyperlinkListener {
+        BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(it)
+      }
+    }
     val toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR, DefaultActionGroup(BackAction(), ForwardAction()), true)
     toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
