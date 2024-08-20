@@ -4301,11 +4301,6 @@ com.intellij.util.indexing.containers.RandomAccessIntContainer
 - a:intIterator():com.intellij.util.indexing.containers.IntIdsIterator
 - a:remove(I):Z
 - a:size():I
-a:com.intellij.util.indexing.impl.AbstractUpdateData
-- p:<init>(I):V
-- getInputId():I
-- pa:iterateKeys(com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.RemovedKeyProcessor):Z
-- p:updateForwardIndex():V
 f:com.intellij.util.indexing.impl.CollectionDataExternalizer
 - com.intellij.util.io.DataExternalizer
 - <init>(com.intellij.util.io.DataExternalizer):V
@@ -4353,9 +4348,6 @@ c:com.intellij.util.indexing.impl.MapInputDataDiffBuilder
 - getClassToBlame():java.lang.Class
 com.intellij.util.indexing.impl.RemovedKeyProcessor
 - a:process(java.lang.Object,I):V
-f:com.intellij.util.indexing.impl.UpdateData
-- com.intellij.util.indexing.impl.AbstractUpdateData
-- <init>(I,java.util.Map,com.intellij.openapi.util.ThrowableComputable,com.intellij.util.indexing.IndexId,com.intellij.util.ThrowableRunnable):V
 com.intellij.util.indexing.impl.ValueSerializationProblemReporter
 - a:reportProblem(java.lang.Exception):V
 com.intellij.util.indexing.impl.forward.ForwardIndex

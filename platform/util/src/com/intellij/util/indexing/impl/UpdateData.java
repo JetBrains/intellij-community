@@ -5,11 +5,13 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.StorageException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
   private final Map<Key, Value> myNewData;
   private final @NotNull ThrowableComputable<? extends InputDataDiffBuilder<Key, Value>, ? extends IOException> myCurrentDataEvaluator;

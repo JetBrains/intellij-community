@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.io.IOException;
  * updateInvertedIndex() it is designed as callback-based {@link #iterateKeys(KeyValueUpdateProcessor, KeyValueUpdateProcessor, RemovedKeyProcessor)},
  * which evaluates a diff between current and new data, and report pieces of the diff into appropriate processors.
  */
+@ApiStatus.Internal
 public abstract class AbstractUpdateData<Key, Value> {
   //MAYBE RC: split this class into 2 interfaces, ForwardIndexUpdate & InvertedIndexUpdate?
   private final int inputId;
