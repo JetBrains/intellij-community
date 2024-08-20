@@ -266,6 +266,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     tabs = new JBRunnerTabs(myProject, this) {
       @Override
       public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
         TabInfo info = tabs.getTargetInfo();
         sink.set(CONTENT_KEY, info == null ? null : getGridFor(info).getContents().toArray(new Content[0]));
         sink.set(CONTEXT_KEY, RunnerContentUi.this);
