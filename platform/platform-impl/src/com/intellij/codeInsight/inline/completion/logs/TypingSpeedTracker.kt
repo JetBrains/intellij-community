@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ml.feature.Feature
-import com.intellij.platform.ml.feature.FeatureDeclaration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.KeyAdapter
@@ -18,6 +17,9 @@ import kotlin.math.pow
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
+import com.intellij.platform.ml.feature.FeatureDeclaration as OldFeatureDeclaration
+import com.jetbrains.ml.Feature as NewFeature
+import com.jetbrains.ml.FeatureDeclaration as NewFeatureDeclaration
 
 @ApiStatus.Internal
 @Service
@@ -49,6 +51,12 @@ class TypingSpeedTracker {
     }
   }
 
+  fun getTypingSpeedNewEventPairs(): Collection<Pair<EventPair<*>, NewFeature>> = DECAY_DURATIONS_NEW.mapNotNull { (decayDuration, eventFieldAndFeature) ->
+    typingSpeeds[decayDuration]?.let {
+      (eventFieldAndFeature.first with it) to (eventFieldAndFeature.second with it)
+    }
+  }
+
   @TestOnly
   fun getTypingSpeed(decayDuration: Duration): Float? = typingSpeeds[decayDuration]
 
@@ -73,10 +81,14 @@ class TypingSpeedTracker {
   }
 
   companion object {
-    private val DECAY_DURATIONS = listOf(1, 2, 5, 30).associate { it.seconds to Pair(EventFields.Float("typing_speed_${it}s"), FeatureDeclaration.float("typing_speed_${it}s").nullable()) }
+    private val DECAY_DURATIONS = listOf(1, 2, 5, 30)
+      .associate { it.seconds to Pair(EventFields.Float("typing_speed_${it}s"), OldFeatureDeclaration.float("typing_speed_${it}s").nullable()) }
+    private val DECAY_DURATIONS_NEW = listOf(1, 2, 5, 30)
+      .associate { it.seconds to Pair(EventFields.Float("typing_speed_${it}s"), NewFeatureDeclaration.float("typing_speed_${it}s").nullable()) }
 
     fun getInstance(): TypingSpeedTracker = service()
     fun getEventFields(): Array<EventField<*>> = DECAY_DURATIONS.values.map { it.first }.toTypedArray()
-    fun getFeatures(): Set<FeatureDeclaration<*>> = DECAY_DURATIONS.values.map { it.second }.toSet()
+    fun getFeatures(): Set<OldFeatureDeclaration<*>> = DECAY_DURATIONS.values.map { it.second }.toSet()
+    fun getFeaturesNew(): List<NewFeatureDeclaration<*>> = DECAY_DURATIONS_NEW.values.map { it.second }
   }
 }

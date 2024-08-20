@@ -19,7 +19,7 @@ class IJPlatform : com.jetbrains.ml.platform.MLApiPlatform(
   override val taskListeners: Map<String, List<com.jetbrains.ml.monitoring.MLTaskListenerTyped<*, *>>>
     get() = KeyedMessagingProvider.collect(MLTaskListenerTyped.TOPIC)
 
-  override fun addTaskListener(taskId: String, taskListener: com.jetbrains.ml.monitoring.MLTaskListenerTyped<*, *>): ExtensionController {
+  override fun addTaskListener(taskId: String, taskListener: com.jetbrains.ml.monitoring.MLTaskListenerTyped<*, *>): com.jetbrains.ml.platform.MLApiPlatform.ExtensionController {
     val connection = application.messageBus.connect()
 
     fun <M : com.jetbrains.ml.model.MLModel<P>, P : Any> capturingType(taskListenerTyped: com.jetbrains.ml.monitoring.MLTaskListenerTyped<M, P>) {

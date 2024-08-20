@@ -38,5 +38,6 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.python.parser" />
     <orderEntry type="module" module-name="intellij.python.syntax.core" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ml" />
   </component>
 </module>

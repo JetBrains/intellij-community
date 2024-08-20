@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="jetbrains.mlapi.usage" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:usage:32">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:usage:34">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/usage/32/usage-32.jar">
-          <sha256sum>714206436b4e8d619d322cba1db73c8e0908ccaf292fa3278a2c85b64512fe8a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/usage/34/usage-34.jar">
+          <sha256sum>b28271a408b89f4a9e00e4a849543b5e9206333472ee379027d969e5d1b42e6f</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/usage/32/usage-32.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/usage/34/usage-34.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/usage/32/usage-32-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/usage/34/usage-34-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/usage/32/usage-32-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/usage/34/usage-34-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

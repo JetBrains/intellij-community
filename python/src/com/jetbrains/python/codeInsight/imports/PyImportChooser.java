@@ -13,6 +13,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PyPsiBundle;
+import kotlin.Unit;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -21,6 +22,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+import static com.jetbrains.python.codeInsight.imports.mlapi.MlImplementationKt.launchMLRanking;
+
+
 public final class PyImportChooser implements ImportChooser {
 
   @Override
@@ -28,20 +32,27 @@ public final class PyImportChooser implements ImportChooser {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return Promises.resolvedPromise(sources.get(0));
     }
-
     AsyncPromise<ImportCandidateHolder> result = new AsyncPromise<>();
 
-    // GUI part
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(sources)
-      .setRenderer(new CellRenderer())
-      .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
-      .setItemChosenCallback(item -> {
-        result.setResult(item);
-      })
-      .setNamerForFiltering(o -> o.getPresentableText())
-      .createPopup()
-      .showInBestPositionFor(dataContext));
+    launchMLRanking(sources, (mlRanking) -> {
+      // GUI part
+      DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(mlRanking.getOrder())
+        .setRenderer(new CellRenderer())
+        .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
+        .setItemChosenCallback(item -> {
+          result.setResult(item);
+          mlRanking.submitSelectedItem(item);
+        })
+        .setCancelCallback(() -> {
+          mlRanking.submitPopUpClosed();
+          return true;
+        })
+        .setNamerForFiltering(o -> o.getPresentableText())
+        .createPopup()
+        .showInBestPositionFor(dataContext));
+      return Unit.INSTANCE;
+    });
 
     return result;
   }
