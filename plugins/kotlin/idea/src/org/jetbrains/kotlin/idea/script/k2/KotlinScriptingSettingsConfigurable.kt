@@ -35,7 +35,7 @@ class KotlinScriptingSettingsConfigurable(val project: Project) : SearchableConf
             .getIndexedSettingsPerDefinition()
 
         val definitions = K2ScriptDefinitionProvider.getInstance(project).getAllDefinitions()
-            .sortedBy { settingsByDefinitionId[it.definitionId]?.index ?: Integer.MAX_VALUE }
+            .sortedBy { settingsByDefinitionId[it.definitionId]?.index ?: it.order }
             .map {
                 DefinitionModelDescriptor(
                     it,

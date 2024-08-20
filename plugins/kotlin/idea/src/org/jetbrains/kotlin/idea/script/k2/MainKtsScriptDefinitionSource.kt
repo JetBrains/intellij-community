@@ -35,7 +35,9 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                         ?: baseHostConfiguration,
                     it.compilationConfiguration,
                     it.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default
-                )
+                ).apply {
+                    order = Int.MIN_VALUE
+                }
             }
         }
 }

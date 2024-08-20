@@ -34,7 +34,7 @@ class K2ScriptDefinitionProvider(val project: Project) : LazyScriptDefinitionPro
 
             return allDefinitions.get()
                 .filter { settingsByDefinitionId[it.definitionId]?.setting?.enabled != false }
-                .sortedBy { settingsByDefinitionId[it.definitionId]?.index ?: Integer.MAX_VALUE }
+                .sortedBy { settingsByDefinitionId[it.definitionId]?.index ?: it.order }
                 .asSequence()
         }
 

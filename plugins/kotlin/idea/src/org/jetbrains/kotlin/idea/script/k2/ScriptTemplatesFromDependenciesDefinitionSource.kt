@@ -90,7 +90,9 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
             templateClassNames = newTemplates.templates,
             templateClasspath = newTemplates.classpath,
             baseHostConfiguration = hostConfiguration,
-        )
+        ).map {
+            it.apply { order = Int.MIN_VALUE }
+        }
 
         scriptingDebugLog { "Script definitions found: ${_definitions?.joinToString()}" }
 

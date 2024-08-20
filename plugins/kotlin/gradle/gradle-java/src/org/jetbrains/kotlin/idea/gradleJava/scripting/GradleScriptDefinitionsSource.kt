@@ -35,7 +35,9 @@ class GradleScriptDefinitionsSource(val project: Project) : ScriptDefinitionsSou
                 configuration,
                 definition.evaluationConfiguration,
                 definition.defaultCompilerOptions
-            )
+            ).apply {
+                order = Integer.MIN_VALUE
+            }
         }
         _definitions.set(definitionsFromConfigurations)
         K2ScriptDefinitionProvider.getInstance(project).reloadDefinitionsFromSources()
