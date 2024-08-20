@@ -29,6 +29,7 @@ import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 
+@Internal
 val CUSTOM_ORIGINAL_FILE = Key.create<VirtualFile>("custom.original.file")
 private const val WEB_PREVIEW_RELOAD_TOOLTIP_ID: String = "web.preview.reload.on.save"
 
