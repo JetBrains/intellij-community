@@ -715,7 +715,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
-  fun pumpEventsForHierarchy(modalComponent: Component, exitCondition: Future<*>, eventConsumer: Consumer<AWTEvent>) {
+  fun pumpEventsForHierarchy(modalComponent: Component, exitCondition: Future<*>, eventConsumer: Consumer<AWTEvent>) = resetThreadContext().use {
     EDT.assertIsEdt()
     Logs.LOG.debug { "pumpEventsForHierarchy($modalComponent, $exitCondition)" }
 
