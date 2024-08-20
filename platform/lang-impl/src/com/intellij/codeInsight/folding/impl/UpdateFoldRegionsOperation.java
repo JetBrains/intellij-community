@@ -283,7 +283,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
                                  region.isExpanded());
       return true;
     }
-    PsiElement element = SlowOperations.allowSlowOperations(() -> info.getPsiElement(region));
+    PsiElement element = info.getPsiElement(region);
     if (element != null) {
       PsiFile containingFile = element.getContainingFile();
       boolean isInjected = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(containingFile);

@@ -8,11 +8,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
-import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
@@ -74,9 +72,7 @@ fun <D : KtNamedDeclaration> generateExpectOrActualInFile(
     val targetFilePointer = targetFile.createSmartPointer()
     DumbService.getInstance(project).runWhenSmart(fun() {
         val generated = try {
-            SlowOperations.allowSlowOperations(ThrowableComputable {
-                factory.generateIt(project, TypeAccessibilityChecker.create(project, module), element)
-            })
+            factory.generateIt(project, TypeAccessibilityChecker.create(project, module), element)
         } catch (e: KotlinTypeInaccessibleException) {
             if (editor != null) {
                 showErrorHint(

@@ -61,10 +61,6 @@ public final class SlowOperations {
    * If you get an exception from this method, then you need to move the computation to a background thread (BGT)
    * and to avoid blocking the UI thread (EDT).
    * <p/>
-   * It's okay if the API changes in the process. For example, instead of wrapping an implementation of some extension
-   * with deprecated {@link #allowSlowOperations} methods, it is better to admit that the EP semantic as a whole requires index access,
-   * and then move the iteration over all extensions to the background on the platform-side.
-   * <p/>
    * To temporarily mute the assertion in cases when it's difficult to rework the code timely,
    * the computation can be wrapped in a named section {@link #startSection}.
    * The assertion inside named sections is turned on/off separately via Registry keys {@code ide.slow.operations.assertion.<sectionName>}
@@ -194,9 +190,7 @@ public final class SlowOperations {
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static <T, E extends Throwable> T allowSlowOperations(@NotNull ThrowableComputable<T, E> computable) throws E {
-    try (AccessToken ignore = startSection(GENERIC)) {
-      return computable.compute();
-    }
+    return computable.compute();
   }
 
   /**
@@ -251,7 +245,6 @@ public final class SlowOperations {
    * semantics, like {@link #FORCE_ASSERT}, and {@link #RESET}.
    * <p/>
    * <b>This method is not for muting the assertion in places. It is intended for the common platform code.
-   * USE DEPRECATED {@link #allowSlowOperations} METHODS IF YOUR INTENT IS TO POSTPONE FIXING THE ASSERTION FOR REAL.</b>
    *
    * @param sectionName reuse {@link #GENERIC} and other existing section names as much as possible.
    * <p/>
