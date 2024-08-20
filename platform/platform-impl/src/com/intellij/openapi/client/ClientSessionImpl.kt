@@ -122,7 +122,8 @@ abstract class ClientSessionImpl(
       return clientService
     }
 
-    if (createIfNeeded && !type.isLocal) {
+    // frontend service as well as a local one should be redirected to a shared in the case when fallbackToShared == true
+    if (createIfNeeded && !type.isLocal && !type.isFrontend) {
       val sessionsManager = sharedComponentManager.getService(ClientSessionsManager::class.java)
       val localSession = sessionsManager?.getSession(ClientId.localId) as? ClientSessionImpl
 
