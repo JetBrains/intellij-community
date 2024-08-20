@@ -73,6 +73,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -517,13 +518,17 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     Disposer.register(parent, () -> mustWaitForSmartMode = old);
   }
 
+  /**
+   * do not run in production since it differs slightly from the {@link #runUpdate()}
+   */
   @TestOnly
+  @ApiStatus.Internal
   public void runPasses(@NotNull PsiFile file,
                         @NotNull Document document,
                         @NotNull TextEditor textEditor,
                         int @NotNull [] passesToIgnore,
                         boolean canChangeDocument,
-                        @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
+                        @Nullable Runnable callbackWhileWaiting) throws Exception {
     ThreadingAssertions.assertEventDispatchThread();
     assert !myDisposed;
     assertMyFile(file.getProject(), file);
@@ -577,7 +582,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private void doRunPasses(@NotNull TextEditor textEditor,
                            int @NotNull [] passesToIgnore,
                            boolean canChangeDocument,
-                           @Nullable Runnable callbackWhileWaiting) {
+                           @Nullable Runnable callbackWhileWaiting) throws Exception {
     ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
       VirtualFile virtualFile = textEditor.getFile();
       HighlightingSession session = queuePassesCreation(textEditor, virtualFile, passesToIgnore);
@@ -691,22 +696,25 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @TestOnly
-  public void prepareForTest() {
+  public void prepareForTest() throws InterruptedException, ExecutionException {
     setUpdateByTimerEnabled(false);
     waitForTermination();
     clearReferences();
   }
 
   @TestOnly
-  public void cleanupAfterTest() {
+  public void cleanupAfterTest() throws InterruptedException, ExecutionException {
     if (myProject.isOpen()) {
       prepareForTest();
     }
   }
 
   @TestOnly
-  public void waitForTermination() {
-    myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.waitForTermination");
+  public void waitForTermination() throws InterruptedException, ExecutionException {
+    AppExecutorUtil.getAppExecutorService().submit(() -> {
+      // wait outside EDT to avoid stealing work from FJP
+      myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.waitForTermination");
+    }).get();
   }
 
   @Override

@@ -283,7 +283,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     ProjectInspectionProfileManager.getInstance(project); // avoid "severities changed, restart" event
 
-    ProcessCanceledException exception = null;
+    Exception exception = null;
     int retries = 1000;
     for (int i = 0; i < retries; i++) {
       int oldDelay = settings.getAutoReparseDelay();
@@ -322,6 +322,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           UIUtil.dispatchAllInvocationEvents();
         });
+        exception = e;
+      }
+      catch (Exception e) {
         exception = e;
       }
       finally {
