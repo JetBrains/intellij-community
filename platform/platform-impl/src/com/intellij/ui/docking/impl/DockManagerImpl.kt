@@ -352,16 +352,17 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
                                  id = null,
                                  container = container,
                                  canReopenWindow = reopenWindow)
-    val isNorthPanelAvailable = if (content is DockableEditor) content.isNorthPanelAvailable else isNorthPanelVisible(UISettings.getInstance())
-    if (isNorthPanelAvailable) {
-      window.setupNorthPanel()
-    }
+
     val isSingletonEditorInWindow = (content as? DockableEditor)?.isSingletonEditorInWindow ?: false
     if (!isSingletonEditorInWindow) {
       window.setupToolWindowPane()
     }
-    val size = content.preferredSize
+    val isNorthPanelAvailable = if (content is DockableEditor) content.isNorthPanelAvailable else isNorthPanelVisible(UISettings.getInstance())
+    if (isNorthPanelAvailable) {
+      window.setupNorthPanel()
+    }
 
+    val size = content.preferredSize
     // The given relative point might be relative to a component on a different screen, using different DPI screen coordinates. Convert to
     // device coordinates first. Ideally, we would be given a DevicePoint
     val showPoint = DevicePoint(point).locationOnScreen
@@ -412,6 +413,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     if (isNorthPanelAvailable) {
       window.setupNorthPanel()
     }
+
     container.add(
       DockableEditor(
         img = null,
