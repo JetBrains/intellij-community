@@ -133,6 +133,9 @@ public final class CommitPresentationUtil {
 
     if (isSubjectMarginEnabled(project)) {
       int margin = CommitMessageInspectionProfile.getSubjectRightMargin(project);
+      if (margin < ELLIPSIS.length()) {
+        margin = 5; //For cases when CommitMessageInspectionProfile wasn't loaded properly.
+      }
       if (subject.length() > margin * EPSILON) {
         int placeToCut = margin - ELLIPSIS.length();
         for (int i = placeToCut; i >= Math.max(margin - BIG_CUT_SIZE, BIG_CUT_SIZE); i--) {
