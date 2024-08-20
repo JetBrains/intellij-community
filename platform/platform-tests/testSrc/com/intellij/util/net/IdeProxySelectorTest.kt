@@ -64,7 +64,7 @@ class IdeProxySelectorTest {
     ), selector.select(URI.create("https://sub.example-domain.com/somepath?query=1")))
     assertEquals(NO_PROXY_LIST, selector.select(URI.create("https://example-domain.com")))
 
-    // make sure broken pac does destroy the IDE
+    // make sure broken pac does not destroy the IDE
     configuration = ProxyConfiguration.proxyAutoConfiguration(
       Path.of(PlatformTestUtil.getPlatformTestDataPath(), "proxy", "broken.pac").toUri().toURL()
     )
