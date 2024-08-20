@@ -10,7 +10,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 
-class EnableSettingsSyncDialog(
+internal class EnableSettingsSyncDialog(
   parent: JComponent,
   remoteSettings: SettingsSyncState?,
   remoteSyncScopeSettings: SettingsSyncLocalStateHolder?,

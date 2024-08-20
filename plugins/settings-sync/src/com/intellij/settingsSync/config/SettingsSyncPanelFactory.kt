@@ -24,7 +24,7 @@ import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-object SettingsSyncPanelFactory {
+internal object SettingsSyncPanelFactory {
   fun createCombinedSyncSettingsPanel(
     syncLabel: @Nls String,
     syncSettings: SettingsSyncState,
