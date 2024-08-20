@@ -77,5 +77,6 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.analysis.analysis-api.k2.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.test.compose.k2" scope="TEST" />
   </component>
 </module>

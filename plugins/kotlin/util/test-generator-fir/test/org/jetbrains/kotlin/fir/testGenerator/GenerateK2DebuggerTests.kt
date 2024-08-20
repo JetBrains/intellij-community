@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentAut
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCompletionTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentHighlightingTest
+import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeVariablePrintingTest
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -99,7 +100,7 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
 
         listOf(AbstractK2IdeK1CodeKotlinVariablePrintingTest::class, AbstractK2IdeK2CodeKotlinVariablePrintingTest::class,).forEach {
             testClass(it) {
-                model("variables")
+                model("variables", isRecursive = false)
             }
         }
 
@@ -140,6 +141,14 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
 
         testClass<AbstractK2CodeFragmentAutoImportTest> {
             model("quickfix.special/codeFragmentAutoImport", pattern = KT, isRecursive = false)
+        }
+    }
+}
+
+internal fun MutableTWorkspace.generateK2ComposeDebuggerTests() {
+    testGroup("jvm-debugger/test/compose", testDataPath = "../testData", category = DEBUGGER) {
+        testClass<AbstractK2ComposeVariablePrintingTest> {
+            model("variables/compose")
         }
     }
 }

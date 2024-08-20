@@ -1,0 +1,17 @@
+LineBreakpoint created at composableLambda.kt:33
+LineBreakpoint created at composableLambda.kt:37
+Run Java
+Connected to the target VM
+composableLambda.kt:33
+KotlinStackFrame (composableLambda.kt:33)
+    JavaValue[this] this: ComposableSingletons$ComposableLambdaKt$lambda-2$1@uniqueID = ComposableSingletons$ComposableLambdaKt$lambda-2$1@hashCode
+    JavaValue[local] $composer: androidx.compose.runtime.Composer = androidx.compose.runtime.ComposerImpl@hashCode
+    JavaValue[local] $changed: int = 6
+composableLambda.kt:37
+KotlinStackFrame (composableLambda.kt:37)
+    JavaValue[this] this: ComposableSingletons$ComposableLambdaKt$lambda-1$1@uniqueID = ComposableSingletons$ComposableLambdaKt$lambda-1$1@hashCode
+    JavaValue[local] $composer: androidx.compose.runtime.Composer = androidx.compose.runtime.ComposerImpl@hashCode
+    JavaValue[local] $changed: int = 6
+Disconnected from the target VM
+
+Process finished with exit code 0

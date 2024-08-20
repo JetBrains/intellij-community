@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 data class TestCompileConfiguration(
     val lambdasGenerationScheme: JvmClosureGenerationScheme,
@@ -48,6 +50,7 @@ open class DebuggerTestCompilerFacility(
     protected val mainFiles: TestFilesByLanguageAndPlatform
     private val libraryFiles: TestFilesByLanguageAndPlatform
     private val mavenArtifacts = mutableListOf<String>()
+    private val compilerPlugins = mutableListOf<String>()
 
     init {
         if (compileConfig.languageVersion?.usesK2 == true && compileConfig.lambdasGenerationScheme != JvmClosureGenerationScheme.INDY) {
@@ -76,6 +79,12 @@ open class DebuggerTestCompilerFacility(
     fun addDependencies(libraryPaths: List<String>) {
         for (libraryPath in libraryPaths) {
             mavenArtifacts.add(libraryPath)
+        }
+    }
+
+    fun addCompilerPlugin(pluginPaths: List<Path>) {
+        pluginPaths.forEach { path ->
+            compilerPlugins.add(path.absolutePathString())
         }
     }
 
@@ -198,6 +207,11 @@ open class DebuggerTestCompilerFacility(
         if (compileConfig.useInlineScopes) {
             options.add("-Xuse-inline-scopes-numbers")
         }
+
+        if (compilerPlugins.isNotEmpty()) {
+            options.add("-Xplugin=${compilerPlugins.joinToString(",")}")
+        }
+
         options.addAll(compileConfig.enabledLanguageFeatures.map { "-XXLanguage:+$it" })
         return options
     }
@@ -317,6 +331,7 @@ private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguag
                     is DebuggerTestModule.Common -> kotlinCommon
                     is DebuggerTestModule.Jvm -> kotlinJvm
                 }
+
             "kts" -> kotlinScripts
             "java" -> java
             else -> resources

@@ -1075,6 +1075,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/completion/impl-shared/kotlin.completion.impl.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/completion/impl-shared/kotlin.completion.impl.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/completion/tests-k1/kotlin.completion.tests.k1.iml" filepath="$PROJECT_DIR$/plugins/kotlin/completion/tests-k1/kotlin.completion.tests.k1.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/completion/tests-shared/kotlin.completion.tests.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/completion/tests-shared/kotlin.completion.tests.shared.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/all-tests-compose/kotlin.compose-all-tests.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/all-tests-compose/kotlin.compose-all-tests.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/copyright/kotlin.copyright.iml" filepath="$PROJECT_DIR$/plugins/kotlin/copyright/kotlin.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/copyright/fir-tests/kotlin.copyright.fir.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/copyright/fir-tests/kotlin.copyright.fir.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/copyright/tests/kotlin.copyright.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/copyright/tests/kotlin.copyright.tests.iml" />
@@ -1143,6 +1144,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/evaluation/k2/kotlin.jvm-debugger.evaluation.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/evaluation/k2/kotlin.jvm-debugger.evaluation.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/sequence/kotlin.jvm-debugger.sequence.k1.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/sequence/kotlin.jvm-debugger.sequence.k1.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/compose/kotlin.jvm-debugger.test.compose.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/compose/kotlin.jvm-debugger.test.compose.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/k2/kotlin.jvm-debugger.test.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/k2/kotlin.jvm-debugger.test.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/kotlin.jvm-decompiler.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/kotlin.jvm-decompiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.lombok.tests/kotlin.k2.lombok.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.lombok.tests/kotlin.k2.lombok.tests.iml" />

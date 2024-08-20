@@ -313,7 +313,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
         listOf(AbstractKotlinVariablePrintingTest::class, AbstractK1IdeK2CodeKotlinVariablePrintingTest::class).forEach {
             testClass(it) {
-                model("variables")
+                model("variables", isRecursive = false)
             }
         }
 

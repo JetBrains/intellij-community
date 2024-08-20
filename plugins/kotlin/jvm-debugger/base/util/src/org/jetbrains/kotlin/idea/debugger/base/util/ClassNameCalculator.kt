@@ -2,24 +2,74 @@
 
 package org.jetbrains.kotlin.idea.debugger.base.util
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.Stack
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import java.util.*
 
-/*
-    JVM backend requires files to be analyzed against JVM-targeted libraries, so calling it from common modules
-    (that depend on common libraries) leads to unpredictable results. Also, JVM backend initialization is quite expensive
-    as it calculates a lot more information than the debugger needs.
-
-    `ClassNameCalculator` aims to fix breakpoints in common modules. It's somehow similar to Ultra Light Classes – it also doesn't depend
-     on the backend. In case if all goes wrong, there's a registry key available that turns off the new behavior.
+/**
+ * JVM backend requires files to be analyzed against JVM-targeted libraries, so calling it from common modules
+ * (that depend on common libraries) leads to unpredictable results. Also, JVM backend initialization is quite expensive
+ * as it calculates a lot more information than the debugger needs.
+ *
+ * `ClassNameCalculator` aims to fix breakpoints in common modules. It's somehow similar to Ultra Light Classes – it also doesn't depend
+ * on the backend. In case if all goes wrong, there's a registry key available that turns off the new behavior.
+ *
+ * The default implementation can be extended using the [EP_NAME]:
+ * Later extensions will overwrite previous extensions.
  */
-object ClassNameCalculator {
-    fun getClassNames(file: KtFile): Map<KtElement, String> {
+interface ClassNameCalculator {
+    companion object : ClassNameCalculator {
+        @JvmStatic
+        fun getInstance(): ClassNameCalculator {
+            return CompositeClassNameCalculator(listOf(DefaultClassNameCalculator) + EP_NAME.extensionList)
+        }
+
+        internal val EP_NAME = ExtensionPointName<ClassNameCalculator>("org.jetbrains.kotlin.idea.debugger.base.util.classNameCalculator")
+
+        override fun getClassName(element: KtElement): String? {
+            return getInstance().getClassName(element)
+        }
+
+        override fun getClassNames(file: KtFile): Map<KtElement, String> {
+            return getInstance().getClassNames(file)
+        }
+    }
+
+    @RequiresReadLock(generateAssertion = false)
+    fun getClassNames(file: KtFile): Map<KtElement, String>
+
+    @RequiresReadLock(generateAssertion = false)
+    fun getClassName(element: KtElement): String? = null
+}
+
+/**
+ * Composite implementation of the [ClassNameCalculator]
+ * Note: the order of [instances] matters! Later instances will override results from previous ones.
+ * (It is expected that the first instance is a default implementation, the following instances are additional extensions)
+ */
+private class CompositeClassNameCalculator(
+    private val instances: List<ClassNameCalculator>
+) : ClassNameCalculator {
+    override fun getClassNames(file: KtFile): Map<KtElement, String> {
+        return WeakHashMap<KtElement, String>().apply {
+            instances.forEach { classNameCalculator -> putAll(classNameCalculator.getClassNames(file)) }
+        }
+    }
+
+    override fun getClassName(element: KtElement): String? {
+        /* Note: Later instances win over earlier one's: We're therefore asking the implementations from back to front */
+        return instances.reversed().firstNotNullOfOrNull { classNameCalculator -> classNameCalculator.getClassName(element) }
+    }
+}
+
+private object DefaultClassNameCalculator : ClassNameCalculator {
+    override fun getClassNames(file: KtFile): Map<KtElement, String> {
         return CachedValuesManager.getCachedValue(file) {
             val visitor = ClassNameCalculatorVisitor()
             file.accept(visitor)
@@ -27,7 +77,7 @@ object ClassNameCalculator {
         }
     }
 
-    fun getClassName(element: KtElement): String? {
+    override fun getClassName(element: KtElement): String? {
         val target = when (element) {
             is KtFunctionLiteral -> element.parent as? KtLambdaExpression ?: element
             else -> element
@@ -37,7 +87,7 @@ object ClassNameCalculator {
     }
 }
 
-private class ClassNameCalculatorVisitor : KtTreeVisitorVoid() {
+private class ClassNameCalculatorVisitor() : KtTreeVisitorVoid() {
     private val names = Stack<String?>()
     private val anonymousIndices = Stack<Int>()
     private var collectedNames = WeakHashMap<KtElement, String>()
@@ -49,6 +99,7 @@ private class ClassNameCalculatorVisitor : KtTreeVisitorVoid() {
         saveName(file, JvmFileClassUtil.getFileClassInfoNoResolve(file).fileClassFqName.asString())
         super.visitKtFile(file)
     }
+
 
     override fun visitScript(script: KtScript) {
         push(script, script.fqName.asString())

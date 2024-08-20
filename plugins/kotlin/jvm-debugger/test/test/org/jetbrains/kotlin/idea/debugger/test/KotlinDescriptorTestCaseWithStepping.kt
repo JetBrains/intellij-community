@@ -23,6 +23,7 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
@@ -55,6 +56,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {
     companion object {
@@ -417,6 +420,19 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         addLibraries(artifacts, module)
     }
 
+    protected fun addLibraries(compilerFacility: DebuggerTestCompilerFacility, libraries: List<Path>) {
+        compilerFacility.addDependencies(libraries.map { it.absolutePathString() })
+        runInEdtAndWait {
+            ConfigLibraryUtil.addLibrary(module, "ARTIFACTS") {
+                libraries.forEach { library ->
+                    classPath.add(library.absolutePathString()) // for sandbox jvm
+                    addRoot(library.absolutePathString(), OrderRootType.CLASSES)
+                }
+            }
+        }
+
+    }
+
     private fun addLibraries(artifacts: MutableList<OrderRoot>, module: Module) {
         runInEdtAndWait {
             ConfigLibraryUtil.addLibrary(module, "ARTIFACTS") {
@@ -428,12 +444,18 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         }
     }
 
+
+    protected open fun jarRepositories() : List<RemoteRepositoryDescription> {
+        return RemoteRepositoryDescription.DEFAULT_REPOSITORIES
+    }
+
     protected fun loadDependencies(
         description: JpsMavenRepositoryLibraryDescriptor
     ): MutableList<OrderRoot> {
+
         return JarRepositoryManager.loadDependenciesSync(
             project, description, setOf(ArtifactKind.ARTIFACT),
-            RemoteRepositoryDescription.DEFAULT_REPOSITORIES, null
+            jarRepositories(), null
         ) ?: throw AssertionError("Maven Dependency not found: $description")
     }
 }
