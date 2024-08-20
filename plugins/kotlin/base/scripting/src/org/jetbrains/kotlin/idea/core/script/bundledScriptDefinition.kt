@@ -15,31 +15,32 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.io.File
 import kotlin.script.dependencies.Environment
 import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.dependencies.DependenciesResolver
 import kotlin.script.experimental.dependencies.ScriptDependencies
 import kotlin.script.experimental.dependencies.asSuccess
+import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 
 class BundledScriptDefinitionContributor(val project: Project) : ScriptDefinitionContributor {
-    private val myBundledIdeScriptDefinition = BundledIdeScriptDefinition(project)
+    private val myLegacyBundledIdeScriptDefinition = LegacyBundledIdeScriptDefinition(project)
 
     @Deprecated("migrating to new configuration refinement: use ScriptDefinitionsSource instead")
-    override fun getDefinitions() = listOf(myBundledIdeScriptDefinition)
+    override fun getDefinitions() = listOf(myLegacyBundledIdeScriptDefinition)
 
     @Deprecated("migrating to new configuration refinement: drop usages")
     override val id: String = "StandardKotlinScript"
 }
 
-
-class BundledIdeScriptDefinition internal constructor(project: Project) : KotlinScriptDefinition(ScriptTemplateWithArgs::class) {
+class LegacyBundledIdeScriptDefinition internal constructor(project: Project) : KotlinScriptDefinition(ScriptTemplateWithArgs::class) {
     override val dependencyResolver = BundledKotlinScriptDependenciesResolver(project)
 }
-
 
 class BundledKotlinScriptDependenciesResolver(private val project: Project) : DependenciesResolver {
     override fun resolve(

@@ -258,8 +258,8 @@ class ScriptDefinitionsManagerTest {
         val defaultDefinition = manager.getDefaultDefinition()
         val defaultScriptDefinition = manager.getDefaultScriptDefinition()
 
-        assertNotNull(defaultDefinition.asLegacyOrNull<BundledIdeScriptDefinition>())
-        assertInstanceOf(BundledIdeScriptDefinition::class.java, defaultScriptDefinition)
+        assertNotNull(defaultDefinition.asLegacyOrNull<LegacyBundledIdeScriptDefinition>())
+        assertInstanceOf(LegacyBundledIdeScriptDefinition::class.java, defaultScriptDefinition)
     }
 
 

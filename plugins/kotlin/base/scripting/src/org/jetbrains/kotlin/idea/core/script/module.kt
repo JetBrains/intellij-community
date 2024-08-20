@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesData
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import java.nio.file.Path
@@ -39,9 +40,7 @@ fun creteScriptModules(project: Project, dependenciesData: ScriptDependenciesDat
         val file = Path.of(scriptFile.path).toFile()
         val relativeLocation = FileUtil.getRelativePath(basePath, file) ?: continue
 
-        val definition = K2ScriptDefinitionProvider.getInstance(project).findDefinition(VirtualFileScriptSource(scriptFile))
-
-        val definitionName = definition?.name ?: continue
+        val definitionName = findScriptDefinition(project, VirtualFileScriptSource(scriptFile)).name
 
         val definitionScriptModuleName = "$KOTLIN_SCRIPTS_MODULE_NAME.$definitionName"
         val locationName = relativeLocation.replace(VfsUtilCore.VFS_SEPARATOR_CHAR, ':')

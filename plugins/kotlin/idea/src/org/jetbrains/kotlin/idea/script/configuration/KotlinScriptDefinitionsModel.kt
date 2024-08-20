@@ -8,7 +8,7 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.BundledIdeScriptDefinition
+import org.jetbrains.kotlin.idea.core.script.LegacyBundledIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
@@ -69,7 +69,7 @@ class KotlinScriptDefinitionsModel private constructor(definitions: MutableList<
         }
 
         override fun isCellEditable(item: ModelDescriptor): Boolean {
-            return item.definition.asLegacyOrNull<BundledIdeScriptDefinition>() == null
+            return item.definition.asLegacyOrNull<LegacyBundledIdeScriptDefinition>() == null
                    && item.definition.canDefinitionBeSwitchedOff
         }
     }

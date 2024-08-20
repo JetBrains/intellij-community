@@ -81,7 +81,6 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
                 }
             }
 
-            GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
             GradleScriptDependenciesSource.getInstance(project)?.updateDependenciesAndCreateModules(gradleScripts, storage)
         }
     }

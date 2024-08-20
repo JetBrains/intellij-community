@@ -35,9 +35,6 @@ internal class ReloadDependenciesScriptAction : AnAction() {
                 listOf(BaseScriptModel(file))
             )
 
-            ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
-            HighlightingSettingsPerFile.getInstance(project).incModificationCount()
-
             EditorNotifications.getInstance(project).updateNotifications(file)
         }
     }

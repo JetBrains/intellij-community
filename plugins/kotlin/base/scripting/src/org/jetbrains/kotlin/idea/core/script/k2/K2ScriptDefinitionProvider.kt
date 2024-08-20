@@ -3,12 +3,15 @@ package org.jetbrains.kotlin.idea.core.script.k2
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.core.script.LegacyBundledIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.displayName
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 /**
@@ -31,7 +34,7 @@ class K2ScriptDefinitionProvider(val project: Project) : LazyScriptDefinitionPro
 
             return allDefinitions.get()
                 .filter { settingsByDefinitionId[it.definitionId]?.setting?.enabled != false }
-                .sortedBy { settingsByDefinitionId[it.definitionId]?.index }
+                .sortedBy { settingsByDefinitionId[it.definitionId]?.index ?: Integer.MAX_VALUE }
                 .asSequence()
         }
 
@@ -43,11 +46,18 @@ class K2ScriptDefinitionProvider(val project: Project) : LazyScriptDefinitionPro
         clearCache()
     }
 
-    override fun getDefaultDefinition(): ScriptDefinition =
-        ScriptDefinition.FromConfigurations(defaultJvmScriptingHostConfiguration, ScriptCompilationConfiguration.Default, null)
+    override fun getDefaultDefinition(): ScriptDefinition = project.defaultDefinition
 
     companion object {
         fun getInstance(project: Project): K2ScriptDefinitionProvider =
             project.service<ScriptDefinitionProvider>() as K2ScriptDefinitionProvider
     }
+}
+
+//TODO: migrate to new definition
+val Project.defaultDefinition: ScriptDefinition
+    get() = ScriptDefinition.FromLegacy(defaultJvmScriptingHostConfiguration, LegacyBundledIdeScriptDefinition(this))
+
+class BundledScriptDefinitionSource(val project: Project) : ScriptDefinitionsSource {
+    override val definitions: Sequence<ScriptDefinition> = sequenceOf(project.defaultDefinition)
 }
