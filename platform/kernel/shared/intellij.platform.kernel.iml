@@ -15,7 +15,7 @@
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
-                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/1.9.20-0.18/rhizomedb-compiler-plugin-1.9.20-0.18.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/1.9.20-0.21/rhizomedb-compiler-plugin-1.9.20-0.21.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -37,13 +37,13 @@
     <orderEntry type="library" scope="PROVIDED" name="rhizomedb-compiler-plugin" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.fleet.kernel" type="repository">
-        <properties maven-id="org.jetbrains.fleet:kernel:1.40.0-FL24724_04887ff57dcb6.12">
+        <properties maven-id="org.jetbrains.fleet:kernel:1.41.0-FL24724_82b058de25568.14">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.40.0-FL24724_04887ff57dcb6.12/kernel-1.40.0-FL24724_04887ff57dcb6.12.jar">
-              <sha256sum>d581a3eea7f3c10113e19cb7c70b3cff712a5599326ebd48bddb2fbe42d3eba6</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.41.0-FL24724_82b058de25568.14/kernel-1.41.0-FL24724_82b058de25568.14.jar">
+              <sha256sum>323782f9aa0cb78a0e799908bfba960e104e40de83a0af229421f22bef13ec1f</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.40.0-FL24724_04887ff57dcb6.12/rhizomedb-1.40.0-FL24724_04887ff57dcb6.12.jar">
-              <sha256sum>816522d69a85b20b7a49fc54b1c2a38cad6a1918bf795dcd3a510e223c25f85c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.41.0-FL24724_82b058de25568.14/rhizomedb-1.41.0-FL24724_82b058de25568.14.jar">
+              <sha256sum>b15197164a6d7dcb13b1c3fb8356b89addc9a6f7ff73048aecb42db9df0257ce</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -61,13 +61,13 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.40.0-FL24724_04887ff57dcb6.12/kernel-1.40.0-FL24724_04887ff57dcb6.12.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.40.0-FL24724_04887ff57dcb6.12/rhizomedb-1.40.0-FL24724_04887ff57dcb6.12.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.41.0-FL24724_82b058de25568.14/kernel-1.41.0-FL24724_82b058de25568.14.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.41.0-FL24724_82b058de25568.14/rhizomedb-1.41.0-FL24724_82b058de25568.14.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.40.0-FL24724_04887ff57dcb6.12/kernel-1.40.0-FL24724_04887ff57dcb6.12-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.40.0-FL24724_04887ff57dcb6.12/rhizomedb-1.40.0-FL24724_04887ff57dcb6.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.41.0-FL24724_82b058de25568.14/kernel-1.41.0-FL24724_82b058de25568.14-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.41.0-FL24724_82b058de25568.14/rhizomedb-1.41.0-FL24724_82b058de25568.14-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
