@@ -397,8 +397,16 @@ open class Alarm @Internal constructor(
 
           //todo fix clients and remove NonCancellable
           try {
-            Cancellation.withNonCancelableSection().use {
-              task.run()
+            if (owner.threadToUse == ThreadToUse.SWING_THREAD) {
+              Cancellation.withNonCancelableSection().use {
+                //todo fix clients and remove WriteIntentReadAction
+                WriteIntentReadAction.run(task)
+              }
+            }
+            else {
+              Cancellation.withNonCancelableSection().use {
+                task.run()
+              }
             }
           }
           catch (e: CancellationException) {

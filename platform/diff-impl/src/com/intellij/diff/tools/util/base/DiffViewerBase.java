@@ -119,7 +119,7 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
     abortRediff();
 
     if (UIUtil.isShowing(getComponent())) {
-      taskAlarm.addRequest(() -> WriteIntentReadAction.run((Runnable)() -> rediff()), ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      taskAlarm.addRequest(() -> rediff(), ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     }
   }
 
