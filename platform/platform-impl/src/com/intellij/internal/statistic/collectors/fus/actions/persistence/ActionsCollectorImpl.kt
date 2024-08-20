@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.actions.ActionsCollector
+import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.collectors.fus.DataContextUtils
 import com.intellij.internal.statistic.eventLog.events.*
@@ -170,12 +171,12 @@ class ActionsCollectorImpl : ActionsCollector() {
                customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       if (action == null) return
 
-      val isLookupActive = project
-        ?.takeIf { !project.isDisposed }
+      val isLookupActive = project?.takeIf { !project.isDisposed }
         ?.getServiceIfCreated(LookupManager::class.java)
         ?.let { event?.dataContext?.getData(CommonDataKeys.HOST_EDITOR) }
         ?.let { LookupManager.getActiveLookup(it) } != null
 
+      val toolWindowId = event?.dataContext?.getData(PlatformDataKeys.TOOL_WINDOW)?.id
       val projectPairs = projectData(project)
 
       eventId.log(project) {
@@ -189,6 +190,7 @@ class ActionsCollectorImpl : ActionsCollector() {
           addAll(projectPairs)
           if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
             add(ActionsEventLogGroup.LOOKUP_ACTIVE.with(isLookupActive))
+            add(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindowId))
           }
         }
         customDataProvider(this)
