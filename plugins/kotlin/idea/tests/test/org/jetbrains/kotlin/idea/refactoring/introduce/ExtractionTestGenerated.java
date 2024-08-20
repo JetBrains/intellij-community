@@ -4174,6 +4174,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testWhile() throws Exception {
                 runTest("testData/refactoring/introduceParameter/while.kt");
             }
+
+            @TestMetadata("withJavaSuper.kt")
+            public void testWithJavaSuper() throws Exception {
+                runTest("testData/refactoring/introduceParameter/withJavaSuper.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -4383,6 +4388,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("lambdaParamOfUnit.kt")
             public void testLambdaParamOfUnit() throws Exception {
                 runTest("testData/refactoring/introduceLambdaParameter/lambdaParamOfUnit.kt");
+            }
+
+            @TestMetadata("lambdaParamWithClsSuper.kt")
+            public void testLambdaParamWithClsSuper() throws Exception {
+                runTest("testData/refactoring/introduceLambdaParameter/lambdaParamWithClsSuper.kt");
             }
 
             @TestMetadata("lambdaParamWithDefaultValue.kt")

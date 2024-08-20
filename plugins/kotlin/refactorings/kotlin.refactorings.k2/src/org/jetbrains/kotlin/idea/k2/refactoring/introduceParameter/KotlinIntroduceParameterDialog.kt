@@ -182,14 +182,15 @@ class KotlinIntroduceParameterDialog(
     }
 
     override fun doAction() {
-        performRefactoring()
+        val startMarkAction = performRefactoring()
+        FinishMarkAction.finish(myProject, editor, startMarkAction)
     }
 
     @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
-    fun performRefactoring() {
+    fun performRefactoring(): StartMarkAction {
         close(OK_EXIT_CODE)
 
-        project.executeCommand(commandName) {
+        return project.executeCommand(commandName) {
             fun createLambdaForArgument(function: KtFunction): KtExpression {
                 val statement = function.bodyBlockExpression!!.statements.single()
                 val space = if (statement.isMultiLine()) "\n" else " "
@@ -232,11 +233,11 @@ class KotlinIntroduceParameterDialog(
                             }
                         }
                 ) {
-                    return@executeCommand
+                    return@executeCommand startMarkAction
                 }
 
                 if (extractionResult == null) {
-                    return@executeCommand
+                    return@executeCommand startMarkAction
                 }
                 val (_, declaration, duplicateReplacers) = extractionResult!!
 
@@ -275,7 +276,8 @@ class KotlinIntroduceParameterDialog(
             )
 
             val configure: IntroduceParameterDescriptor<KtNamedDeclaration> = helper.configure(descriptorToRefactor)
-            configure.performRefactoring(onExit = { FinishMarkAction.finish(myProject, editor, startMarkAction) })
+            configure.performRefactoring(editor)
+            startMarkAction
         }
     }
 }

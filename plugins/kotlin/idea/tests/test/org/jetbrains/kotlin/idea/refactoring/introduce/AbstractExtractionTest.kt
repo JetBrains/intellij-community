@@ -471,7 +471,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     }
 
     protected fun doTest(
-        checkAdditionalAfterdata: Boolean = false,
+        checkAdditionalAfterdata: Boolean = true,
         generateMissingFiles: Boolean = true,
         isIntroduceVariableTest: Boolean = false,
         action: (PsiFile) -> Unit

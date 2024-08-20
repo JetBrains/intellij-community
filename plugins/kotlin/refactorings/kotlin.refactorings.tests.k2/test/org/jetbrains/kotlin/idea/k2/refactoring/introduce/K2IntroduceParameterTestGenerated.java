@@ -561,6 +561,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             public void testWhile() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/while.kt");
             }
+
+            @TestMetadata("withJavaSuper.kt")
+            public void testWithJavaSuper() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/withJavaSuper.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -770,6 +775,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             @TestMetadata("lambdaParamOfUnit.kt")
             public void testLambdaParamOfUnit() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceLambdaParameter/lambdaParamOfUnit.kt");
+            }
+
+            @TestMetadata("lambdaParamWithClsSuper.kt")
+            public void testLambdaParamWithClsSuper() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceLambdaParameter/lambdaParamWithClsSuper.kt");
             }
 
             @TestMetadata("lambdaParamWithDefaultValue.kt")
