@@ -26,9 +26,25 @@ interface LcrRow<T> {
 
   @Deprecated("Will be removed because we want to get rid of swing dependency for RemDev")
   val list: JList<out T>
+
+  /**
+   * The value of the rendering item
+   */
   val value: T
+
+  /**
+   * Index of the rendering item. `-1` if ComboBox is rendering the selected item in collapsed state
+   */
   val index: Int
+
+  /**
+   * `true` if the rendering item is selected
+   */
   val selected: Boolean
+
+  /**
+   * `true` if the rendering item has the focus
+   */
   val hasFocus: Boolean
 
   /**

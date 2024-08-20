@@ -30,7 +30,7 @@ internal sealed class LcrCellBaseImpl<T: LcrInitParams>(val initParams: T, val b
 
   abstract val type: Type
 
-  abstract fun apply(component: JComponent)
+  abstract fun apply(component: JComponent, enabled: Boolean)
 }
 
 private class PatchedSimpleColoredComponent : SimpleColoredComponent() {
