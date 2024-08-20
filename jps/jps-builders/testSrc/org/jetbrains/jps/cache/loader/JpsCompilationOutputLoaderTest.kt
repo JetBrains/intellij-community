@@ -3,17 +3,16 @@
 
 package org.jetbrains.jps.cache.loader
 
-import com.dynatrace.hash4j.hashing.Hashing
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.cache.client.JpsServerClient
 import org.jetbrains.jps.cache.model.BuildTargetState
+import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
+import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -117,18 +116,12 @@ class JpsCompilationOutputLoaderTest : BasePlatformTestCase() {
 }
 
 private fun loadModelFromFile(fileName: String): Map<String, Map<String, BuildTargetState>> {
-  val map = LinkedHashMap<String, Map<String, BuildTargetState>>()
-  for ((k, v) in Json.parseToJsonElement(Files.readString(getTestDataFile(fileName))).jsonObject) {
-    val value = v.jsonObject
-      .map { (k, v) ->
-        v as JsonObject
-        k to BuildTargetState(
-          hash = Hashing.komihash5_0().hashCharsToLong(v.get("hash")!!.jsonPrimitive.content),
-          relativePath = v.get("relativePath")!!.jsonPrimitive.content,
-        )
-      }
-      .toMap()
-    map.put(k, value)
-  }
+  val inJson = Files.readString(getTestDataFile(fileName))
+  val map = BuildTargetSourcesState.readJson(JsonReader(inJson.reader()), true)
+
+  val stringWriter = StringWriter()
+  JsonWriter(stringWriter).use { BuildTargetSourcesState.writeJson(it, map) }
+  assertThat(BuildTargetSourcesState.readJson(JsonReader(stringWriter.toString().reader()), false))
+    .isEqualTo(map)
   return map
 }

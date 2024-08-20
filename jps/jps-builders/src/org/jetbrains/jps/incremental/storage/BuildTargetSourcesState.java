@@ -3,15 +3,18 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -34,7 +37,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -74,7 +76,6 @@ public final class BuildTargetSourcesState implements BuildListener {
   private final CompileContext context;
   private final String outputFolderPath;
   private final Path targetStateStorage;
-  private final Type tokenType;
 
   public BuildTargetSourcesState(@NotNull CompileContext context) {
     this.context = context;
@@ -88,7 +89,6 @@ public final class BuildTargetSourcesState implements BuildListener {
 
     BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
     targetStateStorage = dataPaths.getDataStorageRoot().toPath().resolve(TARGET_SOURCES_STATE_FILE_NAME);
-    tokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType();
 
     // subscribe to events for reporting only changed build targets
     context.addBuildListener(this);
@@ -150,7 +150,9 @@ public final class BuildTargetSourcesState implements BuildListener {
     clearRemovedBuildTargets(targetTypeHashMap);
     try {
       Files.createDirectories(targetStateStorage.getParent());
-      Files.writeString(targetStateStorage, new Gson().toJson(targetTypeHashMap));
+      try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(targetStateStorage))) {
+        writeJson(writer, targetTypeHashMap);
+      }
     }
     catch (IOException e) {
       LOG.warn("Unable to save sources state", e);
@@ -345,14 +347,11 @@ public final class BuildTargetSourcesState implements BuildListener {
 
   private @NotNull Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
     try (BufferedReader reader = Files.newBufferedReader(targetStateStorage)) {
-      Map<String, Map<String, BuildTargetState>> result = new Gson().fromJson(reader, tokenType);
-      if (result != null) {
-        return result;
-      }
+      return readJson(new JsonReader(reader), false);
     }
     catch (NoSuchFileException ignore) {
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.warn("Couldn't parse current build target state", e);
     }
     return new HashMap<>();
@@ -377,5 +376,83 @@ public final class BuildTargetSourcesState implements BuildListener {
       return "";
     }
     return JpsPathUtil.urlToFile(url).getAbsolutePath();
+  }
+
+  @VisibleForTesting
+  public static @NotNull Map<String, Map<String, BuildTargetState>> readJson(JsonReader reader, boolean stringHashAsHash) throws IOException {
+    reader.beginObject();
+    Map<String, Map<String, BuildTargetState>> result = new HashMap<>();
+    while (reader.hasNext()) {
+      String category = reader.nextName();
+
+      reader.beginObject();
+      Map<String, BuildTargetState> map = new HashMap<>();
+      while (reader.hasNext()) {
+        String moduleName = reader.nextName();
+        reader.beginObject();
+        long hash = -1;
+        boolean hasHash = false;
+        String relativePath = null;
+        while (reader.hasNext()) {
+          String name = reader.nextName();
+          if (name.equals("hash")) {
+            if (reader.peek() == JsonToken.NUMBER) {
+              try {
+                hash = reader.nextLong();
+                hasHash = true;
+              }
+              catch (NumberFormatException e) {
+                reader.skipValue();
+              }
+            }
+            else if (stringHashAsHash) {
+              hash = Hashing.komihash5_0().hashCharsToLong(reader.nextString());
+              hasHash = true;
+            }
+            else {
+              reader.skipValue();
+            }
+          }
+          else if (name.equals("relativePath")) {
+            relativePath = reader.nextString();
+          }
+        }
+        if (hasHash && relativePath != null) {
+          map.put(moduleName, new BuildTargetState(hash, relativePath));
+        }
+        reader.endObject();
+
+        result.put(category, map);
+      }
+      reader.endObject();
+    }
+    reader.endObject();
+    return result;
+  }
+
+  @VisibleForTesting
+  public static void writeJson(JsonWriter writer, Map<String, Map<String, BuildTargetState>> map) throws IOException {
+    String[] keys = ArrayUtilRt.toStringArray(map.keySet());
+    Arrays.sort(keys);
+
+    writer.beginObject();
+    for (String category : keys) {
+      writer.name(category);
+
+      Map<String, BuildTargetState> subMap = map.get(category);
+      String[] modules = ArrayUtilRt.toStringArray(subMap.keySet());
+      writer.beginObject();
+      for (String module : modules) {
+        writer.name(module);
+
+        BuildTargetState state = subMap.get(module);
+        writer.beginObject();
+        writer.name("hash").value(state.hash);
+        writer.name("relativePath").value(state.relativePath);
+        writer.endObject();
+      }
+      writer.endObject();
+    }
+    writer.endObject();
   }
 }
