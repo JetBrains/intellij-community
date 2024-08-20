@@ -57,7 +57,7 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
           initWorkspaceClock()
         }
         contextDeferred.complete(currentCoroutineContext().kernelCoroutineContext())
-        ReadTracker.subscribeForChanges()
+        updateDbInTheEventDispatchThread()
       }
     }
   }
