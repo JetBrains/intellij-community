@@ -31,7 +31,7 @@ windows = { version = "0.58.0", features = [
 libc = "0.2.142"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-core-foundation = "0.9.3"
+core-foundation = "0.10.0"
 
 [target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
 native-dialog = "0.7.0"
@@ -39,7 +39,7 @@ native-dialog = "0.7.0"
 # `cargo-deny` and `cargo-about` are used in separate build steps
 # we don't have to actually build them, but having them in the manifest shows if any updates are available
 [target.'cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))'.build-dependencies]
-cargo-deny = "0.14.21"  # checks licenses and problematic dependencies
+cargo-deny = "0.16.1"  # checks licenses and problematic dependencies
 cargo-about = "0.6.1"   # generates license report
 
 [build-dependencies]
