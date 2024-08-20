@@ -120,7 +120,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     EditorMouseHoverPopupManager.getInstance();
   }
 
-  public void testHighlightInfoGeneratedByHighlightVisitorMustImmediatelyShowItselfOnScreenRightAfterCreation() {
+  public void testHighlightInfoGeneratedByHighlightVisitorMustImmediatelyShowItselfOnScreenRightAfterCreation() throws Exception {
     AtomicBoolean xxxMustBeVisible = new AtomicBoolean();
     HighlightVisitor visitor = new MyHighlightCommentsSubstringVisitor(xxxMustBeVisible);
     myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
@@ -271,7 +271,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
   }
 
-  public void testDaemonListenerFiresEventsInCorrectOrderEvenWhenHighlightVisitorInterruptsItself() {
+  public void testDaemonListenerFiresEventsInCorrectOrderEvenWhenHighlightVisitorInterruptsItself() throws Exception {
     List<String> log = Collections.synchronizedList(new ArrayList<>());
     myProject.getMessageBus().connect(getTestRootDisposable())
       .subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
@@ -378,7 +378,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
   }
 
-  public void testHighlightVisitorsMustRunIndependentlyAndInParallel() {
+  public void testHighlightVisitorsMustRunIndependentlyAndInParallel() throws Exception {
     @Language("JAVA")
     String text = """
       class X {
