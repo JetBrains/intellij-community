@@ -5,9 +5,13 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.OuterLanguageElementType
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -45,7 +49,7 @@ class MarkdownHighlightingAnnotator : Annotator {
     val parentType = element.parent?.let(PsiUtilCore::getElementType) ?: return
     val attributes = predicate.invoke(parentType)
     if (attributes != null) {
-      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(attributes).create()
+      element.traverseAndCreateAnnotationsForContent(holder, attributes)
     }
   }
 
@@ -54,9 +58,76 @@ class MarkdownHighlightingAnnotator : Annotator {
       return
     }
     val highlights = syntaxHighlighter.getTokenHighlights(PsiUtilCore.getElementType(element))
-    if (highlights.isNotEmpty() && highlights.first() != MarkdownHighlighterColors.TEXT) {
-      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(highlights.first()).create()
+    val parentAttributesKey = highlights.firstOrNull() ?: return
+    if (parentAttributesKey != MarkdownHighlighterColors.TEXT) {
+      element.traverseAndCreateAnnotationsForContent(holder, parentAttributesKey)
     }
+  }
+
+  /**
+   * Traverse element's subtree and create annotations corresponding only to Markdown content,
+   * ignoring nodes which might be of [OuterLanguageElementType].
+   * Applying for leaf elements would result in a guarantee of non-overlapping ranges.
+   */
+  private fun PsiElement.traverseAndCreateAnnotationsForContent(holder: AnnotationHolder, textAttributesKey: TextAttributesKey) {
+    val contentRanges = mutableListOf<TextRange>()
+
+    accept(object : PsiRecursiveElementVisitor() {
+      override fun visitElement(element: PsiElement) {
+        val type = element.elementType
+        if (type !is OuterLanguageElementType && element.firstChild == null) {
+          contentRanges.add(element.textRange)
+        }
+
+        super.visitElement(element)
+      }
+    })
+
+    /**
+     * If an original sequence was separated by [OuterLanguageElementType]s, then there are several ranges.
+     * In other cases, the result contains one element.
+     */
+    val mergedRanges = mergeRanges(contentRanges)
+
+    mergedRanges.forEach { contentRange ->
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+        .textAttributes(textAttributesKey)
+        .range(contentRange)
+        .create()
+    }
+  }
+
+  /**
+   * Given the list of content [TextRange]s, reduces the list by merging adjustment [TextRange]s, e.g.,
+   * for any i, j from the given list: start_i == end_j.
+   */
+  private fun mergeRanges(contentRanges: Collection<TextRange>): Collection<TextRange> {
+    if (contentRanges.isEmpty()) {
+      return emptyList()
+    }
+
+    val mergedRanges = mutableSetOf<TextRange>()
+    val sortedRanges = contentRanges
+      .sortedBy { it.startOffset }
+    var currentRange = sortedRanges[0]
+
+    for (i in 1 until sortedRanges.size) {
+      val nextRange = sortedRanges[i]
+
+      if (currentRange.endOffset == nextRange.startOffset) {
+        currentRange = TextRange(
+          currentRange.startOffset,
+          maxOf(currentRange.endOffset, nextRange.endOffset)
+        )
+      } else {
+        mergedRanges.add(currentRange)
+        currentRange = nextRange
+      }
+    }
+
+    mergedRanges.add(currentRange)
+
+    return mergedRanges
   }
 
   companion object {
