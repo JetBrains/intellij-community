@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ModalityState
@@ -240,6 +241,12 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
 
     initOrientation(service, true)
     trackOrientation(service)
+  }
+
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PyPackagesUiComponents.SELECTED_PACKAGE_DATA_CONTEXT] = selectedPackage
+    super.uiDataSnapshot(sink)
   }
 
   private fun initOrientation(service: PyPackagingToolWindowService, horizontal: Boolean) {

@@ -5,17 +5,16 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesTable
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackage
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 
-internal class DeletePackageAction(val table: PyPackagesTable<*>) : DumbAwareAction(PyBundle.message("python.toolwindow.packages.delete.package")) {
+internal class DeletePackageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val pkg = table.selectedItem() as? InstalledPackage ?: return
+    val pkg = e.selectedPackage as? InstalledPackage ?: return
 
     val service = project.service<PyPackagingToolWindowService>()
 
@@ -25,7 +24,7 @@ internal class DeletePackageAction(val table: PyPackagesTable<*>) : DumbAwareAct
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = table.selectedItem() is InstalledPackage
+    e.presentation.isEnabledAndVisible = e.selectedPackage is InstalledPackage
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

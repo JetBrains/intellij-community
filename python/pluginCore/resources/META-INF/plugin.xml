@@ -914,6 +914,13 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
+    <group id="PyPackageToolwindowContext">
+      <action id="PyInstallPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallPackageAction"/>
+      <action id="PyDeletePackage" class="com.jetbrains.python.packaging.toolwindow.actions.DeletePackageAction"/>
+      <action id="PyChangeVersionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.ChangeVersionPackageAction"/>
+      <action id="PyUpdateToLatestPackage" class="com.jetbrains.python.packaging.toolwindow.actions.UpdatePackageToLatestAction"/>
+    </group>
+
     <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
             internal="true">
       <add-to-group group-id="Internal"/>

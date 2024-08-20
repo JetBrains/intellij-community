@@ -21,7 +21,7 @@ import javax.swing.table.DefaultTableCellRenderer
 internal class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
   private val nameLabel = JLabel().apply { border = JBUI.Borders.empty(0, 12) }
   private val versionLabel = JLabel().apply { border = JBUI.Borders.emptyRight(12) }
-  private val linkLabel = JLabel(PyBundle.message("python.toolwindow.packages.install.link")).apply {
+  private val linkLabel = JLabel(PyBundle.message("action.python.packages.install.text")).apply {
     border = JBUI.Borders.emptyRight(12)
     foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
   }
@@ -67,7 +67,7 @@ internal class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
       versionPanel.removeAll()
 
       if (value is InstallablePackage) {
-        linkLabel.text = PyBundle.message("python.toolwindow.packages.install.link")
+        linkLabel.text = PyBundle.message("action.python.packages.install.text")
         linkLabel.updateUnderline(table, row)
         if (rowSelected || TableHoverListener.getHoveredRow(table) == row) {
           versionPanel.add(linkLabel)

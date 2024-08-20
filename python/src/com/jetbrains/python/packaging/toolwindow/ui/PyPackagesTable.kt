@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.ui
 
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.DoubleClickListener
@@ -15,10 +16,6 @@ import com.intellij.util.ui.NamedColorUtil
 import com.jetbrains.python.packaging.toolwindow.PyPackagingTablesView
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
-import com.jetbrains.python.packaging.toolwindow.actions.ChangeVersionPackageAction
-import com.jetbrains.python.packaging.toolwindow.actions.DeletePackageAction
-import com.jetbrains.python.packaging.toolwindow.actions.InstallPackageAction
-import com.jetbrains.python.packaging.toolwindow.actions.UpdatePackageToLatestAction
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
@@ -127,12 +124,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(
       }
     }.installOn(this)
 
-    val packageActionGroup = DefaultActionGroup(
-      DeletePackageAction(this),
-      InstallPackageAction(this),
-      UpdatePackageToLatestAction(this),
-      ChangeVersionPackageAction(this),
-    )
+    val packageActionGroup = ActionManager.getInstance().getAction("PyPackageToolwindowContext") as ActionGroup
     PopupHandler.installPopupMenu(this, packageActionGroup, "PackagePopup")
   }
 

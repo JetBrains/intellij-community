@@ -51,8 +51,8 @@ import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
 class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
-
-  private var toolWindowPanel: PyPackagingToolWindowPanel? = null
+  var toolWindowPanel: PyPackagingToolWindowPanel? = null
+    private set
   lateinit var manager: PythonPackageManager
   private var installedPackages: Map<String, InstalledPackage> = emptyMap()
   internal var currentSdk: Sdk? = null
@@ -231,10 +231,12 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private fun sortPackagesForRepo(packageNames: List<String>,
-                                  query: String,
-                                  repository: PyPackageRepository,
-                                  skipItems: Int = 0): PyPackagesViewData {
+  private fun sortPackagesForRepo(
+    packageNames: List<String>,
+    query: String,
+    repository: PyPackageRepository,
+    skipItems: Int = 0,
+  ): PyPackagesViewData {
 
     val comparator = createNameComparator(query, repository.repositoryUrl ?: "")
 
@@ -384,6 +386,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   companion object {
     private const val PACKAGES_LIMIT = 50
+
+    fun getInstance(project: Project) = project.service<PyPackagingToolWindowService>()
+
     private fun createNameComparator(query: String, url: String): Comparator<String> {
       val nameComparator = Comparator<String> { name1, name2 ->
         val queryLowerCase = query.lowercase()

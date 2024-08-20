@@ -2,6 +2,9 @@
 package com.jetbrains.python.packaging.toolwindow.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -25,6 +28,15 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 
 object PyPackagesUiComponents {
+  val SELECTED_PACKAGE_DATA_CONTEXT = DataKey.create<DisplayablePackage>("SELECTED_PACKAGE_DATA_CONTEXT")
+
+  val DataContext.selectedPackage: DisplayablePackage?
+    get() = getData(SELECTED_PACKAGE_DATA_CONTEXT)
+
+  val AnActionEvent.selectedPackage: DisplayablePackage?
+    get() = dataContext.selectedPackage
+
+
   fun createAvailableVersionsPopup(selectedPackage: DisplayablePackage, details: PythonPackageDetails, project: Project, controller: PyPackagingToolWindowPanel): ListPopup {
     return JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<String>(null, details.availableVersions) {
       override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
