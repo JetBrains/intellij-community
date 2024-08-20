@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.base.util
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.Stack
@@ -19,6 +20,16 @@ import java.util.*
      on the backend. In case if all goes wrong, there's a registry key available that turns off the new behavior.
  */
 object ClassNameCalculator {
+
+    interface Extension {
+        companion object {
+            internal val EP_NAME =
+                ExtensionPointName<Extension>("org.jetbrains.kotlin.idea.debugger.base.util.classNameCalculatorExtension")
+        }
+
+        fun getClassNames(file: KtFile): Map<KtElement, String>
+    }
+
     fun getClassNames(file: KtFile): Map<KtElement, String> {
         return CachedValuesManager.getCachedValue(file) {
             val visitor = ClassNameCalculatorVisitor()
@@ -37,18 +48,24 @@ object ClassNameCalculator {
     }
 }
 
-private class ClassNameCalculatorVisitor : KtTreeVisitorVoid() {
+private class ClassNameCalculatorVisitor(
+    private val extensions: List<ClassNameCalculator.Extension> = ClassNameCalculator.Extension.EP_NAME.extensionList,
+) : KtTreeVisitorVoid() {
     private val names = Stack<String?>()
     private val anonymousIndices = Stack<Int>()
     private var collectedNames = WeakHashMap<KtElement, String>()
 
     val allNames: Map<KtElement, String>
-        get() = collectedNames
+        get() = collectedNames + namesFromExtensions
+
+    val namesFromExtensions = WeakHashMap<KtElement, String>()
 
     override fun visitKtFile(file: KtFile) {
+        extensions.forEach { extension -> namesFromExtensions += extension.getClassNames(file) }
         saveName(file, JvmFileClassUtil.getFileClassInfoNoResolve(file).fileClassFqName.asString())
         super.visitKtFile(file)
     }
+
 
     override fun visitScript(script: KtScript) {
         push(script, script.fqName.asString())

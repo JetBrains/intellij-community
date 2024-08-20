@@ -25,6 +25,9 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.debugger.kotlinStackFrameValueContributor"
                     interface="org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrameValueContributor" dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.base.util.classNameCalculatorExtension"
+                    interface="org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator$Extension" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
