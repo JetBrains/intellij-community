@@ -92,6 +92,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
 
         testClass<AbstractK2IntroduceParameterTest> {
             model("refactoring/introduceParameter", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceParameterTest")
+            model("refactoring/introduceJavaParameter", pattern = Patterns.JAVA, testMethodName = "doIntroduceJavaParameterTest")
             model("refactoring/introduceLambdaParameter", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceFunctionalParameterTest")
         }
 

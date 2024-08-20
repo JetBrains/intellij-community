@@ -565,10 +565,11 @@ class ExtractTestFiles(
     val mainFile: PsiFile,
     val afterFile: File,
     val conflictFile: File,
-    val extraFilesToPsi: Map<PsiFile, File> = emptyMap()
+    val extraFilesToPsi: Map<PsiFile, File> = emptyMap(),
+    val isFirPlugin: Boolean,
 ) {
     constructor(path: String, mainFile: PsiFile, extraFilesToPsi: Map<PsiFile, File> = emptyMap(), isFirPlugin: Boolean) :
-            this(mainFile, getAfterFile(path, isFirPlugin), getConflictsFile(path, isFirPlugin), extraFilesToPsi)
+            this(mainFile, getAfterFile(path, isFirPlugin), getConflictsFile(path, isFirPlugin), extraFilesToPsi, isFirPlugin)
 
 
 }
@@ -620,7 +621,8 @@ fun checkExtract(
 
         if (checkAdditionalAfterdata) {
             for ((extraPsiFile, extraFile) in files.extraFilesToPsi) {
-                KotlinTestUtils.assertEqualsToFile(File("${extraFile.path}.after"), extraPsiFile.text)
+                val expectedFile = getAfterFile(extraFile.path, files.isFirPlugin)
+                KotlinTestUtils.assertEqualsToFile(expectedFile, extraPsiFile.text)
             }
         }
     } catch (e: Throwable) {

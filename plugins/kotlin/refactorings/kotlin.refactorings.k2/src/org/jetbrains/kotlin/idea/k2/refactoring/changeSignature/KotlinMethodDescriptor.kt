@@ -30,7 +30,7 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
 
         fun getCallable(): KtNamedDeclaration = (ExpectActualUtils.liftToExpected(c) ?: c) as KtNamedDeclaration
 
-        return if (ApplicationManager.getApplication().isDispatchThread) {
+        return if (ApplicationManager.getApplication().isDispatchThread && !ApplicationManager.getApplication().isWriteAccessAllowed) {
             runWithModalProgressBlocking(
                 c.project, KotlinBundle.message("fix.change.signature.prepare")
             ) { readAction { getCallable() } }

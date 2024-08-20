@@ -594,6 +594,30 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/introduceJavaParameter")
+    public static class IntroduceJavaParameter extends AbstractK2IntroduceParameterTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doIntroduceJavaParameterTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaMethod.java")
+        public void testJavaMethod() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceJavaParameter/javaMethod.java");
+        }
+
+        @TestMetadata("javaMethodOverridingKotlinFunctionWithUsages.java")
+        public void testJavaMethodOverridingKotlinFunctionWithUsages() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceJavaParameter/javaMethodOverridingKotlinFunctionWithUsages.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceLambdaParameter")
     public abstract static class IntroduceLambdaParameter extends AbstractK2IntroduceParameterTest {
         @RunWith(JUnit3RunnerWithInners.class)
