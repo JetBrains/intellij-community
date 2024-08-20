@@ -2,7 +2,9 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.ContextAwareRunnable;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.EventWatcher;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,22 +28,25 @@ final class FlushQueue {
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
-    ThreadingAssertions.assertEventDispatchThread();
-    synchronized (getQueueLock()) {
-      FLUSHER_SCHEDULED = false;
-    }
-    long startTime = System.currentTimeMillis();
-    while (true) {
-      RunnableInfo info = pollNextEvent();
-      if (info == null) {
-        break;
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      ThreadingAssertions.assertEventDispatchThread();
+      synchronized (getQueueLock()) {
+        FLUSHER_SCHEDULED = false;
       }
-      runNextEvent(info);
-      if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
-        synchronized (getQueueLock()) {
-          requestFlush();
+
+      long startTime = System.currentTimeMillis();
+      while (true) {
+        RunnableInfo info = pollNextEvent();
+        if (info == null) {
+          break;
         }
-        break;
+        runNextEvent(info);
+        if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
+          synchronized (getQueueLock()) {
+            requestFlush();
+          }
+          break;
+        }
       }
     }
   }
