@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
@@ -42,25 +41,18 @@ import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
 
 class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
-
-    companion object {
-        fun useIRFragmentCompiler(): Boolean =
-            Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend").asBoolean()
-    }
-
     fun compile(
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
         compilingStrategy: CodeFragmentCompilingStrategy, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
         val result = compilingStrategy.stats.startAndMeasureCompilationUnderReadAction {
-            doCompile(codeFragment, filesToCompile, compilingStrategy, bindingContext, moduleDescriptor)
+            doCompile(codeFragment, filesToCompile, bindingContext, moduleDescriptor)
         }
         return result.getOrThrow()
     }
 
     private fun doCompile(
-        codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
-        compilingStrategy: CodeFragmentCompilingStrategy, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
+        codeFragment: KtCodeFragment, filesToCompile: List<KtFile>, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor,
     ): CompilationResult {
         require(codeFragment is KtBlockCodeFragment || codeFragment is KtExpressionCodeFragment) {
             "Unsupported code fragment type: $codeFragment"
@@ -76,7 +68,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         val defaultReturnType = moduleDescriptor.builtIns.unitType
         val returnType = getReturnType(codeFragment, bindingContext, defaultReturnType)
 
-        val fragmentCompilerBackend = compilingStrategy.compilerBackend
+        val fragmentCompilerBackend = IRFragmentCompilerCodegen()
 
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
@@ -91,8 +83,6 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
             codeFragment, Name.identifier(GENERATED_CLASS_NAME), Name.identifier(GENERATED_FUNCTION_NAME),
             parameterInfo, returnType, moduleDescriptorWrapper.packageFragmentForEvaluator
         )
-
-        fragmentCompilerBackend.initCodegen(classDescriptor, methodDescriptor, parameterInfo)
 
         val generationState = GenerationState.Builder(
             project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper,
@@ -118,8 +108,6 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
             throw e
         } catch (e: Exception) {
             throw CodeFragmentCodegenException(e)
-        } finally {
-            fragmentCompilerBackend.cleanupCodegen()
         }
     }
 

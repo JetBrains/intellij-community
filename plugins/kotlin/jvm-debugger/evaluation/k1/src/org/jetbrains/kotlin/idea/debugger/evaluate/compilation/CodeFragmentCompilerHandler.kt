@@ -41,11 +41,6 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
                 }
         } catch (e: Exception) {
             strategy.processError(e, codeFragment, filesToCompileExceptCodeFragment, executionContext)
-            val fallback = strategy.getFallbackStrategy()
-            if (fallback != null) {
-                strategy.beforeRunningFallback()
-                return doCompileCodeFragment(fallback, codeFragment, moduleDescriptor, bindingContext, executionContext)
-            }
             // This error will be recycled into an error message in the Evaluation/Watches result component,
             // and it won't be actually thrown further, so there shouldn't be duplicated error messages
             // in EA dialog / log / wherever else
