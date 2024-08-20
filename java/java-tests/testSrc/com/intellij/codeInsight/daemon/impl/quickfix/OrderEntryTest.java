@@ -10,6 +10,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -85,7 +86,8 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     if(action != null && performAction) {
       String text = action.getText();
       WriteCommandAction.runWriteCommandAction(null, () -> action.invoke(getProject(), getEditor(), getFile()));
-
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // error dialog shown in later
+      UIUtil.dispatchAllInvocationEvents();
       myFile = getPsiManager().findFile(virtualFile);
 
       Collection<HighlightInfo> infosAfter = highlightErrors();
@@ -108,7 +110,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddDependency() {
-    removeModule();
+    removeModule("C");
     doTest("B/src/y/AddDependency.java", true);
     checkModuleInfo("B/src/module-info.java", "a");
   }
@@ -134,10 +136,10 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     fail("Expected module '" + expectedModule + "' not found");
   }
 
-  private void removeModule() {
+  private void removeModule(String name) {
     ModuleManager manager = ModuleManager.getInstance(getProject());
     ModifiableModuleModel model = manager.getModifiableModel();
-    model.disposeModule(manager.findModuleByName("C"));
+    model.disposeModule(manager.findModuleByName(name));
     WriteAction.run(() -> model.commit());
   }
 
@@ -150,7 +152,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     final Module a = ModuleManager.getInstance(getProject()).findModuleByName("A");
     final Module b = ModuleManager.getInstance(getProject()).findModuleByName("B");
     ModuleRootModificationUtil.addDependency(a, b);
-    removeModule();
+    removeModule("C");
 
     try {
       doTest("B/src/y/AddDependency.java", true);
