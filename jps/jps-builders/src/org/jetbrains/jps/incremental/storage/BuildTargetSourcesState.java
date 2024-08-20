@@ -6,7 +6,6 @@ import com.dynatrace.hash4j.hashing.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -34,10 +33,8 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -76,9 +73,8 @@ public final class BuildTargetSourcesState implements BuildListener {
   private final ProjectStamps projectStamps;
   private final CompileContext context;
   private final String outputFolderPath;
-  private final File targetStateStorage;
+  private final Path targetStateStorage;
   private final Type tokenType;
-  private final Gson gson = new Gson();
 
   public BuildTargetSourcesState(@NotNull CompileContext context) {
     this.context = context;
@@ -91,7 +87,7 @@ public final class BuildTargetSourcesState implements BuildListener {
     outputFolderPath = getOutputFolderPath(pd.getProject());
 
     BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
-    targetStateStorage = new File(dataPaths.getDataStorageRoot(), TARGET_SOURCES_STATE_FILE_NAME);
+    targetStateStorage = dataPaths.getDataStorageRoot().toPath().resolve(TARGET_SOURCES_STATE_FILE_NAME);
     tokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType();
 
     // subscribe to events for reporting only changed build targets
@@ -153,7 +149,8 @@ public final class BuildTargetSourcesState implements BuildListener {
     }
     clearRemovedBuildTargets(targetTypeHashMap);
     try {
-      FileUtil.writeToFile(targetStateStorage, gson.toJson(targetTypeHashMap));
+      Files.createDirectories(targetStateStorage.getParent());
+      Files.writeString(targetStateStorage, new Gson().toJson(targetTypeHashMap));
     }
     catch (IOException e) {
       LOG.warn("Unable to save sources state", e);
@@ -179,9 +176,14 @@ public final class BuildTargetSourcesState implements BuildListener {
     if (reportStateUnavailable()) {
       return;
     }
-    if (targetStateStorage.exists()) {
-      LOG.info("Clear build target sources report");
-      FileUtilRt.delete(targetStateStorage);
+    if (Files.exists(targetStateStorage)) {
+      try {
+        if (Files.deleteIfExists(targetStateStorage)) {
+          LOG.info("Clear build target sources report");
+        }
+      }
+      catch (IOException ignore) {
+      }
     }
   }
 
@@ -342,15 +344,13 @@ public final class BuildTargetSourcesState implements BuildListener {
   }
 
   private @NotNull Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
-    if (!targetStateStorage.exists()) {
-      return new HashMap<>();
-    }
-
-    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(targetStateStorage, StandardCharsets.UTF_8))) {
-      Map<String, Map<String, BuildTargetState>> result = gson.fromJson(bufferedReader, tokenType);
+    try (BufferedReader reader = Files.newBufferedReader(targetStateStorage)) {
+      Map<String, Map<String, BuildTargetState>> result = new Gson().fromJson(reader, tokenType);
       if (result != null) {
         return result;
       }
+    }
+    catch (NoSuchFileException ignore) {
     }
     catch (IOException e) {
       LOG.warn("Couldn't parse current build target state", e);
