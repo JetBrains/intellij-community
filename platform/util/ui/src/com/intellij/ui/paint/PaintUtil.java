@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -427,6 +428,7 @@ public final class PaintUtil {
     return metrics.getStringBounds(text, g).getBounds().width;
   }
   
+  @ApiStatus.Internal
   @Contract("!null, _, _ -> !null")
   public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
     if (text == null) return null;

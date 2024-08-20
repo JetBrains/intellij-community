@@ -58,6 +58,7 @@ import com.intellij.ui.popup.PopupUpdateProcessorBase
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.FilteringListModel
 import com.intellij.ui.speedSearch.NameFilteringListModel
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -559,20 +560,30 @@ object Switcher : BaseSwitcherAction(null) {
         val item: SwitcherVirtualFile,
         val mainText: String,
         val statusText: String,
+        val pathText: String,
         val backgroundColor: Color?,
         val foregroundTextColor: Color?,
       )
       ReadAction.nonBlocking<List<ListItemData>> {
         items.map {
-          val result = project.basePath?.let { path ->
-            FileUtil.toSystemDependentName(path)
+          val result = project.basePath?.let { projectPath ->
+            FileUtil.toSystemDependentName(projectPath)
             val filePath = FileUtil.toSystemDependentName(it.file.parent.path)
-            FileUtil.getRelativePath(path, filePath, File.separatorChar)
+            if (FileUtil.isAncestor(projectPath, filePath, true)) {
+              FileUtil.getRelativePath(projectPath, filePath, File.separatorChar)
+            }
+            else if (FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
+              FileUtil.getLocationRelativeToUserHome(filePath)
+            }
+            else {
+              filePath
+            }
           } ?: ""
          
           ListItemData(item = it,
                        mainText = it.mainText,
-                       statusText = result, 
+                       statusText = FileUtil.getLocationRelativeToUserHome((it.file.parent ?: it.file).presentableUrl),
+                       pathText = result,
                        backgroundColor = VfsPresentationUtil.getFileBackgroundColor(it.project, it.file),
                        foregroundTextColor = FileStatusManager.getInstance(it.project).getStatus(it.file).color)
         }
@@ -582,6 +593,7 @@ object Switcher : BaseSwitcherAction(null) {
           for (data in list) {
             data.item.mainText = data.mainText
             data.item.statusText = data.statusText
+            data.item.pathText = data.pathText
             data.item.backgroundColor = data.backgroundColor
             data.item.foregroundTextColor = data.foregroundTextColor
           }

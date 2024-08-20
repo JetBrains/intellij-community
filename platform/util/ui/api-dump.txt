@@ -3160,7 +3160,6 @@ f:com.intellij.ui.paint.PaintUtil
 - s:alignToInt(D,java.awt.Graphics2D,com.intellij.ui.paint.PaintUtil$ParityMode):D
 - s:alignToInt(D,java.awt.Graphics2D,com.intellij.ui.paint.PaintUtil$RoundingMode):D
 - s:alignTxToInt(java.awt.Graphics2D,java.awt.geom.Point2D,Z,Z,com.intellij.ui.paint.PaintUtil$RoundingMode):java.awt.geom.AffineTransform
-- s:cutContainerText(java.lang.String,I,java.awt.FontMetrics):java.lang.String
 - s:devPixel(java.awt.Graphics2D):D
 - s:devValue(D,com.intellij.ui.scale.ScaleContext):D
 - s:devValue(D,java.awt.Graphics2D):D

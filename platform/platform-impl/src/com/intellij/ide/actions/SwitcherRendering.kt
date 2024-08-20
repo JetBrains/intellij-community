@@ -44,13 +44,14 @@ internal sealed interface SwitcherListItem {
   val mnemonic: String? get() = null
   val mainText: String
   val statusText: String get() = ""
+  val pathText: String get() = ""
   val shortcutText: String? get() = null
   val separatorAbove: Boolean get() = false
 
   fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode)
   fun close(switcher: Switcher.SwitcherPanel): Unit = Unit
 
-  fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean, list: JList<*>, extra: SimpleColoredComponent, mnemonicLabel: JLabel)
+  fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean, listWidth: Int)
   fun prepareExtraRenderer(component: SimpleColoredComponent, selected: Boolean) {
     shortcutText?.let {
       @Suppress("HardCodedStringLiteral")
@@ -85,7 +86,7 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
     RecentLocationsAction.showPopup(switcher.project, switcher.isOnlyEditedFilesShown)
   }
 
-  override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean, list: JList<*>, extra: SimpleColoredComponent, mnemonicLabel: JLabel) {
+  override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean, availableWidth: Int) {
     component.iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
     component.append(mainText)
   }
@@ -113,7 +114,7 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
     manager?.hideToolWindow(id = window.id, moveFocus = false, source = ToolWindowEventSource.CloseFromSwitcher) ?: window.hide()
   }
 
-  override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean, list: JList<*>, extra: SimpleColoredComponent, mnemonicLabel: JLabel) {
+  override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean, availableWidth: Int) {
     val defaultIcon = if (ExperimentalUI.isNewUI()) EmptyIcon.ICON_16 else EmptyIcon.ICON_13
     component.iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
     val icon = if (ExperimentalUI.isNewUI()) window.icon else RenderingUtil.getIcon(window.icon, selected)
@@ -140,6 +141,8 @@ class SwitcherVirtualFile(
   override var mainText: String = ""
 
   override var statusText: String = ""
+  
+  override var pathText: String = ""
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
   }
@@ -147,7 +150,7 @@ class SwitcherVirtualFile(
   override fun close(switcher: Switcher.SwitcherPanel) {
   }
 
-  override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean, list: JList<*>, extra: SimpleColoredComponent, mnemonicLabel: JLabel) {
+  override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean, avaliableWidth: Int) {
     component.iconTextGap = JBUI.scale(4)
     component.icon = when (Registry.`is`("ide.project.view.change.icon.on.selection", true)) {
       true -> RenderingUtil.getIcon(icon, selected)
@@ -160,17 +163,14 @@ class SwitcherVirtualFile(
       else -> SimpleTextAttributes.STYLE_PLAIN or SimpleTextAttributes.STYLE_WAVED
     }
     component.append(mainText, SimpleTextAttributes(style, foreground, effectColor))
-    list.font?.let {
-      val fontMetrics = list.getFontMetrics(it)
-
-      val splitIconWidth = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width
-      val mainTextWidth = fontMetrics.stringWidth(mainText)
-      val shortcutTextWidth = shortcutText?.let { PaintUtil.getStringWidth(it, list.graphics, fontMetrics) } ?: 0
-      val width = list.width - mainTextWidth - shortcutTextWidth - extra.width - splitIconWidth -
-                  component.iconTextGap - component.icon.iconWidth - list.insets.left - list.insets.right -
-                  component.insets.left - component.insets.right - mnemonicLabel.width
+    component.font?.let {
+      val fontMetrics = component.getFontMetrics(it)
+      val mainTextWidth = PaintUtil.getStringWidth(mainText, component.graphics, fontMetrics)
+      val shortcutTextWidth = shortcutText?.let { PaintUtil.getStringWidth(it, component.graphics, fontMetrics) } ?: 0
+      val width = avaliableWidth - mainTextWidth - shortcutTextWidth - component.iconTextGap - component.icon.iconWidth -
+                  component.insets.left - component.insets.right
       if (width <= 0) return@let null
-      PaintUtil.cutContainerText(" $statusText", width, fontMetrics)?.let {
+      PaintUtil.cutContainerText(" $pathText", width, fontMetrics)?.let {
         @Suppress("HardCodedStringLiteral")
         component.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
@@ -214,7 +214,9 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     mnemonic.text = value.mnemonic ?: ""
     mnemonic.isVisible = value.mnemonic != null
     value.prepareExtraRenderer(extra, selected)
-    value.prepareMainRenderer(main, selected, list, extra, mnemonic)
+    main.font = list.font
+    val splitIconWidth = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width
+    value.prepareMainRenderer(main, selected, list.width - extra.width - mnemonic.width - list.insets.left - list.insets.right - splitIconWidth)
     applySpeedSearchHighlighting(switcher, main, false, selected)
     panel.accessibleContext.accessibleName = value.mainText
     panel.accessibleContext.accessibleDescription = value.statusText
