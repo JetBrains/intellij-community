@@ -59,12 +59,12 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content)
     throws MapReduceIndexMappingException, ProcessCanceledException {
     try {
-      StorageUpdate indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
+      StorageUpdate indexUpdate = super.mapInputAndPrepareUpdate(inputId, content);
       IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
 
       return () -> {
         try {
-          boolean updateSuccessful = indexUpdateComputable.update();
+          boolean updateSuccessful = indexUpdate.update();
           if (updateSuccessful && !StaleIndexesChecker.isStaleIdDeletion()) {
             ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
             if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {

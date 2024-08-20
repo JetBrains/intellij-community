@@ -15,6 +15,7 @@ public interface StorageUpdate {
 
   // ================ helpers: =====================================
 
+  /** Nothing to update, just return true (success) */
   StorageUpdate NOOP = new StorageUpdate() {
     @Override
     public boolean update() {
