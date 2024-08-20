@@ -13,7 +13,7 @@ class ModuleSourceRootGroup(
     val sourceRootModules: List<Module>
 )
 
-class ModuleSourceRootMap(val modules: Collection<Module>) {
+class ModuleSourceRootMap private constructor(val modules: Collection<Module>) {
     private val baseModuleByExternalPath: Map<String, Module>
 
     @Suppress("JoinDeclarationAndAssignment")
