@@ -36,6 +36,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
+import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.applyHelperPackageToPythonPath
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -197,29 +198,27 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   }
 
   private suspend fun invokeUpdateLatestVersion() {
-    serviceScope.launch(Dispatchers.Default) {
-      val proccessPackages = installedPackages
-      val updatedPackages = proccessPackages.map { (name, pyPackage: InstalledPackage) ->
-        val specification = pyPackage.repository.createPackageSpecification(pyPackage.name)
-        val latestVersion = manager.repositoryManager.getLatestVersion(specification)
-        val currentVersion = PyPackageVersionNormalizer.normalize(pyPackage.instance.version)
+    val proccessPackages = installedPackages
+    val updatedPackages = proccessPackages.map { (name, pyPackage: InstalledPackage) ->
+      val specification = pyPackage.repository.createPackageSpecification(pyPackage.name)
+      val latestVersion = manager.repositoryManager.getLatestVersion(specification)
+      val currentVersion = PyPackageVersionNormalizer.normalize(pyPackage.instance.version)
 
-        val upgradeTo = if (latestVersion != null && currentVersion != null &&
-                            PyPackageVersionComparator.compare(latestVersion, currentVersion) > 0) {
-          latestVersion
-        }
-        else {
-          null
-        }
-        name to upgradeTo
-      }.toMap()
+      val upgradeTo = if (latestVersion != null && currentVersion != null &&
+                          PyPackageVersionComparator.compare(latestVersion, currentVersion) > 0) {
+        latestVersion
+      }
+      else {
+        null
+      }
+      name to upgradeTo
+    }.toMap()
 
-      installedPackages = installedPackages.map {
-        val newVersion = updatedPackages[it.key]
-        it.key to it.value.withNextVersion(newVersion)
-      }.toMap()
-      handleSearch(currentQuery)
-    }
+    installedPackages = installedPackages.map {
+      val newVersion = updatedPackages[it.key]
+      it.key to it.value.withNextVersion(newVersion)
+    }.toMap()
+    handleSearch(currentQuery)
   }
 
   private suspend fun showPackagingNotification(text: @Nls String) {

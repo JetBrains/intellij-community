@@ -6,6 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.toolwindow.model.*
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesTable
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesTableModel
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagingTableGroup
 import java.awt.Rectangle
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -99,7 +104,7 @@ class PyPackagingTablesView(private val project: Project,
           foreground = JBColor.RED
           icon = AllIcons.General.Error
         }
-        it to headerPanel(label, null)
+        it to PyPackagesUiComponents.headerPanel(label, null)
       }
       .forEach {
         invalidRepositories[it.first] = it.second

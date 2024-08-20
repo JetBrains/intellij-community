@@ -5,9 +5,9 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.toolwindow.PythonPackageInstallAction
-import com.jetbrains.python.packaging.toolwindow.PythonPackagingToolwindowActionProvider
-import com.jetbrains.python.packaging.toolwindow.SimplePythonPackageInstallAction
+import com.jetbrains.python.packaging.toolwindow.actions.PythonPackageInstallAction
+import com.jetbrains.python.packaging.toolwindow.actions.PythonPackagingToolwindowActionProvider
+import com.jetbrains.python.packaging.toolwindow.actions.SimplePythonPackageInstallAction
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

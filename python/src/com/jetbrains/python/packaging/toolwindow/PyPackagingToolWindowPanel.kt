@@ -46,10 +46,19 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonLocalPackageSpecification
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonVcsPackageSpecification
+import com.jetbrains.python.packaging.toolwindow.actions.PythonPackageInstallAction
+import com.jetbrains.python.packaging.toolwindow.actions.PythonPackagingToolwindowActionProvider
+import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.pythonSdk
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
-import java.awt.Component
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
@@ -60,7 +69,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.ListSelectionListener
 
 class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolWindow) : SimpleToolWindowPanel(false, true), Disposable {
-  internal val packagingScope = CoroutineScope(Dispatchers.IO)
+  internal val packagingScope = PyPackageCoroutine.getIoScope(project)
   private var selectedPackage: DisplayablePackage? = null
   private var selectedPackageDetails: PythonPackageDetails? = null
 
@@ -172,20 +181,20 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     tablesView = PyPackagingTablesView(project, packageListPanel, this)
 
     leftPanel = createLeftPanel(service)
-    rightPanel = borderPanel {
-      add(borderPanel {
+    rightPanel = PyPackagesUiComponents.borderPanel {
+      add(PyPackagesUiComponents.borderPanel {
         border = SideBorder(JBColor.GRAY, SideBorder.BOTTOM)
         preferredSize = Dimension(preferredSize.width, 50)
         minimumSize = Dimension(minimumSize.width, 50)
         maximumSize = Dimension(maximumSize.width, 50)
-        add(boxPanel {
+        add(PyPackagesUiComponents.boxPanel {
           add(Box.createHorizontalStrut(10))
           add(packageNameLabel)
           add(Box.createHorizontalStrut(10))
           add(documentationLink)
         }, BorderLayout.WEST)
-        add(boxPanel {
-          alignmentX = Component.RIGHT_ALIGNMENT
+        add(PyPackagesUiComponents.boxPanel {
+          alignmentX = RIGHT_ALIGNMENT
           add(progressBar)
           add(versionSelector)
           add(versionLabel)
@@ -266,8 +275,8 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
       }
     }
 
-    mainPanel = borderPanel {
-      val topToolbar = boxPanel {
+    mainPanel = PyPackagesUiComponents.borderPanel {
+      val topToolbar = PyPackagesUiComponents.boxPanel {
         border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
         preferredSize = Dimension(preferredSize.width, 30)
         minimumSize = Dimension(minimumSize.width, 30)

@@ -742,7 +742,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.PythonPackagingToolwindowActionProvider"
-                    interface="com.jetbrains.python.packaging.toolwindow.PythonPackagingToolwindowActionProvider"
+                    interface="com.jetbrains.python.packaging.toolwindow.actions.PythonPackagingToolwindowActionProvider"
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.pythonPackageManagerProvider"
