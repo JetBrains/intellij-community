@@ -419,7 +419,7 @@ internal class WindowsDistributionBuilder(
     if (isIjentWslFsEnabledByDefaultForProduct(context.productProperties.platformPrefix)) {
       vmOptions += ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
     }
-    writeVmOptions(file = vmOptionsFile, vmOptions = vmOptions, separator = "\r\n")
+    writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
     return vmOptionsFile
   }
 
