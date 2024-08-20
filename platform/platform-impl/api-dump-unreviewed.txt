@@ -7155,6 +7155,7 @@ f:com.intellij.ide.plugins.PluginNode
 - getChangeNotes():java.lang.String
 - *:getChannel():java.lang.String
 - getDate():J
+- getDefaultTrialPeriod():java.lang.Integer
 - getDependencies():java.util.List
 - getDependencyNames():java.util.Collection
 - getDescription():java.lang.String
@@ -7219,6 +7220,7 @@ f:com.intellij.ide.plugins.PluginNode
 - setConverted(Z):V
 - setDate(java.lang.Long):V
 - setDate(java.lang.String):V
+- setDefaultTrialPeriod(java.lang.Integer):V
 - setDependencies(java.util.List):V
 - setDependencyNames(java.util.Collection):V
 - setDepends(java.util.List,com.intellij.openapi.extensions.PluginId[]):V
