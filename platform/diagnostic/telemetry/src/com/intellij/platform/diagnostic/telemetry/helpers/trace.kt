@@ -9,7 +9,7 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import io.opentelemetry.semconv.SemanticAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -48,19 +48,21 @@ inline fun <T> Span.use(operation: (Span) -> T): T {
 }
 
 @Internal
-suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = EmptyCoroutineContext,
-                                                crossinline operation: suspend CoroutineScope.(Span) -> T): T {
+suspend inline fun <T> SpanBuilder.useWithScope(
+  context: CoroutineContext = EmptyCoroutineContext,
+  crossinline operation: suspend CoroutineScope.(Span) -> T,
+): T {
   val span = startSpan()
   return withContext(Context.current().with(span).asContextElement() + context) {
     try {
       operation(span)
     }
     catch (e: CancellationException) {
-      span.recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
+      span.recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
       throw e
     }
     catch (e: Throwable) {
-      span.recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
+      span.recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
       span.setStatus(StatusCode.ERROR)
       throw e
     }
@@ -95,11 +97,11 @@ internal inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
     return operation(this)
   }
   catch (e: CancellationException) {
-    recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
+    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
   catch (e: Throwable) {
-    recordException(e, Attributes.of(SemanticAttributes.EXCEPTION_ESCAPED, true))
+    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     setStatus(StatusCode.ERROR)
     throw e
   }

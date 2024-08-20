@@ -38,7 +38,7 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withProjectLibrary(libraryName)
   }
 
-  fun withProjectLibraries(libraryNames: Iterable<String>) {
+  fun withProjectLibraries(libraryNames: Sequence<String>) {
     layout.withProjectLibraries(libraryNames)
   }
 

@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.CollapseState
-import com.intellij.codeInsight.hints.declarative.CollapsiblePresentationTreeBuilder
-import com.intellij.codeInsight.hints.declarative.InlayActionData
-import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.openapi.application.ApplicationManager
 
 /**
  * The presentation is saved into a [TinyTree] during its construction to be compact.
@@ -28,8 +26,12 @@ class PresentationTreeBuilderImpl private constructor(
   private val context: InlayTreeBuildingContext
 ) : CollapsiblePresentationTreeBuilder {
   companion object {
-    fun createRoot(): PresentationTreeBuilderImpl {
-      val context = InlayTreeBuildingContext()
+    fun createRoot(position: InlayPosition? = null): PresentationTreeBuilderImpl {
+      if (position == null && !ApplicationManager.getApplication().isUnitTestMode) {
+        throw IllegalArgumentException()
+      }
+
+      val context = InlayTreeBuildingContext(position ?: InlineInlayPosition(0, false))
       return PresentationTreeBuilderImpl(0, context)
     }
 
@@ -91,8 +93,8 @@ class PresentationTreeBuilderImpl private constructor(
 
   override fun text(text: String, actionData: InlayActionData?) {
     require(text.isNotEmpty()) { "Text entry may not be empty. Please, fix the provider implementation." }
-    val segmentText = if (MAX_SEGMENT_TEXT_LENGTH < text.length) {
-      text.substring(0, MAX_SEGMENT_TEXT_LENGTH) + "..."
+    val segmentText = if (context.isTruncateTextNodes() && MAX_SEGMENT_TEXT_LENGTH < text.length) {
+      text.substring(0, MAX_SEGMENT_TEXT_LENGTH) + "…"
     } else {
       text
     }
@@ -123,7 +125,7 @@ class ActionWithContent(
   val content: Any
 )
 
-private class InlayTreeBuildingContext {
+private class InlayTreeBuildingContext(private val position: InlayPosition) {
   private var nodeCount = 1
   private var limitReached = false
   var textElementCount = 0
@@ -138,10 +140,12 @@ private class InlayTreeBuildingContext {
     }
     if (nodeCount == PresentationTreeBuilderImpl.MAX_NODE_COUNT - 1) {
       limitReached = true
-      tree.add(parent, InlayTags.TEXT_TAG, "...")
+      tree.add(parent, InlayTags.TEXT_TAG, "…")
       return PresentationTreeBuilderImpl.DOESNT_FIT_INDEX
     }
     nodeCount++
     return tree.add(parent, nodePayload, data)
   }
+
+  fun isTruncateTextNodes() = position is InlineInlayPosition
 }

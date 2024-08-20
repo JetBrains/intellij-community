@@ -7,8 +7,6 @@ import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -23,10 +21,12 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
@@ -128,21 +128,18 @@ internal suspend fun buildDistribution(
     launch(Dispatchers.IO) {
       spanBuilder("generate content report").useWithScope {
         Files.createDirectories(context.paths.artifactDir)
-        val contentMappingJson = context.paths.artifactDir.resolve("content-mapping.json")
-        writeProjectStructureReport(contentReport = contentReport, file = contentMappingJson, buildPaths = context.paths)
         val contentReportFile = context.paths.artifactDir.resolve("content-report.zip")
         writeNewZipWithoutIndex(contentReportFile) { zipFileWriter ->
           buildJarContentReport(contentReport = contentReport, zipFileWriter = zipFileWriter, buildPaths = context.paths, context = context)
         }
-        context.notifyArtifactBuilt(contentMappingJson)
         context.notifyArtifactBuilt(contentReportFile)
       }
     }
-    createBuildThirdPartyLibraryListJob(contentReport.combined(), context)
+    createBuildThirdPartyLibraryListJob(contentReport.bundled(), context)
     if (context.useModularLoader || context.generateRuntimeModuleRepository) {
       launch(Dispatchers.IO) {
         spanBuilder("generate runtime module repository").useWithScope {
-          generateRuntimeModuleRepository(contentReport.combined(), context)
+          generateRuntimeModuleRepository(contentReport.bundled(), context)
         }
       }
     }
@@ -585,7 +582,7 @@ internal suspend fun buildPlugins(
   context: BuildContext,
   buildPlatformJob: Job?,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> Unit)? = null,
+  pluginBuilt: (suspend (PluginLayout, pluginDirOrFile: Path) -> Unit)? = null,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
@@ -792,7 +789,7 @@ suspend fun layoutPlatformDistribution(
     }
 }
 
-private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
+private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
   if (!context.productProperties.reassignAltClickToMultipleCarets) {
     return
   }
@@ -810,13 +807,20 @@ fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture,
   return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
 }
 
-private fun checkOutputOfPluginModules(mainPluginModule: String, includedModules: Collection<ModuleItem>, moduleExcludes: Map<String, List<String>>, context: BuildContext) {
+private suspend fun checkOutputOfPluginModules(
+  mainPluginModule: String,
+  includedModules: Collection<ModuleItem>,
+  moduleExcludes: Map<String, List<String>>,
+  context: BuildContext,
+) {
   for (module in includedModules.asSequence().map { it.moduleName }.distinct()) {
     if (module == "intellij.java.guiForms.rt" ||
-        !containsFileInOutput(moduleName = module,
-                              filePath = "com/intellij/uiDesigner/core/GridLayoutManager.class",
-                              excludes = moduleExcludes[module] ?: emptyList(),
-                              context = context)) {
+        !containsFileInOutput(
+          moduleName = module,
+          filePath = "com/intellij/uiDesigner/core/GridLayoutManager.class",
+          excludes = moduleExcludes[module] ?: emptyList(),
+          context = context,
+        )) {
       "Runtime classes of GUI designer must not be packaged to \'$module\' module in \'$mainPluginModule\' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
       "to the output directory' is disabled in Settings | Editor | GUI Designer."
@@ -824,10 +828,12 @@ private fun checkOutputOfPluginModules(mainPluginModule: String, includedModules
   }
 }
 
-private fun containsFileInOutput(moduleName: String,
-                                 filePath: String,
-                                 excludes: Collection<String>,
-                                 context: BuildContext): Boolean {
+private suspend fun containsFileInOutput(
+  moduleName: String,
+  filePath: String,
+  excludes: Collection<String>,
+  context: BuildContext,
+): Boolean {
   val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(moduleName))
   if (Files.notExists(moduleOutput.resolve(filePath))) {
     return false
@@ -1228,7 +1234,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
   }
 }
 
-private fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: CompilationContext) {
+private suspend fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: CompilationContext) {
   for (module in moduleExcludes.keys) {
     check(Files.exists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
       "There are excludes defined for module '${module}', but the module wasn't compiled;" +

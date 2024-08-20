@@ -662,7 +662,7 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
-  private static final class MyLightVirtualFile extends LightVirtualFile {
+  private static final class MyLightVirtualFile extends LightVirtualFile implements DiffLightVirtualFile {
     private final String myPath;
 
     private MyLightVirtualFile(@NotNull @NonNls @SystemIndependent String path, @Nullable FileType fileType, @NotNull String content) {
@@ -681,7 +681,7 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
   }
 
-  private static class MyBinaryLightVirtualFile extends BinaryLightVirtualFile {
+  private static class MyBinaryLightVirtualFile extends BinaryLightVirtualFile implements DiffLightVirtualFile {
     private final String myPath;
 
     MyBinaryLightVirtualFile(@NotNull @NonNls @SystemIndependent String path, @Nullable FileType type, byte @NotNull [] content) {

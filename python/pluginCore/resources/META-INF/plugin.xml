@@ -508,6 +508,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.installer.BinaryInstallerUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.imports.mlapi.PyCharmImportsRankingLogs"/>
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
@@ -630,6 +631,12 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                  description="Show type hints for all parameters in parameter info window"/>
     <registryKey key="python.unified.interpreter.configuration" defaultValue="true"
                  description="Use the same UI to configure interpreters in IDE widget and New Project Wizard"/>
+
+    <!-- Machine Learning -->
+    <registryKey
+      key="quickfix.ranking.ml"
+      defaultValue="[IN_EXPERIMENT*|ENABLED|DISABLED]"
+      description="Enable ML ranking in quick fix for missing imports"/>
   </extensions>
 
   <extensionPoints>

@@ -72,6 +72,13 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
                                                          () -> myChangeListTodosContent);
   }
 
+  void setSelectedContent(@NotNull TodoPanel panel) {
+    Content content = myContentManager.getContent(panel);
+    if (content != null) {
+      myContentManager.setSelectedContent(content);
+    }
+  }
+
   static final class State {
     @Attribute("selected-index")
     public int selectedIndex;
@@ -210,6 +217,12 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     MyVisibilityListener visibilityListener = new MyVisibilityListener();
     myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, visibilityListener);
     toolWindow.addContentManagerListener(visibilityListener);
+
+    myAllTodos.invokePostponedRunnable();
+    myCurrentFileTodosPanel.invokePostponedRunnable();
+    if (myChangeListTodosPanel != null) {
+      myChangeListTodosPanel.invokePostponedRunnable();
+    }
   }
 
   protected @NotNull AllTodosTreeBuilder createAllTodoBuilder(@NotNull JTree tree,
@@ -272,6 +285,10 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
       .map(TodoPanel::getTreeBuilder)
       .map(TodoTreeBuilder::getCoroutineHelper)
       .forEach(x -> x.scheduleMarkFilesAsDirtyAndUpdateTree(files));
+  }
+
+  public TodoPanel getCurrentFilePanel() {
+    return myCurrentFileTodosPanel;
   }
 
   @VisibleForTesting

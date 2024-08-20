@@ -19,6 +19,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Contract
 import java.awt.Color
 import java.awt.Component
 import java.util.regex.Pattern
@@ -87,6 +88,7 @@ object SearchUtil {
     return -1
   }
 
+  @Contract(pure = false)
   private fun traverseComponentsTree(
     configurable: SearchableConfigurable,
     rootComponent: JComponent,
@@ -174,9 +176,16 @@ object SearchUtil {
         return true
       }
     }
-    return rootComponent.components.any {
-      it is JComponent && traverseComponentsTree(configurable = configurable, rootComponent = it, option = option, force = force)
+
+    var highlightedChild = false
+    for (child in rootComponent.components) {
+      if (child is JComponent) {
+        // keep side effects in mind
+        val highlighted = traverseComponentsTree(configurable = configurable, rootComponent = child, option = option, force = force)
+        highlightedChild = highlightedChild || highlighted
+      }
     }
+    return highlightedChild
   }
 
   @Internal

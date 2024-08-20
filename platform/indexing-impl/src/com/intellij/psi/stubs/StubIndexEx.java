@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -148,10 +148,17 @@ public abstract class StubIndexEx extends StubIndex {
           throw new AssertionError("raw index data access is not available for StubIndex");
         }
       }
+
       Predicate<? super Psi> keyFilter = StubIndexKeyDescriptorCache.INSTANCE.getKeyPsiMatcher(indexKey, key);
-      PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> myStubProcessingHelper.processStubsInFile(
-        project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass,
-        () -> "Looking for " + key + " in " + indexKey);
+      Processor<? super Psi> processorWithKeyFilter = keyFilter == null
+                                                      ? processor
+                                                      : o -> !keyFilter.test(o) || processor.process(o);
+
+      PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> {
+        return myStubProcessingHelper.processStubsInFile(
+          project, file, list, processorWithKeyFilter, scope, requiredClass,
+          () -> "Looking for " + key + " in " + indexKey);
+      };
 
       Iterator<VirtualFile> singleFileInScope = FileBasedIndexEx.extractSingleFileOrEmpty(scope);
       Iterator<VirtualFile> fileStream;
@@ -249,7 +256,7 @@ public abstract class StubIndexEx extends StubIndex {
 
         for (VirtualFile file : filesWithProblems) {
           int fileId = FileBasedIndex.getFileId(file);
-          index.mapInputAndPrepareUpdate(fileId, null).compute();
+          index.mapInputAndPrepareUpdate(fileId, null).update();
         }
 
         Lock writeLock = getIndex(indexKey).getLock().writeLock();
@@ -348,13 +355,13 @@ public abstract class StubIndexEx extends StubIndex {
    */
   private @Nullable <Key> IntSet getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,
                                                   @NotNull Key dataKey,
-                                                  final @NotNull Project project,
+                                                  @NotNull Project project,
                                                   @Nullable IdFilter idFilter,
-                                                  final @Nullable GlobalSearchScope scope) {
+                                                  @Nullable GlobalSearchScope scope) {
     var trace = TRACE_OF_STUB_ENTRIES_LOOKUP.get();
-    final FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
+    FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
-    final UpdatableIndex<Key, Void, FileContent, ?> index = getIndex(indexKey);   // wait for initialization to finish
+    UpdatableIndex<Key, Void, FileContent, ?> index = getIndex(indexKey);   // wait for initialization to finish
     if (index == null || !fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope, null)) return null;
 
     trace.indexValidationFinished();
@@ -402,7 +409,7 @@ public abstract class StubIndexEx extends StubIndex {
     }
     catch (RuntimeException e) {
       trace.lookupFailed();
-      final Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
+      Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
       if (cause != null) {
         forceRebuild(cause);
       }
@@ -422,7 +429,7 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   @ApiStatus.Internal
-  void setDataBufferingEnabled(final boolean enabled) { }
+  void setDataBufferingEnabled(boolean enabled) { }
 
   @ApiStatus.Internal
   void cleanupMemoryStorage() { }

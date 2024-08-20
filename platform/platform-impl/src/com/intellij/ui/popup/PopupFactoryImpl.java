@@ -261,7 +261,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             @Nullable Runnable disposeCallback) {
       this(parentPopup,
            createStep(title, actionGroup, dataContext, actionPlace, presentationFactory, options),
-           disposeCallback, dataContext, options.maxRowCount);
+           disposeCallback, dataContext, options.getMaxRowCount());
       UiInspectorUtil.registerProvider(getList(), () -> UiInspectorActionUtil.collectActionGroupInfo(
         "Menu", actionGroup, actionPlace, ((ActionPopupStep)getStep()).getPresentationFactory()));
     }

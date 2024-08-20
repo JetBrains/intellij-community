@@ -7,9 +7,6 @@
     <extensionPoint qualifiedName="com.intellij.datavis.r.inlays.components.graphicsManagerProvider"
                     interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsManagerProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayOutputProvider"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutputProvider"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation.uiCustomizer"
                     interface="org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer"
                     dynamic="true"/>
@@ -32,22 +29,9 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellInlayController"
                     interface="org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController$Factory"
                     dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayStateCustomizer"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayStateCustomizer"
-                    dynamic="true"/>
   </extensionPoints>
 
   <actions resource-bundle="messages.VisualizationBundle">
-    <group id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutputToolbarActions">
-      <action id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.SaveOutputAction"
-              class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.SaveOutputAction"
-              icon="AllIcons.Actions.MenuSaveall"/>
-      <action id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.CopyImageToClipboardAction"
-              class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.CopyImageToClipboardAction"
-              icon="AllIcons.Actions.Copy"/>
-    </group>
-
     <group id="NotebookOutputCollapseActions" popup="true">
       <action id="NotebookOutputCollapseSingleInCellAction"
               class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseSingleInCellAction"/>

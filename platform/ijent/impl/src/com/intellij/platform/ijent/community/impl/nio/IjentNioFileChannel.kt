@@ -130,7 +130,7 @@ internal class IjentNioFileChannel private constructor(
   override fun size(): Long {
     checkClosed()
     return fsBlocking {
-      return@fsBlocking when (val type = nioFs.ijentFs.stat(ijentOpenedFile.path, false).getOrThrowFileSystemException().type) {
+      return@fsBlocking when (val type = ijentOpenedFile.stat().getOrThrowFileSystemException().type) {
         is IjentFileInfo.Type.Regular -> type.size
         is IjentFileInfo.Type.Directory, is IjentFileInfo.Type.Other -> throw IOException("This file channel is opened for a directory")
         is IjentPosixFileInfo.Type.Symlink -> throw IllegalStateException("Internal error: symlink should be resolved for a file channel")
@@ -142,7 +142,7 @@ internal class IjentNioFileChannel private constructor(
     checkClosed()
     val file = when (ijentOpenedFile) {
       is IjentOpenedFile.Writer -> ijentOpenedFile
-      is IjentOpenedFile.Reader -> throw IOException("File ${ijentOpenedFile.path} is not open for writing")
+      is IjentOpenedFile.Reader -> throw NonWritableChannelException()
     }
     val currentSize = this.size()
     fsBlocking {

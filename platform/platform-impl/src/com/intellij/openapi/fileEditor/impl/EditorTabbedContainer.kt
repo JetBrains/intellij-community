@@ -20,10 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.FileDropManager
 import com.intellij.openapi.editor.containsFileDropTargets
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_INDEX_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
@@ -42,9 +39,7 @@ import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.DockableContent
 import com.intellij.ui.docking.DragSession
-import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelAvailable
-import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelVisible
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
@@ -272,7 +267,7 @@ class DockableEditor(
   private val preferredSize: Dimension,
   @JvmField internal val isPinned: Boolean,
   @JvmField internal val isSingletonEditorInWindow: Boolean,
-  @JvmField internal val isNorthPanelAvailable: Boolean = isNorthPanelVisible(UISettings.getInstance()),
+  @JvmField internal val isNorthPanelAvailable: Boolean = true,
 ) : DockableContent<VirtualFile?> {
   override fun getKey(): VirtualFile = file
 
@@ -432,13 +427,9 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     file.putUserData(DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(editorTabs))
     file.putUserData(DRAG_START_PINNED_KEY, isPinnedAtStart)
     val presentation = Presentation(info.text)
-    if (DockManagerImpl.REOPEN_WINDOW.isIn(file)) {
-      presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(file, true))
-    }
     presentation.icon = info.icon
     val editors = info.composite.allEditors
     val isSingletonEditorInWindow = isSingletonEditorInWindow(editors)
-    presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow)
     session = DockManager.getInstance(window.manager.project).createDragSession(
       mouseEvent,
       DockableEditor(
@@ -747,5 +738,5 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
 }
 
 internal fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
-  return editors.any { FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(it, false) || EditorWindow.HIDE_TABS.get(it, false) }
+  return editors.any { FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW.get(it, false) }
 }

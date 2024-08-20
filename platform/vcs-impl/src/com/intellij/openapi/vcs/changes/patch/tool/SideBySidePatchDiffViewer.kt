@@ -16,6 +16,7 @@ import com.intellij.diff.tools.simple.AlignableChange
 import com.intellij.diff.tools.simple.AlignedDiffModel
 import com.intellij.diff.tools.simple.AlignedDiffModelBase
 import com.intellij.diff.tools.util.*
+import com.intellij.diff.tools.util.BaseSyncScrollable.ScrollHelper
 import com.intellij.diff.tools.util.FocusTrackerSupport.Twoside
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
@@ -119,6 +120,9 @@ internal class SideBySidePatchDiffViewer(
     editorSettingsAction = SetEditorSettingsAction(textSettings, editors)
     editorSettingsAction.setSyncScrollSupport(syncScrollSupport)
     editorSettingsAction.applyDefaults()
+
+    listenTypingAttempts(diffContext, editor1)
+    listenTypingAttempts(diffContext, editor2)
   }
 
   override fun getComponent(): JComponent = panel

@@ -58,9 +58,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public class MyPluginModel extends InstalledPluginsTableModel implements PluginEnabler {
   private static final Logger LOG = Logger.getInstance(MyPluginModel.class);
   private static final Boolean FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI =

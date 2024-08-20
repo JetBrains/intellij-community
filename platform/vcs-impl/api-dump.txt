@@ -1022,13 +1022,16 @@ f:com.intellij.openapi.vcs.changes.ChangeListData
 - <init>():V
 - <init>(com.intellij.vcs.log.VcsUser):V
 - <init>(com.intellij.vcs.log.VcsUser,java.util.Date):V
-- b:<init>(com.intellij.vcs.log.VcsUser,java.util.Date,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.vcs.log.VcsUser,java.util.Date,Z):V
+- b:<init>(com.intellij.vcs.log.VcsUser,java.util.Date,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():com.intellij.vcs.log.VcsUser
 - f:component2():java.util.Date
-- f:copy(com.intellij.vcs.log.VcsUser,java.util.Date):com.intellij.openapi.vcs.changes.ChangeListData
-- bs:copy$default(com.intellij.openapi.vcs.changes.ChangeListData,com.intellij.vcs.log.VcsUser,java.util.Date,I,java.lang.Object):com.intellij.openapi.vcs.changes.ChangeListData
+- f:component3():Z
+- f:copy(com.intellij.vcs.log.VcsUser,java.util.Date,Z):com.intellij.openapi.vcs.changes.ChangeListData
+- bs:copy$default(com.intellij.openapi.vcs.changes.ChangeListData,com.intellij.vcs.log.VcsUser,java.util.Date,Z,I,java.lang.Object):com.intellij.openapi.vcs.changes.ChangeListData
 - equals(java.lang.Object):Z
 - f:getAuthor():com.intellij.vcs.log.VcsUser
+- f:getAutomatic():Z
 - f:getDate():java.util.Date
 - f:getPresentation():java.lang.String
 - hashCode():I
@@ -1039,18 +1042,6 @@ f:com.intellij.openapi.vcs.changes.ChangeListData$Companion
 - f:of(com.intellij.vcs.log.VcsUser,java.util.Date):com.intellij.openapi.vcs.changes.ChangeListData
 - f:readExternal(org.jdom.Element):com.intellij.openapi.vcs.changes.ChangeListData
 - f:writeExternal(com.intellij.openapi.vcs.changes.ChangeListData):org.jdom.Element
-f:com.intellij.openapi.vcs.changes.ChangeListData$State
-- <init>():V
-- <init>(java.lang.String):V
-- <init>(java.lang.String,java.lang.String):V
-- <init>(java.lang.String,java.lang.String,java.util.Date):V
-- b:<init>(java.lang.String,java.lang.String,java.util.Date,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:getDate():java.util.Date
-- f:getEmail():java.lang.String
-- f:getName():java.lang.String
-- f:setDate(java.util.Date):V
-- f:setEmail(java.lang.String):V
-- f:setName(java.lang.String):V
 f:com.intellij.openapi.vcs.changes.ChangeListDataKt
 - sf:getAuthor(com.intellij.openapi.vcs.changes.LocalChangeList):com.intellij.vcs.log.VcsUser
 - sf:getAuthorDate(com.intellij.openapi.vcs.changes.LocalChangeList):java.util.Date
@@ -2157,6 +2148,7 @@ f:com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 - getProject():com.intellij.openapi.project.Project
 - s:getRequestTitle(com.intellij.openapi.vcs.changes.Change):java.lang.String
 - s:getRevisionTitle(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):java.lang.String
+- s:getRevisionTitleOrEmpty(com.intellij.openapi.vcs.changes.ContentRevision):java.lang.String
 - s:getServerVersion():java.lang.String
 - getTag():com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - s:getYourVersion():java.lang.String
@@ -5986,6 +5978,24 @@ pa:com.intellij.openapi.vcs.history.BaseDiffFromHistoryHandler$CollectChangesTas
 - a:getDialogTitle():java.lang.String
 - onSuccess():V
 - run(com.intellij.openapi.progress.ProgressIndicator):V
+f:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
+- sf:INSTANCE:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
+- sf:getTitleCustomizers(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle):java.util.List
+- sf:getTitleCustomizers(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle):java.util.List
+f:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
+- sf:Companion:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle$Companion
+- <init>(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):V
+- f:component1():com.intellij.openapi.vcs.changes.ContentRevision
+- f:component2():java.lang.String
+- f:copy(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
+- bs:copy$default(com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String,I,java.lang.Object):com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
+- sf:create(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
+- equals(java.lang.Object):Z
+- f:getRevision():com.intellij.openapi.vcs.changes.ContentRevision
+- f:getTitle():java.lang.String
+- hashCode():I
+f:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle$Companion
+- f:create(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
 f:com.intellij.openapi.vcs.history.FileHistoryPanelImpl
 - javax.swing.JPanel
 - com.intellij.ide.CopyProvider
@@ -6353,6 +6363,7 @@ f:com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 - getLineStatusTracker(com.intellij.openapi.editor.Document):com.intellij.openapi.vcs.ex.LineStatusTracker
 - getLineStatusTracker(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.ex.LineStatusTracker
 - f:getTrackers():java.util.List
+- f:hasPendingUpdate(com.intellij.openapi.editor.Document):Z
 - invokeAfterUpdate(java.lang.Runnable):V
 - f:releaseAllTrackers():V
 - releaseTrackerFor(com.intellij.openapi.editor.Document,java.lang.Object):V

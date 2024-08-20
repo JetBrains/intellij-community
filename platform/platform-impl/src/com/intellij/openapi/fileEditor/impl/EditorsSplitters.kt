@@ -746,16 +746,22 @@ open class EditorsSplitters internal constructor(
       }
     }
 
+    /**
+      Rolls back the last focus gained time if focus change was temporary
+
+      Fixes the following situation:
+
+      1. The user clicks an inactive IDE window.
+      2. The window gets focus, the last focused editor becomes focused.
+      3. The component that the user clicked becomes focused immediately after that.
+
+      In this case, the IDE should behave as if the editor never received this last focus to begin with.
+      However, it's impossible to detect when the editor gains focus.
+      At that point, the mouse click may not even be in the event queue yet,
+      and it's anyone's guess whether the window was activated by a mouse click or, say, with Alt+Tab.
+      Therefore, we update the editor's last focused time anyway, but then roll back if this situation is detected.
+    */
     private fun rollbackFocusGainedIfNecessary(newFocusedComponent: Component) {
-      // We need to detect the following situation:
-      // 1. The user clicks an inactive IDE window.
-      // 2. The window gets focus, the last focused editor becomes focused.
-      // 3. The component that the user clicked becomes focused immediately after that.
-      // In this case, the IDE should behave as if the editor never received this last focus to begin with.
-      // However, it's impossible to detect when the editor gains focus.
-      // At that point, the mouse click may not even be in the event queue yet,
-      // and it's anyone's guess whether the window was activated by a mouse click or, say, with Alt+Tab.
-      // Therefore, we update the editor's last focused time anyway, but then roll back if this situation is detected.
       if (previousFocusGainedTime == 0L) return // Nothing to roll back.
       if (ComponentUtil.getParentOfType(EditorsSplitters::class.java, newFocusedComponent) == this@EditorsSplitters) {
         // The clicked component is a part of these editor splitters, the user actually requested to focus this specific component.

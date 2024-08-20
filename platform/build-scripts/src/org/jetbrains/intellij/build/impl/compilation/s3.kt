@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
 private val isAwsCliAvailable by lazy {
@@ -39,7 +38,7 @@ internal fun awsS3Cli(vararg args: String, returnStdOut: Boolean = true): String
   }
   val output = if (returnStdOut)
     process.inputStream.use {
-      String(it.readAllBytes(), StandardCharsets.UTF_8)
+      it.readAllBytes().decodeToString()
     }
   else {
     ""

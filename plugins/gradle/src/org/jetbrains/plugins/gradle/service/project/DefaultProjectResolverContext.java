@@ -233,7 +233,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       var properties = GradlePropertiesFile.getProperties(project, projectPath);
       var isolatedProjects = properties.getIsolatedProjects();
       if (isolatedProjects != null && isolatedProjects.getValue()) {
-        LOG.debug("The streaming Gradle model fetching isn't applicable: unsupported isolated-projects mode: " + gradleVersion);
+        LOG.debug("The streaming Gradle model fetching isn't applicable: unsupported isolated-projects mode: " + isolatedProjects);
         return false;
       }
     }

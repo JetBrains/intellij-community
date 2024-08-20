@@ -93,7 +93,7 @@ class NotebookBelowCellDelimiterPanel(
     // ideally, a toolbar with a single action and targetComponent this should've done that
     // however, the toolbar max height must be not greater than 18, which seemed to be non-trivial
     val action = ActionManager.getInstance().getAction("JupyterCellAddTagInlayAction") ?: return null
-    val originalIcon = AllIcons.Expui.General.Add
+    val originalIcon = AllIcons.General.Add
     val transparentIcon = IconLoader.getTransparentIcon(originalIcon)
 
     return JButton().apply {
@@ -155,7 +155,7 @@ class NotebookBelowCellDelimiterPanel(
   fun updateExecutionStatus(
     @NlsSafe tooltipText: String?, executionCount: Int?, statusIcon: Icon?, @NlsSafe executionDurationText: String?
   ) {
-    val showStatus = isExecutionCountDefined(executionCount) || (tooltipText != null && statusIcon != AllIcons.Expui.General.GreenCheckmark)
+    val showStatus = isExecutionCountDefined(executionCount) || (tooltipText != null && statusIcon != AllIcons.General.GreenCheckmark)
     if (showStatus) {
       getOrCreateExecutionLabel().apply {
         text = getExecutionLabelText(executionCount, executionDurationText)

@@ -16,11 +16,15 @@ import com.intellij.openapi.vfs.readText
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 
-private val KOTLIN_NOTEBOOKS_PRIMARY_PLUGIN_ID = "org.jetbrains.plugins.kotlin.jupyter"
-private val KOTLIN_NOTEBOOKS_ALL_PLUGIN_IDS = listOf("org.jetbrains.plugins.kotlin.jupyter", "intellij.jupyter")
-private val KOTLIN_NOTEBOOKS_PLUGIN_NAME: String = "Kotlin Notebook"
-private val KOTLIN_NOTEBOOKS_PLUGIN_FILES: String = "Kotlin Notebook (*.ipynb)"
-private val KOTLIN_NOTEBOOKS_PLUGIN_SUGGESTION_DISMISSED_KEY: String = "notebook.kotlin.suggestion.dismissed"
+private const val KOTLIN_NOTEBOOKS_PRIMARY_PLUGIN_ID = "org.jetbrains.plugins.kotlin.jupyter"
+private val KOTLIN_NOTEBOOKS_ALL_PLUGIN_IDS = listOf(
+    KOTLIN_NOTEBOOKS_PRIMARY_PLUGIN_ID,
+    "intellij.jupyter",
+    "com.intellij.notebooks.core",
+)
+private const val KOTLIN_NOTEBOOKS_PLUGIN_NAME: String = "Kotlin Notebook"
+private const val KOTLIN_NOTEBOOKS_PLUGIN_FILES: String = "Kotlin Notebook (*.ipynb)"
+private const val KOTLIN_NOTEBOOKS_PLUGIN_SUGGESTION_DISMISSED_KEY: String = "notebook.kotlin.suggestion.dismissed"
 
 /**
  * Suggestion provider for the Kotlin Notebooks plugin. It supports Jupyter Notebook files (*.ipynb) that
@@ -35,7 +39,7 @@ internal class KotlinNotebookSuggestionProvider : PluginSuggestionProvider {
     private fun requiredPluginsInstalled(): Boolean {
         return KOTLIN_NOTEBOOKS_ALL_PLUGIN_IDS.all { pluginIdStr ->
             val pluginId = PluginId.getId(pluginIdStr)
-            !PluginManagerCore.isDisabled(pluginId)
+            PluginManager.isPluginInstalled(pluginId) && !PluginManagerCore.isDisabled(pluginId)
         }
     }
 
@@ -55,7 +59,7 @@ internal class KotlinNotebookSuggestionProvider : PluginSuggestionProvider {
         }
 
         // We should only consider notebooks configured to use the Kotlin kernel.
-        // Any error in JSON file or format will be ignored as it is handled as part
+        // Any error in the JSON file or format will be ignored as it is handled as part
         // of opening the file in the editor.
         try {
             val json = JsonParser.parseString(file.readText())
@@ -85,9 +89,9 @@ class KotlinNotebookPluginSuggestion(private val project: Project, private val i
 
     // We need to manually list all dependencies of the Notebook plugin.
     // See IJPL-149727
-    override val pluginIds: List<String> = KOTLIN_NOTEBOOKS_ALL_PLUGIN_IDS
+    override val pluginIds: List<String> = listOf(KOTLIN_NOTEBOOKS_PRIMARY_PLUGIN_ID)
 
-    override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
+    override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
         val status = if (isCommunity) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
         val panel = EditorNotificationPanel(fileEditor, status)
         if (isCommunity) {
@@ -118,7 +122,6 @@ class KotlinNotebookPluginSuggestion(private val project: Project, private val i
     private fun setupPluginSuggestion(panel: EditorNotificationPanel) {
         panel.text = IdeBundle.message("plugins.advertiser.plugins.found", KOTLIN_NOTEBOOKS_PLUGIN_FILES)
         panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", KOTLIN_NOTEBOOKS_PLUGIN_NAME)) {
-            val pluginIds = KOTLIN_NOTEBOOKS_ALL_PLUGIN_IDS
             FUSEventSource.EDITOR.logInstallPlugins(pluginIds, project)
             installAndEnable(project, pluginIds.map(PluginId::getId).toSet(), true) {
                 EditorNotifications.getInstance(project).updateAllNotifications()

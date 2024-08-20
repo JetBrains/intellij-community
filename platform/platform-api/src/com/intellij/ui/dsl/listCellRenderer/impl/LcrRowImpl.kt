@@ -12,6 +12,7 @@ import com.intellij.ui.dsl.listCellRenderer.*
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -76,24 +77,29 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
-  override fun getListCellRendererComponent(list: JList<out T>,
-                                            value: T,
-                                            index: Int,
-                                            isSelected: Boolean,
-                                            cellHasFocus: Boolean): Component {
+  override fun getListCellRendererComponent(
+    list: JList<out T>,
+    value: T,
+    index: Int,
+    isSelected: Boolean,
+    cellHasFocus: Boolean,
+  ): Component {
     cells.clear()
     gap = LcrRow.Gap.DEFAULT
 
     val selectionBg = if (isSelected) RenderingUtil.getSelectionBackground(list) else null
     val isComboBox = isComboBox(list)
+    val enabled: Boolean
     if (isComboBox && index == -1) {
       // Renderer for selected item in collapsed ComboBox component
       background = null
       selectionColor = null
+      enabled = getComboBox(list)?.isEnabled ?: true
     }
     else {
       background = list.background
       selectionColor = selectionBg
+      enabled = list.isEnabled
     }
 
     listCellRendererParams = ListCellRendererParams(list, value, index, isSelected, cellHasFocus)
@@ -109,7 +115,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     for ((i, cell) in cells.withIndex()) {
       val component = result.content.getComponent(i) as JComponent
       val constraints = result.contentLayout.getConstraints(component)!!
-      cell.apply(component)
+      cell.apply(component, enabled)
 
       // Row height is usually even. If components height is odd the component cannot be placed right in center.
       // Because of rounding it's placed a little bit higher which looks not good, especially for text. This patch fixes that
@@ -149,40 +155,15 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     val isComboBox = isComboBox(list)
     if (ExperimentalUI.isNewUI()) {
       // Update height/insets every time, so IDE scaling is applied
-      rendererPanel.apply {
-        if (isComboBox && index == -1) {
-          // Renderer for selected item in collapsed ComboBox component
-          isOpaque = false
-          selectionArc = 0
-          selectionInsets = JBInsets.emptyInsets()
-          border = null
-          preferredHeight = null
-          background = null
-          selectionColor = null
-        }
-        else {
-          isOpaque = true
-          selectionArc = 8
-          if (isComboBox) {
-            selectionInsets = JBInsets.create(0, 12)
-            border = JBUI.Borders.empty(2, 20)
-          }
-          else {
-            selectionInsets = JBInsets.create(0, 12)
-            border = JBUI.Borders.empty(0, 20)
-          }
-          preferredHeight = JBUI.CurrentTheme.List.rowHeight()
-          background = this@LcrRowImpl.background
-          selectionColor = if (selected) this@LcrRowImpl.selectionColor else null
-        }
+      if (isComboBox && index == -1) {
+        rendererPanel.initCollapsedComboBoxItem()
+      }
+      else {
+        rendererPanel.initItem(isComboBox, background, if (selected) selectionColor else null)
       }
     }
     else {
-      rendererPanel.apply {
-        border = JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding())
-        background = if (selected) this@LcrRowImpl.selectionColor else this@LcrRowImpl.background
-        selectionColor = null
-      }
+      rendererPanel.initOldUIItem(if (selected) selectionColor else background)
     }
   }
 
@@ -202,6 +183,20 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     return UIUtil.getParentOfType(BasicComboPopup::class.java, list) != null
   }
 
+  /**
+   * Uses reflection as a workaround, don't call frequently
+   */
+  private fun getComboBox(list: JList<*>): JComboBox<*>? {
+    val popup = UIUtil.getParentOfType(BasicComboPopup::class.java, list) ?: return null
+    try {
+      val field = ReflectionUtil.findField(BasicComboPopup::class.java, JComboBox::class.java, "comboBox")
+      return field.get(popup) as JComboBox<*>?
+    }
+    catch (e: ReflectiveOperationException) {
+      return null
+    }
+  }
+
   @Nls
   private fun getAccessibleName(components: Array<Component>): String {
     val names = components
@@ -213,11 +208,13 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   }
 }
 
-private data class ListCellRendererParams<T>(val list: JList<out T>,
-                                             val value: T,
-                                             val index: Int,
-                                             val selected: Boolean,
-                                             val hasFocus: Boolean)
+private data class ListCellRendererParams<T>(
+  val list: JList<out T>,
+  val value: T,
+  val index: Int,
+  val selected: Boolean,
+  val hasFocus: Boolean,
+)
 
 private class RendererCache {
 
@@ -323,5 +320,40 @@ private class RendererPanel : SelectablePanel(), KotlinUIDslRendererComponent {
       }
     }
     return accessibleContext
+  }
+
+  /**
+   * Init renderer for selected item in collapsed ComboBox component
+   */
+  fun initCollapsedComboBoxItem() {
+    isOpaque = false
+    selectionArc = 0
+    selectionInsets = JBInsets.emptyInsets()
+    border = null
+    preferredHeight = null
+    background = null
+    selectionColor = null
+  }
+
+  fun initItem(isComboBox: Boolean, background: Color?, selectionColor: Color?) {
+    isOpaque = true
+    selectionArc = 8
+    if (isComboBox) {
+      selectionInsets = JBInsets.create(0, 12)
+      border = JBUI.Borders.empty(2, 20)
+    }
+    else {
+      selectionInsets = JBInsets.create(0, 12)
+      border = JBUI.Borders.empty(0, 20)
+    }
+    preferredHeight = JBUI.CurrentTheme.List.rowHeight()
+    this.background = background
+    this.selectionColor = selectionColor
+  }
+
+  fun initOldUIItem(background: Color?) {
+    border = JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding())
+    this.background = background
+    selectionColor = null
   }
 }

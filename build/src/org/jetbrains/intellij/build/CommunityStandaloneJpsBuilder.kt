@@ -19,7 +19,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
                                                layoutCustomizer: ((BaseLayout) -> Unit) = {}) {
   val layout = PlatformLayout()
 
-  layout.withModules(listOf(
+  layout.withModules(sequenceOf(
     "intellij.platform.util",
     "intellij.platform.util.classLoader",
     "intellij.platform.util.base",
@@ -36,13 +36,13 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
 
   layout.withModule("intellij.platform.runtime.repository", "platform-runtime-repository.jar")
-  layout.withModules(listOf(
+  layout.withModules(sequenceOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.impl",
     "intellij.platform.jps.model.serialization",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "jps-model.jar", reason = null) })
 
-  layout.withModules(listOf(
+  layout.withModules(sequenceOf(
     "intellij.java.guiForms.rt",
     "intellij.java.guiForms.compiler",
     "intellij.java.compiler.instrumentationUtil",

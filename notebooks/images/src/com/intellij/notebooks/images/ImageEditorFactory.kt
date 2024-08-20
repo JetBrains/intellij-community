@@ -12,7 +12,7 @@ interface ImageEditorFactory {
                         graphicsPanel: GraphicsPanel): ImageEditor
 
   companion object {
-    val EP_NAME: ExtensionPointName<ImageEditorFactory> = ExtensionPointName("com.intellij.notebooks.images.imageEditorFactory")
+    private val EP_NAME: ExtensionPointName<ImageEditorFactory> = ExtensionPointName("com.intellij.notebooks.images.imageEditorFactory")
 
     val instance: ImageEditorFactory get() = EP_NAME.extensionList.first()
   }

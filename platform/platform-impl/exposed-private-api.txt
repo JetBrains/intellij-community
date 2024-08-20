@@ -11,11 +11,8 @@ com/intellij/ide/gdpr/ConsentAttributes
 com/intellij/ide/lightEdit/LightEditConfiguration
 com/intellij/ide/plugins/IdeaPluginDescriptorImpl
 com/intellij/ide/plugins/marketplace/MarketplacePluginDownloadService
-com/intellij/ide/plugins/marketplace/MarketplaceRequests
 com/intellij/ide/plugins/newui/PluginsViewCustomizer
 com/intellij/ide/plugins/newui/PluginsViewCustomizer$ListPluginComponentCustomizer
-com/intellij/ide/plugins/newui/PluginsViewCustomizer$PluginDetailsCustomizer
-com/intellij/ide/plugins/newui/PluginsViewCustomizer$PluginsGroupDescriptor
 com/intellij/ide/ui/LafReference
 com/intellij/ide/ui/laf/UIThemeExportableBean
 com/intellij/ide/util/GotoLineNumberDialog$Coordinates

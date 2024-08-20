@@ -37,7 +37,7 @@ fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange
   return Pair(sinceBuild, untilBuild)
 }
 
-internal fun patchPluginXml(
+internal suspend fun patchPluginXml(
   moduleOutputPatcher: ModuleOutputPatcher,
   plugin: PluginLayout,
   releaseDate: String,

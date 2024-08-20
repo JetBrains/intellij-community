@@ -1,20 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import kotlin.time.Duration
 
 interface BuildContext : CompilationContext {
@@ -136,7 +136,7 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  fun createCopyForProduct(productProperties: ProductProperties,
+  suspend fun createCopyForProduct(productProperties: ProductProperties,
                            projectHomeForCustomizers: Path,
                            prepareForBuild: Boolean = true): BuildContext
 
@@ -149,7 +149,7 @@ interface BuildContext : CompilationContext {
   suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
 
   suspend fun runProcess(
-    vararg args: String,
+    args: List<String>,
     workingDir: Path? = null,
     timeout: Duration = DEFAULT_TIMEOUT,
     additionalEnvVariables: Map<String, String> = emptyMap(),
@@ -157,9 +157,11 @@ interface BuildContext : CompilationContext {
   )
 }
 
-suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
-                                                stepId: String,
-                                                crossinline step: suspend CoroutineScope.(Span) -> T): T? {
+suspend inline fun <T> BuildContext.executeStep(
+  spanBuilder: SpanBuilder,
+  stepId: String,
+  crossinline step: suspend CoroutineScope.(Span) -> T,
+): T? {
   return spanBuilder.useWithScope(Dispatchers.IO) { span ->
     try {
       options.buildStepListener.onStart(stepId, messages)
@@ -169,10 +171,11 @@ suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
         null
       }
       else {
-        coroutineScope {
-          step(span)
-        }
+        step(span)
       }
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (failure: Throwable) {
       options.buildStepListener.onFailure(stepId, failure, messages)
@@ -209,7 +212,7 @@ sealed interface DistFileContent {
 }
 
 data class LocalDistFileContent(@JvmField val file: Path, val isExecutable: Boolean = false) : DistFileContent {
-  override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).toString(Charsets.UTF_8)
+  override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).decodeToString()
 
   override fun toString(): String = "LocalDistFileContent(file=$file, isExecutable=$isExecutable)"
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -147,7 +147,9 @@ public final class SerializedStubTree {
 
   void restoreIndexedStubs() throws IOException {
     if (myDeserializedIndexedStubs.myState != DeserializedIndexedStubs.RestoreState.RESTORED) {
-      myDeserializedIndexedStubs.setRestoredMap(myStubIndexesExternalizer.read(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength))));
+      DataInputStream in = new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength));
+      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> restoredMap = myStubIndexesExternalizer.read(in);
+      myDeserializedIndexedStubs.setRestoredMap(restoredMap);
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing;
 
@@ -17,8 +17,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 @Internal
 public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends InvertedIndex<Key, Value, Input>{
 
-  boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws
-                                                                                                                                   StorageException;
+  boolean processAllKeys(@NotNull Processor<? super Key> processor,
+                         @NotNull GlobalSearchScope scope,
+                         @Nullable IdFilter idFilter) throws StorageException;
 
   @NotNull
   ReadWriteLock getLock();
@@ -35,6 +36,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   /**
    * @deprecated use {@linkplain #setIndexedStateForFileOnFileIndexMetaData(int, Object, boolean)}
    */
+  @SuppressWarnings("unused")
   @Deprecated(forRemoval = true)
   default void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileIndexMetaData data) {
     throw new IllegalStateException("Please override setIndexedStateForFileOnFileIndexMetaData(int, FileIndexMetaData, boolean)");
@@ -49,6 +51,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   /**
    * @deprecated use {@linkplain #setIndexedStateForFile(int, IndexedFile, boolean)}
    */
+  @SuppressWarnings("unused")
   @Deprecated(forRemoval = true)
   default void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
     throw new IllegalStateException("Please override setIndexedStateForFile(int, IndexedFile, boolean)");

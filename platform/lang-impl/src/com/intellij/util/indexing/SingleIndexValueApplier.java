@@ -7,8 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
-
 @ApiStatus.Internal
 public final class SingleIndexValueApplier<FileIndexMetaData> {
   public final @NotNull ID<?, ?> indexId;
@@ -17,7 +15,7 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
 
   private final int inputId;
   private final @Nullable FileIndexMetaData myFileIndexMetaData;
-  private final @NotNull Supplier<Boolean> storageUpdate;
+  private final @NotNull StorageUpdate storageUpdate;
   private final @NotNull String fileInfo;
   private final boolean isMock;
 
@@ -28,7 +26,7 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
                           @NotNull ID<?, ?> indexId,
                           int inputId,
                           @Nullable FileIndexMetaData fileIndexMetaData,
-                          @NotNull Supplier<Boolean> update,
+                          @NotNull StorageUpdate update,
                           @NotNull VirtualFile file,
                           @NotNull FileContent currentFC,
                           long evaluatingIndexValueApplierTime) {
@@ -43,8 +41,8 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
   }
 
   public boolean wasIndexProvidedByExtension() {
-    return storageUpdate instanceof IndexInfrastructureExtensionUpdateComputation &&
-           ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
+    return storageUpdate instanceof IndexInfrastructureExtensionUpdate &&
+           ((IndexInfrastructureExtensionUpdate)storageUpdate).isIndexProvided();
   }
 
   public boolean apply() {

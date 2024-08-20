@@ -1,16 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.*
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.withClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.unwrapParenthesesLabelsAndAnnotations
 
 internal class UsedReference private constructor(val reference: KtReference) {
     fun KaSession.resolvesByNames(): Collection<Name> {
@@ -44,6 +47,7 @@ internal class UsedReference private constructor(val reference: KtReference) {
         fun KaSession.createFrom(reference: KtReference): UsedReference? {
             return when {
                 isDefaultJavaAnnotationArgumentReference(reference) -> null
+                isUnaryOperatorOnIntLiteralReference(reference) -> null
                 isEmptyInvokeReference(reference) -> null
                 else -> UsedReference(reference)
             }
@@ -88,6 +92,23 @@ internal class UsedSymbol(val reference: KtReference, val symbol: KaSymbol) {
  */
 private fun isDefaultJavaAnnotationArgumentReference(reference: KtReference): Boolean {
     return reference is KtDefaultAnnotationArgumentReference
+}
+
+/**
+ * Checks if the [reference] points to unary plus or minus operator on an [Int] literal, like `-10` or `+(20)`.
+ *
+ * Currently, such operators are not properly resolved in K2 Mode (see KT-70774).
+ */
+private fun isUnaryOperatorOnIntLiteralReference(reference: KtReference): Boolean {
+    val unaryOperationReferenceExpression = reference.element as? KtOperationReferenceExpression ?: return false
+
+    if (unaryOperationReferenceExpression.operationSignTokenType !in arrayOf(KtTokens.PLUS, KtTokens.MINUS)) return false
+
+    val prefixExpression = unaryOperationReferenceExpression.parent as? KtUnaryExpression ?: return false
+    val unwrappedBaseExpression = prefixExpression.baseExpression?.unwrapParenthesesLabelsAndAnnotations() ?: return false
+
+    return unwrappedBaseExpression is KtConstantExpression &&
+            unwrappedBaseExpression.elementType == KtNodeTypes.INTEGER_CONSTANT
 }
 
 /**

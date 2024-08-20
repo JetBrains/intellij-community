@@ -370,7 +370,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(getFile().getText(), errors);
   }
 
-  public void testDaemonIgnoresNonPhysicalEditor() {
+  public void testDaemonIgnoresNonPhysicalEditor() throws Exception {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
           
@@ -396,7 +396,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testDaemonIgnoresConsoleActivities() {
+  public void testDaemonIgnoresConsoleActivities() throws Exception {
     configureByText(JavaFileType.INSTANCE, """
       class AClass<caret> {
           
@@ -448,7 +448,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private void checkDaemonReaction(boolean mustCancelItself, @NotNull Runnable action) {
+  private void checkDaemonReaction(boolean mustCancelItself, @NotNull Runnable action) throws Exception {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     highlightErrors();
     myDaemonCodeAnalyzer.waitForTermination();
@@ -963,7 +963,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       try {
         StoreUtil.saveDocumentsAndProjectsAndApp(false);
 
-        checkDaemonReaction(false, () -> StoreUtil.saveDocumentsAndProjectsAndApp(false));
+        try {
+          checkDaemonReaction(false, () -> StoreUtil.saveDocumentsAndProjectsAndApp(false));
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
       finally {
         settings.setSaveOnFrameDeactivation(frameSave);
@@ -1331,7 +1336,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     return blocks;
   }
 
-  public void testCodeFoldingInSplittedWindowAppliesToAllEditors() {
+  public void testCodeFoldingInSplittedWindowAppliesToAllEditors() throws Exception {
     Set<Editor> applied = ConcurrentCollectionFactory.createConcurrentSet();
     Set<Editor> collected = ConcurrentCollectionFactory.createConcurrentSet();
     registerFakePass(applied, collected);
@@ -1352,7 +1357,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(applied, ContainerUtil.newHashSet(editor1, editor2));
   }
 
-  public void testHighlightingInSplittedWindowFinishesEventually() {
+  public void testHighlightingInSplittedWindowFinishesEventually() throws Exception {
     myDaemonCodeAnalyzer.serializeCodeInsightPasses(true); // reproduced only for serialized passes
     try {
       Collection<Editor> applied = ContainerUtil.createConcurrentList();
@@ -2186,13 +2191,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           MyVerySlowAnnotator.wait.set(false);
           success.set(true);
         }
-        if (n.timedOut()) {
+        if (n.isTimedOut()) {
           MyVerySlowAnnotator.wait.set(false);
           throw new RuntimeException(new TimeoutException(ThreadDumper.dumpThreadsToString()));
         }
       };
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
-      myDaemonCodeAnalyzer.runPasses(myFile, myEditor.getDocument(), textEditor, new int[0], false, checkHighlighted);
+      try {
+        myDaemonCodeAnalyzer.runPasses(myFile, myEditor.getDocument(), textEditor, new int[0], false, checkHighlighted);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
 
       assertEmpty(MyVerySlowAnnotator.syntaxHighlights(markupModel, errorDescription));
       assertNotEmpty(MyVerySlowAnnotator.myHighlights(markupModel));

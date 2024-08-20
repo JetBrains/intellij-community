@@ -75,6 +75,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KtProperty.isPropertyNotInitialized(): Boolean {
+        // TODO: when KT-63221 is fixed use `diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)` instead
         return containingKtFile.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             .filter { it.psi == this@isPropertyNotInitialized }
             .any { it is KaFirDiagnostic.MustBeInitializedOrBeAbstract }

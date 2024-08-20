@@ -75,7 +75,7 @@ class InlayPresentationList(
 
   fun handleClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage, controlDown: Boolean) {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return
-    entry.handleClick(e.editor, this, controlDown)
+    entry.handleClick(e, this, controlDown)
   }
 
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {

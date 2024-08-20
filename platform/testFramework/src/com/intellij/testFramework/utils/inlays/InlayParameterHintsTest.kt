@@ -109,6 +109,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
                               inlayFilter: (Inlay<*>) -> Boolean): List<InlayInfo> {
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength) +
+                    editor.inlayModel.getAfterLineEndElementsInRange(0, editor.document.textLength) +
                     editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength)
 
     val hintManager = ParameterHintsPresentationManager.getInstance()

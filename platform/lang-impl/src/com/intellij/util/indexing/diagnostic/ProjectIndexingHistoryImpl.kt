@@ -35,8 +35,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
     fun startDumbModeBeginningTracking(project: Project,
                                        scanningHistory: ProjectScanningHistoryImpl): Runnable {
-      val now = ZonedDateTime.now(ZoneOffset.UTC)
       val callback = Runnable {
+        val now = ZonedDateTime.now(ZoneOffset.UTC)
         scanningHistory.createScanningDumbModeCallBack().accept(now)
       }
       ReadAction.run<RuntimeException> {

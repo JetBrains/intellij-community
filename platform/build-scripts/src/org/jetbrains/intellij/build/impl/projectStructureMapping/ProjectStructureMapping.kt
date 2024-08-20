@@ -3,10 +3,7 @@
 
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
-import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import org.apache.commons.io.output.ByteArrayOutputStream
@@ -15,7 +12,6 @@ import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import java.io.File
 import java.nio.ByteBuffer
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -146,44 +142,6 @@ private fun buildPlatformContentReport(contentReport: ContentReport, buildPaths:
   return out.toByteArray()
 }
 
-internal fun writeProjectStructureReport(contentReport: ContentReport, file: Path, buildPaths: BuildPaths, extraRoot: Path? = null) {
-  Files.createDirectories(file.parent)
-  Files.newOutputStream(file).use { out ->
-    val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
-    writer.use {
-      writer.writeStartArray()
-      for (entry in contentReport.combined()) {
-        writer.writeStartObject()
-        writer.writeStringField("path", shortenAndNormalizePath(entry.path, buildPaths, extraRoot))
-
-        writer.writeStringField("type", entry.type)
-        when (entry) {
-          is ModuleLibraryFileEntry -> {
-            writer.writeStringField("module", entry.moduleName)
-            writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
-            writer.writeNumberField("size", entry.size)
-          }
-          is ModuleOutputEntry -> {
-            writeModuleItem(writer, entry, writeReason = true)
-          }
-          is ModuleTestOutputEntry -> {
-            writer.writeStringField("module", entry.moduleName)
-          }
-          is ProjectLibraryEntry -> {
-            writer.writeStringField("library", entry.data.libraryName)
-            writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
-            writer.writeNumberField("size", entry.size)
-          }
-          is CustomAssetEntry -> {
-          }
-        }
-        writer.writeEndObject()
-      }
-      writer.writeEndArray()
-    }
-  }
-}
-
 private fun shortenPath(file: Path, buildPaths: BuildPaths, extraRoot: Path?): String {
   if (file.startsWith(MAVEN_REPO)) {
     return "\$MAVEN_REPOSITORY$/" + MAVEN_REPO.relativize(file).toString().replace(File.separatorChar, '/')
@@ -199,18 +157,6 @@ private fun shortenPath(file: Path, buildPaths: BuildPaths, extraRoot: Path?): S
       extraRoot != null && file.startsWith(extraRoot) -> extraRoot.relativize(file).toString()
       else -> file.toString()
     }
-  }
-}
-
-private val INDENTER = DefaultIndenter("  ", "\n")
-
-private class IntelliJDefaultPrettyPrinter : DefaultPrettyPrinter() {
-  override fun createInstance(): DefaultPrettyPrinter = IntelliJDefaultPrettyPrinter()
-
-  init {
-    _objectFieldValueSeparatorWithSpaces = ": "
-    _objectIndenter = INDENTER
-    _arrayIndenter = INDENTER
   }
 }
 

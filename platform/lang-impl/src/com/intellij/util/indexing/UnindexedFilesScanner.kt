@@ -55,17 +55,19 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
-class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Project,
-                                                      private val myOnProjectOpen: Boolean,
-                                                      isIndexingFilesFilterUpToDate: Boolean,
-                                                      val predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
-                                                      mark: StatusMark?,
-                                                      val indexingReason: String,
-                                                      val scanningType: ScanningType,
-                                                      private val startCondition: Future<*>?,
-                                                      private val shouldHideProgressInSmartMode: Boolean?= null,
-                                                      private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
-                                                      private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false) : FilesScanningTask {
+class UnindexedFilesScanner @JvmOverloads constructor(
+  private val myProject: Project,
+  private val myOnProjectOpen: Boolean,
+  isIndexingFilesFilterUpToDate: Boolean,
+  val predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
+  mark: StatusMark?,
+  val indexingReason: String,
+  val scanningType: ScanningType,
+  private val startCondition: Future<*>?,
+  private val shouldHideProgressInSmartMode: Boolean? = null,
+  private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
+  private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false,
+) : FilesScanningTask {
 
   enum class TestMode {
     PUSHING, PUSHING_AND_SCANNING
@@ -79,25 +81,55 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
   private lateinit var scanningHistory: ProjectScanningHistoryImpl
 
   @TestOnly
-  constructor(project: Project) : this(project, false, false, null, null,
-                                       "<unknown>", ScanningType.FULL, null)
+  constructor(project: Project)
+    : this(myProject = project,
+           myOnProjectOpen = false,
+           isIndexingFilesFilterUpToDate = false,
+           predefinedIndexableFilesIterators = null,
+           mark = null,
+           indexingReason = "<unknown>",
+           scanningType = ScanningType.FULL,
+           startCondition = null)
 
 
-  constructor(project: Project,
-              indexingReason: String) : this(project, false, false, null, null, indexingReason, ScanningType.FULL, null)
+  constructor(project: Project, indexingReason: String)
+    : this(myProject = project,
+           myOnProjectOpen = false,
+           isIndexingFilesFilterUpToDate = false,
+           predefinedIndexableFilesIterators = null,
+           mark = null,
+           indexingReason = indexingReason,
+           scanningType = ScanningType.FULL,
+           startCondition = null)
 
-  constructor(project: Project,
-              indexingReason: String,
-              shouldHideProgressInSmartMode: Boolean?) : this(project, false, false, null, null, indexingReason, ScanningType.FULL,
-                                                              null, shouldHideProgressInSmartMode,
-                                                              null)
+  constructor(
+    project: Project,
+    indexingReason: String,
+    shouldHideProgressInSmartMode: Boolean?,
+  ) : this(myProject = project,
+           myOnProjectOpen = false,
+           isIndexingFilesFilterUpToDate = false,
+           predefinedIndexableFilesIterators = null,
+           mark = null,
+           indexingReason = indexingReason,
+           scanningType = ScanningType.FULL,
+           startCondition = null,
+           shouldHideProgressInSmartMode = shouldHideProgressInSmartMode,
+           forceReindexingTrigger = null)
 
-  constructor(project: Project,
-              predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
-              mark: StatusMark?,
-              indexingReason: String) : this(project, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
-                                             if (predefinedIndexableFilesIterators == null) ScanningType.FULL else ScanningType.PARTIAL,
-                                             null)
+  constructor(
+    project: Project,
+    predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
+    mark: StatusMark?,
+    indexingReason: String,
+  ) : this(myProject = project,
+           myOnProjectOpen = false,
+           isIndexingFilesFilterUpToDate = false,
+           predefinedIndexableFilesIterators = predefinedIndexableFilesIterators,
+           mark = mark,
+           indexingReason = indexingReason,
+           scanningType = if (predefinedIndexableFilesIterators == null) ScanningType.FULL else ScanningType.PARTIAL,
+           startCondition = null)
 
   init {
     val filterHolder = myIndex.indexableFilesFilterHolder

@@ -11,7 +11,7 @@ internal fun Project.enableK2Compiler() {
         apiVersion = "2.0"
         languageVersion = "2.0"
     }
-    KotlinJpsPluginSettings.getInstance(this).setVersion("2.0.20-RC")
+    KotlinJpsPluginSettings.getInstance(this).setVersion("2.0.20-RC2")
 }
 
 internal fun Project.enableK1Compiler() {

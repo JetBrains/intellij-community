@@ -257,18 +257,21 @@ public final class EditorEmbeddedComponentManager {
 
   @ApiStatus.Internal
   public static final class FullEditorWidthRenderer extends MyRenderer {
-
+    private final EditorEx myEditor;
     FullEditorWidthRenderer(@NotNull JComponent component,
                             @NotNull ResizePolicy resizePolicy,
                             Properties.@Nullable RendererFactory rendererFactory,
                             @NotNull JScrollPane editorScrollPane,
+                            @NotNull EditorEx editor,
                             ComponentInlays.@NotNull ResizeListener resizeListener) {
       super(component, resizePolicy, rendererFactory, editorScrollPane, resizeListener);
+      myEditor = editor;
     }
 
     @Override
     int getPreferredWidth() {
-      return myEditorScrollPane.getViewport().getWidth() - myEditorScrollPane.getVerticalScrollBar().getWidth();
+      return myEditorScrollPane.getViewport().getWidth() - myEditorScrollPane.getVerticalScrollBar().getWidth()
+             - myEditor.getContentComponent().getInsets().right - myEditor.getContentComponent().getInsets().left;
     }
   }
 
@@ -290,7 +293,9 @@ public final class EditorEmbeddedComponentManager {
       if (myEditor.isDisposed()) return null;
 
 
-      MyRenderer renderer = fullWidth ? new FullEditorWidthRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener) : new MyRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener);
+      MyRenderer renderer = fullWidth ?
+                            new FullEditorWidthRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myEditor, myResizeListener) :
+                            new MyRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener);
       Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset,
                                                                          new InlayProperties()
                                                                            .relatesToPrecedingText(relatesToPrecedingText)

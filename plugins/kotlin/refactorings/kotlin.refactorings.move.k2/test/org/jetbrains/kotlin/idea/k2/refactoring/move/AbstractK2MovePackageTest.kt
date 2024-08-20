@@ -34,8 +34,8 @@ internal object K2MovePackageRefactoringAction : KotlinMoveRefactoringAction {
             project,
             arrayOf(sourcePackage),
             moveDestination,
-            /* searchInComments = */ false,
-            /* searchInNonJavaFiles = */ true,
+            config.updateTextOccurrences(),
+            config.updateTextOccurrences(),
             /* moveCallback = */ null
         ).run()
     }

@@ -2,6 +2,7 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.util.xml.dom.readXmlAsModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
@@ -15,7 +16,7 @@ fun runEssentialPluginsTest(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
-) = runBlocking {
+) = runBlocking(Dispatchers.Default) {
   val buildContext = BuildContextImpl.createContext(
     projectHome = homePath,
     productProperties = productProperties,

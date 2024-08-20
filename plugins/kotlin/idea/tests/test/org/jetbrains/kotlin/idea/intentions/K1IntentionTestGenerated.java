@@ -2179,6 +2179,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/addPropertyAccessors/setter/local.kt");
             }
 
+            @TestMetadata("noGetter.kt")
+            public void testNoGetter() throws Exception {
+                runTest("testData/intentions/addPropertyAccessors/setter/noGetter.kt");
+            }
+
             @TestMetadata("noType.kt")
             public void testNoType() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/setter/noType.kt");

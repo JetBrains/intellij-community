@@ -6,11 +6,9 @@ import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewMod
 import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
-import com.intellij.collaboration.ui.codereview.diff.viewer.buildChangeContext
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.createVcsChange
@@ -25,8 +23,7 @@ internal class GHPRCreateDiffViewModel(private val project: Project, parentCs: C
     .map { RefComparisonChangesSorter.Grouping(project, it) }
   private val helper =
     CodeReviewDiffViewModelComputer(flowOf(ComputedResult.success(Unit)), changesSorter) { _, change ->
-      val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
-      val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
+      val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project))
                                ?: error("Could not create diff producer from $change")
       CodeReviewDiffRequestProducer(project, change, changeDiffProducer, null)
     }

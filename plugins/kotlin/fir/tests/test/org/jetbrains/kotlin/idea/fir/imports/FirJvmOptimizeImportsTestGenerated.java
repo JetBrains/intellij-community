@@ -669,6 +669,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/InnerClassConstructor_superType.kt");
             }
 
+            @TestMetadata("IntUnaryOperatorsAreNotUnresolvedOnLiterals.kt")
+            public void testIntUnaryOperatorsAreNotUnresolvedOnLiterals() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/IntUnaryOperatorsAreNotUnresolvedOnLiterals.kt");
+            }
+
             @TestMetadata("InvokeFunction.kt")
             public void testInvokeFunction() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/InvokeFunction.kt");

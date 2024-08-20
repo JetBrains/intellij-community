@@ -236,7 +236,10 @@ impl DefaultLaunchConfiguration {
     /// the corresponding distribution option must be omitted.
     fn collect_vm_options_from_files(&self, vm_options: &mut Vec<String>) -> Result<()> {
         debug!("[1] Reading main VM options file: {:?}", self.vm_options_path);
-        let (dist_vm_options, _) = read_vm_options(&self.vm_options_path)?;
+        let (dist_vm_options, corrupted) = read_vm_options(&self.vm_options_path)?;
+        if corrupted {
+            bail!("Invalid character ('\\0') found in VM options file: {}", &self.vm_options_path.display());
+        }
 
         debug!("[2] Looking for user VM options file");
         let ((user_vm_options, corrupted), vm_options_path) = match self.get_user_vm_options_file() {

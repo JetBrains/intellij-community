@@ -1507,7 +1507,7 @@ f:com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 - f:setToolbarHeightReferent(javax.swing.JComponent):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser$Companion
-- f:createDiffRequestProducer(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change,java.util.Map,Z):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
+- f:createDiffRequestProducer(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change,java.util.Map):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser$Listener
 - java.util.EventListener
 - a:onModelUpdated():V

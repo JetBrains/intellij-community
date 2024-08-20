@@ -590,7 +590,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     // Presentation is expected to be always externally updated by calling updateCachedPresentation
     // Here we just return cached result because it must be always available for painting or speed search
     UsageNodePresentation cachedPresentation = getCachedPresentation();
-    return cachedPresentation != null ? cachedPresentation : UsageNodePresentation.EMPTY;
+    return cachedPresentation != null ? cachedPresentation : UsageNodePresentation.empty();
   }
 
   @NotNull

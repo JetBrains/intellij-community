@@ -138,6 +138,7 @@ f:com.intellij.openapi.util.text.Strings
 - s:indexOfAny(java.lang.String,java.lang.String):I
 - s:indexOfAny(java.lang.String,java.lang.String,I,I):I
 - s:indexOfIgnoreCase(java.lang.CharSequence,java.lang.CharSequence,I):I
+- s:indexOfIgnoreCase(java.lang.CharSequence,java.lang.CharSequence,I,I):I
 - s:indexOfIgnoreCase(java.lang.String,C,I):I
 - s:indexOfIgnoreCase(java.lang.String,java.lang.String,I):I
 - s:isAscii(C):Z

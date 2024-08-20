@@ -180,13 +180,13 @@ class PluginLayout private constructor(
            if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions"
   }
 
-  override fun withModule(moduleName: String) {
+  override fun getRelativeJarPath(moduleName: String): String {
     if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
       // must be in a separate JAR
-      withModule(moduleName, "${convertModuleNameToFileName(moduleName)}.jar")
+      return "${convertModuleNameToFileName(moduleName)}.jar"
     }
     else {
-      withModule(moduleName, mainJarName)
+      return mainJarName
     }
   }
 
@@ -493,7 +493,7 @@ data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @Jv
  * Think twice before using this API.
  */
 fun interface PluginVersionEvaluator {
-  fun evaluate(pluginXmlSupplier: () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
+  suspend fun evaluate(pluginXmlSupplier: suspend () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
 }
 
 private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

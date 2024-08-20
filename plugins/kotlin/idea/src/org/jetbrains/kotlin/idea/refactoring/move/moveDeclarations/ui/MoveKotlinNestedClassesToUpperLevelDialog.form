@@ -70,7 +70,7 @@
           <component id="e1ccb" class="com.intellij.ui.NonFocusableCheckBox" binding="searchForTextOccurrencesCheckBox">
             <constraints/>
             <properties>
-              <text resource-bundle="messages/KotlinBundle" key="search.for.text.occurrences"/>
+              <text resource-bundle="messages/KotlinBundle" key="update.text.occurrences"/>
             </properties>
           </component>
         </children>

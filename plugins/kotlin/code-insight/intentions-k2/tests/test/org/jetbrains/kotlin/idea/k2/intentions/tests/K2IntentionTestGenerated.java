@@ -1082,6 +1082,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/setter/local.kt");
             }
 
+            @TestMetadata("noGetter.kt")
+            public void testNoGetter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/setter/noGetter.kt");
+            }
+
             @TestMetadata("noType.kt")
             public void testNoType() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/addPropertyAccessors/setter/noType.kt");

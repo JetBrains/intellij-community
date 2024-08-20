@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import javax.swing.JComponent
 
-class K2MoveDialog(project: Project, private val model: K2MoveModel) : RefactoringDialog(project, true) {
+class K2MoveDialog(project: Project, private val model: K2MoveModel) : RefactoringDialog(project, true, true) {
     private lateinit var mainPanel: DialogPanel
 
     init {
@@ -28,12 +29,11 @@ class K2MoveDialog(project: Project, private val model: K2MoveModel) : Refactori
             model.source.buildPanel(this, ::setErrorText, ::validateRefactorButton)
             row {
                 panel {
-                    model.searchForText.createComboBox(this)
-                    model.searchReferences.createComboBox(this, model.inSourceRoot)
+                    model.updateUsages.createComboBox(this, model.inSourceRoot)
+                    model.mppDeclarations.createComboBox(this, model.inSourceRoot && model is K2MoveModel.Declarations)
                 }.align(AlignY.TOP + AlignX.LEFT)
                 panel {
-                    model.searchInComments.createComboBox(this)
-                    model.mppDeclarations.createComboBox(this, model.inSourceRoot && model is K2MoveModel.Declarations)
+                    model.updateTextOccurrences.createComboBox(this)
                 }.align(AlignY.TOP + AlignX.RIGHT)
             }
         }
@@ -50,6 +50,7 @@ class K2MoveDialog(project: Project, private val model: K2MoveModel) : Refactori
 
     override fun doAction() {
         saveSettings()
+        if (isOpenInEditor) PropertiesComponent.getInstance().setValue("MoveFile.OpenInEditor", true)
         val descriptor = ActionUtil.underModalProgress(
             project,
             KotlinBundle.message("preparing.move.descriptor")

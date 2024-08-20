@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.openapi.editor.Inlay
 import org.jetbrains.plugins.notebooks.visualization.UpdateContext
 import java.awt.Rectangle
@@ -47,5 +48,13 @@ abstract class EditorCellViewComponent {
 
   open fun doGetInlays(): Sequence<Inlay<*>> {
     return emptySequence()
+  }
+
+  open fun addInlayBelow(presentation: InlayPresentation) {
+    throw UnsupportedOperationException("Operation is not supported")
+  }
+
+  open fun removeInlayBelow(presentation: InlayPresentation) {
+    throw UnsupportedOperationException("Operation is not supported")
   }
 }

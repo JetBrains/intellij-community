@@ -2,7 +2,6 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.BootstrapBundle;
-import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -127,11 +126,6 @@ final class ImportOldConfigsPanel extends JDialog {
     });
 
     myOkButton.addActionListener(e -> close());
-
-    CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
-    if (configProvider != null) {
-      configProvider.initConfigsPanel(group, myCustomButton);
-    }
 
     getContentPane().setLayout(new BorderLayout());
     getContentPane().add(myRootPanel);

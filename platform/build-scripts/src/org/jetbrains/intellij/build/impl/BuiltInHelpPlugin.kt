@@ -1,17 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.intellij.build.telemetry.use
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import org.jetbrains.intellij.build.productRunner.runJavaForIntellijModule
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -91,13 +91,17 @@ private val helpIndexerMutex = Mutex()
 private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
   spanBuilder("index help topics").use {
     helpIndexerMutex.withLock {
-      runJavaForIntellijModule(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
-                               args = listOf(resourceRoot.resolve("search").toString(),
-                            resourceRoot.resolve("topics").toString()),
-                               jvmArgs = emptyList(),
-                               classPath = classPath)
+      runJavaForIntellijModule(
+        context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
+        args = listOf(
+          resourceRoot.resolve("search").toString(),
+          resourceRoot.resolve("topics").toString(),
+        ),
+        jvmArgs = emptyList(),
+        classPath = classPath,
+      )
     }
-    writeNewZipWithoutIndex(assetJar, compress = true) { zipCreator ->
+    writeNewZipWithoutIndex(file = assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)
       archiver.setRootDir(resourceRoot)
       archiveDir(resourceRoot.resolve("topics"), archiver, null)

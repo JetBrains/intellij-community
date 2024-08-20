@@ -11,6 +11,7 @@ import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private const val CHANGELIST_DATA: String = "changelist_data" // NON-NLS
@@ -21,11 +22,15 @@ internal val LocalChangeList.changeListData: ChangeListData?
 val LocalChangeList.author: VcsUser? get() = changeListData?.author
 val LocalChangeList.authorDate: Date? get() = changeListData?.date
 
-data class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null, val date: Date? = null) {
+data class ChangeListData @JvmOverloads constructor(
+  val author: VcsUser? = null,
+  val date: Date? = null,
+  val automatic: Boolean = false,
+) {
 
-  private constructor(state: State) : this(VcsUserImpl(state.name ?: "", state.email ?: ""), state.date)
+  private constructor(state: State) : this(VcsUserImpl(state.name ?: "", state.email ?: ""), state.date, state.automatic == true)
 
-  private var myState: State = State(author?.name, author?.email, date)
+  private var myState: State = State(author?.name, author?.email, date, automatic)
 
   fun nullize(): ChangeListData? = if (author == null && date == null) null else this
 
@@ -40,10 +45,14 @@ data class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null,
     return lines.joinToString(separator = UIUtil.BR)
   }
 
+  @ApiStatus.Internal
   @Tag(CHANGELIST_DATA)
-  class State @JvmOverloads constructor(@Attribute("name") var name: String? = null,
-                                        @Attribute("email") var email: String? = null,
-                                        @Attribute("date") var date: Date? = null)
+  class State @JvmOverloads constructor(
+    @Attribute("name") var name: String? = null,
+    @Attribute("email") var email: String? = null,
+    @Attribute("date") var date: Date? = null,
+    @Attribute("automatic") var automatic: Boolean? = null,
+  )
 
   companion object {
     fun of(author: VcsUser?, date: Date?): ChangeListData? {

@@ -209,7 +209,9 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     if (baseState != FileIndexingState.UP_TO_DATE) {
       return baseState;
     }
+
     if (mySubIndexerRetriever == null) return FileIndexingState.UP_TO_DATE;
+
     if (!(file instanceof FileContent)) {
       if (((CompositeDataIndexer<?, ?, ?, ?>)myIndexer).requiresContentForSubIndexerEvaluation(file)) {
         FileIndexingState indexConfigurationState = isIndexConfigurationUpToDate(fileId, file);
@@ -217,6 +219,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
         return indexConfigurationState == FileIndexingState.OUT_DATED ? FileIndexingState.OUT_DATED : FileIndexingState.UP_TO_DATE;
       }
     }
+
     try {
       FileIndexingState subIndexerState = mySubIndexerRetriever.getSubIndexerState(fileId, file);
       if (subIndexerState == FileIndexingState.UP_TO_DATE) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettingsBase
@@ -32,13 +32,13 @@ internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var MOVE_PREVIEW_USAGES: Boolean
             by delegateTo { it::MOVE_PREVIEW_USAGES }
 
-    override var MOVE_SEARCH_IN_COMMENTS: Boolean
-            by delegateTo { it::MOVE_SEARCH_IN_COMMENTS }
+    @Suppress("OVERRIDE_DEPRECATION")
+    override var MOVE_SEARCH_IN_COMMENTS: Boolean = false
 
-    override var MOVE_SEARCH_FOR_TEXT: Boolean
+    override var UPDATE_TEXT_OCCURENCES: Boolean
             by delegateTo { it::MOVE_SEARCH_FOR_TEXT }
 
-    override var MOVE_SEARCH_REFERENCES: Boolean
+    override var MOVE_UPDATE_USAGES: Boolean
             by delegateTo { it::MOVE_SEARCH_REFERENCES }
 
     override var MOVE_MPP_DECLARATIONS: Boolean

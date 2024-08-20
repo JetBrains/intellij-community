@@ -144,8 +144,13 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject()))
-      .runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
+    try {
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject()))
+        .runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static class MyCrazyAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {

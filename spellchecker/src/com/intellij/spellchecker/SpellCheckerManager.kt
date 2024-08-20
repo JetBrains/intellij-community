@@ -273,7 +273,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   private fun fireDictionaryChanged(dictionary: EditableDictionary) {
     userDictionaryListenerEventDispatcher.multicaster.dictChanged(dictionary)
     restartInspections()
-    SaveAndSyncHandler.getInstance().scheduleProjectSave(project)
+    SaveAndSyncHandler.getInstance().scheduleProjectSave(project, forceSavingAllSettings = true)
   }
 
   fun updateUserDictionary(words: Collection<String>) {

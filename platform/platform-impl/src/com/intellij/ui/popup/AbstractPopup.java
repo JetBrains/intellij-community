@@ -977,9 +977,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private boolean anyModalWindowsMatching(Predicate<Window> predicate) {
     var modalEntitiesNow = LaterInvocator.getCurrentModalEntities();
     var i = 0;
-    for (; i < modalEntitiesNow.length && i < modalEntitiesWhenShown.length; ++i) {
-      if (modalEntitiesNow[i] != modalEntitiesWhenShown[i]) {
-        break;
+    if(modalEntitiesWhenShown != null) {
+      for (; i < modalEntitiesNow.length && i < modalEntitiesWhenShown.length; ++i) {
+        if (modalEntitiesNow[i] != modalEntitiesWhenShown[i]) {
+          break;
+        }
       }
     }
     for (; i < modalEntitiesNow.length; ++i) {

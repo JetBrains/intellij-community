@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
@@ -27,7 +27,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private @NotNull PluginId id;
   private String name;
   private boolean isPaid = false;
-  private Integer trialPeriod = null;
+  private Integer defaultTrialPeriod = null;
+  private Map<String, Integer> customTrialPeriods = null;
   private String productCode;
   private Date releaseDate;
   private int releaseVersion;
@@ -72,7 +73,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<String> screenShots;
   private String externalPluginIdForScreenShots;
   private String mySuggestedCommercialIde = null;
-  private Collection<String> mySuggestedFeatures;
+  private @NotNull Collection<String> suggestedFeatures = Collections.emptyList();
   private boolean myConverted;
   private Collection<String> dependencyNames;
 
@@ -120,12 +121,43 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.isPaid = isPaid;
   }
 
+  /**
+   * @deprecated Use {@link #getDefaultTrialPeriod()}
+   */
+  @Deprecated
   public @Nullable Integer getTrialPeriod() {
-    return trialPeriod;
+    return defaultTrialPeriod;
   }
 
+  /**
+   * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}}
+   */
+  @Deprecated
   public void setTrialPeriod(@Nullable Integer trialPeriod) {
-    this.trialPeriod = trialPeriod;
+    this.defaultTrialPeriod = trialPeriod;
+  }
+
+  public @Nullable Integer getDefaultTrialPeriod() {
+    return defaultTrialPeriod;
+  }
+
+  public void setDefaultTrialPeriod(@Nullable Integer trialPeriod) {
+    this.defaultTrialPeriod = trialPeriod;
+  }
+
+  /*
+    Allows customising trial period duration per product for a plugin on Marketplace.
+    For the details, see: https://youtrack.jetbrains.com/issue/LLM-3752
+  */
+  @ApiStatus.Internal
+  public @Nullable Integer getTrialPeriodByProductCode(@Nullable String ideProductCode) {
+    if (ideProductCode == null || customTrialPeriods == null) return defaultTrialPeriod;
+    return customTrialPeriods.getOrDefault(ideProductCode, defaultTrialPeriod);
+  }
+
+  @ApiStatus.Internal
+  public void setCustomTrialPeriodMap(@Nullable Map<String, Integer> customTrialPeriodMap) {
+    this.customTrialPeriods = customTrialPeriodMap;
   }
 
   @Override
@@ -645,12 +677,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     mySuggestedCommercialIde = commercialIdeCode;
   }
 
-  public Collection<String> getSuggestedFeatures() {
-    return mySuggestedFeatures;
+  public @NotNull Collection<String> getSuggestedFeatures() {
+    return suggestedFeatures;
   }
 
   public void setSuggestedFeatures(@NotNull Collection<String> features) {
-    mySuggestedFeatures = features;
+    suggestedFeatures = features;
   }
 
   public @Nullable Collection<String> getDependencyNames() {

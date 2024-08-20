@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.openapi.components.*
@@ -25,7 +25,6 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var renameTestMethods: Boolean = true
 
     var MOVE_PREVIEW_USAGES: Boolean = true
-    var MOVE_SEARCH_IN_COMMENTS: Boolean = true
     var MOVE_SEARCH_FOR_TEXT: Boolean = true
     var MOVE_SEARCH_REFERENCES: Boolean = true
     var MOVE_MPP_DECLARATIONS: Boolean = true

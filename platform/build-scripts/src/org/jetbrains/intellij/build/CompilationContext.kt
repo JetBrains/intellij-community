@@ -48,7 +48,7 @@ interface CompilationContext {
 
   fun findModule(name: String): JpsModule?
 
-  fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path
+  suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path
 
   fun getModuleTestsOutputDir(module: JpsModule): Path
 
@@ -67,7 +67,7 @@ interface CompilationContext {
   fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext
 
   @ApiStatus.Internal
-  fun prepareForBuild()
+  suspend fun prepareForBuild()
 }
 
 interface CompilationTasks {
@@ -78,20 +78,20 @@ interface CompilationTasks {
   /**
    * See [compileModules]
    */
-  fun compileAllModulesAndTests()
+  suspend fun compileAllModulesAndTests()
 
   /**
    * [resolveProjectDependencies] is guaranteed to be called
    */
-  fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
+  suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 
   /**
    * [compileModules] is called if required
    */
   suspend fun buildProjectArtifacts(artifactNames: Set<String>)
 
-  fun resolveProjectDependencies()
+  suspend fun resolveProjectDependencies()
   
-  fun generateRuntimeModuleRepository()
+  suspend fun generateRuntimeModuleRepository()
 }
 

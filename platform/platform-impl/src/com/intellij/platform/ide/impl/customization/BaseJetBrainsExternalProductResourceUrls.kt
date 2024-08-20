@@ -76,7 +76,8 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
       Urls.newFromEncoded("https://youtrack.jetbrains.com/newissue").addParameters(mapOf(
         "project" to youtrackProjectId,
         "clearDraft" to "true",
-        "description" to description
+        "description" to description,
+        "c" to "Affected versions: ${ApplicationInfo.getInstance().fullVersion}"
       ))
     }
   

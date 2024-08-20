@@ -21,7 +21,6 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.DUMB_AWARE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
@@ -40,6 +39,8 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.fileEditor.FileEntryTab
 import com.intellij.ui.*
+import com.intellij.ui.SideBorder.BOTTOM
+import com.intellij.ui.SideBorder.TOP
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
@@ -979,7 +980,7 @@ internal fun restoreEditorState(
 }
 
 private fun isDumbAware(editor: FileEditor): Boolean {
-  return editor.getUserData(DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
+  return editor.getUserData(FileEditorManagerKeys.DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
 }
 
 @RequiresEdt

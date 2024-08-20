@@ -3,14 +3,17 @@
 
 package org.jetbrains.intellij.build.dev
 
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.VmProperties
+import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.telemetry.TraceManager
+import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -57,6 +60,9 @@ fun getIdeSystemProperties(runDir: Path): VmProperties {
 
 /** Returns IDE installation directory */
 suspend fun buildProductInProcess(request: BuildRequest): Path {
+  if (request.tracer != null) {
+    TraceManager.setTracer(request.tracer)
+  }
   return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope {
     try {
       buildProduct(

@@ -37,8 +37,8 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
     }
     Document document = editor.getDocument();
 
-    document.insertString(caretOffset.get(), "///");
-    caretAdvance.set(3);
+    document.insertString(caretOffset.get(), "/// ");
+    caretAdvance.set(4);
 
     return Result.DefaultForceIndent;
   }

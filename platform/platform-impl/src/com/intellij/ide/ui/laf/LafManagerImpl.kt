@@ -121,7 +121,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private var preferredDarkEditorSchemeId: String? = null
 
   private val storedDefaults = HashMap<String?, MutableMap<String, Any?>>()
-  private val lafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> {
+  private val lafComboBoxModel = SynchronizedClearableLazy {
     LafComboBoxModel(ThemeListProvider.getInstance().getShownThemes())
   }
 
@@ -493,7 +493,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> =
-    LafCellRenderer(lafComboBoxModel.value as? LafComboBoxModel, component)
+    LafCellRenderer(lafComboBoxModel.value, component)
 
   override fun createSettingsToolbar(): JComponent {
     val group = DefaultActionGroup(PreferredLafAndSchemeAction())
@@ -1028,13 +1028,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 }
 
-private class LafCellRenderer(private val model: LafComboBoxModel?, component: JComponent) : GroupedComboBoxRenderer<LafReference>(component) {
+private class LafCellRenderer(private val model: LafComboBoxModel, component: JComponent) : GroupedComboBoxRenderer<LafReference>(component) {
   override fun getText(item: LafReference): String {
     return item.name
   }
 
   override fun separatorFor(value: LafReference): ListSeparator? {
-    model ?: return null
     if (value.themeId.isEmpty()) return ListSeparator()
 
     val groupWithSameFirstItem = model.groupedThemes.infos.firstOrNull { value.themeId == it.items.firstOrNull()?.id }

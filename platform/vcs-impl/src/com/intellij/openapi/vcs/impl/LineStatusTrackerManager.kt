@@ -220,6 +220,10 @@ class LineStatusTrackerManager(
     }
   }
 
+  fun hasPendingUpdate(document: Document) : Boolean {
+    return loader.hasRequestFor(document)
+  }
+
   override fun invokeAfterUpdate(task: Runnable) {
     loader.addAfterUpdateRunnable(task)
   }

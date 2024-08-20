@@ -9,8 +9,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
-
 @ApiStatus.Internal
 public final class SingleIndexValueRemover {
   public final @NotNull ID<?, ?> indexId;
@@ -53,7 +51,7 @@ public final class SingleIndexValueRemover {
 
     FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {
-      Supplier<Boolean> storageUpdate;
+      StorageUpdate storageUpdate;
       long startTime = System.nanoTime();
       try {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, null);

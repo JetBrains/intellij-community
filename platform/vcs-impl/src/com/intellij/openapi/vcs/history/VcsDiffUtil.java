@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.vcsUtil.VcsFileUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,11 @@ public final class VcsDiffUtil {
     return revision.isEmpty() ? fileName : String.format("%s (%s)", revision, fileName); //NON-NLS
   }
 
+  /**
+   * @deprecated - Consider using {@link DiffTitleFilePathCustomizer#getTitleCustomizers} and
+   * {@link com.intellij.diff.util.DiffUserDataKeysEx#EDITORS_TITLE_CUSTOMIZER} instead
+   */
+  @Deprecated
   public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
@@ -73,9 +79,7 @@ public final class VcsDiffUtil {
   @NotNull
   private static String getShortHash(@Nullable ContentRevision revision) {
     if (revision == null) return "";
-    VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
-    if (revisionNumber instanceof ShortVcsRevisionNumber) return ((ShortVcsRevisionNumber)revisionNumber).toShortString();
-    return revisionNumber.asString();
+    return getShortRevisionString(revision.getRevisionNumber());
   }
 
   @NlsSafe

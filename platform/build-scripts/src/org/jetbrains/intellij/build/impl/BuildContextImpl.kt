@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
@@ -12,6 +12,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
@@ -26,7 +27,6 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
-import org.jetbrains.intellij.build.io.runProcess
 import kotlin.time.Duration
 
 class BuildContextImpl internal constructor(
@@ -220,7 +220,7 @@ class BuildContextImpl internal constructor(
     return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
   }
 
-  override fun createCopyForProduct(
+  override suspend fun createCopyForProduct(
     productProperties: ProductProperties,
     projectHomeForCustomizers: Path,
     prepareForBuild: Boolean,
@@ -388,14 +388,14 @@ class BuildContextImpl internal constructor(
   }
 
   override suspend fun runProcess(
-    vararg args: String,
+    args: List<String>,
     workingDir: Path?,
     timeout: Duration,
     additionalEnvVariables: Map<String, String>,
     attachStdOutToException: Boolean,
   ) {
     runProcess(
-      args.toList(),
+      args = args,
       workingDir = workingDir,
       timeout = timeout,
       additionalEnvVariables = additionalEnvVariables,

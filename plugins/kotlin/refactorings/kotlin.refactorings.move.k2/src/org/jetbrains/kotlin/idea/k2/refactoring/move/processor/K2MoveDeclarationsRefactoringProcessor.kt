@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringEventData
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesDialog
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
@@ -26,10 +29,10 @@ class K2MoveDeclarationsRefactoringProcessor(
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor = operationDescriptor.usageViewDescriptor()
 
     override fun findUsages(): Array<UsageInfo> {
-        if (!operationDescriptor.searchReferences) return emptyArray()
+        if (!operationDescriptor.updateUsages) return emptyArray()
         return operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
             moveDescriptor.source.elements.flatMap { elem ->
-                elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target.pkgName)
+                elem.findUsages(operationDescriptor.updateTextOccurrences, moveDescriptor.target.pkgName)
             }
         }.toTypedArray()
     }
@@ -62,8 +65,8 @@ class K2MoveDeclarationsRefactoringProcessor(
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) {
-        allowAnalysisOnEdt {
-            operationDescriptor.moveDescriptors.forEach { moveDescriptor ->
+        val movedElements = allowAnalysisOnEdt {
+            operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
                 val elementsToMove = moveDescriptor.source.elements.withContext()
                 val targetFile = moveDescriptor.target.getOrCreateTarget(operationDescriptor.dirStructureMatchesPkg)
                 val sourceFiles = elementsToMove.map { it.containingFile as KtFile }.distinct()
@@ -74,6 +77,13 @@ class K2MoveDeclarationsRefactoringProcessor(
                 for (sourceFile in sourceFiles) {
                     if (sourceFile.declarations.isEmpty()) sourceFile.delete()
                 }
+                oldToNewMap.values
+            }
+        }
+
+        if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) { // for simplicity we re-use logic from move files
+            ApplicationManager.getApplication().invokeLater {
+                EditorHelper.openFilesInEditor(movedElements.toTypedArray())
             }
         }
     }

@@ -26,12 +26,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.PlatformIcons;
@@ -69,6 +71,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   private final TodoPanelCoroutineHelper myCoroutineHelper = new TodoPanelCoroutineHelper(this);
 
   public static final DataKey<TodoPanel> TODO_PANEL_DATA_KEY = DataKey.create("TodoPanel");
+
+  private boolean myInitialized = false;
+  private Runnable myPostponedRunnable;
 
   /**
    * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
@@ -131,6 +136,83 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
   protected final @NotNull UsagePreviewPanel getUsagePreviewPanel() {
     return myUsagePreviewPanel;
+  }
+
+  public void selectItem(@NotNull TodoItem todoItem) {
+    runWhenInitialized(() -> {
+      TodoView todoView = this.myProject.getService(TodoView.class);
+      todoView.setSelectedContent(this);
+
+      AsyncTreeModel model = (AsyncTreeModel)myTree.getModel();
+      model.accept(new TreeVisitor() {
+        @Override
+        public @NotNull Action visit(@NotNull TreePath path) {
+          TodoItem nodeTodoItem = getTodoItem(path);
+          if (nodeTodoItem == null) {
+            // it's a root of file node
+            return Action.CONTINUE;
+          }
+
+          if (nodeTodoItem.equals(todoItem)) {
+            // found the target node!
+            return Action.INTERRUPT;
+          }
+
+          if (nodeTodoItem.getTextRange().getStartOffset() > todoItem.getTextRange().getStartOffset()) {
+            // the item was not found, aborting.
+            return Action.INTERRUPT;
+          }
+          else {
+            // keep looking
+            return Action.CONTINUE;
+          }
+        }
+      }).onSuccess(path -> {
+        if (todoItem.equals(getTodoItem(path))) {
+          // TODO setSelectionPath does not work on the first opening right away.
+          //      I don't know how to fix that without this hack
+          new Alarm().addRequest(() -> {
+            myTree.setSelectionPath(path);
+          }, 100);
+        }
+      });
+    });
+  }
+
+  private void runWhenInitialized(Runnable runnable) {
+    if (myInitialized) {
+      runnable.run();
+    }
+    else {
+      myPostponedRunnable = runnable;
+    }
+  }
+
+  void invokePostponedRunnable() {
+    myInitialized = true;
+    if (myPostponedRunnable != null) {
+      ApplicationManager.getApplication().invokeLater(myPostponedRunnable);
+      myPostponedRunnable = null;
+    }
+  }
+
+  private static @Nullable TodoItem getTodoItem(@NotNull TreePath path) {
+    Object component = path.getLastPathComponent();
+    if (!(component instanceof DefaultMutableTreeNode treeNode)) {
+      return null;
+    }
+
+    Object userObject = treeNode.getUserObject();
+    if (!(userObject instanceof TodoItemNode itemNode)) {
+      return null;
+    }
+
+    SmartTodoItemPointer value = itemNode.getValue();
+    if (value == null) {
+      return null;
+    }
+
+    return value.getTodoItem();
   }
 
   private final class MyExpandListener extends TreeModelAdapter {

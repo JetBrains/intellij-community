@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.util.application
-import com.intellij.util.asSafely
 import com.intellij.util.indexing.dependencies.*
 import com.intellij.util.indexing.impl.perFileVersion.LongFileAttribute
 import org.jetbrains.annotations.ApiStatus
@@ -40,6 +39,7 @@ object IndexingFlag {
   private fun isIndexedFlagDisabled(app: Application): Boolean {
     if (indexedFlagDisabled == null) {
       if (app.isUnitTestMode) {
+        @Suppress("TestOnlyProblems")
         val enableByTestModeFlags = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)
         if (enableByTestModeFlags != null) {
           indexedFlagDisabled = !enableByTestModeFlags
@@ -66,20 +66,22 @@ object IndexingFlag {
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileWithId? {
-    return asSafely<VirtualFileWithId>()?.let { if (isIndexedFlagDisabled()) null else it }
+    if (this is VirtualFileWithId && !isIndexedFlagDisabled()) {
+      return this
+    }
+    else {
+      return null
+    }
   }
 
   @JvmStatic
   fun cleanProcessedFlagRecursively(file: VirtualFile) {
-    file.asApplicable()?.also { fileWithId ->
-      cleanProcessingFlag(file)
-      if (fileWithId is VirtualFileSystemEntry) {
-        if (fileWithId.isDirectory()) {
-          for (child in fileWithId.cachedChildren) {
-            cleanProcessedFlagRecursively(child)
-          }
-        }
-      }
+    val fileWithId = file.asApplicable() ?: return
+    cleanProcessingFlag(file)
+    if (fileWithId !is VirtualFileSystemEntry) return
+    if (!fileWithId.isDirectory()) return
+    for (child in fileWithId.cachedChildren) {
+      cleanProcessedFlagRecursively(child)
     }
   }
 
@@ -90,61 +92,58 @@ object IndexingFlag {
 
   @JvmStatic
   fun cleanProcessingFlag(fileId: Int) {
-    // file might have already been deleted, so there might be no VirtualFile for given fileId
+    // the file might have already been deleted, so there might be no VirtualFile for given fileId
     setFileIndexed(fileId, ProjectIndexingDependenciesService.NULL_STAMP)
   }
 
   @JvmStatic
   fun setFileIndexed(file: VirtualFile, stamp: FileIndexingStamp) {
-    file.asApplicable()?.also { fileWithId ->
-      setFileIndexed(fileWithId.id, stamp)
-    }
+    val fileWithId = file.asApplicable() ?: return
+    setFileIndexed(fileWithId.id, stamp)
   }
 
   private fun setFileIndexed(fileId: Int, stamp: FileIndexingStamp) {
-    if (!isIndexedFlagDisabled()) {
-      stamp.store { s ->
-        persistence.writeLong(fileId, s)
-      }
+    if (isIndexedFlagDisabled()) return
+    stamp.store { s ->
+      persistence.writeLong(fileId, s)
     }
   }
 
   @JvmStatic
   fun isFileIndexed(file: VirtualFile, stamp: FileIndexingStamp): Boolean {
-    return file.asApplicable()?.let { fileWithId ->
-      stamp.isSame(persistence.readLong(fileWithId.id))
-    } ?: false
+    val fileWithId = file.asApplicable() ?: return false
+    return stamp.isSame(persistence.readLong(fileWithId.id))
   }
 
   @JvmStatic
   fun isFileChanged(file: VirtualFile, stamp: FileIndexingStamp): IsFileChangedResult {
-    return file.asApplicable()?.let { fileWithId ->
-      stamp.isFileChanged(persistence.readLong(fileWithId.id).toFileModCount())
-    } ?: IsFileChangedResult.UNKNOWN
+    val fileWithId = file.asApplicable() ?: return IsFileChangedResult.UNKNOWN
+    return stamp.isFileChanged(persistence.readLong(fileWithId.id).toFileModCount())
   }
 
   @JvmStatic
   fun getOrCreateHash(file: VirtualFile): Long {
-    return file.asApplicable()?.let { fileWithId -> hashes.getHash(fileWithId.id) } ?: nonExistentHash
+    val fileWithId = file.asApplicable() ?: return nonExistentHash
+    return hashes.getHash(fileWithId.id)
   }
 
   @JvmStatic
   fun unlockFile(file: VirtualFile) {
-    file.asApplicable()?.also { fileWithId -> hashes.releaseHash(fileWithId.id) }
+    val fileWithId = file.asApplicable() ?: return
+    hashes.releaseHash(fileWithId.id)
   }
 
   @JvmStatic
   fun setIndexedIfFileWithSameLock(file: VirtualFile, lockObject: Long, stamp: FileIndexingStamp) {
-    file.asApplicable()?.also { fileWithId ->
-      val hash = hashes.releaseHash(fileWithId.id)
-      if (!isFileIndexed(file, stamp)) {
-        if (hash == lockObject) {
-          setFileIndexed(file, stamp)
-        }
-        else {
-          cleanProcessingFlag(file)
-        }
-      }
+    val fileWithId = file.asApplicable() ?: return
+    val hash = hashes.releaseHash(fileWithId.id)
+    if (isFileIndexed(file, stamp)) return
+
+    if (hash == lockObject) {
+      setFileIndexed(file, stamp)
+    }
+    else {
+      cleanProcessingFlag(file)
     }
   }
 

@@ -23,6 +23,7 @@ import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
+import com.intellij.ui.JreHiDpiUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
@@ -217,6 +218,7 @@ private fun initLux() {
   @Suppress("SpellCheckingInspection")
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
 
+  JreHiDpiUtil.preload() // Sadly, UiUtil static init accesses JBUI.scale().
   UIUtil.disableLayoutInTextComponents()
 }
 

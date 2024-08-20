@@ -175,7 +175,7 @@ abstract class ProductProperties {
   /**
    * See [SoftwareBillOfMaterials]
    */
-  val sbomOptions = SoftwareBillOfMaterials.Options()
+  val sbomOptions: SoftwareBillOfMaterials.Options = SoftwareBillOfMaterials.Options()
 
   /**
    * If `true`, a cross-platform ZIP archive containing binaries for all OSes will be built.
@@ -223,8 +223,7 @@ abstract class ProductProperties {
   }
 
   /**
-   * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
-   * when .class file version verification is needed.
+   * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker], when .class file version verification is necessary.
    */
   var versionCheckerConfig: Map<String, String> = java.util.Map.of()
 
@@ -387,8 +386,7 @@ abstract class ProductProperties {
 
   /**
    * When set to true, invokes keymap and inspections description generators during build.
-   * These generators produce artifacts utilized by documentation
-   * authoring tools and builds.
+   * These generators produce artifacts utilized by documentation authoring tools and builds.
    */
   var buildDocAuthoringAssets: Boolean = false
 

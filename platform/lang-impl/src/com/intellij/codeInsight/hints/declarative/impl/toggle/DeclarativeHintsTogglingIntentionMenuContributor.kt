@@ -8,12 +8,13 @@ import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.Nls
 
-class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributor {
+class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributor, DumbAware {
   override fun collectActions(hostEditor: Editor,
                               hostFile: PsiFile,
                               intentions: ShowIntentionsPass.IntentionsInfo,

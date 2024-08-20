@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
+import com.intellij.model.Pointer
+import com.intellij.model.Symbol
 import com.intellij.psi.SmartPsiElementPointer
 
 /**
@@ -83,6 +85,21 @@ class PsiPointerInlayActionPayload(val pointer: SmartPsiElementPointer<*>) : Inl
     if (javaClass != other?.javaClass) return false
 
     other as PsiPointerInlayActionPayload
+
+    return pointer == other.pointer
+  }
+
+  override fun hashCode(): Int {
+    return pointer.hashCode()
+  }
+}
+
+class SymbolPointerInlayActionPayload(val pointer: Pointer<out Symbol>) : InlayActionPayload {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as SymbolPointerInlayActionPayload
 
     return pointer == other.pointer
   }

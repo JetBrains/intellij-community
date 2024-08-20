@@ -93,7 +93,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
       editorContentTitle = DiffBundle.message("diff.content.selection.from.file.content.title", editorContentTitle);
     }
 
-    MutableDiffRequestChain chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, null);
+    MutableDiffRequestChain chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, null, project);
     String windowTitle = editorFile != null ? DiffBundle.message("diff.clipboard.vs.editor.dialog.title.with.filename",
                                                                  editorFile.getName())
                                             : DiffBundle.message("diff.clipboard.vs.editor.dialog.title");

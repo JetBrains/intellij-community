@@ -7,12 +7,12 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @ApiStatus.Internal
 class InlineCompletionLogsContainer {
@@ -36,12 +36,19 @@ class InlineCompletionLogsContainer {
     ConcurrentCollectionFactory.createConcurrentSet<EventPair<*>>()
   }
 
-  private val asyncAdds = Channel<Deferred<*>>(capacity = Channel.UNLIMITED)
+  private val asyncAdds = ConcurrentLinkedQueue<Job>()
 
-  private suspend fun waitForAsyncAdds() {
+  private suspend fun awaitAllAlreadyRunningAsyncAdds() {
     while (currentCoroutineContext().isActive) {
-      val job = asyncAdds.tryReceive().getOrNull() ?: break
-      job.await()
+      val job = asyncAdds.poll() ?: return
+      job.join()
+    }
+  }
+
+  private fun cancelAsyncAdds() {
+    while (true) {
+      val job = asyncAdds.poll() ?: break
+      job.cancel()
     }
   }
 
@@ -60,42 +67,55 @@ class InlineCompletionLogsContainer {
    * Use [add] if there is no special need to use async variant. See [add] documentation for more info.
    */
   fun addAsync(block: suspend () -> List<EventPair<*>>) {
-    val deferred = InlineCompletionLogsScopeProvider.getInstance().cs.async {
+    val job = InlineCompletionLogsScopeProvider.getInstance().cs.launch {
       block().forEach { add(it) }
     }
-    asyncAdds.trySend(deferred).getOrThrow()
+    asyncAdds.add(job)
   }
 
   /**
-   * Send log container.
+   * Cancel all [asyncAdds] and send current log container.
+   * Await for this function completion before exit from the inline completion request and process next typings or next requests.
+   * Should be very fast.
    */
-  suspend fun log() {
-    waitForAsyncAdds()
-    InlineCompletionLogs.Session.SESSION_EVENT.log(
+  fun logCurrent() {
+    cancelAsyncAdds()
+    InlineCompletionLogs.Session.SESSION_EVENT.log( // log function is asynchronous, so it's ok to launch it even on EDT
       logs.filter { it.value.isNotEmpty() }.map { (phase, events) ->
         InlineCompletionLogs.Session.phases[phase]!!.with(ObjectEventData(events.toList()))
       }
     )
+    logs.forEach { (_, events) -> events.clear() }
   }
 
   /**
-   * Get current logs to use as a feature for some model.
+   * Wait for all [asyncAdds] and return current logs to use as features for some model.
    */
-  suspend fun currentLogs(): List<EventPair<*>> {
-    waitForAsyncAdds()
+  suspend fun getCollectedLogs(): List<EventPair<*>> {
+    awaitAllAlreadyRunningAsyncAdds()
     return logs.values.flatten()
   }
 
   companion object {
     private val KEY: Key<InlineCompletionLogsContainer> = Key("inline.completion.logs.container")
-    fun create(editor: Editor) {
-      editor.putUserData(KEY, InlineCompletionLogsContainer())
+
+    /**
+     * Create, store in editor and get log container
+     */
+    fun create(editor: Editor): InlineCompletionLogsContainer {
+      val container = InlineCompletionLogsContainer()
+      editor.putUserData(KEY, container)
+      return container
     }
 
     fun get(editor: Editor): InlineCompletionLogsContainer? {
       return editor.getUserData(KEY)
     }
 
+    /**
+     * Remove container from editor and return it. This function intentionally does not cancel tasks added from [addAsync].
+     * You still can await for logs to be collected and log all of them.
+     */
     fun remove(editor: Editor): InlineCompletionLogsContainer? {
       return editor.removeUserData(KEY)
     }

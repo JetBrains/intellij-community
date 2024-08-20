@@ -36,7 +36,7 @@ internal class ReportProblemAction : DumbAwareAction() {
     }
   }
 
-  private suspend fun getIssueDescription(project: Project?): String {
+  private suspend fun getIssueDescription(project: Project): String {
     val uploadLogs = withContext(Dispatchers.EDT) {
       confirmLogsUploading(project)
     }
@@ -51,7 +51,7 @@ internal class ReportProblemAction : DumbAwareAction() {
     return sb.toString()
   }
 
-  private fun confirmLogsUploading(project: Project?): Boolean = MessageDialogBuilder.yesNo(
+  private fun confirmLogsUploading(project: Project): Boolean = MessageDialogBuilder.yesNo(
     IdeBundle.message("reportProblemAction.upload.logs.title"),
     IdeBundle.message("reportProblemAction.upload.logs.message", ApplicationNamesInfo.getInstance().fullProductName)
   ).ask(project)

@@ -7,6 +7,8 @@ import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
@@ -23,7 +25,7 @@ class DeclarativeInlayHintsPass(
   private val providerInfos: List<InlayProviderPassInfo>,
   private val isPreview: Boolean,
   private val isProviderDisabled: Boolean = false
-) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
+) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
   private val sinks = ArrayList<InlayTreeSinkImpl>()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
@@ -31,6 +33,10 @@ class DeclarativeInlayHintsPass(
     val sharedCollectors = ArrayList<CollectionInfo<SharedBypassCollector>>()
     for (providerInfo in providerInfos) {
       val provider = providerInfo.provider
+      if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(provider)) {
+        continue
+      }
+
       val sink = InlayTreeSinkImpl(providerInfo.providerId, providerInfo.optionToEnabled, isPreview, isProviderDisabled, provider.javaClass, passSourceId)
       sinks.add(sink)
       when (val collector = createCollector(provider)) {

@@ -40,7 +40,7 @@ var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor> = {
 }
 
 object TraceManager {
-  private val tracer: Tracer
+  private var tracer: Tracer
   private val batchSpanProcessor: BatchSpanProcessor
   private val isEnabled = System.getProperty("intellij.build.export.opentelemetry.spans")?.toBoolean() ?: false
 
@@ -48,6 +48,10 @@ object TraceManager {
     val config = traceManagerInitializer()
     tracer = config.first
     batchSpanProcessor = config.second
+  }
+
+  fun setTracer(tracer: Tracer){
+    this.tracer = tracer
   }
 
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)

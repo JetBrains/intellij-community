@@ -634,6 +634,8 @@
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector"/>
     <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
 
+    <registryKey defaultValue="false" description="Enables navigation for TODO comments" key="todo.navigation"/>
+
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentDateMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentTimeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentUserMacro"/>
@@ -1640,7 +1642,6 @@
 
     <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
-    <toolWindowExtractorMode id="Problems View" mode="per_client"/>
     <notificationGroup id="Automatic Module Unloading" displayType="BALLOON" bundle="messages.ProjectBundle"
                        key="notification.group.automatic.module.unloading"/>
     <notificationGroup id="Execution" displayType="TOOL_WINDOW" bundle="messages.ExecutionBundle" key="notification.group.execution"/>
@@ -1766,6 +1767,10 @@
     <codeCompletionConfigurable provider="com.intellij.application.options.MLCodeCompletionConfigurableProvider"/>
     <optionController implementation="com.intellij.codeInsight.CodeInsightWorkspaceSettings$Provider"/>
     <editorSearchAreaProvider implementation="com.intellij.find.impl.livePreview.SearchResults$EditorSelectionSearchAreaProvider"/>
+    <inline.completion.session.logs
+      implementation="com.intellij.codeInsight.inline.completion.logs.InlineCompletionListenerSessionLogs"/>
+    <inline.completion.session.logs
+      implementation="com.intellij.codeInsight.inline.completion.logs.InlineCompletionContextLogs$CollectorExtension"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.platform.backend">
     <documentation.targetProvider

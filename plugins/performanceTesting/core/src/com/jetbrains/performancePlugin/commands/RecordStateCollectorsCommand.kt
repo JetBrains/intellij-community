@@ -15,6 +15,6 @@ internal class RecordStateCollectorsCommand(text: String, line: Int) : PlaybackC
 
   override suspend fun doExecute(context: PlaybackContext) {
     context.project.service<ProjectFUStateUsagesLogger>().logApplicationAndProjectState()
-    FeatureUsageLogger.flush().asDeferred().join()
+    FeatureUsageLogger.getInstance().flush().asDeferred().join()
   }
 }

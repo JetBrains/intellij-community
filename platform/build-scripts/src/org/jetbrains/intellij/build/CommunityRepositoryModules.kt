@@ -280,10 +280,12 @@ object CommunityRepositoryModules {
     SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
   )
 
-  private fun createAndroidPluginLayout(mainModuleName: String,
-                                        additionalModulesToJars: Map<String, String> = emptyMap(),
-                                        allPlatforms: Boolean,
-                                        addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?): PluginLayout =
+  private fun createAndroidPluginLayout(
+    mainModuleName: String,
+    additionalModulesToJars: Map<String, String> = emptyMap(),
+    allPlatforms: Boolean,
+    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?,
+  ): PluginLayout =
     pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"

@@ -992,7 +992,6 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.MnemonicUsageCollector"/>
 
-    <statistics.counterUsagesCollector groupId="event.log" version="57"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.UILatencyLogger"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.notification.impl.NotificationsEventLogGroup"/>
     <statistics.counterUsagesCollector
@@ -1692,6 +1691,7 @@
     <!-- ML API -->
     <platform.ml.descriptor implementation="com.intellij.codeInsight.inline.completion.ml.TypingFeatures"/>
     <platform.ml.environmentExtender implementation="com.intellij.codeInsight.inline.completion.ml.TypingSpeedProvider"/>
+    <platform.ml.featureProvider implementation="com.intellij.codeInsight.inline.completion.ml.TypingSpeedFeatureProvider"/>
 
     <!-- Presentation Assistant -->
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>

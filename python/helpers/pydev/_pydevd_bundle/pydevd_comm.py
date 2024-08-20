@@ -76,7 +76,7 @@ from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_J
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, \
     GlobalDebuggerHolder, \
     get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR, \
-    SINGLE_PORT_MODE
+    IS_WINDOWS
 from _pydev_bundle.pydev_override import overrides
 import json
 import weakref
@@ -418,26 +418,30 @@ def start_server(port):
         s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
     s.bind(('', port))
-    effective_port = s.getsockname()[1]
-    pydevd_log(1, "Bound to port ", str(effective_port))
+    pydevd_log(1, "Bound to port ", str(port))
 
     try:
         s.listen(1)
-        if SINGLE_PORT_MODE:
-            # Output the effective port number to stdout, allowing a client to read
-            # and connect to it.
-            sys.stdout.write("Waiting connection on port %s...\n" % effective_port)
         newSock, _addr = s.accept()
         pydevd_log(1, "Connection accepted")
         # closing server socket is not necessary but we don't need it
-        s.shutdown(SHUT_RDWR)
-        s.close()
+        try:
+            s.shutdown(SHUT_RDWR)
+        except OSError:
+            if IS_WINDOWS:
+                # For possible and likely harmless WinError 10057 on Windows.
+                pass
+            else:
+                raise
+        finally:
+            s.close()
         return newSock
 
     except:
-        sys.stderr.write("Could not bind to port: %s\n" % (effective_port,))
+        sys.stderr.write("Could not bind to port: %s\n" % (port,))
         sys.stderr.flush()
         traceback.print_exc()
+        raise
 
 #=======================================================================================================================
 # start_client

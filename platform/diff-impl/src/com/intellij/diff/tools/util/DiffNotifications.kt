@@ -35,7 +35,7 @@ object DiffNotifications {
       !equalCharsets -> DiffBundle.message("diff.contents.have.differences.only.in.charset.message.text")
       else -> DiffBundle.message("diff.contents.are.identical.message.text")
     }
-    return createNotification(message)
+    return createNotification(message, status = EditorNotificationPanel.Status.Info)
   }
 
   @JvmStatic

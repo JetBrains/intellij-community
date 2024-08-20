@@ -10,11 +10,18 @@ internal data class ContentReport(
   @JvmField val bundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
   @JvmField val nonBundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
 ) {
-  fun combined(): Sequence<DistributionFileEntry> {
+  fun all(): Sequence<DistributionFileEntry> {
     return sequence {
       yieldAll(platform)
       yieldAll(bundledPlugins.flatMap { it.second })
       yieldAll(nonBundledPlugins.flatMap { it.second })
+    }
+  }
+
+  fun bundled(): Sequence<DistributionFileEntry> {
+    return sequence {
+      yieldAll(platform)
+      yieldAll(bundledPlugins.flatMap { it.second })
     }
   }
 }

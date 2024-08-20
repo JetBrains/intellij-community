@@ -396,6 +396,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/InnerClassConstructor_superType.kt");
             }
 
+            @TestMetadata("IntUnaryOperatorsAreNotUnresolvedOnLiterals.kt")
+            public void testIntUnaryOperatorsAreNotUnresolvedOnLiterals() throws Exception {
+                runTest("testData/editor/optimizeImports/common/IntUnaryOperatorsAreNotUnresolvedOnLiterals.kt");
+            }
+
             @TestMetadata("InvokeFunction.kt")
             public void testInvokeFunction() throws Exception {
                 runTest("testData/editor/optimizeImports/common/InvokeFunction.kt");
