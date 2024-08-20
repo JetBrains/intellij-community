@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -15,7 +15,6 @@ import java.util.*
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
- * [externalUpdateId] update ID from Plugin Repository database.
  * [externalPluginId] plugin ID from Plugin Repository database.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -191,19 +190,19 @@ data class ReviewCommentPlugin(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class SalesMetadata(
+internal data class SalesMetadata(
   val trialPeriod: Int? = null,
   val customTrialPeriods: List<CustomTrialPeriod>? = null
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class CustomTrialPeriod(
+internal data class CustomTrialPeriod(
   @JsonProperty("productCode") val productCode: String,
   @JsonProperty("trialPeriod") val trialPeriod: Int
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class IntellijPluginMetadata(
+internal data class IntellijPluginMetadata(
   val screenshots: List<String>? = null,
   val vendor: PluginVendorMetadata? = null,
   val forumUrl: String? = null,

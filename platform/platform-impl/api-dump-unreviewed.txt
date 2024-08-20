@@ -7482,16 +7482,6 @@ e:com.intellij.ide.plugins.enums.SortBy
 - s:values():com.intellij.ide.plugins.enums.SortBy[]
 f:com.intellij.ide.plugins.enums.SortBy$Companion
 - f:getByQueryOrNull(java.lang.String):com.intellij.ide.plugins.enums.SortBy
-f:com.intellij.ide.plugins.marketplace.CustomTrialPeriod
-- <init>(java.lang.String,I):V
-- f:component1():java.lang.String
-- f:component2():I
-- f:copy(java.lang.String,I):com.intellij.ide.plugins.marketplace.CustomTrialPeriod
-- bs:copy$default(com.intellij.ide.plugins.marketplace.CustomTrialPeriod,java.lang.String,I,I,java.lang.Object):com.intellij.ide.plugins.marketplace.CustomTrialPeriod
-- equals(java.lang.Object):Z
-- f:getProductCode():java.lang.String
-- f:getTrialPeriod():I
-- hashCode():I
 f:com.intellij.ide.plugins.marketplace.FeatureImpl
 - <init>():V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
@@ -7531,33 +7521,6 @@ f:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - f:getPluginId():java.lang.String
 - f:getVersion():java.lang.String
 - hashCode():I
-f:com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-- <init>():V
-- <init>(java.util.List,com.intellij.ide.plugins.marketplace.PluginVendorMetadata,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.marketplace.SalesMetadata):V
-- b:<init>(java.util.List,com.intellij.ide.plugins.marketplace.PluginVendorMetadata,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.marketplace.SalesMetadata,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.util.List
-- f:component2():com.intellij.ide.plugins.marketplace.PluginVendorMetadata
-- f:component3():java.lang.String
-- f:component4():java.lang.String
-- f:component5():java.lang.String
-- f:component6():java.lang.String
-- f:component7():java.lang.String
-- f:component8():java.lang.String
-- f:component9():com.intellij.ide.plugins.marketplace.SalesMetadata
-- f:copy(java.util.List,com.intellij.ide.plugins.marketplace.PluginVendorMetadata,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.marketplace.SalesMetadata):com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-- bs:copy$default(com.intellij.ide.plugins.marketplace.IntellijPluginMetadata,java.util.List,com.intellij.ide.plugins.marketplace.PluginVendorMetadata,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.plugins.marketplace.SalesMetadata,I,java.lang.Object):com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-- equals(java.lang.Object):Z
-- f:getBugtrackerUrl():java.lang.String
-- f:getDocumentationUrl():java.lang.String
-- f:getForumUrl():java.lang.String
-- f:getLicenseUrl():java.lang.String
-- f:getReportPluginUrl():java.lang.String
-- f:getSalesInfo():com.intellij.ide.plugins.marketplace.SalesMetadata
-- f:getScreenshots():java.util.List
-- f:getSourceCodeUrl():java.lang.String
-- f:getVendor():com.intellij.ide.plugins.marketplace.PluginVendorMetadata
-- hashCode():I
-- f:toPluginNode(com.intellij.ide.plugins.PluginNode):V
 f:com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 - <init>():V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.util.List,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.Set,java.util.Set,java.lang.String,java.lang.String,java.lang.String,java.lang.String,I):V
@@ -7685,18 +7648,6 @@ f:com.intellij.ide.plugins.marketplace.ReviewCommentPlugin
 - bs:copy$default(com.intellij.ide.plugins.marketplace.ReviewCommentPlugin,java.lang.String,I,java.lang.Object):com.intellij.ide.plugins.marketplace.ReviewCommentPlugin
 - equals(java.lang.Object):Z
 - f:getLink():java.lang.String
-- hashCode():I
-f:com.intellij.ide.plugins.marketplace.SalesMetadata
-- <init>():V
-- <init>(java.lang.Integer,java.util.List):V
-- b:<init>(java.lang.Integer,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.lang.Integer
-- f:component2():java.util.List
-- f:copy(java.lang.Integer,java.util.List):com.intellij.ide.plugins.marketplace.SalesMetadata
-- bs:copy$default(com.intellij.ide.plugins.marketplace.SalesMetadata,java.lang.Integer,java.util.List,I,java.lang.Object):com.intellij.ide.plugins.marketplace.SalesMetadata
-- equals(java.lang.Object):Z
-- f:getCustomTrialPeriods():java.util.List
-- f:getTrialPeriod():java.lang.Integer
 - hashCode():I
 e:com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 - java.lang.Enum

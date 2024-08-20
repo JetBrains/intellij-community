@@ -39,9 +39,7 @@ import org.xml.sax.SAXException
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
-import java.net.SocketTimeoutException
 import java.net.URLConnection
-import java.net.UnknownHostException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -531,14 +529,14 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
+  internal fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
     val externalPluginId = pluginNode.externalPluginId ?: return null
     return loadPluginMetadata(externalPluginId)
   }
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
+  internal fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     try {
       return readOrUpdateFile(
         Paths.get(PathManager.getPluginTempPath(), "${externalPluginId}-meta.json"),
