@@ -30,6 +30,10 @@
       "description": "Product code (e.g. 'IC' for IntelliJ IDEA Community Edition) as used in full build number",
       "type": "string"
     },
+    "envVarBaseName": {
+      "description": "A prefix for names of environment variables used by product distributions to allow users to customize location of the product runtime (`<PRODUCT>_JDK` variable), *.vmoptions file (`<PRODUCT>_VM_OPTIONS`), `idea.properties` file (`<PRODUCT>_PROPERTIES`).",
+      "type": "string"
+    },
     "dataDirectoryName": {
       "description": "Name of a directory used for storing settings, caches, etc. (e.g. 'IntelliJIdea2020.1' for IntelliJ IDEA 2020.1); the full path to the directory is OS-specific.",
       "type": "string"
