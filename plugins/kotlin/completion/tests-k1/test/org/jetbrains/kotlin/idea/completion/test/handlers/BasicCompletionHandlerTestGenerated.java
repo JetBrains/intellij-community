@@ -190,6 +190,16 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("FunctionalType.kt")
+        public void testFunctionalType() throws Exception {
+            runTest("../testData/handlers/basic/contextReceivers/FunctionalType.kt");
+        }
+
+        @TestMetadata("IncompleteFunctionalType.kt")
+        public void testIncompleteFunctionalType() throws Exception {
+            runTest("../testData/handlers/basic/contextReceivers/IncompleteFunctionalType.kt");
+        }
+
         @TestMetadata("WithoutDeclaration.kt")
         public void testWithoutDeclaration() throws Exception {
             runTest("../testData/handlers/basic/contextReceivers/WithoutDeclaration.kt");

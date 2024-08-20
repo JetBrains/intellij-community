@@ -190,6 +190,16 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
         }
 
+        @TestMetadata("FunctionalType.kt")
+        public void testFunctionalType() throws Exception {
+            runTest("../completion/testData/handlers/basic/contextReceivers/FunctionalType.kt");
+        }
+
+        @TestMetadata("IncompleteFunctionalType.kt")
+        public void testIncompleteFunctionalType() throws Exception {
+            runTest("../completion/testData/handlers/basic/contextReceivers/IncompleteFunctionalType.kt");
+        }
+
         @TestMetadata("WithoutDeclaration.kt")
         public void testWithoutDeclaration() throws Exception {
             runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclaration.kt");
