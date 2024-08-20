@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.intellij.util.lang.Xxh3
 import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.builders.java.ResourcesTargetType
@@ -78,7 +78,7 @@ internal class SourcesStateProcessor(dataStorageRoot: Path, private val classesO
       val resourcesBuildTargetState = resourcesBuildTargetMap.getValue(buildTargetId)
       val outputPath = classesBuildTargetState.relativePath.replace(IDENTIFIER, root.toString())
 
-      val hash = Xxh3.hash(classesBuildTargetState.hash + resourcesBuildTargetState.hash).toString()
+      val hash = Hashing.komihash5_0().hashLongLongToLong(classesBuildTargetState.hash, resourcesBuildTargetState.hash)
       compilationOutputs.add(CompilationOutput(name = buildTargetId, type = bothClassesAndResourcesBuildTargetType, hash = hash, path = outputPath))
     }
 

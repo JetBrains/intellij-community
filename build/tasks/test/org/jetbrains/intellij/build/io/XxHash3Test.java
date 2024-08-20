@@ -21,7 +21,6 @@ import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -41,28 +40,6 @@ public class XxHash3Test {
       System.out.println("Testing: len=" + len);
       test(XXH3Test_HASHES.HASHES_OF_LOOPING_BYTES_WITHOUT_SEED, len);
     }
-  }
-
-  @ParameterizedTest
-  @ValueSource(ints = {1, 2, 3, 10, 20, 2048, 10_000})
-  public void longs(int size) {
-    Random random = new Random(42);
-    long[] data = new long[size];
-    for (int i = 0; i < size; i++) {
-      data[i] = random.nextLong();
-    }
-
-    long expected = switch (size) {
-      case 1 -> 6383185674071107836L;
-      case 2 -> -8849141235685524932L;
-      case 3 -> -7554874527885947435L;
-      case 10 -> 8740875949817914742L;
-      case 20 -> -8306236459388834883L;
-      case 2048 -> -4387089420526726675L;
-      case 10_000 -> -4959357597963000776L;
-      default -> throw new UnsupportedOperationException("Unknown size");
-    };
-    AssertionsForClassTypes.assertThat(Xxh3.hashLongs(data)).isEqualTo(expected);
   }
 
   @Test

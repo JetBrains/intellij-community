@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.protobuf.Message;
@@ -40,8 +41,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -132,6 +132,8 @@ public final class ClasspathBootstrap {
     addToClassPath(Xxh3.class, cp);
     // caffeine
     addToClassPath(Caffeine.class, cp);
+    // Hashing
+    addToClassPath(Hashing.class, cp);
 
     addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
     addToClassPath(Tracer.class, cp); // tracing infrastructure

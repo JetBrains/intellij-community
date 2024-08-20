@@ -242,8 +242,8 @@ private fun require(systemProperty: String, description: String): String {
 internal class CompilationOutput(
   name: String,
   type: String,
-  @JvmField val hash: String, // Some hash of compilation output, could be non-unique across different CompilationOutput's
+  @JvmField val hash: Long, // Some hash of compilation output, could be non-unique across different CompilationOutput's
   @JvmField val path: String, // Local path to compilation output
 ) {
-  @JvmField val remotePath: String = "$type/$name/$hash"
+  @JvmField val remotePath: String = "$type/$name/${java.lang.Long.toUnsignedString(hash, Character.MAX_RADIX)}"
 }
