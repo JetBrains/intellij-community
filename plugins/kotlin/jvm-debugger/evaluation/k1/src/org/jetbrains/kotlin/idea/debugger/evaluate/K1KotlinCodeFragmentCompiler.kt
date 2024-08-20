@@ -27,12 +27,7 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     ): CompiledCodeFragmentData {
         val debugProcess = context.debugProcess
 
-        // TODO remove this registry key?
-        val compilerStrategy = if (CodeFragmentCompiler.useIRFragmentCompiler()) {
-            IRCodeFragmentCompilingStrategy(codeFragment)
-        } else {
-            OldCodeFragmentCompilingStrategy(codeFragment)
-        }
+        val compilerStrategy = IRCodeFragmentCompilingStrategy(codeFragment)
         try {
             patchCodeFragment(context, codeFragment, compilerStrategy.stats)
         } catch (e: Exception) {

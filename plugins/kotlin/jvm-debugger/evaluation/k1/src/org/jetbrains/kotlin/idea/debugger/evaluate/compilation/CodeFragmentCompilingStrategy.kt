@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
-import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerType
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector
@@ -12,24 +11,18 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluationResult
 import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
 import java.util.concurrent.ExecutionException
 
 abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
-
     internal val stats: CodeFragmentCompilationStats = CodeFragmentCompilationStats()
-
-    abstract val compilerBackend: FragmentCompilerCodegen
 
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
 
     abstract fun onSuccess()
     abstract fun processError(e: Throwable, codeFragment: KtCodeFragment, otherFiles: List<KtFile>, executionContext: ExecutionContext)
-    abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
-    abstract fun beforeRunningFallback()
     abstract fun beforeAnalyzingCodeFragment()
 
     protected fun unwrapException(e: Throwable?): Throwable? = when (e) {
@@ -40,52 +33,7 @@ abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
     }
 }
 
-class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
-
-    override val compilerBackend: FragmentCompilerCodegen = OldFragmentCompilerCodegen(codeFragment)
-
-    override fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile> {
-        return analyzeInlinedFunctions(
-            resolutionFacade,
-            codeFragment,
-            analyzeOnlyReifiedInlineFunctions = false,
-        )
-    }
-
-    override fun onSuccess() {
-        KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
-            codeFragment.project,
-            CompilerType.OLD,
-            StatisticsEvaluationResult.SUCCESS,
-            stats
-        )
-    }
-
-    override fun processError(e: Throwable, codeFragment: KtCodeFragment, otherFiles: List<KtFile>, executionContext: ExecutionContext) {
-        val exceptionToThrow = unwrapException(e) ?: throw e
-        KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
-            codeFragment.project,
-            CompilerType.OLD,
-            StatisticsEvaluationResult.FAILURE,
-            stats,
-        )
-        throw exceptionToThrow
-    }
-
-    override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? = null
-
-    override fun beforeRunningFallback() {
-    }
-
-    override fun beforeAnalyzingCodeFragment() {
-    }
-}
-
 class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
-
-
-    override val compilerBackend: FragmentCompilerCodegen = IRFragmentCompilerCodegen()
-
     override fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile> {
         // The IR Evaluator is sensitive to the analysis order of files in fragment compilation:
         // The codeFragment must be passed _last_ to analysis such that the result is stacked at
@@ -138,27 +86,12 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
             StatisticsEvaluationResult.FAILURE,
             stats
         )
-        if (isFallbackDisabled()) {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
             throw exceptionToReport
         }
         if (isApplicationInternalMode()) {
             reportErrorWithAttachments(executionContext, codeFragment, exceptionToReport, prepareFilesToCompile(otherFiles))
         }
-    }
-
-    override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? {
-        // It's better not to fall back when testing the IR evaluator -- otherwise regressions might slip through
-        if (isUnitTestMode()) return null
-
-        return OldCodeFragmentCompilingStrategy(codeFragment)
-    }
-
-    override fun beforeRunningFallback() {
-        KotlinDebuggerEvaluatorStatisticsCollector.logFallbackToOldEvaluator(codeFragment.project)
-    }
-
-    private fun isFallbackDisabled(): Boolean {
-        return Registry.`is`("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
     }
 
     override fun beforeAnalyzingCodeFragment() {

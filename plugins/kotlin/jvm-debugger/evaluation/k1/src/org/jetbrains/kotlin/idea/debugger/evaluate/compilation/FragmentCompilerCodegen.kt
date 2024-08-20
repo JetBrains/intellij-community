@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -13,12 +11,9 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.resolve.BindingContext
 
-
 interface FragmentCompilerCodegen {
-    fun initCodegen(classDescriptor: ClassDescriptor, methodDescriptor: FunctionDescriptor, parameterInfo: K1CodeFragmentParameterInfo)
-    fun cleanupCodegen()
-
     fun configureCompiler(compilerConfiguration: CompilerConfiguration)
+
     fun configureGenerationState(
         builder: GenerationState.Builder,
         bindingContext: BindingContext,
