@@ -92,30 +92,30 @@ fun DecoratedWindowScope.TitleBarView() {
                     when (MainViewModel.theme) {
                         IntUiThemes.Light ->
                             Icon(
-                                "icons/lightTheme@20x20.svg",
-                                "Themes",
-                                StandaloneSampleIcons::class.java,
+                                key = StandaloneSampleIcons.themeLight,
+                                contentDescription = "Light",
+                                hints = arrayOf(Size(20)),
                             )
 
                         IntUiThemes.LightWithLightHeader ->
                             Icon(
-                                "icons/lightWithLightHeaderTheme@20x20.svg",
-                                "Themes",
-                                StandaloneSampleIcons::class.java,
+                                key = StandaloneSampleIcons.themeLightWithLightHeader,
+                                contentDescription = "Light with light header",
+                                hints = arrayOf(Size(20)),
                             )
 
                         IntUiThemes.Dark ->
                             Icon(
-                                "icons/darkTheme@20x20.svg",
-                                "Themes",
-                                StandaloneSampleIcons::class.java,
+                                key = StandaloneSampleIcons.themeDark,
+                                contentDescription = "Dark",
+                                hints = arrayOf(Size(20)),
                             )
 
                         IntUiThemes.System ->
                             Icon(
-                                "icons/systemTheme@20x20.svg",
-                                "Themes",
-                                StandaloneSampleIcons::class.java,
+                                key = StandaloneSampleIcons.themeSystem,
+                                contentDescription = "System",
+                                hints = arrayOf(Size(20)),
                             )
                     }
                 }
