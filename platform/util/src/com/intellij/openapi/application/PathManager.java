@@ -108,7 +108,7 @@ public final class PathManager {
       else if (insideIde) {
         result = getHomePathFor(PathManager.class);
         if (result == null) {
-          String advice = SystemInfoRt.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
+          String advice = SystemInfoRt.isMac ? "reinstall the software." : "make sure product-info.json is present in the installation directory.";
           throw new RuntimeException("Could not find installation home path. Please " + advice);
         }
       }
