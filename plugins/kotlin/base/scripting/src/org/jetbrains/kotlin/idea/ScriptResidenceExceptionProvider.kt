@@ -27,7 +27,7 @@ open class ScriptResidenceExceptionProvider(
         if (supportedUnderSourceRoot) isSupportedScriptExtension(virtualFile) else false
 }
 
-private val scriptResidenceExceptionProviders = listOf(
+private val scriptResidenceExceptionProviders: List<ScriptResidenceExceptionProvider> = listOf(
     ScriptResidenceExceptionProvider(".gradle.kts", true),
     ScriptResidenceExceptionProvider(".main.kts"),
     ScriptResidenceExceptionProvider(".space.kts"),

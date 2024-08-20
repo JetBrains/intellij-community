@@ -2,14 +2,18 @@
 package org.jetbrains.kotlin.idea.core.script.k2
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.atomic.AtomicReference
@@ -37,11 +41,20 @@ abstract class ScriptDependenciesSource<T : BaseScriptModel>(open val project: P
             project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
         }
 
+        val filesInEditors = readAction {
+            FileEditorManager.getInstance(project).allEditors.mapTo(hashSetOf(), FileEditor::getFile)
+        }
+
+        ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+        HighlightingSettingsPerFile.getInstance(project).incModificationCount()
+
         for (script in scripts) {
+            val virtualFile = script.virtualFile
+            if (virtualFile !in filesInEditors) continue
             if (project.isOpen && !project.isDisposed) {
                 readAction {
                     val ktFile =
-                        script.virtualFile.toPsiFile(project) as? KtFile ?: error("Cannot convert to PSI file: ${script.virtualFile}")
+                        virtualFile.toPsiFile(project) as? KtFile ?: error("Cannot convert to PSI file: $virtualFile")
                     DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
                 }
             }
