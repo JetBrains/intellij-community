@@ -41,24 +41,25 @@ final class IconsUastReferencesContributor extends PsiReferenceContributor {
       = literalExpression().and(psiExpression().methodCallParameter(0, method));
     registrar.registerReferenceProvider(findGetIconPattern, new PsiReferenceProvider() {
       @Override
-      public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         if (!IntelliJProjectUtil.isIntelliJPlatformProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new FileReferenceSet(element) {
           @Override
-          protected Collection<PsiFileSystemItem> getExtraContexts() {
-            Module iconsModule = ModuleManager.getInstance(element.getProject()).findModuleByName(PLATFORM_ICONS_MODULE);
+          public @NotNull Collection<PsiFileSystemItem> getDefaultContexts() {
+            ModuleManager moduleManager = ModuleManager.getInstance(element.getProject());
+            Module iconsModule = moduleManager.findModuleByName(PLATFORM_ICONS_MODULE);
             if (iconsModule == null) {
-              iconsModule = ModuleManager.getInstance(element.getProject()).findModuleByName(ICONS_MODULE);
+              iconsModule = moduleManager.findModuleByName(ICONS_MODULE);
             }
             if (iconsModule == null) {
-              return super.getExtraContexts();
+              return super.getDefaultContexts();
             }
 
-            final List<PsiFileSystemItem> result = new SmartList<>();
-            final VirtualFile[] roots = ModuleRootManager.getInstance(iconsModule).getSourceRoots();
-            final PsiManager psiManager = element.getManager();
+            List<PsiFileSystemItem> result = new SmartList<>();
+            VirtualFile[] roots = ModuleRootManager.getInstance(iconsModule).getSourceRoots();
+            PsiManager psiManager = element.getManager();
             for (VirtualFile root : roots) {
-              final PsiDirectory directory = psiManager.findDirectory(root);
+              PsiDirectory directory = psiManager.findDirectory(root);
               ContainerUtil.addIfNotNull(result, directory);
             }
             return result;
