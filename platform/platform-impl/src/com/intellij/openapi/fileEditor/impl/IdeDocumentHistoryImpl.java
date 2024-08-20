@@ -635,7 +635,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
     VirtualFile file = fileEditor.getFile();
     LOG.assertTrue(file != null, fileEditor.getClass().getName() + " getFile() returned null");
 
-    if (file instanceof SkipFromDocumentHistory && !((SkipFromDocumentHistory)file).isIncludedInDocumentHistory(project)) {
+    if (file instanceof OptionallyIncluded && !((OptionallyIncluded)file).isIncludedInDocumentHistory(project)) {
       return null;
     }
 
