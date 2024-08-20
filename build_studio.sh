@@ -69,7 +69,3 @@ cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
   ./gradlew fatJar
   cp -fv build/libs/updater-full.jar "$DIST"
 )
-
-# Linux Tools build is WIP, don't fail build if something goes wrong here
-# TODO: remove error ignore after 2023-08-01
-(${PROG_DIR}/../../tools/base/intellij-native/linux_tools_re_proxy.sh "$OUT" "$DIST" "$AS_BUILD_NUMBER") || true
