@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.util.coroutines.forEachConcurrent
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.sha1Hex
 import com.intellij.util.io.DigestUtil.updateContentHash
@@ -68,7 +67,7 @@ internal class SoftwareBillOfMaterialsImpl(
 ) : SoftwareBillOfMaterials {
   private companion object {
     val JETBRAINS_GITHUB_ORGANIZATIONS: Set<String> = setOf("JetBrains", "Kotlin")
-    val STRICT_MODE: Boolean = SystemProperties.getBooleanProperty("intellij.build.sbom.strictMode", false)
+    val STRICT_MODE: Boolean = System.getProperty("intellij.build.sbom.strictMode").toBoolean()
   }
 
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION

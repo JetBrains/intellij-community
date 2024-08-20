@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
@@ -119,8 +118,7 @@ open class MacDistributionCustomizer {
   /**
    * If `true`, a separate *-[org.jetbrains.intellij.build.impl.MacDistributionBuilder.NO_RUNTIME_SUFFIX].dmg artifact without a runtime will be produced.
    */
-  var buildArtifactWithoutRuntime =
-    SystemProperties.getBooleanProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+  var buildArtifactWithoutRuntime = System.getProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME)?.toBoolean() ?: System.getProperty("artifact.mac.no.jdk").toBoolean()
 
   /**
    * Application bundle name (`<name>.app`).

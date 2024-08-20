@@ -177,8 +177,7 @@ internal object CompiledClasses {
 
 
   fun isIncrementalCompilationDataAvailable(context: CompilationContext): Boolean {
-    return context.options.incrementalCompilation &&
-           context.compilationData.isIncrementalCompilationDataAvailable()
+    return context.options.incrementalCompilation && context.compilationData.isIncrementalCompilationDataAvailable()
   }
 
   suspend fun compile(
