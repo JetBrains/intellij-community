@@ -36,6 +36,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
+import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel.Companion.NO_DESCRIPTION
 import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.applyHelperPackageToPythonPath
@@ -245,6 +246,21 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       .limitDisplayableResult(repository, skipItems)
     val exactMatch = shownPackages.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
     return PyPackagesViewData(repository, shownPackages, exactMatch, packageNames.size - shownPackages.size)
+  }
+
+  suspend fun getHtml(packageDetails: PythonPackageDetails) {
+    runCatching {
+      with(packageDetails) {
+        when {
+          !description.isNullOrEmpty() -> convertToHTML(descriptionContentType, description!!)
+          !summary.isNullOrEmpty() -> wrapHtml(summary!!)
+          else -> NO_DESCRIPTION
+        }
+      }
+    }.getOrElse {
+      thisLogger().info(it)
+      message("conda.packaging.error.rendering.description")
+    }
   }
 
   suspend fun convertToHTML(contentType: String?, description: String): String {

@@ -29,12 +29,19 @@ import javax.swing.*
 
 object PyPackagesUiComponents {
   val SELECTED_PACKAGE_DATA_CONTEXT = DataKey.create<DisplayablePackage>("SELECTED_PACKAGE_DATA_CONTEXT")
+  val CUSTOM_PROGRESS_BAR_DATA_CONTEXT = DataKey.create<JProgressBar>("CUSTOM_PROGRESS_BAR_DATA_CONTEXT")
 
-  val DataContext.selectedPackage: DisplayablePackage?
+  private val DataContext.selectedPackage: DisplayablePackage?
     get() = getData(SELECTED_PACKAGE_DATA_CONTEXT)
 
-  val AnActionEvent.selectedPackage: DisplayablePackage?
+  internal val AnActionEvent.selectedPackage: DisplayablePackage?
     get() = dataContext.selectedPackage
+
+  private val DataContext.progressBar: JProgressBar?
+    get() = getData(CUSTOM_PROGRESS_BAR_DATA_CONTEXT)
+
+  internal val AnActionEvent.progressBar: JProgressBar?
+    get() = dataContext.progressBar
 
 
   fun createAvailableVersionsPopup(selectedPackage: DisplayablePackage, details: PythonPackageDetails, project: Project, controller: PyPackagingToolWindowPanel): ListPopup {
