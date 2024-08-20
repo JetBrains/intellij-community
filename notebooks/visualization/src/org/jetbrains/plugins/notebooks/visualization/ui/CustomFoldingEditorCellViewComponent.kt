@@ -55,19 +55,21 @@ class CustomFoldingEditorCellViewComponent(
     disposeFolding()
   }
 
-  private fun disposeFolding() {
-    if (editor.isDisposed || foldingRegion?.isValid != true) return
-    editor.componentContainer.remove(mainComponent)
-    foldingRegion?.let {
-      editor.foldingModel.runBatchFoldingOperation(
-        {
+  private fun disposeFolding() = cell.manager.update { ctx ->
+    if (!editor.isDisposed && foldingRegion?.isValid == true) {
+      editor.componentContainer.remove(mainComponent)
+      foldingRegion?.let {
+        ctx.addFoldingOperation {
           editor.foldingModel.removeFoldRegion(it)
-        }, true, false)
+        }
+      }
     }
   }
 
   override fun calculateBounds(): Rectangle {
-    return component.bounds
+    return foldingRegion?.let { region ->
+      region.location?.let { location -> Rectangle(location.x, location.y, region.widthInPixels, region.heightInPixels) }
+    } ?: mainComponent.bounds
   }
 
   override fun updateCellFolding(updateContext: UpdateContext) {
@@ -76,11 +78,11 @@ class CustomFoldingEditorCellViewComponent(
       val fr = editor.foldingModel.addCustomLinesFolding(
         cell.interval.lines.first, cell.interval.lines.last, object : CustomFoldRegionRenderer {
         override fun calcWidthInPixels(region: CustomFoldRegion): Int {
-          return component.width
+          return mainComponent.width
         }
 
         override fun calcHeightInPixels(region: CustomFoldRegion): Int {
-          return component.height
+          return mainComponent.height
         }
 
         override fun paint(region: CustomFoldRegion, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {

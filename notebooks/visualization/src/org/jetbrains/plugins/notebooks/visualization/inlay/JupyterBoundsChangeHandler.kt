@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization.inlay
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
@@ -40,6 +41,10 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
 
     editor.foldingModel.addListener(object : FoldingListener {
       override fun onFoldProcessingEnd() {
+        boundsChanged()
+      }
+
+      override fun onCustomFoldRegionPropertiesChange(region: CustomFoldRegion, flags: Int) {
         boundsChanged()
       }
     }, this)

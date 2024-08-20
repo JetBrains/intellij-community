@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.ui.components.JBScrollPane
+import org.jetbrains.plugins.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
@@ -122,6 +123,10 @@ internal class EditorEmbeddedComponentLayoutManager(editorScrollPane: JScrollPan
 
     override fun update() {
       customFoldRegion.update()
+      // [com.intellij.openapi.editor.impl.FoldingModelImpl.onCustomFoldRegionPropertiesChange] fires listeners
+      // before make model consistent.
+      // Here we have to call it once again to get correct bounds.
+      JupyterBoundsChangeHandler.get(customFoldRegion.editor)!!.boundsChanged()
     }
   }
 }
