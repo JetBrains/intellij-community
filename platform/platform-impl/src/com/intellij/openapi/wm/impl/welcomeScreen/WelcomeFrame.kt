@@ -117,6 +117,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
                 return
               }
             }
+            frame.dispose()
             ApplicationManager.getApplication().exit()
           }
           else {
