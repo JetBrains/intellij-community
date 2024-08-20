@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -20,22 +6,21 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
 
 public final class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
   private final Map<Key, Value> myNewData;
-  private final @NotNull ThrowableComputable<? extends InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
+  private final @NotNull ThrowableComputable<? extends InputDataDiffBuilder<Key, Value>, ? extends IOException> myCurrentDataEvaluator;
   private final IndexId<Key, Value> myIndexId;
   private final ThrowableRunnable<? extends IOException> myForwardIndexUpdate;
 
   public UpdateData(int inputId,
                     @NotNull Map<Key, Value> newData,
-                    @NotNull ThrowableComputable<? extends InputDataDiffBuilder<Key, Value>, IOException> currentDataEvaluator,
+                    @NotNull ThrowableComputable<? extends InputDataDiffBuilder<Key, Value>, ? extends IOException> currentDataEvaluator,
                     @NotNull IndexId<Key, Value> indexId,
-                    @Nullable ThrowableRunnable<? extends IOException> forwardIndexUpdate) {
+                    @NotNull ThrowableRunnable<? extends IOException> forwardIndexUpdate) {
     super(inputId);
     myNewData = newData;
     myCurrentDataEvaluator = currentDataEvaluator;
@@ -59,9 +44,7 @@ public final class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value>
 
   @Override
   protected void updateForwardIndex() throws IOException {
-    if (myForwardIndexUpdate != null) {
-      myForwardIndexUpdate.run();
-    }
+    myForwardIndexUpdate.run();
   }
 
   @Override
