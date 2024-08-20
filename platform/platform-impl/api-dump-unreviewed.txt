@@ -13748,6 +13748,12 @@ a:com.intellij.openapi.fileEditor.ChangeEditorSplitAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+f:com.intellij.openapi.fileEditor.FileEditorManagerKeys
+- sf:CLOSING_TO_REOPEN:com.intellij.openapi.util.Key
+- sf:FORBID_PREVIEW_TAB:com.intellij.openapi.util.Key
+- sf:FORBID_TAB_SPLIT:com.intellij.openapi.util.Key
+- sf:INSTANCE:com.intellij.openapi.fileEditor.FileEditorManagerKeys
+- sf:OPEN_IN_PREVIEW_TAB:com.intellij.openapi.util.Key
 f:com.intellij.openapi.fileEditor.LayoutActionsFloatingToolbar
 - com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - <init>(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V

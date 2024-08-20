@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -73,7 +74,7 @@ class EditorWindow internal constructor(
 
     @JvmField
     @Deprecated("Use SINGLETON_EDITOR_IN_WINDOW instead")
-    val HIDE_TABS: Key<Boolean> = FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW
+    val HIDE_TABS: Key<Boolean> = FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW
 
     // Metadata to support editor tab drag&drop process: initial index
     internal val DRAG_START_INDEX_KEY: Key<Int> = KeyWithDefaultValue.create("drag start editor index", -1)

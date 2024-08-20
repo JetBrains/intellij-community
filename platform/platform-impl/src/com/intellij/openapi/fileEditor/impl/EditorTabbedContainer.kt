@@ -20,10 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.FileDropManager
 import com.intellij.openapi.editor.containsFileDropTargets
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_INDEX_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
@@ -741,5 +738,5 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
 }
 
 internal fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
-  return editors.any { FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(it, false) }
+  return editors.any { FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW.get(it, false) }
 }

@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
-import com.intellij.ide.actions.SplitAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -34,7 +34,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
     set(value) = service<VcsLogEditorTabNameCache>().putTabName(path, value)
 
   init {
-    putUserData(SplitAction.FORBID_TAB_SPLIT, true)
+    putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
   }
 
   override fun createMainComponent(project: Project): JComponent {

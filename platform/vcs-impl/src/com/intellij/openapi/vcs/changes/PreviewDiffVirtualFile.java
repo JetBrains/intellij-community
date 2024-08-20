@@ -5,9 +5,9 @@ import com.intellij.diff.editor.DiffEditorViewerFileEditor;
 import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.editor.DiffVirtualFileWithTabName;
 import com.intellij.diff.impl.DiffRequestProcessor;
-import com.intellij.ide.actions.SplitAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -26,7 +26,7 @@ public class PreviewDiffVirtualFile extends DiffVirtualFile implements DiffVirtu
     super("DiffPreview");
     myProvider = provider;
 
-    putUserData(SplitAction.FORBID_TAB_SPLIT, true);
+    putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true);
   }
 
   @Override
