@@ -23,6 +23,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JList
@@ -202,6 +204,13 @@ object ChooserPopupUtil {
       override fun mouseReleased(e: MouseEvent) {
         if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed)
           toggleSelection()
+      }
+    })
+    addKeyListener(object : KeyAdapter() {
+      override fun keyPressed(e: KeyEvent?) {
+        if (e != null && e.keyCode == KeyEvent.VK_ENTER) {
+          toggleSelection()
+        }
       }
     })
   }
