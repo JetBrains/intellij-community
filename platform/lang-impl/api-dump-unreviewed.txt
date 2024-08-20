@@ -18773,10 +18773,6 @@ f:com.intellij.ide.util.projectWizard.ExistingModuleLoader
 - getModuleType():com.intellij.openapi.module.ModuleType
 - s:setUpLoader(java.lang.String):com.intellij.ide.util.projectWizard.ExistingModuleLoader
 - validate(com.intellij.openapi.project.Project,com.intellij.openapi.project.Project):Z
-f:com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector
-- sf:INSTANCE:com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logProjectGenerated(com.intellij.openapi.project.Project,java.lang.Class):V
 a:com.intellij.ide.util.projectWizard.MultiWebTemplateNewProjectWizard
 - com.intellij.ide.util.projectWizard.WebTemplateNewProjectWizardBase
 - <init>(java.util.List):V
