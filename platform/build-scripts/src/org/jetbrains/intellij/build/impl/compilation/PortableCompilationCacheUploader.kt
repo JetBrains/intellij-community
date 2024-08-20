@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalPathApi::class)
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
@@ -28,27 +31,25 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 internal class PortableCompilationCacheUploader(
   private val context: CompilationContext,
   private val remoteCache: PortableCompilationCache.RemoteCache,
   private val remoteGitUrl: String,
   private val commitHash: String,
-  s3Folder: String,
+  private val s3Folder: Path,
   private val forcedUpload: Boolean,
 ) {
-  private val uploadedOutputCount = AtomicInteger()
-
   private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
   private val uploader = Uploader(remoteCache.uploadUrl, remoteCache.authHeader)
 
   private val commitHistory = CommitsHistory(mapOf(remoteGitUrl to setOf(commitHash)))
 
-  private val s3Folder = Path.of(s3Folder)
-
   init {
-    NioFiles.deleteRecursively(this.s3Folder)
-    Files.createDirectories(this.s3Folder)
+    s3Folder.deleteRecursively()
+    Files.createDirectories(s3Folder)
   }
 
   suspend fun upload(messages: BuildMessages) {
@@ -59,20 +60,23 @@ internal class PortableCompilationCacheUploader(
 
     val start = System.nanoTime()
     val totalUploadedBytes = AtomicLong()
-    val tasks = mutableListOf<Deferred<*>>()
     val currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
+    val uploadedOutputCount = AtomicInteger()
     withContext(Dispatchers.IO) {
       // Jps Caches upload is started first because of significant size
-      tasks.add(async {
-        spanBuilder("upload jps cache").use { uploadJpsCaches() }
-      })
+      launch {
+        spanBuilder("upload jps cache").use {
+          uploadJpsCaches()
+        }
+      }
 
-      uploadCompilationOutputs(currentSourcesState = currentSourcesState, uploader = uploader, tasks = tasks)
+      spanBuilder("upload compilation outputs").use {
+        uploadCompilationOutputs(currentSourcesState = currentSourcesState, uploader = uploader, uploadedOutputCount = uploadedOutputCount)
+      }
     }
-    val failed = tasks.mapNotNull { it.getCompletionExceptionOrNull() }
 
     messages.reportStatisticValue("jps-cache:upload:time", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toString())
-    messages.reportStatisticValue("jps-cache:uploaded:count", "${tasks.size - failed.size}")
+    messages.reportStatisticValue("jps-cache:uploaded:count", (uploadedOutputCount.get() + 1).toString())
     messages.reportStatisticValue("jps-cache:uploaded:bytes", "$totalUploadedBytes")
 
     val totalOutputs = (sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size).toString()
@@ -85,7 +89,7 @@ internal class PortableCompilationCacheUploader(
 
   private suspend fun uploadToS3() {
     spanBuilder("aws s3 sync").use {
-      awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", "$s3Folder", "s3://intellij-jps-cache", returnStdOut = false)
+      awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", s3Folder.toString(), "s3://intellij-jps-cache", returnStdOut = false)
     }
   }
 
@@ -111,33 +115,27 @@ internal class PortableCompilationCacheUploader(
     }
   }
 
-  private fun CoroutineScope.uploadCompilationOutputs(
+  private suspend fun uploadCompilationOutputs(
     currentSourcesState: Map<String, Map<String, BuildTargetState>>,
     uploader: Uploader,
-    tasks: MutableList<Deferred<*>>,
-  ): List<Deferred<*>> {
-    return sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).mapTo(tasks) { compilationOutput ->
-      async {
-        spanBuilder("upload output part").setAttribute("part", compilationOutput.remotePath).use { span ->
-          val sourcePath = compilationOutput.remotePath
-          val outputFolder = Path.of(compilationOutput.path)
-          if (!Files.exists(outputFolder)) {
-            span.addEvent(
-              "$outputFolder doesn't exist, was a respective module removed?", Attributes.of(
-              AttributeKey.stringKey("path"), "$outputFolder"
-            )
-            )
-            return@use
-          }
-
-          val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
-          zipWithCompression(zipFile, mapOf(outputFolder to ""))
-          if (forcedUpload || !uploader.isExist(sourcePath)) {
-            uploader.upload(sourcePath, zipFile)
-            uploadedOutputCount.incrementAndGet()
-          }
-          moveFile(zipFile, s3Folder.resolve(sourcePath))
+    uploadedOutputCount: AtomicInteger,
+  ) {
+    sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).forEachConcurrent(uploadParallelism) { compilationOutput ->
+      spanBuilder("upload output part").setAttribute("part", compilationOutput.remotePath).use { span ->
+        val sourcePath = compilationOutput.remotePath
+        val outputFolder = Path.of(compilationOutput.path)
+        if (Files.notExists(outputFolder)) {
+          span.addEvent("$outputFolder doesn't exist, was a respective module removed?", Attributes.of(AttributeKey.stringKey("path"), "$outputFolder"))
+          return@use
         }
+
+        val zipFile = context.paths.tempDir.resolve("compilation-output-zips").resolve(sourcePath)
+        zipWithCompression(zipFile, mapOf(outputFolder to ""))
+        if (forcedUpload || !uploader.isExist(sourcePath)) {
+          uploader.upload(sourcePath, zipFile)
+          uploadedOutputCount.incrementAndGet()
+        }
+        moveFile(zipFile, s3Folder.resolve(sourcePath))
       }
     }
   }

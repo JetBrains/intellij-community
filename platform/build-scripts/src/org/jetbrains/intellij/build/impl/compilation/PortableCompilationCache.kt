@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.incremental.storage.ProjectStamps
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CancellationException
 
@@ -54,7 +55,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   private val uploader by lazy {
-    val s3Folder = require(AWS_SYNC_FOLDER_PROPERTY, "AWS S3 sync folder")
+    val s3Folder = Path.of(require(AWS_SYNC_FOLDER_PROPERTY, "AWS S3 sync folder"))
     val commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit")
     PortableCompilationCacheUploader(
       context = context,

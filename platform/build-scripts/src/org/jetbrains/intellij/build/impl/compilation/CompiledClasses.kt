@@ -36,10 +36,10 @@ internal object CompiledClasses {
         messages.error(message)
       }
     }
-    if (options.pathToCompiledClassesArchive != null && PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
+    if (options.pathToCompiledClassesArchive != null && IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
       messages.error("JPS Cache is enabled so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
     }
-    if (options.pathToCompiledClassesArchivesMetadata != null && PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
+    if (options.pathToCompiledClassesArchivesMetadata != null && IS_PORTABLE_COMPILATION_CACHE_ENABLED) {
       messages.error("JPS Cache is enabled " +
                      "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
     }
@@ -114,7 +114,7 @@ internal object CompiledClasses {
 
   fun keepCompilationState(options: BuildOptions): Boolean {
     return !options.forceRebuild &&
-           (PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED ||
+           (IS_PORTABLE_COMPILATION_CACHE_ENABLED ||
             options.useCompiledClassesFromProjectOutput ||
             options.pathToCompiledClassesArchive == null ||
             options.pathToCompiledClassesArchivesMetadata != null ||
@@ -147,7 +147,7 @@ internal object CompiledClasses {
           )
         }
       }
-      PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
+      IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
         span.addEvent("JPS remote cache will be used for compilation")
         runBlocking(Dispatchers.Default) {
           context.portableCompilationCache.downloadCacheAndCompileProject()
@@ -274,7 +274,7 @@ internal object CompiledClasses {
         cleanOutput(compilationContext = context, keepCompilationState = false)
         context.options.incrementalCompilation = false
       }
-      PortableCompilationCache.IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
+      IS_PORTABLE_COMPILATION_CACHE_ENABLED -> {
         successMessage = context.portableCompilationCache.handleCompilationFailureBeforeRetry(successMessage)
       }
       else -> {
