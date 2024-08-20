@@ -18,12 +18,15 @@ import kotlin.io.path.writeLines
 @ApiStatus.Internal
 class ArchivedCompilationContext(
   private val delegate: CompilationContext,
-  private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(paths = delegate.paths, classesOutputDirectory = delegate.classesOutputDirectory).apply {
+  private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(paths = delegate.paths, classesOutputDirectory = delegate.classesOutputDirectory, messages = delegate.messages).apply {
     delegate.options.pathToCompiledClassesArchivesMetadata?.let {
       this.loadMetadataFile(it)
     }
     System.getProperty("intellij.test.jars.mapping.file")?.let {
       this.loadMapping(Path.of(it))
+    }
+    if (getMapping().isNotEmpty()) {
+      delegate.messages.info("Loading archived compilation mappings: " + getMapping())
     }
   },
 ) : CompilationContext by delegate {
