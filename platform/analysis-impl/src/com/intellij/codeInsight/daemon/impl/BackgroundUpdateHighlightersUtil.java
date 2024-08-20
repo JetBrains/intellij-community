@@ -48,13 +48,13 @@ public final class BackgroundUpdateHighlightersUtil {
   // return true if added
   @Deprecated
   static void addHighlighterToEditorIncrementally(@NotNull HighlightingSession session,
-                                                     @NotNull PsiFile file,
-                                                     @NotNull Document document,
-                                                     @NotNull TextRange restrictRange,
-                                                     @NotNull HighlightInfo info,
-                                                     @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
-                                                     int group,
-                                                     @NotNull Long2ObjectMap<RangeMarker> range2markerCache) {
+                                                  @NotNull PsiFile file,
+                                                  @NotNull Document document,
+                                                  @NotNull TextRange restrictRange,
+                                                  @NotNull HighlightInfo info,
+                                                  @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
+                                                  int group,
+                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = file.getProject();
@@ -343,10 +343,10 @@ public final class BackgroundUpdateHighlightersUtil {
   }
 
   static void changeAttributes(@NotNull RangeHighlighterEx highlighter,
-                                       @NotNull HighlightInfo info,
-                                       @Nullable EditorColorsScheme colorsScheme,
-                                       @NotNull PsiFile psiFile,
-                                       @Nullable TextAttributes infoAttributes) {
+                               @NotNull HighlightInfo info,
+                               @Nullable EditorColorsScheme colorsScheme,
+                               @NotNull PsiFile psiFile,
+                               @Nullable TextAttributes infoAttributes) {
     TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
     highlighter.setTextAttributesKey(textAttributesKey);
 
@@ -372,14 +372,5 @@ public final class BackgroundUpdateHighlightersUtil {
     if (HighlightInfoType.VISIBLE_IF_FOLDED.contains(info.type)) {
       highlighter.setVisibleIfFolded(true);
     }
-
-    ((MarkupModelEx)DocumentMarkupModel.forDocument(highlighter.getDocument(), psiFile.getProject(), true)).processRangeHighlightersOverlappingWith(
-      highlighter.getStartOffset(), highlighter.getEndOffset(), h->{
-        if (h != highlighter && h.getTextRange().equals(highlighter.getTextRange()) && Objects.equals(h.getErrorStripeTooltip(), highlighter.getErrorStripeTooltip())) {
-          //throw new RuntimeException("duplicate RH: "+h);
-          int i = 0;
-        }
-        return true;
-      });
   }
 }
