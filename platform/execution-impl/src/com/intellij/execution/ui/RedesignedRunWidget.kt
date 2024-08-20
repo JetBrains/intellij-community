@@ -407,17 +407,17 @@ private class MoreRunToolbarActions : TogglePopupAction(
 }
 
 internal fun filterOutRunIfDebugResumeIsPresent(e: AnActionEvent, actions: List<AnAction>): List<AnAction> {
-  val hasPause = actions.any {
-    it.javaClass.simpleName.let { it == "InlineXDebuggerResumeAction" || it == "ConfigurationXDebuggerResumeAction" } ||
+  val hasPause = actions.find {
+    it.javaClass.simpleName.let {
+      it == "InlineXDebuggerResumeAction" ||
+      it == "ConfigurationXDebuggerResumeAction"
+    } ||
     e.actionManager.getId(it)?.contains("XDebuggerResumeAction") == true
-  }
-  val hasInlineStop = actions.any {
-    it.javaClass.simpleName.let { it == "StopConfigurationInlineAction" }
-  }
-  return when {
-    hasPause -> actions.filter { ((it as? ExecutorAction)?.id ?: e.actionManager.getId(it)) != "Run" }
-    hasInlineStop -> actions.filter { ((it as? ExecutorAction)?.id ?: e.actionManager.getId(it)) != "Debug" }
-    else -> actions
+
+  } != null
+  if (!hasPause) return actions
+  return actions.filter {
+    ((it as? ExecutorAction)?.id ?: e.actionManager.getId(it)) != "Run"
   }
 }
 

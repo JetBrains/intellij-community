@@ -2063,10 +2063,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void applyEvent(@NotNull VFileEvent event) {
-    SlowOperations.allowSlowOperations(() -> doApplyEvent(event));
-  }
-
-  private void doApplyEvent(@NotNull VFileEvent event) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Applying " + event);
     }

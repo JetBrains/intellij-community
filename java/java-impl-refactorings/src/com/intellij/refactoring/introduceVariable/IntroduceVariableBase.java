@@ -53,7 +53,6 @@ import com.intellij.refactoring.util.occurrences.NotInConstructorCallFilter;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -404,9 +403,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           dialogIntroduce.accept(null);
         }
         else {
-          SlowOperations.allowSlowOperations(
-            () -> dumbService.runWithAlternativeResolveEnabled(
-              () -> inplaceIntroduce(project, editor, choice, targetContainer, occurrenceManager, originalType, dialogIntroduce)));
+          dumbService.runWithAlternativeResolveEnabled(
+            () -> inplaceIntroduce(project, editor, choice, targetContainer, occurrenceManager, originalType, dialogIntroduce));
         }
       }
 
