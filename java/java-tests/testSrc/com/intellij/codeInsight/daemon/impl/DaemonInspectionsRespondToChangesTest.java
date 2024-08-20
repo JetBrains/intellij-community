@@ -423,7 +423,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   private static final AtomicInteger toSleepMs = new AtomicInteger(0);
   private static final String SWEARING = "No swearing";
 
-  private void checkSwearingHighlightIsVisibleImmediately() {
+  private void checkSwearingHighlightIsVisibleImmediately() throws Exception {
     @Language("JAVA")
     String text = """
       class X /* */ {
@@ -474,7 +474,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     }
   }
 
-  public void testAddInspectionProblemToProblemHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
+  public void testAddInspectionProblemToProblemHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() throws Exception {
     registerInspection(new MySwearingInspection());
     checkSwearingHighlightIsVisibleImmediately();
   }

@@ -85,11 +85,11 @@ final class PassExecutorService implements Disposable {
 
   @Override
   public void dispose() {
-    cancelAll(true, "PassExecutorService.dispose");
     // some workers could, although idle, still retain some thread references for some time causing leak hunter to frown
     // call it from BGT to avoid "calling daemon from EDT" assertion
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.SECONDS);
+      cancelAll(true, "PassExecutorService.dispose");
     });
     try {
       future.get();
@@ -101,6 +101,10 @@ final class PassExecutorService implements Disposable {
   }
 
   void cancelAll(boolean waitForTermination, @NotNull String reason) {
+    if (waitForTermination) {
+      // must not wait in EDT because waitFor() might inadvertently steal some work from FJP and try to run it and fail with "must not execute in EDT"
+      ThreadingAssertions.assertBackgroundThread();
+    }
     for (Map.Entry<ScheduledPass, Job<Void>> entry : mySubmittedPasses.entrySet()) {
       Job<Void> job = entry.getValue();
       ScheduledPass pass = entry.getKey();
