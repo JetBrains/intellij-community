@@ -79,6 +79,11 @@ private class DocRenderNecromancer(
         }
       }
     } else {
+      val editor = recipe.editorSupplier()
+      if (!DocRenderManager.isDocRenderingEnabled(editor)) {
+        // abort items calc asap IJPL-160508
+        return
+      }
       val document = recipe.document
       val psiManager = project.serviceAsync<PsiManager>()
       val stampAndItems = readAction {
@@ -89,13 +94,10 @@ private class DocRenderNecromancer(
       if (stampAndItems != null) {
         val (stamp, items) = stampAndItems
         if (!items.isEmpty) {
-          val editor = recipe.editorSupplier()
-          if (DocRenderManager.isDocRenderingEnabled(editor)) {
-            withContext(Dispatchers.EDT) {
-              if (!project.isDisposed && !editor.isDisposed && document.modificationStamp == stamp) {
-                writeIntentReadAction {
-                  DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
-                }
+          withContext(Dispatchers.EDT) {
+            if (!project.isDisposed && !editor.isDisposed && document.modificationStamp == stamp) {
+              writeIntentReadAction {
+                DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
               }
             }
           }

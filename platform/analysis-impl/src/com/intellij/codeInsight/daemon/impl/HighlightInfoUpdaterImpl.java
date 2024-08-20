@@ -491,9 +491,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                                                      @NotNull List<? extends PsiFile> injectedFragments,
                                                      @NotNull Set<? extends Pair<Object, PsiFile>> actualToolsRun,
                                                      @NotNull HighlightingSession highlightingSession,
-                                                     @NotNull List<? extends LocalInspectionToolWrapper> disabledSmartOnlyToolWrappers) {
-
-    Set<String> inactiveSmartOnlyToolIds = ContainerUtil.map2Set(disabledSmartOnlyToolWrappers, toolWrapper -> toolWrapper.getShortName());
+                                                     @NotNull Set<String> inactiveSmartOnlyToolIds) {
 
     for (PsiFile psiFile: ContainerUtil.append(injectedFragments, containingFile)) {
       getData(psiFile, hostDocument).entrySet().removeIf(entry -> {

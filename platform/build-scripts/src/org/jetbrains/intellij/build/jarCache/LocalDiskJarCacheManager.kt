@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.jarCache
 
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
-import com.intellij.util.io.DigestUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -24,6 +23,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.time.Instant
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.days
 
 private const val jarSuffix = ".jar"
@@ -59,12 +59,12 @@ internal class LocalDiskJarCacheManager(
     hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
     for (source in items) {
       hash.putString(source.name)
-      source.updateDigest(hash)
+      source.updateAssetDigest(hash)
     }
 
     val hash1 = java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
 
-    // another 64-bit hash based on paths only to reduce the chance of collision
+    // another 64-bit hash without `source.updateAssetDigest` to reduce the chance of collision
     hash.reset()
     producer.updateDigest(hash)
     for (source in items.asReversed()) {
@@ -79,10 +79,9 @@ internal class LocalDiskJarCacheManager(
     val cacheFile = cacheDir.resolve(cacheFileName)
     val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
     if (checkCache(cacheMetadataFile = cacheMetadataFile, cacheFile = cacheFile, sources = sources, items = items, span = span, nativeFiles = nativeFiles)) {
-      if (!producer.useCacheAsTargetFile) {
-        Files.createDirectories(targetFile.parent)
-        Files.copy(cacheFile, targetFile)
-      }
+      // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
+      Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
+
       span.addEvent(
         "use cache",
         Attributes.of(
@@ -91,13 +90,17 @@ internal class LocalDiskJarCacheManager(
         ),
       )
 
-      // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
-      Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
-
-      return if (producer.useCacheAsTargetFile) cacheFile else targetFile
+      if (producer.useCacheAsTargetFile) {
+        return cacheFile
+      }
+      else {
+        Files.createDirectories(targetFile.parent)
+        Files.copy(cacheFile, targetFile)
+        return targetFile
+      }
     }
 
-    val tempFile = cacheDir.resolve("$cacheName.temp-${java.lang.Long.toUnsignedString(DigestUtil.random.nextLong(), Character.MAX_RADIX)}".takeLast(255))
+    val tempFile = cacheDir.resolve("$cacheName.temp-${java.lang.Long.toUnsignedString(Random.nextLong(), Character.MAX_RADIX)}".takeLast(255))
     var fileMoved = false
     try {
       producer.produce(tempFile)

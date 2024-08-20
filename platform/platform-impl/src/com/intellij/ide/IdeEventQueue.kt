@@ -682,26 +682,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
       val source = e.source
       if (source is IdeFrameImpl) {
-        when (e.id) {
-          MouseEvent.MOUSE_MOVED -> {
-            e as MouseEvent
-            if (!source.isActive) {
-              source.lastInactiveMouseXAbs = e.xOnScreen
-              source.lastInactiveMouseYAbs = e.yOnScreen
-            }
-          }
-          WindowEvent.WINDOW_ACTIVATED -> {
-            source.isFirstMousePressed = true
-          }
-          MouseEvent.MOUSE_PRESSED -> {
-            e as MouseEvent
-            source.wasJustActivatedByClick =
-              source.isFirstMousePressed &&
-              e.xOnScreen == source.lastInactiveMouseXAbs &&
-              e.yOnScreen == source.lastInactiveMouseYAbs
-            source.isFirstMousePressed = false
-          }
-        }
+        source.detectWindowActivationByMousePressed(e)
       }
       super.dispatchEvent(e)
       // collect mnemonics statistics only if a key event was processed above

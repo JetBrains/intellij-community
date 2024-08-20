@@ -14,15 +14,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
@@ -43,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -86,7 +81,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
   private final List<SettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final boolean myAllowRemoteProjectCreation;
-  private @Nullable MouseListener myErrorLabelMouseListener;
 
   protected Consumer<String> myErrorCallback;
 
@@ -309,17 +303,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   public void afterProjectGenerated(final @NotNull Project project) {
   }
 
-  public void addErrorLabelMouseListener(final @NotNull MouseListener mouseListener) {
-    myErrorLabelMouseListener = mouseListener;
-  }
-
-  public @Nullable MouseListener getErrorLabelMouseListener() {
-    return myErrorLabelMouseListener;
-  }
-
-  public void createAndAddVirtualEnv(Project project, PyNewProjectSettings settings) {
-  }
-
   /**
    * @param sdkAndException if you have SDK and execution exception provide them here (both must not be null).
    */
@@ -510,9 +493,5 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
         reportPackageInstallationFailure(requirement, Pair.create(sdk, e));
       }
     }
-  }
-
-  public static boolean useNewInterpreterCreationUi() {
-  return true;
   }
 }

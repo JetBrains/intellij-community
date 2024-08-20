@@ -48,9 +48,9 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private volatile boolean myDisposed;
 
   private final ThreadLocal<Pair<VirtualFile, Map<String, FileAttributes>>> myFileAttributesCache = new ThreadLocal<>();
-  private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(LocalFileSystemImpl::listChildren);
-  private final DiskQueryRelay<VirtualFile, Object> myContentGetter = new DiskQueryRelay<>(LocalFileSystemImpl::readContent);
-  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(LocalFileSystemImpl::readAttributes);
+  private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> listChildren(dir));
+  private final DiskQueryRelay<VirtualFile, Object> myContentGetter = new DiskQueryRelay<>(file -> readContent(file));
+  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(file -> readAttributes(file));
   private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
     new DiskQueryRelay<>(pair -> listWithAttributes(pair.first, pair.second));
 
@@ -168,7 +168,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   @Override
   public @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
-    return ContainerUtil.mapNotNull(getAliasedPaths(path), this::findFileByPathIfCached);
+    return ContainerUtil.mapNotNull(getAliasedPaths(path), path1 -> findFileByPathIfCached(path1));
   }
 
   // Finds paths that denote the same physical file (canonical path + symlinks).

@@ -256,7 +256,7 @@ private class SourcesBasedXIncludeResolver(
   override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path {
     var result: Path? = null
     for (moduleName in pluginLayout.includedModules.asSequence().map { it.moduleName }.distinct()) {
-      result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue)
+      result = context.findFileInModuleSources(moduleName, relativePath) ?: continue
     }
     return result ?: (if (base == null) Path.of(relativePath) else base.resolveSibling(relativePath))
   }

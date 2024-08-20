@@ -11,6 +11,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
@@ -21,12 +22,12 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildOptions.Companion.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -66,6 +67,8 @@ data class BuildRequest(
   @JvmField val writeCoreClasspath: Boolean = true,
 
   @JvmField val buildOptionsTemplate: BuildOptions? = null,
+
+  @JvmField val tracer: Tracer? = null
 ) {
   override fun toString(): String =
     "BuildRequest(platformPrefix='$platformPrefix', " +
@@ -81,7 +84,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     val rootDir = request.devRootDir
     // if symlinked to ram disk, use a real path for performance reasons and avoid any issues in ant/other code
     if (Files.exists(rootDir)) {
-      // toRealPath must be called only on existing file
+      // toRealPath must be called only on an existing file
       rootDir.toRealPath()
     }
     else {
@@ -131,10 +134,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         val binDir = Files.createDirectories(runDir.resolve("bin"))
-        val osDistributionBuilder = getOsDistributionBuilder(os = OsFamily.currentOs, context = context)!!
-        val vmOptionsFile = osDistributionBuilder.writeVmOptions(binDir)
-        // copying outside the installation directory is necessary to specify system property "jb.vmOptionsFile"
-        Files.copy(vmOptionsFile, binDir.parent.parent.resolve(vmOptionsFile.fileName), StandardCopyOption.REPLACE_EXISTING)
+        val osDistributionBuilder = getOsDistributionBuilder(os = OsFamily.currentOs, context = context)
+        if (osDistributionBuilder != null) {
+          val vmOptionsFile = osDistributionBuilder.writeVmOptions(binDir)
+          // copying outside the installation directory is necessary to specify system property "jb.vmOptionsFile"
+          Files.copy(vmOptionsFile, binDir.parent.parent.resolve(vmOptionsFile.fileName), StandardCopyOption.REPLACE_EXISTING)
+        }
 
         val ideaPropertyFile = binDir.resolve(PathManager.PROPERTIES_FILE_NAME)
         Files.writeString(ideaPropertyFile, createIdeaPropertyFile(context))
@@ -458,9 +463,9 @@ private suspend fun createBuildContext(
     BuildContextImpl(
       compilationContext = compilationContext,
       productProperties = productProperties.await(),
-      windowsDistributionCustomizer = object : WindowsDistributionCustomizer() {},
-      linuxDistributionCustomizer = object : LinuxDistributionCustomizer() {},
-      macDistributionCustomizer = object : MacDistributionCustomizer() {},
+      windowsDistributionCustomizer = WindowsDistributionCustomizer(),
+      linuxDistributionCustomizer = LinuxDistributionCustomizer(),
+      macDistributionCustomizer = MacDistributionCustomizer(),
       jarCacheManager = jarCacheManager,
       proprietaryBuildTools = if (request.scrambleTool == null) {
         ProprietaryBuildTools.DUMMY
@@ -559,7 +564,7 @@ private suspend fun layoutPlatform(
       val libDir = runDir.resolve("lib")
       for (entry in entries) {
         val file = entry.path
-        // exclude files like ext/platform-main.jar - if file in lib, take only direct children in an account
+        // exclude files like ext/platform-main.jar - if a file in lib, take only direct children in an account
         if ((entry.relativeOutputFile ?: "").contains('/')) {
           continue
         }

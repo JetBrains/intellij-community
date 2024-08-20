@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.tool.mapConcurrently
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildMessages
@@ -22,17 +22,19 @@ class ArchivedCompilationContext(
     delegate.options.pathToCompiledClassesArchivesMetadata?.let {
       this.loadMetadataFile(Path.of(it))
     }
-  }
+  },
 ) : CompilationContext by delegate {
   val archivesLocation: Path
     get() = storage.archivedOutputDirectory
 
-  override fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
+  override suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
     return replaceWithCompressedIfNeeded(delegate.getModuleOutputDir(module = module, forTests = forTests))
   }
 
   override fun getModuleTestsOutputDir(module: JpsModule): Path {
-    return replaceWithCompressedIfNeeded(delegate.getModuleTestsOutputDir(module))
+    return runBlocking(Dispatchers.IO) {
+      replaceWithCompressedIfNeeded(delegate.getModuleTestsOutputDir(module))
+    }
   }
 
   @Deprecated("Use getModuleTestsOutputDir instead", replaceWith = ReplaceWith("getModuleTestsOutputDir(module)"))
@@ -42,7 +44,7 @@ class ArchivedCompilationContext(
   }
 
   override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
-    return replaceWithCompressedIfNeededLS(delegate.getModuleRuntimeClasspath(module, forTests))
+    return doReplace(delegate.getModuleRuntimeClasspath(module, forTests), inputMapper = { Path.of(it) }, resultMapper = { it.toString() })
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
@@ -51,29 +53,34 @@ class ArchivedCompilationContext(
 
   @Suppress("MemberVisibilityCanBePrivate")
   fun replaceWithCompressedIfNeeded(p: String): String {
-    return storage.getArchived(Path.of(p)).toString()
+    return runBlocking(Dispatchers.IO) {
+      storage.getArchived(Path.of(p)).toString()
+    }
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
-  fun replaceWithCompressedIfNeeded(p: Path): Path {
-    return storage.getArchived(p)
+  suspend fun replaceWithCompressedIfNeeded(p: Path): Path = storage.getArchived(p)
+
+  fun replaceWithCompressedIfNeededLP(files: List<Path>): List<Path> {
+    return doReplace(files, inputMapper = { it }, resultMapper = { it })
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
-  fun replaceWithCompressedIfNeeded(f: File): File {
-    return storage.getArchived(f.toPath()).toFile()
+  fun replaceWithCompressedIfNeededLF(files: List<File>): List<File> {
+    return doReplace(files, inputMapper = { it.toPath() }, resultMapper = { it.toFile() })
   }
 
-  fun replaceWithCompressedIfNeededLS(paths: List<String>): List<String> {
-    return runBlocking(Dispatchers.IO) { paths.mapConcurrently(100, ::replaceWithCompressedIfNeeded) }
-  }
-
-  fun replaceWithCompressedIfNeededLP(paths: List<Path>): List<Path> {
-    return runBlocking(Dispatchers.IO) { paths.mapConcurrently(100, ::replaceWithCompressedIfNeeded) }
-  }
-
-  fun replaceWithCompressedIfNeededLF(paths: List<File>): List<File> {
-    return runBlocking(Dispatchers.IO) { paths.mapConcurrently(100, ::replaceWithCompressedIfNeeded) }
+  private inline fun <I : Any, R : Any> doReplace(
+    files: List<I>,
+    crossinline inputMapper: (I) -> Path,
+    crossinline resultMapper: (Path) -> R,
+  ): List<R> {
+    return runBlocking(Dispatchers.IO) {
+      files.map { file ->
+        async {
+          resultMapper(replaceWithCompressedIfNeeded(inputMapper(file)))
+        }
+      }
+    }.map { it.getCompleted() }
   }
 
   fun saveMapping(file: Path) {

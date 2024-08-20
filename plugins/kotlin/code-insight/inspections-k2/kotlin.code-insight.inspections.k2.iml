@@ -61,5 +61,11 @@
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="module" module-name="kotlin.base.external-build-system" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.k2" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
+    <orderEntry type="library" name="kotlin-tooling-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
   </component>
 </module>

@@ -525,11 +525,12 @@ public class JavaKeywordCompletion {
   private void addCaseDefault() {
     PsiSwitchBlock switchBlock = getSwitchFromLabelPosition(myPosition);
     if (switchBlock == null) return;
-    if (SwitchUtils.findDefaultElement(switchBlock) != null) {
+    PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);
+    if (defaultElement != null && defaultElement.getTextRange().getStartOffset() < myPosition.getTextRange().getStartOffset()) return;
+    addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CASE), TailTypes.insertSpaceType()));
+    if (defaultElement != null) {
       return;
     }
-    addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CASE), TailTypes.insertSpaceType()));
-
     final OverridableSpace defaultCaseRule =
       new OverridableSpace(createKeyword(PsiKeyword.DEFAULT), JavaTailTypes.forSwitchLabel(switchBlock));
     addKeyword(prioritizeForRule(LookupElementDecorator.withInsertHandler(defaultCaseRule, ADJUST_LINE_OFFSET), switchBlock));
@@ -543,6 +544,9 @@ public class JavaKeywordCompletion {
 
     final PsiType selectorType = getSelectorType(switchBlock);
     if (selectorType == null || selectorType instanceof PsiPrimitiveType) return;
+
+    PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);
+    if (defaultElement != null && defaultElement.getTextRange().getStartOffset() < myPosition.getTextRange().getStartOffset()) return;
 
     final TailType caseRuleTail = JavaTailTypes.forSwitchLabel(switchBlock);
     Set<String> containedLabels = getSwitchCoveredLabels(switchBlock, myPosition);

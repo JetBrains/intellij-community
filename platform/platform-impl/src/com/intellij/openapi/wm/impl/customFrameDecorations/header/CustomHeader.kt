@@ -153,8 +153,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     }
 
     val size = preferredSize
-    val height = calcHeight()
-    size.height = JBUI.scale(height)
+    size.height = calcHeight()
     preferredSize = size
     minimumSize = size
   }

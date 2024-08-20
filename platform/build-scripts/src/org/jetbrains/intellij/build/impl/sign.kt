@@ -3,7 +3,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import org.jetbrains.intellij.build.telemetry.use
 import com.jetbrains.signatureverifier.ILogger
 import com.jetbrains.signatureverifier.InvalidDataException
 import com.jetbrains.signatureverifier.crypt.SignatureVerificationParams
@@ -21,11 +20,12 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -117,7 +117,7 @@ private suspend fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context
   }
 }
 
-private fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: BuildContext) {
+private suspend fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: BuildContext) {
   spanBuilder("replacing unsigned entries in zip")
     .setAttribute("zip", origin.toString())
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())

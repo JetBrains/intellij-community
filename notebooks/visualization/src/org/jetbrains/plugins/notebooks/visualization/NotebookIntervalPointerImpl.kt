@@ -9,9 +9,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.removeUserData
+import com.intellij.openapi.util.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly
@@ -63,7 +61,8 @@ private val POSTPONED_ACTION_KEY = Key<BasicUndoableAction>("Postponed interval 
 
 private data class PostponedChanges(val eventChanges: List<Change>, val shiftChanges: List<Change>, val eventSource: EventSource)
 
-private class NotebookIntervalPointerImpl(@Volatile var interval: NotebookCellLines.Interval?) : NotebookIntervalPointer {
+private class NotebookIntervalPointerImpl(@Volatile var interval: NotebookCellLines.Interval?) : NotebookIntervalPointer,
+                                                                                                 UserDataHolder by UserDataHolderBase() {
   override fun get(): NotebookCellLines.Interval? = interval
 
   override fun toString(): String = "NotebookIntervalPointerImpl($interval)"
@@ -80,10 +79,12 @@ private typealias NotebookIntervalPointersEventChanges = ArrayList<Change>
  * For example, you can save pointer anywhere, remove interval, undo removal and pointer instance will contain interval again.
  * You can store interval-related data into WeakHashMap<NotebookIntervalPointer, Data> and this data will outlive undo/redo actions.
  */
-class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: NotebookCellLines,
-                                         private val document: Document,
-                                         undoManager: UndoManager?,
-                                         private val project: Project) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
+class NotebookIntervalPointerFactoryImpl(
+  private val notebookCellLines: NotebookCellLines,
+  private val document: Document,
+  undoManager: UndoManager?,
+  private val project: Project,
+) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
   private val pointers = ArrayList<NotebookIntervalPointerImpl>()
   override val changeListeners: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener> =
     EventDispatcher.create(NotebookIntervalPointerFactory.ChangeListener::class.java)
@@ -157,7 +158,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   private fun setupUndoRedoAndFireEvent(
     event: NotebookCellLinesEvent?,
     eventChanges: NotebookIntervalPointersEventChanges,
-    shiftChanges: NotebookIntervalPointersEventChanges
+    shiftChanges: NotebookIntervalPointersEventChanges,
   ) {
     registerUndoableAction(object : BasicUndoableAction(document) {
       override fun undo() {}
@@ -222,8 +223,10 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   private fun makeSnapshot(interval: NotebookCellLines.Interval) =
     PointerSnapshot(pointers[interval.ordinal], interval)
 
-  private fun hasSingleIntervalsWithSameTypeAndLanguage(oldIntervals: List<NotebookCellLines.Interval>,
-                                                        newIntervals: List<NotebookCellLines.Interval>): Boolean {
+  private fun hasSingleIntervalsWithSameTypeAndLanguage(
+    oldIntervals: List<NotebookCellLines.Interval>,
+    newIntervals: List<NotebookCellLines.Interval>,
+  ): Boolean {
     val old = oldIntervals.singleOrNull() ?: return false
     val new = newIntervals.singleOrNull() ?: return false
     return old.type == new.type && old.language == new.language
@@ -306,8 +309,10 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
   }
 
-  private fun invalidatePointer(eventChanges: NotebookIntervalPointersEventChanges,
-                                ptr: NotebookIntervalPointerImpl) {
+  private fun invalidatePointer(
+    eventChanges: NotebookIntervalPointersEventChanges,
+    ptr: NotebookIntervalPointerImpl,
+  ) {
     val interval = ptr.interval
     if (interval == null) return
 
@@ -319,8 +324,10 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     eventChanges.add(OnInserted(listOf(PointerSnapshot(newPtr, interval))))
   }
 
-  private fun trySwapPointers(eventChanges: NotebookIntervalPointersEventChanges?,
-                              hint: NotebookIntervalPointerFactory.Swap) {
+  private fun trySwapPointers(
+    eventChanges: NotebookIntervalPointersEventChanges?,
+    hint: NotebookIntervalPointerFactory.Swap,
+  ) {
     val firstPtr = pointers.getOrNull(hint.firstOrdinal)
     val secondPtr = pointers.getOrNull(hint.secondOrdinal)
 

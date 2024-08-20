@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.ide.actions.CreateFileFromTemplateAction
+import com.intellij.ide.actions.CreateFileFromTemplateAction.moveCaretAfterNameIdentifier
 import com.intellij.ide.actions.CreateFileFromTemplateDialog
 import com.intellij.ide.actions.CreateTemplateInPackageAction
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction
@@ -13,14 +14,11 @@ import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.DumbAware
@@ -33,18 +31,16 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.configuration.BuildSystemType
-import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
-import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
-import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -53,7 +49,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import java.util.concurrent.Callable
 import javax.swing.Icon
 
 internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
@@ -279,28 +274,6 @@ fun createKotlinFileFromTemplate(name: String, template: FileTemplate, dir: PsiD
             }
         }
         JavaCreateTemplateInPackageAction.setupJdk(adjustedDir, psiFile)
-        val module = ModuleUtil.findModuleForFile(psiFile) ?: return@computeWithAlternativeResolveEnabled psiFile
-
-        // Old JPS configurator logic
-        // TODO: Unify with other auto-configuration logic in NewKotlinFileConfigurationHook
-        val configurator = KotlinProjectConfigurator.EP_NAME.extensions.firstOrNull {
-            // Gradle is already covered by the auto-configuration feature in NewKotlinFileConfigurationHook
-            it.isApplicable(module) && module.buildSystemType != BuildSystemType.Gradle
-        }
-        if (configurator != null) {
-            ReadAction.nonBlocking(Callable {
-                configurator.getStatus(module.toModuleGroup()) == ConfigureKotlinStatus.CAN_BE_CONFIGURED
-            })
-                .inSmartMode(module.project)
-                .finishOnUiThread(ModalityState.nonModal()) {
-                    if (module.project.isDisposed) {
-                        return@finishOnUiThread
-                    }
-                    if (it) {
-                        configurator.configure(module.project, emptyList())
-                    }
-                }.submit(AppExecutorUtil.getAppExecutorService())
-        }
         psiFile
     }
 }

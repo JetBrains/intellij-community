@@ -70,13 +70,13 @@ internal fun writeProductInfoJson(targetFile: Path, json: String, context: Build
   Files.setLastModifiedTime(targetFile, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
 }
 
-internal fun generateJetBrainsClientLaunchData(
-  ideContext: BuildContext,
+internal suspend fun generateJetBrainsClientLaunchData(
   arch: JvmArchitecture,
   os: OsFamily,
+  ideContext: BuildContext,
   vmOptionsFilePath: (BuildContext) -> String
-): CustomCommandLaunchData? =
-  createJetBrainsClientContextForLaunchers(ideContext)?.let { clientContext ->
+): CustomCommandLaunchData? {
+  return createJetBrainsClientContextForLaunchers(ideContext)?.let { clientContext ->
     CustomCommandLaunchData(
       commands = listOf("thinClient", "thinClient-headless", "installFrontendPlugins"),
       vmOptionsFilePath = vmOptionsFilePath(clientContext),
@@ -86,6 +86,7 @@ internal fun generateJetBrainsClientLaunchData(
       dataDirectoryName = clientContext.systemSelector,
     )
   }
+}
 
 /**
  * Describes the format of JSON file containing meta-information about a product installation.

@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.ui.scale.JBUIScale
+import kotlinx.coroutines.*
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
 import java.awt.MouseInfo
 import java.awt.Point
@@ -20,7 +20,7 @@ import javax.swing.SwingUtilities
 import javax.swing.Timer
 
 @Service(Service.Level.PROJECT)  // PY-66455
-class JupyterAddCellToolbarService: Disposable {
+class JupyterAddCellToolbarService(private val scope: CoroutineScope): Disposable {
   private var currentEditor: Editor? = null
   private var currentPanel: JPanel? = null
   private var currentToolbar: JupyterAddNewCellToolbar? = null
@@ -29,26 +29,39 @@ class JupyterAddCellToolbarService: Disposable {
   private val actionGroup: ActionGroup? = createActionGroup()
   private var editorComponentListener: ComponentAdapter? = null
   private var editorKeyListener: KeyAdapter? = null
+  private var showToolbarJob: Job? = null
+  private var isMouseInsidePanel = false
 
   fun requestToolbarDisplay(panel: JPanel, editor: Editor) {
-    val shouldDisplayToolbar = currentPanel != panel || currentToolbar == null
-    if (!shouldDisplayToolbar) return
-    hideToolbarUnconditionally()
-    currentPanel = panel
-    updateCurrentEditor(editor)
-    createAndShowToolbar(editor)
+    showToolbarJob?.cancel()
+    isMouseInsidePanel = true
+
+    showToolbarJob = scope.launch(Dispatchers.Main) {
+      delay(TOOLBAR_SHOW_DELAY)
+      val shouldDisplayToolbar = isMouseInsidePanel && (currentPanel != panel || currentToolbar == null)
+      if (!shouldDisplayToolbar) return@launch
+
+      hideToolbarUnconditionally()
+      currentPanel = panel
+      updateCurrentEditor(editor)
+      createAndShowToolbar(editor)
+    }
   }
 
   fun requestToolbarHide() {
+    isMouseInsidePanel = false
     if (currentToolbar == null) return
     hideToolbarTimer.restart()
+    showToolbarJob?.cancel()
   }
 
   fun hideToolbarUnconditionally() {
     currentPanel = null
+
     currentToolbar?.let {
       currentEditor?.contentComponent?.remove(it)
       currentToolbar = null
+      forceUIUpdate()
     }
   }
 
@@ -89,7 +102,6 @@ class JupyterAddCellToolbarService: Disposable {
     hideToolbarTimer.stop()
     adjustToolbarPosition()
 
-    currentToolbar?.updateActionsImmediately()
     editor.contentComponent.revalidate()
     editor.contentComponent.repaint()
   }
@@ -113,6 +125,7 @@ class JupyterAddCellToolbarService: Disposable {
   }
 
   override fun dispose() {
+    showToolbarJob?.cancel()
     currentEditor?.contentComponent?.removeComponentListener(editorComponentListener)
     currentEditor?.contentComponent?.removeKeyListener(editorKeyListener)
 
@@ -122,10 +135,18 @@ class JupyterAddCellToolbarService: Disposable {
     }
   }
 
+  private fun forceUIUpdate() {
+    // todo: better update currentPanel AND BelowCellPanel of the cell above
+    currentEditor?.contentComponent?.revalidate()
+    currentEditor?.contentComponent?.repaint()
+  }
+
   companion object {
     fun getInstance(project: Project): JupyterAddCellToolbarService = project.getService(JupyterAddCellToolbarService::class.java)
-    private const val ACTION_GROUP_ID = "Jupyter.AboveCellPanelNew"
+    private const val TOOLBAR_SHOW_DELAY = 250L
     private const val TOOLBAR_HIDE_DELAY = 600
+
+    private const val ACTION_GROUP_ID = "Jupyter.AboveCellPanelNew"
     private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.distanceBetweenCells
 
     fun calculateToolbarBounds(

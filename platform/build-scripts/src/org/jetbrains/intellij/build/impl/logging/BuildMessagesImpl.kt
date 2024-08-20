@@ -3,18 +3,13 @@ package org.jetbrains.intellij.build.impl.logging
 
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
-import org.jetbrains.intellij.build.logging.BuildMessageLogger
-import org.jetbrains.intellij.build.logging.BuildMessageLoggerBase
-import org.jetbrains.intellij.build.logging.BuildProblemLogMessage
-import org.jetbrains.intellij.build.logging.CompilationErrorsLogMessage
-import org.jetbrains.intellij.build.logging.ConsoleBuildMessageLogger
-import org.jetbrains.intellij.build.logging.LogMessage
-import org.jetbrains.intellij.build.logging.TeamCityBuildMessageLogger
+import org.jetbrains.intellij.build.logging.*
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.blockingUse
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.file.Files
@@ -130,7 +125,7 @@ class BuildMessagesImpl private constructor(
 
     try {
       processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-      spanBuilder(blockName.lowercase(Locale.getDefault())).use {
+      spanBuilder(blockName.lowercase(Locale.getDefault())).blockingUse {
         try {
           task.call()
         }

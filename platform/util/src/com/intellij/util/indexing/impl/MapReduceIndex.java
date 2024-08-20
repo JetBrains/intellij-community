@@ -3,7 +3,6 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -261,7 +261,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Override
-  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content)
+  public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable Input content)
     throws MapReduceIndexMappingException, ProcessCanceledException {
     InputData<Key, Value> data;
     try {
@@ -278,7 +278,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Override
-  public @NotNull IndexUpdateComputable prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
+  public @NotNull MapReduceIndex.IndexStorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
     UpdateData<Key, Value> updateData = new UpdateData<>(
       inputId,
       data.getKeyValues(),
@@ -287,37 +287,43 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       () -> updateForwardIndex(inputId, data)
     );
 
-    return new IndexUpdateComputable(updateData, data);
+    return new IndexStorageUpdate(updateData, data);
   }
 
   @ApiStatus.Internal
   protected void checkNonCancellableSection() { }
 
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
-    if (myForwardIndex != null) {
-      if (myUseIntForwardIndex) {
-        ((IntForwardIndex)myForwardIndex).putInt(inputId,
-                                                 ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).serializeIndexedDataToInt(
-                                                   data));
-      }
-      else {
-        myForwardIndex.put(inputId, myForwardIndexAccessor.serializeIndexedData(data));
-      }
+    if (myForwardIndex == null) {
+      return;
     }
+
+    if (myUseIntForwardIndex) {
+      IntForwardIndex forwardIndex = (IntForwardIndex)myForwardIndex;
+      IntForwardIndexAccessor<Key, Value> forwardIndexAccessor = (IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor;
+
+      int value = forwardIndexAccessor.serializeIndexedDataToInt(data);
+      forwardIndex.putInt(inputId, value);
+      return;
+    }
+
+    myForwardIndex.put(inputId, myForwardIndexAccessor.serializeIndexedData(data));
   }
 
   protected @NotNull InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
-    if (myForwardIndex != null) {
-      if (myUseIntForwardIndex) {
-        return ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).getDiffBuilderFromInt(inputId,
-                                                                                                   ((IntForwardIndex)myForwardIndex).getInt(
-                                                                                                     inputId));
-      }
-      else {
-        return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndex.get(inputId));
-      }
+    if (myForwardIndex == null) {
+      return new EmptyInputDataDiffBuilder<>(inputId);
     }
-    return new EmptyInputDataDiffBuilder<>(inputId);
+
+    if (myUseIntForwardIndex) {
+      IntForwardIndex forwardIndex = (IntForwardIndex)myForwardIndex;
+      IntForwardIndexAccessor<Key, Value> accessor = (IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor;
+
+      int value = forwardIndex.getInt(inputId);
+      return accessor.getDiffBuilderFromInt(inputId, value);
+    }
+
+    return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndex.get(inputId));
   }
 
   protected @NotNull InputData<Key, Value> mapInput(int inputId, @Nullable Input content) {
@@ -379,6 +385,11 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       try {
         IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
         boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
+        //TODO RC: separate lock for forwardIndex? -- it seems it is used only in updates (?), i.e. only in one place,
+        //         so if it is out-of-sync with inverted index it is not a big deal since nobody able to see it?
+        //         ...but it is important to not allow same fileId data to be applied by different threads, because
+        //         we need previous forwardIndex.get(fileId) to calculate diff! I.e. for each fileId forwardIndex[fileId]
+        //         updates must be serialized, even though for different fileIds there is no serialization required
         if (hasDifference) updateData.updateForwardIndex();
       }
       catch (ProcessCanceledException e) {
@@ -394,39 +405,30 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     });
   }
 
-  public final class IndexUpdateComputable implements Computable<Boolean> {
-    private final UpdateData<Key, Value> myUpdateData;
-    private final InputData<Key, Value> myInputData;
+  @Internal
+  public final class IndexStorageUpdate implements StorageUpdate {
+    private final InputData<Key, Value> inputData;
+    private final UpdateData<Key, Value> updateData;
 
-    private IndexUpdateComputable(@NotNull UpdateData<Key, Value> updateData, @NotNull InputData<Key, Value> inputData) {
-      myUpdateData = updateData;
-      myInputData = inputData;
+    private IndexStorageUpdate(@NotNull UpdateData<Key, Value> updateData,
+                               @NotNull InputData<Key, Value> inputData) {
+      this.updateData = updateData;
+      this.inputData = inputData;
     }
 
     public @NotNull InputData<Key, Value> getInputData() {
-      return myInputData;
+      return inputData;
     }
 
     @Override
-    public Boolean compute() {
+    public boolean update() {
       checkNonCancellableSection();
       try {
-        MapReduceIndex.this.updateWithMap(myUpdateData);
+        MapReduceIndex.this.updateWithMap(updateData);
       }
-      catch (StorageException | ProcessCanceledException ex) {
-        String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
-        //noinspection InstanceofCatchParameter
-        if (ex instanceof ProcessCanceledException) {
-          LOG.error(message, ex);
-        }
-        else {
-          if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
-            LOG.error(message, ex);
-          }
-          else {
-            LOG.info(message, ex);
-          }
-        }
+      catch (StorageException | CancellationException ex) {
+        logStorageUpdateException(ex);
+
         MapReduceIndex.this.requestRebuild(ex);
         return false;
       }
@@ -435,6 +437,27 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
         throw t;
       }
       return true;
+    }
+
+    private void logStorageUpdateException(@NotNull Exception ex) {
+      String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
+      if (ex instanceof CancellationException) {
+        //It an error to log a (P)CE (see Logger.ensureNotControlFlow)
+        LOG.error(message + " (CancellationException: " + ex + ")");
+      }
+      else {
+        if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+          LOG.error(message, ex);
+        }
+        else {
+          LOG.info(message, ex);
+        }
+      }
+    }
+
+    @Override
+    public String toString() {
+      return "IndexUpdate[" + myIndexId + "][fileId: " + updateData.getInputId() + "]{" + inputData.getKeyValues().size() + " values}";
     }
   }
 }

@@ -43,7 +43,7 @@ internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracke
 }
 
 private suspend fun logConfigStateEvents() {
-  if (!FeatureUsageLogger.isEnabled()) {
+  if (!FeatureUsageLogger.getInstance().isEnabled()) {
     return
   }
 

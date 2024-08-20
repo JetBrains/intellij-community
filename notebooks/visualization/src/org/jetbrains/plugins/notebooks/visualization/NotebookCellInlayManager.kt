@@ -253,8 +253,10 @@ class NotebookCellInlayManager private constructor(
       }.toMutableList()
     }
     cellEventListeners.multicaster.onEditorCellEvents(_cells.map { CellCreated(it) })
-    _cells.forEach {
-      it.initView()
+    update {
+      _cells.forEach {
+        it.initView()
+      }
     }
 
     JupyterBoundsChangeHandler.get(editor)?.postponeUpdates()

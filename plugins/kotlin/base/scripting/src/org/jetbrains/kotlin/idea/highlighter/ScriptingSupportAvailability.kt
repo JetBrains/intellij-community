@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 val supportedScriptPredicates: List<(KtFile) -> Boolean> = listOf(
     { ktFile: KtFile -> ktFile.name.endsWith(".main.kts") },
-    { ktFile: KtFile -> ktFile.name.endsWith(".gradle.kts") || ktFile.name.startsWith(".gradle") },
+    { ktFile: KtFile -> ktFile.name.endsWith(".gradle.kts") || ktFile.name.endsWith(".gradle") },
 )
 
 class ScriptingSupportAvailability : KotlinSupportAvailability {

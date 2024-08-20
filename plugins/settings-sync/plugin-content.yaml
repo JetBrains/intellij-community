@@ -1,5 +1,9 @@
 - name: lib/settingsSync.jar
   projectLibraries:
+  - name: cloud-config-client
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/cloudconfig/cloudconfig/2023/cloudconfig-2023.jar
+    reason: <- intellij.settingsSync
   - name: jetbrains.intellij.deps.eclipse.jgit
     files:
     - name: $MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1/JavaEWAH-1.jar

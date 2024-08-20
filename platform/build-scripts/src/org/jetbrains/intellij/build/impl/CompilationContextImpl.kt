@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+@file:OptIn(ExperimentalPathApi::class)
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.PathUtilRt
-import com.intellij.util.SystemProperties
 import com.jetbrains.JBR
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -16,14 +16,10 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -40,7 +36,6 @@ import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.*
@@ -54,13 +49,17 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrNull
 
 @Obsolete
-fun createCompilationContextBlocking(projectHome: Path,
-                                     defaultOutputRoot: Path,
-                                     options: BuildOptions = BuildOptions()): CompilationContextImpl {
+fun createCompilationContextBlocking(
+  projectHome: Path,
+  defaultOutputRoot: Path,
+  options: BuildOptions = BuildOptions(),
+): CompilationContextImpl {
   return runBlocking(Dispatchers.Default) {
     createCompilationContext(projectHome = projectHome, defaultOutputRoot = defaultOutputRoot, options = options)
   }
@@ -109,7 +108,7 @@ class CompilationContextImpl private constructor(
   override var classesOutputDirectory: Path
     get() = Path.of(JpsPathUtil.urlToPath(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl))
     set(outputDirectory) {
-      val url = "file://" + FileUtilRt.toSystemIndependentName(outputDirectory.toString())
+      val url = "file://" + outputDirectory.invariantSeparatorsPathString
       JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
     }
 
@@ -149,7 +148,12 @@ class CompilationContextImpl private constructor(
     JdkDownloader.getJavaExecutable(jdkHome)
   }
 
-  override val originalModuleRepository: OriginalModuleRepository by lazy { OriginalModuleRepositoryImpl(this) }
+  override val originalModuleRepository: OriginalModuleRepository by lazy {
+    runBlocking(Dispatchers.Default) {
+      CompilationTasks.create(this@CompilationContextImpl).generateRuntimeModuleRepository()
+    }
+    OriginalModuleRepositoryImpl(this)
+  }
 
   init {
     val modules = project.modules
@@ -205,15 +209,15 @@ class CompilationContextImpl private constructor(
        * [defineJavaSdk] may be skipped using [CompiledClasses.isCompilationRequired]
        * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
        */
-      spanBuilder("define JDK").useWithScope {
+      spanBuilder("define JDK").use {
         defineJavaSdk(context)
       }
       if (enableCoroutinesDump) {
-        spanBuilder("enable coroutines dump").useWithScope {
+        spanBuilder("enable coroutines dump").use {
           context.enableCoroutinesDump(it)
         }
       }
-      spanBuilder("prepare for build").useWithScope {
+      spanBuilder("prepare for build").use {
         context.prepareForBuild()
       }
 
@@ -239,7 +243,7 @@ class CompilationContextImpl private constructor(
     return copy
   }
 
-  override fun prepareForBuild() {
+  override suspend fun prepareForBuild() {
     CompiledClasses.checkOptions(this)
 
     val logDir = paths.logDir
@@ -248,7 +252,7 @@ class CompilationContextImpl private constructor(
         Files.newDirectoryStream(logDir).use { stream ->
           for (file in stream) {
             if (!file.endsWith("trace.json")) {
-              NioFiles.deleteRecursively(file)
+              file.deleteRecursively()
             }
           }
         }
@@ -273,7 +277,7 @@ class CompilationContextImpl private constructor(
     suppressWarnings(project)
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
     if (options.cleanOutDir || options.forceRebuild) {
-      cleanOutput()
+      cleanOutput(this@CompilationContextImpl)
     }
     else {
       Span.current().addEvent("skip output cleaning", Attributes.of(
@@ -305,7 +309,7 @@ class CompilationContextImpl private constructor(
 
   override fun findModule(name: String): JpsModule? = nameToModule.get(name)
 
-  override fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
+  override suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(/* module = */ module, /* forTests = */ forTests)
     requireNotNull(url) {
       "Output directory for ${module.name} isn\'t set"
@@ -362,7 +366,7 @@ class CompilationContextImpl private constructor(
     val isRegularFile = Files.isRegularFile(artifactPath)
     var targetDirectoryPath = ""
     if (artifactPath.parent.startsWith(paths.artifactDir)) {
-      targetDirectoryPath = FileUtilRt.toSystemIndependentName(paths.artifactDir.relativize(artifactPath.parent).toString())
+      targetDirectoryPath = paths.artifactDir.relativize(artifactPath.parent).invariantSeparatorsPathString
     }
     if (!isRegularFile) {
       targetDirectoryPath = (if (targetDirectoryPath.isEmpty()) "" else "$targetDirectoryPath/") + artifactPath.fileName
@@ -401,18 +405,17 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
     pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlinCompilerHome.toString())
   }
 
-  withContext(Dispatchers.IO) {
-    spanBuilder("load project").useWithScope { span ->
-      pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY",
-                                                 Path.of(SystemProperties.getUserHome(), ".m2/repository").invariantSeparatorsPathString)
-      val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-      loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { it: Runnable -> launch { it.run() } }, false)
-      span.setAllAttributes(Attributes.of(
+  spanBuilder("load project").use(Dispatchers.IO) { span ->
+    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", Path.of(System.getProperty("user.home"), ".m2/repository").invariantSeparatorsPathString)
+    val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
+    loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { it: Runnable -> launch { it.run() } }, false)
+    span.setAllAttributes(
+      Attributes.of(
         AttributeKey.stringKey("project"), projectHome.toString(),
         AttributeKey.longKey("moduleCount"), model.project.modules.size.toLong(),
         AttributeKey.longKey("libraryCount"), model.project.libraryCollection.libraries.size.toLong(),
-      ))
-    }
+      )
+    )
   }
   return model as JpsModel
 }
@@ -463,20 +466,23 @@ private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome
   }
 }
 
-internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = CompiledClasses.keepCompilationState(options)) {
+internal suspend fun cleanOutput(
+  compilationContext: CompilationContext,
+  keepCompilationState: Boolean = CompiledClasses.keepCompilationState(compilationContext.options),
+) {
   val compilationState = setOf(
-    compilationData.dataStorageRoot,
-    classesOutputDirectory,
-    paths.jpsArtifacts,
+    compilationContext.compilationData.dataStorageRoot,
+    compilationContext.classesOutputDirectory,
+    compilationContext.paths.jpsArtifacts,
   )
   val outputDirectoriesToKeep = buildSet {
-    add(paths.logDir)
+    this.add(compilationContext.paths.logDir)
     if (keepCompilationState) {
-      addAll(compilationState)
+      this.addAll(compilationState)
     }
   }
   spanBuilder("clean output").use { span ->
-    val outDir = paths.buildOutputDir
+    val outDir = compilationContext.paths.buildOutputDir
     outputDirectoriesToKeep.forEach {
       val path = it.relativeToOrNull(outDir) ?: it
       span.addEvent("skip cleaning", Attributes.of(AttributeKey.stringKey("dir"), path.toString()))
@@ -499,7 +505,7 @@ internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = Comp
         NioFiles.deleteRecursively(path)
       }
     }
-    Files.createDirectories(paths.tempDir)
+    Files.createDirectories(compilationContext.paths.tempDir)
   }
 }
 

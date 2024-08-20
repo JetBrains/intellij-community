@@ -436,6 +436,21 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testChainedQualifiers() {
+    doTestByText(
+      """
+        from typing_extensions import NotRequired, ReadOnly, TypedDict, Required
+
+        class Movie(TypedDict):
+            name: ReadOnly[str]
+            year: ReadOnly[NotRequired[int | None]]
+
+
+        movie = Movie(name="")
+        """
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

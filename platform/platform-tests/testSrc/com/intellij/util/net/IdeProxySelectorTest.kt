@@ -54,5 +54,23 @@ class IdeProxySelectorTest {
       Proxy(Proxy.Type.SOCKS, InetSocketAddress.createUnresolved("p2.domain.com", 9999)),
       Proxy.NO_PROXY
     ), selector.select(URI.create("https://other.example.com/something")))
+
+    // check that URL sanitization works
+    assertEquals(listOf(
+      Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("p1.domain.com", 3129)),
+    ), selector.select(URI.create("https://sub.example-domain.com")))
+    assertEquals(listOf(
+      Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("p1.domain.com", 3129)),
+    ), selector.select(URI.create("https://sub.example-domain.com/somepath?query=1")))
+    assertEquals(NO_PROXY_LIST, selector.select(URI.create("https://example-domain.com")))
+
+    // make sure broken pac does not destroy the IDE
+    configuration = ProxyConfiguration.proxyAutoConfiguration(
+      Path.of(PlatformTestUtil.getPlatformTestDataPath(), "proxy", "broken.pac").toUri().toURL()
+    )
+    assertEquals(NO_PROXY_LIST, selector.select(URI.create("http://192.168.0.1")))
+    assertEquals(NO_PROXY_LIST, selector.select(URI.create("http://example.com")))
+    assertEquals(NO_PROXY_LIST, selector.select(URI.create("https://example.com/")))
+    assertEquals(NO_PROXY_LIST, selector.select(URI.create("https://example.com/something")))
   }
 }

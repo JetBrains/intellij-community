@@ -1,21 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 data class BuildOptions(
   @ApiStatus.Internal @JvmField val jarCacheDir: Path? = null,
@@ -32,20 +32,20 @@ data class BuildOptions(
    *
    * By default, the development mode is enabled if the build is not running on a continuous integration server (TeamCity).
    */
-  var isInDevelopmentMode: Boolean = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null),
-  var useCompiledClassesFromProjectOutput: Boolean = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
+  var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null),
+  var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
 
-  val cleanOutDir: Boolean = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
+  val cleanOutDir: Boolean = getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
 
   var classOutDir: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY),
 
-  var forceRebuild: Boolean = SystemProperties.getBooleanProperty(FORCE_REBUILD_PROPERTY, false),
+  var forceRebuild: Boolean = getBooleanProperty(FORCE_REBUILD_PROPERTY),
   /**
    * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
    * to allow starting JetBrains Client directly from the IDE's distribution.
    */
   @ApiStatus.Experimental
-  var enableEmbeddedJetBrainsClient: Boolean = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
+  var enableEmbeddedJetBrainsClient: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
 
   /**
    * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
@@ -71,7 +71,7 @@ data class BuildOptions(
   /**
    * If `true`, write all compilation messages into a separate file (`compilation.log`).
    */
-  @JvmField var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true),
+  @JvmField var compilationLogEnabled: Boolean = getBooleanProperty("intellij.build.compilation.log.enabled", true),
   @JvmField val logDir: Path? = System.getProperty("intellij.build.log.root")?.let { Path.of(it) },
 
   /**
@@ -88,11 +88,16 @@ data class BuildOptions(
   /**
    * If `true` won't unpack downloaded jars with compiled classes from [pathToCompiledClassesArchivesMetadata].
    */
-  @JvmField val unpackCompiledClassesArchives: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK, true),
+  @JvmField val unpackCompiledClassesArchives: Boolean = getBooleanProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK, true),
 
-  @JvmField internal val validateModuleStructure: Boolean = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false")),
+  @JvmField internal val validateModuleStructure: Boolean = getBooleanProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY),
 
   @JvmField internal val isUnpackedDist: Boolean = false,
+
+  /**
+   * If `true`, the project modules will be compiled incrementally.
+   */
+  var incrementalCompilation: Boolean = getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION),
 ) {
   companion object {
     /**
@@ -366,28 +371,23 @@ data class BuildOptions(
    * Pass `true` to this system property to produce .snap packages.
    * A build configuration should have "docker.version >= 17" in requirements.
    */
-  var buildUnixSnaps: Boolean = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
+  var buildUnixSnaps: Boolean = getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
    * Docker image for snap package creation
    */
   var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image") ?: DEPENDENCIES_PROPERTIES["snapDockerImage"]
-  var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin", "20").toLong()
-
-  /**
-   * If `true`, the project modules will be compiled incrementally.
-   */
-  var incrementalCompilation: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
+  var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin")?.toLong() ?: 20
 
   /**
    * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
    */
-  var incrementalCompilationFallbackRebuild: Boolean = SystemProperties.getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
+  var incrementalCompilationFallbackRebuild: Boolean = getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
 
   /**
    * Full rebuild will be triggered if this timeout is exceeded for incremental compilation.
    */
-  val incrementalCompilationTimeout: Long = SystemProperties.getLongProperty("intellij.build.incremental.compilation.timeoutMin", Long.MAX_VALUE)
+  val incrementalCompilationTimeout: Long = System.getProperty("intellij.build.incremental.compilation.timeoutMin")?.toLong() ?: Long.MAX_VALUE
 
   /**
    * Use [BuildContext.buildNumber] to get the actual build number in build scripts.
@@ -399,7 +399,9 @@ data class BuildOptions(
       // a build counter supplied by default in TeamCity cannot be used as a build number, skipping
       null
     }
-    else buildNumber
+    else {
+      buildNumber
+    }
   }
 
   /**
@@ -410,12 +412,12 @@ data class BuildOptions(
   /**
    * If `true`, the build is running as a unit test.
    */
-  var isTestBuild: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.mode", false)
+  var isTestBuild: Boolean = getBooleanProperty("intellij.build.test.mode", false)
 
   /**
    * If 'true', print system properties and environment variables to stdout. Useful for build scripts debugging.
    */
-  var printEnvironmentInfo: Boolean = SystemProperties.getBooleanProperty("intellij.print.environment", false)
+  var printEnvironmentInfo: Boolean = getBooleanProperty("intellij.print.environment", false)
 
   /**
    * Specifies a list of directory names for bundled plugins that should not be included in the product distribution.
@@ -437,7 +439,7 @@ data class BuildOptions(
    * will be added to the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
   @ApiStatus.Experimental
-  var useModularLoader: Boolean = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
+  var useModularLoader: Boolean = getBooleanProperty("intellij.build.use.modular.loader", true)
 
   /**
    * If this option is set to `false`, [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] won't be included in the installation.
@@ -447,7 +449,7 @@ data class BuildOptions(
    * (in this case, the generation is always enabled).
    */
   @ApiStatus.Experimental
-  var generateRuntimeModuleRepository: Boolean = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
+  var generateRuntimeModuleRepository: Boolean = getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
 
   /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
@@ -463,12 +465,12 @@ data class BuildOptions(
   @ApiStatus.Internal
   var skipCustomResourceGenerators: Boolean = false
 
-  var resolveDependenciesMaxAttempts: Int = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
-  var resolveDependenciesDelayMs: Long = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
+  var resolveDependenciesMaxAttempts: Int = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY)?.toInt() ?: 2
+  var resolveDependenciesDelayMs: Long = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY)?.toLong() ?: 1_000
 
   var randomSeedNumber: Long = 0
 
-  var isNightlyBuild: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
+  var isNightlyBuild: Boolean = getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
 
   /**
    * If `false`, [org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport]
@@ -493,16 +495,14 @@ data class BuildOptions(
       targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
+
     val targetArchProperty = System.getProperty(TARGET_ARCH_PROPERTY)?.takeIf { it.isNotBlank() }
     targetArch = if (targetArchProperty == ARCH_CURRENT) JvmArchitecture.currentJvmArch else targetArchProperty?.let(JvmArchitecture::valueOf)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
-    randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {
-      ThreadLocalRandom.current().nextLong()
-    }
-    else {
-      randomSeedString.toLong()
-    }
+    randomSeedNumber = if (randomSeedString.isNullOrBlank()) Random.nextLong() else randomSeedString.toLong()
   }
-
-  private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.split(',')?.toSet() ?: emptySet()
 }
+
+private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.splitToSequence(',')?.toSet() ?: emptySet()
+
+internal fun getBooleanProperty(key: String, defaultValue: Boolean = false): Boolean = System.getProperty(key)?.toBoolean() ?: defaultValue

@@ -2085,6 +2085,9 @@ def main():
     if setup['help']:
         usage()
 
+    if SHOW_DEBUG_INFO_ENV:
+        set_debug(setup)
+
     if setup['print-in-debugger-startup']:
         try:
             pid = ' (pid: %s)' % os.getpid()
@@ -2099,9 +2102,6 @@ def main():
 
 
     pydevd_vm_type.setup_type(setup.get('vm_type', None))
-
-    if SHOW_DEBUG_INFO_ENV:
-        set_debug(setup)
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', DebugInfoHolder.DEBUG_RECORD_SOCKET_READS)
     DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS = setup.get('DEBUG_TRACE_BREAKPOINTS', DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS)

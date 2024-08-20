@@ -270,20 +270,19 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/cdimascio/dotenv-kotlin/blob/master/LICENSE"),
     LibraryLicense(name = "Eclipse JDT Core", attachedTo = "intellij.platform.jps.build", version = "4.2.1", license = "CPL 1.0",
                    url = "https://www.eclipse.org/jdt/core/index.php"),
-    LibraryLicense(name = "Eclipse Layout Kernel", url = "https://www.eclipse.org/elk/", libraryName = "eclipse-layout-kernel").eplV1(),
-    LibraryLicense(name = "EditorConfig Java Parser", libraryName = "ec4j-core",
-                   url = "https://github.com/ec4j/ec4j").apache()
+    LibraryLicense(name = "Eclipse Layout Kernel", url = "https://www.eclipse.org/elk/", libraryName = "eclipse-layout-kernel")
+      .eplV1("https://github.com/eclipse/elk/blob/master/LICENSE.md")
+      .suppliedByOrganizations(Suppliers.ECLIPSE),
+    LibraryLicense(name = "EditorConfig Java Parser", libraryName = "ec4j-core", url = "https://github.com/ec4j/ec4j")
+      .apache("https://github.com/ec4j/ec4j/blob/master/LICENSE")
       .suppliedByPersons("Peter Palaga", "Angelo Zerr"),
-    LibraryLicense(name = "emoji-java", libraryName = "com.vdurmont:emoji-java",
-                   url = "https://github.com/vdurmont/emoji-java")
+    LibraryLicense(name = "emoji-java", libraryName = "com.vdurmont:emoji-java", url = "https://github.com/vdurmont/emoji-java")
       .mit("https://github.com/vdurmont/emoji-java/blob/master/LICENSE.md")
       .suppliedByPersons("Vincent DURMONT"),
-    LibraryLicense(name = "entities",
-                   url = "https://github.com/fb55/entities", attachedTo = "intellij.vuejs",
-                   version = LibraryLicense.CUSTOM_REVISION)
+    LibraryLicense(name = "entities", url = "https://github.com/fb55/entities", attachedTo = "intellij.vuejs", version = LibraryLicense.CUSTOM_REVISION)
       .simplifiedBsd("https://github.com/fb55/entities/blob/master/LICENSE"),
-    LibraryLicense(name = "epydoc", attachedTo = "intellij.python", version = "3.0.1",
-                   url = "https://epydoc.sourceforge.net/").mit(),
+    LibraryLicense(name = "epydoc", attachedTo = "intellij.python", version = "3.0.1", url = "https://epydoc.sourceforge.net/")
+      .mit("https://epydoc.sourceforge.net/license.html"),
     LibraryLicense(name = "fastutil", libraryName = "fastutil-min", url = "https://github.com/vigna/fastutil")
       .apache("https://github.com/vigna/fastutil/blob/master/LICENSE-2.0")
       .suppliedByPersons("Sebastiano Vigna"),
@@ -465,9 +464,10 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown", "Jayson Minard",
                          "Drew Stephens", "Vyacheslav Artemyev", "Dmitry Spikhalskiy"),
 
-    LibraryLicense(name = "JaCoCo", libraryName = "JaCoCo", url = "https://www.eclemma.org/jacoco/").eplV1(),
-    LibraryLicense(name = "Jakarta ORO", libraryName = "OroMatcher",
-                   url = "https://jakarta.apache.org/oro/")
+    LibraryLicense(name = "JaCoCo", libraryName = "JaCoCo", url = "https://www.eclemma.org/jacoco/")
+      .suppliedByOrganizations("Mountainminds GmbH & Co. KG and Contributors")
+      .eplV1(),
+    LibraryLicense(name = "Jakarta ORO", libraryName = "OroMatcher", url = "https://jakarta.apache.org/oro/")
       .apache("https://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE")
       .suppliedByPersons(
         "Daniel Savarese",
@@ -521,7 +521,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JAXB (JSR 222) Reference Implementation", libraryName = "jaxb-runtime",
                    url = "https://github.com/javaee/jaxb-v2",
                    license = "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl = "https://oss.oracle.com/licenses/CDDL+GPL-1.1")
-      .suppliedByOrganizations("Eclipse Foundation"),
+      .suppliedByOrganizations(Suppliers.ECLIPSE),
     LibraryLicense(libraryName = "Jaxen", url = "https://github.com/jaxen-xpath/jaxen")
       .newBsd("https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Jayway JsonPath", libraryName = "jsonpath",
@@ -601,7 +601,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JGit (Settings Sync and SettingsRepo)", libraryName = "jetbrains.intellij.deps.eclipse.jgit",
                    license = "Eclipse Distribution License 1.0",
                    licenseUrl = "https://www.eclipse.org/org/documents/edl-v10.php", url = "https://www.eclipse.org/jgit/")
-      .suppliedByOrganizations("Eclipse Foundation"),
+      .suppliedByOrganizations(Suppliers.ECLIPSE),
     LibraryLicense(name = "JGoodies Common", libraryName = "jgoodies-common",
                    url = "https://www.jgoodies.com/freeware/libraries/looks/").simplifiedBsd(),
     LibraryLicense(name = "JGoodies Forms", libraryName = "jgoodies-forms",
@@ -615,8 +615,7 @@ object CommunityLibraryLicenses {
                    licenseUrl = "https://github.com/java-native-access/jna/blob/master/LICENSE"),
     LibraryLicense(name = "Joni", libraryName = "joni", url = "https://github.com/jruby/joni")
       .mit("https://github.com/jruby/joni/blob/master/LICENSE"),
-    LibraryLicense(name = "jps-javac-extension", libraryName = "jps-javac-extension",
-                   url = "https://github.com/JetBrains/jps-javac-extension/")
+    LibraryLicense(name = "jps-javac-extension", libraryName = "jps-javac-extension", url = "https://github.com/JetBrains/jps-javac-extension/")
       .apache("https://github.com/JetBrains/jps-javac-extension/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "JSch", url = "http://www.jcraft.com/jsch/").newBsd("http://www.jcraft.com/jsch/LICENSE.txt")
       .suppliedByPersons("Atsuhiko Yamanaka"),
@@ -653,29 +652,22 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "jzlib", url = "http://www.jcraft.com/jzlib/").newBsd("https://github.com/ymnk/jzlib/raw/master/LICENSE.txt"),
     LibraryLicense(name = "Kconfig for the Zephyr Project", url = "https://github.com/trond-snekvik/vscode-kconfig", version = "1.2.0",
                    attachedTo = "intellij.textmate").mit("https://github.com/trond-snekvik/vscode-kconfig/blob/master/LICENSE"),
-    LibraryLicense(name = "KInference",
-                   libraryName = "kinference.core",
-                   url = "https://packages.jetbrains.team/maven/p/ki/maven")
+    LibraryLicense(name = "KInference", libraryName = "kinference.core", url = "https://packages.jetbrains.team/maven/p/ki/maven")
       .apache("https://github.com/JetBrains-Research/kinference/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "Kodein-DI", libraryName = "kodein-di-jvm", url = "https://github.com/kosi-libs/Kodein")
       .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "Kotlin Coroutines for Guava", libraryName = "kotlinx-coroutines-guava",
-                   url = "https://github.com/Kotlin/kotlinx.coroutines")
+    LibraryLicense(name = "Kotlin Coroutines for Guava", libraryName = "kotlinx-coroutines-guava", url = "https://github.com/Kotlin/kotlinx.coroutines")
       .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
-    LibraryLicense(name = "Kotlin Coroutines for JDK 8", libraryName = "kotlinx-coroutines-core",
-                   url = "https://github.com/Kotlin/kotlinx.coroutines")
+    LibraryLicense(name = "Kotlin Coroutines for JDK 8", libraryName = "kotlinx-coroutines-core", url = "https://github.com/Kotlin/kotlinx.coroutines")
       .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
-    LibraryLicense(name = "Kotlin Coroutines for Slf4j", libraryName = "kotlinx-coroutines-slf4j",
-                   url = "https://github.com/Kotlin/kotlinx.coroutines")
+    LibraryLicense(name = "Kotlin Coroutines for Slf4j", libraryName = "kotlinx-coroutines-slf4j", url = "https://github.com/Kotlin/kotlinx.coroutines")
       .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense(name = "Kotlin multiplatform / multi-format serialization",
-                   libraryName = "kotlinx-serialization-core",
-                   url = "https://github.com/Kotlin/kotlinx.serialization")
+    LibraryLicense(name = "Kotlin multiplatform / multi-format serialization", libraryName = "kotlinx-serialization-core", url = "https://github.com/Kotlin/kotlinx.serialization")
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "Kotlin multiplatform / multi-format serialization",
@@ -786,8 +778,8 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/lz4/lz4-java")
       .apache("https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
     LibraryLicense(name = "MathJax", attachedTo = "intellij.python", version = "2.6.1",
-                   url = "https://github.com/mathjax/MathJax",
-                   licenseUrl = "https://github.com/mathjax/MathJax/blob/master/LICENSE").apache(),
+                   url = "https://github.com/mathjax/MathJax")
+      .apache("https://github.com/mathjax/MathJax/blob/master/LICENSE"),
 
 
     LibraryLicense(name = "Maven archetype catalog", libraryName = "apache.maven.archetype.catalog-no-trans:321",
@@ -835,12 +827,10 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/willemv/mercurial_prompthooks",
                    licenseUrl = "https://github.com/willemv/mercurial_prompthooks/blob/master/LICENSE.txt"),
     LibraryLicense(name = "microba", attachedTo = "intellij.libraries.microba", version = LibraryLicense.CUSTOM_REVISION,
-                   url = "https://microba.sourceforge.net/",
-                   licenseUrl = "https://microba.sourceforge.net/license.txt").newBsd()
+                   url = "https://microba.sourceforge.net/").newBsd("https://microba.sourceforge.net/license.txt")
       .suppliedByPersons("Michael Baranov"),
-    LibraryLicense(name = "MigLayout", libraryName = "miglayout-swing",
-                   url = "https://github.com/mikaelgrev/miglayout/",
-                   licenseUrl = "https://github.com/mikaelgrev/miglayout/blob/master/src/site/resources/docs/license.txt").newBsd()
+    LibraryLicense(name = "MigLayout", libraryName = "miglayout-swing", url = "https://github.com/mikaelgrev/miglayout/")
+      .newBsd("https://github.com/mikaelgrev/miglayout/blob/master/src/site/resources/docs/license.txt")
       .suppliedByOrganizations("MiG InfoCom AB"),
     LibraryLicense(name = "morfologik-fsa", libraryName = "org.carrot2:morfologik-fsa",
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd()
@@ -1025,8 +1015,8 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/adobe-fonts/source-code-pro",
                    licenseUrl = "https://github.com/adobe-fonts/source-code-pro/blob/master/LICENSE.md"),
     LibraryLicense(name = "sphinxcontrib-napoleon", attachedTo = "intellij.python", version = "0.7",
-                   url = "https://sphinxcontrib-napoleon.readthedocs.io/",
-                   licenseUrl = "https://github.com/sphinx-contrib/napoleon/blob/master/LICENSE").simplifiedBsd(),
+                   url = "https://sphinxcontrib-napoleon.readthedocs.io/")
+      .simplifiedBsd("https://github.com/sphinx-contrib/napoleon/blob/master/LICENSE"),
     LibraryLicense(name = "Squareup Okio", libraryName = "squareup.okio.jvm", url = "https://github.com/square/okio")
       .apache("https://github.com/square/okio/blob/master/LICENSE.txt")
       .suppliedByOrganizations("Square, Inc."),
@@ -1132,8 +1122,8 @@ object CommunityLibraryLicenses {
                    url = "https://xerces.apache.org/xml-commons/components/resolver/").apache()
       .suppliedByOrganizations("The Apache Software Foundation"),
     LibraryLicense(name = "XMLBeans", libraryName = "XmlBeans",
-                   url = "https://xmlbeans.apache.org/",
-                   licenseUrl = "https://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/xmlbeans-2.3.0/xmlbeans.LICENSE").apache()
+                   url = "https://xmlbeans.apache.org/")
+      .apache("https://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/xmlbeans-2.3.0/xmlbeans.LICENSE")
       .suppliedByPersons("Cezar Andrei", "Radu Preotiuc", "Radu Preotiuc", "Wing Yew Poon", "Jacob Danner", "POI Team"),
     LibraryLicense(name = "XmlRPC", libraryName = "XmlRPC",
                    url = "https://ws.apache.org/xmlrpc/xmlrpc2/")
@@ -1204,6 +1194,8 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.fleet.rpc"),
     jetbrainsLibrary("jetbrains.fleet.rpc.server"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
+    jetbrainsLibrary("jetbrains.mlapi.extension"),
+    jetbrainsLibrary("jetbrains.mlapi.usage"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),

@@ -105,7 +105,7 @@ private fun checkCorruptedVmOptionsFile() {
   if (System.getProperty("jb.vmOptionsFile.corrupted").toBoolean()) {
     val file = VMOptions.getUserOptionsFile()
     if (file != null) {
-      showNotification("vm.options.file.corrupted", suppressable = false, action = null, shorten(file.toString()))
+      showNotification("vm.options.file.corrupted", suppressable = false, editVmOptionsAction(), shorten(file.toString()))
     }
   }
 }
@@ -219,16 +219,14 @@ private fun checkReservedCodeCacheSize() {
   val reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true)
   val minReservedCodeCacheSize = if (Runtime.version().feature() >= 21 || PluginManagerCore.isRunningFromSources()) 240 else 512
   if (reservedCodeCacheSize in 1 until minReservedCodeCacheSize) {
-    val vmEditAction = EditCustomVmOptionsAction()
-    val action = if (vmEditAction.isEnabled()) {
-      NotificationAction.createExpiring(IdeBundle.message("vm.options.edit.action.cap")) { e, _ -> vmEditAction.actionPerformed(e!!) }
-    }
-    else {
-      null
-    }
-    showNotification("code.cache.warn.message", suppressable = true, action, reservedCodeCacheSize, minReservedCodeCacheSize)
+    showNotification("code.cache.warn.message", suppressable = true, editVmOptionsAction(), reservedCodeCacheSize, minReservedCodeCacheSize)
   }
 }
+
+private fun editVmOptionsAction(): NotificationAction? =
+  EditCustomVmOptionsAction()
+    .takeIf { it.isEnabled() }
+    ?.let { NotificationAction.createExpiring(IdeBundle.message("vm.options.edit.action.cap")) { e, _ -> it.actionPerformed(e!!) } }
 
 private suspend fun checkEnvironment() {
   val usedVars = sequenceOf("_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS")

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public abstract class SplitAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
-  public static final Key<Boolean> FORBID_TAB_SPLIT = new Key<>("FORBID_TAB_SPLIT");
+  public static final Key<Boolean> FORBID_TAB_SPLIT = FileEditorManagerKeys.FORBID_TAB_SPLIT;
 
   private final int orientation;
   private final boolean closeSource;

@@ -34,7 +34,7 @@ suspend fun IjentFailSafeFileSystemPosixApi(
 ): IjentFileSystemApi {
   val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, delegateFactory)
   val user = holder.withDelegateRetrying { user }
-  return IjentFailSafeFileSystemPosixApiImpl(coroutineScope, user, holder)
+  return IjentFailSafeFileSystemPosixApiImpl(user, holder)
 }
 
 private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
@@ -91,7 +91,6 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
  * so implementing a similar class for Windows will require a full copy-paste of this class.
  */
 private class IjentFailSafeFileSystemPosixApiImpl(
-  override val coroutineScope: CoroutineScope,
   override val user: IjentPosixInfo.User,
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
 ) : IjentFileSystemPosixApi {
@@ -118,10 +117,10 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
-    resolveSymlinks: Boolean,
+    symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<Collection<Pair<String, IjentPosixFileInfo>>, IjentFileSystemApi.ListDirectoryError> {
     return holder.withDelegateRetrying {
-      listDirectoryWithAttrs(path, resolveSymlinks)
+      listDirectoryWithAttrs(path, symlinkPolicy)
     }
   }
 
@@ -134,10 +133,10 @@ private class IjentFailSafeFileSystemPosixApiImpl(
 
   override suspend fun stat(
     path: IjentPath.Absolute,
-    resolveSymlinks: Boolean,
+    symlinkPolicy: IjentFileSystemApi.SymlinkPolicy,
   ): IjentFsResult<IjentPosixFileInfo, IjentFileSystemApi.StatError> =
     holder.withDelegateRetrying {
-      stat(path, resolveSymlinks)
+      stat(path, symlinkPolicy)
     }
 
   override suspend fun sameFile(

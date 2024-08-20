@@ -40,9 +40,11 @@ internal class LcrComboBoxPanel : UISandboxPanel {
           comboBox(listOf("First", "Second", "Try with y", "Try with ()"), textListCellRenderer { it })
         }
         row("Items with icon:") {
-          comboBox((1..100).map { "Item $it" }, listCellRenderer {
-            icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
-            text(value ?: "")
+          comboBox((1..100).toList(), listCellRenderer {
+            value?.let {
+              icon(if (it % 2 == 0) AllIcons.General.Information else AllIcons.General.Gear)
+              text("Item $it")
+            }
           })
         }
         row("Long items:") {

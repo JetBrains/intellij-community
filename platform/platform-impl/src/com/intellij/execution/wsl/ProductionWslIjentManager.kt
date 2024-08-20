@@ -8,6 +8,7 @@ import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSessionRegistry
 import com.intellij.platform.ijent.bindToScope
 import com.intellij.platform.ijent.spi.IjentThreadPool
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -26,9 +27,11 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
 
   @DelicateCoroutinesApi
   override val processAdapterScope: CoroutineScope = run {
-    // It's certainly known that `scope` has a parent job inside, so calling `CoroutineScope()` is safe here.
-    @Suppress("RAW_SCOPE_CREATION")
-    CoroutineScope(scope.coroutineContext + IjentThreadPool.asCoroutineDispatcher())
+    scope.childScope(
+      name = "IjentChildProcessAdapter scope for all WSL",
+      context = IjentThreadPool.asCoroutineDispatcher(),
+      supervisor = true,
+    )
   }
 
   override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {

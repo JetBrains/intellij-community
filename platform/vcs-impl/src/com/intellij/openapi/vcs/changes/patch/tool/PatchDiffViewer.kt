@@ -75,6 +75,8 @@ internal class PatchDiffViewer(
     }
     editorSettingsAction = SetEditorSettingsAction(TextDiffViewerUtil.getTextSettings(diffContext), editors)
     editorSettingsAction.applyDefaults()
+
+    listenTypingAttempts(diffContext, editor)
   }
 
   override fun getComponent(): JComponent = panel

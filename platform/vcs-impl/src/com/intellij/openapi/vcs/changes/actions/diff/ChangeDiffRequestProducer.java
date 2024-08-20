@@ -30,6 +30,8 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
+import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer.RevisionWithTitle;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeUtils;
@@ -46,6 +48,7 @@ import java.util.*;
 
 import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 import static com.intellij.util.ObjectUtils.tryCast;
+import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
 public final class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestProducer.class);
@@ -212,7 +215,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
         }
       }
       if (request == null) {
-        request = createRequest(myProject, myChange, context, indicator);
+        request = createRequest(context, indicator);
       }
     }
     catch (DiffRequestProducerException e) {
@@ -234,30 +237,42 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     request.putUserData(CHANGE_KEY, myChange);
     request.putUserData(DiffViewerWrapper.KEY, wrapper);
 
-    for (Map.Entry<Key<?>, Object> entry : myChangeContext.entrySet()) {
-      //noinspection unchecked,rawtypes
-      request.putUserData((Key)entry.getKey(), entry.getValue());
-    }
+    propagateChangeContext(request);
 
     DiffUtil.putDataKey(request, VcsDataKeys.CURRENT_CHANGE, myChange);
 
     return request;
   }
 
-  private @NotNull DiffRequest createRequest(@Nullable Project project,
-                                             @NotNull Change change,
-                                             @NotNull UserDataHolder context,
+  private void propagateChangeContext(@NotNull UserDataHolder target) {
+    for (Map.Entry<Key<?>, Object> entry : myChangeContext.entrySet()) {
+      //noinspection unchecked,rawtypes
+      target.putUserData((Key)entry.getKey(), entry.getValue());
+    }
+  }
+
+  private @NotNull DiffRequest createRequest(@NotNull UserDataHolder context,
                                              @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
-    if (ChangesUtil.isTextConflictingChange(change)) { // three side diff
-      return createMergeRequest(project, indicator, change, context);
+    if (ChangesUtil.isTextConflictingChange(myChange)) { // three side diff
+      return createMergeRequest(myProject, indicator, myChange, context);
     }
 
-    SimpleDiffRequest request = createSimpleRequest(project, change, context, indicator);
+    SimpleDiffRequest request = createSimpleRequest(myProject, myChange, context, indicator);
+    request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER, createTitleCustomizers());
 
-    DiffRequest localRequest = createLocalChangeListRequest(project, change, request);
+    DiffRequest localRequest = createLocalChangeListRequest(myProject, myChange, request);
     if (localRequest != null) return localRequest;
 
     return request;
+  }
+
+  private @NotNull List<DiffEditorTitleCustomizer> createTitleCustomizers() {
+    return DiffTitleFilePathCustomizer.getTitleCustomizers(myProject,
+                                                           RevisionWithTitle.create(myChange.getBeforeRevision(), (String)myChangeContext.get(
+                                                             DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE)),
+                                                           RevisionWithTitle.create(myChange.getAfterRevision(), (String)myChangeContext.get(
+                                                             DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE))
+    );
   }
 
   @SuppressWarnings("unchecked")
@@ -368,11 +383,18 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   }
 
   public static @NotNull @Nls String getRevisionTitle(@Nullable ContentRevision revision, @NotNull @Nls String defaultValue) {
-    if (revision == null) {
-      return defaultValue;
-    }
-    String title = revision.getRevisionNumber().asString();
+    String title = getRevisionTitleOrEmpty(revision);
     return title.isEmpty() ? defaultValue : title;
+  }
+
+  public static @NotNull @Nls String getRevisionTitleOrEmpty(@Nullable ContentRevision revision) {
+    if (revision instanceof CurrentContentRevision) {
+      return DiffBundle.message("merge.version.title.current");
+    } else if (revision == null) {
+      return "";
+    } else {
+      return getShortRevisionString(revision.getRevisionNumber());
+    }
   }
 
   public static @NotNull DiffContent createContent(@Nullable Project project,

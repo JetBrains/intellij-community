@@ -39,5 +39,6 @@
     <orderEntry type="library" name="ktor-client-okhttp" level="project" />
     <orderEntry type="library" name="okhttp" level="project" />
     <orderEntry type="library" name="ktor-client-core" level="project" />
+    <orderEntry type="library" name="hash4j" level="project" />
   </component>
 </module>

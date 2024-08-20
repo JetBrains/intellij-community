@@ -107,6 +107,9 @@ public class UninitializedReadCollector {
     else if (statement instanceof PsiForeachStatement foreachStatement) {
       return foreachStatementAssignsVariable(foreachStatement, variable);
     }
+    else if (statement instanceof PsiForeachPatternStatement) { //not throw errors
+      return false;
+    }
     else if (statement instanceof PsiWhileStatement whileStatement) {
       return whileStatementAssignsVariable(whileStatement, variable, stamp, checkedMethods);
     }

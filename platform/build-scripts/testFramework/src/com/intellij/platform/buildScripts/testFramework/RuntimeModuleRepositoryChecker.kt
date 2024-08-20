@@ -54,8 +54,8 @@ class RuntimeModuleRepositoryChecker private constructor(
   }
   
   companion object {
-    fun checkProductModules(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
-      createCheckers(currentMode, context).forEach { 
+    suspend fun checkProductModules(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
+      createCheckers(currentMode, context).forEach {
         it().use { checker ->
           checker.checkProductModules(productModulesModule, softly)
         }
@@ -67,7 +67,7 @@ class RuntimeModuleRepositoryChecker private constructor(
      * separate product: JARs referenced from its modules must not include resources from modules not included to the product, or they are
      * split by packages in a way that the class-loader may load relevant classes only.
      */
-    fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
+    suspend fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
       createCheckers(currentMode, context).forEach {
         it().use { checker ->
           checker.checkIntegrityOfEmbeddedProduct(productModulesModule, softly)
@@ -92,7 +92,7 @@ class RuntimeModuleRepositoryChecker private constructor(
   }
   private val moduleRepositoryData by lazy { RuntimeModuleRepositorySerialization.loadFromJar(descriptorsJarFile) }
 
-  private fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
+  private suspend fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
     try {
       val productModules = loadProductModules(productModulesModule)
       val serviceModuleMapping = ServiceModuleMapping.buildMapping(productModules, includeDebugInfoInErrorMessage = true)
@@ -133,7 +133,7 @@ class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, softly: SoftAssertions) {
+  private suspend fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, softly: SoftAssertions) {
     val productModules = loadProductModules(productModulesModule)
 
     val allProductModules = LinkedHashMap<RuntimeModuleId, FList<String>>()
@@ -201,7 +201,7 @@ class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private fun loadProductModules(productModulesModule: String): ProductModules {
+  private suspend fun loadProductModules(productModulesModule: String): ProductModules {
     val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(productModulesModule))
     return ProductModulesSerialization.loadProductModules(
       moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), currentMode, repository)

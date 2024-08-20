@@ -9,14 +9,46 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ActionPopupOptions {
-  final boolean showNumbers;
-  final boolean useAlphaAsNumbers;
-  final boolean showDisabledActions;
-  final boolean honorActionMnemonics;
-  final int maxRowCount;
-  final boolean autoSelection;
-  final Condition<? super AnAction> preselectCondition;
-  final int defaultIndex;
+  private final boolean showNumbers;
+  private final boolean useAlphaAsNumbers;
+  private final boolean showDisabledActions;
+  private final boolean honorActionMnemonics;
+  private final int maxRowCount;
+  private final boolean autoSelection;
+  private final Condition<? super AnAction> preselectCondition;
+  private final int defaultIndex;
+
+  public boolean showNumbers() {
+    return showNumbers;
+  }
+
+  public boolean useAlphaAsNumbers() {
+    return useAlphaAsNumbers;
+  }
+
+  public boolean showDisabledActions() {
+    return showDisabledActions;
+  }
+
+  public boolean honorActionMnemonics() {
+    return honorActionMnemonics;
+  }
+
+  public int getMaxRowCount() {
+    return maxRowCount;
+  }
+
+  public boolean autoSelectionEnabled() {
+    return autoSelection;
+  }
+
+  public Condition<? super AnAction> getPreselectCondition() {
+    return preselectCondition;
+  }
+
+  public int getDefaultIndex() {
+    return defaultIndex;
+  }
 
   public static @NotNull ActionPopupOptions empty() {
     return new ActionPopupOptions(false, false, false, false, -1, false, null, -1);

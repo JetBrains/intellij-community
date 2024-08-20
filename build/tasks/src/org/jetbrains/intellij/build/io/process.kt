@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
-import org.jetbrains.intellij.build.telemetry.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
@@ -14,6 +13,7 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.toList
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.io.File
 import java.io.InputStream
 import java.nio.charset.MalformedInputException
@@ -193,35 +193,14 @@ private fun createClassPathFile(classPath: Collection<String>, classpathFile: Pa
 @Obsolete
 fun runProcessBlocking(args: List<String>, workingDir: Path? = null, timeoutMillis: Long = DEFAULT_TIMEOUT.inWholeMilliseconds) {
   runBlocking {
-    runProcess(args = args,
-               workingDir = workingDir,
-               timeout = timeoutMillis.milliseconds,
-               additionalEnvVariables = emptyMap(),
-               inheritOut = false)
+    runProcess(
+      args = args,
+      workingDir = workingDir,
+      timeout = timeoutMillis.milliseconds,
+      additionalEnvVariables = emptyMap(),
+      inheritOut = false,
+    )
   }
-}
-
-suspend fun runProcess(vararg args: String,
-                       workingDir: Path? = null,
-                       timeout: Duration = DEFAULT_TIMEOUT,
-                       additionalEnvVariables: Map<String, String> = emptyMap(),
-                       inheritOut: Boolean = false) {
-  runProcess(args.toList(), workingDir, timeout, additionalEnvVariables, inheritOut)
-}
-
-suspend fun runProcess(
-  vararg args: String,
-  workingDir: Path? = null,
-  timeout: Duration = DEFAULT_TIMEOUT,
-  additionalEnvVariables: Map<String, String> = emptyMap(),
-  stdOutConsumer: (line: String) -> Unit,
-  stdErrConsumer: (line: String) -> Unit,
-) {
-  runProcess(
-    args.toList(), workingDir, timeout, additionalEnvVariables, inheritOut = false,
-    stdOutConsumer = stdOutConsumer,
-    stdErrConsumer = stdErrConsumer,
-  )
 }
 
 suspend fun runProcess(

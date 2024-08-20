@@ -6,6 +6,7 @@ import com.intellij.diff.impl.DiffSettingsHolder.IncludeInNavigationHistory
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.ui.docking.impl.DockManagerImpl
 
 abstract class DiffVirtualFileBase(name: String) :
   LightVirtualFile(name, DiffFileType.INSTANCE, ""),
@@ -32,8 +32,10 @@ abstract class DiffVirtualFileBase(name: String) :
       IncludeInNavigationHistory.Never -> false
       IncludeInNavigationHistory.Always -> true
       IncludeInNavigationHistory.OnlyIfOpen ->
-        FileEditorManager.getInstance(project).isFileOpen(this) // TODO: Check performance
+        FileEditorManager.getInstance(project).isFileOpen(this)
     }
+
+  override fun isPersistedInEditorHistory(): Boolean = false
 
   override fun isIncludedInEditorHistory(project: Project): Boolean =
     settings.isIncludedInNavigationHistory == IncludeInNavigationHistory.Always
@@ -51,8 +53,8 @@ abstract class DiffVirtualFileBase(name: String) :
 
   companion object {
 
-    fun VirtualFile.useDiffWindowDimensionKey() = putUserData(DockManagerImpl.WINDOW_DIMENSION_KEY, DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
-    fun VirtualFile.turnOffReopeningWindow() = putUserData(DockManagerImpl.REOPEN_WINDOW, false)
+    fun VirtualFile.useDiffWindowDimensionKey() = putUserData(FileEditorManagerKeys.WINDOW_DIMENSION_KEY, DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
+    fun VirtualFile.turnOffReopeningWindow() = putUserData(FileEditorManagerKeys.REOPEN_WINDOW, false)
 
     /**
      * @see [DiffEditorEscapeAction]

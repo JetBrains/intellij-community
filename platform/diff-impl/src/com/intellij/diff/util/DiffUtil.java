@@ -743,7 +743,9 @@ public final class DiffUtil {
     BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
     JComponent titleLabel = titleCustomizer != null ? titleCustomizer.getLabel()
                                                     : new JBLabel(StringUtil.notNullize(title)).setCopyable(true);
-    labelWithIcon.addToCenter(titleLabel);
+    if (titleLabel != null) {
+      labelWithIcon.addToCenter(titleLabel);
+    }
     if (readOnly) {
       labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
     }
@@ -1738,6 +1740,12 @@ public final class DiffUtil {
     wrapper.setContent(component);
     wrapper.setBorder(border);
     return wrapper;
+  }
+
+  @NotNull
+  public static <T extends DiffRequest> T addTitleCustomizers(@NotNull T request, @NotNull List<DiffEditorTitleCustomizer> customizers) {
+    request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER, customizers);
+    return request;
   }
 
   //

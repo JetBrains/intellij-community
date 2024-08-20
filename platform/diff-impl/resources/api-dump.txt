@@ -101,6 +101,10 @@ f:com.intellij.diff.actions.impl.MutableDiffRequestChain
 - sf:Companion:com.intellij.diff.actions.impl.MutableDiffRequestChain$Companion
 - <init>(com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent):V
 - <init>(com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent):V
+- <init>(com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,com.intellij.openapi.project.Project):V
+- b:<init>(com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,com.intellij.openapi.project.Project):V
+- b:<init>(com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getBaseColorMode():com.intellij.diff.util.DiffUserDataKeys$ThreeSideDiffColors
 - f:getBaseContent():com.intellij.diff.contents.DiffContent
 - f:getBaseTitle():java.lang.String
@@ -366,6 +370,7 @@ a:com.intellij.diff.editor.DiffVirtualFileBase
 - createEscapeHandler():com.intellij.openapi.actionSystem.AnAction
 - isIncludedInDocumentHistory(com.intellij.openapi.project.Project):Z
 - isIncludedInEditorHistory(com.intellij.openapi.project.Project):Z
+- isPersistedInEditorHistory():Z
 - isWritable():Z
 f:com.intellij.diff.editor.DiffVirtualFileBase$Companion
 - f:turnOffReopeningWindow(com.intellij.openapi.vfs.VirtualFile):V
@@ -631,6 +636,11 @@ a:com.intellij.diff.impl.DiffWindowBase
 - a:getTools():java.util.List
 - a:onSelected(com.intellij.openapi.project.Project,com.intellij.diff.DiffTool):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer
+- com.intellij.diff.DiffEditorTitleCustomizer
+- <init>(java.lang.String,java.lang.String,javax.swing.JComponent):V
+- b:<init>(java.lang.String,java.lang.String,javax.swing.JComponent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getLabel():javax.swing.JComponent
 com.intellij.diff.lang.DiffIgnoredRangeProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent):Z
@@ -2503,9 +2513,9 @@ com.intellij.diff.tools.util.text.TwosideTextDiffProvider$NoIgnore
 f:com.intellij.diff.util.BlankDiffWindowUtil
 - sf:INSTANCE:com.intellij.diff.util.BlankDiffWindowUtil
 - sf:REMEMBER_CONTENT_KEY:com.intellij.openapi.util.Key
-- sf:createBlankDiffRequestChain(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent):com.intellij.diff.actions.impl.MutableDiffRequestChain
+- sf:createBlankDiffRequestChain(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.openapi.project.Project):com.intellij.diff.actions.impl.MutableDiffRequestChain
 - sf:createBlankDiffRequestChain(com.intellij.openapi.project.Project):com.intellij.diff.actions.impl.MutableDiffRequestChain
-- bs:createBlankDiffRequestChain$default(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,I,java.lang.Object):com.intellij.diff.actions.impl.MutableDiffRequestChain
+- bs:createBlankDiffRequestChain$default(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.openapi.project.Project,I,java.lang.Object):com.intellij.diff.actions.impl.MutableDiffRequestChain
 - f:getBLANK_KEY():com.intellij.openapi.util.Key
 - f:saveRecentContent(com.intellij.diff.contents.DiffContent):V
 - f:saveRecentContents(com.intellij.diff.requests.DiffRequest):V
@@ -2700,6 +2710,7 @@ com.intellij.diff.util.DiffUserDataKeysEx
 - sf:MERGE_CANCEL_HANDLER:com.intellij.openapi.util.Key
 - sf:MERGE_CANCEL_MESSAGE:com.intellij.openapi.util.Key
 - sf:NAVIGATION_CONTEXT:com.intellij.openapi.util.Key
+- sf:PATCH_FILE_PREVIEW_MODIFICATION_SWITCH:com.intellij.openapi.util.Key
 - sf:SCROLL_TO_CHANGE:com.intellij.openapi.util.Key
 - sf:SHOW_READ_ONLY_LOCK:com.intellij.openapi.util.Key
 - sf:TWO_SIDE_SPLITTER_PROPORTION:com.intellij.openapi.util.Key
@@ -2732,6 +2743,7 @@ f:com.intellij.diff.util.DiffUtil
 - s:addActionBlock(com.intellij.openapi.actionSystem.DefaultActionGroup,java.util.List,Z):V
 - s:addActionBlock(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.AnAction[]):V
 - s:addNotification(com.intellij.diff.util.DiffNotificationProvider,com.intellij.openapi.util.UserDataHolder):V
+- s:addTitleCustomizers(com.intellij.diff.requests.DiffRequest,java.util.List):com.intellij.diff.requests.DiffRequest
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,com.intellij.openapi.editor.Document,I,I):V
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,java.util.List):V
 - s:applyModification(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,java.util.List):java.lang.String

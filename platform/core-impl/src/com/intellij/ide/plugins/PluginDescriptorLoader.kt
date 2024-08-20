@@ -616,7 +616,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
         path = PluginManagerCore.PLUGIN_XML_PATH,
         context = context,
         pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSources = false),
-        useCoreClassLoader = platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader"),
+        useCoreClassLoader = platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader(),
         reader = if (PlatformUtils.isGateway()) {
           getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader = mainClassLoader)!!
         }
@@ -828,7 +828,7 @@ private fun CoroutineScope.loadCoreModules(
   result: MutableList<Deferred<IdeaPluginDescriptorImpl?>>,
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
-  val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
+  val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
   if (loadCorePlugin(
       platformPrefix = platformPrefix,
       isInDevServerMode = isInDevServerMode,
@@ -1267,11 +1267,12 @@ private fun loadDescriptorFromResource(
     context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = filename)
 
     if (libDir == null) {
+      val runFromSources = pathResolver.isRunningFromSources || PluginManagerCore.isUnitTestMode || forceUseCoreClassloader()
       for (module in descriptor.content.modules) {
         val subDescriptorFile = module.configFile ?: "${module.name}.xml"
         val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
         val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
-        if ((pathResolver.isRunningFromSources || PluginManagerCore.isUnitTestMode) && subDescriptor.packagePrefix == null) {
+        if (runFromSources && subDescriptor.packagePrefix == null) {
           // no package in run from sources - load module from main classpath
           subDescriptor.jarFiles = Collections.emptyList()
         }
@@ -1295,3 +1296,5 @@ private fun loadDescriptorFromResource(
     closeable?.close()
   }
 }
+
+private fun forceUseCoreClassloader() = java.lang.Boolean.getBoolean("idea.force.use.core.classloader")

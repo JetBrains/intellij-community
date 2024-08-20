@@ -496,7 +496,10 @@
       ]
     },
     "image": {
-      "actualZoom.svg": "graph/actualZoom.svg",
+      "actualZoom.svg": [
+        "general/actualZoom.svg",
+        "graph/actualZoom.svg"
+      ],
       "colorPicker.svg": "ide/pipette.svg",
       "grid.svg": "graph/grid.svg",
       "zoomIn.svg": "graph/zoomIn.svg",
@@ -807,6 +810,7 @@
     },
     "runConfigurations": {
       "application.svg": [
+        "general/projectTab.svg",
         "nodes/project.svg",
         "runConfigurations/application.svg",
         "runConfigurations/applet.svg"

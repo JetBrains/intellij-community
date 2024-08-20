@@ -844,6 +844,16 @@
     <stacktrace.fold substring="at com.sun.proxy.$Proxy"/>
     <stacktrace.fold substring="at com.intellij.rt.execution."/>
 
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.PsiComment"
+                                 implementationClass="com.intellij.codeInsight.todo.TodoSymbolReferenceProvider"
+                                 targetClass="com.intellij.codeInsight.todo.TodoSymbol"
+                                 hostLanguage="JAVA"
+    />
+    <lang.symbolSearchTarget implementationClass="com.intellij.codeInsight.todo.TodoSymbolSearchTargetFactory"
+                             forClass="com.intellij.codeInsight.todo.TodoSymbol"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.codeInsight.todo.TodoSearcher"/>
+
     <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
 
 

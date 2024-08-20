@@ -3,6 +3,9 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
 import com.intellij.collaboration.util.MainDispatcherRule
 import com.intellij.platform.util.coroutines.childScope
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,12 +18,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepos
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.junit.Assert.assertEquals
 import org.junit.ClassRule
-import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mock
-import org.mockito.junit.MockitoJUnit
-import org.mockito.junit.MockitoRule
-import org.mockito.kotlin.*
 
 internal class GitLabRepositoryAndAccountSelectorViewModelTest {
 
@@ -30,35 +28,28 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     val mainRule = MainDispatcherRule()
   }
 
-  @Rule
-  @JvmField
-  val mockitoRule: MockitoRule = MockitoJUnit.rule()
-
-  @Mock
-  internal lateinit var projectManager: GitLabProjectsManager
-
-  @Mock
-  internal lateinit var accountManager: GitLabAccountManager
+  private val projectManager = mockk<GitLabProjectsManager>()
+  private val accountManager = mockk<GitLabAccountManager>()
 
   @Test
   fun `single mapping and account initial selection`() = runTest {
-    val projectMapping = mock<GitLabProjectMapping> {
-      on { repository } doAnswer {
-        mock {
-          on { serverPath } doReturn GitLabServerPath.DEFAULT_SERVER
+    val projectMapping = mockk<GitLabProjectMapping> {
+      every { repository } answers {
+        mockk {
+          every { serverPath } returns GitLabServerPath.DEFAULT_SERVER
         }
       }
     }
 
-    whenever(projectManager.knownRepositoriesState) doReturn MutableStateFlow(setOf(projectMapping))
+    every { projectManager.knownRepositoriesState } returns MutableStateFlow(setOf(projectMapping))
 
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
-    whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account))
-    whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
-    whenever(accountManager.canPersistCredentials) doReturn MutableStateFlow(true)
+    every { accountManager.accountsState } returns MutableStateFlow(setOf(account))
+    coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow("")
+    every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
     val scope = childScope(Dispatchers.Main)
-    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mock() }
+    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mockk() }
 
     assertEquals(projectMapping, vm.repoSelectionState.value)
     assertEquals(account, vm.accountSelectionState.value)
@@ -71,24 +62,24 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
 
   @Test
   fun `multiple accounts initial selection`() = runTest {
-    val projectMapping = mock<GitLabProjectMapping> {
-      on { repository } doAnswer {
-        mock {
-          on { serverPath } doReturn GitLabServerPath.DEFAULT_SERVER
+    val projectMapping = mockk<GitLabProjectMapping> {
+      every { repository } answers {
+        mockk {
+          every { serverPath } returns GitLabServerPath.DEFAULT_SERVER
         }
       }
     }
 
-    whenever(projectManager.knownRepositoriesState) doReturn MutableStateFlow(setOf(projectMapping))
+    every { projectManager.knownRepositoriesState } returns MutableStateFlow(setOf(projectMapping))
 
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
     val secondAccount = GitLabAccount(name = "secondAccount", server = GitLabServerPath.DEFAULT_SERVER)
-    whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account, secondAccount))
-    whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
-    whenever(accountManager.canPersistCredentials) doReturn MutableStateFlow(true)
+    every { accountManager.accountsState } returns MutableStateFlow(setOf(account, secondAccount))
+    coEvery { accountManager.getCredentialsState(any(), any()) } returns MutableStateFlow("")
+    every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
     val scope = childScope(Dispatchers.Main)
-    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mock() }
+    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mockk() }
 
     assertEquals(null, vm.repoSelectionState.value)
     assertEquals(null, vm.accountSelectionState.value)

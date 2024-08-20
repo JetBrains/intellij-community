@@ -416,7 +416,7 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(onExit: 
     val defaultValue = (if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue)?.let { KtPsiUtil.safeDeparenthesize(it) }
 
     if (!withDefaultValue) {
-        val parameters = targetCallable.getValueParameters()
+        val parameters = callable.getValueParameters()
         val withReceiver = methodDescriptor.receiver != null
         parametersToRemove
             .map {

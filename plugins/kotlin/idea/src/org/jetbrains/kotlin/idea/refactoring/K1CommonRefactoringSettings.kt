@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring
 
 @Suppress("SuspiciousCallableReferenceInLambda")
@@ -33,10 +33,10 @@ internal class K1CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var MOVE_SEARCH_IN_COMMENTS: Boolean
             by delegateTo { it::MOVE_SEARCH_IN_COMMENTS }
 
-    override var MOVE_SEARCH_FOR_TEXT: Boolean
+    override var UPDATE_TEXT_OCCURENCES: Boolean
             by delegateTo { it::MOVE_SEARCH_FOR_TEXT }
 
-    override var MOVE_SEARCH_REFERENCES: Boolean
+    override var MOVE_UPDATE_USAGES: Boolean
             by delegateTo { it::MOVE_SEARCH_REFERENCES }
 
     override var MOVE_MPP_DECLARATIONS: Boolean

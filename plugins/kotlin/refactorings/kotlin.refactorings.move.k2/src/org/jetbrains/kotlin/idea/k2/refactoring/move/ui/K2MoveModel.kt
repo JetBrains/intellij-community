@@ -40,13 +40,11 @@ sealed class K2MoveModel {
 
     abstract val target: K2MoveTargetModel
 
-    val searchForText: Setting = Setting.SEARCH_FOR_TEXT
-
-    val searchInComments: Setting = Setting.SEARCH_IN_COMMENTS
+    val updateTextOccurrences: Setting = Setting.UPDATE_TEXT_OCCURRENCES
 
     abstract val inSourceRoot: Boolean
 
-    val searchReferences: Setting = Setting.SEARCH_REFERENCES
+    val updateUsages: Setting = Setting.UPDATE_USAGES
 
     val mppDeclarations: Setting = Setting.MPP_DECLARATIONS
 
@@ -64,34 +62,23 @@ sealed class K2MoveModel {
     }
 
     enum class Setting(private val text: @NlsContexts.Checkbox String) {
-        SEARCH_FOR_TEXT(KotlinBundle.message("search.for.text.occurrences")) {
+        UPDATE_TEXT_OCCURRENCES(KotlinBundle.message("update.text.occurrences")) {
             override var state: Boolean
                 get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
+                    return KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES
                 }
                 set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT = value
+                    KotlinCommonRefactoringSettings.getInstance().UPDATE_TEXT_OCCURENCES = value
                 }
         },
 
-        SEARCH_IN_COMMENTS(KotlinBundle.message("search.in.comments.and.strings"),) {
+        UPDATE_USAGES(KotlinBundle.message("checkbox.text.update.usages")) {
             override var state: Boolean
                 get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS
+                    return KotlinCommonRefactoringSettings.getInstance().MOVE_UPDATE_USAGES
                 }
                 set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS = value
-                }
-        },
-
-
-        SEARCH_REFERENCES(KotlinBundle.message("checkbox.text.search.references")) {
-            override var state: Boolean
-                get() {
-                    return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
-                }
-                set(value) {
-                    KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES = value
+                    KotlinCommonRefactoringSettings.getInstance().MOVE_UPDATE_USAGES = value
                 }
         },
 
@@ -146,7 +133,7 @@ sealed class K2MoveModel {
         override fun toDescriptor(): K2MoveOperationDescriptor.Files {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
-            val searchReferences = if (inSourceRoot) searchReferences.state else false
+            val updateUsages = if (inSourceRoot) updateUsages.state else false
             val moveDescriptor = K2MoveDescriptor.Files(
                 project,
                 srcDescr,
@@ -155,9 +142,8 @@ sealed class K2MoveModel {
             val operationDescriptor = K2MoveOperationDescriptor.Files(
                 project,
                 listOf(moveDescriptor),
-                searchForText.state,
-                searchReferences,
-                searchInComments.state,
+                updateTextOccurrences.state,
+                updateUsages,
                 dirStructureMatchesPkg = true,
                 moveCallBack
             )
@@ -195,9 +181,8 @@ sealed class K2MoveModel {
                 target.directory,
                 target.fileName,
                 target.pkgName,
-                searchForText.state,
-                if (inSourceRoot) searchReferences.state else false,
-                searchInComments.state,
+                updateTextOccurrences.state,
+                if (inSourceRoot) updateUsages.state else false,
                 true,
                 mppDeclarations.state,
                 moveCallBack

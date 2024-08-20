@@ -4,10 +4,10 @@ package com.intellij.codeInsight.hints.declarative.impl
 import com.intellij.codeInsight.hints.declarative.CollapseState
 import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
-import com.intellij.codeInsight.hints.declarative.TinyTreeDebugNode as DebugNode
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.junit.Assert
+import com.intellij.codeInsight.hints.declarative.TinyTreeDebugNode as DebugNode
 
 class PresentationTreeBuilderTest : UsefulTestCase() {
   fun testText() {
@@ -92,7 +92,7 @@ class PresentationTreeBuilderTest : UsefulTestCase() {
     }
     val tree = treeBuilder.complete()
     val debugTree = DebugNode.buildDebugTree(tree)
-    val firstNode = DebugNode<Any?>(InlayTags.TEXT_TAG, "a".repeat(30) + "...", mutableListOf())
+    val firstNode = DebugNode<Any?>(InlayTags.TEXT_TAG, "a".repeat(30) + "…", mutableListOf())
     val root = DebugNode(InlayTags.LIST_TAG, null, mutableListOf(firstNode))
     TestCase.assertEquals(root, debugTree)
   }

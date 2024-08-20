@@ -3,21 +3,20 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.NativeBinaryDownloader
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
+import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.telemetry.useWithScope
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -136,12 +135,11 @@ class LinuxDistributionBuilder(
     }
   }
 
-  override fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
+  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
     generateProductJson(targetDir, arch)
   }
 
-  override fun writeVmOptions(distBinDir: Path): Path =
-    writeLinuxVmOptions(distBinDir, context)
+  override fun writeVmOptions(distBinDir: Path): Path = writeLinuxVmOptions(distBinDir, context)
 
   private fun generateReadme(unixDistPath: Path) {
     val fullName = context.applicationInfo.fullProductName
@@ -157,8 +155,9 @@ class LinuxDistributionBuilder(
     )
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> =
-    customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
+    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
+  }
 
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
@@ -327,12 +326,11 @@ class LinuxDistributionBuilder(
 
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
-  private fun generateProductJson(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean = true): String {
-    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.LINUX) {
+  private suspend fun generateProductJson(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(arch = arch, os = OsFamily.LINUX, ideContext = context) {
       "bin/${it.productProperties.baseFileName}64.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.LINUX)
-
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,
@@ -352,7 +350,7 @@ class LinuxDistributionBuilder(
       ),
       context
     )
-    writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
+    writeProductInfoJson(targetFile = targetDir.resolve(PRODUCT_INFO_FILE_NAME), json = json, context = context)
     return json
   }
 
@@ -448,8 +446,8 @@ class LinuxDistributionBuilder(
     val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
 
     @Suppress("SpellCheckingInspection")
-    val vmOptions = VmOptionsGenerator.computeVmOptions(context) + listOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true")
-    writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
+    val vmOptions = VmOptionsGenerator.computeVmOptions(context).asSequence() + sequenceOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true")
+    writeVmOptions(file = vmOptionsPath, vmOptions = vmOptions, separator = "\n")
 
     return vmOptionsPath
   }

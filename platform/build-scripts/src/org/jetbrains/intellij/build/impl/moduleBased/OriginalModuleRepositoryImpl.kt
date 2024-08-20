@@ -4,33 +4,29 @@ package org.jetbrains.intellij.build.impl.moduleBased
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
-import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.product.serialization.RawProductModules
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
-import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import java.io.InputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-class OriginalModuleRepositoryImpl(private val context: CompilationContext) : OriginalModuleRepository {
-  override val repositoryPath: Path
-  
+internal class OriginalModuleRepositoryImpl(private val context: CompilationContext) : OriginalModuleRepository {
+  override val repositoryPath: Path = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
+
   override val rawRepositoryData: RawRuntimeModuleRepositoryData
 
   init {
-    CompilationTasks.create(context).generateRuntimeModuleRepository()
-
-    repositoryPath = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
-    if (!repositoryPath.exists()) {
+    if (Files.notExists(repositoryPath)) {
       context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryPath doesn't exist")
     }
     rawRepositoryData = try {

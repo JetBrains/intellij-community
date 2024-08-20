@@ -25,7 +25,7 @@ class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackag
 
     override fun findUsages(): Array<UsageInfo> {
         return descriptor.files.flatMap {
-            it.findUsages(descriptor.searchInComments, descriptor.searchForText, descriptor.target)
+            it.findUsages(descriptor.updateTextOccurrences, descriptor.target)
         }.toTypedArray()
     }
 

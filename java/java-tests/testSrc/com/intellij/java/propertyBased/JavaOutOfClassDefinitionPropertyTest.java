@@ -3,6 +3,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -72,6 +73,7 @@ public class JavaOutOfClassDefinitionPropertyTest extends LightJavaCodeInsightFi
     myFixture.getEditor().getCaretModel().moveToOffset(offset);
     IntentionAction intention = myFixture.findSingleIntention("Move member into class");
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   private boolean moveMemberFromClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull PsiMember psiMember) {

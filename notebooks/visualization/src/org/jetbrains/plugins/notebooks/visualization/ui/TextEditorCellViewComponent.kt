@@ -1,12 +1,17 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
@@ -106,5 +111,23 @@ class TextEditorCellViewComponent(
     val lines = cell.interval.lines
     val offset = editor.document.getLineStartOffset(lines.first + 1)
     editor.caretModel.moveToOffset(offset)
+  }
+
+  private val presentationToInlay = mutableMapOf<InlayPresentation, Inlay<*>>()
+
+  override fun addInlayBelow(presentation: InlayPresentation) {
+    editor.inlayModel.addBlockElement(
+      editor.document.getLineEndOffset(cell.interval.lines.last),
+      InlayProperties()
+        .showAbove(false)
+        .showWhenFolded(true),
+      PresentationRenderer(presentation)
+    )?.also { inlay ->
+      presentationToInlay[presentation] = inlay
+    }
+  }
+
+  override fun removeInlayBelow(presentation: InlayPresentation) {
+    presentationToInlay.remove(presentation)?.let { inlay -> Disposer.dispose(inlay) }
   }
 }

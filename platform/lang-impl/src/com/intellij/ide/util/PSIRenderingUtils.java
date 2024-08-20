@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,13 +21,10 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.File;
-import java.util.LinkedList;
 import java.util.Optional;
 
 public final class PSIRenderingUtils {
@@ -53,42 +49,6 @@ public final class PSIRenderingUtils {
       }
     }
     return attributes;
-  }
-
-  @Contract("!null, _, _ -> !null")
-  public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
-    if (text == null) return null;
-
-    if (text.startsWith("(") && text.endsWith(")")) {
-      text = text.substring(1, text.length() - 1);
-    }
-
-    if (maxWidth < 0) return text;
-
-    boolean in = text.startsWith("in ");
-    if (in) text = text.substring(3);
-    String left = in ? "in " : "";
-    String adjustedText = left + text;
-
-    int fullWidth = fm.stringWidth(adjustedText);
-    if (fullWidth < maxWidth) return adjustedText;
-
-    String separator = text.contains("/") ? "/" :
-                       SystemInfo.isWindows && text.contains("\\") ? "\\" :
-                       text.contains(".") ? "." :
-                       text.contains("-") ? "-" : " ";
-    LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, separator));
-    int index;
-    while (parts.size() > 1) {
-      index = parts.size() / 2 - 1;
-      parts.remove(index);
-      if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
-        parts.add(index, "...");
-        return left + StringUtil.join(parts, separator);
-      }
-    }
-    int adjustedWidth = Math.max(adjustedText.length() * maxWidth / fullWidth - 1, left.length() + 3);
-    return StringUtil.trimMiddle(adjustedText, adjustedWidth);
   }
 
   public static @NotNull String normalizePsiElementContainerText(PsiElement element, String text, String presentablePath) {

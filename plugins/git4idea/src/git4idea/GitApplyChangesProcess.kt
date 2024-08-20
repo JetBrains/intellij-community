@@ -385,7 +385,11 @@ internal class GitApplyChangesProcess(
     return commitSucceeded.get()
   }
 
-  private fun createChangeListData(commit: VcsCommitMetadata) = ChangeListData(commit.author, Date(commit.authorTime))
+  private fun createChangeListData(commit: VcsCommitMetadata): ChangeListData {
+    return ChangeListData(author = commit.author,
+                          date = Date(commit.authorTime),
+                          automatic = true)
+  }
 
   private fun notifyResult(successfulCommits: List<VcsCommitMetadata>, skipped: List<VcsCommitMetadata>) {
     when {

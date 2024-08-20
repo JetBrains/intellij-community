@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspendPreserveClientId
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
@@ -54,6 +55,7 @@ import java.io.File
 import java.net.InetAddress
 import java.time.LocalTime
 import javax.imageio.ImageIO
+import javax.swing.JFrame
 import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration
@@ -386,6 +388,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
     else {
       val windowString = "window '${projectIdeFrame.name}'"
+      if (SystemInfo.isWindows) {
+        return requestFocusWithProjectOnWindows(projectIdeFrame, project, windowString)
+      }
+
       if (projectIdeFrame.isFocused) {
         LOG.info("$actionTitle: Window '$windowString' is already focused")
         return true
@@ -402,6 +408,16 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         return waitResult
       }
     }
+  }
+
+  private suspend fun requestFocusWithProjectOnWindows(projectIdeFrame: JFrame, project: Project, windowString: String): Boolean {
+    AppIcon.getInstance().requestFocus(projectIdeFrame)
+    ProjectUtil.focusProjectWindow(project)
+    val waitResult = waitFor(timeout = 5.seconds.toJavaDuration()) { projectIdeFrame.isFocused }
+    if (!waitResult) {
+      LOG.error("Couldn't wait for focus in project '$windowString'")
+    }
+    return waitResult
   }
 
   private suspend fun requestFocusNoProject(actionTitle: String): Boolean {

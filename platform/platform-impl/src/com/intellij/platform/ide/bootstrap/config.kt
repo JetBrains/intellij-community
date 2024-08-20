@@ -38,7 +38,6 @@ internal suspend fun importConfigIfNeeded(
 
   if (isHeadless) {
     importConfigHeadless(lockSystemDirsJob, logDeferred)
-    if (!AppMode.isRemoteDevHost()) enableNewUi(logDeferred, false)
     val log = logDeferred.await()
     if (shouldMigrateConfigOnNextRun(args)) {
       log.info("writing marker to ${PathManager.getOriginalConfigDir()} to ensure that config will be imported next time")
@@ -75,7 +74,7 @@ private fun shouldMigrateConfigOnNextRun(args: List<String>): Boolean {
 private suspend fun importConfigHeadless(lockSystemDirsJob: Job, logDeferred: Deferred<Logger>) {
   // make sure we lock the dir before writing
   lockSystemDirsJob.join()
-  enableNewUi(logDeferred, isBackgroundSwitch = true)
+  enableNewUi(logDeferred, isBackgroundSwitch = !AppMode.isRemoteDevHost())
 }
 
 private suspend fun importConfig(

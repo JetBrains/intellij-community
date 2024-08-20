@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorComposite.Companion.EMPTY
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.EditorComposite
@@ -88,7 +89,7 @@ internal class LightEditFileEditorManagerImpl(
 
   fun createEditorComposite(editorInfo: LightEditorInfo): EditorComposite {
     // Needed for composite not to postpone loading via DumbService.wrapGently()
-    editorInfo.fileEditor.putUserData(DUMB_AWARE, true)
+    editorInfo.fileEditor.putUserData(FileEditorManagerKeys.DUMB_AWARE, true)
     val editorProvider = (editorInfo as LightEditorInfoImpl).provider
     val editorWithProvider = FileEditorWithProvider(editorInfo.getFileEditor(), editorProvider)
     return createCompositeInstance(

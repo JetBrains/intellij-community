@@ -223,7 +223,9 @@ public final class FileAttributes {
     long lastModified = attrs.lastModifiedTime().toMillis();
 
     boolean isSpecial = attrs.isOther() && !(SystemInfo.isWindows && attrs.isDirectory());  // reparse points are directories (not special files)
-    CaseSensitivity caseSensitivity = attrs instanceof CaseSensitivityAttribute ? ((CaseSensitivityAttribute)attrs).getCaseSensitivity() : CaseSensitivity.UNKNOWN;
+    CaseSensitivity caseSensitivity = attrs.isDirectory() && attrs instanceof CaseSensitivityAttribute
+                                      ? ((CaseSensitivityAttribute)attrs).getCaseSensitivity()
+                                      : CaseSensitivity.UNKNOWN;
     return new FileAttributes(attrs.isDirectory(), isSpecial, isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable, caseSensitivity);
   }
 }

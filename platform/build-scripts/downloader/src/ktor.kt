@@ -34,6 +34,7 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
+import io.opentelemetry.semconv.ExceptionAttributes
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
@@ -136,11 +137,11 @@ internal inline fun <T> Span.use(operation: (Span) -> T): T {
     return operation(this)
   }
   catch (e: CancellationException) {
-    recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
+    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
   catch (e: Throwable) {
-    recordException(e, Attributes.of(AttributeKey.booleanKey("exception.escaped"), true))
+    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     setStatus(StatusCode.ERROR)
     throw e
   }
@@ -150,7 +151,7 @@ internal inline fun <T> Span.use(operation: (Span) -> T): T {
 }
 
 // copy from util, do not make public
-internal suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend (Span) -> T): T {
+internal suspend inline fun <T> SpanBuilder.useWithScope(crossinline operation: suspend (Span) -> T): T {
   val span = startSpan()
   return withContext(Context.current().with(span).asContextElement()) {
     span.use {
@@ -168,7 +169,7 @@ fun closeKtorClient() {
 private val fileLocks = StripedMutex()
 
 suspend fun downloadAsBytes(url: String): ByteArray {
-  return spanBuilder("download").setAttribute("url", url).useWithScope2 {
+  return spanBuilder("download").setAttribute("url", url).useWithScope {
     withContext(Dispatchers.IO) {
       httpClient.value.get(url).body()
     }
@@ -184,7 +185,7 @@ suspend fun postData(url: String, data: ByteArray) {
 }
 
 suspend fun downloadAsText(url: String): String {
-  return spanBuilder("download").setAttribute("url", url).useWithScope2 {
+  return spanBuilder("download").setAttribute("url", url).useWithScope {
     withContext(Dispatchers.IO) {
       httpClient.value.get(url).bodyAsText()
     }
@@ -225,7 +226,7 @@ private suspend fun downloadFileToCacheLocation(url: String,
 
   val target = BuildDependenciesDownloader.getTargetFile(communityRoot, url)
   val targetPath = target.toString()
-  val lock = fileLocks.getLock(targetPath.hashCode())
+  val lock = fileLocks.getLock(targetPath)
   lock.lock()
   try {
     if (Files.exists(target)) {
@@ -241,8 +242,8 @@ private suspend fun downloadFileToCacheLocation(url: String,
 
     println(" * Downloading $url")
 
-    return spanBuilder("download").setAttribute("url", url).setAttribute("target", targetPath).useWithScope2 {
-      suspendingRetryWithExponentialBackOff {
+    return spanBuilder("download").setAttribute("url", url).setAttribute("target", targetPath).useWithScope {
+      retryWithExponentialBackOff {
         // save to the same disk to ensure that move will be atomic and not as a copy
         val tempFile = target.parent
           .resolve("${target.fileName}-${(Instant.now().epochSecond - 1634886185).toString(36)}-${Instant.now().nano.toString(36)}".take(255))

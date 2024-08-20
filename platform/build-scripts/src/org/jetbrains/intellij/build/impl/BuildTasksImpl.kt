@@ -20,7 +20,6 @@ import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
-import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
 import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
@@ -80,7 +79,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     val currentOs = OsFamily.currentOs
     context.paths.distAllDir = targetDirectory
     context.options.targetOs = persistentListOf(currentOs)
-    context.options.buildStepsToSkip += listOf(
+    context.options.buildStepsToSkip += sequenceOf(
       BuildOptions.GENERATE_JAR_ORDER_STEP,
       SoftwareBillOfMaterials.STEP_ID,
     )
@@ -111,14 +110,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch)
     }
   }
-}
-
-/**
- * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
- */
-suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val report = generateProjectStructureMapping(context = context, platformLayout = createPlatformLayout(context = context))
-  writeProjectStructureReport(contentReport = report, file = targetFile, buildPaths = context.paths)
 }
 
 data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
@@ -342,14 +333,14 @@ private fun checkProjectLibraries(names: Collection<String>, fieldName: String, 
 private suspend fun buildSourcesArchive(contentReport: ContentReport, context: BuildContext) {
   val productProperties = context.productProperties
   val archiveName = "${productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)}-sources.zip"
-  val openSourceModules = getIncludedModules(contentReport.combined()).filter { moduleName ->
+  val openSourceModules = getIncludedModules(contentReport.bundled()).filter { moduleName ->
     productProperties.includeIntoSourcesArchiveFilter.test(context.findRequiredModule(moduleName), context)
   }.toList()
   zipSourcesOfModules(
     modules = openSourceModules,
     targetFile = context.paths.artifactDir.resolve(archiveName),
     includeLibraries = true,
-    context = context
+    context = context,
   )
 }
 
@@ -361,7 +352,7 @@ internal fun collectModulesToCompileForDistribution(context: BuildContext): Muta
   }
 
   val productProperties = context.productProperties
-  result.addAll(productProperties.productLayout.mainModules)
+  result.add(productProperties.applicationInfoModule)
 
   val mavenArtifacts = productProperties.mavenArtifacts
   result.addAll(mavenArtifacts.additionalModules)
@@ -391,6 +382,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       it.addEvent("skipped, no need to build distributions")
       return@executeStep null
     }
+
     val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
     val platform = createPlatformLayout(context = context)
     val moduleNames = getModulesForPluginsToPublish(platform = platform, pluginsToPublish = pluginsToPublish)
@@ -399,7 +391,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     val builtinModuleData = spanBuilder("build provided module list").useWithScope {
       Files.deleteIfExists(providedModuleFile)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      context.createProductRunner().runProduct(args = listOf("listBundledPlugins", providedModuleFile.toString()))
+      context.createProductRunner().runProduct(listOf("listBundledPlugins", providedModuleFile.toString()))
 
       context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
       try {
@@ -422,7 +414,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, result = pluginsToPublish, context = context)
       filterPluginsToPublish(plugins = pluginsToPublish, context = context)
 
-      // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
+        // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
       val enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
       distributionState(context, pluginsToPublish, projectLibrariesUsedByPlugins, enabledPluginModules)
     }
@@ -493,7 +485,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
     val distDirs = buildOsSpecificDistributions(context)
     launch(Dispatchers.IO) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
-        SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = contentReport.combined().toList()).generate()
+        SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = contentReport.bundled().toList()).generate()
       }
     }
     if (context.productProperties.buildCrossPlatformDistribution) {
@@ -659,7 +651,6 @@ private fun checkProductLayout(context: BuildContext) {
   checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules", context)
   checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules", context)
   checkModules(layout.moduleExcludes.keys, "productProperties.productLayout.moduleExcludes", context)
-  checkModules(layout.mainModules, "productProperties.productLayout.mainModules", context)
   for (plugin in pluginLayouts) {
     checkBaseLayout(plugin, "\'${plugin.mainModule}\' plugin", context)
   }
@@ -788,7 +779,7 @@ private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
   }
 }
 
-private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
+private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
   val productJson = generateProductInfoJson(
@@ -874,17 +865,17 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
     return
   }
 
-  context.executeStep(spanBuilder("checkClassFiles"), BuildOptions.VERIFY_CLASS_FILE_VERSIONS) {
+  context.executeStep(spanBuilder("checkClassFiles"), BuildOptions.VERIFY_CLASS_FILE_VERSIONS) { span ->
     val versionCheckerConfig = context.productProperties.versionCheckerConfig
     val forbiddenSubPaths = context.productProperties.forbiddenClassFileSubPaths
     val forbiddenSubPathExceptions = context.productProperties.forbiddenClassFileSubPathExceptions
     if (forbiddenSubPaths.isNotEmpty()) {
       val forbiddenString = forbiddenSubPaths.let { "(${it.size}): ${it.joinToString()}" }
       val exceptionsString = forbiddenSubPathExceptions.let { "(${it.size}): ${it.joinToString()}" }
-      it.addEvent("forbiddenSubPaths $forbiddenString, exceptions $exceptionsString")
+      span.addEvent("forbiddenSubPaths $forbiddenString, exceptions $exceptionsString")
     }
     else {
-      it.addEvent("forbiddenSubPaths: EMPTY (no scrambling checks will be done)")
+      span.addEvent("forbiddenSubPaths: EMPTY (no scrambling checks will be done)")
     }
 
     if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
@@ -892,7 +883,7 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
     }
 
     if (forbiddenSubPaths.isNotEmpty()) {
-      it.addEvent("SUCCESS for forbiddenSubPaths at '$root': ${forbiddenSubPaths.joinToString()}")
+      span.addEvent("SUCCESS for forbiddenSubPaths at '$root': ${forbiddenSubPaths.joinToString()}")
     }
   }
 }

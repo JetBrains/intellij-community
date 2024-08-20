@@ -5,6 +5,10 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.FlowTestUtil.assertEmits
 import com.intellij.collaboration.util.MainDispatcherRule
 import com.intellij.util.messages.MessageBus
+import io.mockk.coEvery
+import io.mockk.coVerifyAll
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
@@ -16,16 +20,10 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.ClassRule
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.mockito.Mock
-import org.mockito.junit.MockitoJUnit
-import org.mockito.junit.MockitoRule
-import org.mockito.kotlin.*
 import kotlin.time.Duration.Companion.seconds
 
 private val PR_ID = GHPRIdentifier("id", 0)
@@ -40,30 +38,18 @@ class GHPRDetailsDataProviderImplTest {
     internal val mainRule = MainDispatcherRule()
   }
 
-  @Rule
-  @JvmField
-  internal val mockitoRule: MockitoRule = MockitoJUnit.rule()
-
-  @Mock
-  internal lateinit var detailsService: GHPRDetailsService
-
-  @Mock
-  internal lateinit var messageBus: MessageBus
-
-  @Mock
-  internal lateinit var listener: GHPRDataOperationsListener
-
-  @Before
-  internal fun setup() {
-    whenever(messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC)) doReturn listener
+  private val detailsService = mockk<GHPRDetailsService>(relaxUnitFun = true)
+  private val listener = mockk<GHPRDataOperationsListener>(relaxUnitFun = true)
+  private val messageBus = mockk<MessageBus> {
+    every { syncPublisher(GHPRDataOperationsListener.TOPIC) } returns listener
   }
 
   private fun TestScope.createProvider() = GHPRDetailsDataProviderImpl(backgroundScope, detailsService, PR_ID, messageBus)
 
   @Test
   fun testCachingDetailsLoad() = runTest {
-    val result = mock<GHPullRequest>()
-    whenever(detailsService.loadDetails(PR_ID)) doReturn result
+    val result = mockk<GHPullRequest>()
+    coEvery { detailsService.loadDetails(PR_ID) } returns result
 
     val inst = createProvider()
     assertEquals(inst.loadDetails(), result)
@@ -71,12 +57,14 @@ class GHPRDetailsDataProviderImplTest {
     assertEquals(inst.loadDetails(), result)
     assertEquals(inst.loadedDetails, result)
 
-    verify(detailsService, times(1)).loadDetails(PR_ID)
+    coVerifyAll {
+      detailsService.loadDetails(PR_ID)
+    }
   }
 
   @Test
   fun testDetailsErrorLoad() = runTest {
-    whenever(detailsService.loadDetails(PR_ID)) doThrow EXCEPTION
+    coEvery { detailsService.loadDetails(PR_ID) } throws EXCEPTION
 
     val inst = createProvider()
     runCatching {
@@ -85,14 +73,14 @@ class GHPRDetailsDataProviderImplTest {
       assertEquals(EXCEPTION, exceptionOrNull())
     }
 
-    verify(detailsService, times(1)).loadDetails(PR_ID)
+    coVerifyAll { detailsService.loadDetails(PR_ID) }
   }
 
   @Test
   fun testDetailsReloadAfterError() = runTest {
-    val result = mock<GHPullRequest>()
+    val result = mockk<GHPullRequest>()
     var counter = 0
-    whenever(detailsService.loadDetails(PR_ID)) doSuspendableAnswer {
+    coEvery { detailsService.loadDetails(PR_ID) } coAnswers {
       if (counter == 0) {
         throw EXCEPTION
       }
@@ -107,41 +95,46 @@ class GHPRDetailsDataProviderImplTest {
     inst.signalDetailsNeedReload()
     runCatching { inst.loadDetails() }.apply { assertEquals(result, getOrThrow()) }
 
-    verify(detailsService, times(2)).loadDetails(PR_ID)
+    coVerifyAll {
+      detailsService.loadDetails(PR_ID)
+      detailsService.loadDetails(PR_ID)
+    }
   }
 
   @Test
   fun testUpdate() = runTest {
-    val result1 = mock<GHPullRequest>()
-    val result2 = mock<GHPullRequest>()
-    whenever(detailsService.loadDetails(PR_ID)) doReturn result1
-    whenever(detailsService.updateDetails(eq(PR_ID), any(), any())) doReturn result2
+    val result1 = mockk<GHPullRequest>()
+    val result2 = mockk<GHPullRequest>()
+    coEvery { detailsService.loadDetails(PR_ID) } returns result1
+    coEvery { detailsService.updateDetails(eq(PR_ID), any(), any()) } returns result2
 
     val inst = createProvider()
     assertEquals(inst.loadDetails(), result1)
     inst.updateDetails("", "")
     assertEquals(inst.loadDetails(), result2)
 
-    verify(detailsService, times(1)).updateDetails(eq(PR_ID), any(), any())
-    verify(detailsService, times(1)).loadDetails(PR_ID)
-    verify(listener, times(1)).onMetadataChanged()
+    coVerifyAll {
+      detailsService.updateDetails(eq(PR_ID), any(), any())
+      detailsService.loadDetails(PR_ID)
+      listener.onMetadataChanged()
+    }
   }
 
   @Test
   fun testCachingMergeabilityLoad() = runTest {
-    val result = mock<GHPRMergeabilityState>()
-    whenever(detailsService.loadMergeabilityState(PR_ID)) doReturn result
+    val result = mockk<GHPRMergeabilityState>()
+    coEvery { detailsService.loadMergeabilityState(PR_ID) } returns result
 
     val inst = createProvider()
     assertEquals(inst.loadMergeabilityState(), result)
     assertEquals(inst.loadMergeabilityState(), result)
 
-    verify(detailsService, times(1)).loadMergeabilityState(PR_ID)
+    coVerifyAll { detailsService.loadMergeabilityState(PR_ID) }
   }
 
   @Test
   fun testMergeabilityErrorLoad() = runTest {
-    whenever(detailsService.loadMergeabilityState(PR_ID)) doThrow EXCEPTION
+    coEvery { detailsService.loadMergeabilityState(PR_ID) } throws EXCEPTION
 
     val inst = createProvider()
     runCatching {
@@ -150,14 +143,14 @@ class GHPRDetailsDataProviderImplTest {
       assertEquals(EXCEPTION, exceptionOrNull())
     }
 
-    verify(detailsService, times(1)).loadMergeabilityState(PR_ID)
+    coVerifyAll { detailsService.loadMergeabilityState(PR_ID) }
   }
 
   @Test
   fun testMergeabilityReloadAfterError() = runTest {
-    val result = mock<GHPRMergeabilityState>()
+    val result = mockk<GHPRMergeabilityState>()
     var counter = 0
-    whenever(detailsService.loadMergeabilityState(PR_ID)) doSuspendableAnswer {
+    coEvery { detailsService.loadMergeabilityState(PR_ID) } coAnswers {
       if (counter == 0) {
         throw EXCEPTION
       }
@@ -172,17 +165,21 @@ class GHPRDetailsDataProviderImplTest {
     inst.signalMergeabilityNeedsReload()
     runCatching { inst.loadMergeabilityState() }.apply { assertEquals(result, getOrThrow()) }
 
-    verify(detailsService, times(2)).loadMergeabilityState(PR_ID)
+    coVerifyAll {
+      detailsService.loadMergeabilityState(PR_ID)
+      detailsService.loadMergeabilityState(PR_ID)
+    }
   }
 
   @Test
   fun testReviewers() = runTest {
     val inst = createProvider()
-    inst.adjustReviewers(mock())
+    inst.adjustReviewers(mockk())
 
-    verify(detailsService, never()).loadDetails(PR_ID)
-    verify(detailsService, times(1)).adjustReviewers(eq(PR_ID), any())
-    verify(listener, times(1)).onMetadataChanged()
+    coVerifyAll {
+      detailsService.adjustReviewers(eq(PR_ID), any())
+      listener.onMetadataChanged()
+    }
   }
 
   @Test
@@ -190,17 +187,18 @@ class GHPRDetailsDataProviderImplTest {
     val inst = createProvider()
     inst.close()
 
-    verify(detailsService, never()).loadDetails(PR_ID)
-    verify(detailsService, times(1)).close(PR_ID)
-    verify(listener, times(1)).onMetadataChanged()
+    coVerifyAll {
+      detailsService.close(eq(PR_ID))
+      listener.onMetadataChanged()
+    }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   @Test
   fun testDetailsFlow() = runTest(UnconfinedTestDispatcher()) {
-    val result = mock<GHPullRequest>()
+    val result = mockk<GHPullRequest>()
     var counter = 0
-    whenever(detailsService.loadDetails(PR_ID)) doSuspendableAnswer {
+    coEvery { detailsService.loadDetails(PR_ID) } coAnswers {
       if (counter == 0) {
         delay(1.seconds)
         throw EXCEPTION
@@ -225,9 +223,9 @@ class GHPRDetailsDataProviderImplTest {
   @OptIn(ExperimentalCoroutinesApi::class)
   @Test
   fun testMergeabilityFlow() = runTest(UnconfinedTestDispatcher()) {
-    val result = mock<GHPRMergeabilityState>()
+    val result = mockk<GHPRMergeabilityState>()
     var counter = 0
-    whenever(detailsService.loadMergeabilityState(PR_ID)) doSuspendableAnswer {
+    coEvery { detailsService.loadMergeabilityState(PR_ID) } coAnswers {
       if (counter == 0) {
         delay(1.seconds)
         throw EXCEPTION

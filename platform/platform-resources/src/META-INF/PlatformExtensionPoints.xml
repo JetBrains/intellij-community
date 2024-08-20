@@ -541,6 +541,9 @@
     <extensionPoint qualifiedName="com.intellij.platform.ml.taskListener"
                     interface="com.intellij.platform.ml.monitoring.MLTaskGroupListener"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.featureProvider"
+                    interface="com.jetbrains.ml.FeatureProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="defender.config" interface="com.intellij.diagnostic.WindowsDefenderChecker$Extension" dynamic="true" />
     <extensionPoint name="authorizationProvider" interface="com.intellij.ide.impl.AuthorizationProvider" dynamic="true" />

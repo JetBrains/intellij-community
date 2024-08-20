@@ -100,7 +100,7 @@ class IjentNioPosixFileAttributes(
       IjentFileInfo.CaseSensitivity.INSENSITIVE -> FileAttributes.CaseSensitivity.INSENSITIVE
       IjentFileInfo.CaseSensitivity.UNKNOWN -> FileAttributes.CaseSensitivity.UNKNOWN
     }
-    else -> FileAttributes.CaseSensitivity.UNKNOWN
+    else -> throw IllegalStateException("Cannot ask for case sensitivity of $type")
   }
 }
 

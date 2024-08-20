@@ -261,6 +261,7 @@ f:com.intellij.psi.search.IndexPattern
 - getOptimizedIndexingPattern():java.util.regex.Pattern
 - getPattern():java.util.regex.Pattern
 - getPatternString():java.lang.String
+- *:getWordToHighlight():java.lang.String
 - getWordsToFindFirst():java.util.List
 - hashCode():I
 - isCaseSensitive():Z

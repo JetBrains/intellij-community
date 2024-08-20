@@ -36,7 +36,7 @@ private val BASE_CLASS_VERSIONS: Map<String, String> = java.util.Map.copyOf(hash
  * See also [DEFAULT_BUNDLED_PLUGINS].
  */
 @Suppress("SpellCheckingInspection")
-val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + persistentListOf(
+val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + sequenceOf(
   JavaPluginLayout.MAIN_MODULE_NAME,
   "intellij.java.ide.customization",
   "intellij.copyright",

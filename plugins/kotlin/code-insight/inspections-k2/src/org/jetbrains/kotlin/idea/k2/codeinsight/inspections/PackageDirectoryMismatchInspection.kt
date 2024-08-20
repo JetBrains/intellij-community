@@ -127,7 +127,7 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val file = descriptor.psiElement as? KtFile ?: return
-            val changePkgDescriptor = K2ChangePackageDescriptor(file.project, setOf(file), packageFqName, false, false)
+            val changePkgDescriptor = K2ChangePackageDescriptor(file.project, setOf(file), packageFqName, false)
             K2ChangePackageRefactoringProcessor(changePkgDescriptor).run()
         }
 

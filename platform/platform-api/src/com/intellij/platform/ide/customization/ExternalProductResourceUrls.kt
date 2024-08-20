@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.customization
 
 import com.intellij.openapi.application.ApplicationManager
@@ -12,10 +12,10 @@ import org.jetbrains.annotations.ApiStatus
  * Provides URLs of different external resources associated with an IDE. An IDE should register its implementation of this interface as
  * a service with `overrides="true"` attribute to override the default one (which takes this information from *ApplicationInfo.xml file).
  * 
- * IDEs developed by JetBrains should use [BaseJetBrainsExternalProductResourceUrls][com.intellij.platform.ide.impl.customization.BaseJetBrainsExternalProductResourceUrls] 
+ * IDEs developed by JetBrains should use [com.intellij.platform.ide.impl.customization.BaseJetBrainsExternalProductResourceUrls]
  * as a superclass for their implementations.
  * 
- * Members of this interface are supposed to be accessed from platform code only, and should be only overriden in IDEs.  
+ * Members of this interface are supposed to be accessed from platform code only and should be overridden in IDEs.  
  */
 @ApiStatus.OverrideOnly
 interface ExternalProductResourceUrls {
@@ -42,8 +42,7 @@ interface ExternalProductResourceUrls {
    * Returns a function which computes URL for bug reporting.
    * `description` parameter will contain automatically generated information about the current IDE and the environment, it may be added
    * to the template of the issue report.
-   * In order to include custom data in the description, you may use [FeedbackDescriptionProvider][com.intellij.ide.FeedbackDescriptionProvider]
-   * extension point.
+   * To include custom data in the description, you may use [com.intellij.ide.FeedbackDescriptionProvider] extension point.
    *
    * The computed URL will be opened in browser when a user invokes the "Submit a Bug Report" action. If this function returns `null`,
    * the action won't be available.
@@ -55,8 +54,7 @@ interface ExternalProductResourceUrls {
    * Returns a function which computes URL for contacting technical support.
    * `description` parameter will contain automatically generated information about the current IDE and the environment, it may be added
    * to the template of the support form.
-   * In order to include custom data in the description, you may use [FeedbackDescriptionProvider][com.intellij.ide.FeedbackDescriptionProvider]
-   * extension point.
+   * To include custom data in the description, you may use [com.intellij.ide.FeedbackDescriptionProvider] extension point.
    *
    * The computed URL will be opened in browser when a user invokes the "Contact Support" action. If this function returns `null`,
    * the action won't be available.
@@ -65,7 +63,7 @@ interface ExternalProductResourceUrls {
     get() = null
 
   /**
-   * Returns an instance which will be used to submit feedback about the product via "Submit Feedback" action. 
+   * Returns an instance which will be used to submit feedback about the product via the "Submit Feedback" action. 
    * If this function returns `null`, the action won't be available.
    */
   val feedbackReporter: FeedbackReporter?
@@ -94,11 +92,11 @@ interface ExternalProductResourceUrls {
     get() = null
   
   /**
-   * Returns URL of the page containing information about new features in the product.  
+   * Returns the URL of the page containing information about new features in the product.  
    * It's opened in the browser or in the editor when a user invokes the "What's New" action.
    * If the property returns `null`, the action won't be shown.
    * 
-   * This page will be also shown in IDE automatically if [UpdateStrategyCustomization.showWhatIsNewPageAfterUpdate][com.intellij.openapi.updateSettings.UpdateStrategyCustomization.showWhatIsNewPageAfterUpdate]
+   * This page will be also shown in IDE automatically if [com.intellij.openapi.updateSettings.UpdateStrategyCustomization.showWhatIsNewPageAfterUpdate]
    * returns `true`.
    */
   val whatIsNewPageUrl: Url?
@@ -127,21 +125,20 @@ interface ExternalProductResourceUrls {
 interface FeedbackReporter {
   /**
    * Describes the place where the feedback will be reported to (e.g., address of the site).
-   * It's shown in the description of "Submit Feedback" action.
+   * It's shown in the description of the "Submit Feedback" action.
    */
   val destinationDescription: String
 
   /**
-   * Returns a URL which will be opened in the browser when the user invokes "Submit Feedback" action. 
+   * Returns a URL which will be opened in the browser when the user invokes the "Submit Feedback" action. 
    * @param description contains automatically generated information about the current IDE and the environment, it may be added to the template 
    * of the feedback form.
-   * In order to include custom data in the description, you may use [FeedbackDescriptionProvider][com.intellij.ide.FeedbackDescriptionProvider]
-   * extension point.
+   * To include custom data in the description, you may use [com.intellij.ide.FeedbackDescriptionProvider] extension point.
    */
   fun feedbackFormUrl(description: String): Url
 
   /**
-   * Override this function to show a custom form when "Submit Feedback" action is invoked or when the IDE requests a user to provide 
+   * Override this function to show a custom form when the "Submit Feedback" action is invoked or when the IDE requests a user to provide 
    * feedback during the evaluation period.
    * @param requestedForEvaluation `true` if the form is shown by the IDE during the evaluation period and `false` if user explicitly 
    * invoked "Submit Feedback" action.  

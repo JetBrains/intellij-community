@@ -1,0 +1,15 @@
+// WITH_DEFAULT_VALUE: false
+interface I {
+    fun bar(): Int
+}
+
+open class A {
+    fun foo(i1: Int)
+}
+
+class B: A {
+    override fun foo(i1: Int) {
+        i1
+    }
+}
+// IGNORE_K1

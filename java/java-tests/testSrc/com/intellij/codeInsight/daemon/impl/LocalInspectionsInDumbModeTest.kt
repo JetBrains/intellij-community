@@ -4,9 +4,11 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
@@ -16,6 +18,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.testFramework.*
 import org.intellij.lang.annotations.Language
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 @CanChangeDocumentDuringHighlighting
 class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
@@ -74,6 +77,38 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     assertExistsInfo(dumbInfos, "Smart0")
   }
 
+  fun testLocalInspectionInDumbModeDontInitializeUnrelatedTools() {
+    val unrelatedToolWrapper = createUnrelatedToolWrapper()
+    enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
+    LocalInspectionsPass.forceNoDuplicateCheckInTests(testRootDisposable)
+
+    @Language("JAVA")
+    val text = """
+      // comment
+    """
+    configureByText(JavaFileType.INSTANCE, text)
+
+    doHighlightingInDumbMode()
+
+    assertFalse(unrelatedToolWrapper.isToolInstantiated())
+  }
+
+  fun testLocalInspectionDontInitializeUnrelatedTools() {
+    val unrelatedToolWrapper = createUnrelatedToolWrapper()
+    enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
+    LocalInspectionsPass.forceNoDuplicateCheckInTests(testRootDisposable)
+
+    @Language("JAVA")
+    val text = """
+      // comment
+    """
+    configureByText(JavaFileType.INSTANCE, text)
+
+    doHighlighting()
+
+    assertFalse(unrelatedToolWrapper.isToolInstantiated())
+  }
+
   private fun assertExistsInfo(infos: List<HighlightInfo>, text: String) {
     assert(infos.any { it.description == text }) {
       "List [${infos.joinToString { it.description }}] does not contain `$text`"
@@ -119,4 +154,32 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     }
   }
 
+  private fun createUnrelatedToolWrapper(): UnrelatedToolWrapper {
+    val ep = LocalInspectionEP()
+    ep.dumbAware = true
+    ep.implementationClass = "foo.bar.Baz"
+    ep.id = "Baz"
+    ep.language = "TEXT"
+    ep.displayName = "Baz"
+    return UnrelatedToolWrapper(ep)
+  }
+
+  private class UnrelatedToolWrapper(ep: LocalInspectionEP) : LocalInspectionToolWrapper(ep) {
+    private val toolIsInstantiated = AtomicBoolean(false)
+
+    override fun getTool(): LocalInspectionTool {
+      toolIsInstantiated.set(true)
+      return MyLocalInspection()
+    }
+
+    fun isToolInstantiated(): Boolean {
+      return toolIsInstantiated.get()
+    }
+
+    private class MyLocalInspection : LocalInspectionTool() {
+      override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return PsiElementVisitor.EMPTY_VISITOR
+      }
+    }
+  }
 }

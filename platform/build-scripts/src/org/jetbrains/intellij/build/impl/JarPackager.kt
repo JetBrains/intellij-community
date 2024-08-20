@@ -134,6 +134,24 @@ class JarPackager private constructor(
     suspend fun pack(
       includedModules: Collection<ModuleItem>,
       outputDir: Path,
+      context: BuildContext,
+    ) {
+      val packager = JarPackager(outDir = outputDir, platformLayout = null, isRootDir = false, moduleOutputPatcher = ModuleOutputPatcher(), context = context)
+      packager.computeModuleSources(includedModules = includedModules, searchableOptionSet = null, layout = null)
+      buildJars(
+        assets = packager.assets.values,
+        layout = null,
+        cache = if (context is BuildContextImpl) context.jarCacheManager else NonCachingJarCacheManager,
+        context = context,
+        isCodesignEnabled = false,
+        useCacheAsTargetFile = context.options.isUnpackedDist,
+        dryRun = false,
+      )
+    }
+
+    suspend fun pack(
+      includedModules: Collection<ModuleItem>,
+      outputDir: Path,
       isRootDir: Boolean,
       isCodesignEnabled: Boolean = true,
       layout: BaseLayout?,
@@ -349,7 +367,7 @@ class JarPackager private constructor(
     }
   }
 
-  private fun addSearchableOptionSources(
+  private suspend fun addSearchableOptionSources(
     layout: BaseLayout?,
     moduleName: String,
     module: JpsModule,

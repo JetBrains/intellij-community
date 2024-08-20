@@ -11,6 +11,7 @@ import com.intellij.internal.ui.sandbox.dsl.*
 import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrComboBoxPanel
 import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrListPanel
 import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrOthersPanel
+import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrSeparatorPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.CrossValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPanel
@@ -71,6 +72,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       Group("ListCellRenderer", children = listOf(
         LcrListPanel(),
         LcrComboBoxPanel(),
+        LcrSeparatorPanel(),
         LcrOthersPanel()
       )),
       Group("Validaiton", children = listOf(

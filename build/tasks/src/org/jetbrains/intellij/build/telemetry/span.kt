@@ -33,8 +33,23 @@ suspend inline fun <T> SpanBuilder.useWithScope(
  * See [com.intellij.platform.diagnostic.telemetry.helpers.use]
  */
 @Internal
-inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
+inline fun <T> SpanBuilder.blockingUse(operation: (Span) -> T): T {
   return use { span ->
+    TeamCityBuildMessageLogger.withFlow(span) {
+      operation(span)
+    }
+  }
+}
+
+/**
+ * See [com.intellij.platform.diagnostic.telemetry.helpers.use]
+ */
+@Internal
+suspend inline fun <T> SpanBuilder.use(
+  context: CoroutineContext = EmptyCoroutineContext,
+  crossinline operation: suspend CoroutineScope.(Span) -> T,
+): T {
+  return useWithScope(context) { span ->
     TeamCityBuildMessageLogger.withFlow(span) {
       operation(span)
     }

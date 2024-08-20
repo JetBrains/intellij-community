@@ -82,6 +82,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.ide.plugins.newui.PluginsViewCustomizerKt.getPluginsViewCustomizer;
 
+@ApiStatus.Internal
 public final class PluginManagerConfigurable
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
 
@@ -392,7 +393,7 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, true);
+            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, true);
           }
         };
 
@@ -762,7 +763,7 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, true);
+            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, true);
           }
         };
 
@@ -940,7 +941,7 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, false);
+            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, false);
           }
         };
 
@@ -1107,7 +1108,7 @@ public final class PluginManagerConfigurable
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
                                                                      @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, false);
+            return new ListPluginComponent(myPluginModel, descriptor, group, searchListener, false);
           }
         };
 
@@ -1871,7 +1872,7 @@ public final class PluginManagerConfigurable
     if (showAllPredicate.test(group)) {
       group.rightAction = new LinkLabelButton<>(IdeBundle.message("plugins.configurable.show.all"),
                                                 null,
-                                                myMarketplaceTab.mySearchListener,
+                                                myMarketplaceTab.searchListener,
                                                 showAllQuery);
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }

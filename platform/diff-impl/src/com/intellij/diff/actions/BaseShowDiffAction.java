@@ -77,10 +77,11 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
         (baseContent == null || baseContent instanceof DocumentContent)) {
       chain = BlankDiffWindowUtil.createBlankDiffRequestChain((DocumentContent)content1,
                                                               (DocumentContent)content2,
-                                                              (DocumentContent)baseContent);
+                                                              (DocumentContent)baseContent,
+                                                              project);
     }
     else {
-      chain = new MutableDiffRequestChain(content1, baseContent, content2);
+      chain = new MutableDiffRequestChain(content1, baseContent, content2, project);
     }
 
     if (baseFile != null) {

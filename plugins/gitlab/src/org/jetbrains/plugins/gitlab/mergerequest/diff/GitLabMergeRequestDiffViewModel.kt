@@ -9,7 +9,6 @@ import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewMod
 import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
-import com.intellij.collaboration.ui.codereview.diff.viewer.buildChangeContext
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
@@ -64,8 +63,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
     .map { RefComparisonChangesSorter.Grouping(project, it) }
   private val changesFetchFlow = computationStateFlow(mergeRequest.changes, GitLabMergeRequestChanges::loadRevisionsAndParseChanges)
   private val helper = CodeReviewDiffViewModelComputer(changesFetchFlow, changesSorter) { changesBundle, change ->
-    val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
-    val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
+    val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project))
                              ?: error("Could not create diff producer from $change")
     CodeReviewDiffRequestProducer(project, change, changeDiffProducer, changesBundle.patchesByChange[change]?.getDiffComputer())
   }

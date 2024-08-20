@@ -54,7 +54,6 @@ public final class PythonGenerateProjectCallback<T extends PyNewProjectSettings>
 
     if (generator instanceof PythonProjectGenerator && sdk == null && newProject != null) {
       final PyNewProjectSettings newSettings = (PyNewProjectSettings)((PythonProjectGenerator<?>)generator).getProjectSettings();
-      ((PythonProjectGenerator<?>)generator).createAndAddVirtualEnv(newProject, newSettings);
       sdk = newSettings.getSdk();
     }
 

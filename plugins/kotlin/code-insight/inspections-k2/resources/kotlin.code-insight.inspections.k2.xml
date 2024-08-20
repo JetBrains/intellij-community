@@ -1,5 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.inspections">
   <dependencies>
+    <module name="kotlin.base.external-build-system"/>
     <module name="kotlin.code-insight.intentions.k2"/>
     <module name="kotlin.code-insight.inspections.shared"/>
     <module name="kotlin.searching.k2"/>
@@ -433,6 +434,15 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.array.in.data.class.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinOptionsToCompilerOptionsInGradleScriptInspection"
+                     shortName="KotlinOptionsToCompilerOptionsInGradleScript"
+                     groupPathKey="group.path.kotlin.migration"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin" editorAttributes="DEPRECATED_ATTRIBUTES"
+                     key="inspection.kotlin.options.to.compiler.options.display.name" bundle="messages.KotlinBundle"/>
 
   </extensions>
 </idea-plugin>

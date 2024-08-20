@@ -128,7 +128,7 @@ class ProxySettingsUi(
         indent {
           row {
             pacUrlCheckBox = checkBox(UIBundle.message("proxy.pac.url.label")).component
-            pacUrlTextField = textField().align(AlignX.FILL).component
+            pacUrlTextField = textField().align(AlignX.FILL).comment(UIBundle.message("proxy.pac.url.example")).component
           }
           row {
             @Suppress("DialogTitleCapitalization")

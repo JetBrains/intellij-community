@@ -3,22 +3,25 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import org.jetbrains.intellij.build.telemetry.use
+import com.intellij.platform.util.coroutines.mapConcurrent
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.retryWithExponentialBackOff
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.cache.model.BuildTargetState
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAdder
 
 private const val COMMITS_COUNT = 1_000
 
@@ -34,7 +37,7 @@ internal class PortableCompilationCacheDownloader(
 
   private val lastCommits by lazy { git.log(COMMITS_COUNT) }
 
-  private fun downloadString(url: String): String = retryWithExponentialBackOff {
+  private suspend fun downloadString(url: String): String = retryWithExponentialBackOff {
     if (url.isS3()) {
       awsS3Cli("cp", url, "-")
     }
@@ -43,8 +46,8 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  private fun downloadToFile(url: String, file: Path, spanName: String) {
-    TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").use {
+  private suspend fun downloadToFile(url: String, file: Path, spanName: String) {
+    spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").use {
       Files.createDirectories(file.parent)
       retryWithExponentialBackOff {
         if (url.isS3()) {
@@ -60,13 +63,8 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  val availableCommitDepth by lazy {
-    lastCommits.indexOfFirst {
-      availableCachesKeys.contains(it)
-    }
-  }
-
-  private val availableCachesKeys by lazy {
+  @OptIn(DelicateCoroutinesApi::class)
+  private val availableCachesKeysLazyTask = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
     val commitHistory = "$remoteCacheUrl/${CommitsHistory.JSON_FILE}"
     if (isExist(commitHistory)) {
       val json = downloadString(commitHistory)
@@ -77,52 +75,89 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  private fun isExist(path: String): Boolean =
-    TraceManager.spanBuilder("head").setAttribute("url", remoteCacheUrl).use {
+  @OptIn(DelicateCoroutinesApi::class)
+  private val availableCommitDepthLazyTask = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+    val availableCachesKeys = availableCachesKeysLazyTask.await()
+    lastCommits.indexOfFirst {
+      availableCachesKeys.contains(it)
+    }
+  }
+
+  suspend fun getAvailableCommitDepth(): Int = availableCommitDepthLazyTask.await()
+
+  private val blockingAvailableCachesKeys: Collection<String> by lazy {
+    runBlocking {
+      availableCachesKeysLazyTask.await()
+    }
+  }
+
+  private suspend fun isExist(path: String): Boolean {
+    return spanBuilder("head").setAttribute("url", remoteCacheUrl).use {
       retryWithExponentialBackOff {
         httpClient.head(path, remoteCache.authHeader) == 200
       }
     }
+  }
 
-  fun download() {
-    if (availableCommitDepth in 0 until lastCommits.count()) {
-      val lastCachedCommit = lastCommits.get(availableCommitDepth)
-      context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
-      context.messages.block("Available cache keys listing") {
-        availableCachesKeys.forEach(context.messages::info)
+  suspend fun download() {
+    val availableCommitDepth = getAvailableCommitDepth()
+    if (availableCommitDepth !in 0 until lastCommits.count()) {
+      Span.current().addEvent("Unable to find cache for any of last ${lastCommits.count()} commits.")
+      return
+    }
+
+    val lastCachedCommit = lastCommits.get(availableCommitDepth)
+    Span.current().addEvent(
+      "using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit)",
+      Attributes.of(
+        AttributeKey.longKey("behind last commit"), availableCommitDepth.toLong(),
+        AttributeKey.stringArrayKey("available cache keys"), availableCachesKeysLazyTask.await().toList(),
+      )
+    )
+    val start = System.nanoTime()
+    val failed = LongAdder()
+    val totalDownloadedBytes = AtomicLong()
+    var total = -1
+    withContext(Dispatchers.IO) {
+      launch {
+        spanBuilder("get and unpack jps cache").setAttribute("commit", lastCachedCommit).use {
+          saveJpsCache(lastCachedCommit, totalDownloadedBytes)
+        }
       }
-      val start = System.nanoTime()
-      val tasks = mutableListOf<ForkJoinTask<*>>()
-      val totalDownloadedBytes = AtomicLong()
-      tasks.add(forkJoinTask(TraceManager.spanBuilder("get and unpack jps cache").setAttribute("commit", lastCachedCommit)) {
-        saveJpsCache(lastCachedCommit, totalDownloadedBytes)
-      })
 
       val sourcesState = getSourcesState(lastCachedCommit)
       val outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)
-      context.messages.info("Going to download ${outputs.size} compilation output parts.")
-      outputs.forEach { output ->
-        tasks.add(forkJoinTask(TraceManager.spanBuilder("get and unpack output").setAttribute("part", output.remotePath)) { span ->
-          saveOutput(output, totalDownloadedBytes, span)
-        })
+      total = outputs.size
+      spanBuilder("download compilation output parts").setAttribute(AttributeKey.longKey("count"), outputs.size.toLong()).use {
+        outputs.mapConcurrent(downloadParallelism) { output ->
+          spanBuilder("get and unpack output").setAttribute("part", output.remotePath).use { span ->
+            try {
+              saveOutput(compilationOutput = output, totalDownloadedBytes = totalDownloadedBytes, span = span)
+            }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              span.recordException(e)
+              failed.increment()
+            }
+            null
+          }
+        }
       }
+    }
 
-      val failed = ForkJoinTask.invokeAll(tasks).mapNotNull { it.exception }
-      reportStatisticValue("jps-cache:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-      reportStatisticValue("jps-cache:downloaded:bytes", "$totalDownloadedBytes")
-      reportStatisticValue("jps-cache:downloaded:count", "${tasks.size - failed.size}")
-      reportStatisticValue("jps-cache:failed:count", "${failed.size}")
-    }
-    else {
-      context.messages.warning("Unable to find cache for any of last ${lastCommits.count()} commits.")
-    }
+    reportStatisticValue("jps-cache:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+    reportStatisticValue("jps-cache:downloaded:bytes", "$totalDownloadedBytes")
+    reportStatisticValue("jps-cache:downloaded:count", "${total - failed.sum()}")
+    reportStatisticValue("jps-cache:failed:count", "${failed.sum()}")
   }
 
-  private fun getSourcesState(commitHash: String): Map<String, Map<String, BuildTargetState>> {
+  private suspend fun getSourcesState(commitHash: String): Map<String, Map<String, BuildTargetState>> {
     return sourcesStateProcessor.parseSourcesStateFile(downloadString("$remoteCacheUrl/metadata/$commitHash"))
   }
 
-  private fun saveJpsCache(commitHash: String, totalBytes: AtomicLong) {
+  private suspend fun saveJpsCache(commitHash: String, totalBytes: AtomicLong) {
     var cacheArchive: Path? = null
     try {
       cacheArchive = downloadJpsCache(commitHash)
@@ -130,7 +165,7 @@ internal class PortableCompilationCacheDownloader(
       totalBytes.addAndGet(Files.size(cacheArchive))
       val cacheDestination = context.compilationData.dataStorageRoot
 
-      TraceManager.spanBuilder("unpack jps cache")
+      spanBuilder("unpack jps cache")
         .setAttribute("archive", "$cacheArchive")
         .setAttribute("destination", "$cacheDestination")
         .use {
@@ -144,23 +179,26 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  private fun downloadJpsCache(commitHash: String): Path {
+  private suspend fun downloadJpsCache(commitHash: String): Path {
     val cacheArchive = Files.createTempFile("cache", ".zip")
-    downloadToFile("$remoteCacheUrl/caches/$commitHash", cacheArchive, spanName = "download jps cache")
+    downloadToFile(url = "$remoteCacheUrl/caches/$commitHash", file = cacheArchive, spanName = "download jps cache")
     return cacheArchive
   }
 
-  private fun saveOutput(compilationOutput: CompilationOutput, totalDownloadedBytes: AtomicLong, span: Span) {
+  private suspend fun saveOutput(compilationOutput: CompilationOutput, totalDownloadedBytes: AtomicLong, span: Span) {
     var outputArchive: Path? = null
     try {
       outputArchive = downloadOutput(compilationOutput)
       totalDownloadedBytes.addAndGet(Files.size(outputArchive))
-      TraceManager.spanBuilder("unpack output")
+      spanBuilder("unpack output")
         .setAttribute("archive", "$outputArchive")
         .setAttribute("destination", compilationOutput.path)
         .use {
           Decompressor.Zip(outputArchive).overwrite(true).extract(Path.of(compilationOutput.path))
         }
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       span.addEvent("cannot get output", Attributes.of(
@@ -175,9 +213,9 @@ internal class PortableCompilationCacheDownloader(
     }
   }
 
-  private fun downloadOutput(compilationOutput: CompilationOutput): Path {
+  private suspend fun downloadOutput(compilationOutput: CompilationOutput): Path {
     val outputArchive = Path.of(compilationOutput.path, "tmp-output.zip")
-    downloadToFile("$remoteCacheUrl/${compilationOutput.remotePath}", outputArchive, spanName = "download output")
+    downloadToFile(url = "$remoteCacheUrl/${compilationOutput.remotePath}", file = outputArchive, spanName = "download output")
     return outputArchive
   }
 

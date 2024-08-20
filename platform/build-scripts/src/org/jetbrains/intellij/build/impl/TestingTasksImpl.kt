@@ -10,15 +10,16 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
-import org.jetbrains.intellij.build.telemetry.use
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.blockingUse
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.java.ModulePathSplitter
@@ -163,32 +164,39 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     context.messages.warning("'${specifiedOption}' option is specified, so '${ignoredOption}' will be ignored.")
   }
 
-  private fun runTestsFromRunConfigurations(additionalJvmOptions: List<String>,
-                                            runConfigurations: List<JUnitRunConfigurationProperties>,
-                                            systemProperties: MutableMap<String, String>) {
+  private suspend fun runTestsFromRunConfigurations(
+    additionalJvmOptions: List<String>,
+    runConfigurations: List<JUnitRunConfigurationProperties>,
+    systemProperties: MutableMap<String, String>,
+  ) {
     for (configuration in runConfigurations) {
-      blockAndSpan("run '${configuration.name}' run configuration") {
-        runTestsFromRunConfiguration(configuration, additionalJvmOptions, systemProperties)
+      spanBuilder("run '${configuration.name}' run configuration").use {
+        runTestsFromRunConfiguration(runConfigurationProperties = configuration, additionalJvmOptions = additionalJvmOptions, systemProperties = systemProperties)
       }
     }
   }
 
-  private fun runTestsFromRunConfiguration(runConfigurationProperties: JUnitRunConfigurationProperties,
-                                           additionalJvmOptions: List<String>,
-                                           systemProperties: Map<String, String>) {
+  private suspend fun runTestsFromRunConfiguration(
+    runConfigurationProperties: JUnitRunConfigurationProperties,
+    additionalJvmOptions: List<String>,
+    systemProperties: Map<String, String>,
+  ) {
     if (runConfigurationProperties.testSearchScope != JUnitRunConfigurationProperties.TestSearchScope.WHOLE_PROJECT) {
       context.messages.warning(
         "Run configuration '${runConfigurationProperties.name}' uses test search scope '${runConfigurationProperties.testSearchScope.serialized}', " +
-        "while only '${JUnitRunConfigurationProperties.TestSearchScope.WHOLE_PROJECT.serialized}' is supported. Scope will be ignored")
+        "while only '${JUnitRunConfigurationProperties.TestSearchScope.WHOLE_PROJECT.serialized}' is supported. Scope will be ignored"
+      )
     }
     try {
-      runTestsProcess(mainModule = runConfigurationProperties.moduleName,
-                      testGroups = null,
-                      testPatterns = runConfigurationProperties.testClassPatterns.joinToString(separator = ";"),
-                      jvmArgs = removeStandardJvmOptions(runConfigurationProperties.vmParameters) + additionalJvmOptions,
-                      systemProperties = systemProperties,
-                      envVariables = runConfigurationProperties.envVariables,
-                      remoteDebugging = false)
+      runTestsProcess(
+        mainModule = runConfigurationProperties.moduleName,
+        testGroups = null,
+        testPatterns = runConfigurationProperties.testClassPatterns.joinToString(separator = ";"),
+        jvmArgs = removeStandardJvmOptions(runConfigurationProperties.vmParameters) + additionalJvmOptions,
+        systemProperties = systemProperties,
+        envVariables = runConfigurationProperties.envVariables,
+        remoteDebugging = false,
+      )
     }
     catch (e: NoTestsFound) {
       throw RuntimeException("No tests were found in the configuration '${runConfigurationProperties.name}'").apply {
@@ -197,10 +205,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
   }
 
-  private fun runTestsFromGroupsAndPatterns(additionalJvmOptions: List<String>,
-                                            mainModule: String,
-                                            rootExcludeCondition: ((Path) -> Boolean)?,
-                                            systemProperties: MutableMap<String, String>) {
+  private suspend fun runTestsFromGroupsAndPatterns(
+    additionalJvmOptions: List<String>,
+    mainModule: String,
+    rootExcludeCondition: ((Path) -> Boolean)?,
+    systemProperties: MutableMap<String, String>,
+  ) {
     if (rootExcludeCondition != null) {
       val excludedRootPaths = ArrayList<Path>(context.project.modules.size * 2)
       for (module in context.project.modules) {
@@ -219,12 +229,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
 
     try {
-      runTestsProcess(mainModule = mainModule,
-                      testGroups = options.testGroups,
-                      testPatterns = options.testPatterns,
-                      jvmArgs = additionalJvmOptions,
-                      systemProperties = systemProperties,
-                      remoteDebugging = false)
+      runTestsProcess(
+        mainModule = mainModule,
+        testGroups = options.testGroups,
+        testPatterns = options.testPatterns,
+        jvmArgs = additionalJvmOptions,
+        systemProperties = systemProperties,
+        remoteDebugging = false
+      )
     }
     catch (e: NoTestsFound) {
       val msg = buildString {
@@ -276,7 +288,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   private val testDiscoveryTraceFilePath: String
     get() = options.testDiscoveryTraceFilePath ?: context.paths.projectHome.resolve("intellij-tracing/td.tr").toString()
 
-  private fun debugTests(remoteDebugJvmOptions: String,
+  private suspend fun debugTests(remoteDebugJvmOptions: String,
                          additionalJvmOptions: List<String>,
                          mainModule: String) {
     val testConfigurationType = System.getProperty("teamcity.remote-debug.type")
@@ -313,13 +325,15 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                     remoteDebugging = true)
   }
 
-  private fun runTestsProcess(mainModule: String,
-                              testGroups: String?,
-                              testPatterns: String?,
-                              jvmArgs: List<String>,
-                              systemProperties: Map<String, String>,
-                              envVariables: Map<String, String> = emptyMap(),
-                              remoteDebugging: Boolean) {
+  private suspend fun runTestsProcess(
+    mainModule: String,
+    testGroups: String?,
+    testPatterns: String?,
+    jvmArgs: List<String>,
+    systemProperties: Map<String, String>,
+    envVariables: Map<String, String> = emptyMap(),
+    remoteDebugging: Boolean,
+  ) {
     val useKotlinK2 = System.getProperty("idea.kotlin.plugin.use.k2", "false").toBoolean() ||
                       System.getProperty("teamcity.buildType.id", "").contains("KotlinK2Tests")
     val mainJpsModule = context.findRequiredModule(mainModule)
@@ -333,7 +347,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (isBootstrapSuiteDefault && !isRunningInBatchMode) {
       //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
       val testFrameworkCoreModule = context.findRequiredModule("intellij.platform.testFramework.core")
-      val testFrameworkOutput = context.getModuleOutputDir(testFrameworkCoreModule).toFile()
+      val testFrameworkOutput = runBlocking(Dispatchers.Default) {
+        context.getModuleOutputDir(testFrameworkCoreModule).toFile()
+      }
       if (!testRoots.contains(testFrameworkOutput)) {
         testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map(::File))
       }
@@ -398,13 +414,15 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         messages.info("Environment variables: ${envVariables}")
       }
     }
-    runJUnit5Engine(mainModule = mainModule,
-                    systemProperties = systemProperties,
-                    jvmArgs = allJvmArgs,
-                    envVariables = envVariables,
-                    bootstrapClasspath = bootstrapClasspath,
-                    modulePath = modulePath,
-                    testClasspath = testClasspath)
+    runJUnit5Engine(
+      mainModule = mainModule,
+      systemProperties = systemProperties,
+      jvmArgs = allJvmArgs,
+      envVariables = envVariables,
+      bootstrapClasspath = bootstrapClasspath,
+      modulePath = modulePath,
+      testClasspath = testClasspath,
+    )
     notifySnapshotBuilt(allJvmArgs)
   }
 
@@ -480,7 +498,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     val ideaSystemPath = Path.of("$tempDir/system")
     if (cleanSystemDir) {
-      spanBuilder("idea.system.path cleanup").use {
+      spanBuilder("idea.system.path cleanup").blockingUse {
         NioFiles.deleteRecursively(ideaSystemPath)
       }
     }
@@ -730,25 +748,34 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   private fun <T> blockAndSpan(spanName: String, task: Callable<T>): T {
     var result: T? = null
     context.messages.block(spanName) {
-      spanBuilder(spanName).use {
+      spanBuilder(spanName).blockingUse {
         result = task.call()
       }
     }
     return result!!
   }
 
-  private fun runJUnit5Engine(mainModule: String,
-                              systemProperties: Map<String, String>,
-                              jvmArgs: List<String>,
-                              envVariables: Map<String, String>,
-                              bootstrapClasspath: List<String>,
-                              modulePath: List<String>?,
-                              testClasspath: List<String>) {
+  private suspend fun runJUnit5Engine(
+    mainModule: String,
+    systemProperties: Map<String, String>,
+    jvmArgs: List<String>,
+    envVariables: Map<String, String>,
+    bootstrapClasspath: List<String>,
+    modulePath: List<String>?,
+    testClasspath: List<String>,
+  ) {
     if (isRunningInBatchMode) {
       spanBuilder("run tests in batch mode")
         .setAttribute(AttributeKey.stringKey("pattern"), options.batchTestIncludes ?: "")
-        .use {
-          runInBatchMode(mainModule, systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath)
+        .blockingUse {
+          runInBatchMode(
+            mainModule = mainModule,
+            systemProperties = systemProperties,
+            jvmArgs = jvmArgs,
+            envVariables = envVariables,
+            bootstrapClasspath = bootstrapClasspath,
+            testClasspath = testClasspath,
+          )
         }
     }
     else if (options.isDedicatedTestRuntime != "false") {
@@ -757,7 +784,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
       context.messages.info("Will run tests in dedicated runtimes ('${options.isDedicatedTestRuntime}')")
       // First, collect all tests for both JUnit5 and JUnit3+4
-      val testClassesJUnit5 = blockAndSpan("collect junit 5 tests") {
+      val testClassesJUnit5 = spanBuilder("collect junit 5 tests").use {
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
           systemProperties = systemProperties + ("intellij.build.test.list.classes" to testClassesListFile.absolutePathString()),
@@ -767,9 +794,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           modulePath = modulePath,
           testClasspath = testClasspath,
           suiteName = null,
-          methodName = null)
-        return@blockAndSpan testClassesListFile.let { if (Files.exists(it)) it.readLines() else emptyList() }
+          methodName = null,
+        )
+        testClassesListFile.let { if (Files.exists(it)) it.readLines() else emptyList() }
       }
+
       val testClassesJUnit34 = blockAndSpan("collect junit 3+4 tests") {
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
@@ -780,7 +809,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           modulePath = modulePath,
           testClasspath = testClasspath,
           suiteName = options.bootstrapSuite,
-          methodName = null)
+          methodName = null
+        )
         return@blockAndSpan testClassesListFile.let { if (Files.exists(it)) it.readLines() else emptyList() }
       }
 
@@ -823,6 +853,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             if (i != -1) it.substring(0, i) else ""
           }
         }
+
         fun runOnePackage(entry: Map.Entry<String, List<String>>) {
           val packageName = entry.key
           val classes = entry.value
@@ -1035,8 +1066,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 }
 
-private class MyTraceFileUploader(serverUrl: String, token: String?, private val messages: BuildMessages) : TraceFileUploader(serverUrl,
-                                                                                                                              token) {
+private class MyTraceFileUploader(
+  serverUrl: String,
+  token: String?,
+  private val messages: BuildMessages,
+) : TraceFileUploader(serverUrl, token) {
   override fun log(message: String) = messages.info(message)
 }
 
@@ -1051,7 +1085,7 @@ private fun removeStandardJvmOptions(vmOptions: List<String>): List<String> {
   return vmOptions.filter { option -> ignoredPrefixes.none(option::startsWith) }
 }
 
-private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
+private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?) {
   val serverUrl = System.getProperty("intellij.test.discovery.url")
   val token = System.getProperty("intellij.test.discovery.token")
   messages.info("Trying to upload ${file} into ${serverUrl}.")

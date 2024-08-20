@@ -7,6 +7,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.ZipFile
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -112,24 +113,22 @@ private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(
   )
 )
 
-internal suspend fun packNativePresignedFiles(
+internal fun CoroutineScope.packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
   dryRun: Boolean,
   context: BuildContext,
   toRelativePath: (String, String) -> String,
 ) {
-  coroutineScope {
-    for ((source, paths) in nativeFiles) {
-      val sourceFile = source.file
-      launch(Dispatchers.IO) {
-        unpackNativeLibraries(
-          sourceFile = sourceFile,
-          paths = paths,
-          dryRun = dryRun,
-          context = context,
-          toRelativePath = toRelativePath,
-        )
-      }
+  for ((source, paths) in nativeFiles) {
+    val sourceFile = source.file
+    launch(Dispatchers.IO) {
+      unpackNativeLibraries(
+        sourceFile = sourceFile,
+        paths = paths,
+        dryRun = dryRun,
+        context = context,
+        toRelativePath = toRelativePath,
+      )
     }
   }
 }

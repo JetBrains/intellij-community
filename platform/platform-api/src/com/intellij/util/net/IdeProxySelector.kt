@@ -115,19 +115,26 @@ class IdeProxySelector(
       if (autoProxy != null && autoProxy.pacUrl?.toString() == pacUrl?.toString()) return autoProxy.selector
 
       val searchStartMs = System.currentTimeMillis()
-      val detectedSelector = NetUtils.getProxySelector(pacUrl?.toString())
-                             ?: DirectSelector.also {
-                               if (pacUrl != null) {
-                                 logger.warn("failed to configure proxy by pacUrl=$pacUrl, using NO_PROXY")
-                               } else {
-                                 logger.info("unable to autodetect proxy settings, using NO_PROXY")
-                               }
-                             }
+      val detectedSelector = try {
+        NetUtils.getProxySelector(pacUrl?.toString())
+      }
+      catch (e: Exception) {
+        logger.warn("proxy auto-configuration has failed ${pacUrl?.let { "(url=$it)" }}", e)
+        null
+      }
+      val resultSelector = detectedSelector ?: DirectSelector.also {
+        if (pacUrl != null) {
+          logger.warn("failed to configure proxy by pacUrl=$pacUrl, using NO_PROXY")
+        }
+        else {
+          logger.info("unable to autodetect proxy settings, using NO_PROXY")
+        }
+      }
       if (pacUrl == null) {
         proxyAutodetectDurationMs = System.currentTimeMillis() - searchStartMs
       }
-      autoProxyResult.set(AutoProxyHolder(pacUrl, detectedSelector))
-      return detectedSelector
+      autoProxyResult.set(AutoProxyHolder(pacUrl, resultSelector))
+      return resultSelector
     }
   }
 

@@ -44,6 +44,7 @@
 
   <content>
     <module name="kotlin.base.analysis-api-platform"/>
+    <module name="kotlin.base.external-build-system"/>
     <module name="kotlin.base.fe10.plugin"/>
     <module name="kotlin.base.fe10.analysis-api-platform"/>
     <module name="kotlin.base.fe10.project-structure"/>

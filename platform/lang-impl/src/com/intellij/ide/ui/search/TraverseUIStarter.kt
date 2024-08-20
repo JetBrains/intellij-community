@@ -25,15 +25,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.options.*
 import com.intellij.openapi.options.ex.ConfigurableWrapper
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ReflectionUtil
@@ -59,6 +58,7 @@ import java.util.*
  */
 private class TraverseUIStarter : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
+    TraverseUIMode.getInstance().setActive(true)
     try {
       doBuildSearchableOptions(
         options = LinkedHashMap(),

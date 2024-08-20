@@ -2,7 +2,6 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.fs.*
-import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.FileStore
@@ -28,7 +27,7 @@ class IjentNioFileSystem internal constructor(
       ?: throw java.nio.file.FileSystemException("`$uri` was removed from IJent FS providers")
 
   override fun isOpen(): Boolean =
-    ijentFs.coroutineScope.isActive
+    fsProvider.ijentFsApi(uri) != null
 
   override fun isReadOnly(): Boolean = false
 

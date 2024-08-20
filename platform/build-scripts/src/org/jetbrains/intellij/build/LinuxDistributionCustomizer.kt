@@ -3,12 +3,11 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
-abstract class LinuxDistributionCustomizer {
+open class LinuxDistributionCustomizer {
   /**
    * Path to a 128x128 PNG product icon for Linux distribution.
    * If omitted, only an SVG icon will be included.
@@ -30,19 +29,22 @@ abstract class LinuxDistributionCustomizer {
    */
   var extraExecutables: PersistentList<String> = persistentListOf()
 
-  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
-    val basePatterns = persistentListOf(
+  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
+    val basePatterns = sequenceOf(
       "bin/*.sh",
       "plugins/**/*.sh",
       "bin/fsnotifier",
       "bin/restarter"
     )
 
-    val launcherPattern = if (useXPlatLauncher) listOf("bin/${context.productProperties.baseFileName}") else emptyList()
+    val launcherPattern = if (useXPlatLauncher) sequenceOf("bin/${context.productProperties.baseFileName}") else emptySequence()
 
-    val rtPatterns =
-      if (includeRuntime) context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution)
-      else emptyList()
+    val rtPatterns = if (includeRuntime) {
+      context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution)
+    }
+    else {
+      emptySequence()
+    }
 
     return basePatterns + launcherPattern + rtPatterns +
            RepairUtilityBuilder.executableFilesPatterns(context) +

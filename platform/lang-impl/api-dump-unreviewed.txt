@@ -6588,12 +6588,14 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayEditorMouseLis
 - com.intellij.openapi.editor.event.EditorMouseListener
 - <init>():V
 - mouseClicked(com.intellij.openapi.editor.event.EditorMouseEvent):V
+- mouseReleased(com.intellij.openapi.editor.event.EditorMouseEvent):V
 f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsMouseMotionListener
 - com.intellij.openapi.editor.event.EditorMouseMotionListener
 - <init>():V
 - mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
 f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass
 - com.intellij.codeHighlighting.EditorBoundHighlightingPass
+- com.intellij.openapi.project.DumbAware
 - sf:Companion:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass$Companion
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor,java.util.List,Z,Z):V
 - b:<init>(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor,java.util.List,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -6604,6 +6606,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass$Comp
 f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 - com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 - com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
+- com.intellij.openapi.project.DumbAware
 - sf:Companion:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory$Companion
 - <init>():V
 - createHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass
@@ -6719,7 +6722,8 @@ f:com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 - text(java.lang.String,com.intellij.codeInsight.hints.declarative.InlayActionData):V
 - toggleButton(kotlin.jvm.functions.Function1):V
 f:com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl$Companion
-- f:createRoot():com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
+- f:createRoot(com.intellij.codeInsight.hints.declarative.InlayPosition):com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
+- bs:createRoot$default(com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl$Companion,com.intellij.codeInsight.hints.declarative.InlayPosition,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 f:com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry
 - <init>(java.lang.String,B,com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea):V
 - b:<init>(java.lang.String,B,com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -6727,12 +6731,13 @@ f:com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry
 - computeWidth(com.intellij.codeInsight.hints.presentation.InlayTextMetrics):I
 - equals(java.lang.Object):Z
 - f:getText():java.lang.String
-- handleClick(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList,Z):V
+- handleClick(com.intellij.openapi.editor.event.EditorMouseEvent,com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList,Z):V
 - hashCode():I
 - render(java.awt.Graphics2D,com.intellij.codeInsight.hints.presentation.InlayTextMetrics,com.intellij.openapi.editor.markup.TextAttributes,Z,I,I,com.intellij.openapi.editor.Editor):V
 f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingIntention
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.codeInsight.intention.LowPriorityAction
+- com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String,java.lang.String,Z):V
 - getFamilyName():java.lang.String
 - getText():java.lang.String
@@ -6740,11 +6745,13 @@ f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglin
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - startInWriteAction():Z
 f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingIntentionMenuContributor
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - collectActions(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.codeInsight.daemon.impl.ShowIntentionsPass$IntentionsInfo,I,I):V
 f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingOptionIntention
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.codeInsight.intention.LowPriorityAction
+- com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingOptionIntention$Mode):V
 - getFamilyName():java.lang.String
 - getText():java.lang.String
@@ -17287,6 +17294,7 @@ a:com.intellij.ide.todo.TodoPanel
 - hasNextOccurence():Z
 - hasPreviousOccurence():Z
 - p:rebuildWithAlarm(com.intellij.util.Alarm):V
+- selectItem(com.intellij.psi.search.TodoItem):V
 - p:setDisplayName(java.lang.String):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction
@@ -17395,6 +17403,7 @@ c:com.intellij.ide.todo.TodoView
 - addCustomTodoView(com.intellij.ide.todo.TodoTreeBuilderFactory,java.lang.String,com.intellij.ide.todo.TodoPanelSettings):com.intellij.ui.content.Content
 - p:createAllTodoBuilder(javax.swing.JTree,com.intellij.openapi.project.Project):com.intellij.ide.todo.AllTodosTreeBuilder
 - dispose():V
+- getCurrentFilePanel():com.intellij.ide.todo.TodoPanel
 - getState():com.intellij.ide.todo.TodoView$State
 - initToolWindow(com.intellij.openapi.wm.ToolWindow):V
 - loadState(com.intellij.ide.todo.TodoView$State):V
@@ -17523,6 +17532,13 @@ c:com.intellij.ide.todo.nodes.TodoTreeHelper
 - getProject():com.intellij.openapi.project.Project
 - getSelectedElement(java.lang.Object):com.intellij.psi.PsiElement
 - skipDirectory(com.intellij.psi.PsiDirectory):Z
+f:com.intellij.ide.ui.search.TraverseUIMode
+- sf:Companion:com.intellij.ide.ui.search.TraverseUIMode$Companion
+- <init>():V
+- sf:getInstance():com.intellij.ide.ui.search.TraverseUIMode
+- f:isActive():Z
+f:com.intellij.ide.ui.search.TraverseUIMode$Companion
+- f:getInstance():com.intellij.ide.ui.search.TraverseUIMode
 a:com.intellij.ide.util.AbstractTreeClassChooserDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.ide.util.TreeChooser
@@ -17807,7 +17823,6 @@ c:com.intellij.ide.util.NavigationItemListCellRenderer
 - <init>():V
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 f:com.intellij.ide.util.PSIRenderingUtils
-- s:cutContainerText(java.lang.String,I,java.awt.FontMetrics):java.lang.String
 - s:extractPresentablePath(com.intellij.psi.PsiElement):java.lang.String
 - s:getNavigationItemAttributesStatic(java.lang.Object):com.intellij.openapi.editor.markup.TextAttributes
 - s:getPSIElementText(com.intellij.psi.PsiElement):java.lang.String
@@ -18435,14 +18450,15 @@ a:com.intellij.ide.util.gotoByName.SimpleChooseByNameModel
 a:com.intellij.ide.util.projectWizard.AbstractNewProjectDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>():V
-- p:createActions():javax.swing.Action[]
-- p:createCenterPanel():javax.swing.JComponent
-- pa:createRootStep():com.intellij.openapi.actionSystem.DefaultActionGroup
+- pf:createActions():javax.swing.Action[]
+- pf:createCenterPanel():javax.swing.JComponent
+- p:createNewProjectStep():com.intellij.ide.util.projectWizard.AbstractNewProjectStep
+- p:createRootStep():com.intellij.openapi.actionSystem.DefaultActionGroup
 - p:createSouthPanel():javax.swing.JComponent
 - p:getHelpId():java.lang.String
 - getPreferredFocusedComponent():javax.swing.JComponent
 - p:getStyle():com.intellij.openapi.ui.DialogWrapper$DialogStyle
-- p:init():V
+- pf:init():V
 a:com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.project.DumbAware
