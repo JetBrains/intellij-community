@@ -95,6 +95,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   // subId->Tree state; key may be null
   private final Map<String,TreeState> myReadTreeState = new HashMap<>();
   private final AtomicBoolean myTreeStateRestored = new AtomicBoolean();
+  boolean myNonEmptyTreeStateRestored = false;
   private String mySubId;
   private static final @NonNls String ELEMENT_SUB_PANE = "subPane";
   private static final @NonNls String ATTRIBUTE_SUB_ID = "subId";
@@ -613,6 +614,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       var initListener = new MyTreeStateListener();
       myTree.addTreeExpansionListener(initListener);
       treeState.applyTo(myTree);
+      myNonEmptyTreeStateRestored = true;
     }
     else if (myTree.isSelectionEmpty()) {
       TreeUtil.promiseSelectFirst(myTree);

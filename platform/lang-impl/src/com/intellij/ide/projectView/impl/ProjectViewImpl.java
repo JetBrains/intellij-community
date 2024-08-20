@@ -635,7 +635,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         JTree tree = pane.getTree();
         if (tree != null && projectView instanceof ProjectViewImpl impl && impl.firstShow) {
           impl.firstShow = false;
-          TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
+          if (!pane.myNonEmptyTreeStateRestored) {
+            TreeUtil.promiseSelectFirst(tree).onSuccess(tree::expandPath);
+          }
         }
       }
 
