@@ -378,7 +378,10 @@
       "informationDialog.svg": "general/informationDialog.svg",
       "layout.svg": "debugger/restoreLayout.svg",
       "left.svg": "actions/back.svg",
-      "listFiles.svg": "actions/listFiles.svg",
+      "listFiles.svg": [
+        "actions/annotate.svg",
+        "actions/listFiles.svg"
+      ],
       "locate.svg": "general/locate.svg",
       "locked.svg": "ide/readonly.svg",
       "moreHorizontal.svg": "actions/moreHorizontal.svg",
