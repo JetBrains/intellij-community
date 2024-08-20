@@ -2,7 +2,6 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.actionSystem.DataSink
@@ -17,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.CommitInfo
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension
@@ -97,13 +97,23 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     workflow.initCommitHandlers(checkinHandlers)
   }
 
-  protected fun createCommitOptions(): CommitOptions = CommitOptionsImpl(
-    if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),
-    getBeforeOptions(workflow.commitHandlers),
-    // TODO Potential leak here for non-modal
-    getAfterOptions(workflow.commitHandlers, this),
-    CommitOptionsDialogExtension.EP_NAME.extensionList.flatMap { it.getOptions(project) }
-  )
+  protected fun createCommitOptions(): CommitOptions {
+    val beforeCommitChecksOptions = mutableListOf<RefreshableOnComponent>()
+    val postCommitChecksOptions = mutableListOf<RefreshableOnComponent>()
+    workflow.commitHandlers.forEachLoggingErrors(LOG) { handler ->
+      val panel = handler.beforeCheckinConfigurationPanel ?: return@forEachLoggingErrors
+      val listToUpdate = if (handler.isPostCommit()) postCommitChecksOptions else beforeCommitChecksOptions
+      listToUpdate += panel
+    }
+    return CommitOptionsImpl(
+      vcsOptions = if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),
+      beforeCommitChecksOptions = beforeCommitChecksOptions,
+      postCommitChecksOptions = postCommitChecksOptions,
+      // TODO Potential leak here for non-modal
+      afterOptions = getAfterOptions(workflow.commitHandlers, this),
+      extensionOptions = CommitOptionsDialogExtension.EP_NAME.extensionList.flatMap { it.getOptions(project) }
+    )
+  }
 
   abstract fun updateDefaultCommitActionName()
 
@@ -186,9 +196,6 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
         Pair(vcs, optionsPanel)
       }
       .toMap()
-
-  private fun getBeforeOptions(handlers: Collection<CheckinHandler>): List<RefreshableOnComponent> =
-    handlers.mapNotNullLoggingErrors(LOG) { it.beforeCheckinConfigurationPanel }
 
   private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.getAfterCheckinConfigurationPanel(parent) }
@@ -320,3 +327,6 @@ class DynamicCommitInfoImpl(
 interface DynamicCommitInfo : CommitInfo {
   fun asStaticInfo(): StaticCommitInfo
 }
+
+internal fun CheckinHandler.isPostCommit() =
+  (this as? CommitCheck)?.getExecutionOrder() == CommitCheck.ExecutionOrder.POST_COMMIT

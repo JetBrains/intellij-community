@@ -5633,6 +5633,7 @@ f:com.intellij.openapi.vcs.configurable.CommitDialogConfigurable
 - <init>(com.intellij.openapi.project.Project):V
 - createConfigurables():java.util.List
 - createPanel():com.intellij.openapi.ui.DialogPanel
+- disposeUIResources():V
 f:com.intellij.openapi.vcs.configurable.CommitDialogConfigurable$Companion
 c:com.intellij.openapi.vcs.configurable.IssueLinkConfigurationDialog
 - com.intellij.openapi.ui.DialogWrapper
@@ -7841,15 +7842,17 @@ e:com.intellij.vcs.commit.CommitOption
 - s:values():com.intellij.vcs.commit.CommitOption[]
 com.intellij.vcs.commit.CommitOptions
 - a:getAfterOptions():java.util.List
-- a:getBeforeOptions():java.util.List
+- a:getBeforeCommitChecksOptions():java.util.List
 - a:getExtensionOptions():java.util.List
+- a:getPostCommitChecksOptions():java.util.List
 - a:getVcsOptions():java.util.Map
 f:com.intellij.vcs.commit.CommitOptionsImpl
 - com.intellij.vcs.commit.CommitOptions
-- <init>(java.util.Map,java.util.List,java.util.List,java.util.List):V
+- <init>(java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List):V
 - getAfterOptions():java.util.List
-- getBeforeOptions():java.util.List
+- getBeforeCommitChecksOptions():java.util.List
 - getExtensionOptions():java.util.List
+- getPostCommitChecksOptions():java.util.List
 - getVcsOptions():java.util.Map
 f:com.intellij.vcs.commit.CommitOptionsKt
 - sf:getAllOptions(com.intellij.vcs.commit.CommitOptions):kotlin.sequences.Sequence
@@ -7864,6 +7867,7 @@ f:com.intellij.vcs.commit.CommitOptionsPanel
 - setVisible(java.util.Collection):V
 f:com.intellij.vcs.commit.CommitOptionsPanel$Companion
 - f:commitChecksGroupTitle(java.lang.String):java.lang.String
+- f:postCommitChecksGroupTitle(java.lang.String):java.lang.String
 com.intellij.vcs.commit.CommitOptionsUi
 - a:setOptions(com.intellij.vcs.commit.CommitOptions):V
 - a:setVisible(java.util.Collection):V
@@ -8091,8 +8095,9 @@ f:com.intellij.vcs.commit.MutableCommitOptions
 - f:add(com.intellij.vcs.commit.CommitOptions):V
 - f:clear():V
 - getAfterOptions():java.util.List
-- getBeforeOptions():java.util.List
+- getBeforeCommitChecksOptions():java.util.List
 - getExtensionOptions():java.util.List
+- getPostCommitChecksOptions():java.util.List
 - getVcsOptions():java.util.Map
 - f:toUnmodifiableOptions():com.intellij.vcs.commit.CommitOptionsImpl
 f:com.intellij.vcs.commit.NonModalAmendCommitHandler

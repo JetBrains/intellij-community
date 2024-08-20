@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
@@ -26,13 +27,22 @@ import java.io.File
 
 class CommitDialogConfigurable(private val project: Project)
   : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(VcsBundle.message("commit.dialog.configurable"), HELP_ID, ID) {
+  private val postCommitConfigurables = mutableSetOf<UnnamedConfigurable>()
 
   override fun createConfigurables(): List<UnnamedConfigurable> {
     val allVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss.toList()
     val checkinPanel = SettingsMockCheckinPanel(project)
     val commitContext = CommitContext()
     val checkinHandlers = AbstractCommitWorkflow.getCommitHandlers(allVcses, checkinPanel, commitContext)
-    return checkinHandlers.mapNotNullLoggingErrors(LOG) { it.beforeCheckinSettings }
+
+    postCommitConfigurables.clear()
+    return checkinHandlers.mapNotNullLoggingErrors(LOG) { handler ->
+      val configurable = handler.beforeCheckinSettings
+      if (configurable != null && handler.isPostCommit()) {
+        postCommitConfigurables.add(configurable)
+      }
+      configurable
+    }
   }
 
   override fun createPanel(): DialogPanel {
@@ -66,23 +76,34 @@ class CommitDialogConfigurable(private val project: Project)
         }.resizableRow()
       }
 
-      if (configurables.isNotEmpty()) {
-        val actionName = UIUtil.removeMnemonic(getDefaultCommitActionName(emptyList()))
+      val actionName = UIUtil.removeMnemonic(getDefaultCommitActionName(emptyList()))
+
+      val (postCommitChecks, beforeCommitChecks) = configurables.partition { it in postCommitConfigurables }
+
+      if (beforeCommitChecks.isNotEmpty()) {
         group(CommitOptionsPanel.commitChecksGroupTitle(actionName)) {
+          beforeCommitChecks.forEach { appendDslConfigurable(it) }
+        }
+      }
+
+      if (postCommitChecks.isNotEmpty()) {
+        group(CommitOptionsPanel.postCommitChecksGroupTitle(actionName)) {
           row {
-            checkBox(VcsBundle.message("settings.commit.slow.checks"))
-              .comment(VcsBundle.message("settings.commit.slow.checks.description"))
+            checkBox(VcsBundle.message("settings.commit.postpone.slow.checks"))
+              .comment(VcsBundle.message("settings.commit.postpone.slow.checks.description"))
               .enabledIf(nonModalCommitCheckBox.selected)
               .bindSelected({ settings.NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS }, { setRunSlowCommitChecksAfterCommit(project, it) })
           }
           separator()
-
-          for (configurable in configurables) {
-            appendDslConfigurable(configurable)
-          }
+          postCommitChecks.forEach { appendDslConfigurable(it) }
         }
       }
     }
+  }
+
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    postCommitConfigurables.clear()
   }
 
   private class SettingsMockCheckinPanel(private val project: Project) : CheckinProjectPanel {

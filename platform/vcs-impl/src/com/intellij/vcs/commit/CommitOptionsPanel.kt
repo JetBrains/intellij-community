@@ -55,33 +55,33 @@ class CommitOptionsPanel(private val project: Project,
         }.visibleIf(VcsVisiblePredicate(vcs))
       }
 
-      val beforeOptions = options.beforeOptions
-      if (beforeOptions.isNotEmpty()) {
+      val preCommitChecks = options.beforeCommitChecksOptions
+      if (preCommitChecks.isNotEmpty()) {
         group(commitChecksGroupTitle(actionName)) {
+          appendOptionRows(preCommitChecks)
+        }
+      }
+
+      val postCommitChecks = options.postCommitChecksOptions
+      if (postCommitChecks.isNotEmpty()) {
+        group(postCommitChecksGroupTitle(actionName)) {
           if (nonModalCommit) {
-            appendNonModalCommitSettingsRow()
+            appendNonModalCommitSettingsRow(actionName)
             separator()
           }
-          for (option in beforeOptions) {
-            appendOptionRow(option)
-          }
+          appendOptionRows(postCommitChecks)
         }
       }
 
       val afterOptions = options.afterOptions
       if (afterOptions.isNotEmpty()) {
         group(message("border.standard.after.checkin.options.group", actionName)) {
-          for (option in afterOptions) {
-            appendOptionRow(option)
-          }
+          appendOptionRows(afterOptions)
         }
       }
+
       val extensionOptions = options.extensionOptions
-      if (extensionOptions.isNotEmpty()) {
-        for (option in extensionOptions) {
-          appendOptionRow(option)
-        }
-      }
+      appendOptionRows(extensionOptions)
     }
 
     // Hack: do not iterate over checkboxes in CommitDialog.
@@ -92,15 +92,17 @@ class CommitOptionsPanel(private val project: Project,
     }
   }
 
-  private fun Panel.appendNonModalCommitSettingsRow() {
+  private fun Panel.appendNonModalCommitSettingsRow(actionName: String) {
     val settings = VcsConfiguration.getInstance(project)
     row {
-      checkBox(message("settings.commit.slow.checks"))
-        .comment(message("settings.commit.slow.checks.description.short"))
+      checkBox(message("settings.commit.postpone.slow.checks", actionName))
+        .comment(message("settings.commit.postpone.slow.checks.description.short"))
         .selected(settings.NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS)
         .onChanged { setRunSlowCommitChecksAfterCommit(project, it.isSelected) }
     }
   }
+
+  private fun Panel.appendOptionRows(options: List<RefreshableOnComponent>) = options.forEach { appendOptionRow(it) }
 
   private fun Panel.appendOptionRow(option: RefreshableOnComponent) {
     val component = extractMeaningfulComponent(option.component)
@@ -142,5 +144,6 @@ class CommitOptionsPanel(private val project: Project,
 
   companion object {
     fun commitChecksGroupTitle(actionName: @Nls String): @Nls String = message("commit.checks.group", actionName)
+    fun postCommitChecksGroupTitle(actionName: @Nls String): @Nls String = message("commit.checks.group.post", actionName)
   }
 }
