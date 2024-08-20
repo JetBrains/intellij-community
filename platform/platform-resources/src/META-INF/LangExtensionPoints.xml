@@ -698,5 +698,8 @@
                     interface="com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker"/>
     <extensionPoint qualifiedName="com.intellij.marketplaceTextualFeaturesProvider" dynamic="true"
                     interface="com.intellij.ide.plugins.marketplace.statistics.features.MarketplaceTextualFeaturesProvider"/>
+    <extensionPoint qualifiedName="com.intellij.mlCompletionFeaturesCollector" dynamic="true" beanClass="com.intellij.lang.LanguageExtensionPoint">
+        <with attribute="implementationClass" implements="com.intellij.codeInsight.inline.completion.features.MLCompletionFeaturesCollector"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.features
 
 import com.intellij.codeInsight.inline.completion.features.MLCompletionFeaturesScopeAnalyzer.ScopeType
+import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -36,14 +37,14 @@ interface MLCompletionFeaturesCollector {
     val argumentsSize: Int?,
     val isIntoKeywordArgument: Boolean? = null,
     val haveNamedArgLeft: Boolean? = null,
-    val haveNamedArgRight: Boolean? = null
+    val haveNamedArgRight: Boolean? = null,
   )
 
   data class BracketFeatures(
     val haveOpeningParenthesisOnTheLeft: Boolean,
     val haveOpeningBracketOnTheLeft: Boolean,
     val haveOpeningBraceOnTheLeft: Boolean,
-    val haveOpeningAngleBracketOnTheLeft: Boolean
+    val haveOpeningAngleBracketOnTheLeft: Boolean,
   )
 
   data class SuggestionReferenceFeatures(
@@ -76,4 +77,9 @@ interface MLCompletionFeaturesCollector {
     val valuableSymbolsAfter: Boolean?,
     val hasErrorPsi: Boolean?,
   )
+
+  companion object {
+    private val EP_NAME = LanguageExtension<MLCompletionFeaturesCollector>("com.intellij.mlCompletionFeaturesCollector")
+    fun get(file: PsiFile): MLCompletionFeaturesCollector? = EP_NAME.forLanguage(file.viewProvider.baseLanguage)
+  }
 }
