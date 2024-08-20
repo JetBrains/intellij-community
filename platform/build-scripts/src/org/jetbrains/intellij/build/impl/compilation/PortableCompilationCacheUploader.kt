@@ -42,7 +42,6 @@ internal class PortableCompilationCacheUploader(
   private val s3Folder: Path,
   private val forcedUpload: Boolean,
 ) {
-  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
   private val uploader = Uploader(remoteCache.uploadUrl, remoteCache.authHeader)
 
   private val commitHistory = CommitsHistory(mapOf(remoteGitUrl to setOf(commitHash)))
@@ -53,14 +52,16 @@ internal class PortableCompilationCacheUploader(
   }
 
   suspend fun upload(messages: BuildMessages) {
-    check(Files.exists(sourcesStateProcessor.sourceStateFile)) {
+    val sourceStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
+    val sourceStateFile = sourceStateProcessor.sourceStateFile
+    check(Files.exists(sourceStateFile)) {
       "Compilation outputs doesn't contain source state file, " +
       "please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag"
     }
 
     val start = System.nanoTime()
     val totalUploadedBytes = AtomicLong()
-    val currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
+    val currentSourcesState = sourceStateProcessor.parseSourcesStateFile()
     val uploadedOutputCount = AtomicInteger()
     withContext(Dispatchers.IO) {
       // Jps Caches upload is started first because of significant size
@@ -71,7 +72,12 @@ internal class PortableCompilationCacheUploader(
       }
 
       spanBuilder("upload compilation outputs").use {
-        uploadCompilationOutputs(currentSourcesState = currentSourcesState, uploader = uploader, uploadedOutputCount = uploadedOutputCount)
+        uploadCompilationOutputs(
+          currentSourcesState = currentSourcesState,
+          uploader = uploader,
+          uploadedOutputCount = uploadedOutputCount,
+          sourcesStateProcessor = sourceStateProcessor,
+        )
       }
     }
 
@@ -79,11 +85,11 @@ internal class PortableCompilationCacheUploader(
     messages.reportStatisticValue("jps-cache:uploaded:count", (uploadedOutputCount.get() + 1).toString())
     messages.reportStatisticValue("jps-cache:uploaded:bytes", "$totalUploadedBytes")
 
-    val totalOutputs = (sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size).toString()
+    val totalOutputs = (sourceStateProcessor.getAllCompilationOutputs(currentSourcesState).size).toString()
     messages.reportStatisticValue("Total outputs", totalOutputs)
     messages.reportStatisticValue("Uploaded outputs", uploadedOutputCount.get().toString())
 
-    uploadMetadata()
+    uploadMetadata(sourceStateFile)
     uploadToS3()
   }
 
@@ -106,10 +112,9 @@ internal class PortableCompilationCacheUploader(
     moveFile(zipFile, s3Folder.resolve(cachePath))
   }
 
-  private suspend fun uploadMetadata() {
+  private suspend fun uploadMetadata(sourceStateFile: Path) {
     val metadataPath = "metadata/$commitHash"
     spanBuilder("upload metadata").setAttribute("path", metadataPath).use {
-      val sourceStateFile = sourcesStateProcessor.sourceStateFile
       uploader.upload(metadataPath, sourceStateFile)
       copyFile(sourceStateFile, s3Folder.resolve(metadataPath))
     }
@@ -119,6 +124,7 @@ internal class PortableCompilationCacheUploader(
     currentSourcesState: Map<String, Map<String, BuildTargetState>>,
     uploader: Uploader,
     uploadedOutputCount: AtomicInteger,
+    sourcesStateProcessor: SourcesStateProcessor,
   ) {
     sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).forEachConcurrent(uploadParallelism) { compilationOutput ->
       spanBuilder("upload output part").setAttribute("part", compilationOutput.remotePath).use { span ->
