@@ -78,11 +78,11 @@ public final class TodoPattern implements Cloneable {
   }
 
   public boolean equals(Object o) {
-    return this == o || o instanceof TodoPattern that && myIndexPattern.equals(that.myIndexPattern);
+    return this == o || o instanceof TodoPattern that && myIndexPattern.equals(that.myIndexPattern) && myAttributes.equals(that.myAttributes);
   }
 
   public int hashCode() {
-    return myIndexPattern.hashCode();
+    return myIndexPattern.hashCode() * 31 + myAttributes.hashCode();
   }
 
   public IndexPattern getIndexPattern() {
