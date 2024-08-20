@@ -97,16 +97,23 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     }
 
     Point point = e.getMouseEvent().getPoint();
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
-      if (handler.isEnabled(myProject)) {
-        requestHint(handler, editor, point, e, type);
-        return;
-      }
-    }
 
-    // if no providers were triggered - hide
-    hideHint();
+    if (!Registry.is("debugger.valueLookupFrontendBackend")) {
+      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+        QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
+        if (handler.isEnabled(myProject)) {
+          requestHint(handler, editor, point, e, type);
+          return;
+        }
+      }
+
+      // if no providers were triggered - hide
+      hideHint();
+    }
+    else {
+      QuickEvaluateHandler handler = new ValueLookupManagerQuickEvaluateHandler();
+      requestHint(handler, editor, point, e, type);
+    }
   }
 
   private void requestHint(final QuickEvaluateHandler handler,

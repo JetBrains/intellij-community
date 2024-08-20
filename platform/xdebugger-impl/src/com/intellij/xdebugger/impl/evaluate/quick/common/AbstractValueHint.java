@@ -233,7 +233,7 @@ public abstract class AbstractValueHint {
 
   private boolean myInsideShow = false; // to avoid invoking myHideRunnable for new popups with updated presentation
 
-  private void processHintHidden() {
+  protected void processHintHidden() {
     if (!myInsideShow) {
       if (myHideRunnable != null) {
         myHideRunnable.run();

@@ -15,6 +15,9 @@
  */
 package com.intellij.xdebugger.impl.evaluate.quick.common
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class ValueHintType {
   MOUSE_OVER_HINT,
   MOUSE_ALT_OVER_HINT,

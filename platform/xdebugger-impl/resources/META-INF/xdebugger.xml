@@ -141,6 +141,8 @@
 
     <editorFloatingToolbarProvider implementation="com.intellij.xdebugger.impl.hotswap.HotSwapFloatingToolbarProvider"/>
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
+    <registryKey defaultValue="false" key="debugger.valueLookupFrontendBackend"
+                 description="Provides a way to use frontend-backend implementation of debugger's evaluation popup"/>
   </extensions>
 
   <actions>

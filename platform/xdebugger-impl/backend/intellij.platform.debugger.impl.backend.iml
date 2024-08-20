@@ -16,6 +16,7 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/1.9.20-0.1/rpc-compiler-plugin-1.9.20-0.1.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -43,5 +44,7 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>
