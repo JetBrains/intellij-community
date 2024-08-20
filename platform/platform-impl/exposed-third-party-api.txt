@@ -55,5 +55,3 @@ org/cef/handler/CefRenderHandler
 sun/awt/FontConfiguration
 sun/awt/KeyboardFocusManagerPeerImpl
 sun/font/SunFontManager
-
-

@@ -7482,6 +7482,16 @@ e:com.intellij.ide.plugins.enums.SortBy
 - s:values():com.intellij.ide.plugins.enums.SortBy[]
 f:com.intellij.ide.plugins.enums.SortBy$Companion
 - f:getByQueryOrNull(java.lang.String):com.intellij.ide.plugins.enums.SortBy
+f:com.intellij.ide.plugins.marketplace.CustomTrialPeriod
+- <init>(java.lang.String,I):V
+- f:component1():java.lang.String
+- f:component2():I
+- f:copy(java.lang.String,I):com.intellij.ide.plugins.marketplace.CustomTrialPeriod
+- bs:copy$default(com.intellij.ide.plugins.marketplace.CustomTrialPeriod,java.lang.String,I,I,java.lang.Object):com.intellij.ide.plugins.marketplace.CustomTrialPeriod
+- equals(java.lang.Object):Z
+- f:getProductCode():java.lang.String
+- f:getTrialPeriod():I
+- hashCode():I
 f:com.intellij.ide.plugins.marketplace.FeatureImpl
 - <init>():V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
@@ -7678,12 +7688,14 @@ f:com.intellij.ide.plugins.marketplace.ReviewCommentPlugin
 - hashCode():I
 f:com.intellij.ide.plugins.marketplace.SalesMetadata
 - <init>():V
-- <init>(java.lang.Integer):V
-- b:<init>(java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.Integer,java.util.List):V
+- b:<init>(java.lang.Integer,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.Integer
-- f:copy(java.lang.Integer):com.intellij.ide.plugins.marketplace.SalesMetadata
-- bs:copy$default(com.intellij.ide.plugins.marketplace.SalesMetadata,java.lang.Integer,I,java.lang.Object):com.intellij.ide.plugins.marketplace.SalesMetadata
+- f:component2():java.util.List
+- f:copy(java.lang.Integer,java.util.List):com.intellij.ide.plugins.marketplace.SalesMetadata
+- bs:copy$default(com.intellij.ide.plugins.marketplace.SalesMetadata,java.lang.Integer,java.util.List,I,java.lang.Object):com.intellij.ide.plugins.marketplace.SalesMetadata
 - equals(java.lang.Object):Z
+- f:getCustomTrialPeriods():java.util.List
 - f:getTrialPeriod():java.lang.Integer
 - hashCode():I
 e:com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
@@ -25094,13 +25106,21 @@ c:com.intellij.ui.popup.AbstractPopup$MyContentPanel
 - setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ui.popup.ActionPopupOptions
+- autoSelectionEnabled():Z
 - s:create(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
 - s:empty():com.intellij.ui.popup.ActionPopupOptions
 - s:forStep(Z,Z,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
 - s:forStepAndItems(Z,Z,Z,Z,Z,com.intellij.openapi.util.Condition,I):com.intellij.ui.popup.ActionPopupOptions
+- getDefaultIndex():I
+- getMaxRowCount():I
+- getPreselectCondition():com.intellij.openapi.util.Condition
+- honorActionMnemonics():Z
 - s:honorMnemonics():com.intellij.ui.popup.ActionPopupOptions
 - s:mnemonicsAndDisabled():com.intellij.ui.popup.ActionPopupOptions
 - s:showDisabled():com.intellij.ui.popup.ActionPopupOptions
+- showDisabledActions():Z
+- showNumbers():Z
+- useAlphaAsNumbers():Z
 c:com.intellij.ui.popup.ActionPopupStep
 - com.intellij.openapi.ui.popup.ListPopupStepEx
 - com.intellij.openapi.ui.popup.MnemonicNavigationFilter
@@ -25121,6 +25141,7 @@ c:com.intellij.ui.popup.ActionPopupStep
 - getMnemonicNavigationFilter():com.intellij.openapi.ui.popup.MnemonicNavigationFilter
 - getMnemonicPos(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):I
 - getMnemonicString(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
+- getOptions():com.intellij.ui.popup.ActionPopupOptions
 - getPresentationFactory():com.intellij.openapi.actionSystem.impl.PresentationFactory
 - getSecondaryTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
 - getSelectedIconFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):javax.swing.Icon
