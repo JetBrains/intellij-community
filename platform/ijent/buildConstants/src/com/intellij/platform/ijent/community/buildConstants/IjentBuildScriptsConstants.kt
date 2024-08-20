@@ -10,12 +10,13 @@ package com.intellij.platform.ijent.community.buildConstants
  * `com.intellij.testFramework.common.PlatformPrefix.PREFIX_CANDIDATES`.
  */
 fun isIjentWslFsEnabledByDefaultForProduct(platformPrefix: String?): Boolean =
-  platformPrefix in IJENT_ENABLED_BY_DEFAULT_IN
+  platformPrefix !in IJENT_DISABLED_BY_DEFAULT_IN
 
-private val IJENT_ENABLED_BY_DEFAULT_IN: Collection<String> = listOf(
-  "idea",
-  "Idea",
-  "WebStorm",
+/**
+ * In case of problems in a particular IDE and inability to fix them quickly, add the platform prefix here.
+ * The platform prefix is defined in `org.jetbrains.intellij.build.ProductProperties.platformPrefix`.
+ */
+private val IJENT_DISABLED_BY_DEFAULT_IN: Collection<String> = listOf(
 )
 
 const val IJENT_BOOT_CLASSPATH_MODULE = "intellij.platform.core.nio.fs"
@@ -24,8 +25,7 @@ const val IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY = "wsl.use.remote.agent.for.nio.fil
 
 const val IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS = "com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider"
 
-val ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS: List<String> = listOf(
+val MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS: List<String> = listOf(
   "-Djava.nio.file.spi.DefaultFileSystemProvider=$IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS",
   "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
-  "-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=true"
 )

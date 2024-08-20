@@ -4,7 +4,8 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.platform.ijent.community.buildConstants.ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
+import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
 import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.common.AttributeKey
@@ -416,8 +417,10 @@ internal class WindowsDistributionBuilder(
   private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
     var vmOptions = VmOptionsGenerator.computeVmOptions(context).asSequence()
-    if (isIjentWslFsEnabledByDefaultForProduct(context.productProperties.platformPrefix)) {
-      vmOptions += ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
+    val isIjentWslFsEnabled = isIjentWslFsEnabledByDefaultForProduct(context.productProperties.platformPrefix)
+    vmOptions += "-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=$isIjentWslFsEnabled"
+    if (isIjentWslFsEnabled) {
+      vmOptions += MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
     }
     writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
     return vmOptionsFile
