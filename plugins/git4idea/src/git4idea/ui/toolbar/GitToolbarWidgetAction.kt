@@ -4,8 +4,6 @@ package git4idea.ui.toolbar
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.isTrusted
-import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -43,8 +41,6 @@ private val WIDGET_ICON: Icon = AllIcons.General.Vcs
 private const val GIT_WIDGET_PLACEHOLDER_KEY = "git-widget-placeholder"
 
 internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
-
-  private val actionsWithIncomingOutgoingEnabled = GitToolbarActions.isEnabledAndVisible()
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -145,17 +141,12 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
         }
       }
     }
-    val schema = CustomActionsSchema.getInstance()
 
     val rightIcons = mutableListOf<Icon>()
-    val showIncoming = !actionsWithIncomingOutgoingEnabled
-                       || !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.update.project", schema)
-    if (showIncoming && syncStatus?.incoming == true) {
+    if (syncStatus?.incoming == true) {
       rightIcons.add(DvcsImplIcons.Incoming)
     }
-    val showOutgoing = !actionsWithIncomingOutgoingEnabled
-                       || !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.push", schema)
-    if (showOutgoing && syncStatus?.outgoing == true) {
+    if (syncStatus?.outgoing == true) {
       rightIcons.add(DvcsImplIcons.Outgoing)
     }
     e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, when {
