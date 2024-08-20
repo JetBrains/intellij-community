@@ -344,12 +344,13 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
   fun createNewDockContainerFor(content: DockableContent<*>, point: RelativePoint) {
     val container = getFactory(content.dockContainerType).createContainer(content)
-    val canReopenWindow = content.presentation.getClientProperty(REOPEN_WINDOW)
-    val reopenWindow = canReopenWindow == null || canReopenWindow
+
+    val file: VirtualFile? = (content as? DockableEditor)?.file
+    val canReopenWindow = REOPEN_WINDOW.get(file, true)
     val window = createWindowFor(dimensionKey = getWindowDimensionKey(content = content),
                                  id = null,
                                  container = container,
-                                 canReopenWindow = reopenWindow)
+                                 canReopenWindow = canReopenWindow)
 
     val isSingletonEditorInWindow = (content as? DockableEditor)?.isSingletonEditorInWindow ?: false
     if (!isSingletonEditorInWindow) {

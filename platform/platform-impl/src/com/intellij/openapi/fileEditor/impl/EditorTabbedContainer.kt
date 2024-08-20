@@ -42,7 +42,6 @@ import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.DockableContent
 import com.intellij.ui.docking.DragSession
-import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelAvailable
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
@@ -431,9 +430,6 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     file.putUserData(DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(editorTabs))
     file.putUserData(DRAG_START_PINNED_KEY, isPinnedAtStart)
     val presentation = Presentation(info.text)
-    if (DockManagerImpl.REOPEN_WINDOW.isIn(file)) {
-      presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(file, true))
-    }
     presentation.icon = info.icon
     val editors = info.composite.allEditors
     val isSingletonEditorInWindow = isSingletonEditorInWindow(editors)
