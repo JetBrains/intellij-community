@@ -57,9 +57,14 @@ val KernelRpcSerialization = Serialization(lazyOf(SerializersModule {
 
 suspend fun updateDbInTheEventDispatchThread(): Nothing {
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    kernel().log.collect { event ->
-      DbContext.threadLocal.set(DbContext<DB>(event.db, null))
+    try {
+      kernel().log.collect { event ->
+        DbContext.threadLocal.set(DbContext<DB>(event.db, null))
+      }
+      awaitCancellation()
+    }
+    finally {
+      DbContext.clearThreadBoundDbContext()
     }
   }
-  awaitCancellation()
 }
