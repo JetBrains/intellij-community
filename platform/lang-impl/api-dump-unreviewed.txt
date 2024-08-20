@@ -17532,6 +17532,13 @@ c:com.intellij.ide.todo.nodes.TodoTreeHelper
 - getProject():com.intellij.openapi.project.Project
 - getSelectedElement(java.lang.Object):com.intellij.psi.PsiElement
 - skipDirectory(com.intellij.psi.PsiDirectory):Z
+f:com.intellij.ide.ui.search.TraverseUIMode
+- sf:Companion:com.intellij.ide.ui.search.TraverseUIMode$Companion
+- <init>():V
+- sf:getInstance():com.intellij.ide.ui.search.TraverseUIMode
+- f:isActive():Z
+f:com.intellij.ide.ui.search.TraverseUIMode$Companion
+- f:getInstance():com.intellij.ide.ui.search.TraverseUIMode
 a:com.intellij.ide.util.AbstractTreeClassChooserDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.ide.util.TreeChooser
