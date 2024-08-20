@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +17,6 @@ import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
-import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -35,19 +34,21 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.jps.incremental.FileHashUtilKt.pathHashCode;
+
 /**
- * Describes step of compilation process which copies resources files from source and resource roots of a Java module.
+ * Describes a step of compilation process which copies resource's files from source and resource roots of a Java module.
  */
 public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDescriptor> {
-  private final @NotNull ResourcesTargetType myTargetType;
+  private final @NotNull ResourcesTargetType targetType;
 
   public ResourcesTarget(@NotNull JpsModule module, @NotNull ResourcesTargetType targetType) {
     super(targetType, module);
-    myTargetType = targetType;
+    this.targetType = targetType;
   }
 
   public @Nullable File getOutputDir() {
-    return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, myTargetType.isTests());
+    return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, targetType.isTests());
   }
 
   @Override
@@ -57,7 +58,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
 
   @Override
   public boolean isTests() {
-    return myTargetType.isTests();
+    return targetType.isTests();
   }
 
   @Override
@@ -71,7 +72,10 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   }
 
   @Override
-  public @NotNull List<ResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
+  public @NotNull List<ResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                                      @NotNull ModuleExcludeIndex index,
+                                                                      @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                                      @NotNull BuildDataPaths dataPaths) {
     List<ResourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
@@ -108,28 +112,21 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
 
   @Override
   public @NotNull String getPresentableName() {
-    return "Resources for '" + getModule().getName() + "' " + (myTargetType.isTests() ? "tests" : "production");
+    return "Resources for '" + getModule().getName() + "' " + (targetType.isTests() ? "tests" : "production");
   }
 
   @Override
   public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
-    int fingerprint = 0;
-    final BuildRootIndex rootIndex = pd.getBuildRootIndex();
-    final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
-    final List<ResourceRootDescriptor> roots = rootIndex.getTargetRoots(this, null);
+    HashStream64 hash = Hashing.komihash5_0().hashStream();
+    BuildRootIndex rootIndex = pd.getBuildRootIndex();
+    PathRelativizerService relativizer = pd.dataManager.getRelativizer();
+    List<ResourceRootDescriptor> roots = rootIndex.getTargetRoots(this, null);
     for (ResourceRootDescriptor root : roots) {
       String path = relativizer.toRelative(root.getRootFile().getAbsolutePath());
-      fingerprint += pathHashCode(path);
-      fingerprint += root.getPackagePrefix().hashCode();
+      pathHashCode(path, hash);
+      hash.putString(root.getPackagePrefix());
     }
-    out.write(Integer.toHexString(fingerprint));
-  }
-
-  private static int pathHashCode(@Nullable String path) {
-    // On case insensitive OS hash calculated from path converted to lower case
-    if (ProjectStamps.PORTABLE_CACHES) {
-      return StringUtil.isEmpty(path) ? 0 : FileUtil.toCanonicalPath(path).hashCode();
-    }
-    return FileUtil.pathHashCode(path);
+    hash.putInt(roots.size());
+    out.write(Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX));
   }
 }

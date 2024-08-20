@@ -44,7 +44,6 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.listDirectoryEntries
-import kotlin.math.min
 
 // doesn't make sense to execute 64 tasks in parallel
 private const val ioTaskParallelism = 8
@@ -567,17 +566,18 @@ private fun computeHash(file: Path): String {
     val fileSize = channel.size()
     // java message digest doesn't support native buffer (copies to a heap byte array in any case)
     val bufferSize = 256 * 1024
-    val sourceBuffer = ByteBuffer.allocate(bufferSize)
+    val buffer = ByteBuffer.allocate(bufferSize)
     var offset = 0L
+    var readBytes: Int
     while (offset < fileSize) {
-      sourceBuffer.limit(min((fileSize - offset).toInt(), bufferSize))
-      do {
-        offset += channel.read(sourceBuffer, offset)
+      buffer.clear()
+      readBytes = channel.read(buffer, offset)
+      if (readBytes <= 0) {
+        break
       }
-      while (sourceBuffer.hasRemaining())
 
-      messageDigest.update(sourceBuffer.array(), 0, sourceBuffer.limit())
-      sourceBuffer.position(0)
+      messageDigest.update(buffer.array(), 0, readBytes)
+      offset += readBytes
     }
   }
   return digestToString(messageDigest)

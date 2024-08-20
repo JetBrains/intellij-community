@@ -22,6 +22,7 @@ import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildListener;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FileHashUtilKt;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
@@ -59,6 +60,7 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
  * <b>This is class can be changed or removed in future</b>
  */
 @ApiStatus.Experimental
+@ApiStatus.Internal
 public final class BuildTargetSourcesState implements BuildListener {
   private static final Logger LOG = Logger.getInstance(BuildTargetSourcesState.class);
   private static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
@@ -332,9 +334,11 @@ public final class BuildTargetSourcesState implements BuildListener {
   }
 
   private static long getOutputFileHash(@NotNull Path file, @NotNull Path rootPath, @NotNull HashStream64 hashToReuse) throws IOException {
+    // reduce GC - reuse hashToReuse - do not inline fileHash variable
+    long fileHash = FileHashUtilKt.getFileHash(file, hashToReuse);
     return hashToReuse
       .reset()
-      .putLong(Xxh3HashingServiceKt.getFileHash(file))
+      .putLong(fileHash)
       .putString(toRelative(file, rootPath))
       .getAsLong();
   }

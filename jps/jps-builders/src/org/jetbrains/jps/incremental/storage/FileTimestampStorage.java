@@ -11,6 +11,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp;
@@ -50,21 +51,21 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
   }
 
   @Override
-  public FileTimestamp getCurrentStamp(File file) {
+  public FileTimestamp getCurrentStamp(Path file) {
     return FileTimestamp.fromLong(FSOperations.lastModified(file));
   }
 
   @Override
   public boolean isDirtyStamp(@NotNull Stamp stamp, File file) {
     if (!(stamp instanceof FileTimestamp)) return true;
-    return ((FileTimestamp) stamp).myTimestamp != FSOperations.lastModified(file);
+    return ((FileTimestamp)stamp).myTimestamp != FSOperations.lastModified(file);
   }
 
   @Override
   public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) {
     if (!(stamp instanceof FileTimestamp)) return true;
     FileTimestamp timestamp = (FileTimestamp) stamp;
-    // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
+    // for symlinks, the attr structure reflects the symlink's timestamp and not symlink's target timestamp
     return attrs.isRegularFile() ? attrs.lastModifiedTime().toMillis() != timestamp.myTimestamp : isDirtyStamp(timestamp, file);
   }
 

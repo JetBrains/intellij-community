@@ -2816,13 +2816,6 @@ f:org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
 - outputRootWasDeleted(org.jetbrains.jps.incremental.CompileContext):Z
 - save(org.jetbrains.jps.incremental.CompileContext):V
 - storeNonexistentOutputRoots(org.jetbrains.jps.incremental.CompileContext):V
-*f:org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
-- org.jetbrains.jps.incremental.BuildListener
-- <init>(org.jetbrains.jps.incremental.CompileContext):V
-- clearSourcesState():V
-- filesDeleted(org.jetbrains.jps.incremental.messages.FileDeletedEvent):V
-- filesGenerated(org.jetbrains.jps.incremental.messages.FileGeneratedEvent):V
-- reportSourcesState():V
 f:org.jetbrains.jps.incremental.storage.BuildTargetTypeState
 - <init>(org.jetbrains.jps.builders.BuildTargetType,org.jetbrains.jps.incremental.storage.BuildTargetsState):V
 - getAverageTargetBuildTime():J
@@ -2888,7 +2881,7 @@ org.jetbrains.jps.incremental.storage.StampsStorage
 - a:clean():V
 - a:close():V
 - a:force():V
-- a:getCurrentStamp(java.io.File):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
+- a:getCurrentStamp(java.nio.file.Path):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
 - a:getPreviousStamp(java.io.File,org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage$Stamp
 - a:getStorageRoot():java.io.File
 - a:isDirtyStamp(org.jetbrains.jps.incremental.storage.StampsStorage$Stamp,java.io.File):Z

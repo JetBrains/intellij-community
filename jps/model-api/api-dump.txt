@@ -651,6 +651,7 @@ org.jetbrains.jps.model.module.JpsDependenciesList
 - org.jetbrains.jps.model.JpsElement
 - a:getDependencies():java.util.List
 org.jetbrains.jps.model.module.JpsDependenciesRootsEnumerator
+- a:getPaths():java.util.Collection
 - a:getRoots():java.util.Collection
 - a:getUrls():java.util.Collection
 org.jetbrains.jps.model.module.JpsDependencyElement

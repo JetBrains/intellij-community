@@ -16,7 +16,6 @@ import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.lang.Xxh3;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import io.netty.buffer.ByteBufAllocator;
@@ -129,7 +128,6 @@ public final class ClasspathBootstrap {
     addToClassPath(IXMLBuilder.class, cp);  // nano-xml
     addToClassPath(JavaProjectBuilder.class, cp);  // QDox lightweight java parser
     addToClassPath(Gson.class, cp);  // gson
-    addToClassPath(Xxh3.class, cp);
     // caffeine
     addToClassPath(Caffeine.class, cp);
     // Hashing

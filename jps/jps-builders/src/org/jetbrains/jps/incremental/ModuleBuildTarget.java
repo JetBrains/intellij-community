@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
+import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NonNls;
@@ -35,17 +36,19 @@ import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.jps.incremental.FileHashUtilKt.getFileHash;
+import static org.jetbrains.jps.incremental.FileHashUtilKt.pathHashCode;
+
 /**
- * Describes step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module. These
- * targets are built by {@link ModuleLevelBuilder} and they are the only targets which can have circular dependencies on each other.
+ * Describes a step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module.
+ * These targets are built by {@link ModuleLevelBuilder} and they are the only targets that can have circular dependencies on each other.
  */
 public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {
   private static final Logger LOG = Logger.getInstance(ModuleBuildTarget.class);
@@ -168,83 +171,100 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
   @Override
   public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
-    final JpsModule module = getModule();
-    final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
+    JpsModule module = getModule();
+    PathRelativizerService relativizer = pd.dataManager.getRelativizer();
 
-    final StringBuilder logBuilder = LOG.isDebugEnabled() ? new StringBuilder() : null;
+    StringBuilder logBuilder = LOG.isDebugEnabled() ? new StringBuilder() : null;
 
-    int fingerprint = getDependenciesFingerprint(logBuilder, relativizer);
+    HashStream64 hash = Hashing.komihash5_0().hashStream();
 
-    for (JavaSourceRootDescriptor root : pd.getBuildRootIndex().getTargetRoots(this, null)) {
-      final File file = root.getRootFile();
+    getDependenciesFingerprint(logBuilder, relativizer, hash);
+
+    List<JavaSourceRootDescriptor> roots = pd.getBuildRootIndex().getTargetRoots(this, null);
+    for (JavaSourceRootDescriptor root : roots) {
+      File file = root.getRootFile();
       String path = relativizer.toRelative(file.getPath());
       if (logBuilder != null) {
         logBuilder.append(path).append("\n");
       }
-      fingerprint += pathHashCode(path);
+      pathHashCode(path, hash);
     }
+    hash.putInt(roots.size());
 
-    final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    if (level != null) {
+    LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
+    if (level == null) {
+      hash.putInt(0);
+    }
+    else {
       if (logBuilder != null) {
         logBuilder.append(level.name()).append("\n");
       }
-      fingerprint += level.name().hashCode();
+      hash.putString(level.name());
     }
 
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
-    final String bytecodeTarget = config.getByteCodeTargetLevel(module.getName());
-    if (bytecodeTarget != null) {
+    JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
+    String bytecodeTarget = config.getByteCodeTargetLevel(module.getName());
+    if (bytecodeTarget == null) {
+      hash.putInt(0);
+    }
+    else {
       if (logBuilder != null) {
-        logBuilder.append(bytecodeTarget).append("\n");
+        logBuilder.append(bytecodeTarget).append('\n');
       }
-      fingerprint += bytecodeTarget.hashCode();
+      hash.putString(bytecodeTarget);
     }
 
-    final CompilerEncodingConfiguration encodingConfig = pd.getEncodingConfiguration();
-    final String encoding = encodingConfig.getPreferredModuleEncoding(module);
-    if (encoding != null) {
+    CompilerEncodingConfiguration encodingConfig = pd.getEncodingConfiguration();
+    String encoding = encodingConfig.getPreferredModuleEncoding(module);
+    if (encoding == null) {
+      hash.putInt(0);
+    }
+    else {
       if (logBuilder != null) {
         logBuilder.append(encoding).append("\n");
       }
-      fingerprint += encoding.hashCode();
+      hash.putString(encoding);
     }
 
-    final String hash = Integer.toHexString(fingerprint);
-    out.write(hash);
-    if (logBuilder != null) {
-      File configurationTextFile = new File(pd.getTargetsState().getDataPaths().getTargetDataRoot(this), "config.dat.debug.txt");
-      @NonNls String oldText;
+    String hashString = Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX);
+    out.write(hashString);
+    if (logBuilder == null) {
+      return;
+    }
+
+    Path configurationTextFile = pd.getTargetsState().getDataPaths().getTargetDataRoot(this).toPath().resolve("config.dat.debug.txt");
+    @NonNls String oldText;
+    try {
+      oldText = Files.readString(configurationTextFile);
+    }
+    catch (IOException e) {
+      oldText = null;
+    }
+    String newText = logBuilder.toString();
+    if (!newText.equals(oldText)) {
+      if (oldText != null) {
+        LOG.debug("Configuration differs from the last recorded one for " + getPresentableName() + ".\nRecorded configuration:\n" + oldText +
+                  "\nCurrent configuration (hash=" + hashString + "):\n" + newText);
+      }
       try {
-        oldText = FileUtil.loadFile(configurationTextFile);
+        Files.createDirectories(configurationTextFile.getParent());
+        Files.writeString(configurationTextFile, newText);
       }
       catch (IOException e) {
-        oldText = null;
-      }
-      String newText = logBuilder.toString();
-      if (!newText.equals(oldText)) {
-        if (oldText != null) {
-          LOG.debug("Configuration differs from the last recorded one for " + getPresentableName() + ".\nRecorded configuration:\n" + oldText +
-                    "\nCurrent configuration (hash=" + hash + "):\n" + newText);
-        }
-        try {
-          FileUtil.writeToFile(configurationTextFile, newText);
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-        }
+        LOG.debug(e);
       }
     }
   }
 
-  private int getDependenciesFingerprint(@Nullable StringBuilder logBuilder, @NotNull PathRelativizerService relativizer) {
-    int fingerprint = 0;
-
+  private void getDependenciesFingerprint(@Nullable StringBuilder logBuilder,
+                                          @NotNull PathRelativizerService relativizer,
+                                          @NotNull HashStream64 hash) {
     if (!REBUILD_ON_DEPENDENCY_CHANGE) {
-      return fingerprint;
+      hash.putInt(0);
+      return;
     }
 
-    final JpsModule module = getModule();
+    JpsModule module = getModule();
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly().recursivelyExportedOnly();
     if (!isTests()) {
       enumerator = enumerator.productionOnly();
@@ -253,57 +273,37 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       enumerator = enumerator.withoutSdk();
     }
 
-    for (File file : enumerator.classes().getRoots()) {
-      String path = relativizer.toRelative(file.getAbsolutePath());
-
-      int contentHash = getContentHash(file);
+    Collection<Path> roots = enumerator.classes().getPaths();
+    for (Path file : roots) {
+      String path = relativizer.toRelative(file.toAbsolutePath().toString());
+      getContentHash(file, hash);
       if (logBuilder != null) {
         logBuilder.append(path);
-        if (contentHash != 0) {
-          logBuilder.append(": ").append(contentHash);
-        }
+        // not a content hash, but the current hash value
+        logBuilder.append(": ").append(hash.getAsLong());
         logBuilder.append("\n");
       }
-      fingerprint = 31 * fingerprint + pathHashCode(path) + contentHash;
+      pathHashCode(path, hash);
     }
-    return fingerprint;
+    hash.putInt(roots.size());
   }
 
-  private static int getContentHash(File file) {
-    if (ProjectStamps.TRACK_LIBRARY_CONTENT) {
-      try {
-        if (!file.isFile() || !file.getName().endsWith(".jar")) {
-          return 0;
-        }
+  private static void getContentHash(Path file, HashStream64 hash) {
+    if (!ProjectStamps.TRACK_LIBRARY_CONTENT) {
+      hash.putInt(0);
+      return;
+    }
 
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        FileInputStream inputStream = new FileInputStream(file);
-
-        byte[] bytesBuffer = new byte[1024];
-        int bytesRead;
-
-        while ((bytesRead = inputStream.read(bytesBuffer)) != -1) {
-          digest.update(bytesBuffer, 0, bytesRead);
-        }
-
-        byte[] hashBytes = digest.digest();
-        inputStream.close();
-
-        ByteBuffer buffer = ByteBuffer.wrap(hashBytes);
-        return buffer.getInt();
+    try {
+      if (Files.isRegularFile(file) && file.getFileName().endsWith(".jar")) {
+        getFileHash(file, hash);
       }
-      catch (NoSuchAlgorithmException | IOException e) {
-        throw new RuntimeException(e);
+      else {
+        hash.putInt(0);
       }
     }
-    return 0;
-  }
-
-  private static int pathHashCode(@NotNull String path) {
-    // On case-insensitive OS hash calculated from path converted to lower case
-    if (ProjectStamps.PORTABLE_CACHES) {
-      return StringUtil.isEmpty(path) ? 0 : FileUtil.toCanonicalPath(path).hashCode();
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
-    return FileUtil.pathHashCode(path);
   }
 }

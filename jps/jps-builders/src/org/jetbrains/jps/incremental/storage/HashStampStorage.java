@@ -11,11 +11,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import static org.jetbrains.jps.incremental.FileHashUtilKt.getFileHash;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp;
 import static org.jetbrains.jps.incremental.storage.HashStampStorage.HashStampPerTarget;
-import static org.jetbrains.jps.incremental.storage.Xxh3HashingServiceKt.getFileHash;
 
 final class HashStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements StampsStorage<HashStampStorage.HashStamp> {
   private final FileTimestampStorage myTimestampStorage;
@@ -105,38 +106,61 @@ final class HashStampStorage extends AbstractStateStorage<String, HashStampPerTa
 
   public Long getStoredFileHash(File file, BuildTarget<?> target) throws IOException {
     HashStampPerTarget[] state = getState(relativePath(file));
-    if (state == null) return null;
+    if (state == null) {
+      return null;
+    }
+
     int targetId = myTargetsState.getBuildTargetId(target);
     for (HashStampPerTarget filesStampPerTarget : state) {
-      if (filesStampPerTarget.targetId == targetId) return filesStampPerTarget.hash;
+      if (filesStampPerTarget.targetId == targetId) {
+        return filesStampPerTarget.hash;
+      }
     }
     return null;
   }
 
   @Override
-  public HashStamp getCurrentStamp(File file) throws IOException {
+  public HashStamp getCurrentStamp(Path file) throws IOException {
     FileTimestamp currentTimestamp = myTimestampStorage.getCurrentStamp(file);
     return new HashStamp(getFileHash(file), currentTimestamp.asLong());
   }
 
   @Override
   public boolean isDirtyStamp(@NotNull Stamp stamp, File file) throws IOException {
-    if (!(stamp instanceof HashStamp)) return true;
+    if (!(stamp instanceof HashStamp)) {
+      return true;
+    }
+
     HashStamp filesStamp = (HashStamp)stamp;
-    if (!myTimestampStorage.isDirtyStamp(FileTimestamp.fromLong(filesStamp.myTimestamp), file)) return false;
+    if (!myTimestampStorage.isDirtyStamp(FileTimestamp.fromLong(filesStamp.myTimestamp), file)) {
+      return false;
+    }
+
     Long hash = filesStamp.myHash;
-    if (hash == null) return true;
-    return hash != getFileHash(file);
+    if (hash == null) {
+      return true;
+    }
+
+    return hash != getFileHash(file.toPath());
   }
 
   @Override
   public boolean isDirtyStamp(Stamp stamp, File file, @NotNull BasicFileAttributes attrs) throws IOException {
-    if (!(stamp instanceof HashStamp)) return true;
+    if (!(stamp instanceof HashStamp)) {
+      return true;
+    }
+
     HashStamp filesStamp = (HashStamp)stamp;
-    if (!myTimestampStorage.isDirtyStamp(FileTimestamp.fromLong(filesStamp.myTimestamp), file, attrs)) return false;
+    if (!myTimestampStorage.isDirtyStamp(FileTimestamp.fromLong(filesStamp.myTimestamp), file, attrs)) {
+      return false;
+    }
+
     Long hash = filesStamp.myHash;
-    if (hash == null) return true;
-    return hash != getFileHash(file);
+    if (hash == null) {
+      return true;
+    }
+
+    return hash != getFileHash(file.toPath());
   }
 
   @Override

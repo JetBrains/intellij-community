@@ -22,6 +22,7 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -399,14 +400,15 @@ public final class BuildFSState {
         CompileScope scope = context.getScope();
         for (File file : files) {
           if (scope.isAffected(target, file)) {
-            final long currentFileTimestamp = FSOperations.lastModified(file);
-            StampsStorage.Stamp stamp = stampsStorage.getCurrentStamp(file);
+            Path nioFile = file.toPath();
+            long currentFileTimestamp = FSOperations.lastModified(nioFile);
+            StampsStorage.Stamp stamp = stampsStorage.getCurrentStamp(nioFile);
             if (!rd.isGenerated() && (currentFileTimestamp > targetBuildStartStamp || getEventRegistrationStamp(file) > targetBuildStartStamp)) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
               // Important!
               // Event registration stamp check is essential for the files that were actually changed _before_ targetBuildStart,
-              // but corresponding change event was received and processed _after_ targetBuildStart
+              // but the corresponding change event was received and processed _after_ targetBuildStart
               if (Utils.IS_TEST_MODE) {
                 LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
               }
@@ -447,5 +449,4 @@ public final class BuildFSState {
       key.set(context, delta);
     }
   }
-
 }
