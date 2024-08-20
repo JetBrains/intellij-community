@@ -18470,9 +18470,9 @@ a:com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 - s:created(com.intellij.openapi.project.Project):Z
 - s:doGenerateProject(com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.DirectoryProjectGenerator,java.lang.Object):com.intellij.openapi.project.Project
 - s:doGenerateProject(java.lang.String,com.intellij.platform.DirectoryProjectGenerator,java.lang.Object,com.intellij.ide.impl.OpenProjectTask):com.intellij.openapi.project.Project
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:updateActions():V
+- f:getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
+- pf:updateActions():V
 c:com.intellij.ide.util.projectWizard.AbstractNewProjectStep$AbstractCallback
 - com.intellij.util.PairConsumer
 - <init>():V

@@ -66,13 +66,13 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     super.update(e);
     NewWelcomeScreen.updateNewProjectIconIfWelcomeScreen(e);
     updateActions();
   }
 
-  protected void updateActions() {
+  protected final void updateActions() {
     removeAll();
     AbstractCallback<T> callback = myCustomization.createCallback();
     ProjectSpecificAction projectSpecificAction = myCustomization.createProjectSpecificAction(callback);
@@ -269,15 +269,16 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
-  void setWizardContext(@NotNull WizardContext wizardContext) {
+  final void setWizardContext(@NotNull WizardContext wizardContext) {
     myWizardContext = wizardContext;
   }
 
-  @Nullable WizardContext getWizardContext() {
+  @Nullable
+  final WizardContext getWizardContext() {
     return myWizardContext;
   }
 }
