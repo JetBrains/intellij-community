@@ -53,7 +53,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
            actionText.matches("Surround with 'if \\(.+\\)'") || // might produce uninitialized variable or missing return statement problem
            actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
-           actionText.startsWith("Create missing branches: ") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
+           actionText.startsWith("Create missing branches ") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
            actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear

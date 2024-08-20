@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -24,6 +24,7 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -375,7 +376,7 @@ public class SwitchBlockHighlightingModel {
     HighlightInfo.Builder info = createCompletenessInfoForSwitch(hasElements);
     if (!missingConstants.isEmpty() && getSwitchSelectorKind() == SelectorKind.ENUM) {
       IntentionAction enumBranchesFix =
-        getFixFactory().createAddMissingEnumBranchesFix(myBlock, ContainerUtil.map2Set(missingConstants, PsiField::getName));
+        getFixFactory().createAddMissingEnumBranchesFix(myBlock, ContainerUtil.map2LinkedSet(missingConstants, PsiField::getName));
       IntentionAction fix = PriorityIntentionActionWrapper.highPriority(enumBranchesFix);
       info.registerFix(fix, null, null, null, null);
     }
@@ -395,7 +396,7 @@ public class SwitchBlockHighlightingModel {
 
   @NotNull
   HighlightInfo.Builder createCompletenessInfoForSwitch(boolean hasAnyCaseLabels) {
-    String messageKey;
+    @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String messageKey;
     boolean isSwitchExpr = myBlock instanceof PsiExpression;
     if (hasAnyCaseLabels) {
       messageKey = isSwitchExpr ? "switch.expr.incomplete" : "switch.statement.incomplete";

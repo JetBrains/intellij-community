@@ -1,4 +1,4 @@
-// "Create missing switch branches with null branch" "true-preview"
+// "Create missing and 'null' branches" "true-preview"
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

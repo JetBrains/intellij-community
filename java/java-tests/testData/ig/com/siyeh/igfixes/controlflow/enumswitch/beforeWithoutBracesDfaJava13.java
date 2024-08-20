@@ -1,4 +1,4 @@
-// "Create missing switch branch 'E2'" "true"
+// "Create missing branch 'E2'" "true"
 class Foo {
   void foo(E e) {
     if (e != E.E1) {

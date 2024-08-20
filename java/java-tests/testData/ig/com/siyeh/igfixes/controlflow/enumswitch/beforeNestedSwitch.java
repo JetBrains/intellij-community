@@ -1,4 +1,4 @@
-// "Create missing switch branch 'A'" "false"
+// "Create missing branch 'A'" "false"
 enum Z {
   B,
   A,

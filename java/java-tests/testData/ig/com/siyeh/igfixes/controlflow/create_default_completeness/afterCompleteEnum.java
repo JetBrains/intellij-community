@@ -1,4 +1,4 @@
-// "Insert 'default' branch" "true"
+// "Create 'default' branch" "true"
 class Test {
   void test(Day d) {
     switch (d){

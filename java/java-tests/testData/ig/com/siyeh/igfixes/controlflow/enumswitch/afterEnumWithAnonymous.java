@@ -1,4 +1,4 @@
-// "Create missing branches: 'A', 'B', and 'C'" "true"
+// "Create missing branches 'A', 'B', and 'C'" "true"
 class Scratch
 {
   public enum EnumWithCode {

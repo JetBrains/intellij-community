@@ -1,4 +1,4 @@
-// "Create missing branches: 'Pair(A sc1, B sc2)', 'Pair(A sc1, C sc2)', ..." "true-preview"
+// "Create missing branches 'Pair(A sc1, B sc2)', 'Pair(A sc1, C sc2)', 'Pa..." "true-preview"
 record Pair(SC sc1, SC sc2) {
 
 }

@@ -1,4 +1,4 @@
-// "Create missing branches: 'false', and 'true'" "true-preview"
+// "Create missing branches 'true' and 'false'" "true-preview"
 import java.util.List;
 
 class Test {

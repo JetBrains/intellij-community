@@ -53,7 +53,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
       }
     }
     if (missed.isEmpty()) return null;
-    return new CreateMissingBooleanPrimitiveBranchesFix(block, new HashSet<>(missed));
+    return new CreateMissingBooleanPrimitiveBranchesFix(block, new LinkedHashSet<>(missed));
   }
 
   @Nullable

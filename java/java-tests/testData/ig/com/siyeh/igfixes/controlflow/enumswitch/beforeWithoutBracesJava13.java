@@ -1,4 +1,4 @@
-// "Create missing branches: 'E1', and 'E2'" "true"
+// "Create missing branches 'E1' and 'E2'" "true"
 class Foo {
   void foo(E e) {
     switch (e)<caret>

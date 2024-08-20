@@ -1,4 +1,4 @@
-// "Create missing switch branch 'Ab'" "true-preview"
+// "Create missing branch 'Ab'" "true-preview"
 sealed interface A {}
 sealed interface Aa extends A {}
 final class Aaa implements Aa {}
