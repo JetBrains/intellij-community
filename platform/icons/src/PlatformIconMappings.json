@@ -438,7 +438,10 @@
       "projectWideAnalysisOff.svg": "actions/projectWideAnalysisOff.svg",
       "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
       "softWrap.svg": "actions/toggleSoftWrap.svg",
-      "showToImplement.svg": "general/show_to_implement.svg",
+      "showToImplement.svg": [
+        "general/implementingMethod.svg",
+        "general/show_to_implement.svg"
+      ],
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
       "scrollUp.svg": "runConfigurations/scroll_up.svg",
       "projectStructure.svg": "general/projectStructure.svg",

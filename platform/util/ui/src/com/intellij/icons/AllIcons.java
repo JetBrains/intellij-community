@@ -528,7 +528,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Groups = load("expui/general/groups.svg", -2073085413, 2);
     /** 16x16 */ public static final @NotNull Icon HideToolWindow = load("expui/general/hide.svg", "general/hideToolWindow.svg", -24888126, 2);
     /** 16x16 */ public static final @NotNull Icon History = load("expui/general/history.svg", -1313586434, 2);
-    /** 16x16 */ public static final @NotNull Icon ImplementingMethod = load("general/implementingMethod.svg", -286814761, 1);
+    /** 16x16 */ public static final @NotNull Icon ImplementingMethod = load("expui/general/showToImplement.svg", "general/implementingMethod.svg", -286814761, 1);
     /** 16x16 */ public static final @NotNull Icon Information = load("expui/status/info.svg", "general/information.svg", 45152184, 0);
     /** 32x32 */ public static final @NotNull Icon InformationDialog = load("expui/general/informationDialog.svg", "general/informationDialog.svg", -143059635, 0);
     /** 16x16 */ public static final @NotNull Icon InheritedMethod = load("general/inheritedMethod.svg", 2120980341, 0);
