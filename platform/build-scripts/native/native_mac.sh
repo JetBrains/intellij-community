@@ -25,11 +25,6 @@ declare exit_code=0
 )
 
 (
-  echo "Building MacLauncher..."
-  ${script_dir}/build-mac-launcher.sh -o ${out_dir}/MacLauncher -d ${dist_dir} || ((exit_code++))
-)
-
-(
   echo "Building MacScreenMenu..."
   ${script_dir}/build-mac-screenmenu.sh -o ${out_dir}/MacScreenMenu -d ${dist_dir} || ((exit_code++))
 )
