@@ -12,6 +12,7 @@ public interface CaseSensitivityAttribute extends BasicFileAttributes {
   /**
    * Relevant for a directory.
    * @return case sensitivity for children of the requested directory.
+   * @throws IllegalStateException if the attributes are requested for something other than a directory
    */
-  FileAttributes.CaseSensitivity getCaseSensitivity();
+  FileAttributes.CaseSensitivity getCaseSensitivity() throws IllegalStateException;
 }
