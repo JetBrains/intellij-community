@@ -188,12 +188,10 @@ public final class SlowOperations {
   }
 
   /**
-   * @deprecated To resolve EDT freezes, "slow operations" will soon be banned from EDT.
-   * Consider reworking the code and the UX that needs to mute the assertion, and moving it to BGT.
-   * <p/>
-   * <b>DO NOT JUST CONVERT TO {@link #startSection(String)}.
-   * Keep using the deprecated method if your intent is to postpone fixing the assertion for real.</b>
+   * @deprecated Redesign the logic - move BGT-only activities to BGT.
+   * Otherwise, file a ticket and use {@link #knownIssue(String)} if not possible.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static <T, E extends Throwable> T allowSlowOperations(@NotNull ThrowableComputable<T, E> computable) throws E {
     try (AccessToken ignore = startSection(GENERIC)) {
@@ -202,12 +200,10 @@ public final class SlowOperations {
   }
 
   /**
-   * @deprecated To resolve EDT freezes, "slow operations" will soon be banned from EDT.
-   * Consider reworking the code and the UX that needs to mute the assertion, and moving it to BGT.
-   * <p/>
-   * <b>DO NOT JUST CONVERT TO {@link #startSection(String)}.
-   * Keep using the deprecated method if your intent is to postpone fixing the assertion for real.</b>
+   * @deprecated Redesign the logic - move BGT-only activities to BGT.
+   * Otherwise, file a ticket and use {@link #knownIssue(String)} if not possible.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static <E extends Throwable> void allowSlowOperations(@NotNull ThrowableRunnable<E> runnable) throws E {
     try (AccessToken ignore = startSection(GENERIC)) {
@@ -238,14 +234,12 @@ public final class SlowOperations {
   }
 
   /**
-   * @deprecated To resolve EDT freezes, "slow operations" will soon be banned from EDT.
-   * Consider reworking the code and the UX that needs to mute the assertion, and moving it to BGT.
-   * <p/>
-   * <b>DO NOT JUST CONVERT TO {@link #startSection(String)}.
-   * Keep using the deprecated method if your intent is to postpone fixing the assertion for real.</b>
+   * @deprecated Redesign the logic - move BGT-only activities to BGT.
+   * Otherwise, file a ticket and use {@link #knownIssue(String)} if not possible.
    *
    * @param activityName see {@link #startSection(String)} javadoc
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
     return startSection(activityName);
