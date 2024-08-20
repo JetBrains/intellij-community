@@ -83,9 +83,6 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
     private lateinit var perModuleLibraryOutputDirectory: File
     private lateinit var perModuleLibrarySourceDirectory: File
 
-    override fun fragmentCompilerBackend() =
-        FragmentCompilerBackend.JVM_IR
-
     override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
         perModuleLibraryOutputDirectory = File(testAppDirectory, "perModuleLibs").apply { mkdirs() }
         perModuleLibrarySourceDirectory = File(testAppDirectory, "perModuleLibsSrc").apply { mkdirs() }
