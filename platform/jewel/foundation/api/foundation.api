@@ -146,6 +146,31 @@ public final class org/jetbrains/jewel/foundation/TextColors {
 public final class org/jetbrains/jewel/foundation/TextColors$Companion {
 }
 
+public abstract interface class org/jetbrains/jewel/foundation/actionSystem/DataProviderContext {
+	public abstract fun lazy (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public abstract fun set (Ljava/lang/String;Ljava/lang/Object;)V
+}
+
+public final class org/jetbrains/jewel/foundation/actionSystem/DataProviderNode : androidx/compose/ui/Modifier$Node, androidx/compose/ui/focus/FocusEventModifierNode, androidx/compose/ui/node/TraversableNode {
+	public static final field $stable I
+	public static final field TraverseKey Lorg/jetbrains/jewel/foundation/actionSystem/DataProviderNode$TraverseKey;
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public final fun getDataProvider ()Lkotlin/jvm/functions/Function1;
+	public final fun getHasFocus ()Z
+	public synthetic fun getTraverseKey ()Ljava/lang/Object;
+	public fun getTraverseKey ()Lorg/jetbrains/jewel/foundation/actionSystem/DataProviderNode$TraverseKey;
+	public fun onFocusEvent (Landroidx/compose/ui/focus/FocusState;)V
+	public final fun setDataProvider (Lkotlin/jvm/functions/Function1;)V
+	public final fun setHasFocus (Z)V
+}
+
+public final class org/jetbrains/jewel/foundation/actionSystem/DataProviderNode$TraverseKey {
+}
+
+public final class org/jetbrains/jewel/foundation/actionSystem/ProvideDataKt {
+	public static final fun provideData (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+}
+
 public class org/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings : org/jetbrains/jewel/foundation/lazy/DefaultSelectableColumnKeybindings {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings$Companion;

@@ -44,7 +44,8 @@ composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" 
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 ideaPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "ideaPlugin" }
-ideaPluginModule = { id = "org.jetbrains.intellij.platform.base", version.ref = "ideaPlugin" }
+ideaPluginBase = { id = "org.jetbrains.intellij.platform.base", version.ref = "ideaPlugin" }
+ideaPluginModule = { id = "org.jetbrains.intellij.platform.module", version.ref = "ideaPlugin" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinx-binaryCompatValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "kotlinxBinaryCompat" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

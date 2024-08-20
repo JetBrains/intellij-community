@@ -3,7 +3,7 @@ plugins {
     `jewel-publish`
     `jewel-check-public-api`
     alias(libs.plugins.composeDesktop)
-    alias(libs.plugins.ideaPluginModule)
+    alias(libs.plugins.ideaPluginBase)
 }
 
 // Because we need to define IJP dependencies, the dependencyResolutionManagement

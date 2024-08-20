@@ -4,7 +4,7 @@ plugins {
     `jewel-check-public-api`
     `ide-version-checker`
     alias(libs.plugins.composeDesktop)
-    alias(libs.plugins.ideaPluginBase)
+    alias(libs.plugins.ideaPluginModule)
 }
 
 // Because we need to define IJP dependencies, the dependencyResolutionManagement
@@ -20,12 +20,14 @@ repositories {
 }
 
 dependencies {
-    api(projects.ui) {
+    testImplementation(projects.ui) {
         exclude(group = "org.jetbrains.kotlinx")
     }
+    testImplementation(projects.ideLafBridge)
 
     intellijPlatform {
         intellijIdeaCommunity(libs.versions.idea)
+        instrumentationTools()
     }
 
     testImplementation(compose.desktop.uiTestJUnit4)

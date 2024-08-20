@@ -84,9 +84,22 @@ public final class org/jetbrains/jewel/bridge/TypographyKt {
 	public static final fun small (Lorg/jetbrains/jewel/ui/component/Typography;Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 }
 
-public final class org/jetbrains/jewel/bridge/actionSystem/ProvideDataKt {
-	public static final fun ComponentDataProviderBridge (Ljavax/swing/JComponent;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun provideData (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+public final class org/jetbrains/jewel/bridge/actionSystem/RootDataProviderModifier : androidx/compose/ui/node/ModifierNodeElement, com/intellij/openapi/actionSystem/UiDataProvider {
+	public static final field $stable I
+	public fun <init> ()V
+	public synthetic fun create ()Landroidx/compose/ui/Modifier$Node;
+	public fun create ()Lorg/jetbrains/jewel/bridge/actionSystem/RootDataProviderNode;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun uiDataSnapshot (Lcom/intellij/openapi/actionSystem/DataSink;)V
+	public synthetic fun update (Landroidx/compose/ui/Modifier$Node;)V
+	public fun update (Lorg/jetbrains/jewel/bridge/actionSystem/RootDataProviderNode;)V
+}
+
+public final class org/jetbrains/jewel/bridge/actionSystem/RootDataProviderNode : androidx/compose/ui/Modifier$Node, com/intellij/openapi/actionSystem/UiDataProvider {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun uiDataSnapshot (Lcom/intellij/openapi/actionSystem/DataSink;)V
 }
 
 public final class org/jetbrains/jewel/bridge/icon/IntelliJIconKeyKt {

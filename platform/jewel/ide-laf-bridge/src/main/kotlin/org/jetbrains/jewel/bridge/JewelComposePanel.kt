@@ -11,19 +11,23 @@ import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.toSize
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.InternalJewelApi
+import java.awt.BorderLayout
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JewelComposePanel(content: @Composable () -> Unit): JComponent =
-    ComposePanel().apply {
+    createJewelComposePanel { jewelPanel ->
         setContent {
             SwingBridgeTheme {
-                CompositionLocalProvider(LocalComponent provides this@apply) {
-                    ComponentDataProviderBridge(this@apply, content = content)
+                CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+                    ComponentDataProviderBridge(jewelPanel, content = content)
                 }
             }
         }
@@ -32,17 +36,34 @@ public fun JewelComposePanel(content: @Composable () -> Unit): JComponent =
 @InternalJewelApi
 @Suppress("ktlint:standard:function-naming", "FunctionName") // Swing to Compose bridge API
 public fun JewelToolWindowComposePanel(content: @Composable () -> Unit): JComponent =
-    ComposePanel().apply {
+    createJewelComposePanel { jewelPanel ->
         setContent {
             Compose17IJSizeBugWorkaround {
                 SwingBridgeTheme {
-                    CompositionLocalProvider(LocalComponent provides this@apply) {
-                        ComponentDataProviderBridge(this@apply, content = content)
+                    CompositionLocalProvider(LocalComponent provides this@createJewelComposePanel) {
+                        ComponentDataProviderBridge(jewelPanel, content = content)
                     }
                 }
             }
         }
     }
+
+private fun createJewelComposePanel(config: ComposePanel.(JewelComposePanel) -> Unit): JewelComposePanel {
+    val jewelPanel = JewelComposePanel()
+    jewelPanel.layout = BorderLayout()
+    val composePanel = ComposePanel()
+    jewelPanel.add(composePanel, BorderLayout.CENTER)
+    composePanel.config(jewelPanel)
+    return jewelPanel
+}
+
+internal class JewelComposePanel : JPanel(), UiDataProvider {
+    internal var targetProvider: UiDataProvider? = null
+
+    override fun uiDataSnapshot(sink: DataSink) {
+        targetProvider?.uiDataSnapshot(sink)
+    }
+}
 
 @ExperimentalJewelApi
 public val LocalComponent: ProvidableCompositionLocal<JComponent> =

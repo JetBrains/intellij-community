@@ -26,5 +26,8 @@ See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for mo
         <action id="Jewel Dialog Demo" class="org.jetbrains.jewel.samples.ideplugin.dialog.JewelDemoAction"
                 text="Jewel Demo Dialog">
         </action>
+        <action id="Jewel Action System Test" class="org.jetbrains.jewel.samples.ideplugin.ActionSystemTestAction"
+                text="Jewel Action System Test">
+        </action>
     </actions>
 </idea-plugin>

@@ -35,6 +35,7 @@ import com.intellij.util.ui.JBUI
 import icons.IdeSampleIconKeys
 import org.jetbrains.jewel.bridge.LocalComponent
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.foundation.actionSystem.provideData
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.modifier.onActivated
 import org.jetbrains.jewel.foundation.modifier.trackActivation
@@ -147,7 +148,15 @@ private fun RowScope.ColumnOne() {
         val state = rememberTextFieldState("")
         TextField(
             state = state,
-            modifier = Modifier.width(200.dp),
+            modifier =
+                Modifier
+                    .width(200.dp)
+                    .provideData {
+                        set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "TextField")
+                        lazy(ActionSystemTestAction.COMPONENT_DATA_KEY.name) {
+                            Math.random().toString()
+                        }
+                    },
             placeholder = { Text("Write something...") },
         )
 
@@ -160,6 +169,10 @@ private fun RowScope.ColumnOne() {
                 checked = checked,
                 onCheckedChange = { checked = it },
                 outline = outline,
+                modifier =
+                    Modifier.provideData {
+                        set(ActionSystemTestAction.COMPONENT_DATA_KEY.name, "Checkbox")
+                    },
             ) {
                 Text("Hello, I am a themed checkbox")
             }
