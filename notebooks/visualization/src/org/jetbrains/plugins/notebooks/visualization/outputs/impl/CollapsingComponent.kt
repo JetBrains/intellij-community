@@ -13,7 +13,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.hoveredCollapsingComponentRect
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.ResizeController
-import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Font
@@ -144,7 +143,7 @@ open class CollapsingComponent(
 
       if (!isSeen) {
         val outputAdjacentRectWidth = notebookAppearance.getLeftBorderWidth()
-        g.color = UiCustomizer.instance.getTextOutputBackground(editor)
+        g.color = editor.notebookAppearance.getTextOutputBackground(editor.colorsScheme)
         g.fillRect(
           editor.gutterComponentEx.width - outputAdjacentRectWidth,
           rectTop,
@@ -201,7 +200,7 @@ open class CollapsingComponent(
     private fun updateUIFromEditor() {
       val fontType = editor.colorsScheme.getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES)?.fontType ?: Font.PLAIN
       foreground = JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND
-      background = UiCustomizer.instance.getTextOutputBackground(editor)
+      background = editor.notebookAppearance.getTextOutputBackground(editor.colorsScheme)
       font = EditorUtil.fontForChar(text.first(), fontType, editor).font
     }
   }

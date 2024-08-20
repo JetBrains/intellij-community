@@ -7,9 +7,6 @@
     <extensionPoint qualifiedName="com.intellij.datavis.r.inlays.components.graphicsManagerProvider"
                     interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsManagerProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation.uiCustomizer"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"
                     interface="org.jetbrains.plugins.notebooks.visualization.NotebookEditorAppearanceProvider"
                     dynamic="true"/>
@@ -57,10 +54,6 @@
     <uiDataRule implementation="org.jetbrains.plugins.notebooks.visualization.EditorsWithOffsetsDataRule"/>
     <editorFactoryDocumentListener implementation="org.jetbrains.plugins.notebooks.visualization.UndoableActionListener"
                                    order="last"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation">
-    <uiCustomizer implementation="org.jetbrains.plugins.notebooks.visualization.r.ui.DefaultUiCustomizer"/>
   </extensions>
 
   <!-- New output inlays -->

@@ -77,6 +77,7 @@ interface NotebookEditorAppearanceColors {
   fun getGutterOutputExecutionCountForegroundColor(scheme: EditorColorsScheme): Color? = null
   fun getProgressStatusRunningColor(scheme: EditorColorsScheme): Color = JBColor.BLUE
   fun getInlayBackgroundColor(scheme: EditorColorsScheme): Color? = null
+  fun getTextOutputBackground(scheme: EditorColorsScheme): Color = scheme.defaultBackground
 
   fun getSausageButtonAppearanceBackgroundColor(scheme: EditorColorsScheme): Color = JBColor.WHITE
   fun getSausageButtonAppearanceForegroundColor(scheme: EditorColorsScheme): Color = JBColor.BLACK
