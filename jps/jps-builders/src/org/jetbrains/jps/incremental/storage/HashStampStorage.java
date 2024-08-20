@@ -15,7 +15,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTimestamp;
 import static org.jetbrains.jps.incremental.storage.HashStampStorage.HashStampPerTarget;
-import static org.jetbrains.jps.incremental.storage.Xxh3HashingService.getFileHash;
+import static org.jetbrains.jps.incremental.storage.Xxh3HashingServiceKt.getFileHash;
 
 final class HashStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements StampsStorage<HashStampStorage.HashStamp> {
   private final FileTimestampStorage myTimestampStorage;

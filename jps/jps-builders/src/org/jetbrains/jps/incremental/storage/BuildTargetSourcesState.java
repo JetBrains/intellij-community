@@ -334,7 +334,7 @@ public final class BuildTargetSourcesState implements BuildListener {
   private static long getOutputFileHash(@NotNull Path file, @NotNull Path rootPath, @NotNull HashStream64 hashToReuse) throws IOException {
     return hashToReuse
       .reset()
-      .putLong(Xxh3HashingService.getFileHash(file))
+      .putLong(Xxh3HashingServiceKt.getFileHash(file))
       .putString(toRelative(file, rootPath))
       .getAsLong();
   }
