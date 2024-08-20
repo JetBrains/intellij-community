@@ -232,6 +232,7 @@ macro_rules! jvm_property {
 pub struct ProductInfo {
     pub productCode: String,
     pub productVendor: String,
+    pub envVarBaseName: String,
     pub dataDirectoryName: String,
     pub launch: Vec<ProductInfoLaunchField>
 }

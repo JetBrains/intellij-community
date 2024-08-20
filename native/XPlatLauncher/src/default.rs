@@ -100,7 +100,7 @@ impl DefaultLaunchConfiguration {
         let data_directory_name = custom_data_directory_name.unwrap_or(product_info.dataDirectoryName.clone());
         let user_config_dir = config_home.join(&product_info.productVendor).join(data_directory_name);
         let launcher_base_name = Self::get_launcher_base_name(vm_options_rel_path);
-        let env_var_base_name = Self::get_env_var_base_name(&launcher_base_name);
+        let env_var_base_name = product_info.envVarBaseName.clone();
 
         let config = DefaultLaunchConfiguration {
             product_info,
@@ -134,7 +134,7 @@ impl DefaultLaunchConfiguration {
             None => vm_options_filename
         };
 
-        // strip the "64" suffix ("idea64" -> "idea")
+        // strip the "64" suffix ("idea64" → "idea")
         let base_product_name = match vm_options_filename_no_last_extension.split_once("64") {
             Some((prefix, _)) => prefix,
             None => vm_options_filename_no_last_extension
@@ -142,18 +142,6 @@ impl DefaultLaunchConfiguration {
 
         debug!("get_launcher_base_name('{vm_options_rel_path}') -> {base_product_name}");
         base_product_name.to_string()
-    }
-
-    /// Converts a launcher base name (extracted from a VM options relative path),
-    /// to a base name of product-specific environment variables (like `<PRODUCT>_JDK`).
-    ///
-    /// See also: `org.jetbrains.intellij.build.ProductProperties#getEnvironmentVariableBaseName`.
-    fn get_env_var_base_name(launcher_base_name: &str) -> String {
-        match launcher_base_name {
-            "webstorm" => "WEBIDE".to_string(),
-            "idea-dbst" => "IDEA".to_string(),
-            _ => launcher_base_name.to_ascii_uppercase().replace('-', "_")
-        }
     }
 
     /// Locates the Java runtime and returns a path to the standard launcher (`bin/java` or `bin\\java.exe`).

@@ -4,6 +4,7 @@
   "versionSuffix": "EAP",
   "buildNumber": "123.456",
   "productCode": "XL",
+  "envVarBaseName": "XPLAT",
   "dataDirectoryName": "XPlatLauncherTest",
   "svgIconPath": "../bin/idea.svg",
   "productVendor": "JetBrains",
