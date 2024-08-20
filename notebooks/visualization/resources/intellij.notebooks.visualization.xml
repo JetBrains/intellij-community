@@ -4,9 +4,6 @@
   </dependencies>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.datavis.r.inlays.components.graphicsManagerProvider"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsManagerProvider"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"
                     interface="org.jetbrains.plugins.notebooks.visualization.NotebookEditorAppearanceProvider"
                     dynamic="true"/>
