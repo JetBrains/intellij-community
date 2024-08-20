@@ -14,7 +14,6 @@ object PythonCommunityPluginModules {
     "intellij.python.community",
     "intellij.python.community.communityOnly",
     "intellij.python.community.core.impl",
-    "intellij.python.community.deprecated.extensions",
     "intellij.python.community.impl",
     "intellij.python.community.impl.huggingFace",
     "intellij.python.community.plugin.impl",

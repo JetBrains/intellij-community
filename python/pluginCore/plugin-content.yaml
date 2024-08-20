@@ -32,7 +32,6 @@
   contentModules:
   - name: intellij.commandInterface
   - name: intellij.python.community.communityOnly
-  - name: intellij.python.community.deprecated.extensions
   - name: intellij.python.community.impl.huggingFace
   - name: intellij.python.community.plugin.impl
   - name: intellij.python.community.plugin.java
