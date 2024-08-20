@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.evaluate.quick.common;
+package com.intellij.xdebugger.impl.evaluate.quick.common
 
-public enum ValueHintType {
+enum class ValueHintType {
   MOUSE_OVER_HINT,
   MOUSE_ALT_OVER_HINT,
   MOUSE_CLICK_HINT
