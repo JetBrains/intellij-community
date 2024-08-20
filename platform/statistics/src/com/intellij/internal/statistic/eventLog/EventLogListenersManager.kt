@@ -75,7 +75,7 @@ class EventLogListenersManager {
           listener.onLogEvent(validatedEvent, rawEventId, rawData)
         }
       } catch (e: Exception) {
-        logger.error("Exception during notifying event log listener", e)
+        logger.warnInProduction(e)
       }
     }
   }
