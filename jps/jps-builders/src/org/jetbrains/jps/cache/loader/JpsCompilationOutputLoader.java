@@ -171,7 +171,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     if (currentModulesState == null) {
       commitModulesState.forEach((type, map) -> {
         map.forEach((name, state) -> {
-          affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
+          affectedModules.add(new AffectedModule(type, name, state.hash, getBuildDirRelativeFile(state.relativePath)));
         });
       });
       LOG.warn("Project doesn't contain metadata, force to download " + affectedModules.size() + " modules.");
@@ -186,7 +186,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     newBuildTypes.removeAll(currentModulesState.keySet());
     newBuildTypes.forEach(type -> {
       commitModulesState.get(type).forEach((name, state) -> {
-        affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
+        affectedModules.add(new AffectedModule(type, name, state.hash, getBuildDirRelativeFile(state.relativePath)));
       });
     });
 
@@ -195,7 +195,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     oldBuildTypes.removeAll(commitModulesState.keySet());
     oldBuildTypes.forEach(type -> {
       currentModulesState.get(type).forEach((name, state) -> {
-        oldModulesMap.put(name, state.getRelativePath());
+        oldModulesMap.put(name, state.relativePath);
       });
     });
 
@@ -210,7 +210,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
       newBuildModules.removeAll(currentTypeState.keySet());
       newBuildModules.forEach(name -> {
         BuildTargetState state = map.get(name);
-        affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
+        affectedModules.add(new AffectedModule(type, name, state.hash, getBuildDirRelativeFile(state.relativePath)));
       });
 
       // Calculate old modules paths for remove
@@ -218,20 +218,20 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
       oldBuildModules.removeAll(map.keySet());
       oldBuildModules.forEach(name -> {
         BuildTargetState state = currentTypeState.get(name);
-        oldModulesMap.put(name, state.getRelativePath());
+        oldModulesMap.put(name, state.relativePath);
       });
 
       // In another case compare modules inside the same build type
       map.forEach((name, state) -> {
         BuildTargetState currentTargetState = currentTypeState.get(name);
         if (currentTargetState == null || !state.equals(currentTargetState)) {
-          affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
+          affectedModules.add(new AffectedModule(type, name, state.hash, getBuildDirRelativeFile(state.relativePath)));
           return;
         }
 
-        File outFile = getBuildDirRelativeFile(state.getRelativePath());
+        File outFile = getBuildDirRelativeFile(state.relativePath);
         if (checkExistance && (!outFile.exists() || ArrayUtil.isEmpty(outFile.listFiles()))) {
-          affectedModules.add(new AffectedModule(type, name, state.getHash(), outFile));
+          affectedModules.add(new AffectedModule(type, name, state.hash, outFile));
         }
       });
     });
@@ -240,7 +240,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     myOldModulesPaths = oldModulesMap.entrySet().stream().filter(entry -> {
       for (Map.Entry<String, Map<String, BuildTargetState>> commitEntry : commitModulesState.entrySet()) {
         BuildTargetState targetState = commitEntry.getValue().get(entry.getKey());
-        if (targetState != null && targetState.getRelativePath().equals(entry.getValue())) return false;
+        if (targetState != null && targetState.relativePath.equals(entry.getValue())) return false;
       }
       return true;
     }).map(entry -> getBuildDirRelativeFile(entry.getValue()))
@@ -261,7 +261,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
           result.add(affectedModule);
           return;
         }
-        long hash = Hashing.komihash5_0().hashLongLongToLong(affectedModule.getHash(), targetState.getHash());
+        long hash = Hashing.komihash5_0().hashLongLongToLong(affectedModule.getHash(), targetState.hash);
         result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else if (affectedModule.getType().equals(RESOURCES_PRODUCTION)) {
@@ -270,7 +270,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
           result.add(affectedModule);
           return;
         }
-        long hash = Hashing.komihash5_0().hashLongLongToLong(targetState.getHash(), affectedModule.getHash());
+        long hash = Hashing.komihash5_0().hashLongLongToLong(targetState.hash, affectedModule.getHash());
         result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else if (affectedModule.getType().equals(JAVA_TEST)) {
@@ -279,7 +279,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
           result.add(affectedModule);
           return;
         }
-        long hash = Hashing.komihash5_0().hashLongLongToLong(affectedModule.getHash(), targetState.getHash());
+        long hash = Hashing.komihash5_0().hashLongLongToLong(affectedModule.getHash(), targetState.hash);
         result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else if (affectedModule.getType().equals(RESOURCES_TEST)) {
@@ -288,7 +288,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
           result.add(affectedModule);
           return;
         }
-        long hash = Hashing.komihash5_0().hashLongLongToLong(targetState.getHash(), affectedModule.getHash());
+        long hash = Hashing.komihash5_0().hashLongLongToLong(targetState.hash, affectedModule.getHash());
         result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else {

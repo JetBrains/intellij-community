@@ -1,130 +1,134 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jps.cache.loader;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.cache.client.JpsServerClient;
-import org.jetbrains.jps.cache.model.AffectedModule;
-import org.jetbrains.jps.cache.model.BuildTargetState;
+package org.jetbrains.jps.cache.loader
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
+import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.jps.cache.client.JpsServerClient
+import org.jetbrains.jps.cache.model.BuildTargetState
+import java.nio.file.Files
+import java.nio.file.Path
 
-public class JpsCompilationOutputLoaderTest extends BasePlatformTestCase {
-  private static final String PRODUCTION = "production";
-  private static final String TEST = "test";
-  private JpsCompilationOutputLoader compilationOutputLoader;
-  private Type myTokenType;
-  private Gson myGson;
+private const val PRODUCTION = "production"
+private const val TEST = "test"
+private fun getTestDataFile(fileName: String): Path {
+  return PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/cacheLoader").toPath().resolve(fileName)
+}
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    compilationOutputLoader = new JpsCompilationOutputLoader(JpsServerClient.getServerClient(""), "/intellij/out/classes");
-    myGson = new Gson();
-    myTokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType();
+class JpsCompilationOutputLoaderTest : BasePlatformTestCase() {
+  private var compilationOutputLoader: JpsCompilationOutputLoader? = null
+
+  public override fun setUp() {
+    super.setUp()
+    compilationOutputLoader = JpsCompilationOutputLoader(JpsServerClient.getServerClient(""), "/intellij/out/classes")
   }
 
-  public void testCurrentModelStateNull() throws IOException {
-    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(null, loadModelFromFile("caseOne.json"), false);
-    assertSize(4, affectedModules);
+  fun testCurrentModelStateNull() {
+    val affectedModules = compilationOutputLoader!!.getAffectedModules(null, loadModelFromFile("caseOne.json"), false)
+    UsefulTestCase.assertSize(4, affectedModules)
     // 836 production
-    assertSize(2, ContainerUtil.filter(affectedModules, module -> module.getType().contains(PRODUCTION)));
+    UsefulTestCase.assertSize(2, affectedModules.filter { it.type.contains(PRODUCTION) })
     // 407 test
-    assertSize(2, ContainerUtil.filter(affectedModules, module -> module.getType().contains(TEST)));
+    UsefulTestCase.assertSize(2, affectedModules.filter { it.type.contains(TEST) })
   }
 
-  public void testChangedStatsCollectorModule() throws IOException {
-    List<AffectedModule> affectedModules =
-      compilationOutputLoader.getAffectedModules(loadModelFromFile("caseOne.json"), loadModelFromFile("caseTwo.json"), false);
-    assertSize(1, affectedModules);
-    AffectedModule affectedModule = affectedModules.get(0);
-    assertEquals("java-production", affectedModule.getType());
-    assertEquals("intellij.statsCollector", affectedModule.getName());
+  fun testChangedStatsCollectorModule() {
+    val affectedModules =
+      compilationOutputLoader!!.getAffectedModules(loadModelFromFile("caseOne.json"), loadModelFromFile("caseTwo.json"), false)
+    assertThat(affectedModules).hasSize(1)
+    val affectedModule = affectedModules[0]
+    assertEquals("java-production", affectedModule!!.type)
+    assertEquals("intellij.statsCollector", affectedModule.name)
   }
 
-  public void testNewType() throws IOException {
-    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseTwo.json"),
-                                                                                      loadModelFromFile("caseThree.json"), false);
-    assertSize(1, affectedModules);
-    AffectedModule affectedModule = affectedModules.get(0);
-    assertEquals("artifacts", affectedModule.getType());
-    assertEquals("intellij.cidr.externalSystem", affectedModule.getName());
+  fun testNewType() {
+    val affectedModules = compilationOutputLoader!!.getAffectedModules(loadModelFromFile("caseTwo.json"),
+                                                                       loadModelFromFile("caseThree.json"), false)
+    assertThat(affectedModules).hasSize(1)
+    val affectedModule = affectedModules[0]
+    assertEquals("artifacts", affectedModule!!.type)
+    assertEquals("intellij.cidr.externalSystem", affectedModule.name)
   }
 
-  public void testChangedProductionModule() throws IOException {
-    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseTwo.json"),
-                                                                                      loadModelFromFile("caseFour.json"), false);
-    assertSize(1, affectedModules);
-    AffectedModule affectedModule = affectedModules.get(0);
-    assertEquals(PRODUCTION, affectedModule.getType());
-    assertEquals("intellij.cidr.externalSystem", affectedModule.getName());
+  fun testChangedProductionModule() {
+    val affectedModules = compilationOutputLoader!!.getAffectedModules(loadModelFromFile("caseTwo.json"),
+                                                                       loadModelFromFile("caseFour.json"), false)
+    assertThat(affectedModules).hasSize(1)
+    val affectedModule = affectedModules[0]
+    assertEquals(PRODUCTION, affectedModule!!.type)
+    assertEquals("intellij.cidr.externalSystem", affectedModule.name)
   }
 
-  public void testNewBuildModule() throws IOException {
-    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseFour.json"),
-                                                                                      loadModelFromFile("caseFive.json"), false);
-    assertSize(1, affectedModules);
-    AffectedModule affectedModule = affectedModules.get(0);
-    assertEquals("resources-production", affectedModule.getType());
-    assertEquals("intellij.sh", affectedModule.getName());
+  fun testNewBuildModule() {
+    val affectedModules = compilationOutputLoader!!.getAffectedModules(loadModelFromFile("caseFour.json"),
+                                                                       loadModelFromFile("caseFive.json"), false)
+    assertThat(affectedModules).hasSize(1)
+    val affectedModule = affectedModules[0]
+    assertEquals("resources-production", affectedModule!!.type)
+    assertEquals("intellij.sh", affectedModule.name)
   }
 
-  public void testTargetFolderNotExist() throws IOException {
-    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseFour.json"),
-                                                                                      loadModelFromFile("caseFive.json"), true);
-    assertSize(4, affectedModules);
-    List<String> types = ContainerUtil.map(affectedModules, AffectedModule::getType);
-    List<String> names = ContainerUtil.map(affectedModules, AffectedModule::getName);
-    assertSameElements(types, "java-test", "production", "resources-test", "resources-production");
-    assertSameElements(names, "intellij.cidr.externalSystem", "intellij.platform.ssh.integrationTests", "intellij.sh");
+  fun testTargetFolderNotExist() {
+    val affectedModules = compilationOutputLoader!!.getAffectedModules(loadModelFromFile("caseFour.json"),
+                                                                       loadModelFromFile("caseFive.json"), true)
+    assertThat(affectedModules).hasSize(4)
+    val types = affectedModules.map { it.type }
+    val names = affectedModules.map { it.name }
+    UsefulTestCase.assertSameElements(types, "java-test", "production", "resources-test", "resources-production")
+    UsefulTestCase.assertSameElements(names, "intellij.cidr.externalSystem", "intellij.platform.ssh.integrationTests", "intellij.sh")
   }
 
-  public void testChangedTest() throws IOException {
-    List<AffectedModule> affectedModules = compilationOutputLoader.getAffectedModules(loadModelFromFile("caseFive.json"),
-                                                                                      loadModelFromFile("caseSix.json"), false);
-    assertSize(1, affectedModules);
-    AffectedModule affectedModule = affectedModules.get(0);
-    assertEquals(TEST, affectedModule.getType());
-    assertEquals("intellij.cidr.externalSystem", affectedModule.getName());
+  fun testChangedTest() {
+    val affectedModules = compilationOutputLoader!!.getAffectedModules(loadModelFromFile("caseFive.json"),
+                                                                       loadModelFromFile("caseSix.json"), false)
+    assertThat(affectedModules).hasSize(1)
+    val affectedModule = affectedModules[0]
+    assertEquals(TEST, affectedModule!!.type)
+    assertEquals("intellij.cidr.externalSystem", affectedModule.name)
   }
 
-  public void testRemoveBuildType() throws IOException {
-    compilationOutputLoader.getAffectedModules(loadModelFromFile("removeOne.json"), loadModelFromFile("caseOne.json"), false);
-    List<File> oldModulesPaths = compilationOutputLoader.getOldModulesPaths();
-    assertSize(1, oldModulesPaths);
-    assertEquals("intellij.cidr", oldModulesPaths.get(0).getName());
+  fun testRemoveBuildType() {
+    compilationOutputLoader!!.getAffectedModules(loadModelFromFile("removeOne.json"), loadModelFromFile("caseOne.json"), false)
+    val oldModulesPaths = compilationOutputLoader!!.oldModulesPaths
+    UsefulTestCase.assertSize(1, oldModulesPaths)
+    assertEquals("intellij.cidr", oldModulesPaths[0]!!.name)
   }
 
-  public void testRemoveModuleNotExistingInOtherBuildTypes() throws IOException {
-    compilationOutputLoader.getAffectedModules(loadModelFromFile("removeTwo.json"), loadModelFromFile("removeOne.json"), false);
-    List<File> oldModulesPaths = compilationOutputLoader.getOldModulesPaths();
-    assertSize(1, oldModulesPaths);
-    assertEquals("intellij.platform.ssh.integrationTests", oldModulesPaths.get(0).getName());
+  fun testRemoveModuleNotExistingInOtherBuildTypes() {
+    compilationOutputLoader!!.getAffectedModules(loadModelFromFile("removeTwo.json"), loadModelFromFile("removeOne.json"), false)
+    val oldModulesPaths = compilationOutputLoader!!.oldModulesPaths
+    UsefulTestCase.assertSize(1, oldModulesPaths)
+    assertEquals("intellij.platform.ssh.integrationTests", oldModulesPaths[0]!!.name)
   }
 
-  public void testRemoveModuleExistingInOtherBuildTypes() throws IOException {
-    compilationOutputLoader.getAffectedModules(loadModelFromFile("removeThree.json"), loadModelFromFile("removeTwo.json"), false);
-    List<File> oldModulesPaths = compilationOutputLoader.getOldModulesPaths();
-    assertSize(0, oldModulesPaths);
+  fun testRemoveModuleExistingInOtherBuildTypes() {
+    compilationOutputLoader!!.getAffectedModules(loadModelFromFile("removeThree.json"), loadModelFromFile("removeTwo.json"), false)
+    val oldModulesPaths = compilationOutputLoader!!.oldModulesPaths
+    UsefulTestCase.assertSize(0, oldModulesPaths)
   }
+}
 
-  private Map<String, Map<String, BuildTargetState>> loadModelFromFile(String fileName) throws IOException {
-    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(getTestDataFile(fileName)))) {
-      return myGson.fromJson(bufferedReader, myTokenType);
-    }
+private fun loadModelFromFile(fileName: String): Map<String, Map<String, BuildTargetState>> {
+  val map = LinkedHashMap<String, Map<String, BuildTargetState>>()
+  for ((k, v) in Json.parseToJsonElement(Files.readString(getTestDataFile(fileName))).jsonObject) {
+    val value = v.jsonObject
+      .map { (k, v) ->
+        v as JsonObject
+        k to BuildTargetState(
+          hash = Hashing.komihash5_0().hashCharsToLong(v.get("hash")!!.jsonPrimitive.content),
+          relativePath = v.get("relativePath")!!.jsonPrimitive.content,
+        )
+      }
+      .toMap()
+    map.put(k, value)
   }
-
-  private static File getTestDataFile(@NotNull String fileName) {
-    return new File(PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/cacheLoader"), fileName);
-  }
+  return map
 }
