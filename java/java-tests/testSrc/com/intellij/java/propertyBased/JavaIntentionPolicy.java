@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -59,11 +59,10 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear
            actionText.startsWith("Surround with try-with-resources block") || // if 'close' throws, we don't add a new 'catch' for that, see IDEA-196544
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
-           actionText.matches("Replace with throws .*") || //may break catches with explicit exceptions
-           actionText.equals("Generate 'clone()' method which always throws exception") || // IDEA-207048
+           actionText.matches("Replace with throws .*") || // may break catches with explicit exceptions
            actionText.matches("Replace '.+' with '.+' in cast") || // can produce uncompilable code by design
            actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'") || // Suspicious toArray may introduce compilation error
-           actionText.equals("Rollback changes in current line"); //revert only one line
+           actionText.equals("Rollback changes in current line"); // revert only one line
   }
 
   static boolean skipPreview(@NotNull IntentionAction action) {
