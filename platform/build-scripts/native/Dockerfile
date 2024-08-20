@@ -27,6 +27,6 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y -v --default-toolchain stable -
 RUN . "$HOME/.cargo/env"; \
     cargo install cargo-prefetch; \
     cargo prefetch; \
-    cargo prefetch autocfg@=1.1.0 chrono@=0.4.31 libc@=0.2.148 num-traits@=0.2.16
+    cargo prefetch autocfg@=1.1.0 chrono@=0.4.38 libc@=0.2.153 num-traits@=0.2.16 winresource@=0.1.17 windows@0.58.0
 
 WORKDIR /home/builder
