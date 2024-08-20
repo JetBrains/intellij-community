@@ -6,9 +6,18 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 
 val Module.externalProjectId: String?
-    get() = ExternalSystemApiUtil.getExternalProjectId(this)
+    get() {
+        ProgressManager.checkCanceled()
+
+        return ExternalSystemApiUtil.getExternalProjectId(this)
+    }
 
 val Module.externalProjectPath: String?
-    get() = ExternalSystemApiUtil.getExternalProjectPath(this)
+    get() {
+        ProgressManager.checkCanceled()
+
+        return ExternalSystemApiUtil.getExternalProjectPath(this)
+    }
