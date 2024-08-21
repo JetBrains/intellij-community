@@ -13,7 +13,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
-import okio.source
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
@@ -26,8 +25,10 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.cache.model.BuildTargetState
 import org.jetbrains.jps.incremental.storage.ProjectStamps
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -202,19 +203,23 @@ private class Uploader(serverUrl: String, val authHeader: String) {
   suspend fun upload(path: String, file: Path) {
     val url = pathToUrl(path)
     spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).use {
-      check(Files.exists(file)) {
-        "The file $file does not exist"
-      }
+      val fileSize = Files.size(file)
       retryWithExponentialBackOff {
         httpClient.newCall(Request.Builder().url(url)
           .header("Authorization", authHeader)
           .put(object : RequestBody() {
             override fun contentType() = MEDIA_TYPE_BINARY
 
-            override fun contentLength() = Files.size(file)
+            override fun contentLength(): Long = fileSize
 
             override fun writeTo(sink: BufferedSink) {
-              file.source().use(sink::writeAll)
+              FileChannel.open(file, StandardOpenOption.READ).use { channel ->
+                var position = 0L
+                val size = channel.size()
+                while (position < size) {
+                    position += channel.transferTo(position, size - position, sink)
+                }
+              }
             }
           }).build()).executeAsync().useSuccessful {}
       }

@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.util.coroutines.mapConcurrent
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -129,7 +129,7 @@ internal class PortableCompilationCacheDownloader(
       val outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)
       total = outputs.size
       spanBuilder("download compilation output parts").setAttribute(AttributeKey.longKey("count"), outputs.size.toLong()).use {
-        outputs.mapConcurrent(downloadParallelism) { output ->
+        outputs.forEachConcurrent(downloadParallelism) { output ->
           spanBuilder("get and unpack output").setAttribute("part", output.remotePath).use { span ->
             try {
               saveOutput(compilationOutput = output, totalDownloadedBytes = totalDownloadedBytes, span = span)
@@ -141,7 +141,6 @@ internal class PortableCompilationCacheDownloader(
               span.recordException(e)
               failed.increment()
             }
-            null
           }
         }
       }
