@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.CommonBundle
@@ -37,7 +37,7 @@ internal const val HEADER_HEIGHT_DFM = 30
 internal const val HEADER_HEIGHT_COMPACT = 32
 internal const val HEADER_HEIGHT_NORMAL = 40
 
-private val windowBorderThicknessInPhysicalPx: Int = run {
+private val windowBorderThicknessInPhysicalPx: Int by lazy {
   // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
   // calculated once on desktop session start, so it should be okay to store once per IDE session.
   val scale = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration.defaultTransform.scaleY
