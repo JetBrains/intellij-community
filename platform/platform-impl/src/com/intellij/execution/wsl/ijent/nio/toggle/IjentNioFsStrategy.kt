@@ -4,13 +4,13 @@ package com.intellij.execution.wsl.ijent.nio.toggle
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
+import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
-import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystem
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
 import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.CoroutineScope
@@ -98,7 +98,7 @@ class IjentWslNioFsToggleStrategy(
     }
 
     ownFileSystems.compute(distro) { underlyingProvider, _, actualFs ->
-      if (actualFs is TracingFileSystem && actualFs.provider().delegate is IjentWslNioFileSystemProvider) {
+      if (actualFs is IjentWslNioFileSystem) {
         LOG.debug {
           "Tried to switch $distro to IJent WSL nio.FS, but it had already been so. The old filesystem: $actualFs"
         }
