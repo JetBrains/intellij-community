@@ -68,6 +68,7 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val d
         return@launch
       }
       val vm = GHPRSubmitReviewViewModelImpl(this, reviewData, viewerIsAuthor, pendingReviewResult.getOrNull()) {
+        dataProvider.detailsData.signalDetailsNeedReload()
         ctx.cancel()
       }
       handler.invoke(vm)
