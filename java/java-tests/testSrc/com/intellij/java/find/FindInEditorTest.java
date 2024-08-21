@@ -315,7 +315,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
   }
 
 
-  public void testReplacePerformance() throws Exception {
+  public void testReplacePerformance() {
     String aas = StringUtil.repeat("a", 100);
     String text = StringUtil.repeat(aas + "\n" + StringUtil.repeat("aaaaasdbbbbbbbbbbbbbbbbb\n", 100), 1000);
     String bbs = StringUtil.repeat("b", 100);
@@ -332,11 +332,11 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
         for (int i=0; i<25; i++) {
           myFindModel.   setStringToFind(aas);
           myFindModel.setStringToReplace(bbs);
-          FindUtil.replace(editor.getProject(), editor, 0, myFindModel);
+          FindUtil.replace(getProject(), editor, 0, myFindModel);
           assertEquals(repl, editor.getDocument().getText());
           myFindModel.   setStringToFind(bbs);
           myFindModel.setStringToReplace(aas);
-          FindUtil.replace(editor.getProject(), editor, 0, myFindModel);
+          FindUtil.replace(getProject(), editor, 0, myFindModel);
           assertEquals(text, editor.getDocument().getText());
         }
       }).start();

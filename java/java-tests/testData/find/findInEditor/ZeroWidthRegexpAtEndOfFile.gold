@@ -57,8 +57,8 @@ a[[]]
 b[]
 c[]
 --
-RangeHighlighter: (1,1); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,java.awt.Color[r=255,g=255,b=0],{},java.awt.Color[r=113,g=179,b=98]]
-RangeHighlighter: (1,1); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],{},null]
-RangeHighlighter: (3,3); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,java.awt.Color[r=255,g=255,b=0],{},java.awt.Color[r=113,g=179,b=98]]
-RangeHighlighter: (5,5); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,java.awt.Color[r=255,g=255,b=0],{},java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (1,1); layer:5999; tooltip: null : BOXED
+RangeHighlighter: (1,1); layer:5999; tooltip: null : ROUNDED_BOX
+RangeHighlighter: (3,3); layer:5999; tooltip: null : BOXED
+RangeHighlighter: (5,5); layer:5999; tooltip: null : BOXED
 ------------
