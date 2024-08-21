@@ -320,14 +320,6 @@ private fun <T, R> Flow<Iterable<T>>.associateCaching(hashingStrategy: HashingSt
   return associateCachingBy({ it }, hashingStrategy, { mapper(it) }, { }, update)
 }
 
-@ApiStatus.Internal
-@ApiStatus.Obsolete
-fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
-                                                  mapper: CoroutineScope.(T) -> R,
-                                                  destroy: suspend R.() -> Unit,
-                                                  update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
-  associateCachingBy(sourceIdentifier, HashingStrategy.canonical(), mapper, destroy, update).map { it.values.toList() }
-
 /**
  * Creates a list of model objects from DTOs
  */

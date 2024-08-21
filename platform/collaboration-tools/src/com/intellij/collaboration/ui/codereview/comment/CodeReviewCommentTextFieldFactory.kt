@@ -23,6 +23,7 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
@@ -31,9 +32,19 @@ import javax.swing.Action
 import javax.swing.JComponent
 
 object CodeReviewCommentTextFieldFactory {
-  fun createIn(cs: CoroutineScope, vm: CodeReviewSubmittableTextViewModel,
-               actions: CommentInputActionsComponentFactory.Config,
-               icon: CommentTextFieldFactory.IconConfig? = null): JComponent {
+  fun createIn(
+    cs: CoroutineScope, vm: CodeReviewSubmittableTextViewModel,
+    actions: CommentInputActionsComponentFactory.Config,
+    icon: CommentTextFieldFactory.IconConfig? = null,
+  ): JComponent = createIn(cs, vm, actions, icon) {}
+
+  @ApiStatus.Internal
+  fun createIn(
+    cs: CoroutineScope, vm: CodeReviewSubmittableTextViewModel,
+    actions: CommentInputActionsComponentFactory.Config,
+    icon: CommentTextFieldFactory.IconConfig? = null,
+    setupEditor: (Editor) -> Unit = {},
+  ): JComponent {
     val editor = CodeReviewMarkdownEditor.create(vm.project).apply {
       component.isOpaque = false
       val fieldBackground = JBColor.lazy {
@@ -88,6 +99,9 @@ object CodeReviewCommentTextFieldFactory {
     }
 
     CollaborationToolsUIUtil.installValidator(editor.component, errorValue)
+
+    setupEditor(editor)
+
     val inputField = CollaborationToolsUIUtil.wrapWithProgressOverlay(editor.component, busyValue).let {
       if (icon != null) {
         CommentTextFieldFactory.wrapWithLeftIcon(icon, it) {

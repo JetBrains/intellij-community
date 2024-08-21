@@ -40,7 +40,7 @@ object CommentTextFieldFactory {
     project: Project?,
     document: Document,
     scrollOnChange: ScrollOnChangePolicy = ScrollOnChangePolicy.ScrollToField,
-    placeHolder: @Nls String? = null
+    placeHolder: @Nls String? = null,
   ): EditorTextField = CommentTextField(project, document).apply {
     putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     setPlaceholder(placeHolder)
@@ -128,7 +128,7 @@ object CommentTextFieldFactory {
 
 private class CommentTextField(
   project: Project?,
-  document: Document
+  document: Document,
 ) : EditorTextField(document, project, FileTypes.PLAIN_TEXT) {
   init {
     isOneLineMode = false
