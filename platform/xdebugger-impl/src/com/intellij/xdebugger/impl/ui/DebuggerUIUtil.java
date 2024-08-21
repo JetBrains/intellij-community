@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -136,7 +137,7 @@ public final class DebuggerUIUtil {
                                     @NotNull MouseEvent event,
                                     @NotNull Project project,
                                     @Nullable Editor editor) {
-    VisualizedTextPopup.INSTANCE.evaluateAndShowValuePopup(evaluator, event, project, editor);
+    WriteIntentReadAction.run((Runnable)() -> VisualizedTextPopup.INSTANCE.evaluateAndShowValuePopup(evaluator, event, project, editor));
   }
 
   @ApiStatus.Experimental

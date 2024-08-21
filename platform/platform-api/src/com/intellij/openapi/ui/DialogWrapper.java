@@ -486,7 +486,8 @@ public abstract class DialogWrapper {
       processDoNotAskOnCancel();
     }
 
-    Disposer.dispose(myDisposable);
+    //maybe readaction
+    WriteIntentReadAction.run((Runnable)() -> Disposer.dispose(myDisposable));
   }
 
   public final void close(int exitCode) {
