@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.gradle.service.resolve.static
 
 import com.android.tools.idea.gradle.dsl.api.ProjectBuildModel
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
@@ -18,10 +21,23 @@ class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
     return ProjectBuildModel.get(project).context.versionCatalogFiles.associate { it.catalogName to it.file } ?: emptyMap()
   }
 
+  override fun getVersionCatalogFiles(module: Module): Map<String, VirtualFile> {
+    val buildModel = getBuildModel(module) ?: return emptyMap()
+    return buildModel.context.versionCatalogFiles.associate { it.catalogName to it.file }
+  }
+
   override fun getAccessorClass(context: PsiElement, catalogName: String): PsiClass? {
     val project = context.project
     val scope = context.resolveScope
-    val versionCatalogModel = ProjectBuildModel.get(project).versionCatalogsModel ?: return null
+    val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return null
+    val buildModel = getBuildModel(module) ?: return null
+    val versionCatalogModel = buildModel.versionCatalogsModel
     return SyntheticVersionCatalogAccessor(project, scope, versionCatalogModel, catalogName)
+  }
+
+  private fun getBuildModel(module: Module): ProjectBuildModel? {
+    val buildPath = ExternalSystemModulePropertyManager.getInstance(module)
+      .getLinkedProjectPath() ?: return null
+    return ProjectBuildModel.getForCompositeBuild(module.project, buildPath)
   }
 }
