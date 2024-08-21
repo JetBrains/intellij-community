@@ -829,6 +829,11 @@
       <reference ref="ProjectViewPopupMenuSettingsGroup"/>
     </group>
 
+    <group id="InspectCodeActionInPopupMenus">
+      <reference ref="InspectCode"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
+    </group>
+
     <group id="RemoveBom.Group">
       <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
       <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
