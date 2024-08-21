@@ -166,7 +166,7 @@ public class JBPopupMenu extends JPopupMenu {
     Timer myTimer;
 
     MyLayout(final JPopupMenu target) {
-      super(target, BoxLayout.PAGE_AXIS);
+      super(target, PAGE_AXIS);
       myTarget = target;
       myTimer = TimerUtil.createNamedTimer("PopupTimer", 40, this);
       myTarget.addPopupMenuListener(new PopupMenuListener() {
@@ -301,11 +301,18 @@ public class JBPopupMenu extends JPopupMenu {
 
     private int getMaxHeight() {
       GraphicsConfiguration configuration = myTarget.getGraphicsConfiguration();
-      if (configuration == null && myTarget.getInvoker() != null) {
-        configuration = myTarget.getInvoker().getGraphicsConfiguration();
+      Component invoker = myTarget.getInvoker();
+      if (configuration == null && invoker != null) {
+        configuration = invoker.getGraphicsConfiguration();
       }
       if (configuration == null) return Short.MAX_VALUE;
       Rectangle screenRectangle = ScreenUtil.getScreenRectangle(configuration);
+
+      if (invoker != null && invoker.getParent() instanceof JMenuBar) {
+        var menuItemHeight = invoker.getSize().height;
+        var y = invoker.getLocationOnScreen().y - screenRectangle.y;
+        return Math.max(y, screenRectangle.height - y - menuItemHeight);
+      }
       return screenRectangle.height;
     }
 

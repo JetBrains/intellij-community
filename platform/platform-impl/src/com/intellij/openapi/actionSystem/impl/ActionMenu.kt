@@ -367,6 +367,15 @@ class ActionMenu constructor(private val context: DataContext?,
       }
     }
 
+    if (!SystemInfo.isMacSystemMenu && parent is JMenuBar) {
+      // Workaround for a problem in `javax.swing.JMenu.getPopupMenuOrigin` method:
+      // 1. Show some menu above the correspondent main menu item
+      // 2. Change its content (see video in IJPL-54336) or move the main frame to lower position
+      // 3. Open the menu again: it will have the wrong position
+      // The position is calculated based on the old size, resetting size forces `getPopupMenuOrigin` method to use preferred size
+      popupMenu.size = Dimension(0, 0)
+    }
+
     super.setPopupMenuVisible(value)
 
     if (value) {
