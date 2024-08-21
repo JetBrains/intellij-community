@@ -35,16 +35,24 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
                                @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexFactory,
                                @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
     super(extension, storageFactory, forwardIndexFactory, forwardIndexAccessor);
-    if (!(myIndexId instanceof ID<?, ?>)) {
-      throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
+    IndexId<Key, Value> indexId = super.indexId();
+    if (!(indexId instanceof ID<?, ?>)) {
+      throw new IllegalArgumentException("extension.getName() (=" + indexId + ") should be instance of com.intellij.util.indexing.ID");
     }
     mySingleEntryIndex = extension instanceof SingleEntryFileBasedIndexExtension;
   }
 
   @Override
-  public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
+  public ID<Key, Value> indexId() {
+    //ctor checks it is always an ID:
+    return (ID<Key, Value>)super.indexId();
+  }
+
+  @Override
+  public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter)
+    throws StorageException {
     return ConcurrencyUtil.withLock(getLock().readLock(), () ->
-      ((VfsAwareIndexStorage<Key, Value>)myStorage).processKeys(processor, scope, idFilter)
+      ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter)
     );
   }
 
@@ -74,7 +82,7 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       Ref<Map<Key, Value>> result = new Ref<>(Collections.emptyMap());
       ValueContainer<Value> container = getData(key);
       container.forEach((id, value) -> {
-        boolean acceptNullValues = ((SingleEntryIndexer<?>)myIndexer).isAcceptNullValues();
+        boolean acceptNullValues = ((SingleEntryIndexer<?>)indexer()).isAcceptNullValues();
         if (value != null || acceptNullValues) {
           result.set(Collections.singletonMap(key, value));
         }
@@ -86,7 +94,7 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
       return forwardIndexAccessor.convertToInputDataMap(fileId, serializedInputData);
     }
-    getLogger().error("Can't fetch indexed data for index " + myIndexId.getName());
+    getLogger().error("Can't fetch indexed data for index " + indexId().getName());
     return null;
   }
 

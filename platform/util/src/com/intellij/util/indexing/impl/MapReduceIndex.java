@@ -32,19 +32,38 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
 
 
-  protected final IndexId<Key, Value> myIndexId;
-  protected final IndexStorage<Key, Value> myStorage;
-  protected final AtomicLong myModificationStamp = new AtomicLong();
-  protected final DataIndexer<Key, Value, Input> myIndexer;
-
-  private final @Nullable ValueSerializationChecker<Value, Input> myValueSerializationChecker;
   private final IndexExtension<Key, Value, Input> myExtension;
-  private final @Nullable ForwardIndex myForwardIndex;
-  private final ForwardIndexAccessor<Key, Value> myForwardIndexAccessor;
+  /** = extension.getName(), cached because very frequently accessed */
+  private final IndexId<Key, Value> myIndexId;
+  /** = extension.getIndexer() */
+  private final DataIndexer<Key, Value, Input> myIndexer;
+
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
+
+  private final IndexStorage<Key, Value> myStorage;
+  private final @Nullable ForwardIndex myForwardIndex;
+  private final @Nullable ForwardIndexAccessor<Key, Value> myForwardIndexAccessor;
   private final boolean myUseIntForwardIndex;
+
+  private final AtomicLong myModificationStamp = new AtomicLong();
+
+
+  /**
+   * Checks Value objects follow normal equals/hashCode contract: i.e. equals/hashCode are stable, and value after
+   * serialization-deserialization is equal to the original value before serialization.
+   * <p>
+   * The check is expensive, so it is really executed only if {@link IndexDebugProperties#DEBUG}, and not in stress-tests
+   *
+   * @see ValueSerializationChecker#checkValueSerialization(Map, Object) for details
+   */
+  private final @Nullable ValueSerializationChecker<Value, Input> myValueSerializationChecker;
+
+
   private volatile boolean myDisposed;
+
+
   private final LowMemoryWatcher myLowMemoryFlusher;
+
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorageLayout<Key, Value> indexStorageLayout) throws IOException {
@@ -84,6 +103,46 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
   }
 
+
+  public @NotNull IndexExtension<Key, Value, Input> getExtension() {
+    return myExtension;
+  }
+
+  /** =extension.getName() */
+  public IndexId<Key, Value> indexId() {
+    return myIndexId;
+  }
+
+  /** = extension.getIndexer() */
+  protected DataIndexer<Key, Value, Input> indexer() {
+    return myIndexer;
+  }
+
+  public @NotNull IndexStorage<Key, Value> getStorage() {
+    return myStorage;
+  }
+
+  protected @NotNull ValueSerializationProblemReporter getSerializationProblemReporter() {
+    return ValueSerializationChecker.DEFAULT_SERIALIZATION_PROBLEM_REPORTER;
+  }
+
+  public @Nullable ForwardIndex getForwardIndex() {
+    return myForwardIndex;
+  }
+
+  public @Nullable ForwardIndexAccessor<Key, Value> getForwardIndexAccessor() {
+    return myForwardIndexAccessor;
+  }
+
+  public final @NotNull ReadWriteLock getLock() {
+    return myLock;
+  }
+
+  public long getModificationStamp() {
+    return myModificationStamp.get();
+  }
+
+
   public void clearCaches() {
     try {
       //TODO RC: it seems useless to clearCaches() before flush() -- clearCaches() basically trims
@@ -102,10 +161,6 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     }
   }
 
-  protected @NotNull ValueSerializationProblemReporter getSerializationProblemReporter() {
-    return ValueSerializationChecker.DEFAULT_SERIALIZATION_PROBLEM_REPORTER;
-  }
-
   protected void tryDispose() {
     try {
       dispose();
@@ -113,26 +168,6 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     catch (Exception e) {
       LOG.info(e);
     }
-  }
-
-  public @Nullable ForwardIndex getForwardIndex() {
-    return myForwardIndex;
-  }
-
-  public ForwardIndexAccessor<Key, Value> getForwardIndexAccessor() {
-    return myForwardIndexAccessor;
-  }
-
-  public @NotNull IndexExtension<Key, Value, Input> getExtension() {
-    return myExtension;
-  }
-
-  public @NotNull IndexStorage<Key, Value> getStorage() {
-    return myStorage;
-  }
-
-  public final @NotNull ReadWriteLock getLock() {
-    return myLock;
   }
 
   @Override
@@ -340,10 +375,6 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   public abstract void checkCanceled();
 
   protected abstract void requestRebuild(@NotNull Throwable e);
-
-  public long getModificationStamp() {
-    return myModificationStamp.get();
-  }
 
   private final RemovedKeyProcessor<Key> myRemovedKeyProcessor = new RemovedKeyProcessor<Key>() {
     @Override

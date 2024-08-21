@@ -73,8 +73,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
   @Override
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
-    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-      LOG.info("updateForwardIndex,inputId=" + myIndexId + ",index=" + myIndexId + ",inMemory=" + myInMemoryMode.get());
+    if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
+      LOG.info("updateForwardIndex,inputId=" + indexId() + ",index=" + indexId() + ",inMemory=" + myInMemoryMode.get());
     }
 
     if (myInMemoryMode.get()) {
@@ -106,8 +106,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
           @Override
           public void memoryStorageCleared() {
-            if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-              LOG.info("memoryStorageCleared,index=" + myIndexId);
+            if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
+              LOG.info("memoryStorageCleared,index=" + indexId());
             }
             myInMemoryKeysAndValues.clear();
           }
@@ -127,8 +127,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
     }
     getLock().writeLock().lock();
     try {
-      if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-        LOG.info("removeTransientDataForFile,inputId=" + inputId + ",index=" + myIndexId);
+      if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
+        LOG.info("removeTransientDataForFile,inputId=" + inputId + ",index=" + indexId());
       }
       Map<Key, Value> keyValueMap = myInMemoryKeysAndValues.remove(inputId);
       if (keyValueMap == null) return;

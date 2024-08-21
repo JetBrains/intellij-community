@@ -235,6 +235,6 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
 
   @Internal
   DataIndexer<Integer, SerializedStubTree, FileContent> getIndexer() {
-    return myIndexer;
+    return indexer();
   }
 }

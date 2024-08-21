@@ -68,12 +68,12 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
                                    @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
     super(extension, storageFactory, forwardIndexFactory, forwardIndexAccessor);
 
-    if (FileBasedIndex.isCompositeIndexer(myIndexer)) {
+    if (FileBasedIndex.isCompositeIndexer(indexer())) {
       try {
         // noinspection unchecked,rawtypes
-        mySubIndexerRetriever = new PersistentSubIndexerRetriever((ID)myIndexId,
+        mySubIndexerRetriever = new PersistentSubIndexerRetriever(indexId(),
                                                                   extension.getVersion(),
-                                                                  (CompositeDataIndexer)myIndexer);
+                                                                  (CompositeDataIndexer)indexer());
       }
       catch (IOException e) {
         tryDispose();
@@ -113,7 +113,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
         IndexerIdHolder holder = ProgressManager.getInstance()
           .computeInNonCancelableSection(() -> new IndexerIdHolder(mySubIndexerRetriever.getFileIndexerId(file)));
         LOG.assertTrue(holder != null,
-                       "getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + myIndexId.getName());
+                       "getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + indexId().getName());
         return (FileCachedData)holder;
       }
       catch (IOException e) {
@@ -156,10 +156,10 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   public void setIndexedStateForFileOnFileIndexMetaData(int fileId,
                                                         @Nullable FileCachedData fileData,
                                                         boolean isProvidedByInfrastructureExtension) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId, isProvidedByInfrastructureExtension);
+    IndexingStamp.setFileIndexedStateCurrent(fileId, indexId(), isProvidedByInfrastructureExtension);
     if (mySubIndexerRetriever != null) {
       if (fileData == null) {
-        LOG.error("getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + myIndexId.getName());
+        LOG.error("getFileIndexMetaData() shouldn't have returned null in " + getClass() + ", " + indexId().getName());
       }
       else {
         try {
@@ -174,7 +174,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
 
   @Override
   public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId, isProvidedByInfrastructureExtension);
+    IndexingStamp.setFileIndexedStateCurrent(fileId, indexId(), isProvidedByInfrastructureExtension);
     if (mySubIndexerRetriever != null) {
       try {
         mySubIndexerRetriever.setIndexedState(fileId, file);
@@ -187,12 +187,12 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
 
   @Override
   public void invalidateIndexedStateForFile(int fileId) {
-    IndexingStamp.setFileIndexedStateOutdated(fileId, (ID<?, ?>)myIndexId);
+    IndexingStamp.setFileIndexedStateOutdated(fileId, indexId());
   }
 
   @Override
   public void setUnindexedStateForFile(int fileId) {
-    IndexingStamp.setFileIndexedStateUnindexed(fileId, (ID<?, ?>)myIndexId);
+    IndexingStamp.setFileIndexedStateUnindexed(fileId, indexId());
     if (mySubIndexerRetriever != null) {
       try {
         mySubIndexerRetriever.setUnindexedState(fileId);
@@ -205,7 +205,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
 
   @Override
   public @NotNull FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
-    FileIndexingState baseState = IndexingStamp.isFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
+    FileIndexingState baseState = IndexingStamp.isFileIndexedStateCurrent(fileId, indexId());
     if (baseState != FileIndexingState.UP_TO_DATE) {
       return baseState;
     }
@@ -213,7 +213,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     if (mySubIndexerRetriever == null) return FileIndexingState.UP_TO_DATE;
 
     if (!(file instanceof FileContent)) {
-      if (((CompositeDataIndexer<?, ?, ?, ?>)myIndexer).requiresContentForSubIndexerEvaluation(file)) {
+      if (((CompositeDataIndexer<?, ?, ?, ?>)indexer()).requiresContentForSubIndexerEvaluation(file)) {
         FileIndexingState indexConfigurationState = isIndexConfigurationUpToDate(fileId, file);
         // baseState == UP_TO_DATE => no need to reindex this file
         return indexConfigurationState == FileIndexingState.OUT_DATED ? FileIndexingState.OUT_DATED : FileIndexingState.UP_TO_DATE;
@@ -223,7 +223,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     try {
       FileIndexingState subIndexerState = mySubIndexerRetriever.getSubIndexerState(fileId, file);
       if (subIndexerState == FileIndexingState.UP_TO_DATE) {
-        if (file instanceof FileContent && ((CompositeDataIndexer<?, ?, ?, ?>)myIndexer).requiresContentForSubIndexerEvaluation(file)) {
+        if (file instanceof FileContent && ((CompositeDataIndexer<?, ?, ?, ?>)indexer()).requiresContentForSubIndexerEvaluation(file)) {
           setIndexConfigurationUpToDate(fileId, file);
         }
         return FileIndexingState.UP_TO_DATE;
@@ -261,7 +261,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
 
   @Override
   protected void requestRebuild(@NotNull Throwable ex) {
-    Runnable action = () -> FileBasedIndex.getInstance().requestRebuild((ID<?, ?>)myIndexId, ex);
+    Runnable action = () -> FileBasedIndex.getInstance().requestRebuild(indexId(), ex);
     Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
@@ -281,7 +281,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   @Override
   protected @NotNull ValueSerializationProblemReporter getSerializationProblemReporter() {
     return problem -> {
-      PluginId pluginId = ((ID<?, ?>)myIndexId).getPluginId();
+      PluginId pluginId = indexId().getPluginId();
       if (pluginId != null) {
         LOG.error(new PluginException(problem, pluginId));
       }
