@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.indices;
 
 import com.intellij.openapi.util.io.FileFilters;
@@ -27,7 +13,10 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.file.Path;
 import java.util.Collection;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
   private File myRoot;
@@ -50,7 +39,7 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     assertNotExcluded(myRoot);
     assertExcluded(out);
     assertEmpty(getModuleExcludes(module1));
-    assertSameElements(getModuleExcludes(module2), out);
+    assertThat(getModuleExcludes(module2)).containsExactlyInAnyOrder(out.toPath());
   }
 
   public void testModuleOutput() {
@@ -62,7 +51,7 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
 
     assertNotExcluded(myRoot);
     assertExcluded(out);
-    assertSameElements(getModuleExcludes(module), out);
+    assertThat(getModuleExcludes(module)).containsExactlyInAnyOrder(out.toPath());
 
     extension.setExcludeOutput(false);
     assertNotExcluded(out);
@@ -76,7 +65,7 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
 
     assertNotExcluded(myRoot);
     assertExcluded(exc);
-    assertSameElements(getModuleExcludes(module), exc);
+    assertThat(getModuleExcludes(module)).containsExactlyInAnyOrder(exc.toPath());
   }
 
   public void testContentRootUnderExcluded() {
@@ -109,7 +98,7 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     assertNotExcluded(outerRoot);
     assertNotExcluded(inner1Root);
     assertNotExcluded(inner2Root);
-    assertSameElements(getModuleExcludes(outer), inner1Root, inner2Root);
+    assertThat(getModuleExcludes(outer)).containsExactlyInAnyOrder(inner1Root.toPath(), inner2Root.toPath());
     assertEmpty(getModuleExcludes(inner1));
     assertEmpty(getModuleExcludes(inner2));
     ModuleExcludeIndexImpl index = createIndex();
@@ -130,7 +119,7 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     addContentRoot(inner, innerRoot);
     assertNotExcluded(outerRoot);
     assertNotExcluded(innerRoot);
-    assertSameElements(getModuleExcludes(outer), exc, innerRoot);
+    assertThat(getModuleExcludes(outer)).containsExactlyInAnyOrder(exc.toPath(), innerRoot.toPath());
     assertEmpty(getModuleExcludes(inner));
     ModuleExcludeIndexImpl index = createIndex();
     assertTrue(index.isExcludedFromModule(innerRoot, outer));
@@ -188,7 +177,7 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(root.getAbsolutePath()));
   }
 
-  private Collection<File> getModuleExcludes(JpsModule module) {
+  private Collection<Path> getModuleExcludes(JpsModule module) {
     return createIndex().getModuleExcludes(module);
   }
 

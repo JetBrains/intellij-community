@@ -29,6 +29,7 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,8 +84,8 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
       if (!isExcludedFromCompilation(excludedRootProviders, sourceRoot)) {
         final String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
-        final File rootFile = sourceRoot.getFile();
-        roots.add(new FilteredResourceRootDescriptor(rootFile, this, packagePrefix, computeRootExcludes(rootFile, index),
+        Path rootFile = sourceRoot.getPath();
+        roots.add(new FilteredResourceRootDescriptor(rootFile.toFile(), this, packagePrefix, computeRootExcludes(rootFile, index),
                                                      filterForExcludedPatterns));
       }
     }
@@ -92,9 +93,9 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     JavaResourceRootType resourceType = isTests() ? JavaResourceRootType.TEST_RESOURCE : JavaResourceRootType.RESOURCE;
     for (JpsTypedModuleSourceRoot<JavaResourceRootProperties> root : myModule.getSourceRoots(resourceType)) {
       if (!isExcludedFromCompilation(excludedRootProviders, root)) {
-        File rootFile = root.getFile();
+        Path rootFile = root.getPath();
         String relativeOutputPath = root.getProperties().getRelativeOutputPath();
-        roots.add(new ResourceRootDescriptor(rootFile, this, relativeOutputPath.replace('/', '.'), computeRootExcludes(rootFile, index), filterForExcludedPatterns));
+        roots.add(new ResourceRootDescriptor(rootFile.toFile(), this, relativeOutputPath.replace('/', '.'), computeRootExcludes(rootFile, index), filterForExcludedPatterns));
       }
     }
     

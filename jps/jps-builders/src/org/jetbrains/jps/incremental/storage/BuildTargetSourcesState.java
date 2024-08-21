@@ -268,9 +268,7 @@ public final class BuildTargetSourcesState implements BuildListener {
       Files.walkFileTree(rootFile, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-          return buildRootIndex.isDirectoryAccepted(dir.toFile(), rootDescriptor)
-                 ? FileVisitResult.CONTINUE
-                 : FileVisitResult.SKIP_SUBTREE;
+          return buildRootIndex.isDirectoryAccepted(dir, rootDescriptor) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
         }
 
         @Override

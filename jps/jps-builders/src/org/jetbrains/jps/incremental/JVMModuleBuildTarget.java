@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
@@ -10,6 +9,7 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -30,25 +30,26 @@ public abstract class JVMModuleBuildTarget<R extends BuildRootDescriptor> extend
     return getModule().getName();
   }
 
-  protected @NotNull Set<File> computeRootExcludes(File root, ModuleExcludeIndex index) {
-    final Collection<File> moduleExcludes = index.getModuleExcludes(getModule());
+  protected final @NotNull Set<Path> computeRootExcludes(Path root, ModuleExcludeIndex index) {
+    Collection<Path> moduleExcludes = index.getModuleExcludes(getModule());
     if (moduleExcludes.isEmpty()) {
       return Collections.emptySet();
     }
-    final Set<File> excludes = FileCollectionFactory.createCanonicalFileSet();
-    for (File excluded : moduleExcludes) {
-      if (FileUtil.isAncestor(root, excluded, true)) {
+
+    Set<Path> excludes = FileCollectionFactory.createCanonicalPathSet();
+    for (Path excluded : moduleExcludes) {
+      if (FileUtil.isAncestor(root.toString(), excluded.toString(), true)) {
         excludes.add(excluded);
       }
     }
-    return excludes;
+    return excludes.isEmpty() ? Collections.emptySet() : excludes;
   }
 
   @Override
   public R findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
-    final List<R> descriptors = rootIndex.getRootDescriptors(
+    List<R> descriptors = rootIndex.getRootDescriptors(
       new File(rootId), Collections.singletonList((BuildTargetType<? extends JVMModuleBuildTarget<R>>)getTargetType()), null
     );
-    return ContainerUtil.getFirstItem(descriptors);
+    return descriptors.isEmpty() ? null : descriptors.get(0);
   }
 }

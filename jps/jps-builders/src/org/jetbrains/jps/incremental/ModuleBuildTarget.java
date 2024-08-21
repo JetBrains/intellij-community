@@ -4,7 +4,6 @@ package org.jetbrains.jps.incremental;
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NonNls;
@@ -146,20 +145,24 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
           continue roots_loop;
         }
       }
-      final String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
+
+      String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
 
       // consider annotation processors output for generated sources, if contained under some source root
-      Set<File> excludes = computeRootExcludes(sourceRoot.getFile(), index);
-      final ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(myModule);
+      Set<Path> excludes = computeRootExcludes(sourceRoot.getPath(), index);
+      ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(myModule);
       if (profile.isEnabled()) {
-        final File outputDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(myModule, JavaSourceRootType.TEST_SOURCE == sourceRoot.getRootType(), profile);
-        if (outputDir != null && FileUtil.isAncestor(sourceRoot.getFile(), outputDir, true)) {
-          excludes = FileCollectionFactory.createCanonicalFileSet(excludes);
-          excludes.add(outputDir);
+        File outputIoDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(myModule, JavaSourceRootType.TEST_SOURCE == sourceRoot.getRootType(), profile);
+        if (outputIoDir != null) {
+          Path outputDir = outputIoDir.toPath();
+          if (sourceRoot.getPath().startsWith(outputDir)) {
+            excludes = FileCollectionFactory.createCanonicalPathSet(excludes);
+            excludes.add(outputDir);
+          }
         }
       }
       FileFilter filterForExcludedPatterns = index.getModuleFileFilterHonorExclusionPatterns(myModule);
-      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix, excludes, filterForExcludedPatterns));
+      roots.add(JavaSourceRootDescriptor.createJavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix, excludes, filterForExcludedPatterns));
     }
     return roots;
   }

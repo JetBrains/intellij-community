@@ -319,12 +319,18 @@ public final class FSOperations {
     void consume(@NotNull File file, @Nullable BasicFileAttributes attrs) throws IOException;
   }
   
-  public static void traverseRecursively(BuildRootIndex rootIndex, final BuildRootDescriptor rd, final File fromFile, @NotNull FSOperations.FileConsumer processor) throws IOException {
-    traverseRecursively(fromFile, f -> rootIndex.isDirectoryAccepted(f, rd), f -> rootIndex.isFileAccepted(f, rd), processor);
+  public static void traverseRecursively(BuildRootIndex rootIndex,
+                                         BuildRootDescriptor rd,
+                                         File fromFile,
+                                         @NotNull FSOperations.FileConsumer processor) throws IOException {
+    traverseRecursively(fromFile.toPath(), f -> rootIndex.isDirectoryAccepted(f.toPath(), rd), f -> rootIndex.isFileAccepted(f, rd), processor);
   }
 
-  private static void traverseRecursively(final File fromFile, @NotNull FileFilter dirFilter, @NotNull FileFilter fileFilter, @NotNull FSOperations.FileConsumer processor) throws IOException {
-    Files.walkFileTree(fromFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
+  private static void traverseRecursively(@NotNull Path fromFile,
+                                          @NotNull FileFilter dirFilter,
+                                          @NotNull FileFilter fileFilter,
+                                          @NotNull FSOperations.FileConsumer processor) throws IOException {
+    Files.walkFileTree(fromFile, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
         if (e instanceof NoSuchFileException) {

@@ -2,7 +2,6 @@
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -22,6 +21,7 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -205,14 +205,14 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
       current = FileUtilRt.getParentFile(current);
       depth++;
     }
-    return result != null ? result : Collections.emptyList();
+    return result == null ? Collections.emptyList() : result;
   }
 
   private @NotNull <R extends BuildRootDescriptor> List<R> filterDescriptorsByFile(@NotNull List<R> descriptors, File file, int parentsToCheck) {
     List<R> result = descriptors;
     for (int i = 0; i < descriptors.size(); i++) {
       R descriptor = descriptors.get(i);
-      if (isFileAccepted(file, descriptor) && isParentDirectoriesAccepted(file, parentsToCheck, descriptor)) {
+      if (isFileAccepted(file, descriptor) && isParentDirectoriesAccepted(file.toPath(), parentsToCheck, descriptor)) {
         if (result != descriptors) {
           result.add(descriptor);
         }
@@ -227,10 +227,14 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
     return result;
   }
 
-  private boolean isParentDirectoriesAccepted(File file, int parentsToCheck, BuildRootDescriptor descriptor) {
-    File current = file;
+  private boolean isParentDirectoriesAccepted(@NotNull Path file, int parentsToCheck, BuildRootDescriptor descriptor) {
+    Path current = file;
     while (parentsToCheck-- > 0) {
-      current = FileUtil.getParentFile(current);
+      current = current.getParent();
+      if (current == null) {
+        return true;
+      }
+
       if (!isDirectoryAccepted(current, descriptor)) {
         return false;
       }
@@ -276,7 +280,7 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
   }
 
   @Override
-  public boolean isDirectoryAccepted(@NotNull File dir, @NotNull BuildRootDescriptor descriptor) {
-    return !myIgnoredFileIndex.isIgnored(dir.getName()) && !descriptor.getExcludedRoots().contains(dir);
+  public boolean isDirectoryAccepted(@NotNull Path dir, @NotNull BuildRootDescriptor descriptor) {
+    return !myIgnoredFileIndex.isIgnored(dir.getFileName().toString()) && !descriptor.getExcludedRoots().contains(dir);
   }
 }

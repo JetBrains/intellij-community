@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.io.FileFilters;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.incremental.BuilderRegistry;
@@ -12,6 +13,7 @@ import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.file.Path;
 import java.util.Set;
 
 public class JavaSourceRootDescriptor extends BuildRootDescriptor {
@@ -21,7 +23,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   public final boolean isGeneratedSources;
   public final boolean isTemp;
   private final String myPackagePrefix;
-  private final Set<File> myExcludes;
+  private final Set<Path> myExcludes;
 
   /**
    * @deprecated use {@link #JavaSourceRootDescriptor(File, ModuleBuildTarget, boolean, boolean, String, Set, FileFilter)} instead;
@@ -34,7 +36,18 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
                                   boolean isTemp,
                                   @NotNull String packagePrefix,
                                   @NotNull Set<File> excludes) {
-    this(root, target, isGenerated, isTemp, packagePrefix, excludes, FileFilters.EVERYTHING);
+    this(root, target, isGenerated, isTemp, packagePrefix, convertExcludes(excludes), FileFilters.EVERYTHING, true);
+  }
+
+  public static @NotNull JavaSourceRootDescriptor createJavaSourceRootDescriptor(
+    @NotNull File root,
+    @NotNull ModuleBuildTarget target,
+    boolean isGenerated,
+    boolean isTemp,
+    @NotNull String packagePrefix,
+    @NotNull Set<Path> excludes,
+    @NotNull FileFilter filterForExcludedPatterns) {
+    return new JavaSourceRootDescriptor(root, target, isGenerated, isTemp, packagePrefix, excludes, filterForExcludedPatterns, true);
   }
 
   public JavaSourceRootDescriptor(@NotNull File root,
@@ -44,6 +57,25 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
                                   @NotNull String packagePrefix,
                                   @NotNull Set<File> excludes,
                                   @NotNull FileFilter filterForExcludedPatterns) {
+    this(root, target, isGenerated, isTemp, packagePrefix, convertExcludes(excludes), filterForExcludedPatterns, true);
+  }
+
+  private static Set<Path> convertExcludes(@NotNull Set<File> excludes) {
+    Set<Path> result = FileCollectionFactory.createCanonicalPathSet();
+    for (File exclude : excludes) {
+      result.add(exclude.toPath());
+    }
+    return result;
+  }
+
+  private JavaSourceRootDescriptor(@NotNull File root,
+                                   @NotNull ModuleBuildTarget target,
+                                   boolean isGenerated,
+                                   boolean isTemp,
+                                   @NotNull String packagePrefix,
+                                   @NotNull Set<Path> excludes,
+                                   @NotNull FileFilter filterForExcludedPatterns,
+                                   boolean ignored) {
     this.root = root;
     this.target = target;
     this.isGeneratedSources = isGenerated;
@@ -63,7 +95,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public @NotNull Set<File> getExcludedRoots() {
+  public @NotNull Set<Path> getExcludedRoots() {
     return myExcludes;
   }
 
@@ -73,7 +105,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
 
   @Override
   public @NotNull String getRootId() {
-    return FileUtil.toSystemIndependentName(root.getPath());
+    return FileUtilRt.toSystemIndependentName(root.getPath());
   }
 
   @Override
