@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
@@ -22,7 +24,6 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import com.jetbrains.python.psi.stubs.PyVersionRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +47,8 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
                                     boolean hasAssignedValue,
                                     CustomTargetExpressionStub customStub,
                                     StubElement parent,
-                                    @NotNull PyVersionRange versionRange) {
-    super(parent, PyStubElementTypes.TARGET_EXPRESSION, versionRange);
+                                    @NotNull RangeSet<Version> versions) {
+    super(parent, PyStubElementTypes.TARGET_EXPRESSION, versions);
     myName = name;
     myTypeComment = typeComment;
     myAnnotation = annotation;
@@ -68,8 +69,8 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
                                     @Nullable String annotation,
                                     boolean hasAssignedValue,
                                     final StubElement parentStub,
-                                    @NotNull PyVersionRange versionRange) {
-    super(parentStub, PyStubElementTypes.TARGET_EXPRESSION, versionRange);
+                                    @NotNull RangeSet<Version> versions) {
+    super(parentStub, PyStubElementTypes.TARGET_EXPRESSION, versions);
     myName = name;
     myTypeComment = typeComment;
     myAnnotation = annotation;

@@ -20,3 +20,6 @@ if condition1:
                             s = "x"
                 else:
                     i = 1
+
+if (sys.version_info > (2, 1) and ((sys.version_info <= (2, 2) or sys.version_info > (3, )))):
+    qux = ""

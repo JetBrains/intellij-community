@@ -15,7 +15,9 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
@@ -60,7 +62,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
     final String typeComment = function.getTypeCommentAnnotation();
     final String annotationContent = function.getAnnotationValue();
-    final PyVersionRange versionRange = PyVersionSpecificStubBaseKt.evaluateVersionRangeForElement(psi);
+    final RangeSet<Version> versions = PyVersionSpecificStubBaseKt.evaluateVersionsForElement(psi);
     return new PyFunctionStubImpl(psi.getName(),
                                   PyPsiUtils.strValue(docStringExpression),
                                   message,
@@ -71,7 +73,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   annotationContent,
                                   parentStub,
                                   getStubElementType(),
-                                  versionRange);
+                                  versions);
   }
 
   @Override
@@ -84,7 +86,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     dataStream.writeBoolean(stub.onlyRaisesNotImplementedError());
     dataStream.writeName(stub.getTypeComment());
     dataStream.writeName(stub.getAnnotation());
-    PyVersionSpecificStubBaseKt.serializeVersionRange(stub.getVersionRange(), dataStream);
+    PyVersionSpecificStubBaseKt.serializeVersions(stub.getVersions(), dataStream);
   }
 
   @Override
@@ -98,7 +100,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final boolean onlyRaisesNotImplementedError = dataStream.readBoolean();
     String typeComment = dataStream.readNameString();
     String annotationContent = dataStream.readNameString();
-    PyVersionRange versionRange = PyVersionSpecificStubBaseKt.deserializeVersionRange(dataStream);
+    RangeSet<Version> versions = PyVersionSpecificStubBaseKt.deserializeVersions(dataStream);
     return new PyFunctionStubImpl(name,
                                   StringUtil.nullize(docString),
                                   deprecationMessage,
@@ -109,7 +111,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   annotationContent,
                                   parentStub,
                                   getStubElementType(),
-                                  versionRange);
+                                  versions);
   }
 
   @Override

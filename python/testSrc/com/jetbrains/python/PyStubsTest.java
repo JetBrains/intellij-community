@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.google.common.collect.ImmutableRangeSet;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -144,11 +147,14 @@ public class PyStubsTest extends PyTestCase {
           .withChildren(
             element(PyClassStub.class, versionRange("2.5", "3.0"))
               .withChildren(
-                element(PyFunctionStub.class, versionRange("3.11", "3.0")),
+                element(PyFunctionStub.class, ImmutableRangeSet.of()),
                 element(PyTargetExpressionStub.class, versionRange("2.5", "3.0"))
               ),
-            element(PyTargetExpressionStub.class, versionRange("3.12", "3.0"))
-          )
+            element(PyTargetExpressionStub.class, ImmutableRangeSet.of())
+          ),
+        element(PyTargetExpressionStub.class,
+                ImmutableRangeSet.unionOf(List.of(Range.openClosed(Version.parseVersion("2.1"), Version.parseVersion("2.2")),
+                                                  Range.greaterThan(Version.parseVersion("3.0")))))
       )
       .test(file.getStub());
   }
@@ -1263,19 +1269,19 @@ public class PyStubsTest extends PyTestCase {
   }
 
   private static <T extends PyVersionSpecificStub> @NotNull StubElementValidator element(@NotNull Class<T> clazz,
-                                                                                         @NotNull PyVersionRange versionRange) {
+                                                                                         @NotNull RangeSet<Version> versions) {
     return stub -> {
       assertInstanceOf(stub, clazz);
-      assertEquals(versionRange, clazz.cast(stub).getVersionRange());
+      assertEquals(versions, clazz.cast(stub).getVersions());
     };
   }
 
-  private static @NotNull PyVersionRange versionLessThan(@NotNull String version) {
-    return new PyVersionRange(null, Version.parseVersion(version));
+  private static @NotNull RangeSet<Version> versionLessThan(@NotNull String version) {
+    return ImmutableRangeSet.of(Range.lessThan(Version.parseVersion(version)));
   }
 
-  private static @NotNull PyVersionRange versionRange(@NotNull String lowInclusive, @NotNull String highExclusive) {
-    return new PyVersionRange(Version.parseVersion(lowInclusive), Version.parseVersion(highExclusive));
+  private static @NotNull RangeSet<Version> versionRange(@NotNull String lowInclusive, @NotNull String highExclusive) {
+    return ImmutableRangeSet.of(Range.closedOpen(Version.parseVersion(lowInclusive), Version.parseVersion(highExclusive)));
   }
 
   private interface StubElementValidator {

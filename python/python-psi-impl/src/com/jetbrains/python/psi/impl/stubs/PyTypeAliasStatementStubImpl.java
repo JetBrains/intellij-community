@@ -1,10 +1,11 @@
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
+import com.intellij.openapi.util.Version;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
 import com.jetbrains.python.psi.stubs.PyTypeAliasStatementStub;
-import com.jetbrains.python.psi.stubs.PyVersionRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +18,8 @@ public class PyTypeAliasStatementStubImpl extends PyVersionSpecificStubBase<PyTy
                                       @Nullable String typeExpressionText,
                                       @Nullable StubElement parent,
                                       @NotNull IStubElementType stubElementType,
-                                      @NotNull PyVersionRange versionRange) {
-    super(parent, stubElementType, versionRange);
+                                      @NotNull RangeSet<Version> versions) {
+    super(parent, stubElementType, versions);
     myName = name;
     myTypeExpressionText = typeExpressionText;
   }

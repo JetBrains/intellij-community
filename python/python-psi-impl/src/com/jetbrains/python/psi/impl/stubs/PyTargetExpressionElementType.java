@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Version;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.IndexSink;
@@ -55,12 +57,12 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     final String docString = DocStringUtil.getDocStringValue(psi);
     final String typeComment = psi.getTypeCommentAnnotation();
     final String annotation = psi.getAnnotationValue();
-    final PyVersionRange versionRange = PyVersionSpecificStubBaseKt.evaluateVersionRangeForElement(psi);
+    final RangeSet<Version> versions = PyVersionSpecificStubBaseKt.evaluateVersionsForElement(psi);
 
     CustomTargetExpressionStub customStub = createCustomStub(psi);
     if (customStub != null) {
       return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, psi.hasAssignedValue(), customStub, parentStub,
-                                            versionRange);
+                                            versions);
     }
 
     PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.Other;
@@ -78,7 +80,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       }
     }
     return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, psi.isQualified(), typeComment, annotation,
-                                          psi.hasAssignedValue(), parentStub, versionRange);
+                                          psi.hasAssignedValue(), parentStub, versions);
   }
 
   @Override
@@ -90,7 +92,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     stream.writeName(stub.getTypeComment());
     stream.writeName(stub.getAnnotation());
     stream.writeBoolean(stub.hasAssignedValue());
-    PyVersionSpecificStubBaseKt.serializeVersionRange(stub.getVersionRange(), stream);
+    PyVersionSpecificStubBaseKt.serializeVersions(stub.getVersions(), stream);
     final CustomTargetExpressionStub customStub = stub.getCustomStub(CustomTargetExpressionStub.class);
     if (customStub != null) {
       serializeCustomStub(customStub, stream);
@@ -113,15 +115,15 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     String typeComment = stream.readNameString();
     String annotation = stream.readNameString();
     final boolean hasAssignedValue = stream.readBoolean();
-    PyVersionRange versionRange = PyVersionSpecificStubBaseKt.deserializeVersionRange(stream);
+    RangeSet<Version> versions = PyVersionSpecificStubBaseKt.deserializeVersions(stream);
     if (initializerType == PyTargetExpressionStub.InitializerType.Custom) {
       CustomTargetExpressionStub stub = deserializeCustomStub(stream);
-      return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, hasAssignedValue, stub, parentStub, versionRange);
+      return new PyTargetExpressionStubImpl(name, docString, typeComment, annotation, hasAssignedValue, stub, parentStub, versions);
     }
     QualifiedName initializer = QualifiedName.deserialize(stream);
     boolean isQualified = stream.readBoolean();
     return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, isQualified, typeComment, annotation,
-                                          hasAssignedValue, parentStub, versionRange);
+                                          hasAssignedValue, parentStub, versions);
   }
 
   @Override

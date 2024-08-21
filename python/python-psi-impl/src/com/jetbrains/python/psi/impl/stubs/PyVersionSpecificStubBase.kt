@@ -1,116 +1,141 @@
 package com.jetbrains.python.psi.impl.stubs
 
+import com.google.common.collect.BoundType
+import com.google.common.collect.ImmutableRangeSet
+import com.google.common.collect.Range
+import com.google.common.collect.RangeSet
+import com.google.common.collect.TreeRangeSet
 import com.intellij.openapi.util.Version
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.*
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.psi.PyElsePart
-import com.jetbrains.python.psi.PyIfPart
-import com.jetbrains.python.psi.PyIfStatement
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyVersionCheck
-import com.jetbrains.python.psi.impl.isLessThan
-import com.jetbrains.python.psi.stubs.PyVersionRange
 import com.jetbrains.python.psi.stubs.PyVersionSpecificStub
 
 internal abstract class PyVersionSpecificStubBase<T : PsiElement>(
   parent: StubElement<*>?,
   elementType: IStubElementType<*, *>?,
-  override val versionRange: PyVersionRange,
+  override val versions: RangeSet<Version>,
 ) : StubBase<T>(parent, elementType), PyVersionSpecificStub
 
 internal fun getChildrenStubs(stub: StubElement<*>, languageLevel: LanguageLevel): Iterable<StubElement<*>> {
+  val version = Version(languageLevel.majorVersion, languageLevel.minorVersion, 0)
   return stub.childrenStubs.asSequence()
-    .filter { it !is PyVersionSpecificStub || it.versionRange.contains(languageLevel) }
+    .filter { it !is PyVersionSpecificStub || it.versions.contains(version) }
     .asIterable()
 }
 
-private fun PyVersionRange.contains(languageLevel: LanguageLevel): Boolean {
-  val low = lowInclusive
-  val high = highExclusive
-  return (low == null || !languageLevel.isLessThan(low)) &&
-         (high == null || languageLevel.isLessThan(high))
-}
-
-internal fun evaluateVersionRangeForElement(element: PsiElement): PyVersionRange {
+internal fun evaluateVersionsForElement(element: PsiElement): ImmutableRangeSet<Version> {
   return CachedValuesManager.getCachedValue(element) {
     val parent = element.parent
-    var range: PyVersionRange
+    var result: ImmutableRangeSet<Version>
     if (parent == null) {
-      range = PyVersionRange(null, null)
+      result = ImmutableRangeSet.of(Range.all())
     }
     else {
-      range = evaluateVersionRangeForElement(parent)
+      result = evaluateVersionsForElement(parent)
       if (parent is PyIfPart || parent is PyElsePart) {
         val grandParent = parent.parent
-        if (grandParent is PyIfStatement) {
-          range = evaluateRange(range, grandParent, parent)
+        if (grandParent is PyIfStatement && element === (parent as PyStatementPart).statementList) {
+          val versions = evaluateVersionRangeForIfStatementPart(grandParent, parent)
+          if (versions != null) {
+            result = result.intersection(versions)
+          }
         }
       }
     }
-    CachedValueProvider.Result.create(range, element)
+    CachedValueProvider.Result.create(result, element)
   }
 }
 
-private fun evaluateRange(
-  initialRange: PyVersionRange,
-  ifStatement: PyIfStatement,
-  ifStatementPart: PsiElement,
-): PyVersionRange {
-  val versionChecks = mutableListOf<PyVersionCheck>()
+private fun evaluateVersionRangeForIfStatementPart(ifStatement: PyIfStatement, ifStatementPart: PsiElement): RangeSet<Version>? {
+  assert(ifStatementPart is PyIfPart || ifStatementPart is PyElsePart)
+  val result = if (ifStatementPart is PyIfPart) {
+    val versionRanges = ifStatementPart.condition?.let(PyVersionCheck::convertToVersionRanges) ?: return null
+    TreeRangeSet.create(versionRanges)
+  }
+  else {
+    TreeRangeSet.create(listOf(Range.all<Version>()))
+  }
   val ifParts = sequenceOf(ifStatement.ifPart) + ifStatement.elifParts.asSequence()
   for (ifPart in ifParts.takeWhile { it !== ifStatementPart }) {
-    val versionCheck = PyVersionCheck.fromCondition(ifPart) ?: return initialRange
-    versionChecks.add(PyVersionCheck(versionCheck.version, !versionCheck.isLessThan))
+    val versionRanges = ifPart.condition?.let(PyVersionCheck::convertToVersionRanges) ?: return null
+    result.removeAll(versionRanges)
   }
-  if (ifStatementPart is PyIfPart) {
-    val versionCheck = PyVersionCheck.fromCondition(ifStatementPart) ?: return initialRange
-    versionChecks.add(versionCheck)
-  }
-  return versionChecks.fold(initialRange, ::clampRange)
+  return result
 }
 
-private fun clampRange(versionRange: PyVersionRange, versionCheck: PyVersionCheck): PyVersionRange {
-  return if (versionCheck.isLessThan)
-    PyVersionRange(versionRange.lowInclusive, min(versionRange.highExclusive, versionCheck.version))
+internal fun serializeVersions(versions: RangeSet<Version>, outputStream: StubOutputStream) {
+  val ranges = versions.asRanges()
+  outputStream.writeVarInt(ranges.size)
+  for (range in ranges) {
+    serializeRange(range, outputStream)
+  }
+}
+
+private fun serializeRange(range: Range<Version>, outputStream: StubOutputStream) {
+  val low = if (range.hasLowerBound()) Endpoint(range.lowerEndpoint(), range.lowerBoundType()) else null
+  val high = if (range.hasUpperBound()) Endpoint(range.upperEndpoint(), range.upperBoundType()) else null
+  serializeEndpoint(low, outputStream)
+  serializeEndpoint(high, outputStream)
+}
+
+private fun serializeEndpoint(endpoint: Endpoint?, outputStream: StubOutputStream) {
+  if (endpoint == null) {
+    outputStream.writeByte(EndpointType.UNBOUND)
+  }
+  else {
+    val endpointType = when (endpoint.boundType) {
+      BoundType.OPEN -> EndpointType.OPEN
+      BoundType.CLOSED -> EndpointType.CLOSED
+    }
+    outputStream.writeByte(endpointType)
+    outputStream.writeVarInt(endpoint.version.major)
+    outputStream.writeVarInt(endpoint.version.minor)
+  }
+}
+
+internal fun deserializeVersions(stream: StubInputStream): RangeSet<Version> {
+  val size = stream.readVarInt()
+  val builder = ImmutableRangeSet.builder<Version>()
+  repeat(size) {
+    builder.add(deserializeRange(stream))
+  }
+  return builder.build()
+}
+
+private fun deserializeRange(stream: StubInputStream): Range<Version> {
+  val low = deserializeEndpoint(stream)
+  val high = deserializeEndpoint(stream)
+  return if (low != null && high != null)
+    Range.range(low.version, low.boundType, high.version, high.boundType)
+  else if (high != null)
+    Range.upTo(high.version, high.boundType)
+  else if (low != null)
+    Range.downTo(low.version, low.boundType)
   else
-    PyVersionRange(max(versionRange.lowInclusive, versionCheck.version), versionRange.highExclusive)
+    Range.all()
 }
 
-private fun min(a: Version?, b: Version): Version {
-  return if (a == null) b else minOf(a, b)
-}
-
-private fun max(a: Version?, b: Version): Version {
-  return if (a == null) b else maxOf(a, b)
-}
-
-internal fun serializeVersionRange(versionRange: PyVersionRange, outputStream: StubOutputStream) {
-  serializeVersion(versionRange.lowInclusive, outputStream)
-  serializeVersion(versionRange.highExclusive, outputStream)
-}
-
-private fun serializeVersion(version: Version?, outputStream: StubOutputStream) {
-  outputStream.writeBoolean(version != null)
-  if (version != null) {
-    outputStream.writeVarInt(version.major)
-    outputStream.writeVarInt(version.minor)
+private fun deserializeEndpoint(stream: StubInputStream): Endpoint? {
+  val endpointType = stream.readByte().toInt()
+  val boundType = when (endpointType) {
+    EndpointType.UNBOUND -> return null
+    EndpointType.OPEN -> BoundType.OPEN
+    EndpointType.CLOSED -> BoundType.CLOSED
+    else -> throw IllegalArgumentException()
   }
+  val major = stream.readVarInt()
+  val minor = stream.readVarInt()
+  return Endpoint(Version(major, minor, 0), boundType)
 }
 
-internal fun deserializeVersionRange(stream: StubInputStream): PyVersionRange {
-  val lowInclusive = deserializeVersion(stream)
-  val highExclusive = deserializeVersion(stream)
-  return PyVersionRange(lowInclusive, highExclusive)
-}
+private data class Endpoint(val version: Version, val boundType: BoundType)
 
-private fun deserializeVersion(stream: StubInputStream): Version? {
-  val isNotNull = stream.readBoolean()
-  if (isNotNull) {
-    val major = stream.readVarInt()
-    val minor = stream.readVarInt()
-    return Version(major, minor, 0)
-  }
-  return null
+private object EndpointType {
+  const val UNBOUND = 0
+  const val OPEN = 1
+  const val CLOSED = 2
 }

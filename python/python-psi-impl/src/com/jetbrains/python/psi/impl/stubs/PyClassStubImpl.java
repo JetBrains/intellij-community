@@ -1,13 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
+import com.intellij.openapi.util.Version;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.stubs.PyClassStub;
-import com.jetbrains.python.psi.stubs.PyVersionRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,9 +50,9 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
                          @Nullable String docString,
                          @Nullable String deprecationMessage,
                          @NotNull IStubElementType stubElementType,
-                         @NotNull PyVersionRange versionRange,
+                         @NotNull RangeSet<Version> versions,
                          @Nullable PyCustomClassStub customStub) {
-    super(parentStub, stubElementType, versionRange);
+    super(parentStub, stubElementType, versions);
     myName = name;
     mySuperClasses = superClasses;
     mySuperClassesText = superClassesText;

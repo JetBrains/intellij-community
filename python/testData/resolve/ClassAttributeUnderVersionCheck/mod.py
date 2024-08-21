@@ -5,7 +5,7 @@ if sys.version_info < (4,):
         if sys.version_info >= (3,):
             def foo(self):
                 pass
-        elif sys.version_info <= (2, 5):
+        elif sys.version_info < (2, 5):
             def bar(self):
                 pass
         else:
