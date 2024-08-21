@@ -27,10 +27,23 @@ private class RunSuspend<T> : Continuation<T> {
 
   fun await(): T {
     synchronized(this) {
+      var interrupted = false
       while (true) {
         when (val result = this.result) {
-          null -> @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") (this as Object).wait()
+          null ->
+            try {
+              @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+              (this as Object).wait()
+            }
+            catch (_: InterruptedException) {
+              // Suppress exception or token could be lost.
+              interrupted = true
+            }
           else -> {
+            if (interrupted) {
+              // Restore "interrupted" flag
+              Thread.currentThread().interrupt()
+            }
             return result.getOrThrow() // throw up failure
           }
         }
