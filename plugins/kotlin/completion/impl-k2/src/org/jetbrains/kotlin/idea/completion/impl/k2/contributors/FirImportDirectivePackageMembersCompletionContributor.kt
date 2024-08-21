@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveToSymbols
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -27,7 +27,7 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
-        positionContext.resolveToSymbols()
+        positionContext.resolveReceiverToSymbols()
             .mapNotNull { it.staticScope }
             .forEach { scopeWithKind ->
                 val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)

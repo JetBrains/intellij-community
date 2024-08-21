@@ -38,14 +38,14 @@ internal sealed class CompletionSymbolOrigin {
 }
 
 context(KaSession)
-internal fun KotlinRawPositionContext.resolveToSymbols(): Sequence<KaSymbol> =
+internal fun KotlinRawPositionContext.resolveReceiverToSymbols(): Sequence<KaSymbol> =
     when (this) {
-        is KotlinNameReferencePositionContext -> resolveToSymbols()
+        is KotlinNameReferencePositionContext -> resolveReceiverToSymbols()
         else -> sequenceOf(rootPackageSymbol)
     }
 
 context(KaSession)
-internal fun KotlinNameReferencePositionContext.resolveToSymbols(): Sequence<KaSymbol> =
+internal fun KotlinNameReferencePositionContext.resolveReceiverToSymbols(): Sequence<KaSymbol> =
     when (val explicitReceiver = explicitReceiver) {
         null -> sequenceOf(rootPackageSymbol)
         else -> explicitReceiver.reference()

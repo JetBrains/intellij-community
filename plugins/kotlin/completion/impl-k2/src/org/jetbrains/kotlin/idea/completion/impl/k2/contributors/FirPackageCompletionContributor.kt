@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveToSymbols
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
@@ -29,7 +29,7 @@ internal class FirPackageCompletionContributor(
         sessionParameters: FirCompletionSessionParameters,
     ) {
 
-        val rootSymbol = positionContext.resolveToSymbols()
+        val rootSymbol = positionContext.resolveReceiverToSymbols()
             .filterIsInstance<KaPackageSymbol>()
             .singleOrNull()
             ?: return
