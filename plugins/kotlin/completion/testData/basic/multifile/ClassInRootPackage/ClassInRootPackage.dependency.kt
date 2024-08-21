@@ -1,1 +1,1 @@
-object RootPackageClass
+class RootPackageClass
