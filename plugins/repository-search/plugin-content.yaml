@@ -6,11 +6,11 @@
     reason: <- intellij.repository.search
   - name: package-search-api-client
     files:
-    - name: $MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4/krypto-jvm-4.jar
     - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3/packagesearch-api-client-jvm-3.jar
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3/packagesearch-api-models-jvm-3.jar
     - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3/packagesearch-http-models-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3/packagesearch-api-models-jvm-3.jar
     - name: $MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3/packagesearch-version-utils-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4/krypto-jvm-4.jar
     reason: <- intellij.repository.search
   modules:
   - name: intellij.repository.search

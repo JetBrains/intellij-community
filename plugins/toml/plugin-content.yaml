@@ -4,5 +4,5 @@
   - name: intellij.toml.core
     reason: <- intellij.toml
   contentModules:
-  - name: intellij.toml.grazie
   - name: intellij.toml.json
+  - name: intellij.toml.grazie

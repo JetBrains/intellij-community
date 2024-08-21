@@ -215,18 +215,6 @@ class JarPackager private constructor(
         for (item in packager.assets.values) {
           computeDistributionFileEntries(asset = item, hasher = hasher, list = list, dryRun = dryRun, cacheManager = cacheManager)
         }
-
-        // sort because projectStructureMapping is a concurrent collection
-        // call invariantSeparatorsPathString because the result of Path ordering is platform-dependent
-        list.sortWith(
-          compareBy(
-            { it.path.invariantSeparatorsPathString },
-            { it.type },
-            { (it as? ModuleOutputEntry)?.moduleName },
-            { (it as? LibraryFileEntry)?.libraryFile?.let(::isFromLocalMavenRepo) != true },
-            { (it as? LibraryFileEntry)?.libraryFile?.invariantSeparatorsPathString },
-          )
-        )
         list
       }
     }

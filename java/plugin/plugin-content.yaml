@@ -18,62 +18,62 @@
   - name: intellij.java.frontback.psi.impl
 - name: lib/java-impl.jar
   modules:
-  - name: intellij.java
-  - name: intellij.java.analysis
-  - name: intellij.java.analysis.impl
   - name: intellij.java.compiler
-  - name: intellij.java.compiler.impl
   - name: intellij.java.debugger
+  - name: intellij.java.execution
+  - name: intellij.java.remoteServers
+  - name: intellij.java.analysis
+  - name: intellij.jvm.analysis
+  - name: intellij.java.indexing
+  - name: intellij.java.psi
+  - name: intellij.java
+  - name: intellij.jsp
+  - name: intellij.platform.uast
+  - name: intellij.platform.uast.ide
+  - name: intellij.java.uast.ide
+  - name: intellij.java.compiler.impl
   - name: intellij.java.debugger.impl
   - name: intellij.java.debugger.memory.agent
-  - name: intellij.java.duplicates
-  - name: intellij.java.duplicates.analysis
-  - name: intellij.java.duplicatesDetection
-  - name: intellij.java.execution
   - name: intellij.java.execution.impl
+  - name: intellij.java.ui
+  - name: intellij.java.structureView
+  - name: intellij.java.manifest
+  - name: intellij.java.remoteServers.impl
+  - name: intellij.uiDesigner
+  - name: intellij.java.analysis.impl
+  - name: intellij.jvm.analysis.impl
+  - name: intellij.jvm.analysis.quickFix
+  - name: intellij.jvm.analysis.refactoring
+  - name: intellij.java.indexing.impl
+  - name: intellij.java.psi.impl
   - name: intellij.java.impl
     libraries:
       completion-ranking-java:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
   - name: intellij.java.impl.inspections
   - name: intellij.java.impl.refactorings
-  - name: intellij.java.indexing
-  - name: intellij.java.indexing.impl
+  - name: intellij.jsp.spi
+  - name: intellij.java.uast
+  - name: intellij.java.typeMigration
   - name: intellij.java.jam
   - name: intellij.java.jam.impl
-  - name: intellij.java.manifest
+  - name: intellij.java.duplicatesDetection
+  - name: intellij.java.duplicates
+  - name: intellij.java.duplicates.analysis
   - name: intellij.java.plugin
-  - name: intellij.java.psi
-  - name: intellij.java.psi.impl
-  - name: intellij.java.remoteServers
-  - name: intellij.java.remoteServers.impl
   - name: intellij.java.resources
     reason: <- intellij.java.plugin
   - name: intellij.java.resources.en
     reason: <- intellij.java.plugin
-  - name: intellij.java.structureView
-  - name: intellij.java.typeMigration
-  - name: intellij.java.uast
-  - name: intellij.java.uast.ide
-  - name: intellij.java.ui
-  - name: intellij.jsp
-  - name: intellij.jsp.spi
-  - name: intellij.jvm.analysis
-  - name: intellij.jvm.analysis.impl
-  - name: intellij.jvm.analysis.quickFix
-  - name: intellij.jvm.analysis.refactoring
-  - name: intellij.platform.uast
-  - name: intellij.platform.uast.ide
-  - name: intellij.uiDesigner
   contentModules:
-  - name: intellij.java.compiler.charts
   - name: intellij.java.performancePlugin
+  - name: intellij.java.compiler.charts
 - name: lib/javac2.jar
   modules:
   - name: intellij.java.compiler.antTasks
+  - name: intellij.java.guiForms.compiler
   - name: intellij.java.compiler.instrumentationUtil
   - name: intellij.java.compiler.instrumentationUtil.java8
-  - name: intellij.java.guiForms.compiler
 - name: lib/jb-jdi.jar
   projectLibraries:
   - name: jb-jdi

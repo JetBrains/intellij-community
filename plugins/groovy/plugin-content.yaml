@@ -1,10 +1,10 @@
 - name: lib/Groovy.jar
   modules:
-  - name: intellij.groovy
-  - name: intellij.groovy.duplicates
-  - name: intellij.groovy.duplicatesDetection
   - name: intellij.groovy.psi
   - name: intellij.groovy.structuralSearch
+  - name: intellij.groovy.duplicates
+  - name: intellij.groovy.duplicatesDetection
+  - name: intellij.groovy
   contentModules:
   - name: intellij.groovy.git
 - name: lib/groovy-constants-rt.jar

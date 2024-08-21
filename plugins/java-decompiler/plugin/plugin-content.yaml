@@ -1,4 +1,4 @@
 - name: lib/java-decompiler.jar
   modules:
-  - name: intellij.java.decompiler
   - name: intellij.java.decompiler.engine
+  - name: intellij.java.decompiler

@@ -2,8 +2,8 @@
   projectLibraries:
   - name: joni
     files:
-    - name: $MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1/jcodings-1.jar
     - name: $MAVEN_REPOSITORY$/org/jruby/joni/joni/2/joni-2.jar
+    - name: $MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1/jcodings-1.jar
     reason: <- intellij.textmate.core
   modules:
   - name: intellij.textmate

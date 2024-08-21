@@ -44,10 +44,7 @@ import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.copyToRecursively
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.useLines
+import kotlin.io.path.*
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -1323,6 +1320,23 @@ private fun buildBlockMap(file: Path, json: JSON) {
   }
 }
 
+private fun sortEntries(unsorted: List<DistributionFileEntry>): List<DistributionFileEntry> {
+  // sort because projectStructureMapping is a concurrent collection
+  // call invariantSeparatorsPathString because the result of Path ordering is platform-dependent
+  return unsorted.sortedWith(
+    compareBy(
+      { it.path.invariantSeparatorsPathString },
+      { it.type },
+      { (it as? ModuleOutputEntry)?.moduleName },
+      { (it as? LibraryFileEntry)?.libraryFile?.let(::isFromLocalMavenRepo) != true },
+      { (it as? LibraryFileEntry)?.libraryFile?.invariantSeparatorsPathString },
+    )
+  )
+}
+
+// also, put libraries from Maven repo ahead of others, for them to not depend on the lexicographical order of Maven repo and source path
+private fun isFromLocalMavenRepo(path: Path) = path.startsWith(MAVEN_REPO)
+
 suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext): Collection<String> {
   val contentReport = generateProjectStructureMapping(context = context, platformLayout = platform)
 
@@ -1330,7 +1344,7 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
   val classPath = LinkedHashSet<Path>()
 
   val libDir = context.paths.distAllDir.resolve("lib")
-  for (entry in contentReport.platform) {
+  for (entry in sortEntries(contentReport.platform)) {
     if (!(entry is ModuleOutputEntry && entry.reason == ModuleIncludeReasons.PRODUCT_MODULES)) {
       val relativePath = libDir.relativize(entry.path)
       if (relativePath.nameCount != 1 && !relativePath.startsWith("modules")) {

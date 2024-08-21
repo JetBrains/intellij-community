@@ -7,5 +7,5 @@
   - name: intellij.java.coverage
     libraries:
       coverage-report:
-      - name: $MAVEN_REPOSITORY$/org/freemarker/freemarker/2/freemarker-2.jar
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1/coverage-report-1.jar
+      - name: $MAVEN_REPOSITORY$/org/freemarker/freemarker/2/freemarker-2.jar

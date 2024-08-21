@@ -4,7 +4,7 @@
   - name: intellij.sh.core
     reason: <- intellij.sh
   contentModules:
+  - name: intellij.sh.terminal
   - name: intellij.sh.copyright
   - name: intellij.sh.markdown
   - name: intellij.sh.python
-  - name: intellij.sh.terminal

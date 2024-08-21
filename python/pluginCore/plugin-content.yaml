@@ -20,23 +20,23 @@
       ml-completion-prev-exprs-models:
       - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
       tuweni-toml:
-      - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
       - name: $MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2/tuweni-toml-2.jar
+      - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
       completion-ranking-python-with-full-line:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
-  - name: intellij.python.community.plugin
   - name: intellij.python.psi
   - name: intellij.python.psi.impl
   - name: intellij.python.pydev
   - name: intellij.python.sdk
+  - name: intellij.python.community.plugin
   contentModules:
-  - name: intellij.commandInterface
+  - name: intellij.python.community.plugin.minor
+  - name: intellij.python.community.plugin.minorRider
   - name: intellij.python.community.communityOnly
+  - name: intellij.commandInterface
   - name: intellij.python.community.impl.huggingFace
   - name: intellij.python.community.plugin.impl
   - name: intellij.python.community.plugin.java
-  - name: intellij.python.community.plugin.minor
-  - name: intellij.python.community.plugin.minorRider
   - name: intellij.python.copyright
   - name: intellij.python.featuresTrainer
   - name: intellij.python.grazie
@@ -45,7 +45,7 @@
   - name: intellij.python.terminal
 - name: lib/python-common.jar
   modules:
-  - name: intellij.python.ast
   - name: intellij.python.parser
+  - name: intellij.python.ast
   - name: intellij.python.syntax
   - name: intellij.python.syntax.core

@@ -2,13 +2,13 @@
   projectLibraries:
   - name: jetbrains.intellij.deps.eclipse.jgit
     files:
-    - name: $MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1/JavaEWAH-1.jar
     - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6/org.eclipse.jgit-6.jar
+    - name: $MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1/JavaEWAH-1.jar
     reason: <- intellij.settingsRepository
   modules:
   - name: intellij.settingsRepository
     libraries:
-      JSch:
-      - name: $MAVEN_REPOSITORY$/com/jcraft/jsch/0/jsch-0.jar
       eclipse.jgit.ssh.jsch:
       - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.jsch/6/org.eclipse.jgit.ssh.jsch-6.jar
+      JSch:
+      - name: $MAVEN_REPOSITORY$/com/jcraft/jsch/0/jsch-0.jar

@@ -2,8 +2,8 @@
   projectLibraries:
   - name: assertJ
     files:
-    - name: $MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1/byte-buddy-1.jar
     - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/3/assertj-core-3.jar
+    - name: $MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1/byte-buddy-1.jar
     reason: <- intellij.featuresTrainer
   - name: assertj-swing
     files:
@@ -16,5 +16,5 @@
   modules:
   - name: intellij.featuresTrainer
   contentModules:
-  - name: intellij.featuresTrainer.onboarding
   - name: intellij.vcs.git.featuresTrainer
+  - name: intellij.featuresTrainer.onboarding

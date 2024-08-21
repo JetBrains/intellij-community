@@ -2,9 +2,9 @@
   modules:
   - name: intellij.dev
   contentModules:
-  - name: intellij.dev.codeInsight
   - name: intellij.dev.psiViewer
-  - name: intellij.groovy.dev
+  - name: intellij.dev.codeInsight
   - name: intellij.java.dev
+  - name: intellij.groovy.dev
   - name: intellij.kotlin.dev
   - name: intellij.platform.statistics.devkit

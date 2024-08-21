@@ -2,8 +2,8 @@
   projectLibraries:
   - name: TestNG
     files:
-    - name: $MAVEN_REPOSITORY$/com/beust/jcommander/1/jcommander-1.jar
     - name: $MAVEN_REPOSITORY$/org/testng/testng/7/testng-7.jar
+    - name: $MAVEN_REPOSITORY$/com/beust/jcommander/1/jcommander-1.jar
     - name: $MAVEN_REPOSITORY$/org/webjars/jquery/3/jquery-3.jar
     reason: withProjectLibrary
   modules:
