@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.restoreInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.updatableUsageInfo
@@ -298,10 +300,7 @@ sealed class K2MoveRenameUsageInfo(
          * For this case, let's rely on the fact that in the same write action,
          * copy and original files are identical and retrieve original resolve targets from initial user data.
          */
-        fun retargetInternalUsagesForCopyFile(
-            originalFile: KtFile,
-            fileCopy: KtFile,
-        ) {
+        fun retargetInternalUsagesForCopyFile(originalFile: KtFile, fileCopy: KtFile) {
             val skipPackageStmt: (KtSimpleNameExpression) -> Boolean = { PsiTreeUtil.getParentOfType(it, KtPackageDirective::class.java) == null }
             val inCopy = fileCopy.collectDescendantsOfType<KtSimpleNameExpression>().filter(skipPackageStmt)
             val original = originalFile.collectDescendantsOfType<KtSimpleNameExpression>().filter(skipPackageStmt)
@@ -316,8 +315,14 @@ sealed class K2MoveRenameUsageInfo(
                 }
                 usageInfo.refresh(c, referencedElement)
             }
-
-            shortenUsages(retargetMoveUsages(mapOf(fileCopy to internalUsages), emptyMap()))
+            val progress = ProgressManager.getInstance().progressIndicator
+            progress.pushState()
+            progress.isIndeterminate = false
+            progress.text = KotlinBundle.message("retargeting.internal.usages.progress")
+            val retargetedUsages = retargetMoveUsages(mapOf(fileCopy to internalUsages), emptyMap())
+            progress.text = KotlinBundle.message("shortening.internal.usages.progress")
+            shortenUsages(retargetedUsages)
+            progress.popState()
         }
 
         fun retargetInternalUsages(oldToNewMap: Map<PsiElement, PsiElement>, fromCopy: Boolean = false) {
@@ -330,8 +335,15 @@ sealed class K2MoveRenameUsageInfo(
                 .filterIsInstance<K2MoveRenameUsageInfo>()
                 .groupByFile()
                 .sortedByOffset()
-            shortenUsages(retargetMoveUsages(internalUsages, oldToNewMap))
+            val progress = ProgressManager.getInstance().progressIndicator
+            progress.pushState()
+            progress.isIndeterminate = false
+            progress.text = KotlinBundle.message("retargeting.internal.usages.progress")
+            val retargetedUsages = retargetMoveUsages(internalUsages, oldToNewMap)
+            progress.text = KotlinBundle.message("shortening.internal.usages.progress")
+            shortenUsages(retargetedUsages)
             topLevelElements.forEach { decl -> unMarkAllUsages(decl) }
+            progress.popState()
         }
 
         /**
@@ -361,7 +373,7 @@ sealed class K2MoveRenameUsageInfo(
         internal fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
             // Retarget external usages before internal usages to make sure imports in moved files are properly updated
             retargetExternalUsages(usages, oldToNewMap)
-            retargetInternalUsages(oldToNewMap)
+            retargetInternalUsages(oldToNewMap, false)
         }
 
         private fun retargetExternalUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
@@ -369,15 +381,25 @@ sealed class K2MoveRenameUsageInfo(
                 .filter { it.element != null } // if the element is null, it means that this external usage was moved
                 .groupByFile()
                 .sortedByOffset()
-            shortenUsages(retargetMoveUsages(externalUsages, oldToNewMap))
+            val progress = ProgressManager.getInstance().progressIndicator
+            progress.pushState()
+            progress.isIndeterminate = false
+            progress.text = KotlinBundle.message("retargeting.external.usages.progress")
+            val retargetedUsages = retargetMoveUsages(externalUsages, oldToNewMap)
+            progress.text = KotlinBundle.message("shortening.external.usages.progress")
+            shortenUsages(retargetedUsages)
+            progress.popState()
         }
 
         private fun retargetMoveUsages(
             usageInfosByFile: Map<PsiFile, List<K2MoveRenameUsageInfo>>,
             oldToNewMap: Map<PsiElement, PsiElement>
         ): Map<PsiFile, Map<PsiElement, PsiNamedElement>> {
+            val fileCount = usageInfosByFile.size
+            val progress = ProgressManager.getInstance().progressIndicator
             return usageInfosByFile.map { (file, usageInfos) ->
-                file to usageInfos.mapNotNull { usageInfo ->
+                progress.text2 = file.virtualFile.presentableUrl
+                val usageMap = file to usageInfos.mapNotNull { usageInfo ->
                     val newDeclaration = (oldToNewMap[usageInfo.referencedElement] ?: usageInfo.referencedElement) as? PsiNamedElement
                         ?: return@mapNotNull null
                     val retargetedReference = usageInfo.retarget(newDeclaration)
@@ -391,14 +413,20 @@ sealed class K2MoveRenameUsageInfo(
                         qualifiedReference to newDeclaration
                     } else null
                 }.filter { it.first.isValid }.toMap()  // imports can become invalid because they are removed when binding element
+                progress.fraction += 1 / (fileCount * 2).toDouble()
+                usageMap
             }.toMap()
         }
 
         private fun shortenUsages(qualifiedUsages: Map<PsiFile, Map<PsiElement, PsiNamedElement>>) {
+            val fileCount = qualifiedUsages.size
+            val progress = ProgressManager.getInstance().progressIndicator
             qualifiedUsages.forEach { (file, usageMap) ->
                 if (file is KtFile) {
                     shortenReferences(usageMap.keys.filterIsInstance<KtElement>())
                 }
+                progress.text2 = file.virtualFile.presentableUrl
+                progress.fraction += 1 / (fileCount * 2).toDouble()
             }
         }
     }
