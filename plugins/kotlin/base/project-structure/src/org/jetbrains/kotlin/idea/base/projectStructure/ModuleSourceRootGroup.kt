@@ -24,6 +24,7 @@ class ModuleSourceRootMap private constructor(val modules: Collection<Module>) {
         val cache = ModuleExternalDetailsCache()
 
         allModulesByExternalPath = modules
+            .asSequence()
             .filter { cache.getExternalProjectPathOrNull(it) != null && cache.getExternalProjectIdOrNull(it) != null }
             .groupBy { cache.getExternalProjectPath(it) }
 
