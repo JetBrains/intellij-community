@@ -1,12 +1,12 @@
 {
   "a": "a",
-  <warning descr="Property 'c' is not allowed">"c": 7</warning>,
-  "b": <warning descr="Incompatible types.
+  <warning descr="Property 'c' is not allowed">"c"</warning>: 7,
+  <warning descr="Property 'b' is not allowed">"b"</warning>: <warning descr="Incompatible types.
  Required: string. Actual: integer.">5</warning>,
   "x25": "q",
   "x255": <warning descr="Incompatible types.
  Required: string. Actual: integer.">7</warning>,
   "0x256": <warning descr="Incompatible types.
  Required: string. Actual: boolean.">true</warning>,
-  <warning descr="Property 'x025' is not allowed">"x025": "fail"</warning>
+  <warning descr="Property 'x025' is not allowed">"x025"</warning>: "fail"
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
+import com.jetbrains.jsonSchema.impl.fixes.FixPropertyNameTypoFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public final class JsonValidationError {
@@ -113,9 +115,11 @@ public final class JsonValidationError {
 
   public static final class ProhibitedPropertyIssueData implements IssueData {
     public final @NlsSafe String propertyName;
+    public final List<@NlsSafe String> typoCandidates;
 
-    public ProhibitedPropertyIssueData(@NlsSafe String propertyName) {
+    public ProhibitedPropertyIssueData(@NlsSafe String propertyName, List<@NlsSafe String> typoCandidates) {
       this.propertyName = propertyName;
+      this.typoCandidates = typoCandidates;
     }
   }
 
@@ -156,10 +160,22 @@ public final class JsonValidationError {
       case MissingOneOfProperty, MissingAnyOfProperty ->
         ((MissingOneOfPropsIssueData)myIssueData).myExclusiveOptions.stream().map(d -> new AddMissingPropertyFix(d, quickFixAdapter))
           .toArray(LocalQuickFix[]::new);
-      case ProhibitedProperty ->
-        new RemoveProhibitedPropertyFix[]{new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData, quickFixAdapter)};
+      case ProhibitedProperty -> getProhibitedPropertyFixes(quickFixAdapter);
       case NonEnumValue -> new SuggestEnumValuesFix[]{new SuggestEnumValuesFix(quickFixAdapter)};
       default -> LocalQuickFix.EMPTY_ARRAY;
     };
+  }
+
+  private LocalQuickFix @NotNull [] getProhibitedPropertyFixes(@NotNull JsonLikeSyntaxAdapter quickFixAdapter) {
+    ProhibitedPropertyIssueData data = (ProhibitedPropertyIssueData)myIssueData;
+    if (data.typoCandidates.isEmpty()) {
+      return new RemoveProhibitedPropertyFix[]{new RemoveProhibitedPropertyFix(data, quickFixAdapter)};
+    }
+    ArrayList<LocalQuickFix> allFixes = new ArrayList<>();
+    for (@NlsSafe String candidate : data.typoCandidates) {
+      allFixes.add(new FixPropertyNameTypoFix(candidate, quickFixAdapter));
+    }
+    allFixes.add(new RemoveProhibitedPropertyFix(data, quickFixAdapter));
+    return allFixes.toArray(LocalQuickFix[]::new);
   }
 }

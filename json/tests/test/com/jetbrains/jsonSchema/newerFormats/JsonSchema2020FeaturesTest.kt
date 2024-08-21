@@ -424,7 +424,7 @@ internal class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
         {
           "foo": {
             "${dollar}ref": "...",
-            <warning descr="Property 'prohibitedAdditionalProperty' is not allowed">"prohibitedAdditionalProperty": 123</warning>
+            <warning descr="Property 'prohibitedAdditionalProperty' is not allowed">"prohibitedAdditionalProperty"</warning>: 123
           }
         }
       """.trimIndent(),

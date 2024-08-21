@@ -6,5 +6,5 @@
       }
     }
   },
-  <warning descr="Property 'aaa' is not allowed">"aaa": 1</warning>
+  <warning descr="Property 'aaa' is not allowed">"aaa"</warning>: 1
 }

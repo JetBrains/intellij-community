@@ -218,7 +218,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   public void testAdditionalPropertiesDisabled() {
     @Language("YAML") final String schema = "{\"type\": \"object\", \"properties\": {\"prop\": {}}, \"additionalProperties\": false}";
     // not sure abt inner object
-    doTestYaml(schema, "prop:\n q: true\n<warning descr=\"Schema validation: Property 'someStuff' is not allowed\">someStuff: 20</warning>");
+    doTestYaml(schema, "prop:\n q: true\n<warning descr=\"Schema validation: Property 'someStuff' is not allowed\">someStuff</warning>: 20");
   }
 
   public void testAdditionalPropertiesSchema() {
@@ -301,7 +301,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                    "\"innerType\":{}, \"innerValue\":{}" +
                                                    "}, \"additionalProperties\": false" +
                                                    "}}");
-    doTestYaml(schema, "prop:\n- innerType: aaa\n  <warning descr=\"Schema validation: Property 'alien' is not allowed\">alien: bee</warning>");
+    doTestYaml(schema, "prop:\n- innerType: aaa\n  <warning descr=\"Schema validation: Property 'alien' is not allowed\">alien</warning>: bee");
   }
 
   public void testObjectDeeperInArray() {
@@ -312,7 +312,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                                                    "}, \"additionalProperties\": false" +
                                                    "}}");
     doTestYaml(schema,
-           "prop:\n- innerType:\n   only: true\n   <warning descr=\"Schema validation: Property 'hidden' is not allowed\">hidden: false</warning>");
+           "prop:\n- innerType:\n   only: true\n   <warning descr=\"Schema validation: Property 'hidden' is not allowed\">hidden</warning>: false");
   }
 
   public void testInnerObjectPropValueInArray() {
@@ -325,7 +325,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     @Language("YAML") final String schema = "{\"allOf\": [{\"type\": \"object\", \"properties\": {\"first\": {}}}," +
                                             " {\"properties\": {\"second\": {\"enum\": [33,44]}}}], \"additionalProperties\": false}";
     //    doTestYaml(schema, "first: true\nsecond: <warning descr=\"Schema validation: Value should be one of: [33, 44]\">null</warning>");
-    doTestYaml(schema, "first: true\nsecond: 44\n<warning descr=\"Schema validation: Property 'other' is not allowed\">other: 15</warning>");
+    doTestYaml(schema, "first: true\nsecond: 44\n<warning descr=\"Schema validation: Property 'other' is not allowed\">other</warning>: 15");
     doTestYaml(schema, "first: true\nsecond: <warning descr=\"Schema validation: Value should be one of: 33, 44\">12</warning>");
   }
 
@@ -333,7 +333,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     final String subSchema1 = "{\"enum\": [1,2,3,4,5]}";
     final String subSchema2 = "{\"type\": \"array\", \"items\": {\"properties\": {\"kilo\": {}}, \"additionalProperties\": false}}";
     @Language("YAML") final String schema = "{\"properties\": {\"prop\": {\"oneOf\": [" + subSchema1 + ", " + subSchema2 + "]}}}";
-    doTestYaml(schema, "prop:\n - <warning descr=\"Schema validation: Property 'foxtrot' is not allowed\">foxtrot: 15</warning>\n   kilo: 20");
+    doTestYaml(schema, "prop:\n - <warning descr=\"Schema validation: Property 'foxtrot' is not allowed\">foxtrot</warning>: 15\n   kilo: 20");
   }
 
   public void testPatternPropertiesHighlighting() {
@@ -423,7 +423,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
 
 
   public void testRootObjectRedefinedAdditionalPropertiesForbidden() {
-    doTestYaml(rootObjectRedefinedSchema(), "<warning descr=\"Schema validation: Property 'a' is not allowed\">a: true</warning>\n" +
+    doTestYaml(rootObjectRedefinedSchema(), "<warning descr=\"Schema validation: Property 'a' is not allowed\">a</warning>: true\n" +
                                         "r1: allowed!");
   }
 

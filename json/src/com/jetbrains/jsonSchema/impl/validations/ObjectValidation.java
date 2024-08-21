@@ -3,12 +3,14 @@ package com.jetbrains.jsonSchema.impl.validations;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.EditDistance;
 import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
 import com.jetbrains.jsonSchema.extension.JsonValidationHost;
@@ -16,6 +18,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.*;
+import kotlin.collections.CollectionsKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +41,8 @@ public final class ObjectValidation implements JsonSchemaValidation {
     return checkObject(propValue, schema, consumer, options);
   }
 
+  private static final int MIN_LENGTH_TO_FIX_TYPOS = 3;
+
   private static boolean checkObject(@NotNull JsonValueAdapter value,
                                      @NotNull JsonSchemaObject schema,
                                      JsonValidationHost consumer,
@@ -52,8 +57,8 @@ public final class ObjectValidation implements JsonSchemaValidation {
     for (JsonPropertyAdapter property : propertyList) {
       final String name = StringUtil.notNullize(property.getName());
       JsonSchemaObject propertyNamesSchema = schema.getPropertyNamesSchema();
+      JsonValueAdapter nameValueAdapter = property.getNameValueAdapter();
       if (propertyNamesSchema != null) {
-        JsonValueAdapter nameValueAdapter = property.getNameValueAdapter();
         if (nameValueAdapter != null) {
           JsonValidationHost checker = consumer.checkByMatchResult(nameValueAdapter, consumer.resolve(propertyNamesSchema,
                                                                                                       nameValueAdapter), options);
@@ -68,9 +73,21 @@ public final class ObjectValidation implements JsonSchemaValidation {
       final JsonPointerPosition step = JsonPointerPosition.createSingleProperty(name);
       final Pair<ThreeState, JsonSchemaObject> pair = doSingleStep(step, schema);
       if (ThreeState.NO.equals(pair.getFirst()) && !set.contains(name)) {
-        consumer.error(JsonBundle.message("json.schema.annotation.not.allowed.property", name), property.getDelegate(),
+        Iterator<String> propertyNamesIterator = schema.getPropertyNames();
+        List<@NlsSafe String> typoCandidates = CollectionsKt.filter(
+          iteratorToList(propertyNamesIterator),
+          s -> EditDistance.optimalAlignment(s, name, false, 1) <= 1
+        );
+        consumer.error(JsonBundle.message(
+                         name.length() < MIN_LENGTH_TO_FIX_TYPOS || typoCandidates.isEmpty() ?
+          "json.schema.annotation.not.allowed.property" :
+          "json.schema.annotation.not.allowed.property.possibly.typo", name),
+                       nameValueAdapter != null ? nameValueAdapter.getDelegate() : property.getDelegate(),
                        JsonValidationError.FixableIssueKind.ProhibitedProperty,
-                       new JsonValidationError.ProhibitedPropertyIssueData(name), JsonErrorPriority.LOW_PRIORITY);
+                       new JsonValidationError.ProhibitedPropertyIssueData(
+                         name,
+                         name.length() >= MIN_LENGTH_TO_FIX_TYPOS ? typoCandidates : Collections.emptyList()
+                       ), JsonErrorPriority.LOW_PRIORITY);
         isValid = false;
         if (options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
@@ -143,6 +160,22 @@ public final class ObjectValidation implements JsonSchemaValidation {
     return checkUnevaluatedPropertiesSchemaViolation(consumer, schema, object, options);
   }
 
+  private static @NotNull ArrayList<@NlsSafe String> iteratorToList(Iterator<String> propertyNamesIterator) {
+    return Collections.list(
+      new Enumeration<>() {
+        @Override
+        public boolean hasMoreElements() {
+          return propertyNamesIterator.hasNext();
+        }
+
+        @Override
+        public String nextElement() {
+          return propertyNamesIterator.next();
+        }
+      }
+    );
+  }
+
   private static boolean checkUnevaluatedPropertiesSchemaViolation(@NotNull JsonValidationHost consumer,
                                                                    @NotNull JsonSchemaObject schemaNode,
                                                                    @NotNull JsonObjectValueAdapter inspectedObject,
@@ -195,7 +228,8 @@ public final class ObjectValidation implements JsonSchemaValidation {
       if (defaultValue == null) {
         if (Registry.is("json.schema.object.v2")) {
           defaultValue = schema.getExampleByName(req);
-        } else {
+        }
+        else {
           var example = schema.getExample();
           defaultValue = example == null ? null : example.get(req);
         }
@@ -287,7 +321,8 @@ public final class ObjectValidation implements JsonSchemaValidation {
     var existingProperties = ContainerUtil.map(objectValueAdapter.getPropertyList(), JsonPropertyAdapter::getName);
 
     Iterable<String> iter = (() -> schema.getPropertyNames());
-    var missingProperties = StreamSupport.stream(iter.spliterator(), false).filter(it -> !existingProperties.contains(it)).collect(Collectors.toSet());
+    var missingProperties =
+      StreamSupport.stream(iter.spliterator(), false).filter(it -> !existingProperties.contains(it)).collect(Collectors.toSet());
     var missingPropertiesData = createMissingPropertiesData(schema, missingProperties, validationHost, objectValueAdapter);
     validationHost.error(
       JsonBundle.message("schema.validation.missing.not.required.property.or.properties", missingPropertiesData.getMessage(false)),
