@@ -27,7 +27,7 @@ import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COM
 
 public class XMarkObjectActionHandler extends MarkObjectActionHandler {
   @Override
-  public void perform(@NotNull Project project, AnActionEvent event) {
+  public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
     XDebugSession session = DebuggerUIUtil.getSession(event);
     if (session == null) return;
 
@@ -71,7 +71,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+  public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
     XValueMarkers<?, ?> markers = getValueMarkers(event);
     if (markers == null) return false;
 
@@ -89,7 +89,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
   }
 
   @Override
-  public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+  public boolean isHidden(@NotNull Project project, @NotNull AnActionEvent event) {
     return getValueMarkers(event) == null;
   }
 

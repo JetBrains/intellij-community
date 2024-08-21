@@ -34,11 +34,11 @@ public abstract class DebuggerSupport {
     public static final DisabledActionHandler INSTANCE = new DisabledActionHandler();
 
     @Override
-    public void perform(@NotNull Project project, AnActionEvent event) {
+    public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
     }
 
     @Override
-    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+    public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
       return false;
     }
   }
@@ -214,16 +214,16 @@ public abstract class DebuggerSupport {
     }
 
     @Override
-    public void perform(@NotNull Project project, AnActionEvent event) {
+    public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
     }
 
     @Override
-    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+    public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
       return false;
     }
 
     @Override
-    public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+    public boolean isHidden(@NotNull Project project, @NotNull AnActionEvent event) {
       return true;
     }
   };
@@ -238,7 +238,7 @@ public abstract class DebuggerSupport {
     }
 
     @Override
-    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+    public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
       return false;
     }
   };

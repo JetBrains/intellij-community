@@ -36,7 +36,7 @@ import java.awt.*;
 
 public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   @Override
-  protected void perform(@NotNull final XDebugSession session, DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     final XStackFrame stackFrame = session.getCurrentStackFrame();
     final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
@@ -154,7 +154,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   }
 
   @Override
-  protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     return session.getDebugProcess().getEvaluator() != null;
   }
 }

@@ -23,7 +23,7 @@ public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHa
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+  public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return false;

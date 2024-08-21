@@ -15,7 +15,7 @@ import java.util.List;
 
 public class XDebuggerStepIntoHandler extends XDebuggerSmartStepIntoHandler {
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     return XDebuggerSuspendedActionHandler.isEnabled(session);
   }
 

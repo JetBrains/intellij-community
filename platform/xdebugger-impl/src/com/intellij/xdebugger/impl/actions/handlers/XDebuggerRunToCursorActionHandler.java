@@ -30,12 +30,12 @@ public class XDebuggerRunToCursorActionHandler extends XDebuggerSuspendedActionH
   }
 
   @Override
-  protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     return super.isEnabled(session, dataContext) && XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext) != null;
   }
 
   @Override
-  protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
     if (position != null) {
       session.runToPosition(position, myIgnoreBreakpoints);

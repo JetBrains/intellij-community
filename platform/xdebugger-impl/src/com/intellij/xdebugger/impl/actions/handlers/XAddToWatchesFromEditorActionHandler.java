@@ -21,7 +21,7 @@ import java.util.concurrent.TimeoutException;
 
 public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     Promise<String> textPromise = getTextToEvaluate(dataContext, session);
     // in the case of async expression evaluation just enable the action
     if (textPromise.getState() == Promise.State.PENDING) {
@@ -59,7 +59,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     getTextToEvaluate(dataContext, session)
       .onSuccess(text -> {
         if (text == null) return;

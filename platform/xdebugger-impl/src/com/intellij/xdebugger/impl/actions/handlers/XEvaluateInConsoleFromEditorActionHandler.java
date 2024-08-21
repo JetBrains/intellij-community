@@ -26,7 +26,7 @@ import java.util.List;
 
 public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFromEditorActionHandler {
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     return super.isEnabled(session, dataContext) && getConsoleExecuteAction(session) != null;
   }
 
@@ -47,7 +47,7 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (!(editor instanceof EditorEx)) {
       return;

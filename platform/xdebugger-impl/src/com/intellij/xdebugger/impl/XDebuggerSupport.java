@@ -45,26 +45,26 @@ public class XDebuggerSupport extends DebuggerSupport {
     myAddToInlineWatchesActionHandler = new XAddToInlineWatchesFromEditorActionHandler();
     myStepOverHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.stepOver(false);
       }
     };
     myStepIntoHandler = new XDebuggerStepIntoHandler();
     myStepOutHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.stepOut();
       }
     };
     myForceStepOverHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.stepOver(true);
       }
     };
     myForceStepIntoHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.forceStepInto();
       }
     };
@@ -73,19 +73,19 @@ public class XDebuggerSupport extends DebuggerSupport {
     myForceRunToCursor = new XDebuggerRunToCursorActionHandler(true);
     myResumeHandler = new XDebuggerActionHandler() {
       @Override
-      protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         return session.isPaused();
       }
 
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.resume();
       }
     };
     myPauseHandler = new XDebuggerPauseActionHandler();
     myShowExecutionPointHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.showExecutionPoint();
       }
     };

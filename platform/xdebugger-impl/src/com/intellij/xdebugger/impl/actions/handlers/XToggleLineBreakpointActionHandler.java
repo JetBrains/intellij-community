@@ -25,8 +25,8 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,17 +40,17 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
   }
 
   @Override
-  public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
+  public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor == null || DiffUtil.isDiffEditor(editor)) {
       return false;
     }
     XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XSourcePosition position : ToggleLineBreakpointAction.getAllPositionsForBreakpoints(project, event.getDataContext())) {
       for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
-        final VirtualFile file = position.getFile();
-        final int line = position.getLine();
+        VirtualFile file = position.getFile();
+        int line = position.getLine();
         if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
           return true;
         }
@@ -60,7 +60,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
   }
 
   @Override
-  public void perform(@NotNull final Project project, final AnActionEvent event) {
+  public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     boolean isFromGutterClick = event.getData(XLineBreakpointManager.BREAKPOINT_LINE_KEY) != null;
     InputEvent inputEvent = event.getInputEvent();

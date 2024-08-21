@@ -17,7 +17,7 @@ public class PauseAction extends XDebuggerActionBase {
   }
 
   @Override
-  protected boolean isHidden(AnActionEvent event) {
+  protected boolean isHidden(@NotNull AnActionEvent event) {
     if (!isPauseResumeMerged()) {
       return super.isHidden(event);
     }

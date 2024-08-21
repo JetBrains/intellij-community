@@ -11,18 +11,18 @@ import org.jetbrains.annotations.NotNull;
 
 public class XDebuggerPauseActionHandler extends XDebuggerActionHandler {
   @Override
-  protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     session.pause();
   }
 
   @Override
-  public boolean isHidden(@NotNull Project project, AnActionEvent event) {
-    final XDebugSession session = DebuggerUIUtil.getSession(event);
+  public boolean isHidden(@NotNull Project project, @NotNull AnActionEvent event) {
+    XDebugSession session = DebuggerUIUtil.getSession(event);
     return session == null || !((XDebugSessionImpl)session).isPauseActionSupported();
   }
 
   @Override
-  protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     assert session instanceof XDebugSessionImpl;
     return ((XDebugSessionImpl)session).isPauseActionSupported() && !session.isPaused();
   }

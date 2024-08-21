@@ -32,7 +32,7 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
     }
 
     @Override
-    public void perform(@NotNull final Project project, final AnActionEvent event) {
+    public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
       Editor editor = event.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
@@ -42,7 +42,7 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
     }
 
     @Override
-    public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
+    public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
       if (!myHandler.isEnabled(project, event)) {
         return false;
       }
