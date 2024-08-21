@@ -127,11 +127,11 @@ public final class JavaEnterInInjectedTextBlockHandler extends EnterHandlerDeleg
     }
   }
 
-  public record HostPosition(@NotNull PsiFile originalFile, @NotNull Editor originalEditor, int offset) {
+  private record HostPosition(@NotNull PsiFile originalFile, @NotNull Editor originalEditor, int offset) {
   }
 
   @Nullable
-  public static HostPosition getHost(@NotNull DataContext dataContext) {
+  private static HostPosition getHost(@NotNull DataContext dataContext) {
     Editor data = CommonDataKeys.HOST_EDITOR.getData(dataContext);
     if (!(data instanceof EditorEx originalEditor)) return null;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
