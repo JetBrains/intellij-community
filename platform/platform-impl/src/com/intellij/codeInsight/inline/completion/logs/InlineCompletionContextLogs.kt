@@ -267,15 +267,15 @@ internal object InlineCompletionContextLogs {
     val BLOCK_STATEMENT_LEVEL = register(EventFields.Int("block_statement_level"))
     val TOPIC_TO_FIELD = listOf("data_science", "web")
       .associateWith { register(EventFields.Boolean("has_${it}_imports")) }
-    val SCOPE_TYPE = scopeFeatures { register(EventFields.Enum<ScopeType>("${it}_scope_type", "Type of ${it} scope where the caret is placed")) }
-    val SCOPE_INIT = scopeFeatures { register(EventFields.Boolean("${it}_scope_init", "True if caret is placed at the ${it} scope initialization")) }
-    val SCOPE_NUM_LINES = scopeFeatures { register(EventFields.Int("${it}_scope_num_lines", "Number of lines in the ${it} scope where the caret is placed")) }
-    val SCOPE_NUM_SYMBOLS = scopeFeatures { register(EventFields.Int("${it}_scope_num_symbols", "Number of symbols in the ${it} scope where the caret is placed")) }
-    val SCOPE_LINE_OFFSET = scopeFeatures { register(EventFields.Int("${it}_scope_line_offset", "Line offset of the caret in the ${it} scope")) }
-    val SCOPE_OFFSET = scopeFeatures { register(EventFields.Int("${it}_scope_offset", "Char offset of the caret in the ${it} scope")) }
-    val SCOPE_VALUABLE_SYMBOLS_BEFORE = scopeFeatures { register(EventFields.Boolean("${it}_scope_valuable_symbols_before", "False if in the ${it} scope before caret there are only whitespaces or statements/strings enclosures")) }
-    val SCOPE_VALUABLE_SYMBOLS_AFTER = scopeFeatures { register(EventFields.Boolean("${it}_scope_valuable_symbols_after", "False if in the ${it} scope after caret there are only whitespaces or statements/strings enclosures")) }
-    val SCOPE_HAS_ERROR_PSI = scopeFeatures { register(EventFields.Boolean("${it}_scope_has_error_psi", "True if in the ${it} scope there's any PsiError element")) }
+    val SCOPE_TYPE = scopeFeatures { EventFields.Enum<ScopeType>("${it}_scope_type", "Type of ${it} scope where the caret is placed") }
+    val SCOPE_INIT = scopeFeatures { EventFields.Boolean("${it}_scope_init", "True if caret is placed at the ${it} scope initialization") }
+    val SCOPE_NUM_LINES = scopeFeatures { EventFields.Int("${it}_scope_num_lines", "Number of lines in the ${it} scope where the caret is placed") }
+    val SCOPE_NUM_SYMBOLS = scopeFeatures { EventFields.Int("${it}_scope_num_symbols", "Number of symbols in the ${it} scope where the caret is placed") }
+    val SCOPE_LINE_OFFSET = scopeFeatures { EventFields.Int("${it}_scope_line_offset", "Line offset of the caret in the ${it} scope") }
+    val SCOPE_OFFSET = scopeFeatures { EventFields.Int("${it}_scope_offset", "Char offset of the caret in the ${it} scope") }
+    val SCOPE_VALUABLE_SYMBOLS_BEFORE = scopeFeatures { EventFields.Boolean("${it}_scope_valuable_symbols_before", "False if in the ${it} scope before caret there are only whitespaces or statements/strings enclosures") }
+    val SCOPE_VALUABLE_SYMBOLS_AFTER = scopeFeatures { EventFields.Boolean("${it}_scope_valuable_symbols_after", "False if in the ${it} scope after caret there are only whitespaces or statements/strings enclosures") }
+    val SCOPE_HAS_ERROR_PSI = scopeFeatures { EventFields.Boolean("${it}_scope_has_error_psi", "True if in the ${it} scope there's any PsiError element") }
 
     private fun <T> scopeFeatures(createFeatureDeclaration: (String) -> EventField<T>): List<EventField<T>> {
       return listOf(
