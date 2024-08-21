@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.StringUtil.parseLong
 import com.intellij.openapi.util.text.StringUtil.unquoteString
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -190,11 +191,21 @@ data class ReviewCommentPlugin(
   val link: @Nls String = ""
 )
 
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SalesMetadata(
-  val trialPeriod: Int? = null
+  val trialPeriod: Int? = null,
+  val customTrialPeriods: List<CustomTrialPeriod>? = null
 )
 
+@ApiStatus.Internal
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class CustomTrialPeriod(
+  @JsonProperty("productCode") val productCode: String,
+  @JsonProperty("trialPeriod") val trialPeriod: Int
+)
+
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijPluginMetadata(
   val screenshots: List<String>? = null,
@@ -220,7 +231,10 @@ data class IntellijPluginMetadata(
     pluginNode.documentationUrl = documentationUrl
     pluginNode.sourceCodeUrl = sourceCodeUrl
     pluginNode.reportPluginUrl = reportPluginUrl
-    pluginNode.trialPeriod = salesInfo?.trialPeriod
+    pluginNode.defaultTrialPeriod = salesInfo?.trialPeriod
+    pluginNode.setCustomTrialPeriodMap(salesInfo?.customTrialPeriods?.associate {
+      p -> p.productCode to p.trialPeriod
+    })
   }
 }
 
