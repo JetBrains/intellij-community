@@ -61,15 +61,15 @@ internal open class FirClassifierCompletionContributor(
         symbols.asSequence()
             .mapNotNull { it.staticScope }
             .forEach { scopeWithKind ->
-            scopeWithKind.scope
-                .classifiers(scopeNameFilter)
-                .filter { filterClassifiers(it) }
-                .filter { visibilityChecker.isVisible(it) }
-                .forEach {
-                    val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
-                    addClassifierSymbolToCompletion(it, context, symbolOrigin, ImportStrategy.DoNothing)
-                }
-        }
+                scopeWithKind.scope
+                    .classifiers(scopeNameFilter)
+                    .filter { filterClassifiers(it) }
+                    .filter { visibilityChecker.isVisible(it) }
+                    .forEach {
+                        val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
+                        addClassifierSymbolToCompletion(it, context, symbolOrigin, ImportStrategy.DoNothing)
+                    }
+            }
     }
 
     context(KaSession)
