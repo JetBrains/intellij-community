@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.features
 
 import com.intellij.codeInsight.inline.completion.features.MLCompletionFeaturesScopeAnalyzer.ScopeType
+import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -80,6 +81,6 @@ interface MLCompletionFeaturesCollector {
 
   companion object {
     private val EP_NAME = LanguageExtension<MLCompletionFeaturesCollector>("com.intellij.mlCompletionFeaturesCollector")
-    fun get(file: PsiFile): MLCompletionFeaturesCollector? = EP_NAME.forLanguage(file.viewProvider.baseLanguage)
+    fun get(language: Language): MLCompletionFeaturesCollector? = EP_NAME.forLanguage(language)
   }
 }
