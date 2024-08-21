@@ -419,12 +419,13 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     myModificationStamp.incrementAndGet();
   }
 
+  //MAYBE RC: rename to updateWith()? There is no map anymore
   public void updateWithMap(@NotNull UpdateData<Key, Value> updateData) throws StorageException {
     ConcurrencyUtil.withLock(myLock.writeLock(), () -> {
       IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
         IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
-        boolean hasDifference = updateData.iterateKeys(
+        boolean hasDifference = updateData.iterateChanges(
           myAddedKeyProcessor,
           myUpdatedKeyProcessor,
           myRemovedKeyProcessor

@@ -15,14 +15,14 @@ import java.io.IOException;
  * <p>
  * The update as a whole is going to the forward index, while the changes are going to the inverted index.
  * So the {@link #updateForwardIndex()} is to update the forward index with the new data, and
- * {@link #iterateKeys(KeyValueUpdateProcessor, KeyValueUpdateProcessor, RemovedKeyProcessor)} is to stream
+ * {@link #iterateChanges(KeyValueUpdateProcessor, KeyValueUpdateProcessor, RemovedKeyProcessor)} is to stream
  * the changes against current data to apply on the inverted index.
  * <p>
  * The 2 sides are separated to allow indexes to skip forward index update, and/or to provide an optimized version
  * of changes evaluation.
  */
 @ApiStatus.Internal
-public final class UpdateData<Key, Value>/* implements UpdateData.ChangesProducer<Key, Value> */ {
+public final class UpdateData<Key, Value> {
 
   private final int inputId;
   private final @NotNull IndexId<Key, Value> indexId;
@@ -44,11 +44,12 @@ public final class UpdateData<Key, Value>/* implements UpdateData.ChangesProduce
     return inputId;
   }
 
-  //MAYBE RC: iterateChanges() is more clear name?..
+  //MAYBE RC: move ChangesProducer to the upper level, and make UpdateData implement ChangesProducer, so this
+  //          method become .forEachChange()?
   /** @return true if new data is different from current data -- which means at least one processor _was_ called */
-  boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addedEntriesProcessor,
-                      @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updatedEntriesProcessor,
-                      @NotNull RemovedKeyProcessor<? super Key> removedEntriesProcessor) throws StorageException {
+  boolean iterateChanges(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addedEntriesProcessor,
+                         @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updatedEntriesProcessor,
+                         @NotNull RemovedKeyProcessor<? super Key> removedEntriesProcessor) throws StorageException {
     return changesProducer.forEachChange(
       addedEntriesProcessor,
       updatedEntriesProcessor,
