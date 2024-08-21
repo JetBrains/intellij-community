@@ -13,11 +13,12 @@ import java.io.IOException;
  * {@link #iterateKeys(KeyValueUpdateProcessor, KeyValueUpdateProcessor, RemovedKeyProcessor)}
  * is for updating inverted index, and {@link #updateForwardIndex()} is for updating forward index.
  * <p>
- * Inverted index update (a first phase) is more complicated than forward index update because forward index is
- * just [inputId -> Map[Key,Value]], so the update is just replacing an old map with a new one. But inverted
- * index update could require set of updates, (potentially) for each [Key] in the map -- so instead of a simple
- * updateInvertedIndex() it is designed as callback-based {@link #iterateKeys(KeyValueUpdateProcessor, KeyValueUpdateProcessor, RemovedKeyProcessor)},
- * which evaluates a diff between current and new data, and report pieces of the diff into appropriate processors.
+ * Inverted index update (the first phase) is more complicated than forward index update because forward index is
+ * just [inputId → Map[Key,Value]], so the update is just replacing an old map with a new one. But inverted
+ * index update could require a set of updates, (potentially) for each [Key] in the map -- so instead of a simple
+ * {@code updateInvertedIndex()} it is designed as callback-based {@link #iterateKeys(KeyValueUpdateProcessor, KeyValueUpdateProcessor, RemovedKeyProcessor)},
+ * which evaluates a diff between current and new data, and report the diff as a set of changes, into appropriate
+ * processors.
  */
 @ApiStatus.Internal
 public abstract class AbstractUpdateData<Key, Value> {
