@@ -23,7 +23,6 @@ import org.jetbrains.plugins.notebooks.ui.visualization.NotebookTextCellBackgrou
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController.InputFactory
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point

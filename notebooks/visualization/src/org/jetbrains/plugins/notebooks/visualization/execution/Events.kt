@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.execution
 
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
+import org.jetbrains.plugins.notebooks.visualization.ui.ProgressStatus
 import java.time.ZonedDateTime
 
 sealed interface ExecutionEvent {

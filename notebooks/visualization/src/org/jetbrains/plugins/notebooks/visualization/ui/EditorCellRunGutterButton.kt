@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.ex.EditorEx
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
 
 class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: EditorCell)  {
   // PY-72142 & PY-69788 & PY-72701 - adds "Run cell" button to the gutter

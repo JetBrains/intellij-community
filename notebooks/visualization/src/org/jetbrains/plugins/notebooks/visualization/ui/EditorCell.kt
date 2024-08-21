@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.execution.ExecutionEvent
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 

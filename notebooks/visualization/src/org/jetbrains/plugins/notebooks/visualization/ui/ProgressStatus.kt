@@ -1,5 +1,4 @@
-package org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress
-
+package org.jetbrains.plugins.notebooks.visualization.ui
 
 enum class ProgressStatus {
   RUNNING,
