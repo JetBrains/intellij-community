@@ -129,18 +129,18 @@ class CompilationChartsMouseAdapter(private val vm: CompilationChartsViewModel, 
 
   override fun mouseClicked(e: MouseEvent) {
     component.setFocus()
-    val info = search(e.point)?.info ?: return
-    val popupMenu = JPopupMenu().apply {
-      add(JLabel(CompilationChartsBundle.message("charts.module.info", info["name"], info["duration"]))) // TODO
-      show(this@CompilationChartsMouseAdapter.component, e.point.x, e.point.y)
+    search(e.point)?.info?.let { info ->
+      currentPopup = JPopupMenu(info["name"]).apply {
+        add(JLabel(CompilationChartsBundle.message("charts.module.info", info["name"], info["duration"])))
+        show(this@CompilationChartsMouseAdapter.component, e.point.x, e.point.y)
+      }
     }
-    currentPopup = popupMenu
   }
 
   override fun mouseExited(e: MouseEvent) {
     val popup = currentPopup ?: return
     if (popup.isShowing && !popup.contains(e.point)) {
-      popup.isVisible = false // todo animation
+      popup.isVisible = false
     }
   }
 

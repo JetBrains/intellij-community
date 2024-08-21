@@ -68,7 +68,8 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
           if (words.isEmpty()) {
             vm.filter.set(vm.filter.value.setText(listOf()))
             updateLabel(null, null)
-          } else {
+          }
+          else {
             vm.filter.set(vm.filter.value.setText(words))
             updateLabel(vm.modules.get().keys, vm.filter.value)
           }
@@ -91,7 +92,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
   }
 
   init {
-    border = JBUI.Borders.emptyBottom(2)
+    border = JBUI.Borders.customLine(COLOR_LINE)
     layout = BorderLayout()
 
     // module name
@@ -121,17 +122,19 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
   fun updateLabel(set: Set<CompilationChartsViewModel.Modules.EventKey>?, filter: CompilationChartsViewModel.Filter?) {
     if (set == null || filter == null) {
       countLabel.text = ""
-    } else {
+    }
+    else {
       val count = set.count { filter.test(it) }
       if (count == set.count()) {
         countLabel.text = ""
-      } else {
+      }
+      else {
         countLabel.text = CompilationChartsBundle.message("charts.search.results", count)
       }
     }
   }
 
-  private class ScrollToEndAction(private val vm : CompilationChartsViewModel): DumbAwareAction(
+  private class ScrollToEndAction(private val vm: CompilationChartsViewModel) : DumbAwareAction(
     CompilationChartsBundle.message("charts.scroll.to.end.action.title"),
     CompilationChartsBundle.message("charts.scroll.to.end.action.description"),
     AllIcons.Actions.Forward) {
