@@ -14,15 +14,23 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.vcsUtil.VcsUtil
 
 object DiffTitleFilePathCustomizer {
+  private val EMPTY_CUSTOMIZER = DiffEditorTitleCustomizer { null }
+
   @JvmStatic
   fun getTitleCustomizers(
     project: Project?,
     beforeRevision: RevisionWithTitle?,
     afterRevision: RevisionWithTitle?,
-  ): List<DiffEditorTitleCustomizer> = buildList {
-    add(getTitleCustomizer(beforeRevision, project))
-    add(getTitleCustomizer(afterRevision, project, showPath = beforeRevision == null || beforeRevision.revision.file != afterRevision?.revision?.file))
-  }
+  ): List<DiffEditorTitleCustomizer> = listOf(
+    getTitleCustomizer(beforeRevision, project),
+    getTitleCustomizer(afterRevision, project, showPath = beforeRevision == null || beforeRevision.revision.file != afterRevision?.revision?.file),
+  )
+
+  @JvmStatic
+  fun getTitleCustomizers(beforeFilePath: String?, afterFilePath: String?): List<DiffEditorTitleCustomizer> = listOf(
+    beforeFilePath?.let { FilePathDiffTitleCustomizer(beforeFilePath) } ?: EMPTY_CUSTOMIZER,
+    afterFilePath?.let { FilePathDiffTitleCustomizer(afterFilePath) } ?: EMPTY_CUSTOMIZER,
+  )
 
   @JvmStatic
   fun getTitleCustomizers(
@@ -30,11 +38,11 @@ object DiffTitleFilePathCustomizer {
     beforeRevision: RevisionWithTitle?,
     centerRevision: RevisionWithTitle?,
     afterRevision: RevisionWithTitle?,
-  ): List<DiffEditorTitleCustomizer> = buildList {
-    add(getTitleCustomizer(beforeRevision, project, showPath = centerRevision == null || centerRevision.revision.file != beforeRevision?.revision?.file))
-    add(getTitleCustomizer(centerRevision, project))
-    add(getTitleCustomizer(afterRevision, project, showPath = centerRevision == null || centerRevision.revision.file != afterRevision?.revision?.file))
-  }
+  ): List<DiffEditorTitleCustomizer> = listOf(
+    getTitleCustomizer(beforeRevision, project, showPath = centerRevision == null || centerRevision.revision.file != beforeRevision?.revision?.file),
+    getTitleCustomizer(centerRevision, project),
+    getTitleCustomizer(afterRevision, project, showPath = centerRevision == null || centerRevision.revision.file != afterRevision?.revision?.file),
+  )
 
   private fun getTitleCustomizer(
     revision: RevisionWithTitle?,

@@ -5982,6 +5982,7 @@ f:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
 - sf:INSTANCE:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
 - sf:getTitleCustomizers(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle):java.util.List
 - sf:getTitleCustomizers(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle):java.util.List
+- sf:getTitleCustomizers(java.lang.String,java.lang.String):java.util.List
 f:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
 - sf:Companion:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle$Companion
 - <init>(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):V
