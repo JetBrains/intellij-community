@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
+import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
@@ -206,7 +206,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public void updateWithMap(@NotNull AbstractUpdateData<FileType, Void> updateData) {
+  public void updateWithMap(@NotNull UpdateData<FileType, Void> updateData) {
     throw new UnsupportedOperationException();
   }
 

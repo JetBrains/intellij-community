@@ -24,9 +24,8 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
-import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
-import com.intellij.util.indexing.impl.RemovedKeyProcessor;
+import com.intellij.util.indexing.impl.UpdateData;
+import com.intellij.util.indexing.impl.UpdateData.ForwardIndexUpdate;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.MeasurableIndexStore;
@@ -86,25 +85,26 @@ public abstract class StubIndexEx extends StubIndex {
                            " new  = " + Arrays.toString(newKeys.toArray()) +
                            " updated_id = " + System.identityHashCode(newKeys));
         }
-        final UpdatableIndex<K, Void, FileContent, ?> index = getIndex(stubIndexKey);
+        UpdatableIndex<K, Void, FileContent, ?> index = getIndex(stubIndexKey);
         if (index == null) return;
-        index.updateWithMap(new AbstractUpdateData<>(fileId) {
-          @Override
-          protected boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super K, ? super Void> addProcessor,
-                                        @NotNull KeyValueUpdateProcessor<? super K, ? super Void> updateProcessor,
-                                        @NotNull RemovedKeyProcessor<? super K> removeProcessor) throws StorageException {
-            boolean modified = false;
 
+        index.updateWithMap(new UpdateData<>(
+          fileId,
+          index.getExtension().getName(),
+
+          (addedEntriesProcessor, updatedEntriesProcessor, removedEntriesProcessor) -> {
+
+            boolean modified = false;
             for (K oldKey : oldKeys) {
               if (!newKeys.contains(oldKey)) {
-                removeProcessor.process(oldKey, fileId);
+                removedEntriesProcessor.process(oldKey, fileId);
                 if (!modified) modified = true;
               }
             }
 
             for (K newKey : newKeys) {
               if (!oldKeys.contains(newKey)) {
-                addProcessor.process(newKey, null, fileId);
+                addedEntriesProcessor.process(newKey, null, fileId);
                 if (!modified) modified = true;
               }
             }
@@ -114,8 +114,10 @@ public abstract class StubIndexEx extends StubIndex {
             }
 
             return modified;
-          }
-        });
+          },
+          
+          ForwardIndexUpdate.NOOP
+        ));
       }
       catch (StorageException e) {
         getLogger().info(e);

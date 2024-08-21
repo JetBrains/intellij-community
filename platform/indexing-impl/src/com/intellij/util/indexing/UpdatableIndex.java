@@ -4,7 +4,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
+import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +77,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   @NotNull
   IndexExtension<Key, Value, Input> getExtension();
 
-  void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException;
+  void updateWithMap(@NotNull UpdateData<Key, Value> updateData) throws StorageException;
 
   void setBufferingEnabled(boolean enabled);
 

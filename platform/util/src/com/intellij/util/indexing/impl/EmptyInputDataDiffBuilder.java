@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
@@ -20,7 +20,7 @@ public final class EmptyInputDataDiffBuilder<Key, Value> extends DirectInputData
 
   @Override
   public boolean differentiate(@NotNull Map<Key, Value> newData,
-                               final @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                               @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
                                @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
                                @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
     return processAllKeyValuesAsAdded(myInputId, newData, addProcessor);
@@ -28,7 +28,7 @@ public final class EmptyInputDataDiffBuilder<Key, Value> extends DirectInputData
 
   public static <Key, Value> boolean processAllKeyValuesAsAdded(int inputId,
                                                                 @NotNull Map<Key, Value> addedData,
-                                                                final @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor)
+                                                                @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor)
     throws StorageException {
     boolean[] anyAdded = {false};
     try {

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.UpdateData.ChangesProducer.LazyChangesProducer;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
@@ -308,16 +309,20 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Override
-  public @NotNull StorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
+  public @NotNull StorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> inputData) {
     UpdateData<Key, Value> updateData = new UpdateData<>(
       inputId,
-      data.getKeyValues(),
-      () -> getKeysDiffBuilder(inputId),
-      myIndexId,
-      () -> updateForwardIndex(inputId, data)
+      indexId(),
+
+      new LazyChangesProducer<>(
+        inputData.getKeyValues(),
+        () -> getKeysDiffBuilder(inputId)
+      ),
+
+      () -> updateForwardIndex(inputId, inputData)
     );
 
-    return new IndexStorageUpdate(updateData, data);
+    return new IndexStorageUpdate(inputData, updateData);
   }
 
   @ApiStatus.Internal
@@ -404,7 +409,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     myModificationStamp.incrementAndGet();
   }
 
-  public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
+  public void updateWithMap(@NotNull UpdateData<Key, Value> updateData) throws StorageException {
     ConcurrencyUtil.withLock(myLock.writeLock(), () -> {
       IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
@@ -443,10 +448,10 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     private final InputData<Key, Value> inputData;
     private final UpdateData<Key, Value> updateData;
 
-    private IndexStorageUpdate(@NotNull UpdateData<Key, Value> updateData,
-                               @NotNull InputData<Key, Value> inputData) {
-      this.updateData = updateData;
+    private IndexStorageUpdate(@NotNull InputData<Key, Value> inputData,
+                               @NotNull UpdateData<Key, Value> updateData) {
       this.inputData = inputData;
+      this.updateData = updateData;
     }
 
     public @NotNull InputData<Key, Value> getInputData() {
@@ -490,7 +495,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
     @Override
     public String toString() {
-      return "IndexUpdate[" + myIndexId + "][fileId: " + updateData.getInputId() + "]{" + inputData.getKeyValues().size() + " values}";
+      return "IndexUpdate[" + myIndexId + "][fileId: " + updateData.inputId() + "]{" + inputData.getKeyValues().size() + " values}";
     }
   }
 }
