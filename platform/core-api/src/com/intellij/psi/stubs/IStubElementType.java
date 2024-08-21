@@ -7,12 +7,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
   private static final Set<String> NOT_INITIALIZED_SET = Collections.emptySet();
@@ -84,11 +88,7 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
       logger.debug("Lazy stub element types loaded: " + StringUtil.join(debugStr, ", "));
     }
 
-    Set<String> lazyIds = new HashSet<>(result.size());
-    for (StubFieldAccessor accessor : result) {
-      lazyIds.add(accessor.externalId);
-    }
-    lazyExternalIds = Collections.unmodifiableSet(lazyIds);
+    lazyExternalIds = ContainerUtil.map2Set(result, accessor -> accessor.externalId);
     return result;
   }
 
