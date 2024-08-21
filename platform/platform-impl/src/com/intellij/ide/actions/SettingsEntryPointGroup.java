@@ -14,8 +14,8 @@ import java.util.List;
  */
 final class SettingsEntryPointGroup extends DefaultActionGroup {
   @Override
-  public @NotNull List<@NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
-                                                                     @NotNull List<? extends @NotNull AnAction> visibleChildren) {
+  public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                               @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     for (AnAction child : visibleChildren) {
       Presentation presentation = e.getUpdateSession().presentation(child);
       String text = presentation.getText();

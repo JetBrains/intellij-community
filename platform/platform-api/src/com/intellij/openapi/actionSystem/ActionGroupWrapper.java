@@ -60,8 +60,8 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   }
 
   @Override
-  public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
-                                                            @NotNull List<? extends AnAction> visibleChildren) {
+  public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                               @NotNull List<? extends AnAction> visibleChildren) {
     return myDelegate.postProcessVisibleChildren(e, visibleChildren);
   }
 }

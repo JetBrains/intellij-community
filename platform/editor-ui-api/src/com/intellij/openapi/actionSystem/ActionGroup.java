@@ -144,7 +144,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Allows the group to intercept and transform its expanded visible children.
    */
-  public @NotNull List<@NotNull AnAction> postProcessVisibleChildren(
+  public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
     @NotNull AnActionEvent e,
     @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     return Collections.unmodifiableList(visibleChildren);
