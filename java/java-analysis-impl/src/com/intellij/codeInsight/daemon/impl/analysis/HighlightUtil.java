@@ -215,15 +215,19 @@ public final class HighlightUtil {
         .formatType(checkType));
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
+      if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) && convertible) {
+        HighlightInfo.Builder infoFeature =
+          HighlightUtil.checkFeature(expression, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS,
+                                     PsiUtil.getLanguageLevel(expression), expression.getContainingFile());
+        if (infoFeature != null) {
+          info = infoFeature;
+        }
+      }
       if (checkIsPrimitive) {
         IntentionAction action = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(operandType, typeElement);
         if (action != null) {
           info.registerFix(action, null, null, null, null);
         }
-      }
-
-      if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) && convertible) {
-        registerIncreaseLanguageLevelFixes(expression, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, info);
       }
 
       errorSink.accept(info);

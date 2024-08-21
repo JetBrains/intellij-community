@@ -182,15 +182,20 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
         String expectedTypes = JavaErrorBundle.message("switch.class.or.array.type.expected");
         String message = JavaErrorBundle.message("unexpected.type", expectedTypes, JavaHighlightUtil.formatType(patternType));
         HighlightInfo.Builder info = createError(elementToReport, message);
+        if (patternType instanceof PsiPrimitiveType) {
+          HighlightInfo.Builder infoFeature =
+            HighlightUtil.checkFeature(elementToReport, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS,
+                                       PsiUtil.getLanguageLevel(elementToReport), elementToReport.getContainingFile());
+          if (infoFeature != null) {
+            info = infoFeature;
+          }
+        }
         PsiPrimitiveType primitiveType = ObjectUtils.tryCast(patternType, PsiPrimitiveType.class);
         if (primitiveType != null) {
           IntentionAction fix = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(mySelectorType, typeElement);
           if (fix != null) {
             info.registerFix(fix, null, null, null, null);
           }
-        }
-        if (patternType instanceof PsiPrimitiveType) {
-          HighlightUtil.registerIncreaseLanguageLevelFixes(mySelector, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, info);
         }
         errorSink.accept(info);
         return true;
@@ -210,7 +215,12 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
           HighlightInfo.Builder error =
             HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
           if (mySelectorType instanceof PsiPrimitiveType) {
-            HighlightUtil.registerIncreaseLanguageLevelFixes(mySelector, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, error);
+            HighlightInfo.Builder infoFeature =
+              HighlightUtil.checkFeature(elementToReport, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS,
+                                         PsiUtil.getLanguageLevel(elementToReport), elementToReport.getContainingFile());
+            if (infoFeature != null) {
+              error = infoFeature;
+            }
           }
           errorSink.accept(error);
           return true;
