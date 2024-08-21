@@ -1084,6 +1084,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/SeparateInitializerInTry.kt");
             }
 
+            @TestMetadata("thisQualificationInsideExtensionFunction.kt")
+            public void testThisQualificationInsideExtensionFunction() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/thisQualificationInsideExtensionFunction.kt");
+            }
+
             @TestMetadata("UsedInAssignment.kt")
             public void testUsedInAssignment() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/UsedInAssignment.kt");

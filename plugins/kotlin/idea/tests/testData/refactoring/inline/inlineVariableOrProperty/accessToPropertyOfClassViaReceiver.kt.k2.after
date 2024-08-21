@@ -6,7 +6,7 @@ fun Foo.m() {
     object : Runnable {
         override fun run() {
             if ((1..2).find<Int> {
-                    println(this@Foo.i)
+                    println(this@m.i)
                     true
                 } != 0) {
             }

@@ -3,7 +3,7 @@
 class Receiver(val c: String)
 class Container(val c: String) {
     fun Receiver.respond() {
-        println(this@Receiver.c)
+        println(this@respond.c)
         println(this@Container.c)
     }
 }
