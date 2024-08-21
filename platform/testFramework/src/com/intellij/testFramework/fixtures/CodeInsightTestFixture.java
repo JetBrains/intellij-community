@@ -771,9 +771,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @param charToTypeAfterCompletion after completion, this char will be typed if not {@code null}.
    *                                  It could be used to complete the suggestion with {@code '\t'} for example.
+   * @param typeCharIfOnlyOneCompletion if charToTypeAfterCompletion should be placed if code is completed by {@link #completeBasic()}
    * @return list of all completion elements just like in {@link #completeBasic()}
    * @see #completeBasic()
    */
+  @NotNull
+  List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion, boolean typeCharIfOnlyOneCompletion);
+
   @NotNull
   List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
 
