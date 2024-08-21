@@ -8,9 +8,11 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ml.feature.FeatureDeclaration
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
+import com.intellij.psi.util.startOffset
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
@@ -18,19 +20,22 @@ internal object InlineCompletionContextLogs {
   @RequiresReadLock
   @RequiresBlockingContext
   fun getFor(request: InlineCompletionRequest): List<EventPair<*>> {
-    val simple = captureSimple(request.file, request.editor, request.startOffset)
+    val element = if (request.startOffset == 0) null else request.file.findElementAt(request.startOffset - 1)
+    val simple = captureSimple(request.file, request.editor, request.startOffset, element)
     val featureCollectorBased = MLCompletionFeaturesCollector.get(request.file.language)?.let {
       captureFeatureCollectorBased(request.file, request.editor, request.startOffset, it)
     }
     return simple + featureCollectorBased.orEmpty()
   }
 
-  private fun captureSimple(psiFile: PsiFile, editor: Editor, offset: Int): List<EventPair<*>> {
+  private fun captureSimple(psiFile: PsiFile, editor: Editor, offset: Int, element: PsiElement?): List<EventPair<*>> {
     val contextFeatures = mutableListOf<EventPair<*>>()
     val logicalPosition = editor.offsetToLogicalPosition(offset)
     val lineNumber = logicalPosition.line
     val columnNumber = logicalPosition.column
     val fileLineCount = editor.document.lineCount
+
+    element?.let { contextFeatures.add(Logs.ELEMENT_PREFIX_LENGTH with (offset - it.textOffset)) }
 
     contextFeatures.add(Logs.LINE_NUMBER.with(lineNumber))
     contextFeatures.add(Logs.COLUMN_NUMBER.with(columnNumber))
@@ -120,6 +125,7 @@ internal object InlineCompletionContextLogs {
     val PARENT_FEATURES = listOf("first", "second", "third", "forth", "fifth").map {
       register(EventFields.Class("${it}_parent"))
     }
+    val ELEMENT_PREFIX_LENGTH = register(EventFields.Int("element_prefix_length"))
   }
 
   internal class CollectorExtension : InlineCompletionSessionLogsEP {
