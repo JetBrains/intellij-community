@@ -7,7 +7,6 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.UpdateData.ChangesProducer.LazyChangesProducer;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
@@ -276,7 +275,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Override
-  public @NotNull ValueContainer<Value> getData(final @NotNull Key key) throws StorageException {
+  public @NotNull ValueContainer<Value> getData(@NotNull Key key) throws StorageException {
     return ConcurrencyUtil.withLock(myLock.readLock(), () -> {
       try {
         if (isDisposed()) {
@@ -314,10 +313,21 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       inputId,
       indexId(),
 
-      new LazyChangesProducer<>(
-        inputData.getKeyValues(),
-        () -> getKeysDiffBuilder(inputId)
-      ),
+      (addedEntriesProcessor, updatedEntriesProcessor, removedEntriesProcessor) -> {
+        try {
+          InputDataDiffBuilder<Key, Value> diffBuilder = getKeysDiffBuilder(inputId);
+          Map<Key, Value> newData = inputData.getKeyValues();
+          return diffBuilder.differentiate(
+            newData,
+            addedEntriesProcessor,
+            updatedEntriesProcessor,
+            removedEntriesProcessor
+          );
+        }
+        catch (IOException e) {
+          throw new StorageException("Error while applying " + this, e);
+        }
+      },
 
       () -> updateForwardIndex(inputId, inputData)
     );

@@ -1,14 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Class encapsulates index update from a single input (=usually, file) change.
@@ -19,6 +17,9 @@ import java.util.Map;
  * So the {@link #updateForwardIndex()} is to update the forward index with the new data, and
  * {@link #iterateKeys(KeyValueUpdateProcessor, KeyValueUpdateProcessor, RemovedKeyProcessor)} is to stream
  * the changes against current data to apply on the inverted index.
+ * <p>
+ * The 2 sides are separated to allow indexes to skip forward index update, and/or to provide an optimized version
+ * of changes evaluation.
  */
 @ApiStatus.Internal
 public final class UpdateData<Key, Value>/* implements UpdateData.ChangesProducer<Key, Value> */ {
@@ -84,44 +85,12 @@ public final class UpdateData<Key, Value>/* implements UpdateData.ChangesProduce
     };
   }
 
-  /**
-   * It is basically an inverse-index update (pair to {@link ForwardIndexUpdate}), but designed in a more complex way:
-   * it exposes the set of updates to be applied to inverted index, but via callbacks
-   */
+  /** Set of updates to be applied to inverted index: entries added, entries removed, entries changed -- but via callbacks */
   @ApiStatus.Internal
   @FunctionalInterface
   public interface ChangesProducer<Key, Value> {
     boolean forEachChange(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addedEntriesProcessor,
                           @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updatedEntriesProcessor,
                           @NotNull RemovedKeyProcessor<? super Key> removedEntriesProcessor) throws StorageException;
-
-    class LazyChangesProducer<Key, Value> implements ChangesProducer<Key, Value> {
-      private final @NotNull Map<Key, Value> newData;
-      private final @NotNull ThrowableComputable<? extends InputDataDiffBuilder<Key, Value>, ? extends IOException> currentDataEvaluator;
-
-      public LazyChangesProducer(@NotNull Map<Key, Value> newData,
-                                 @NotNull ThrowableComputable<? extends InputDataDiffBuilder<Key, Value>, ? extends IOException> currentDataEvaluator) {
-        this.newData = newData;
-        this.currentDataEvaluator = currentDataEvaluator;
-      }
-
-      @Override
-      public boolean forEachChange(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addedEntriesProcessor,
-                                   @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updatedEntriesProcessor,
-                                   @NotNull RemovedKeyProcessor<? super Key> removedEntriesProcessor) throws StorageException {
-        try {
-          InputDataDiffBuilder<Key, Value> diffBuilderAgainstCurrentData = currentDataEvaluator.compute();
-          return diffBuilderAgainstCurrentData.differentiate(
-            newData,
-            addedEntriesProcessor,
-            updatedEntriesProcessor,
-            removedEntriesProcessor
-          );
-        }
-        catch (IOException e) {
-          throw new StorageException("Error while applying " + this, e);
-        }
-      }
-    }
   }
 }
