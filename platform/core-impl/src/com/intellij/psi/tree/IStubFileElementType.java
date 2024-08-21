@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.tree;
 
@@ -26,7 +26,7 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
 
   public IStubFileElementType(@NonNls String debugName, Language language) {
     super(debugName, language);
-    if (hasNonTrivialExternalId() && !isOutOfOurControl()) {
+    if (hasNonTrivialExternalId()) {
       IStubElementType.checkNotInstantiatedTooLate(getClass());
     }
     dropTemplateStubBaseVersion();
@@ -34,10 +34,6 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
 
   private boolean hasNonTrivialExternalId() {
     return ReflectionUtil.getMethodDeclaringClass(getClass(), "getExternalId") != IStubFileElementType.class;
-  }
-
-  private boolean isOutOfOurControl() {
-    return getClass().getName().contains(".kotlin."); // KT-28732
   }
 
   /**
