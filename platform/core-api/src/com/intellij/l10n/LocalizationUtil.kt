@@ -6,6 +6,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -181,7 +182,18 @@ object LocalizationUtil {
       //extensionLocale.language == locale.language && (extensionLocale.country == locale.country || locale.country == null))
     }
   }
+  
+  @Internal
+  fun isLocalizationPluginDescriptor(pluginDescriptor: PluginDescriptor): Boolean {
+    return getAllLanguageBundleExtensions().map { it.pluginDescriptor }.any{it == pluginDescriptor}
+  }
 
+  @Internal
+  fun isCurrentLocalizationPluginDescriptor(pluginDescriptor: PluginDescriptor): Boolean {
+    val currentDescriptor = getLocaleOrNullForDefault()?.let { findLanguageBundle(it)?.pluginDescriptor } ?: return false
+    return currentDescriptor == pluginDescriptor
+  }
+  
   private fun getAllLanguageBundleExtensions(): List<DynamicBundle.LanguageBundleEP> {
     try {
       if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {
