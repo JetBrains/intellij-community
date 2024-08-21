@@ -185,21 +185,12 @@ internal class SoftwareBillOfMaterialsImpl(
     }
   }
 
-  private class Checksums(@JvmField val path: Path) {
-    val sha1sum: String
-    val sha256sum: String
-
-    init {
-      val buffer = ByteArray(512 * 1024)
-      val digests = Files.newInputStream(path).use {
-        val sha1 = DigestUtil.sha1()
-        val sha256 = DigestUtil.sha256()
-        updateContentHash(digest = sha1, inputStream = it, buffer = buffer)
-        updateContentHash(digest = sha256, inputStream = it, buffer = buffer)
-        bytesToHex(sha1.digest()) to bytesToHex(sha256.digest())
-      }
-      sha1sum = digests.first
-      sha256sum = digests.second
+  private class Checksums(val path: Path) {
+    val sha256sum: String = sha256Hex(path)
+    val sha1sum: String = Files.newInputStream(path).use {
+      val sha1 = DigestUtil.sha1()
+      updateContentHash(digest = sha1, inputStream = it)
+      bytesToHex(sha1.digest())
     }
   }
 
