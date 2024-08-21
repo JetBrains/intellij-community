@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -33,18 +32,6 @@ public final class FastUtilHashingStrategies {
     @Override
     public boolean equals(@Nullable String p1, @Nullable String p2) {
       return FileUtilRt.pathsEqual(p1, p2);
-    }
-  };
-
-  public static final Hash.Strategy<File> FILE_HASH_STRATEGY = new SerializableHashStrategy<File>() {
-    @Override
-    public int hashCode(@Nullable File o) {
-      return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
-    }
-
-    @Override
-    public boolean equals(@Nullable File a, @Nullable File b) {
-      return FileUtilRt.pathsEqual(a == null ? null : a.getPath(), b == null ? null : b.getPath());
     }
   };
 

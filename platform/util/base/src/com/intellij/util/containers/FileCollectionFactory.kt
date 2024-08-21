@@ -1,123 +1,81 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.containers;
+package com.intellij.util.containers
 
-import com.intellij.openapi.util.io.FileUtilRt;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.io.Serializable;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import com.intellij.openapi.util.io.FileUtilRt
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenCustomHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.File
+import java.io.Serializable
+import java.nio.file.Path
 
 /**
  * Creates map or set with canonicalized path hash strategy.
  */
-public final class FileCollectionFactory {
-  private interface SerializableHashingStrategy<T> extends Hash.Strategy<T>, Serializable {}
-
-  private static final SerializableHashingStrategy<File> FILE_HASH_STRATEGY = new SerializableHashingStrategy<File>() {
-    @Override
-    public int hashCode(@Nullable File o) {
-      return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
-    }
-
-    @Override
-    public boolean equals(@Nullable File a, @Nullable File b) {
-      return FileUtilRt.pathsEqual(a == null ? null : a.getPath(), b == null ? null : b.getPath());
-    }
-  };
+object FileCollectionFactory {
+  /**
+   * Create a linked map with canonicalized key hash strategy.
+   */
+  @JvmStatic
+  fun <V> createCanonicalPathLinkedMap(): MutableMap<Path, V> = Object2ObjectLinkedOpenCustomHashMap(PathHashStrategy)
 
   /**
-   * Create linked map with canonicalized key hash strategy.
+   * Create a linked map with canonicalized key hash strategy.
    */
-  public static @NotNull <V> Map<Path, V> createCanonicalPathLinkedMap() {
-    return new Object2ObjectLinkedOpenCustomHashMap<>(new PathSerializableHashStrategy());
+  @JvmStatic
+  fun <V> createCanonicalFilePathLinkedMap(): MutableMap<String, V> {
+    return Object2ObjectLinkedOpenCustomHashMap(object : Hash.Strategy<String?> {
+      override fun hashCode(value: String?): Int = FileUtilRt.pathHashCode(value)
+
+      override fun equals(val1: String?, val2: String?): Boolean = FileUtilRt.pathsEqual(val1, val2)
+    })
   }
 
-  /**
-   * Create linked map with canonicalized key hash strategy.
-   */
-  public static @NotNull <V> Map<String, V> createCanonicalFilePathLinkedMap() {
-    return new Object2ObjectLinkedOpenCustomHashMap<>(new Hash.Strategy<String>() {
-      @Override
-      public int hashCode(@Nullable String value) {
-        return FileUtilRt.pathHashCode(value);
-      }
+  @JvmStatic
+  fun <V> createCanonicalFileMap(): MutableMap<File, V> = Object2ObjectOpenCustomHashMap(FileHashStrategy)
 
-      @Override
-      public boolean equals(@Nullable String val1, @Nullable String val2) {
-        return FileUtilRt.pathsEqual(val1, val2);
-      }
-    });
+  @JvmStatic
+  fun <V> createCanonicalPathMap(): MutableMap<Path, V> = Object2ObjectOpenCustomHashMap(PathHashStrategy)
+
+  @JvmStatic
+  fun <V> createCanonicalFileMap(expected: Int): MutableMap<File, V> {
+    return Object2ObjectOpenCustomHashMap(expected, FileHashStrategy)
   }
 
-  public static @NotNull <V> Map<File, V> createCanonicalFileMap() {
-    return new Object2ObjectOpenCustomHashMap<>(FILE_HASH_STRATEGY);
-  }
+  @JvmStatic
+  fun <V> createCanonicalFileMap(map: Map<out File, V>): MutableMap<File, V> = Object2ObjectOpenCustomHashMap(map, FileHashStrategy)
 
-  public static @NotNull <V> Map<File, V> createCanonicalFileMap(int expected) {
-    return new Object2ObjectOpenCustomHashMap<>(expected, FILE_HASH_STRATEGY);
-  }
+  @JvmStatic
+  fun createCanonicalFileSet(): MutableSet<File> = ObjectOpenCustomHashSet(FileHashStrategy)
 
-  public static @NotNull <V> Map<File, V> createCanonicalFileMap(@NotNull Map<? extends File, ? extends V> map) {
-    Map<File, V> result = createCanonicalFileMap(map.size());
-    result.putAll(map);
-    return result;
-  }
+  @JvmStatic
+  fun createCanonicalFileSet(files: Collection<File>): MutableSet<File> = ObjectOpenCustomHashSet(files, FileHashStrategy)
 
-  public static @NotNull Set<File> createCanonicalFileSet() {
-    return new ObjectOpenCustomHashSet<>(FILE_HASH_STRATEGY);
-  }
+  @JvmStatic
+  fun createCanonicalPathSet(): MutableSet<Path> = ObjectOpenCustomHashSet(PathHashStrategy)
 
-  public static @NotNull Set<File> createCanonicalFileSet(@NotNull Collection<? extends File> files) {
-    Set<File> set = createCanonicalFileSet();
-    set.addAll(files);
-    return set;
-  }
+  @JvmStatic
+  fun createCanonicalPathSet(files: Collection<Path>): MutableSet<Path> = ObjectOpenCustomHashSet(files, PathHashStrategy)
 
-  public static @NotNull Set<Path> createCanonicalPathSet() {
-    return new ObjectOpenCustomHashSet<>(new PathSerializableHashStrategy());
-  }
+  @JvmStatic
+  fun createCanonicalFilePathSet(): MutableSet<String> = ObjectOpenCustomHashSet(FastUtilHashingStrategies.FILE_PATH_HASH_STRATEGY)
 
-  public static @NotNull Set<Path> createCanonicalPathSet(@NotNull Collection<? extends Path> files) {
-    return new ObjectOpenCustomHashSet<>(files, new PathSerializableHashStrategy());
-  }
+  @JvmStatic
+  fun createCanonicalFileLinkedSet(): MutableSet<File> = ObjectLinkedOpenCustomHashSet(FileHashStrategy)
+}
 
-  public static @NotNull Set<String> createCanonicalFilePathSet() {
-    return new ObjectOpenCustomHashSet<>(FastUtilHashingStrategies.FILE_PATH_HASH_STRATEGY);
-  }
+@Internal
+object FileHashStrategy : Hash.Strategy<File>, Serializable {
+  override fun hashCode(o: File?): Int = FileUtilRt.pathHashCode(o?.path)
 
-  public static @NotNull Set<File> createCanonicalFileLinkedSet() {
-    return new ObjectLinkedOpenCustomHashSet<>(new Hash.Strategy<File>() {
-      @Override
-      public int hashCode(@Nullable File o) {
-        return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
-      }
+  override fun equals(a: File?, b: File?): Boolean = FileUtilRt.pathsEqual(a?.path, b?.path)
+}
 
-      @Override
-      public boolean equals(@Nullable File a, @Nullable File b) {
-        return FileUtilRt.pathsEqual(a == null ? null : a.getPath(), b == null ? null : b.getPath());
-      }
-    });
-  }
+private object PathHashStrategy : Hash.Strategy<Path>, Serializable {
+  override fun hashCode(o: Path?): Int = FileUtilRt.pathHashCode(o?.toString())
 
-  private static final class PathSerializableHashStrategy implements FastUtilHashingStrategies.SerializableHashStrategy<Path> {
-    @Override
-    public int hashCode(@Nullable Path o) {
-      return FileUtilRt.pathHashCode(o == null ? null : o.toString());
-    }
-
-    @Override
-    public boolean equals(@Nullable Path a, @Nullable Path b) {
-      return FileUtilRt.pathsEqual(a == null ? null : a.toString(), b == null ? null : b.toString());
-    }
-  }
+  override fun equals(a: Path?, b: Path?): Boolean = FileUtilRt.pathsEqual(a?.toString(), b?.toString())
 }

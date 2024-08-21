@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
 // ContainerUtil requires trove in classpath
+@SuppressWarnings("UnnecessaryFullyQualifiedName")
 public final class CollectionFactory {
 
   /**
@@ -278,16 +279,17 @@ public final class CollectionFactory {
 
   public static @NotNull Set<String> createFilePathLinkedSet() {
     return SystemInfoRt.isFileSystemCaseSensitive
-           ? createSmallMemoryFootprintLinkedSet()
+           ? new ObjectLinkedOpenHashSet<>()
            : new ObjectLinkedOpenCustomHashSet<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
   /**
-   * Create linked map with key hash strategy according to file system path case sensitivity.
+   * Create a linked map with key hash strategy according to file system path case sensitivity.
    */
   public static @NotNull <V> Map<String, V> createFilePathLinkedMap() {
+    //noinspection SSBasedInspection
     return SystemInfoRt.isFileSystemCaseSensitive
-           ? createSmallMemoryFootprintLinkedMap()
+           ? new Object2ObjectLinkedOpenHashMap<>()
            : new Object2ObjectLinkedOpenCustomHashMap<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
@@ -336,8 +338,8 @@ public final class CollectionFactory {
 
   /**
    * Returns a linked-keys (i.e. iteration order is the same as the insertion order) {@link Set} implementation with slightly faster access for very big collection (>100K keys) and a bit smaller memory footprint
-   * than {@link HashSet}. Null keys are permitted. Use sparingly only when performance considerations are utterly important;
-   * in all other cases please prefer {@link HashSet}.
+   * than {@link java.util.HashSet}. Null keys are permitted. Use sparingly only when performance considerations are utterly important;
+   * in all other cases please prefer {@link java.util.HashSet}.
    */
   @Contract(value = "-> new", pure = true)
   public static <K> @NotNull Set<K> createSmallMemoryFootprintLinkedSet() {
@@ -346,8 +348,8 @@ public final class CollectionFactory {
 
   /**
    * Returns a {@link Set} implementation with slightly faster access for very big collections (>100K keys) and a bit smaller memory footprint
-   * than {@link HashSet}. Null keys are permitted. Use sparingly only when performance considerations are utterly important;
-   * in all other cases please prefer {@link HashSet}.
+   * than {@link java.util.HashSet}. Null keys are permitted. Use sparingly only when performance considerations are utterly important;
+   * in all other cases please prefer {@link java.util.HashSet}.
    */
   @Contract(value = "-> new", pure = true)
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet() {
