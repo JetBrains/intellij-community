@@ -2,8 +2,6 @@
 package com.intellij.platform.kernel
 
 import com.intellij.openapi.application.ApplicationManager
-import fleet.kernel.Kernel
-import fleet.kernel.kernel
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -12,8 +10,6 @@ import kotlin.coroutines.CoroutineContext
 interface KernelService {
 
   suspend fun coroutineContext(): CoroutineContext
-
-  suspend fun kernel(): Kernel = coroutineContext().kernel
 
   companion object {
 

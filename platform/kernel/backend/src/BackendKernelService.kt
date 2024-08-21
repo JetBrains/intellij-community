@@ -10,6 +10,7 @@ import com.intellij.platform.kernel.util.*
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.util.coroutines.childScope
 import fleet.kernel.change
+import fleet.kernel.kernel
 import fleet.kernel.rebase.*
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
@@ -23,9 +24,10 @@ private class RemoteKernelScopeHolder(private val coroutineScope: CoroutineScope
 
   suspend fun createRemoteKernel(): RemoteKernel {
     val kernelService = KernelService.instance
+    val kernelCoroutineContext = kernelService.coroutineContext()
     return RemoteKernelImpl(
-      kernelService.kernel(),
-      coroutineScope.childScope("RemoteKernelScope", kernelService.coroutineContext()),
+      kernelCoroutineContext.kernel,
+      coroutineScope.childScope("RemoteKernelScope", kernelCoroutineContext),
       CommonInstructionSet.decoder(),
       KernelRpcSerialization,
     )
