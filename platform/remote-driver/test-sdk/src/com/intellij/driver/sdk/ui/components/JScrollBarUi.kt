@@ -21,6 +21,10 @@ class JScrollBarUi(data: ComponentData): UiComponent(data) {
   fun scrollToMinimum() {
     fixture.scrollToMinimum()
   }
+
+  fun scrollBlockDown(times: Int) {
+    fixture.scrollBlockDown(times)
+  }
 }
 
 @Remote("javax.swing.JScrollBar")
@@ -32,4 +36,5 @@ interface JScrollBarComponent {
 interface JScrollBarFixture {
   fun scrollToMaximum(): JScrollBarFixture
   fun scrollToMinimum(): JScrollBarFixture
+  fun scrollBlockDown(times: Int): JScrollBarFixture
 }

@@ -24,4 +24,7 @@ class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
   fun clickCustomize() = leftItems.clickPath("Customize")
   fun clickPlugins() = leftItems.clickPath("Plugins")
   fun clickLearn() = leftItems.clickPath("Learn")
+  fun clickRecentProject(projectName: String) {
+    x { byClass("CardLayoutPanel") }.waitOneText(projectName).click()
+  }
 }
