@@ -134,8 +134,8 @@ abstract class ClientSessionImpl(
       }
     }
 
-    ClientId.withExplicitClientId(ClientId.localId) {
-      return if (createIfNeeded) {
+    return ClientId.withExplicitClientId(ClientId.localId) {
+      return@withExplicitClientId if (createIfNeeded) {
         sharedComponentManager.getService(serviceClass)
       }
       else {

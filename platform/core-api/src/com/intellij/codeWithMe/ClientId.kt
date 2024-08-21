@@ -220,10 +220,19 @@ data class ClientId(val value: String) {
      *
      * **Note:** This method should not be called within a suspend context.
      * It is recommended to use `withContext(clientId.asContextElement())` instead.
+     *
+     * **Note 2** Don't do this method inline!
+     * If it's inline it's possible to do suspend calls inside [action], and thus it makes [withClientId] itself a suspend method.
+     *
+     * It may lead to unexpected behavior:
+     * the method enters and sets [clientId] to the thread-local storage of a particular dispatcher's thread.
+     * Then suspension is happening for some time, and during this suspension some other events can be processed on the same dispatcher's thread.
+     * Since the thread local wasn't reset (due to the fact that the [withClientId] call is not finished yet) some event can observe this hanging [clientId],
+     * which in essence should not be set for this event.
      */
     @JvmStatic
     @RequiresBlockingContext
-    inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
+    fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
       return withClientId(clientId, errorOnMismatch = true).use {
         action()
       }
@@ -236,11 +245,20 @@ data class ClientId(val value: String) {
      * Use cases: CWM Following code when some activity should be executed for another client,
      * or accessing some Host's IDE subsystems like settings from a controller.
      * Otherwise, use ordinary [withClientId] to avoid hiding issues with lost/extra overridden ClientId
+     *
+     * **Note 2** Don't do this method inline!
+     * If it's inline it's possible to do suspend calls inside [action], and thus it makes [withClientId] itself a suspend method.
+     *
+     * It may lead to unexpected behavior:
+     * the method enters and sets [clientId] to the thread-local storage of a particular dispatcher's thread.
+     * Then suspension is happening for some time, and during this suspension some other events can be processed on the same dispatcher's thread.
+     * Since the thread local wasn't reset (due to the fact that the [withClientId] call is not finished yet) some event can observe this hanging [clientId],
+     * which in essence should not be set for this event.
      */
     @Internal
     @JvmStatic
     @RequiresBlockingContext
-    inline fun <T> withExplicitClientId(clientId: ClientId?, action: () -> T): T {
+    fun <T> withExplicitClientId(clientId: ClientId?, action: () -> T): T {
       return withClientId(clientId, errorOnMismatch = false).use {
         action()
       }
@@ -287,7 +305,7 @@ data class ClientId(val value: String) {
 
     @JvmStatic
     @RequiresBlockingContext
-    fun withClientId(clientId: ClientId?, errorOnMismatch: Boolean): AccessToken {
+    private fun withClientId(clientId: ClientId?, errorOnMismatch: Boolean): AccessToken {
       if (clientId == null) {
         if (absenceBehaviorValue == AbsenceBehavior.LOG_ERROR) {
           logger.error("Attempt to call withClientId with ClientId==null")
