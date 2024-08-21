@@ -236,6 +236,7 @@ object Utils {
   private fun getRawDataIfCached(dataContext: DataContext, dataId: String, uiOnly: Boolean): Any? = when (dataContext) {
     is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId, uiOnly)
     is EdtDataContext -> dataContext.getRawDataIfCached(dataId)
+    is CustomizedDataContext -> getRawDataIfCached(dataContext.customizedDelegate, dataId, uiOnly)
     else -> null
   }
 
