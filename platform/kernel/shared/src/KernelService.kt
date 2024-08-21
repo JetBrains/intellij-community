@@ -2,6 +2,7 @@
 package com.intellij.platform.kernel
 
 import com.intellij.openapi.application.ApplicationManager
+import kotlinx.coroutines.Deferred
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -9,7 +10,7 @@ import kotlin.coroutines.CoroutineContext
  */
 interface KernelService {
 
-  suspend fun coroutineContext(): CoroutineContext
+  val kernelCoroutineContext: Deferred<CoroutineContext>
 
   companion object {
 

@@ -19,5 +19,6 @@ suspend fun <T> withKernel(action: suspend CoroutineScope.() -> T): T {
 
 private suspend fun kernelCoroutineContext(): CoroutineContext {
   return KernelService.instance
-    .coroutineContext()
+    .kernelCoroutineContext
+    .await()
 }

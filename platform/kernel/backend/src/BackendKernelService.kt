@@ -24,7 +24,7 @@ private class RemoteKernelScopeHolder(private val coroutineScope: CoroutineScope
 
   suspend fun createRemoteKernel(): RemoteKernel {
     val kernelService = KernelService.instance
-    val kernelCoroutineContext = kernelService.coroutineContext()
+    val kernelCoroutineContext = kernelService.kernelCoroutineContext.await()
     return RemoteKernelImpl(
       kernelCoroutineContext.kernel,
       coroutineScope.childScope("RemoteKernelScope", kernelCoroutineContext),
@@ -46,11 +46,7 @@ internal class RemoteKernelProvider : RemoteApiProvider {
 
 internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelService {
 
-  private val contextDeferred: CompletableDeferred<CoroutineContext> = CompletableDeferred()
-
-  override suspend fun coroutineContext(): CoroutineContext {
-    return contextDeferred.await()
-  }
+  override val kernelCoroutineContext: CompletableDeferred<CoroutineContext> = CompletableDeferred()
 
   init {
     coroutineScope.launch {
@@ -58,7 +54,7 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
         change {
           initWorkspaceClock()
         }
-        contextDeferred.complete(currentCoroutineContext().kernelCoroutineContext())
+        kernelCoroutineContext.complete(currentCoroutineContext().kernelCoroutineContext())
         updateDbInTheEventDispatchThread()
       }
     }
