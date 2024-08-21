@@ -46,7 +46,7 @@ fun Component.showingScope(
  * Exceptions from the [block] also cancel the returned Job, effectively cleaning up the whole thing.
  * For example, to execute some logic on the first time the component is shown, one can throw a CancellationException:
  * ```
- * myLabel.uiScope {
+ * myLabel.showingScope(myDebugName) {
  *   shownForTheFirstTimeEver(myLabel)
  *   throw CancellationException()
  * }
