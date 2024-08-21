@@ -101,6 +101,7 @@ class PlatformProxyAuthentication(
   override fun getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? {
     val knownCredentials = getCredentialStore().getCredentials(host, port)
     if (knownCredentials != null) {
+      logger.debug { "returning known credentials for $host:$port" }
       return knownCredentials
     }
     return getPromptedAuthentication(prompt, host, port)

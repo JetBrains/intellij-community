@@ -40,7 +40,7 @@ class IdeProxyAuthenticator(
     if (!isProxy) {
       return null
     }
-    val host = getHostNameReliably(requestingHost, requestingSite, requestingURL) ?: ""
+    val host = getHostNameReliably(requestingHost, requestingSite, requestingURL) ?: "" // TODO remove requestingURL, it is not relevant for proxy _auth_
     val port = requestingPort
     var credentials = proxyAuth.getOrPromptAuthentication(requestingPrompt, host, port)
     var key = getKey(credentials)
