@@ -2,10 +2,6 @@
 package com.intellij.find.findUsages.similarity
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Iconable
 import com.intellij.ui.Gray
@@ -28,10 +24,10 @@ import javax.swing.JPanel
 
 internal class UsagePreviewComponent private constructor(
   usageView: UsageView,
-  private val usageInfo: UsageInfo,
+  usageInfo: UsageInfo,
   renderingData: SnippetRenderingData,
   parent: Disposable,
-) : JBPanel<JBPanel<*>>(), Disposable, UiDataProvider {
+) : JBPanel<JBPanel<*>>(), Disposable {
   var header: JPanel
   private var mySnippetComponent: UsageCodeSnippetComponent
   private val myUsageView: UsageView
@@ -41,19 +37,10 @@ internal class UsagePreviewComponent private constructor(
     myUsageView = usageView
     header = createHeaderWithLocationLink(usageInfo)
     add(header)
-    mySnippetComponent = UsageCodeSnippetComponent(renderingData)
+    mySnippetComponent = UsageCodeSnippetComponent(renderingData, usageInfo)
     add(mySnippetComponent)
     if (!Disposer.tryRegister(parent, this)) {
       Disposer.dispose(parent)
-    }
-  }
-
-  override fun uiDataSnapshot(sink: DataSink) {
-    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY) {
-      val file = usageInfo.virtualFile ?: return@lazy emptyArray()
-      val navigationOffset = usageInfo.navigationOffset
-      val openFileDescriptor = OpenFileDescriptor(usageInfo.project, file, navigationOffset)
-      arrayOf(openFileDescriptor)
     }
   }
 
@@ -61,7 +48,7 @@ internal class UsagePreviewComponent private constructor(
     removeAll()
     header = createHeaderWithLocationLink(usageInfo)
     Disposer.dispose(mySnippetComponent)
-    mySnippetComponent = UsageCodeSnippetComponent(renderingData)
+    mySnippetComponent = UsageCodeSnippetComponent(renderingData, usageInfo)
     add(header)
     add(mySnippetComponent)
   }

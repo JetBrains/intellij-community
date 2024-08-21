@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages.similarity;
 
 import com.intellij.openapi.Disposable;
@@ -62,7 +62,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     if (virtualFile == null) return;
     SnippetRenderingData data = UsageCodeSnippetComponent.calculateSnippetRenderingData(element, rangeInElement);
     if (data == null) return;
-    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(data);
+    final UsageCodeSnippetComponent codeSnippet = new UsageCodeSnippetComponent(data, info);
     Disposer.register(this, codeSnippet);
     JPanel headerPanelForUsage = getHeaderPanelForUsage(info, codeSnippet.getEditor().getBackgroundColor());
     if (myOriginalUsage == info) {
