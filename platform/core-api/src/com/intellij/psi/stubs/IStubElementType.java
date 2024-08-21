@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -69,13 +69,20 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
   static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
     List<StubFieldAccessor> result = new ArrayList<>();
 
-    List<String> debugStr = new ArrayList<>();
+    Logger logger = Logger.getInstance(IStubElementType.class);
+    List<String> debugStr = logger.isDebugEnabled() ? new ArrayList<>() : null;
+
     StubElementTypeHolderEP.EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
       int accessorCount = bean.initializeOptimized(pluginDescriptor, result);
-      debugStr.add(accessorCount + " in " + bean.holderClass);
+      if (debugStr != null) {
+        debugStr.add(accessorCount + " in " + bean.holderClass);
+      }
       return Unit.INSTANCE;
     });
-    Logger.getInstance(IStubElementType.class).debug("Lazy stub element types loaded: " + StringUtil.join(debugStr, ", "));
+
+    if (debugStr != null) {
+      logger.debug("Lazy stub element types loaded: " + StringUtil.join(debugStr, ", "));
+    }
 
     Set<String> lazyIds = new HashSet<>(result.size());
     for (StubFieldAccessor accessor : result) {
