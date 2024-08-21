@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.impl
 
+import com.intellij.ide.RegionUrlMapper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
@@ -111,7 +112,10 @@ fun submitFeedback(feedbackData: FeedbackRequestDataHolder,
       FeedbackRequestType.TEST_REQUEST -> TEST_FEEDBACK_URL
       FeedbackRequestType.PRODUCTION_REQUEST -> PRODUCTION_FEEDBACK_URL
     }
-    sendFeedback(feedbackUrl, feedbackData, onDone, onError)
+
+    val regionalFeedbackUrl = RegionUrlMapper.mapUrl(feedbackUrl) ?: feedbackUrl
+    LOG.info("Feedback sent to $regionalFeedbackUrl")
+    sendFeedback(regionalFeedbackUrl, feedbackData, onDone, onError)
   }
 }
 
