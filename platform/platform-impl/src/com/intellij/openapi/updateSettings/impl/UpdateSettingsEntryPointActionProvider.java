@@ -36,6 +36,7 @@ import static com.intellij.ide.actions.SettingsEntryPointAction.*;
 final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static final String NEXT_RUN_KEY_BUILD = "NextRunPlatformUpdateBuild";
   private static final String NEXT_RUN_KEY_VERSION = "NextRunPlatformUpdateVersion";
+  private static final String NEXT_RUN_KEY_SELF_BUILD = "NextRunPlatformUpdateSelfBuild";
 
   private static boolean myNewPlatformUpdate;
   private static @Nullable String myNextRunPlatformUpdateVersion;
@@ -66,15 +67,19 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
     PropertiesComponent properties = PropertiesComponent.getInstance();
     BuildNumber newBuildForUpdate;
+    BuildNumber newBuildForUpdateSelfBuild;
     try {
       newBuildForUpdate = BuildNumber.fromString(properties.getValue(NEXT_RUN_KEY_BUILD));
+      newBuildForUpdateSelfBuild = BuildNumber.fromString(properties.getValue(NEXT_RUN_KEY_SELF_BUILD));
     }
     catch (Exception ignore) {
       return;
     }
 
-    if (newBuildForUpdate != null) {
-      if (newBuildForUpdate.compareTo(ApplicationInfo.getInstance().getBuild()) > 0) {
+    if (newBuildForUpdate != null &&
+        newBuildForUpdateSelfBuild != null) {
+      if (newBuildForUpdate.compareTo(ApplicationInfo.getInstance().getBuild()) > 0 &&
+          newBuildForUpdateSelfBuild.compareTo(ApplicationInfo.getInstance().getBuild()) == 0) {
         myNextRunPlatformUpdateVersion = properties.getValue(NEXT_RUN_KEY_VERSION);
 
         if (myNextRunPlatformUpdateVersion != null) {
@@ -84,11 +89,13 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         else {
           properties.unsetValue(NEXT_RUN_KEY_BUILD);
           properties.unsetValue(NEXT_RUN_KEY_VERSION);
+          properties.unsetValue(NEXT_RUN_KEY_SELF_BUILD);
         }
       }
       else {
         properties.unsetValue(NEXT_RUN_KEY_BUILD);
         properties.unsetValue(NEXT_RUN_KEY_VERSION);
+        properties.unsetValue(NEXT_RUN_KEY_SELF_BUILD);
       }
     }
   }
@@ -156,11 +163,13 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     if (platformUpdateInfo == null) {
       properties.unsetValue(NEXT_RUN_KEY_BUILD);
       properties.unsetValue(NEXT_RUN_KEY_VERSION);
+      properties.unsetValue(NEXT_RUN_KEY_SELF_BUILD);
     }
     else {
       BuildInfo build = platformUpdateInfo.getNewBuild();
       properties.setValue(NEXT_RUN_KEY_BUILD, build.getNumber().toString());
       properties.setValue(NEXT_RUN_KEY_VERSION, build.getVersion());
+      properties.setValue(NEXT_RUN_KEY_SELF_BUILD, ApplicationInfo.getInstance().getBuild().asString());
     }
   }
 
