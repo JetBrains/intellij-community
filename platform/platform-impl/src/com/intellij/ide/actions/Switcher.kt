@@ -84,6 +84,8 @@ import java.util.*
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 import kotlin.math.max
 import kotlin.math.min
 
@@ -566,20 +568,20 @@ object Switcher : BaseSwitcherAction(null) {
       )
       ReadAction.nonBlocking<List<ListItemData>> {
         items.map {
-          val result = project.basePath?.let { projectPath ->
-            FileUtil.toSystemDependentName(projectPath)
-            val filePath = FileUtil.toSystemDependentName(it.file.parent.path)
-            if (FileUtil.isAncestor(projectPath, filePath, true)) {
-              FileUtil.getRelativePath(projectPath, filePath, File.separatorChar)
+          val filePath = Path(it.file.presentableUrl).parent?.pathString
+          val result = filePath?.let { filePath ->
+            val projectPath = project.basePath?.let { FileUtil.toSystemDependentName(it) }
+            if (projectPath != null && FileUtil.isAncestor(projectPath, filePath, true)) {
+              return@let FileUtil.getRelativePath(projectPath, filePath, File.separatorChar)
             }
-            else if (FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
+            if (FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
               FileUtil.getLocationRelativeToUserHome(filePath)
             }
             else {
               filePath
             }
           } ?: ""
-         
+
           ListItemData(item = it,
                        mainText = it.mainText,
                        statusText = FileUtil.getLocationRelativeToUserHome((it.file.parent ?: it.file).presentableUrl),
