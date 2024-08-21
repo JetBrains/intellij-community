@@ -25,9 +25,24 @@ private fun test2() {
     foo(user.name, user.age)
 }
 
+class User3 {
+    val name: String = ""
+    val age: Int =
+        0
+}
+
+private fun test3() {
+    val user = User3()
+    // STEP_INTO: 1
+    // RESUME: 1
+    //Breakpoint!
+    foo(user.name, user.age)
+}
+
 fun main() {
     test1()
     test2()
+    test3()
 }
 
 // SKIP_GETTERS: true
