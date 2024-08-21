@@ -62,6 +62,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.RestartDialogImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -656,11 +657,21 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   }
 
   override fun apply() {
+    val oldIsSupportScreenReaders = generalSettings.isSupportScreenReaders
+    val oldSeparateMainMenu = settings.separateMainMenu
+    val oldMergeMainMenuWithWindowTitle = settings.mergeMainMenuWithWindowTitle
+
     val uiSettingsChanged = isModified
     super.apply()
     if (uiSettingsChanged) {
       UISettings.getInstance().fireUISettingsChanged()
       EditorFactory.getInstance().refreshAllEditors()
+    }
+
+    if (oldIsSupportScreenReaders != generalSettings.isSupportScreenReaders ||
+        (!SystemInfo.isWindows && oldSeparateMainMenu != settings.separateMainMenu) ||
+        oldMergeMainMenuWithWindowTitle != settings.mergeMainMenuWithWindowTitle) {
+      RestartDialogImpl.showRestartRequired()
     }
   }
 }
