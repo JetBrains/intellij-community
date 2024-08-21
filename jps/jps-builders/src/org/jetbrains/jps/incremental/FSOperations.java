@@ -96,14 +96,16 @@ public final class FSOperations {
    * @return a builder object that marks dirty files and collects data about files marked
    */
   public static <R extends BuildRootDescriptor, T extends BuildTarget<R>> DirtyFilesHolderBuilder<R, T> createDirtyFilesHolderBuilder(CompileContext context, final CompilationRound round) {
-    return new DirtyFilesHolderBuilder<R, T>() {
+    return new DirtyFilesHolderBuilder<>() {
       private final Map<T, Map<R, Set<File>>> dirtyFiles = new HashMap<>();
+
       @Override
       public DirtyFilesHolderBuilder<R, T> markDirtyFile(T target, File file) throws IOException {
         final ProjectDescriptor pd = context.getProjectDescriptor();
         final R rd = pd.getBuildRootIndex().findParentDescriptor(file, Collections.singleton(target.getTargetType()), context);
         if (rd != null) {
-          if (pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.getProjectStamps().getStampStorage()) || pd.fsState.isMarkedForRecompilation(context, round, rd, file)) {
+          if (pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.getProjectStamps().getStampStorage()) ||
+              pd.fsState.isMarkedForRecompilation(context, round, rd, file)) {
             Map<R, Set<File>> targetFiles = dirtyFiles.get(target);
             if (targetFiles == null) {
               targetFiles = new HashMap<>();
@@ -127,7 +129,7 @@ public final class FSOperations {
           public void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException {
             for (Map.Entry<T, Map<R, Set<File>>> entry : dirtyFiles.entrySet()) {
               final T target = entry.getKey();
-              for (Map.Entry<R, Set<File>>  targetEntry: entry.getValue().entrySet()) {
+              for (Map.Entry<R, Set<File>> targetEntry : entry.getValue().entrySet()) {
                 final R rd = targetEntry.getKey();
                 for (File file : targetEntry.getValue()) {
                   processor.apply(target, file, rd);
@@ -438,8 +440,8 @@ public final class FSOperations {
   }
 
   public static void copy(File fromFile, File toFile) throws IOException {
-    final Path from = fromFile.toPath();
-    final Path to = toFile.toPath();
+    Path from = fromFile.toPath();
+    Path to = toFile.toPath();
     try {
       try {
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
