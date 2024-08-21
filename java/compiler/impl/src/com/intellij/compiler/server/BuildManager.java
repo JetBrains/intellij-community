@@ -123,8 +123,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1542,7 +1541,7 @@ public final class BuildManager implements Disposable {
     }
 
     // portable caches
-    if (Registry.is("compiler.process.use.portable.caches") &&
+    if (RegistryManager.getInstance().is("compiler.process.use.portable.caches") &&
         CompilerCacheConfigurator.isServerUrlConfigured(project) &&
         CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
       cmdLine.addParameter("-D" + ProjectStamps.PORTABLE_CACHES_PROPERTY + "=true");
