@@ -27,7 +27,7 @@ internal suspend fun importConfigIfNeeded(
   lockSystemDirsJob: Job,
   logDeferred: Deferred<Logger>,
   args: List<String>,
-  targetDirectoryToImportConfig: Path?,
+  customTargetDirectoryToImportConfig: Path?,
   appStarterDeferred: Deferred<AppStarter>,
   euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
   initLafJob: Job
@@ -49,7 +49,7 @@ internal suspend fun importConfigIfNeeded(
 
   initLafJob.join()
   val log = logDeferred.await()
-  val targetDirectoryToImportConfig = targetDirectoryToImportConfig ?: PathManager.getConfigDir()
+  val targetDirectoryToImportConfig = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
   importConfig(args, targetDirectoryToImportConfig, log, appStarterDeferred.await(), euaDocumentDeferred)
 
   val isNewUser = ConfigImportHelper.isNewUser()

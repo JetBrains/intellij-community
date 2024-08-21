@@ -83,7 +83,7 @@ internal var isInitialStart: CompletableDeferred<Boolean>? = null
 fun CoroutineScope.startApplication(
   args: List<String>,
   configImportNeededDeferred: Deferred<Boolean>,
-  targetDirectoryToImportConfig: Path?,
+  customTargetDirectoryToImportConfig: Path?,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
   appStarterDeferred: Deferred<AppStarter>,
   mainScope: CoroutineScope,
@@ -209,7 +209,7 @@ fun CoroutineScope.startApplication(
       lockSystemDirsJob = lockSystemDirsJob,
       logDeferred = logDeferred,
       args = args,
-      targetDirectoryToImportConfig = targetDirectoryToImportConfig,
+      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
       appStarterDeferred = appStarterDeferred,
       euaDocumentDeferred = euaDocumentDeferred,
       initLafJob = initLafJob,
