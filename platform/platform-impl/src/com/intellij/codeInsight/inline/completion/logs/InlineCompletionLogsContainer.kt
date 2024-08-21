@@ -89,9 +89,9 @@ class InlineCompletionLogsContainer {
   }
 
   /**
-   * Wait for all [asyncAdds] and return current logs to use as features for some model.
+   * Wait for all running [asyncAdds] and return current logs to use as features for some model.
    */
-  suspend fun getCollectedLogs(): List<EventPair<*>> {
+  suspend fun awaitAndGetCurrentLogs(): List<EventPair<*>> {
     awaitAllAlreadyRunningAsyncAdds()
     return logs.values.flatten()
   }
