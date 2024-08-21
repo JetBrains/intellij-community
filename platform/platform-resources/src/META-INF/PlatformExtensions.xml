@@ -665,6 +665,9 @@
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
 
+    <applicationService serviceInterface="com.intellij.ide.ui.customization.UIThemeCustomizer"
+                        serviceImplementation="com.intellij.ide.ui.customization.UIThemeCustomizerImpl" />
+
     <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization" preload="notHeadless"/>
 
     <!-- General -->
