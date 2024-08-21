@@ -1439,7 +1439,11 @@
                           order="before afterUnmatchedBrace"/>
     <lang.smartEnterProcessor language="JAVA"
                               implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
-    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterInTextBlockHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterInTextBlockHandler" id="JavaEnterInTextBlockHandler"/>
+    <enterHandlerDelegate
+      id="JavaEnterInInjectedTextBlockHandler"
+      order="before EnterBetweenBracesHandler, before JavaEnterInTextBlockHandler, first"
+      implementation="com.intellij.codeInsight.editorActions.JavaEnterInInjectedTextBlockHandler"/>
     <breadcrumbsInfoProvider implementation="com.intellij.lang.java.JavaBreadcrumbsInfoProvider"/>
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
     <binaryFileSourceProvider implementation="com.intellij.codeEditor.JavaBinaryFileSourceProvider"/>
