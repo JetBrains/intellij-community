@@ -2,6 +2,7 @@
 package com.intellij.platform.kernel
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
@@ -17,8 +18,9 @@ suspend fun <T> withKernel(action: suspend CoroutineScope.() -> T): T {
   return withContext(kernelContext, action)
 }
 
-private suspend fun kernelCoroutineContext(): CoroutineContext {
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun kernelCoroutineContext(): CoroutineContext {
   return KernelService.instance
     .kernelCoroutineContext
-    .await()
+    .getCompleted()
 }
