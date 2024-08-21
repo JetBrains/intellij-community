@@ -1030,6 +1030,7 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:SCOPE_VIEW_POPUP:java.lang.String
 - sf:SERVICES_POPUP:java.lang.String
 - sf:SERVICES_TOOLBAR:java.lang.String
+- sf:SERVICES_TREE_TOOLBAR:java.lang.String
 - sf:SETTINGS_HISTORY:java.lang.String
 - sf:SHOW_USAGES_POPUP_TOOLBAR:java.lang.String
 - sf:SIMILAR_USAGES_PREVIEW_TOOLBAR:java.lang.String

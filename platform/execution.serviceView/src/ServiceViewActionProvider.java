@@ -103,7 +103,7 @@ final class ServiceViewActionProvider {
       group.add(collapseAllAction);
     }
 
-    ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
+    ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TREE_TOOLBAR, group, true);
     treeActionsToolBar.setTargetComponent(component);
     return treeActionsToolBar;
   }
