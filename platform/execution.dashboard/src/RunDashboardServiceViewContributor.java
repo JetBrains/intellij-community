@@ -61,7 +61,7 @@ public final class RunDashboardServiceViewContributor
 
   @NonNls static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
 
-  private static final Key<DefaultActionGroup> MORE_ACTION_GROUP_KEY = Key.create("ServicesMoreActionGroup");
+  private static final Key<ActionGroup> MORE_ACTION_GROUP_KEY = Key.create("ServicesMoreActionGroup");
 
   @NotNull
   @Override
@@ -123,51 +123,56 @@ public final class RunDashboardServiceViewContributor
   }
 
   private static ActionGroup getToolbarActions(@Nullable RunContentDescriptor descriptor) {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+    DefaultActionGroup actionGroup = new DefaultActionGroup() {
+      @Override
+      public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
+        @NotNull AnActionEvent e,
+        @NotNull List<? extends @NotNull AnAction> visibleChildren) {
+        MoreActionGroup more = ContainerUtil.findInstance(visibleChildren, MoreActionGroup.class);
+        ActionGroup newMore = more == null ? null : getServicesMoreActionGroup(more, descriptor);
+        if (newMore != null) e.getUpdateSession().presentation(newMore);
+        return visibleChildren.stream().filter(
+            o -> !(o instanceof StopAction) &&
+                 !(o instanceof FakeRerunAction) &&
+                 !(o instanceof ExecutorAction))
+          .map(o -> o == more ? newMore : o)
+          .toList();
+      }
+    };
+    DefaultActionGroup result = new DefaultActionGroup();
+    result.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+    result.add(actionGroup);
 
-    List<AnAction> leftToolbarActions = null;
     RunnerLayoutUiImpl ui = RunDashboardManagerImpl.getRunnerLayoutUi(descriptor);
     if (ui != null) {
-      leftToolbarActions = ui.getActions();
+      actionGroup.addAll(ui.getContentUI().getActions(true));
     }
     else {
       ActionToolbar toolbar = RunDashboardManagerImpl.findActionToolbar(descriptor);
       if (toolbar != null) {
-        leftToolbarActions = toolbar.getActions();
+        actionGroup.add(toolbar.getActionGroup());
       }
     }
-
-    if (leftToolbarActions != null) {
-      if (leftToolbarActions.size() == 1 && leftToolbarActions.get(0) instanceof ActionGroup) {
-        leftToolbarActions = Arrays.asList(((ActionGroup)leftToolbarActions.get(0)).getChildren(null));
-      }
-      for (AnAction action : leftToolbarActions) {
-        if (action instanceof MoreActionGroup) {
-          actionGroup.add(getServicesMoreActionGroup((MoreActionGroup)action, descriptor));
-        }
-        else if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction) && !(action instanceof ExecutorAction)) {
-          actionGroup.add(action);
-        }
-      }
-    }
-    return actionGroup;
+    return result;
   }
 
-  private static DefaultActionGroup getServicesMoreActionGroup(MoreActionGroup contentGroup, RunContentDescriptor descriptor) {
+  private static @NotNull ActionGroup getServicesMoreActionGroup(MoreActionGroup contentGroup, RunContentDescriptor descriptor) {
     if (descriptor == null) return contentGroup;
 
     Content content = descriptor.getAttachedContent();
     if (content == null) return contentGroup;
 
-    DefaultActionGroup moreGroup = content.getUserData(MORE_ACTION_GROUP_KEY);
+    ActionGroup moreGroup = content.getUserData(MORE_ACTION_GROUP_KEY);
     if (moreGroup == null) {
-      moreGroup = new MoreActionGroup(false);
+      moreGroup = new ActionGroupWrapper(contentGroup) {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setIcon(AllIcons.Actions.MoreHorizontal);
+        }
+      };
       content.putUserData(MORE_ACTION_GROUP_KEY, moreGroup);
     }
-    moreGroup.removeAll();
-    ActionManager actionManager = ActionManager.getInstance();
-    moreGroup.addAll(contentGroup.getChildren(actionManager));
     return moreGroup;
   }
 

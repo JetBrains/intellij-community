@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
   private final RunnerLayout myLayout;
@@ -366,9 +365,5 @@ public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayout
 
   public void setTopLeftActionsVisible(boolean value) {
     myContentUI.setTopLeftActionsVisible(value);
-  }
-
-  public List<AnAction> getActions() {
-    return myContentUI.getActions(true);
   }
 }

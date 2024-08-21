@@ -3358,7 +3358,6 @@ f:com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 - createContent(java.lang.String,javax.swing.JComponent,java.lang.String,javax.swing.Icon,javax.swing.JComponent):com.intellij.ui.content.Content
 - dispose():V
 - findContent(java.lang.String):com.intellij.ui.content.Content
-- getActions():java.util.List
 - getComponent():javax.swing.JComponent
 - getContentManager():com.intellij.ui.content.ContentManager
 - getContentUI():com.intellij.execution.ui.layout.impl.RunnerContentUi

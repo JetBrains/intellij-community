@@ -227,7 +227,11 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
     QuickActionProvider provider = myModel.getDataContext().getData(QuickActionProvider.KEY);
     if (provider != null) {
-      actions = Stream.concat(actions, provider.getActions(true).stream());
+      actions = Stream.concat(Stream.concat(actions, provider.getActions(true).stream()), provider.getActions(true).stream()
+        .flatMap(action -> {
+          if (!(action instanceof ActionGroup o)) return Stream.<AnAction>empty();
+          return myModel.getUpdateSession().children(o).stream();
+        }));
     }
 
     Stream<ActionWrapper> actionWrappers = actions

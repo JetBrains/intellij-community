@@ -94,7 +94,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCA
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static java.util.Arrays.asList;
 import static org.jetbrains.concurrency.Promises.cancelledPromise;
 
 @State(name = "ChangesViewManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -744,7 +743,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Override
     public @NotNull List<AnAction> getActions(boolean originalProvider) {
-      return asList(myChangesPanel.getToolbarActionGroup().getChildren(ActionManager.getInstance()));
+      return List.of(myChangesPanel.getToolbarActionGroup());
     }
 
     @Override

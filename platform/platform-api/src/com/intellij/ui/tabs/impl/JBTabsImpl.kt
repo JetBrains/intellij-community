@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.ui.ShadowAction
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep.FINAL_CHOICE
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.IconLoader.getTransparentIcon
@@ -74,7 +75,11 @@ import java.util.*
 import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.accessibility.*
+import javax.accessibility.AccessibleContext.ACCESSIBLE_DESCRIPTION_PROPERTY
+import javax.accessibility.AccessibleContext.ACCESSIBLE_NAME_PROPERTY
 import javax.swing.*
+import javax.swing.JComponent.AccessibleJComponent.ACCESSIBLE_NAME_PROPERTY
+import javax.swing.JComponent.AccessibleJComponent.ACCESSIBLE_SELECTION_PROPERTY
 import javax.swing.border.Border
 import javax.swing.event.ChangeListener
 import javax.swing.event.PopupMenuEvent
@@ -3124,7 +3129,7 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun getActions(originalProvider: Boolean): List<AnAction> {
-    return selectedInfo?.group?.getChildren(null)?.toList() ?: emptyList()
+    return selectedInfo?.group?.let { listOf(it) } ?: emptyList()
   }
 
   val navigationActions: ActionGroup

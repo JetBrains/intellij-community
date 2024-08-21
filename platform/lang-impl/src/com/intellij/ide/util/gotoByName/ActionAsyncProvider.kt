@@ -171,7 +171,10 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
       return@mapNotNull action
     }
     val extendedActions = model.dataContext.getData(QuickActionProvider.KEY)?.getActions(true) ?: emptyList()
-    val actions = (mainActions + extendedActions).mapNotNull {
+    val allActions = mainActions + extendedActions + extendedActions.flatMap {
+      (it as? ActionGroup)?.let { model.updateSession.children(it) } ?: emptyList()
+    }
+    val actions = allActions.mapNotNull {
       runCatching {
         val mode = model.actionMatches(pattern, matcher, it)
         if (mode != MatchMode.NONE) {

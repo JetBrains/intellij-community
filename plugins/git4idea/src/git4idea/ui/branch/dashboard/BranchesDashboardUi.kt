@@ -293,7 +293,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     }
 
     override fun getActions(originalProvider: Boolean): List<AnAction> {
-      return createToolbarGroup().getChildren(ActionManager.getInstance()).asList()
+      return listOf(createToolbarGroup())
     }
 
     override fun getComponent(): JComponent = filteringTree.component

@@ -1937,13 +1937,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   @Override
   public @NotNull List<AnAction> getActions(boolean originalProvider) {
     ArrayList<AnAction> result = new ArrayList<>();
-    if (myLeftToolbarActions != null) {
-      AnAction[] kids = myLeftToolbarActions.getChildren(null);
-      ContainerUtil.addAll(result, kids);
-    }
-    if (myTopLeftActions != null && UIExperiment.isNewDebuggerUIEnabled()) {
-      AnAction[] kids = myTopLeftActions.getChildren(null);
-      ContainerUtil.addAll(result, kids);
+    ContainerUtil.addIfNotNull(result, myLeftToolbarActions);
+    if (UIExperiment.isNewDebuggerUIEnabled()) {
+      ContainerUtil.addIfNotNull(result, myTopLeftActions);
     }
     return result;
   }

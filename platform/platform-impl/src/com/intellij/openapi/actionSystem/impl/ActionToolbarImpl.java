@@ -1513,7 +1513,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public @NotNull List<AnAction> getActions(boolean originalProvider) {
-    return getActions();
+    return List.of(myActionGroup);
   }
 
   @Override
