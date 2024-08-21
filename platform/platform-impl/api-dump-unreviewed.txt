@@ -9808,12 +9808,16 @@ f:com.intellij.ide.wizard.NewProjectWizardStepPanel
 - f:validate():Z
 f:com.intellij.ide.wizard.RootNewProjectWizardStep
 - com.intellij.ide.wizard.NewProjectWizardStep
+- sf:Companion:com.intellij.ide.wizard.RootNewProjectWizardStep$Companion
 - <init>(com.intellij.ide.util.projectWizard.WizardContext):V
+- createModuleConfigurator():java.util.function.Consumer
 - getContext():com.intellij.ide.util.projectWizard.WizardContext
 - getData():com.intellij.openapi.util.UserDataHolderBase
 - getKeywords():com.intellij.ide.wizard.NewProjectWizardStep$Keywords
 - getPropertyGraph():com.intellij.openapi.observable.properties.PropertyGraph
 - setKeywords(com.intellij.ide.wizard.NewProjectWizardStep$Keywords):V
+f:com.intellij.ide.wizard.RootNewProjectWizardStep$Companion
+- f:getPROJECT_BUILDER_KEY():com.intellij.openapi.util.Key
 f:com.intellij.ide.wizard.UIWizardUtil
 - sf:chain(com.intellij.ide.wizard.NewProjectWizardStep,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardStep
 - sf:chain(com.intellij.ide.wizard.NewProjectWizardStep,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardStep

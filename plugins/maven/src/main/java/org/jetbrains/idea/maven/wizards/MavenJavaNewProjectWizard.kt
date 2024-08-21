@@ -15,6 +15,7 @@ import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
+import com.intellij.ide.wizard.RootNewProjectWizardStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
@@ -36,6 +37,8 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent),
     BuildSystemJavaNewProjectWizardData by parent,
     MavenJavaNewProjectWizardData {
+
+    private val builder = MavenJavaModuleBuilder()
 
     override val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
@@ -78,11 +81,12 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkMavenProject(project, MavenJavaModuleBuilder())
+      linkMavenProject(project, builder)
     }
 
     init {
       data.putUserData(MavenJavaNewProjectWizardData.KEY, this)
+      data.putUserData(RootNewProjectWizardStep.PROJECT_BUILDER_KEY, builder)
     }
   }
 

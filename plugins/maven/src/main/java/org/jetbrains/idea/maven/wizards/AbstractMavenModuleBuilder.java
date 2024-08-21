@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -44,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
@@ -108,24 +110,28 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     }
 
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
-      if (myEnvironmentForm != null) {
-        myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
-      }
-
-      var future = sdkDownloadedFuture;
-      if (null != future) {
-        try {
-          future.get(); // maven sync uses project JDK
-        }
-        catch (Exception e) {
-          MavenLog.LOG.error(e);
-        }
-      }
-
-      new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
-                                   MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
+      configure(project, root);
     });
+  }
+
+  private void configure(Project project, VirtualFile root) {
+    if (myEnvironmentForm != null) {
+      myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
+    }
+
+    var future = sdkDownloadedFuture;
+    if (null != future) {
+      try {
+        future.get(); // maven sync uses project JDK
+      }
+      catch (Exception e) {
+        MavenLog.LOG.error(e);
+      }
+    }
+
+    new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
+                                 myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
+                                 MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
   }
 
   protected static void setupNewProject(Project project) {
@@ -318,5 +324,13 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   public Project createProject(String name, String path) {
     setCreatingNewProject(true);
     return super.createProject(name, path);
+  }
+
+  @Override
+  public @Nullable Consumer<Module> createModuleConfigurator() {
+    return module -> {
+      VirtualFile root = ModuleRootManager.getInstance(module).getContentEntries()[0].getFile();
+      configure(module.getProject(), root);
+    };
   }
 }
