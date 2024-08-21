@@ -125,6 +125,10 @@ class KotlinFirChangeSignatureTest :
         doTestConflict("interface <caret>A {}", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
     }
 
+    fun testLocalVariable() {
+        doTestConflict("fun main() { val <caret>x = 42 }", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
+    }
+
     @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
     fun testExpressionFragmentErrors() {
         val psiFile = myFixture.addFileToProject("CommonList.kt", "class CustomList<in T>")
