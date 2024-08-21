@@ -42,7 +42,6 @@
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
-    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
 
     <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalEnterHandler"

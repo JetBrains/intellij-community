@@ -73,6 +73,8 @@
     <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
+
+    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
   </extensions>
   <extensionPoints>
     <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"
