@@ -377,6 +377,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/inDefaultValue.kt");
             }
 
+            @TestMetadata("invalidationOnSubstitution.kt")
+            public void testInvalidationOnSubstitution() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/invalidationOnSubstitution.kt");
+            }
+
             @TestMetadata("lambdaArgument.kt")
             public void testLambdaArgument() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/lambdaArgument.kt");

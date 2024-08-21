@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2In
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -410,7 +411,7 @@ internal class KotlinFunctionCallUsage(
                 element is KtConstantExpression || element is KtThisExpression || element is KtSimpleNameExpression -> false
                 element is KtBinaryExpression && OperatorConventions.ASSIGNMENT_OPERATIONS.contains(element.operationToken) -> true
                 element is KtUnaryExpression && OperatorConventions.INCREMENT_OPERATIONS.contains(element.operationToken) -> true
-                element is KtCallExpression -> true
+                element is KtCallExpression -> element.calleeExpression?.mainReference?.resolve() is KtConstructor<*>
                 else -> element.children.any { needSeparateVariable(it) }
             }
         }
