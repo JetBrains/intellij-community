@@ -44,6 +44,7 @@ abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionB
     fun testNotImportedExtension() = doTest()
     fun testNotImportedTypeAlias() = doTest()
     fun testKT12077() = doTest()
+    fun testClassInRootPackage() = doTest()
     fun testPackageDirective() = if (isFirPlugin) doTest() else Unit
     fun testPackageInImportDirective() = if (isFirPlugin) doTest() else Unit
 
