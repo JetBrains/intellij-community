@@ -117,11 +117,11 @@ class JpsCompilationOutputLoaderTest : BasePlatformTestCase() {
 
 private fun loadModelFromFile(fileName: String): Map<String, Map<String, BuildTargetState>> {
   val inJson = Files.readString(getTestDataFile(fileName))
-  val map = BuildTargetSourcesState.readJson(JsonReader(inJson.reader()), true)
+  val map = BuildTargetSourcesState.readJson(JsonReader(inJson.reader()))
 
   val stringWriter = StringWriter()
   JsonWriter(stringWriter).use { BuildTargetSourcesState.writeJson(it, map) }
-  assertThat(BuildTargetSourcesState.readJson(JsonReader(stringWriter.toString().reader()), false))
+  assertThat(BuildTargetSourcesState.readJson(JsonReader(stringWriter.toString().reader())))
     .isEqualTo(map)
   return map
 }

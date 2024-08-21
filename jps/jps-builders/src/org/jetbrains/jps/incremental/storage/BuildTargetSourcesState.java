@@ -4,7 +4,6 @@ package org.jetbrains.jps.incremental.storage;
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -347,7 +346,7 @@ public final class BuildTargetSourcesState implements BuildListener {
 
   private @NotNull Map<String, Map<String, BuildTargetState>> loadCurrentTargetState() {
     try (BufferedReader reader = Files.newBufferedReader(targetStateStorage)) {
-      return readJson(new JsonReader(reader), false);
+      return readJson(new JsonReader(reader));
     }
     catch (NoSuchFileException ignore) {
     }
@@ -379,55 +378,56 @@ public final class BuildTargetSourcesState implements BuildListener {
   }
 
   @VisibleForTesting
-  public static @NotNull Map<String, Map<String, BuildTargetState>> readJson(JsonReader reader, boolean stringHashAsHash) throws IOException {
+  public static @NotNull Map<String, Map<String, BuildTargetState>> readJson(JsonReader reader) throws IOException {
     reader.beginObject();
     Map<String, Map<String, BuildTargetState>> result = new HashMap<>();
     while (reader.hasNext()) {
       String category = reader.nextName();
 
       reader.beginObject();
-      Map<String, BuildTargetState> map = new HashMap<>();
+      Map<String, BuildTargetState> moduleNameToDescriptor = new HashMap<>();
       while (reader.hasNext()) {
         String moduleName = reader.nextName();
-        reader.beginObject();
-        long hash = -1;
-        boolean hasHash = false;
-        String relativePath = null;
-        while (reader.hasNext()) {
-          String name = reader.nextName();
-          if (name.equals("hash")) {
-            if (reader.peek() == JsonToken.NUMBER) {
-              try {
-                hash = reader.nextLong();
-                hasHash = true;
-              }
-              catch (NumberFormatException e) {
-                reader.skipValue();
-              }
-            }
-            else if (stringHashAsHash) {
-              hash = Hashing.komihash5_0().hashCharsToLong(reader.nextString());
-              hasHash = true;
-            }
-            else {
-              reader.skipValue();
-            }
-          }
-          else if (name.equals("relativePath")) {
-            relativePath = reader.nextString();
-          }
-        }
-        if (hasHash && relativePath != null) {
-          map.put(moduleName, new BuildTargetState(hash, relativePath));
-        }
-        reader.endObject();
-
-        result.put(category, map);
+        readModule(reader, moduleNameToDescriptor, moduleName);
+        result.put(category, moduleNameToDescriptor);
       }
       reader.endObject();
     }
     reader.endObject();
     return result;
+  }
+
+  private static void readModule(JsonReader reader,
+                                 Map<String, BuildTargetState> moduleNameToDescriptor,
+                                 String moduleName) throws IOException {
+    reader.beginObject();
+    long hash = -1;
+    boolean hasHash = false;
+    String relativePath = null;
+    while (reader.hasNext()) {
+      String propertyName = reader.nextName();
+      switch (propertyName) {
+        case "relativePath":
+          relativePath = reader.nextString();
+          break;
+        case "h":
+          hash = reader.nextLong();
+          hasHash = true;
+          break;
+        case "hash":
+          reader.skipValue();
+          break;
+        default:
+          LOG.warn("Unknown property: " + propertyName);
+          reader.skipValue();
+          break;
+      }
+    }
+    reader.endObject();
+
+    if (hasHash && relativePath != null) {
+      moduleNameToDescriptor.put(moduleName, new BuildTargetState(hash, relativePath));
+    }
   }
 
   @VisibleForTesting
@@ -447,7 +447,7 @@ public final class BuildTargetSourcesState implements BuildListener {
 
         BuildTargetState state = subMap.get(module);
         writer.beginObject();
-        writer.name("hash").value(state.hash);
+        writer.name("h").value(state.hash);
         writer.name("relativePath").value(state.relativePath);
         writer.endObject();
       }
