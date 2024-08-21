@@ -298,6 +298,31 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertEquals("foo", targetElement.asString())
     }
 
+    fun `test move top level declaration into directory`() {
+        val barClass = (myFixture.addFileToProject("a/FooBar.kt", """
+            package a
+            
+            class Bar { }
+            
+            class Foo { }
+        """.trimIndent()) as KtFile).declarations.first()
+        val bDirectory = (myFixture.addFileToProject("b/Other.kt", """
+            package b
+            
+            class Other { }
+        """.trimIndent()) as KtFile).parent
+        val moveModel = K2MoveModel.create(arrayOf(barClass), bDirectory)!!
+        assertInstanceOf<K2MoveModel.Declarations>(moveModel)
+        assertTrue(moveModel.isValidRefactoring())
+        val moveDeclarationsModel = moveModel as K2MoveModel.Declarations
+        assertSize(1, moveDeclarationsModel.source.elements)
+        val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
+        assert(sourceElement is KtClass && sourceElement.name == "Bar")
+        val targetElement = moveDeclarationsModel.target.pkgName
+        assertEquals("a", targetElement.asString())
+    }
+
+
     fun `test move enum entry should fail`() {
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             package foo

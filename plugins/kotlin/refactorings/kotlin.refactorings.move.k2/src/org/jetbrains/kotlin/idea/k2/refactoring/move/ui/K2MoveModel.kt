@@ -289,7 +289,9 @@ sealed class K2MoveModel {
 
             val inSourceRoot = inSourceRoot(elementsToMove)
             return when {
-                targetContainer is PsiDirectory || isMultiFileMove(elementsToMove) || declarationsFromFiles.isEmpty() -> {
+                (elementsToMove.all { it is KtFile } && targetContainer is PsiDirectory)
+                        || isMultiFileMove(elementsToMove)
+                        || declarationsFromFiles.isEmpty() -> {
                     // this move can contain foreign language files
                     val source = K2MoveSourceModel.FileSource(elementsToMove.fileElements().toSet())
                     val target = if (targetContainer is PsiDirectory) {
