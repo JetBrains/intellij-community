@@ -31,7 +31,8 @@ private val LOGGER = Logger.getInstance(WslSync::class.java)
 class WslSync<SourceFile, DestFile> private constructor(private val source: FileStorage<SourceFile, DestFile>,
                                                         private val dest: FileStorage<DestFile, SourceFile>,
                                                         private val filters: WslHashFilters,
-                                                        private val useStubs: Boolean) {
+                                                        private val useStubs: Boolean,
+                                                        private val retainUnmatchedFiles: Boolean = false) {
 
   companion object {
 
@@ -47,15 +48,16 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
                        distro: AbstractWslDistribution,
                        linToWinCopy: Boolean = true,
                        filters: WslHashFilters = EMPTY_FILTERS,
-                       useStubs: Boolean = false) {
+                       useStubs: Boolean = false,
+                       retainUnmatchedFiles: Boolean = false) {
       LOGGER.info("Sync " + if (linToWinCopy) "$linuxDir -> $windowsDir" else "$windowsDir -> $linuxDir")
       val win = WindowsFileStorage(windowsDir, distro)
       val lin = LinuxFileStorage(linuxDir, distro)
       if (linToWinCopy) {
-        WslSync(lin, win, filters, useStubs)
+        WslSync(lin, win, filters, useStubs, retainUnmatchedFiles)
       }
       else {
-        WslSync(win, lin, filters, useStubs)
+        WslSync(win, lin, filters, useStubs, retainUnmatchedFiles)
         val execFile = windowsDir.resolve("exec.txt")
         if (execFile.exists()) {
           // TODO: Support non top level files
@@ -120,23 +122,30 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
     val destSyncData = destSyncDataFuture.get()
     val destHashes = destSyncData.hashes
 
-    val destFilesToRemove = ArrayList<FilePathRelativeToDir>(AVG_NUM_FILES)
+    val filesToCopy = mutableListOf<FilePathRelativeToDir>()
+    val destFilesToRemove = mutableListOf<FilePathRelativeToDir>()
+
     for (destRecord in destHashes) {
-      // Lowercase is to ignore case when comparing files since Win is case-insensitive
       val sourceHashAndName = sourceHashes[destRecord.fileLowerCase]
-      if (sourceHashAndName != null && sourceHashAndName.hash == destRecord.hash) {
-        // Dest file matches Source file
-        // Remove this record, so at the end there will be a list of files to copy from SRC to DST
-        sourceHashes.remove(destRecord.fileLowerCase)
-      }
-      else if (sourceHashAndName == null) {
-        // No such file on Source, remove it from Dest
-        destFilesToRemove.add(destRecord.file) // Lin is case-sensitive so we must use real file name, not lowerecased as we used for cmp
+
+      if (sourceHashAndName != null) {
+        if (sourceHashAndName.hash == destRecord.hash) {
+          sourceHashes.remove(destRecord.fileLowerCase)
+        } else {
+          destFilesToRemove.add(destRecord.file)
+        }
+      } else {
+        if (!retainUnmatchedFiles) {
+          destFilesToRemove.add(destRecord.file)
+        }
       }
     }
 
-    copyFilesInParallel(sourceHashes.values.map { it.file })
-    dest.removeFiles(destFilesToRemove)
+    filesToCopy.addAll(sourceHashes.values.map { it.file })
+    copyFilesInParallel(filesToCopy)
+
+    if (!retainUnmatchedFiles) { dest.removeFiles(destFilesToRemove) }
+
     syncLinks(sourceSyncData.links, destSyncData.links)
     syncStubs(sourceSyncData.stubs, destSyncData.stubs)
   }
