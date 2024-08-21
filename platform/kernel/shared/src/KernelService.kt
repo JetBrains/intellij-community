@@ -6,6 +6,9 @@ import fleet.kernel.Kernel
 import fleet.kernel.kernel
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Don't use directly. Use [withKernel] instead.
+ */
 interface KernelService {
 
   suspend fun coroutineContext(): CoroutineContext
@@ -16,7 +19,5 @@ interface KernelService {
 
     val instance: KernelService
       get() = ApplicationManager.getApplication().getService(KernelService::class.java)
-
-    suspend fun kernelCoroutineContext(): CoroutineContext = instance.coroutineContext()
   }
 }
