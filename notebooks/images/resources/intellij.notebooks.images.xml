@@ -1,8 +1,0 @@
-<idea-plugin package="com.intellij.notebooks.images">
-
-  <dependencies>
-    <plugin id="com.intellij.platform.images"/>
-    <module name="intellij.notebooks.visualization"/>
-  </dependencies>
-
-</idea-plugin>
