@@ -63,6 +63,9 @@ public final class RunDashboardServiceViewContributor
 
   private static final Key<ActionGroup> MORE_ACTION_GROUP_KEY = Key.create("ServicesMoreActionGroup");
 
+  private static final DataProvider TREE_EXPANDER_HIDE_PROVIDER =
+    id -> PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(id) ? true : null;
+
   @NotNull
   @Override
   public ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
@@ -274,12 +277,18 @@ public final class RunDashboardServiceViewContributor
     @Override
     public @Nullable DataProvider getDataProvider() {
       Content content = myNode.getContent();
-      if (content == null) return null;
+      if (content == null) return TREE_EXPANDER_HIDE_PROVIDER;
 
       // Try to get data provider from content's component itself.
       // No need to search for data providers in content's component swing hierarchy,
       // because it is inside service view component for which data is provided.
-      return DataManagerImpl.getDataProviderEx(content.getComponent());
+      DataProvider componentProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
+      return id -> {
+        Object data = TREE_EXPANDER_HIDE_PROVIDER.getData(id);
+        if (data != null) return data;
+
+        return componentProvider == null ? null : componentProvider.getData(id);
+      };
     }
 
     @Override
@@ -508,6 +517,11 @@ public final class RunDashboardServiceViewContributor
       }
       return group.getName();
     }
+
+    @Override
+    public @Nullable DataProvider getDataProvider() {
+      return TREE_EXPANDER_HIDE_PROVIDER;
+    }
   }
 
   private static final class RunDashboardFolderGroupViewDescriptor extends RunDashboardGroupViewDescriptor implements ServiceViewDnDDescriptor {
@@ -582,6 +596,21 @@ public final class RunDashboardServiceViewContributor
     @Override
     public @Nullable JComponent getContentComponent() {
       return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent();
+    }
+
+    @Override
+    public @Nullable DataProvider getDataProvider() {
+      return new DataProvider() {
+        @Override
+        public @Nullable Object getData(@NotNull String dataId) {
+          if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+            RunDashboardTypePanel typeContent =
+              ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getTypeContent();
+            return typeContent.getTreeExpander();
+          }
+          return TREE_EXPANDER_HIDE_PROVIDER.getData(dataId);
+        }
+      };
     }
   }
 
@@ -661,6 +690,11 @@ public final class RunDashboardServiceViewContributor
         public @Nullable JComponent getContentComponent() {
           return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getEmptyContent();
         }
+
+        @Override
+        public @NotNull DataProvider getDataProvider() {
+          return TREE_EXPANDER_HIDE_PROVIDER;
+        }
       };
     }
   }
@@ -686,7 +720,7 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public DataProvider getDataProvider() {
-      return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id) ? new RunDashboardServiceViewDeleteProvider() : null;
+      return id -> PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(id) ? new RunDashboardServiceViewDeleteProvider() : TREE_EXPANDER_HIDE_PROVIDER.getData(id);
     }
 
     @Override

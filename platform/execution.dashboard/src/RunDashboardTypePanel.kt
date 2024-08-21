@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DefaultTreeExpander
+import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -147,8 +148,10 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
     }
   }
 
+  fun getTreeExpander(): TreeExpander? = if (hasFolders) treeExpander else null
+
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER] = true
-    sink[PlatformDataKeys.TREE_EXPANDER] = if (hasFolders) treeExpander else null
+    sink[PlatformDataKeys.TREE_EXPANDER] = getTreeExpander()
   }
 }
