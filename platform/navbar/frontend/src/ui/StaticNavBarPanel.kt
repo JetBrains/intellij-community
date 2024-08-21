@@ -8,9 +8,11 @@ import com.intellij.platform.navbar.frontend.vm.impl.NavBarVmImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.showingScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Window
 import javax.swing.JComponent
@@ -42,7 +44,9 @@ fun staticNavBarPanel(
   }
 
   panel.showingScope("static nav bar window", uiData = ComponentUtil::getWindow) { window ->
-    handleWindow(window)
+    withContext(Dispatchers.Default) {
+      handleWindow(window)
+    }
   }
 
   return panel

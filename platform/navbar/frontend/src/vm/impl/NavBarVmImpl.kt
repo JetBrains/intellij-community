@@ -202,6 +202,10 @@ class NavBarVmImpl(
     override fun activate() {
       _activationRequests.tryEmit(item)
     }
+
+    override fun toString(): String {
+      return item.toString()
+    }
   }
 }
 
