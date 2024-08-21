@@ -152,8 +152,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
       return
     }
 
-    val runnable = ContextAwareRunnable {
-      val component = component.get()?.takeIf { !isDisposed } ?: return@ContextAwareRunnable
+    val runnable = Runnable {
+      val component = component.get()?.takeIf { !isDisposed } ?: return@Runnable
       if (ComponentUtil.isShowing(component, false)) {
         showNotify()
       }
