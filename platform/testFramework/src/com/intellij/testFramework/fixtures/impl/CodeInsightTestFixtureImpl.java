@@ -1291,8 +1291,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
+  public final List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion, boolean typeCharIfOnlyOneCompletion) {
+    return myEditorTestFixture.completeBasicAllCarets(charToTypeAfterCompletion, typeCharIfOnlyOneCompletion);
+  }
+
+  @Override
+  @NotNull
   public final List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion) {
-    return myEditorTestFixture.completeBasicAllCarets(charToTypeAfterCompletion);
+    return completeBasicAllCarets(charToTypeAfterCompletion, true);
   }
 
   @Override
