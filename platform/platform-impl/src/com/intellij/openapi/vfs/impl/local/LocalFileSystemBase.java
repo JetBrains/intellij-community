@@ -516,14 +516,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     try {
       var nioFile = convertToNioFileAndCheck(file, false);
       if (SystemInfo.isWindows || JavaVersion.current().isAtLeast(21)) {
-        return nioFile.toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
+        var realName = nioFile.toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
+        if (originalFileName.equalsIgnoreCase(realName)) {
+          return realName;
+        }
       }
       var parentFile = nioFile.getParent();
       if (parentFile != null) {
         var canonicalFileNames = parentFile.toFile().list();
         if (canonicalFileNames != null) {
           for (var name : canonicalFileNames) {
-            if (name.compareToIgnoreCase(originalFileName) == 0) {
+            if (name.equalsIgnoreCase(originalFileName)) {
               return name;
             }
           }

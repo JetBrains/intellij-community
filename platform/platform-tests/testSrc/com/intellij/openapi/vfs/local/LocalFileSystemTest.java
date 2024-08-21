@@ -33,6 +33,7 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -1012,5 +1013,15 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
     byte[] actualContent = myFS.refreshAndFindFileByIoFile(file).contentsToByteArray();
     assertArrayEquals(expectedContent, actualContent);
+  }
+
+  @Test
+  public void canonicallyCasedHardLink() throws IOException {
+    assumeTrue("Requires JRE 21+", JavaVersion.current().isAtLeast(21));
+    var original = tempDir.newFile("original").toPath();
+    var hardLink = Files.createLink(original.resolveSibling("hardLink"), original);
+    var lfs = LocalFileSystem.getInstance();
+    assertThat(lfs.refreshAndFindFileByNioFile(hardLink).getName()).isEqualTo(hardLink.getFileName().toString());
+    assertThat(lfs.refreshAndFindFileByNioFile(original).getName()).isEqualTo(original.getFileName().toString());
   }
 }
