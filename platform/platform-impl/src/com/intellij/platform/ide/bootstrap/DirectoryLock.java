@@ -313,7 +313,7 @@ final class DirectoryLock {
     catch (IOException e) {
       LOG.debug(e);
       dispose(false);
-      throw new CannotActivateException(e);
+      throw new IOException("Cannot lock config directory " + myLockFile.getParent(), e);
     }
 
     new Thread(this::acceptConnections, SERVER_THREAD_NAME).start();

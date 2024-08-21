@@ -124,6 +124,15 @@ public abstract sealed class DirectoryLockTest {
   }
 
   @Test
+  public void lockingReadOnlyDirectory() throws Exception {
+    assumeTrue(SystemInfo.isUnix);
+    var configDir = Files.createDirectories(testDir.resolve("c"));
+    NioFiles.setReadOnly(configDir, true);
+    var lock = createLock(configDir, Files.createDirectories(testDir.resolve("s")));
+    assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(IOException.class);
+  }
+
+  @Test
   public void lockIndependence() throws Exception {
     var lock1 = createLock(testDir.resolve("c1"), testDir.resolve("s1"));
     assertNull(lock1.lockOrActivate(currentDir, List.of()));
