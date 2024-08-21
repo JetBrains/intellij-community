@@ -41,8 +41,11 @@ internal suspend fun importConfigIfNeeded(
     if (!AppMode.isRemoteDevHost()) enableNewUi(logDeferred, false)
     val log = logDeferred.await()
     if (shouldMigrateConfigOnNextRun(args)) {
-      log.info("writing marker to ${PathManager.getOriginalConfigDir()} to ensure that config will be imported next time")
-      CustomConfigMigrationOption.MergeConfigs.writeConfigMarkerFile()
+      val configDir = PathManager.getOriginalConfigDir()
+      if (!CustomConfigMigrationOption.doesCustomConfigMarkerExist(configDir)) {
+        log.info("writing marker to $configDir to ensure that config will be imported next time")
+        CustomConfigMigrationOption.MergeConfigs.writeConfigMarkerFile()
+      }
     }
     log.info("config importing not performed in headless mode")
     return null

@@ -8,6 +8,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 private val log = logger<CustomConfigMigrationOption>()
 
@@ -117,5 +118,7 @@ sealed class CustomConfigMigrationOption {
 
     @VisibleForTesting
     fun getCustomConfigMarkerFilePath(configDir: Path): Path = configDir.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)
+    
+    internal fun doesCustomConfigMarkerExist(configDir: Path): Boolean = getCustomConfigMarkerFilePath(configDir).exists()
   }
 }
