@@ -1027,6 +1027,7 @@
     </group>
 
     <group id="WelcomeScreen.QuickStart">
+      <group id="WelcomeScreen.QuickStart.Platform"/>
       <add-to-group group-id="WelcomeScreen.QuickStart.EmptyState"/>
       <add-to-group group-id="WelcomeScreen.QuickStart.ProjectsState"/>
     </group>

@@ -36,10 +36,6 @@
   <xi:include href="/idea/ProblemsViewActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
-    <group id="WelcomeScreen.QuickStart.Platform">
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-    </group>
-
     <group id="InspectCodeActionInPopupMenus">
       <reference ref="InspectCode"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
