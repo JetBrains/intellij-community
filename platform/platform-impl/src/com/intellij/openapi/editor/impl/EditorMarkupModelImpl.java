@@ -903,6 +903,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     myTrafficLightPopup.hidePopup();
     extensionActions.clear();
 
+    analyzerStatus = AnalyzerStatus.getEMPTY();
+
     super.dispose();
   }
 
