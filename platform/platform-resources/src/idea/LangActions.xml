@@ -450,7 +450,9 @@
       <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedSymbolAction"/>
       <separator/>
       <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
-      <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
+      <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction">
+        <add-to-group group-id="RevealGroup" anchor="last"/>
+      </action>
       <group id="HierarchyGroup">
         <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
         <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
@@ -727,21 +729,6 @@
            popup="true" searchable="false" use-shortcut-of="NewElement"/>
     <reference ref="AssociateWithFileType"/>
 
-    <reference id="OpenInRightSplit">
-      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
-    </reference>
-    <reference id="SplitChooser">
-      <add-to-group group-id="RunContextPopupGroup" anchor="after" relative-to-action="OpenInRightSplit"/>
-    </reference>
-
-    <group id="RevealGroup" popup="true" class="com.intellij.ide.actions.RevealGroup">
-      <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
-      <action id="OpenInAssociatedApplication" class="com.intellij.ide.actions.OpenInAssociatedApplicationAction"/>
-      <reference ref="ShowFilePath"/>
-
-      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
-    </group>
-
     <!-- VCS -->
     <group id="VersionControlsGroup"/>
 
@@ -814,6 +801,7 @@
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRunGroup"/>
+      <reference ref="RevealGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <reference ref="CacheRecovery"/>
@@ -867,6 +855,7 @@
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRunGroup"/>
+      <reference ref="RevealGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <reference ref="SynchronizeCurrentFile"/>
@@ -987,6 +976,7 @@
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
+      <reference ref="RevealGroup"/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
@@ -1017,6 +1007,7 @@
       <group id="EditorPopupMenu.Run">
         <reference ref="RunContextPopupGroup"/>
       </group>
+      <reference id="RevealGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
@@ -1032,6 +1023,7 @@
       <reference ref="MarkFileAs"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
+      <reference ref="RevealGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
@@ -1102,6 +1094,7 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
+      <reference ref="RevealGroup"/>
       <separator/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
