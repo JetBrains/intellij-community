@@ -62,6 +62,8 @@ public abstract sealed class DirectoryLockTest {
   }
 
   public static final class FallbackModeTest extends DirectoryLockTest {
+    @Rule public final InMemoryFsRule memoryFs = new InMemoryFsRule(SystemInfo.isWindows);
+
     @Override
     protected Path getTestDir() {
       var path = SystemInfo.isWindows ? "C:\\tests\\" + tempDir.getRootPath().getFileName() : tempDir.getRootPath().toString();
@@ -72,7 +74,6 @@ public abstract sealed class DirectoryLockTest {
   @Rule public final TestRule watcher = TestLoggerFactory.createTestWatcher();
   @Rule public final Timeout timeout = Timeout.seconds(30);
   @Rule public final TempDirectory tempDir = new TempDirectory();
-  @Rule public final InMemoryFsRule memoryFs = new InMemoryFsRule(SystemInfo.isWindows);
   @Rule public final ApplicationRule app = new ApplicationRule();
 
   private Path testDir;
