@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -383,6 +383,11 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
                  ContainerUtil.exists(suppressedPlaces, place -> mySuppressor.isSuppressionFor(element, place, suppressId));
         }
       };
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return mySuppressor.isDumbAware();
     }
   }
 }

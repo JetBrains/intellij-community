@@ -145,7 +145,7 @@ class InspectionRunner {
     InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, session -> {
       for (LocalInspectionToolWrapper toolWrapper : applicableByLanguage) {
         if (enabledToolsPredicate == null || enabledToolsPredicate.value(toolWrapper)) {
-          LocalInspectionTool tool = toolWrapper.getTool();
+        LocalInspectionTool tool = toolWrapper.getTool();
           AtomicInteger toolWasProcessed = new AtomicInteger();
           ToolStampInfo toolStamps = new ToolStampInfo();
           InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, toolWrapper, myIsOnTheFly, myInspectionProfileWrapper,
@@ -207,7 +207,7 @@ class InspectionRunner {
         InspectionProfilerDataHolder.saveStats(myPsiFile, init, highlightInfoUpdater);
       }
       if (myIsOnTheFly && addRedundantSuppressions) {
-        addRedundantSuppressions(init, toolWrappers, redundantContexts, applyIncrementallyCallback, contextFinishedCallback);
+        addRedundantSuppressions(init, toolWrappers, redundantContexts, applyIncrementallyCallback, contextFinishedCallback, enabledToolsPredicate);
       }
     });
     return ContainerUtil.concat(init, redundantContexts, injectedContexts);
@@ -294,7 +294,8 @@ class InspectionRunner {
                                         @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                         @NotNull List<? super InspectionContext> result,
                                         @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
-                                        @NotNull Consumer<? super InspectionContext> contextFinishedCallback) {
+                                        @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
+                                        @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     for (InspectionContext context : init) {
       LocalInspectionToolWrapper toolWrapper = context.tool;
       LocalInspectionTool tool = toolWrapper.getTool();
@@ -310,20 +311,33 @@ class InspectionRunner {
     if (redundantSuppressionKey == null || !inspectionProfile.isToolEnabled(redundantSuppressionKey, myPsiFile)) {
       return;
     }
+    InspectionToolWrapper<?, ?> redundantSuppressTool = Objects.requireNonNull(
+      inspectionProfile.getInspectionTool(RedundantSuppressInspectionBase.SHORT_NAME, myPsiFile),
+      "inspectionProfile.isToolEnabled(redundantSuppressionKey, myPsiFile) return true, thus an instance must be not-null"
+    );
+
     Language fileLanguage = myPsiFile.getLanguage();
-    InspectionSuppressor suppressor = ContainerUtil.find(LanguageInspectionSuppressors.INSTANCE.allForLanguage(fileLanguage), s -> s instanceof RedundantSuppressionDetector);
-    if (!(suppressor instanceof RedundantSuppressionDetector redundantSuppressionDetector)) {
-      return;
-    }
-    Set<String> activeTools = new HashSet<>();
+
+    RedundantSuppressionDetector redundantSuppressionDetector = findSuppressionDetector(fileLanguage);
+    if (redundantSuppressionDetector == null) return;
+
+    // todo do we really need toolWrappers to figure out active tools?
+    //      I believe `init` parameter already has the correct list of active tools???
+    Set<String> activeTools =  new HashSet<>();
     for (LocalInspectionToolWrapper tool : toolWrappers) {
       if (tool.runForWholeFile()) {
         // no redundants for whole file tools pass
         continue;
       }
-      if (tool.isUnfair() || !tool.isApplicable(fileLanguage) || myInspectionProfileWrapper.getInspectionTool(tool.getShortName(), myPsiFile) instanceof GlobalInspectionToolWrapper) {
+
+      if (tool.isUnfair() ||
+          !tool.isApplicable(fileLanguage) ||
+          myInspectionProfileWrapper.getInspectionTool(tool.getShortName(), myPsiFile) instanceof GlobalInspectionToolWrapper ||
+          !(enabledToolsPredicate != null && enabledToolsPredicate.test(tool))
+      ) {
         continue;
       }
+
       activeTools.add(tool.getID());
       ContainerUtil.addIfNotNull(activeTools, tool.getAlternativeID());
       InspectionElementsMerger elementsMerger = InspectionElementsMerger.getMerger(tool.getShortName());
@@ -331,14 +345,26 @@ class InspectionRunner {
         activeTools.addAll(Arrays.asList(elementsMerger.getSuppressIds()));
       }
     }
-    InspectionToolWrapper<?,?> redundantSuppressTool = inspectionProfile.getInspectionTool(RedundantSuppressInspectionBase.SHORT_NAME, myPsiFile);
+
     RedundantSuppressInspectionBase redundantSuppressGlobalTool = (RedundantSuppressInspectionBase)redundantSuppressTool.getTool();
-    LocalInspectionTool rsLocalTool = redundantSuppressGlobalTool.createLocalTool(redundantSuppressionDetector, mySuppressedElements, activeTools, myRestrictRange);
-    List<LocalInspectionToolWrapper> wrappers = Collections.singletonList(new LocalInspectionToolWrapper(rsLocalTool));
+    LocalInspectionTool rsLocalTool = redundantSuppressGlobalTool.createLocalTool(
+      redundantSuppressionDetector, mySuppressedElements, activeTools, myRestrictRange
+    );
+    LocalInspectionToolWrapper rsWrapper = new LocalInspectionToolWrapper(rsLocalTool);
+    if (enabledToolsPredicate != null && !enabledToolsPredicate.test(rsWrapper)) {
+      return;
+    }
+
+    List<LocalInspectionToolWrapper> wrappers = Collections.singletonList(rsWrapper);
     InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, true,
                                                    myDumbMode, myProgress, false, myInspectionProfileWrapper,
                                                    mySuppressedElements);
     result.addAll(runner.inspect(wrappers, HighlightSeverity.WARNING, false, applyIncrementallyCallback, contextFinishedCallback, null));
+  }
+
+  private static @Nullable RedundantSuppressionDetector findSuppressionDetector(@NotNull Language fileLanguage) {
+    List<InspectionSuppressor> allSuppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(fileLanguage);
+    return ContainerUtil.findInstance(allSuppressors, RedundantSuppressionDetector.class);
   }
 
   private void executeInImpatientReadAction(@NotNull Runnable runnable) {

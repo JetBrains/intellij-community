@@ -1532,6 +1532,7 @@ com.intellij.codeInspection.QuickFix
 - a:getFamilyName():java.lang.String
 - getName():java.lang.String
 com.intellij.codeInspection.RedundantSuppressionDetector
+- com.intellij.openapi.project.PossiblyDumbAware
 - a:createRemoveRedundantSuppressionFix(java.lang.String):com.intellij.codeInspection.LocalQuickFix
 - getHighlightingRange(com.intellij.psi.PsiElement,java.lang.String):com.intellij.openapi.util.TextRange
 - a:getSuppressionIds(com.intellij.psi.PsiElement):java.lang.String

@@ -4,17 +4,14 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInspection.LocalInspectionEP
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.*
 import com.intellij.testFramework.*
 import org.intellij.lang.annotations.Language
 import java.util.*
@@ -26,10 +23,11 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
   override fun setUp() {
     super.setUp()
     DaemonProgressIndicator.setDebug(true)
-    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
   }
 
   fun testLocalInspectionInDumbMode() {
+    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
+
     @Language("JAVA")
     val text = """
       // comment
@@ -57,6 +55,8 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
   }
 
   fun testLocalInspectionsInSmartModeThenInDumbMode() {
+    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
+
     @Language("JAVA")
     val text = """
       // comment
@@ -78,6 +78,8 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
   }
 
   fun testLocalInspectionInDumbModeDontInitializeUnrelatedTools() {
+    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
+
     val unrelatedToolWrapper = createUnrelatedToolWrapper()
     enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
     LocalInspectionsPass.forceNoDuplicateCheckInTests(testRootDisposable)
@@ -94,6 +96,8 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
   }
 
   fun testLocalInspectionDontInitializeUnrelatedTools() {
+    enableInspectionTools(project, testRootDisposable, DumbInspection(), SmartInspection())
+
     val unrelatedToolWrapper = createUnrelatedToolWrapper()
     enableInspectionTool(project, unrelatedToolWrapper, testRootDisposable)
     LocalInspectionsPass.forceNoDuplicateCheckInTests(testRootDisposable)
@@ -107,6 +111,86 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     doHighlighting()
 
     assertFalse(unrelatedToolWrapper.isToolInstantiated())
+  }
+
+  fun testJavaSuppressor() {
+    enableInspectionTools(project, testRootDisposable, RedundantSuppressInspection(), StringInspection())
+
+    val javaRedundantSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(JavaLanguage.INSTANCE)
+      .filterIsInstance<RedundantSuppressionDetector>()
+      .firstOrNull() // Java Redundant Suppressor is expected to exist
+    requireNotNull(javaRedundantSuppressor) // Java Redundant Suppressor is expected to exist
+    assertFalse(javaRedundantSuppressor.isDumbAware) // update the test if JavaRedundantSuppressor has become dumb-aware
+
+    @Language("JAVA")
+    val text = """
+      class A {
+        void foo() {
+          //noinspection String
+          Object s = "abc";
+        }
+      }
+    """
+    configureByText(JavaFileType.INSTANCE, text)
+
+    // smart infos don't contain String because Suppressor works in smart mode and suppresses it
+    val smartInfos = doHighlighting().map { it.description }
+    assertDoesntContain(smartInfos, "String")
+
+    // dumb infos contain String because Suppressor does not work in dumb mode
+    val dumbInfos = doHighlightingInDumbMode().map { it.description }
+    assertContainsElements(dumbInfos, "String")
+  }
+
+  fun testRedundantJavaSuppression() {
+    enableInspectionTools(project, testRootDisposable, RedundantSuppressInspection(), StringInspection())
+
+    val javaRedundantSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(JavaLanguage.INSTANCE)
+      .filterIsInstance<RedundantSuppressionDetector>()
+      .firstOrNull()
+    assertNotNull(javaRedundantSuppressor)// Java Redundant Suppressor is expected to exist
+
+    @Language("JAVA")
+    val text = """
+      class A {
+        void foo() {
+          //noinspection String
+          Object s;
+        }
+      }
+    """
+    configureByText(JavaFileType.INSTANCE, text)
+
+    // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
+    val initialDumbInfos = doHighlightingInDumbMode().map { it.description }
+    assertDoesntContain(initialDumbInfos, "Redundant suppression")
+
+    // smart infos contain a redundant suppression, because suppression is in fact redundant,
+    // and redundant suppressor for Java works in smart mode
+    val smartInfos = doHighlighting().map { it.description }
+    assertContainsElements(smartInfos, "Redundant suppression")
+
+    // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
+    val dumbInfos = doHighlightingInDumbMode().map { it.description }
+    assertContainsElements(dumbInfos, "Redundant suppression")
+  }
+
+
+  fun testSuppressorInDumbMode2() {
+    enableInspectionTools(project, testRootDisposable, RedundantSuppressInspection(), StringInspection())
+
+    @Language("JAVA")
+    val text = """
+      class A {
+        void foo() {
+          Object s = "abc";
+        }
+      }
+    """
+    configureByText(JavaFileType.INSTANCE, text)
+
+    val dumbInfos = doHighlightingInDumbMode()
+    assertDoesntContain(dumbInfos, "String")
   }
 
   private fun assertExistsInfo(infos: List<HighlightInfo>, text: String) {
@@ -153,6 +237,17 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
       }
     }
   }
+
+  private class StringInspection : LocalInspectionTool(), DumbAware {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+      return object : JavaElementVisitor() {
+        override fun visitLiteralExpression(expression: PsiLiteralExpression) {
+          holder.registerProblem(expression, "String")
+        }
+      }
+    }
+  }
+
 
   private fun createUnrelatedToolWrapper(): UnrelatedToolWrapper {
     val ep = LocalInspectionEP()
