@@ -45,11 +45,8 @@ import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.listDirectoryEntries
 
-// doesn't make sense to execute 64 tasks in parallel
-private const val ioTaskParallelism = 8
-
-internal const val uploadParallelism = 4
-internal const val downloadParallelism = 4
+internal val uploadParallelism = Runtime.getRuntime().availableProcessors()
+internal val downloadParallelism = uploadParallelism
 
 private const val BRANCH_PROPERTY_NAME = "intellij.build.compiled.classes.branch"
 private const val SERVER_URL = "intellij.build.compiled.classes.server.url"
@@ -167,7 +164,7 @@ private suspend fun packCompilationResult(zipDir: Path, context: CompilationCont
   }
 
   spanBuilder("build zip archives").use(Dispatchers.IO) {
-    items.forEachConcurrent(ioTaskParallelism) { item ->
+    items.forEachConcurrent { item ->
       item.hash = packAndComputeHash(addDirEntriesMode = addDirEntriesMode, name = item.name, archive = item.archive, directory = item.output)
     }
   }
@@ -351,7 +348,7 @@ suspend fun fetchAndUnpackCompiledClasses(
         }
         true
       }
-      .mapConcurrent(ioTaskParallelism) { item ->
+      .mapConcurrent { item ->
         val file = item.file
         when {
           Files.notExists(file) -> item
@@ -446,7 +443,7 @@ suspend fun fetchAndUnpackCompiledClasses(
 
   val start = System.nanoTime()
   spanBuilder("unpack compiled classes archives").use(Dispatchers.IO) {
-    toUnpack.forEachConcurrent(ioTaskParallelism) { item ->
+    toUnpack.forEachConcurrent { item ->
       spanBuilder("unpack").setAttribute("name", item.name).use {
         unpackArchive(item, saveHash)
       }
@@ -476,7 +473,7 @@ private suspend fun checkPreviouslyUnpackedDirectories(
       }
     }
 
-    items.forEachConcurrent(ioTaskParallelism) { item ->
+    items.forEachConcurrent { item ->
       val out = item.output
       if (Files.notExists(out)) {
         span.addEvent("output directory doesn't exist", Attributes.of(AttributeKey.stringKey("name"), item.name, AttributeKey.stringKey("outDir"), out.toString()))
