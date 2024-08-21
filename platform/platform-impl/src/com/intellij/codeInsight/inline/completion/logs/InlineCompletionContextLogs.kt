@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.features.MLCompletionFeaturesCollector
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.editor.Document
@@ -17,10 +18,14 @@ internal object InlineCompletionContextLogs {
   @RequiresReadLock
   @RequiresBlockingContext
   fun getFor(request: InlineCompletionRequest): List<EventPair<*>> {
-    return doCapture(request.file, request.editor, request.startOffset)
+    val simple = captureSimple(request.file, request.editor, request.startOffset)
+    val featureCollectorBased = MLCompletionFeaturesCollector.get(request.file.language)?.let {
+      captureFeatureCollectorBased(request.file, request.editor, request.startOffset, it)
+    }
+    return simple + featureCollectorBased.orEmpty()
   }
 
-  private fun doCapture(psiFile: PsiFile, editor: Editor, offset: Int): List<EventPair<*>> {
+  private fun captureSimple(psiFile: PsiFile, editor: Editor, offset: Int): List<EventPair<*>> {
     val contextFeatures = mutableListOf<EventPair<*>>()
     val logicalPosition = editor.offsetToLogicalPosition(offset)
     val lineNumber = logicalPosition.line
@@ -92,6 +97,10 @@ internal object InlineCompletionContextLogs {
       parents.getOrNull(i)
         ?.let { add(parentFeature with it.javaClass) }
     }
+  }
+
+  private fun captureFeatureCollectorBased(file: PsiFile, editor: Editor, startOffset: Int, collector: MLCompletionFeaturesCollector): List<EventPair<*>> {
+    return emptyList() // TODO
   }
 
   private object Logs : PhasedLogs(InlineCompletionLogsContainer.Phase.INLINE_API_STARTING) {
