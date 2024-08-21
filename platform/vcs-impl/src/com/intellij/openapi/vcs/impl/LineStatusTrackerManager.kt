@@ -62,6 +62,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
@@ -405,6 +406,8 @@ class LineStatusTrackerManager(
     virtualFile: VirtualFile, document: Document,
     refreshExisting: Boolean = false,
   ) {
+    ThreadingAssertions.assertEventDispatchThread()
+
     val provider = getTrackerProvider(virtualFile, document)
 
     val oldTracker = trackers[document]?.tracker
@@ -423,6 +426,8 @@ class LineStatusTrackerManager(
     virtualFile: VirtualFile, document: Document,
     provider: LocalLineStatusTrackerProvider,
   ): LocalLineStatusTracker<*>? {
+    ThreadingAssertions.assertEventDispatchThread()
+
     if (isDisposed) return null
     if (trackers[document] != null) return null
 
