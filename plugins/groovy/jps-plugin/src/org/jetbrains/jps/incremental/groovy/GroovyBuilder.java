@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -104,8 +104,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
   }
 
-  @Nullable
-  static Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
+  static @Nullable Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
     Map<ModuleBuildTarget, String> finalOutputs = new LinkedHashMap<>();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = target.getOutputDir();
@@ -142,9 +141,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return path.endsWith("." + GROOVY_EXTENSION);
   }
 
-  @NotNull
   @Override
-  public List<String> getCompilableFileExtensions() {
+  public @NotNull List<String> getCompilableFileExtensions() {
     return Collections.singletonList(GROOVY_EXTENSION);
   }
 
@@ -154,8 +152,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myBuilderName;
   }
 

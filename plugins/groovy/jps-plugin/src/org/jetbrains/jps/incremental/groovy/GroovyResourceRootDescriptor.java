@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Set;
 
-class GroovyResourceRootDescriptor extends BuildRootDescriptor {
+final class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   private final CheckResourcesTarget myTarget;
   private final ResourceRootDescriptor myDescriptor;
 
@@ -24,8 +24,7 @@ class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  @NotNull
-  public FileFilter createFileFilter() {
+  public @NotNull FileFilter createFileFilter() {
     return myDescriptor.createFileFilter();
   }
 

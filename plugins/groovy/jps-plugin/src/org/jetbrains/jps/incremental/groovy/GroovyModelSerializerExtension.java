@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.util.xmlb.XmlSerializer;
@@ -12,9 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class GroovyModelSerializerExtension extends JpsModelSerializerExtension {
-  @NotNull
   @Override
-  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Arrays.asList(new JpsProjectExtensionSerializer("groovyc.xml", "GroovyCompilerProjectConfiguration") {
       @Override
       public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {

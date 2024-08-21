@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.util.Key;
@@ -26,9 +26,8 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
     super(CheckResourcesTarget.TARGET_TYPES);
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return GroovyJpsBundle.message("builder.resource.checker");
   }
 
@@ -38,9 +37,9 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
   }
 
   @Override
-  public void build(@NotNull final CheckResourcesTarget target,
+  public void build(final @NotNull CheckResourcesTarget target,
                     @NotNull DirtyFilesHolder<GroovyResourceRootDescriptor, CheckResourcesTarget> holder,
-                    @NotNull final BuildOutputConsumer outputConsumer,
+                    final @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException, IOException {
     if (context.getBuilderParameter(CHECKING_RESOURCES_REBUILD.toString()) == null) {
       return;
@@ -54,8 +53,7 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
     });
   }
 
-  @NotNull
-  private static ModuleChunk singleModuleChunk(final JpsModule module) {
+  private static @NotNull ModuleChunk singleModuleChunk(final JpsModule module) {
     return new ModuleChunk(Collections.singleton(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)));
   }
 
@@ -95,8 +93,7 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
       return paths;
     }
 
-    @NotNull
-    private List<File> getVisibleResourceOutputs(CompileContext context, boolean tests) {
+    private @NotNull List<File> getVisibleResourceOutputs(CompileContext context, boolean tests) {
       List<File> resourceOutputs = new ArrayList<>();
       JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(myTarget.getModule()).
         includedIn(JpsJavaClasspathKind.compile(tests)).

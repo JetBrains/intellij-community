@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -79,8 +79,7 @@ class EclipseOutputParser {
     }
   }
 
-  @Nullable
-  private CompilerMessage parseMessage(@NlsSafe String msgText) {
+  private @Nullable CompilerMessage parseMessage(@NlsSafe String msgText) {
     // message should look like this:
     //        1. WARNING in /Users/andrew/git-repos/foo/src/main/java/packAction.java (at line 47)
     //            public abstract class AbstractScmTagAction extends TaskAction implements BuildBadgeAction {
