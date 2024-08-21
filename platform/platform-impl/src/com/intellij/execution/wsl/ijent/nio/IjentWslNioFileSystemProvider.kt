@@ -137,7 +137,7 @@ class IjentWslNioFileSystemProvider(
   override fun readSymbolicLink(link: Path): IjentWslNioPath =
     IjentWslNioPath(
       getFileSystem(wslIdFromPath(link)),
-      originalFsProvider.readSymbolicLink(link.toOriginalPath()),
+      ijentFsProvider.readSymbolicLink(link.toIjentPath()),
     )
 
   override fun getPath(uri: URI): Path =
