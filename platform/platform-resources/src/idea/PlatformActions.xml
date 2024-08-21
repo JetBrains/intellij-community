@@ -1,11 +1,6 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/PlatformExecutionActions.xml"/>
+<idea-plugin>
   <actions>
     <action id="QuickActionPopup" class="com.intellij.ui.switcher.ShowQuickActionPopupAction"/>
-    <action id="RunConfigurationTemplatesForNewProjects"
-            class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction">
-      <override-text place="MainMenu"/>
-    </action>
 
     <group id="Other.KeymapGroup" searchable="false"/> <!-- grouping for Settings -> Keymap -> Others -->
     <group id="Vcs.KeymapGroup" searchable="false"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
@@ -487,7 +482,6 @@
         </group>
         <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
           <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
-          <reference ref="RunConfigurationTemplatesForNewProjects"/>
           <group id="FileSettingsGroup"/>
         </group>
         <separator/>
@@ -1051,7 +1045,6 @@
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction">
         <synonym key="action.WelcomeScreen.Plugins.Extensions.text"/>
       </action>
-      <reference ref="RunConfigurationTemplatesForNewProjects"/>
 
       <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction"
               icon="AllIcons.ToolbarDecorator.Import"/>
@@ -1444,12 +1437,6 @@
       <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ShowBlankDiffWindow" anchor="after"/>
     </group>
-
-    <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction">
-      <add-to-group group-id="RunTab.TopToolbar"/>
-      <add-to-group group-id="RunTab.TopToolbar.Old"/>
-    </action>
-    <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction"/>
 
     <action id="IncrementWindowWidth" class="com.intellij.ide.actions.WindowAction$IncrementWidth" use-shortcut-of="ResizeToolWindowRight"/>
     <action id="DecrementWindowWidth" class="com.intellij.ide.actions.WindowAction$DecrementWidth" use-shortcut-of="ResizeToolWindowLeft"/>

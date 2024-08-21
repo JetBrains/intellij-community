@@ -28,6 +28,9 @@
   </actions>
 
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PlatformExecutionActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/ExecutionActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/XDebuggerActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/UsageViewActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 

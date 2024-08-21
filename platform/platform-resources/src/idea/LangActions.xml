@@ -2,36 +2,6 @@
   <actions>
     <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
 
-    <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
-    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
-    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
-    <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
-
-    <group id="RunConfiguration.Group">
-      <action id="SaveTemporaryRunConfiguration" class="com.intellij.execution.actions.SaveTemporaryRunConfigurationAction"/>
-      <action id="DeleteRunConfiguration" class="com.intellij.execution.actions.DeleteRunConfigurationAction"/>
-    </group>
-
-    <group id="RunContextGroup" popup="false">
-      <group id="RunContextGroupInner">
-        <!-- A dynamic group filled with executor actions -->
-        <group id="RunContextExecutorsGroup"/>
-        <group id="RunContextGroupMore" class="com.intellij.ide.actions.SmartPopupActionGroup">
-          <reference ref="CreateRunConfiguration"/>
-          <separator/>
-          <group id="CreateNewRunConfiguration" class="com.intellij.execution.actions.CreateNewConfigurationAction"/>
-        </group>
-      </group>
-      <separator/>
-    </group>
-    <group id="RunContextPopupGroup" popup="false">
-      <reference ref="RunContextGroup"/>
-    </group>
-
-    <group id="RunLineMarkerExtraActions">
-      <reference ref="CreateRunConfiguration"/>
-    </group>
-
     <group id="LangCodeInsightActions">
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
       <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
@@ -505,6 +475,7 @@
         <!--suppress PluginXmlCapitalization -->
         <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
       </group>
+      <reference id="XDebugger.Code.Toolbar"/>
     </group>
     <action id="CodeFloatingToolbar.GotoNextMenu" class="com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu" />
     <action id="CodeFloatingToolbar.GotoPrevMenu" class="com.intellij.ui.codeFloatingToolbar.GotoPreviousFloatingToolbarMenu" />
@@ -726,29 +697,6 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
-    <!-- Run -->
-    <group id="RunMenu" popup="true">
-      <group id="RunnerActions"/>
-      <separator/>
-      <reference ref="ChooseRunConfiguration"/>
-      <reference ref="ChooseDebugConfiguration"/>
-      <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
-      <action id="ManageTargets" class="com.intellij.execution.target.ManageTargetEnvironmentsAction"/>
-      <separator/>
-      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend">
-        <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Rerun"/>
-        <add-to-group group-id="RunTab.TopToolbar.Old" anchor="after" relative-to-action="Rerun"/>
-      </action>
-      <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
-      <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
-
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
-    </group>
-
-    <group id="BuildMenu" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
-      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
-    </group>
-
     <!-- Tools -->
     <group id="ToolsBasicGroup">
       <add-to-group group-id="ToolsMenu" anchor="first"/>
@@ -802,13 +750,6 @@
       <add-to-group group-id="MainToolBar" relative-to-action="Back" anchor="before"/>
     </group>
 
-    <group id="ToolbarRunGroup">
-      <reference ref="RunConfiguration"/>
-      <reference ref="RunnerActions"/>
-      <reference ref="Stop"/>
-      <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
-    </group>
-
     <group id="NavBarToolBarOthers"/>
     <group id="NavBarToolBar">
       <reference ref="ToolbarRunGroup"/>
@@ -847,10 +788,6 @@
         <action id="OverrideFileTypeAction" class="com.intellij.openapi.file.exclude.OverrideFileTypeAction"/>
         <action id="ReverteOverrideFileTypeAction" class="com.intellij.openapi.file.exclude.ReverteOverrideFileTypeAction"/>
       </group>
-    </group>
-
-    <group id="ProjectViewPopupMenuRunGroup">
-      <reference ref="RunContextPopupGroup"/>
     </group>
 
     <group id="ProjectViewPopupMenuSettingsGroup">
@@ -1173,85 +1110,6 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
-    <action id="EditBreakpoint" class="com.intellij.xdebugger.impl.actions.EditBreakpointAction"/>
-    <group id="DebugMainMenu">
-      <separator/>
-      <group id="DebuggingActionsGroup" popup="true">
-        <group id="DebugReloadGroup"/>
-        <separator/>
-        <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="AllIcons.Actions.TraceOver"/>
-        <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="AllIcons.Debugger.ForceStepOver"/>
-        <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="AllIcons.Actions.TraceInto"/>
-        <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="AllIcons.Debugger.ForceStepInto"/>
-        <action id="SmartStepInto" class="com.intellij.xdebugger.impl.actions.SmartStepIntoAction" icon="AllIcons.Debugger.SmartStepInto"/>
-        <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="AllIcons.Actions.StepOut"/>
-        <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
-        <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="AllIcons.Debugger.ForceRunToCursor"/>
-        <action id="Debugger.PopFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
-        <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
-        <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
-        <separator/>
-        <action id="EvaluateExpression" class="com.intellij.xdebugger.impl.actions.EvaluateAction" icon="AllIcons.Debugger.EvaluateExpression"/>
-        <action id="QuickEvaluateExpression" class="com.intellij.xdebugger.impl.actions.QuickEvaluateAction"/>
-        <action id="ShowExecutionPoint" class="com.intellij.xdebugger.impl.actions.ShowExecutionPointAction"
-                icon="AllIcons.Debugger.ShowCurrentFrame"/>
-        <separator/>
-      </group>
-      <group id="BreakpointActionsGroup" popup="true">
-        <action id="Debugger.RestoreBreakpoint" class="com.intellij.xdebugger.impl.actions.RestoreBreakpointAction"/>
-        <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction">
-          <override-text place="MainMenu"/>
-        </action>
-        <action id="ToggleTemporaryLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleTemporaryLineBreakpointAction">
-          <override-text place="MainMenu"/>
-        </action>
-        <action id="ToggleBreakpointEnabled" class="com.intellij.xdebugger.impl.actions.ToggleBreakpointEnabledAction"/>
-      </group>
-      <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="AllIcons.Debugger.ViewBreakpoints"/>
-      <separator/>
-
-      <add-to-group group-id="RunMenu" anchor="last"/>
-    </group>
-
-    <group id="XDebugger.Actions">
-      <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
-      <action id="Debugger.AddInlineWatch" class="com.intellij.xdebugger.impl.inline.AddInlineWatchAction" icon="AllIcons.Debugger.AddToWatch"/>
-      <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
-
-      <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
-      </action>
-      <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
-      <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
-      <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction"/>
-      <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
-      <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"
-              use-shortcut-of="EditSource"/>
-      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"/>
-
-      <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
-
-      <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.General.Add"/>
-      <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction" use-shortcut-of="XDebugger.SetValue"/>
-      <action id="XDebugger.CopyWatch" class="com.intellij.xdebugger.impl.frame.actions.XCopyWatchAction" icon="AllIcons.Actions.Copy" use-shortcut-of="EditorDuplicate"/>
-      <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.General.Remove"
-              use-shortcut-of="$Delete"/>
-      <action id="XDebugger.MoveWatchUp" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp" use-shortcut-of="MoveLineUp"/>
-      <action id="XDebugger.MoveWatchDown" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown" use-shortcut-of="MoveLineDown"/>
-      <action id="XDebugger.SeparateWatches" class="com.intellij.xdebugger.impl.frame.actions.XSeparateWatchesAndVariables"
-              icon="AllIcons.Debugger.Watch"/>
-      <action id="XDebugger.ToggleEvaluateExpressionField" class="com.intellij.xdebugger.impl.frame.actions.XToggleEvaluateExpressionFieldAction"/>
-      <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>
-      <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
-              icon="AllIcons.Debugger.MuteBreakpoints"/>
-      <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="AllIcons.ObjectBrowser.Sorted"/>
-      <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
-      <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
-      <action id="Debugger.FocusOnFinish" class="com.intellij.xdebugger.impl.actions.FocusOnFinishAction"/>
-      <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
-      <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"/>
-      <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"/>
-    </group>
-
     <group id="EditorPopupMenuDebug">
       <separator/>
       <reference ref="EvaluateExpression"/>
@@ -1265,182 +1123,10 @@
       <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
     </group>
 
-    <group id="XDebugger.ToolWindow.TopToolbar">
-      <reference ref="ShowExecutionPoint"/>
-      <separator/>
-      <reference ref="StepOver"/>
-      <reference ref="StepInto"/>
-      <reference ref="StepOut"/>
-      <reference ref="RunToCursor"/>
-      <separator/>
-      <reference ref="EvaluateExpression" />
-    </group>
-
-    <group id="XDebugger.ToolWindow.TopToolbar3">
-      <reference ref="Rerun"/>
-      <reference ref="Stop"/>
-      <separator/>
-      <reference ref="Resume"/>
-      <reference ref="Pause"/>
-      <reference ref="StepOver"/>
-      <reference ref="StepInto"/>
-      <reference ref="StepOut"/>
-      <separator/>
-      <reference ref="ViewBreakpoints"/>
-      <reference ref="XDebugger.MuteBreakpoints"/>
-    </group>
-
-    <group id="XDebugger.ToolWindow.TopToolbar3.Extra" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup">
-      <reference ref="ForceStepOver"/>
-      <reference ref="ForceStepInto"/>
-      <reference ref="SmartStepInto"/>
-      <separator/>
-      <reference ref="RunToCursor"/>
-      <reference ref="ForceRunToCursor"/>
-      <separator/>
-      <reference ref="ShowExecutionPoint"/>
-      <separator/>
-      <reference ref="EvaluateExpression" />
-      <reference ref="Debugger.PopFrame" />
-    </group>
-
-    <group id="XDebugger.ToolWindow.LeftToolbar">
-      <separator/>
-      <reference ref="Resume"/>
-      <reference ref="Pause"/>
-      <reference ref="Stop"/>
-      <separator/>
-      <reference ref="ViewBreakpoints"/>
-      <reference ref="XDebugger.MuteBreakpoints"/>
-    </group>
-
-    <group id="XDebugger.ValueGroup" popup="false">
-      <reference ref="XDebugger.Inspect"/>
-      <reference ref="Debugger.MarkObject"/>
-      <reference ref="XDebugger.SetValue"/>
-      <reference ref="XDebugger.CopyValue"/>
-      <reference ref="XDebugger.CompareValueWithClipboard"/>
-      <reference ref="XDebugger.CopyName"/>
-      <separator/>
-      <reference ref="EvaluateExpression"/>
-      <reference ref="Debugger.Tree.EvaluateInConsole"/>
-      <reference ref="Debugger.AddToWatch"/>
-      <reference ref="Debugger.ShowReferring"/>
-      <separator/>
-      <reference ref="XDebugger.JumpToSource"/>
-      <reference ref="XDebugger.JumpToTypeSource"/>
-      <separator/>
-    </group>
-
-    <group id="XDebugger.Evaluation.Dialog.Tree.Popup">
-      <reference ref="XDebugger.ValueGroup"/>
-    </group>
-
-    <group id="XDebugger.Frames.Tree.Popup">
-      <reference ref="Debugger.PopFrame" />
-      <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" icon="AllIcons.Actions.Copy"/>
-    </group>
-
-    <group id="XDebugger.Frames.TopToolbar">
-      <action id="Debugger.ShowLibraryFrames" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction"/>
-    </group>
-
-    <group id="XDebugger.Variables.Tree.Popup">
-      <reference ref="XDebugger.ValueGroup"/>
-    </group>
-
-    <group id="XDebugger.Variables.Tree.Toolbar">
-    </group>
-
-    <group id="XDebugger.Watches.Tree.Popup">
-      <reference ref="XDebugger.NewWatch"/>
-      <reference ref="XDebugger.RemoveWatch"/>
-      <reference ref="XDebugger.RemoveAllWatches"/>
-      <reference ref="XDebugger.EditWatch"/>
-      <separator/>
-      <reference ref="XDebugger.ValueGroup"/>
-    </group>
-
-    <group id="XDebugger.Watches.Tree.Toolbar">
-      <reference ref="XDebugger.NewWatch"/>
-      <reference ref="XDebugger.RemoveWatch"/>
-      <reference ref="XDebugger.MoveWatchUp"/>
-      <reference ref="XDebugger.MoveWatchDown"/>
-      <reference ref="XDebugger.CopyWatch"/>
-    </group>
-
-    <group id="XDebugger.Watches.Inline.Popup" popup="true">
-    </group>
-
-    <group id="XDebugger.Inspect.Tree.Popup">
-      <reference ref="XDebugger.ValueGroup"/>
-    </group>
-
-    <group id="XDebugger.Evaluate.Code.Fragment.Editor.Popup">
-      <reference ref="BasicEditorPopupMenu"/>
-      <reference ref="EditorToggleUseSoftWraps"/>
-    </group>
-
-    <group id="XDebugger.Settings" icon="AllIcons.General.GearPlain" popup="true">
-      <action id="XDebugger.PreviewTab" class="com.intellij.xdebugger.impl.actions.OpenFilesInPreviewTabAction"/>
-      <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
-      <separator/>
-      <reference ref="XDebugger.ToggleSortValues"/>
-      <separator/>
-      <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction" />
-    </group>
-
-    <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup">
-      <separator/>
-      <reference ref="EvaluateExpression"/>
-      <reference ref="Debugger.AddToWatch"/>
-      <add-to-group group-id="Floating.CodeToolbar" relative-to-action="ReformatCode" anchor="after"/>
-    </group>
-
-    <group id="RunnerLayoutActions">
-      <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
-      <group id="Runner.Layout">
-        <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
-                icon="AllIcons.Debugger.RestoreLayout"/>
-      </group>
-      <group id="Runner.View.Close.Group" popup="false">
-        <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="AllIcons.Actions.Close"/>
-        <action id="Runner.CloseOtherViews" class="com.intellij.execution.ui.layout.actions.CloseOtherViewsAction" icon="AllIcons.Actions.Close"/>
-        <action id="Runner.CloseAllViews" class="com.intellij.execution.ui.layout.actions.CloseAllViewsAction" icon="AllIcons.Actions.Close"/>
-        <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Close"/>
-      </group>
-      <group id="Runner.View.Popup">
-        <reference ref="Runner.View.Close.Group"/>
-        <separator/>
-        <group id="Runner.Focus">
-          <action id="Runner.FocusOnStartup" class="com.intellij.execution.ui.actions.FocusOnStartAction"/>
-        </group>
-      </group>
-
-
-      <group id="Runner.View.Toolbar">
-        <reference ref="Runner.CloseView"/>
-      </group>
-    </group>
-
-    <group id="TestTreePopupMenu">
-      <!--suppress PluginXmlCapitalization -->
-      <action id="openAssertEqualsDiff" class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction" use-shortcut-of="Diff.ShowDiff"/>
-      <separator/>
-      <reference ref="RunContextGroup"/>
-      <reference ref="EditSource"/>
-    </group>
-
     <group id="ConsoleView.PopupMenu">
       <reference ref="ConsoleEditorPopupMenu"/>
       <separator/>
       <action id="ConsoleView.ClearAll" class="com.intellij.execution.actions.ClearConsoleAction"/>
-    </group>
-
-    <action id="SendEOF" class="com.intellij.execution.actions.EOFAction"/>
-
-    <group id="RunTestGroup">
-      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="DebugMainMenu"/>
     </group>
 
     <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights">
@@ -1661,36 +1347,10 @@
       </group>
     </group>
 
-
-    <action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper">
-      <add-to-group group-id="MainToolbarRight" anchor="first"/>
-    </action>
-
-    <group id="RunToolbarMainActionGroup">
-      <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
-      <group id="compositeResumeGroup" searchable="false" popup="false"/>
-      <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" popup="false"/>
-      <reference ref="Stop"/>
-      <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
-      <action id="InactiveStopActionPlaceholder" class="com.intellij.execution.ui.InactiveStopActionPlaceholder" />
-    </group>
-
-    <action id="AllRunConfigurationsToggle" class="com.intellij.execution.ui.AllRunConfigurationsToggle"/>
-    <group id="RunConfigurationsActionGroup" class="com.intellij.execution.ui.RunConfigurationsActionGroup"/>
-
-    <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
-      <reference id="ExecutionTargets"/>
-      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
-    </group>
-
     <action id="FileChooser.LightEditGotoOpenedFile"
             class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
             icon="AllIcons.General.Locate">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
-    </action>
-
-    <action class="com.intellij.execution.actions.ActivateRunToolWindowAction" id="ActivateRunToolWindow">
-      <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
 
     <action class="com.intellij.ide.hierarchy.actions.ActivateHierarchyToolWindowAction" id="ActivateHierarchyToolWindow">

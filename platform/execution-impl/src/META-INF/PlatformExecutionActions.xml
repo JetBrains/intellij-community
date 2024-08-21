@@ -13,6 +13,13 @@
 
     <action id="ExecutionTargets" class="com.intellij.execution.actions.ExecutionTargetComboBoxAction"/>
 
+    <action id="RunConfigurationTemplatesForNewProjects"
+            class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction">
+      <override-text place="MainMenu"/>
+      <add-to-group group-id="FileOtherSettingsGroup" anchor="before" relative-to-action="FileSettingsGroup"/>
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="WelcomeScreen.Configure.Import"/>
+    </action>
+
     <group id="ExecutionTargets.Additional" searchable="false"/>
 
     <group id="RunToolbarSlotContextMenuGroup" popup="false">
