@@ -101,10 +101,7 @@
           <separator/>
           <action id="ChangesView.CreatePatch" class="com.intellij.openapi.vcs.changes.actions.CreatePatchAction"
                   icon="AllIcons.Vcs.Patch"/>
-          <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction">
-            <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ProjectViewEditSource" anchor="after"/>
-            <add-to-group group-id="NavbarPopupMenu" relative-to-action="EditSource" anchor="after"/>
-          </action>
+          <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction"/>
           <action id="ChangesView.ApplyPatchFromClipboard" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchFromClipboardAction"/>
           <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction" icon="com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons.Shelve"/>
         </group>

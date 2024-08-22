@@ -836,6 +836,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/dvcs-impl/intellij.platform.vcs.dvcs.impl.iml" filepath="$PROJECT_DIR$/platform/dvcs-impl/intellij.platform.vcs.dvcs.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-impl/intellij.platform.vcs.impl.iml" filepath="$PROJECT_DIR$/platform/vcs-impl/intellij.platform.vcs.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-impl/exec/intellij.platform.vcs.impl.exec.iml" filepath="$PROJECT_DIR$/platform/vcs-impl/exec/intellij.platform.vcs.impl.exec.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/vcs-impl/lang/actions/intellij.platform.vcs.impl.lang.actions.iml" filepath="$PROJECT_DIR$/platform/vcs-impl/lang/actions/intellij.platform.vcs.impl.lang.actions.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/api/intellij.platform.vcs.log.iml" filepath="$PROJECT_DIR$/platform/vcs-log/api/intellij.platform.vcs.log.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/graph-api/intellij.platform.vcs.log.graph.iml" filepath="$PROJECT_DIR$/platform/vcs-log/graph-api/intellij.platform.vcs.log.graph.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/graph/intellij.platform.vcs.log.graph.impl.iml" filepath="$PROJECT_DIR$/platform/vcs-log/graph/intellij.platform.vcs.log.graph.impl.iml" />
