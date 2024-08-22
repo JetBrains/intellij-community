@@ -196,13 +196,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected void performAction(MouseEvent e) {
-    AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
+    ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
+    ActionUiKind uiKind = toolbar instanceof ActionUiKind o ? o : ActionUiKind.TOOLBAR;
+    AnActionEvent event = AnActionEvent.createEvent(getDataContext(), myPresentation, myPlace, uiKind, e);
     if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false) && isEnabled()) {
       ActionUtil.performDumbAwareWithCallbacks(myAction, event, () -> actionPerformed(event));
       if (event.getInputEvent() instanceof MouseEvent) {
         ToolbarClicksCollector.record(myAction, myPlace, e, event.getDataContext());
       }
-      ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
       if (toolbar != null) {
         toolbar.updateActionsAsync();
       }
@@ -316,7 +317,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
           " is not allowed on EDT", null, myAction.getClass()));
       }
     }
-    AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
+    ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
+    ActionUiKind uiKind = toolbar instanceof ActionUiKind o ? o : ActionUiKind.TOOLBAR;
+    AnActionEvent e = AnActionEvent.createEvent(getDataContext(), myPresentation, myPlace, uiKind, null);
     ActionUtil.performDumbAwareUpdate(myAction, e, false);
     updateToolTipText();
     updateIcon();

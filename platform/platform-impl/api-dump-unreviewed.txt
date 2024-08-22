@@ -10413,20 +10413,20 @@ f:com.intellij.openapi.actionSystem.ActionGroupUtil
 com.intellij.openapi.actionSystem.ActionUpdaterInterceptor
 - sf:Companion:com.intellij.openapi.actionSystem.ActionUpdaterInterceptor$Companion
 - allowsFastUpdate(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):Z
-- expandActionGroup(com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,Z,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- bs:expandActionGroup$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,Z,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- expandActionGroup(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- bs:expandActionGroup$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - getGroupChildren(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - bs:getGroupChildren$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- runUpdateSessionForInputEvent(java.util.List,java.lang.String,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- bs:runUpdateSessionForInputEvent$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,java.util.List,java.lang.String,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- runUpdateSessionForInputEvent(java.util.List,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- bs:runUpdateSessionForInputEvent$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,java.util.List,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - treatDefaultActionGroupAsDynamic():Z
 - updateAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - bs:updateAction$suspendImpl(com.intellij.openapi.actionSystem.ActionUpdaterInterceptor,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.actionSystem.ActionUpdaterInterceptor$Companion
-- f:expandActionGroup(com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,Z,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- f:expandActionGroup(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - f:getGroupChildren(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - f:isDefaultImpl():Z
-- f:runUpdateSessionForInputEvent(java.util.List,java.lang.String,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- f:runUpdateSessionForInputEvent(java.util.List,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - f:treatDefaultActionGroupAsDynamic():Z
 - f:updateAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.actionSystem.AnActionExtensionProvider
@@ -10705,6 +10705,7 @@ c:com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 - unregisterAction(java.lang.String):V
 f:com.intellij.openapi.actionSystem.impl.ActionMenu
 - com.intellij.ui.components.JBMenu
+- com.intellij.openapi.actionSystem.ActionUiKind$Popup
 - sf:ALWAYS_VISIBLE:com.intellij.openapi.util.Key
 - sf:Companion:com.intellij.openapi.actionSystem.impl.ActionMenu$Companion
 - sf:KEYBOARD_SHORTCUT_SUFFIX:com.intellij.openapi.util.Key
@@ -10719,6 +10720,7 @@ f:com.intellij.openapi.actionSystem.impl.ActionMenu
 - sf:isAligned():Z
 - sf:isAlignedInGroup():Z
 - f:isHeaderMenuItem():Z
+- isMainMenu():Z
 - f:isMainMenuPlace():Z
 - sf:isShowNoIcons():Z
 - sf:isShowNoIcons(com.intellij.openapi.actionSystem.AnAction):Z
@@ -13172,6 +13174,7 @@ c:com.intellij.openapi.editor.textarea.TextComponentEditorImpl
 Fa:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - com.intellij.openapi.Disposable$Default
 - com.intellij.openapi.actionSystem.ActionToolbar
+- com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - com.intellij.ui.switcher.QuickActionProvider
 - javax.swing.JPanel
@@ -24923,7 +24926,7 @@ c:com.intellij.ui.popup.ActionPopupStep
 - s:createActionItems(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions):java.util.List
 - s:createActionItems(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory):java.util.List
 - s:createActionsStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,java.util.function.Supplier,com.intellij.ui.popup.ActionPopupOptions):com.intellij.openapi.ui.popup.ListPopupStep
-- createAnActionEvent(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
+- createAnActionEvent(com.intellij.ui.popup.PopupFactoryImpl$ActionItem,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
 - getActionPlace():java.lang.String
 - getDefaultOptionIndex():I
 - getFinalRunnable():java.lang.Runnable

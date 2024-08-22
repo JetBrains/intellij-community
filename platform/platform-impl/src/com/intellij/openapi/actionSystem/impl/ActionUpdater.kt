@@ -79,8 +79,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   private val presentationFactory: PresentationFactory,
   private val dataContext: DataContext,
   val place: String,
-  private val contextMenuAction: Boolean,
-  private val toolbarAction: Boolean,
+  private val uiKind: ActionUiKind,
   private val edtDispatcher: CoroutineDispatcher,
   private val actionFilter: ((AnAction) -> Boolean)? = null,
   private val eventTransform: ((AnActionEvent) -> AnActionEvent)? = null) {
@@ -231,14 +230,14 @@ internal class ActionUpdater @JvmOverloads constructor(
     edtCallsCount = 0
     edtWaitNanos = 0
     val job = currentCoroutineContext().job
-    val targetJobs = if (toolbarAction) ourToolbarJobs else ourOtherJobs
+    val targetJobs = if (uiKind is ActionUiKind.Toolbar) ourToolbarJobs else ourOtherJobs
     targetJobs.add(job)
     try {
       if (testDelayMillis > 0) {
         delay(testDelayMillis.toLong())
       }
       val result = ActionUpdaterInterceptor.expandActionGroup(
-        presentationFactory, dataContext, place, group, toolbarAction, asUpdateSession()) {
+        group, dataContext, place, uiKind, presentationFactory, asUpdateSession()) {
         removeUnnecessarySeparators(doExpandActionGroup(group, false))
       }
       computeOnEdt {
@@ -411,8 +410,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   @Suppress("unused")
   private fun createActionEvent(element: OpElement, presentation: Presentation): AnActionEvent {
     val event = AnActionEvent(
-      null, dataContext, place, presentation,
-      actionManager, 0, contextMenuAction, toolbarAction).let {
+      dataContext, presentation, place, uiKind, null, 0, actionManager).let {
       eventTransform?.invoke(it) ?: it
     }
     event.updateSession = asUpdateSession()

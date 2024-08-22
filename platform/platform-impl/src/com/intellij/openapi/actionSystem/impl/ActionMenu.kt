@@ -33,7 +33,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBMenu
 import com.intellij.ui.icons.getMenuBarIcon
-import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.plaf.beg.BegMenuItemUI
 import com.intellij.ui.plaf.beg.IdeaMenuUI
 import com.intellij.util.FontUtil
@@ -63,7 +62,8 @@ class ActionMenu constructor(private val context: DataContext?,
                              private val presentationFactory: PresentationFactory,
                              private var isMnemonicEnabled: Boolean,
                              private val useDarkIcons: Boolean,
-                             val isHeaderMenuItem: Boolean = false) : JBMenu() {
+                             val isHeaderMenuItem: Boolean = false
+) : JBMenu(), ActionUiKind.Popup {
   private val group = createActionRef(group)
   private val presentation = presentationFactory.getPresentation(group)
 
@@ -149,6 +149,8 @@ class ActionMenu constructor(private val context: DataContext?,
       frame?.getStatusBar()?.setInfo(if (isIncluded) description else null)
     }
   }
+
+  override fun isMainMenu(): Boolean = isMainMenuPlace
 
   override fun getPopupMenu(): JPopupMenu {
     var specialMenu = specialMenu
@@ -420,16 +422,12 @@ class ActionMenu constructor(private val context: DataContext?,
 
   fun fillMenu() {
     val context = getDataContext()
-    val isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
-    Utils.fillMenu(group = group.getAction(),
-                   component = this,
-                   nativePeer = null,
+    Utils.fillMenu(uiKind = this,
+                   group = group.getAction(),
                    enableMnemonics = isMnemonicEnabled,
                    presentationFactory = presentationFactory,
                    context = context,
                    place = place,
-                   isWindowMenu = true,
-                   useDarkIcons = isDarkMenu,
                    progressPoint = RelativePoint.getNorthEastOf(this)) { !isSelected }
   }
 }

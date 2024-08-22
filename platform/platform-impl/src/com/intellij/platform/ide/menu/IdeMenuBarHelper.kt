@@ -177,7 +177,7 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
       presentationFactory = presentationFactory,
       dataContext = dataContext,
       place = ActionPlaces.MAIN_MENU,
-      isToolbarAction = false,
+      uiKind = ActionUiKind.MAIN_MENU,
       fastTrack = isFirstUpdate,
     )
   }.filterIsInstance<ActionGroup>()

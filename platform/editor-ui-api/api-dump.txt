@@ -1158,6 +1158,19 @@ com.intellij.openapi.actionSystem.ActionToolbar
 com.intellij.openapi.actionSystem.ActionToolbarListener
 - java.util.EventListener
 - actionsUpdated():V
+com.intellij.openapi.actionSystem.ActionUiKind
+- sf:Companion:com.intellij.openapi.actionSystem.ActionUiKind$Companion
+- sf:MAIN_MENU:com.intellij.openapi.actionSystem.ActionUiKind$Popup
+- sf:NONE:com.intellij.openapi.actionSystem.ActionUiKind
+- sf:POPUP:com.intellij.openapi.actionSystem.ActionUiKind$Popup
+- sf:TOOLBAR:com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
+f:com.intellij.openapi.actionSystem.ActionUiKind$Companion
+com.intellij.openapi.actionSystem.ActionUiKind$Popup
+- com.intellij.openapi.actionSystem.ActionUiKind
+- isMainMenu():Z
+com.intellij.openapi.actionSystem.ActionUiKind$Toolbar
+- com.intellij.openapi.actionSystem.ActionUiKind
+- isHorizontal():Z
 e:com.intellij.openapi.actionSystem.ActionUpdateThread
 - java.lang.Enum
 - sf:BGT:com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -1211,9 +1224,11 @@ a:com.intellij.openapi.actionSystem.AnAction
 - useSmallerFontForTextInToolbar():Z
 c:com.intellij.openapi.actionSystem.AnActionEvent
 - com.intellij.ui.PlaceProvider
+- <init>(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.Presentation,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,java.awt.event.InputEvent,I,com.intellij.openapi.actionSystem.ActionManager):V
 - <init>(java.awt.event.InputEvent,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.ActionManager,I):V
 - <init>(java.awt.event.InputEvent,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.ActionManager,I,Z,Z):V
 - accept(com.intellij.openapi.actionSystem.AnActionEventVisitor):V
+- s:createEvent(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.Presentation,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromAnAction(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent,java.lang.String,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromDataContext(java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromInputEvent(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent,java.lang.String):com.intellij.openapi.actionSystem.AnActionEvent
@@ -1229,6 +1244,7 @@ c:com.intellij.openapi.actionSystem.AnActionEvent
 - getPresentation():com.intellij.openapi.actionSystem.Presentation
 - getProject():com.intellij.openapi.project.Project
 - getRequiredData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+- getUiKind():com.intellij.openapi.actionSystem.ActionUiKind
 - getUpdateSession():com.intellij.openapi.actionSystem.UpdateSession
 - isFromActionToolbar():Z
 - isFromContextMenu():Z

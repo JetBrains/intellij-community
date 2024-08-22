@@ -170,7 +170,7 @@ public final class CachedIntentions implements IntentionContainer {
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
       group, presentationFactory,
-      EditorUtil.getEditorDataContext(myEditor), ActionPlaces.INTENTION_MENU);
+      EditorUtil.getEditorDataContext(myEditor), ActionPlaces.INTENTION_MENU, ActionUiKind.POPUP);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;
     boolean hasSeparatorAbove = false;

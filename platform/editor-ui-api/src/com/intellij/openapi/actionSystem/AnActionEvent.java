@@ -29,33 +29,24 @@ public class AnActionEvent implements PlaceProvider {
   private final @NotNull ActionManager myActionManager;
   private final @NotNull DataContext myDataContext;
   private final @NotNull @NonNls String myPlace;
+  private final @NotNull ActionUiKind myUiKind;
   private final @NotNull Presentation myPresentation;
   @JdkConstants.InputEventMask
   private final int myModifiers;
-  private final boolean myIsContextMenuAction;
-  private final boolean myIsActionToolbar;
 
   private @NotNull UpdateSession myUpdateSession = UpdateSession.EMPTY;
 
-  /**
-   * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
-   *                                  {@code place} is {@code null} or {@code presentation} is {@code null}
-   * @see ActionManager#getInstance()
-   */
   public AnActionEvent(@Nullable InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
                        @NotNull Presentation presentation,
                        @NotNull ActionManager actionManager,
                        @JdkConstants.InputEventMask int modifiers) {
-    this(inputEvent, dataContext, place, presentation, actionManager, modifiers, false, false);
+    this(dataContext, presentation, place, ActionUiKind.NONE, inputEvent, modifiers, actionManager);
   }
 
-  /**
-   * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
-   *                                  {@code place} is {@code null} or {@code presentation} is {@code null}
-   * @see ActionManager#getInstance()
-   */
+  /** @deprecated Use {@link #AnActionEvent(DataContext, Presentation, String, ActionUiKind, InputEvent, int, ActionManager)} instead. */
+  @Deprecated(forRemoval = true)
   public AnActionEvent(@Nullable InputEvent inputEvent,
                        @NotNull DataContext dataContext,
                        @NotNull @NonNls String place,
@@ -64,6 +55,20 @@ public class AnActionEvent implements PlaceProvider {
                        @JdkConstants.InputEventMask int modifiers,
                        boolean isContextMenuAction,
                        boolean isActionToolbar) {
+    this(dataContext, presentation, place,
+         isContextMenuAction ? ActionUiKind.POPUP :
+         isActionToolbar ? ActionUiKind.TOOLBAR :
+         ActionUiKind.NONE,
+         inputEvent, modifiers, actionManager);
+  }
+
+  public AnActionEvent(@NotNull DataContext dataContext,
+                       @NotNull Presentation presentation,
+                       @NotNull @NonNls String place,
+                       @NotNull ActionUiKind uiKind,
+                       @Nullable InputEvent inputEvent,
+                       @JdkConstants.InputEventMask int modifiers,
+                       @NotNull ActionManager actionManager) {
     presentation.assertNotTemplatePresentation();
     myInputEvent = inputEvent;
     myActionManager = actionManager;
@@ -71,25 +76,33 @@ public class AnActionEvent implements PlaceProvider {
     myPlace = place;
     myPresentation = presentation;
     myModifiers = modifiers;
-    myIsContextMenuAction = isContextMenuAction;
-    myIsActionToolbar = isActionToolbar;
+    myUiKind = uiKind;
   }
 
   public @NotNull AnActionEvent withDataContext(@NotNull DataContext dataContext) {
     if (myDataContext == dataContext) return this;
-    AnActionEvent event = new AnActionEvent(myInputEvent, dataContext, myPlace, myPresentation,
-                                            myActionManager, myModifiers, myIsContextMenuAction, myIsActionToolbar);
+    AnActionEvent event = new AnActionEvent(dataContext, myPresentation, myPlace, myUiKind, myInputEvent,
+                                            myModifiers, myActionManager);
     event.setUpdateSession(myUpdateSession);
     return event;
   }
 
-  /**
-   * @deprecated use {@link #createFromInputEvent(InputEvent, String, Presentation, DataContext, boolean, boolean)}
-   */
+  public static @NotNull AnActionEvent createEvent(@NotNull DataContext dataContext,
+                                                   @Nullable Presentation presentation,
+                                                   @NotNull String place,
+                                                   @NotNull ActionUiKind uiKind,
+                                                   @Nullable InputEvent event) {
+    //noinspection MagicConstant
+    return new AnActionEvent(dataContext, presentation == null ? new Presentation() : presentation,
+                             place, uiKind, event, event == null ? 0 : event.getModifiers(),
+                             ActionManager.getInstance());
+  }
+
+  /** @deprecated use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} */
   @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromInputEvent(@NotNull AnAction action, @Nullable InputEvent event, @NotNull String place) {
-    DataContext context =
-      event == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(event.getComponent());
+    DataContext context = event == null ? DataManager.getInstance().getDataContext() :
+                          DataManager.getInstance().getDataContext(event.getComponent());
     return createFromAnAction(action, event, place, context);
   }
 
@@ -116,18 +129,21 @@ public class AnActionEvent implements PlaceProvider {
                                                             @NotNull String place,
                                                             @Nullable Presentation presentation,
                                                             @NotNull DataContext dataContext) {
-    return createFromInputEvent(event, place, presentation, dataContext, false, false);
+    return createEvent(dataContext, presentation, place, ActionUiKind.NONE, event);
   }
 
+  /** @deprecated Use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} */
+  @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromInputEvent(@Nullable InputEvent event,
                                                             @NotNull String place,
                                                             @Nullable Presentation presentation,
                                                             @NotNull DataContext dataContext,
                                                             boolean isContextMenuAction,
                                                             boolean isToolbarAction) {
-    return new AnActionEvent(event, dataContext, place, presentation == null ? new Presentation() : presentation,
-                             ActionManager.getInstance(),
-                             event == null ? 0 : event.getModifiers(), isContextMenuAction, isToolbarAction);
+    ActionUiKind uiKind = isContextMenuAction ? ActionUiKind.POPUP :
+                          isToolbarAction ? ActionUiKind.TOOLBAR :
+                          ActionUiKind.NONE;
+    return createEvent(dataContext, presentation, place, uiKind, event);
   }
 
   /**
@@ -227,17 +243,31 @@ public class AnActionEvent implements PlaceProvider {
     return myPlace;
   }
 
-  public boolean isFromActionToolbar() {
-    return myIsActionToolbar;
+  /**
+   * Returns the kind of UI for which the event is created - a toolbar, a menu, a popup.
+   */
+  public @NotNull ActionUiKind getUiKind() {
+    return myUiKind;
   }
 
   /**
-   * @deprecated This method returns {@code true} for both main menu and context menu invocations. Use {@link ActionPlaces#isPopupPlace(String)}
-   * instead to get results only from context menus.
+   * @see #getUiKind()
+   * @see ActionUiKind#TOOLBAR
+   */
+  public boolean isFromActionToolbar() {
+    return myUiKind instanceof ActionUiKind.Toolbar;
+  }
+
+  /**
+   * @deprecated This method returns {@code true} for both main menu and context menu invocations.
+   * Use {@link #getUiKind()} instead.
+   *
+   * @see #getUiKind()
+   * @see ActionUiKind#POPUP
    */
   @Deprecated(forRemoval = true)
   public boolean isFromContextMenu() {
-    return myIsContextMenuAction;
+    return myUiKind instanceof ActionUiKind.Popup;
   }
 
   /**

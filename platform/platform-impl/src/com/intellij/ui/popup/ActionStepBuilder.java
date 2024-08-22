@@ -93,7 +93,7 @@ final class ActionStepBuilder {
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
-      actionGroup, myPresentationFactory, myDataContext, myActionPlace);
+      actionGroup, myPresentationFactory, myDataContext, myActionPlace, ActionUiKind.POPUP);
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
       newVisibleActions, o -> o instanceof Separator || myPresentationFactory.getPresentation(o).isEnabled());
     calcMaxIconSize(filtered);

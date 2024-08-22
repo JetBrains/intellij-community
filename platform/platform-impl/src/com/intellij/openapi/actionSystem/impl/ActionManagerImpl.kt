@@ -1235,7 +1235,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     else {
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
         try {
-          tryToExecuteSuspend(action, place, contextComponent, inputEvent, result)
+          tryToExecuteSuspend(action, place, contextComponent, inputEvent, this@ActionManagerImpl, result)
         }
         finally {
           if (!result.isProcessed) {
@@ -1382,6 +1382,7 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
                                         place: String,
                                         contextComponent: Component?,
                                         inputEvent: InputEvent?,
+                                        actionManager: ActionManagerImpl,
                                         result: ActionCallback) {
   (if (contextComponent != null) IdeFocusManager.findInstanceByComponent(contextComponent)
   else IdeFocusManager.getGlobalInstance()).awaitFocusSettlesDown()
@@ -1391,11 +1392,12 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
   }
   val wrappedContext = Utils.createAsyncDataContext(dataContext)
 
+  val uiKind = ActionUiKind.NONE
   val presentationFactory = PresentationFactory()
-  Utils.expandActionGroupSuspend(DefaultActionGroup(action), presentationFactory, wrappedContext, place, false, false)
+  Utils.expandActionGroupSuspend(DefaultActionGroup(action), presentationFactory, wrappedContext, place, uiKind, false)
   val presentation = presentationFactory.getPresentation(action)
   val event = if (presentation.isEnabled) AnActionEvent(
-    inputEvent, wrappedContext, place, presentation, ActionManager.getInstance(), 0, false, false)
+    wrappedContext, presentation, place, uiKind, inputEvent, 0, actionManager)
   else null
   if (event != null && event.presentation.isEnabled) {
     //todo fix all clients and move locks into them

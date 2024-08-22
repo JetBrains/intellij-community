@@ -70,7 +70,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider, AlphaAnimated {
+public class ActionToolbarImpl extends JPanel implements ActionToolbar, ActionUiKind.Toolbar, QuickActionProvider, AlphaAnimated {
   private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
 
   private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
@@ -246,6 +246,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     installPopupHandler(customizable, null, null);
     UiInspectorUtil.registerProvider(this, () -> UiInspectorActionUtil.collectActionGroupInfo(
       "Toolbar", myActionGroup, myPlace, myPresentationFactory));
+  }
+
+  @Override
+  public boolean isHorizontal() {
+    return getOrientation() == SwingConstants.HORIZONTAL;
   }
 
   protected @NotNull PresentationFactory createPresentationFactory() {
@@ -1014,7 +1019,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       putClientProperty(SUPPRESS_FAST_TRACK, true);
     }
     CancellablePromise<List<AnAction>> promise = myLastUpdate = Utils.expandActionGroupAsync(
-      myActionGroup, myPresentationFactory, dataContext, myPlace, true, firstTimeFastTrack || isUnitTestMode);
+      myActionGroup, myPresentationFactory, dataContext, myPlace, this, firstTimeFastTrack || isUnitTestMode);
     if (promise.isSucceeded()) {
       myLastUpdate = null;
       List<AnAction> fastActions;

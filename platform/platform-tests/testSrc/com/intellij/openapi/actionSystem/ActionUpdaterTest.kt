@@ -153,7 +153,7 @@ class ActionUpdaterTest {
         val count = IdeEventQueue.getInstance().eventCount
         val result = async(start = CoroutineStart.UNDISPATCHED) {
           Utils.expandActionGroupSuspend(group, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                         ActionPlaces.UNKNOWN, false, fastTrack = true)
+                                         ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = true)
         }
         jobCompleted = result.isCompleted
         assertEquals(count, IdeEventQueue.getInstance().eventCount, "Expand must complete in a single event")
@@ -197,7 +197,7 @@ class ActionUpdaterTest {
     withContext(Dispatchers.EDT) {
       val result = async(start = CoroutineStart.UNDISPATCHED) {
         Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                       ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                       ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
       }
       assertFalse(result.isCompleted, "The update must still be in progress")
       semaphore.acquire()
@@ -236,7 +236,7 @@ class ActionUpdaterTest {
     val actions = try {
       withContext(Dispatchers.EDT) {
         Utils.expandActionGroupSuspend (actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                        ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                        ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
       }
     }
     catch (ex: Exception) {
@@ -261,7 +261,7 @@ class ActionUpdaterTest {
       LaterInvocator.enterModal(modalEntity)
       try {
         Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                       ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                       ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
       }
       finally {
         LaterInvocator.leaveModal(modalEntity)
@@ -291,7 +291,7 @@ class ActionUpdaterTest {
     }
     val actions = withContext(Dispatchers.EDT + MyContextElement(1)) {
       Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                     ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
     }
     assertEquals(1, actions.size)
   }
@@ -311,7 +311,7 @@ class ActionUpdaterTest {
     }
     val actions = withContext(Dispatchers.EDT) {
       Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                     ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
     }
     assertEquals(2, actions.size)
   }
@@ -348,7 +348,7 @@ class ActionUpdaterTest {
         retries.setValue(10)
         withContext(Dispatchers.EDT) {
           Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                         ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                         ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
         }
       }
       catch (_: TestLoggerAssertionError) {
@@ -396,7 +396,7 @@ class ActionUpdaterTest {
     }
     val actions = withContext(Dispatchers.EDT) {
       Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                     ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
     }
     assertEquals(1, actions.size)
   }
@@ -425,7 +425,7 @@ class ActionUpdaterTest {
     try {
       withContext(Dispatchers.EDT) {
         Utils.expandActionGroupSuspend(group, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                       ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                       ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
       }
       fail("Expected to fail")
     }
