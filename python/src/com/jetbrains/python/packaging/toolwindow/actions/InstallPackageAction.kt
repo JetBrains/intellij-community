@@ -8,7 +8,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.progressBar
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackage
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
@@ -20,20 +19,13 @@ internal class InstallPackageAction : DumbAwareAction() {
     val project = e.project ?: return
     val pkg = e.selectedPackage as? InstallablePackage ?: return
 
-    val service = PyPackagingToolWindowService.getInstance(project)
 
-    val progressBar = e.progressBar
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      progressBar?.isVisible = true
-      try {
-        val details = service.detailsForPackage(pkg)
-        withContext(Dispatchers.Main) {
-          val popup = PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project)
-          popup.show(RelativePoint(e.inputEvent as MouseEvent))
-        }
-      }
-      finally {
-        progressBar?.isVisible = false
+      val service = PyPackagingToolWindowService.getInstance(project)
+      val details = service.detailsForPackage(pkg)
+      withContext(Dispatchers.Main) {
+        val popup = PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project)
+        popup.show(RelativePoint(e.inputEvent as MouseEvent))
       }
 
     }

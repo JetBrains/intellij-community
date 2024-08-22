@@ -9,7 +9,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.progressBar
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackage
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
@@ -22,18 +21,11 @@ internal class ChangeVersionPackageAction : DumbAwareAction() {
     val project = e.project ?: return
     val pkg = e.selectedPackage as? InstalledPackage ?: return
     val service = PyPackagingToolWindowService.getInstance(project)
-    val progressBar = e.progressBar
     PyPackageCoroutine.getIoScope(project).launch {
-      progressBar?.isVisible = true
-      try {
-        val details = service.detailsForPackage(pkg)
-        withContext(Dispatchers.EDT) {
-          PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project).show(
-            RelativePoint(e.inputEvent as MouseEvent))
-        }
-      }
-      finally {
-        progressBar?.isVisible = false
+      val details = service.detailsForPackage(pkg)
+      withContext(Dispatchers.EDT) {
+        PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project).show(
+          RelativePoint(e.inputEvent as MouseEvent))
       }
     }
   }
