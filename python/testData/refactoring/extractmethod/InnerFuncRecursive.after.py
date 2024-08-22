@@ -7,5 +7,3 @@ class Test:
         def extracted(b_new):
             x = self.method(b_new)
             return x
-
-        return 0

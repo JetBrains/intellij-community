@@ -8,5 +8,3 @@ class Test:
         def extracted(c_new):
             y = self.a + b * c_new
             return y
-
-        pass
