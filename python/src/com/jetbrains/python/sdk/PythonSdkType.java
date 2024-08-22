@@ -135,7 +135,7 @@ public final class PythonSdkType extends SdkType {
         if (files.length != 0) {
           VirtualFile file = files[0];
           if (!isLocatedInWsl(file) && !isValidSdkHome(file.getPath())) {
-            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.name", file.getName()));
+            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.selected", file.getName()));
           }
         }
       }

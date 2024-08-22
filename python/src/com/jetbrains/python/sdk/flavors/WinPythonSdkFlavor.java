@@ -99,12 +99,12 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   }
 
   @Override
-  public boolean isValidSdkHome(final @NotNull String path) {
-    if (super.isValidSdkHome(path)) {
+  public boolean isValidSdkPath(final @NotNull Path path) {
+    if (super.isValidSdkPath(path)) {
       return true;
     }
 
-    return isLocalPathValidPython(Path.of(path));
+    return isLocalPathValidPython(path);
   }
 
   private boolean isLocalPathValidPython(@NotNull Path path) {
@@ -113,7 +113,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     }
 
     String product = getAppxProduct(path);
-    return product != null && product.contains(APPX_PRODUCT) && isValidSdkPath(path.toFile());
+    return product != null && product.contains(APPX_PRODUCT) && isValidSdkPath(path);
   }
 
   @Override
