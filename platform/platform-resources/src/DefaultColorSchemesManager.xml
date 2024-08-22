@@ -542,6 +542,7 @@
           <option name="FOREGROUND" value="808080"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
+          <option name="ERROR_STRIPE_COLOR" value="ebc700" deuteranopia="ffd400" protanopia="ffd400"/>
         </value>
       </option>
 
@@ -2504,6 +2505,7 @@
       <option name="NOT_USED_ELEMENT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="72737A" />
+          <option name="ERROR_STRIPE_COLOR" value="be9117" deuteranopia="806a00" protanopia="806a00"/>
         </value>
       </option>
       <option name="PROPERTIES.INVALID_STRING_ESCAPE">
