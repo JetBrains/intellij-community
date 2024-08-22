@@ -1610,6 +1610,7 @@ f:com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 - s:getSettingsEP():com.intellij.openapi.extensions.ExtensionPointName
 - getState():com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl$SettingsState
 - loadState(com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl$SettingsState):V
+- noStateLoaded():V
 c:com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl$SettingsState
 - specificStates:java.util.List
 - <init>():V

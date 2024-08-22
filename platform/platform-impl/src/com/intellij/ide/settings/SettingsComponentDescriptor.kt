@@ -6,7 +6,9 @@ import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 class SettingsComponentDescriptor: PluginAware {
   @Attribute("service")
   @RequiredElement

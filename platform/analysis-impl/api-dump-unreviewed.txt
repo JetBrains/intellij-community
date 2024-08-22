@@ -176,6 +176,7 @@ c:com.intellij.codeInsight.CodeInsightSettings
 - getState():org.jdom.Element
 - isSelectAutopopupSuggestionsByChars():Z
 - loadState(org.jdom.Element):V
+- noStateLoaded():V
 - setBackspaceMode(com.intellij.codeInsight.editorActions.SmartBackspaceMode):V
 - setCompletionCaseSensitive(I):V
 - setSelectAutopopupSuggestionsByChars(Z):V

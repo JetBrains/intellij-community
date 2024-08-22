@@ -7855,6 +7855,18 @@ f:com.intellij.ide.projectWizard.NewProjectWizardConstants$Language
 - sf:RUBY:java.lang.String
 - sf:RUST:java.lang.String
 - sf:SCALA:java.lang.String
+*f:com.intellij.ide.settings.SettingsComponentDescriptor
+- com.intellij.openapi.extensions.PluginAware
+- *sf:Companion:com.intellij.ide.settings.SettingsComponentDescriptor$Companion
+- implementationClass:java.lang.String
+- <init>():V
+- f:getImplementationClass():java.lang.String
+- f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
+- f:setImplementationClass(java.lang.String):V
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+*f:com.intellij.ide.settings.SettingsComponentDescriptor$Companion
+- f:getAPPLICATION_EP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:getPROJECT_EP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.ide.startup.ServiceNotReadyException
 - com.intellij.openapi.progress.ProcessCanceledException
 - <init>():V
@@ -10217,6 +10229,7 @@ f:com.intellij.notification.impl.NotificationsConfigurationImpl
 - hasToolWindowCapability(java.lang.String):Z
 - isRegistered(java.lang.String):Z
 - loadState(org.jdom.Element):V
+- noStateLoaded():V
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType):V
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z):V
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,Z):V
