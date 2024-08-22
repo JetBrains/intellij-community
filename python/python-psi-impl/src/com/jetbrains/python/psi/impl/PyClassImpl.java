@@ -902,7 +902,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
           return null;
         }
-        return callable.getCallType(receiver, buildArgumentsToParametersMap(receiver, callable, context), context);
+        return callable.getCallType(receiver, null, buildArgumentsToParametersMap(receiver, callable, context), context);
       }
       return null;
     }

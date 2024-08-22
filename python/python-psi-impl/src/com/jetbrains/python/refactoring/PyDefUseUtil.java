@@ -105,7 +105,7 @@ public final class PyDefUseUtil {
                                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
                                                        ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
                                                        : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
-                                      if (newContext.getType(typedElement) instanceof PyNarrowedType narrowedType) {
+                                      if (newContext.getType(typedElement) instanceof PyNarrowedType narrowedType && narrowedType.isBound()) {
                                         if (narrowedType.getQname().equals(varName)) {
                                           pendingTypeGuard.put(narrowedType.getOriginal(), conditionalInstruction);
                                         }

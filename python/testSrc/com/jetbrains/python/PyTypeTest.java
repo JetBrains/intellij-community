@@ -304,6 +304,15 @@ public class PyTypeTest extends PyTestCase {
                      expr = x""");
   }
 
+  public void testIsInstance2() {
+    doTest("str",
+           """
+             x = ""
+             if isinstance(x, (1, "")):
+                 expr = x
+             """);
+  }
+
   // PY-4383
   public void testAssertIsInstance() {
     doTest("int",
