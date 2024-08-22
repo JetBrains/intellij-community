@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.util
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -8,17 +8,11 @@ import com.intellij.util.withScheme
 import java.net.URI
 
 object URIUtil {
-
   fun normalizeAndValidateHttpUri(uri: String): String {
-    val normalized = addHttpsSchemaIfMissing(uri).removeSuffix("/")
+    val normalized = URLUtil.addSchemaIfMissing(uri).removeSuffix("/")
     require(normalized.startsWith(URLUtil.HTTP_PROTOCOL)) { CollaborationToolsBundle.message("login.server.invalid") }
     URI.create(normalized)
     return normalized
-  }
-
-  private fun addHttpsSchemaIfMissing(uri: String): String {
-    if (uri.contains(URLUtil.SCHEME_SEPARATOR)) return uri
-    return "${URLUtil.HTTPS_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}$uri"
   }
 
   fun isValidHttpUri(uri: String): Boolean {
@@ -27,7 +21,7 @@ object URIUtil {
       normalizeAndValidateHttpUri(uri)
       true
     }
-    catch (e: Throwable) {
+    catch (_: Throwable) {
       false
     }
   }

@@ -524,27 +524,13 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     if (submitter == null && plugin != null && !PluginManagerCore.isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.isVisible = true
       val vendor = plugin.vendor
-      var vendorUrl = plugin.vendorUrl?.let {
-        when {
-          isValidUrl(it) -> it
-          !it.contains(URLUtil.SCHEME_SEPARATOR) -> ("${URLUtil.HTTPS_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}${it}").takeIf(::isValidUrl)
-          else -> null
-        }
-      }
-      if (vendorUrl.isNullOrBlank()) {
-        val vendorEmail = plugin.vendorEmail
-        if (!vendorEmail.isNullOrBlank()) {
-          vendorUrl = ("mailto:" + vendorEmail.removePrefix("mailto:")).takeIf(::isValidUrl)
-        }
-      }
-      if (!vendor.isNullOrEmpty() && vendorUrl != null) {
-        myForeignPluginWarningLabel.text = DiagnosticBundle.message("error.dialog.foreign.plugin.warning", vendor, vendorUrl)
-      }
-      else if (vendorUrl != null) {
-        myForeignPluginWarningLabel.text = DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unnamed", vendorUrl)
-      }
-      else {
-        myForeignPluginWarningLabel.text = DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unknown")
+      val vendorUrl =
+        plugin.vendorUrl?.trim()?.let { URLUtil.addSchemaIfMissing(it) }?.takeIf(::isValidUrl)
+        ?: plugin.vendorEmail?.trim()?.let { "mailto:" + it.removePrefix("mailto:") }?.takeIf(::isValidUrl)
+      myForeignPluginWarningLabel.text = when {
+        !vendor.isNullOrEmpty() && vendorUrl != null -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning", vendor, vendorUrl)
+        vendorUrl != null -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unnamed", vendorUrl)
+        else -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unknown")
       }
     }
     else {

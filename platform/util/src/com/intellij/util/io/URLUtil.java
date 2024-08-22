@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -345,5 +345,9 @@ public final class URLUtil {
     catch (URISyntaxException e) {
       return query;
     }
+  }
+
+  public static @NotNull String addSchemaIfMissing(@NotNull String url) {
+    return url.contains(SCHEME_SEPARATOR) ? url : HTTPS_PROTOCOL + SCHEME_SEPARATOR + url;
   }
 }

@@ -5087,6 +5087,7 @@ f:com.intellij.util.io.URLUtil
 - sf:SCHEME_SEPARATOR:java.lang.String
 - sf:URL_PATTERN:java.util.regex.Pattern
 - sf:URL_WITH_PARENS_PATTERN:java.util.regex.Pattern
+- s:addSchemaIfMissing(java.lang.String):java.lang.String
 - s:canContainUrl(java.lang.String):Z
 - s:containsScheme(java.lang.String):Z
 - s:decode(java.lang.String):java.lang.String
