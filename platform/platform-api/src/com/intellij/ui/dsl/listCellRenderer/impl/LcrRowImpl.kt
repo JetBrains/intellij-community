@@ -113,40 +113,15 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     applyRowStyle(result)
 
     for ((i, cell) in cells.withIndex()) {
-      val component = result.content.getComponent(i) as JComponent
-      val constraints = result.contentLayout.getConstraints(component)!!
+      val component = result.applyCellConstraints(i, cell, if (i == 0) 0 else getGapValue(cell.gapBefore))
       cell.apply(component, enabled)
-
-      // Row height is usually even. If components height is odd the component cannot be placed right in center.
-      // Because of rounding it's placed a little bit higher which looks not good, especially for text. This patch fixes that
-      val roundingTopGapPatch = component.preferredSize.height % 2
-      val gaps = UnscaledGaps(top = roundingTopGapPatch, left = if (i == 0) 0 else getGapValue(cell.gapBefore))
-      val horizontalAlign = when (cell.initParams.align) {
-        null, LcrInitParams.Align.LEFT -> HorizontalAlign.LEFT
-        LcrInitParams.Align.CENTER -> HorizontalAlign.CENTER
-        LcrInitParams.Align.RIGHT -> HorizontalAlign.RIGHT
-      }
-      val baselineAlign = cell.baselineAlign
-
-      if (constraints.gaps != gaps || constraints.horizontalAlign != horizontalAlign || constraints.baselineAlign != baselineAlign) {
-        val newConstrains = constraints.copy(gaps = gaps, horizontalAlign = horizontalAlign, baselineAlign = baselineAlign)
-        result.contentLayout.setComponentConstrains(component, newConstrains)
-      }
-
-      val resizableColumn = cell.initParams.align != null
-      if (resizableColumn) {
-        result.contentLayout.rootGrid.resizableColumns += i
-      }
-      else {
-        result.contentLayout.rootGrid.resizableColumns -= i
-      }
 
       if (cell is LcrSimpleColoredTextImpl && cell.initParams.speedSearchHighlighting) {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, component as SimpleColoredComponent, true, isSelected)
       }
     }
 
-    result.accessibleContext.accessibleName = getAccessibleName(result.content.components)
+    result.applyAccessibleName()
 
     return result
   }
@@ -154,7 +129,6 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   private fun applyRowStyle(rendererPanel: RendererPanel) {
     val isComboBox = isComboBox(list)
     if (ExperimentalUI.isNewUI()) {
-      // Update height/insets every time, so IDE scaling is applied
       if (isComboBox && index == -1) {
         rendererPanel.initCollapsedComboBoxItem()
       }
@@ -196,16 +170,6 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       return null
     }
   }
-
-  @Nls
-  private fun getAccessibleName(components: Array<Component>): String {
-    val names = components
-      .map { it.accessibleContext.accessibleName?.trim() }
-      .filter { !it.isNullOrEmpty() }
-
-    // Comma gives a good pause between unrelated text for readers on Windows and macOS
-    return names.joinToString(", ")
-  }
 }
 
 private data class ListCellRendererParams<T>(
@@ -216,44 +180,47 @@ private data class ListCellRendererParams<T>(
   val hasFocus: Boolean,
 )
 
+/**
+ * Unique key for different row configurations
+ */
+private data class RowKey(val types: List<LcrCellBaseImpl.Type>)
+
 private class RendererCache {
 
-  private val cache = HashMap<List<LcrCellBaseImpl.Type>, RendererPanel>()
+  private val cache = HashMap<RowKey, RendererPanel>()
 
   fun getRootPanel(types: List<LcrCellBaseImpl.Type>): RendererPanel {
-    return cache[types] ?: createNewRootPanel(types)
-  }
-
-  private fun createNewRootPanel(key: List<LcrCellBaseImpl.Type>): RendererPanel {
-    val result = RendererPanel()
-    val builder = RowsGridBuilder(result.content)
-    builder.resizableRow()
-    for (type in key) {
-      builder.cell(type.createInstance())
+    val key = RowKey(types)
+    return cache.getOrPut(key) {
+      RendererPanel(key)
     }
-    cache[key.toList()] = result
-    return result
   }
 }
 
-private class RendererPanel : SelectablePanel(), KotlinUIDslRendererComponent {
+private class RendererPanel(key: RowKey) : SelectablePanel(), KotlinUIDslRendererComponent {
 
-  val contentLayout = GridLayout()
+  private val cellsLayout = GridLayout()
 
   /**
-   * Content panel allows trimming components that could go outside of selection. It's better to implement that on layout level later
+   * Cells panel allows trimming components that could go outside selection
    */
-  val content = JPanel(contentLayout)
+  private val cellsPanel = JPanel(cellsLayout)
 
   init {
-    content.isOpaque = false
+    cellsPanel.isOpaque = false
     layout = BorderLayout()
-    add(content, BorderLayout.CENTER)
+    add(cellsPanel, BorderLayout.CENTER)
+
+    val builder = RowsGridBuilder(cellsPanel)
+    builder.resizableRow()
+    for (type in key.types) {
+      builder.cell(type.createInstance())
+    }
   }
 
   override fun getCopyText(): String? {
     // Find the first component with non-trivial text
-    for (component in content.components) {
+    for (component in cellsPanel.components) {
       val result = when (component) {
         is SimpleColoredComponent -> component.getCharSequence(true).toString()
         is JLabel -> component.text
@@ -270,8 +237,8 @@ private class RendererPanel : SelectablePanel(), KotlinUIDslRendererComponent {
 
   override fun getBaseline(width: Int, height: Int): Int {
     val patchedLabels = mutableListOf<Pair<JLabel, String>>()
-    val baselineComponents = content.components
-      .filter { contentLayout.getConstraints(it as JComponent)!!.baselineAlign }
+    val baselineComponents = cellsPanel.components
+      .filter { cellsLayout.getConstraints(it as JComponent)!!.baselineAlign }
 
     // JLabel doesn't have baseline if empty. Workaround similar like in BasicComboBoxUI.getBaseline method
     for (component in baselineComponents) {
@@ -282,12 +249,12 @@ private class RendererPanel : SelectablePanel(), KotlinUIDslRendererComponent {
     }
     setSize(width, height)
     doLayout()
-    content.doLayout()
+    cellsPanel.doLayout()
     var result = -1
     for (component in baselineComponents) {
       val componentBaseline = component.getBaseline(component.width, component.height)
       if (componentBaseline >= 0) {
-        result = max(result, content.y + component.y + componentBaseline)
+        result = max(result, cellsPanel.y + component.y + componentBaseline)
       }
     }
 
@@ -303,12 +270,12 @@ private class RendererPanel : SelectablePanel(), KotlinUIDslRendererComponent {
     super.setForeground(fg)
 
     @Suppress("SENSELESS_COMPARISON")
-    if (content == null) {
+    if (cellsPanel == null) {
       // Called while initialization
       return
     }
 
-    for (component in content.components) {
+    for (component in cellsPanel.components) {
       component.foreground = fg
     }
   }
@@ -320,6 +287,46 @@ private class RendererPanel : SelectablePanel(), KotlinUIDslRendererComponent {
       }
     }
     return accessibleContext
+  }
+
+  fun applyCellConstraints(i: Int, cell: LcrCellBaseImpl<*>, leftGap: Int): JComponent {
+    val result = cellsPanel.getComponent(i) as JComponent
+    val constraints = cellsLayout.getConstraints(result)!!
+
+    // Row height is usually even. If components height is odd the component cannot be placed right in center.
+    // Because of rounding it's placed a little bit higher which looks not good, especially for text. This patch fixes that
+    val roundingTopGapPatch = result.preferredSize.height % 2
+    val gaps = UnscaledGaps(top = roundingTopGapPatch, left = leftGap)
+    val horizontalAlign = when (cell.initParams.align) {
+      null, LcrInitParams.Align.LEFT -> HorizontalAlign.LEFT
+      LcrInitParams.Align.CENTER -> HorizontalAlign.CENTER
+      LcrInitParams.Align.RIGHT -> HorizontalAlign.RIGHT
+    }
+    val baselineAlign = cell.baselineAlign
+
+    if (constraints.gaps != gaps || constraints.horizontalAlign != horizontalAlign || constraints.baselineAlign != baselineAlign) {
+      val newConstrains = constraints.copy(gaps = gaps, horizontalAlign = horizontalAlign, baselineAlign = baselineAlign)
+      cellsLayout.setComponentConstrains(result, newConstrains)
+    }
+
+    val resizableColumn = cell.initParams.align != null
+    if (resizableColumn) {
+      cellsLayout.rootGrid.resizableColumns += i
+    }
+    else {
+      cellsLayout.rootGrid.resizableColumns -= i
+    }
+
+    return result
+  }
+
+  fun applyAccessibleName() {
+    val names = cellsPanel.components
+      .map { it.accessibleContext.accessibleName?.trim() }
+      .filter { !it.isNullOrEmpty() }
+
+    // Comma gives a good pause between unrelated text for readers on Windows and macOS
+    getAccessibleContext().accessibleName = names.joinToString(", ")
   }
 
   /**
@@ -336,6 +343,7 @@ private class RendererPanel : SelectablePanel(), KotlinUIDslRendererComponent {
   }
 
   fun initItem(isComboBox: Boolean, background: Color?, selectionColor: Color?) {
+    // Update height/insets every time, so IDE scaling is applied
     isOpaque = true
     selectionArc = 8
     if (isComboBox) {

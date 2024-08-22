@@ -14,11 +14,12 @@ internal annotation class LcrDslMarker
  * * Rectangular selection and correct insets for old UI
  * * Rounded selection, correct insets and height for new UI
  * * Uses correct colors for text in selected/unselected state
+ * * Uses gray text and icons in disabled state
  * * Colored text has different color in selected state
  * * Supports IDE scaling and compact mode
  * * Provides accessibility details for rows: by default it is concatenation of accessible names of all visible cells
  *
- * Because of all described nuances it is hard to write correct own render, so using Kotlin UI DSL is highly recommended
+ * Because of all described nuances, it is hard to write correct own render. So using Kotlin UI DSL is highly recommended
  */
 fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
   return UiDslRendererProvider.getRenderer(init)

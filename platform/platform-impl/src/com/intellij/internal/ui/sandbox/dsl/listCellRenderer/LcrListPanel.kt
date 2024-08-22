@@ -53,7 +53,7 @@ internal class LcrListPanel : UISandboxPanel {
                 text(value) {
                   align = LcrInitParams.Align.LEFT
                 }
-                text("Commented") {
+                text("Comment") {
                   foreground = greyForeground
                 }
               }
