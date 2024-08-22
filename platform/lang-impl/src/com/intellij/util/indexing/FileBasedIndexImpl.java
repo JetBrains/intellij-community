@@ -76,6 +76,7 @@ import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.StorageLockContext;
@@ -1659,6 +1660,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return new SingleIndexValueApplier<>(
         this,
         indexId,
+        (index.getExtension() instanceof ShardableIndexExtension s) ? s.shardNo(inputId) : 0,
         inputId,
         fileIndexMetaData,
         storageUpdate,
@@ -1701,7 +1703,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return null; // the index is scheduled for rebuild, no need to update
     }
-    return new SingleIndexValueRemover(this, indexId, file, fileContent, inputId, applicationMode);
+    UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
+    return new SingleIndexValueRemover(
+      this,
+      indexId,
+      (index.getExtension() instanceof ShardableIndexExtension s) ? s.shardNo(inputId) : 0, file,
+      fileContent,
+      inputId,
+      applicationMode
+    );
   }
 
   boolean runUpdateForPersistentData(StorageUpdate storageUpdate) {

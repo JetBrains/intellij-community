@@ -10,11 +10,13 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public final class SingleIndexValueApplier<FileIndexMetaData> {
   public final @NotNull ID<?, ?> indexId;
+  public final int shardNo;
 
   private final @NotNull FileBasedIndexImpl indexImpl;
 
   private final int inputId;
-  private final @Nullable FileIndexMetaData myFileIndexMetaData;
+
+  private final @Nullable FileIndexMetaData fileIndexMetaData;
   private final @NotNull StorageUpdate storageUpdate;
   private final @NotNull String fileInfo;
   private final boolean isMock;
@@ -24,6 +26,7 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
 
   SingleIndexValueApplier(@NotNull FileBasedIndexImpl index,
                           @NotNull ID<?, ?> indexId,
+                          int shardNo,
                           int inputId,
                           @Nullable FileIndexMetaData fileIndexMetaData,
                           @NotNull StorageUpdate update,
@@ -31,9 +34,12 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
                           @NotNull FileContent currentFC,
                           long evaluatingIndexValueApplierTime) {
     indexImpl = index;
+
     this.indexId = indexId;
+    this.shardNo = shardNo;
     this.inputId = inputId;
-    myFileIndexMetaData = fileIndexMetaData;
+
+    this.fileIndexMetaData = fileIndexMetaData;
     this.evaluatingIndexValueApplierTime = evaluatingIndexValueApplierTime;
     storageUpdate = update;
     fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, currentFC);
@@ -69,7 +75,7 @@ public final class SingleIndexValueApplier<FileIndexMetaData> {
           //noinspection unchecked
           UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index =
             (UpdatableIndex<?, ?, FileContent, FileIndexMetaData>)indexImpl.getIndex(indexId);
-          index.setIndexedStateForFileOnFileIndexMetaData(inputId, myFileIndexMetaData, wasIndexProvidedByExtension());
+          index.setIndexedStateForFileOnFileIndexMetaData(inputId, fileIndexMetaData, wasIndexProvidedByExtension());
         });
       }
     }
