@@ -3,8 +3,10 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryArtifactResolver;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryConfigurationArtifacts;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.QueryBasedAuxiliaryArtifactResolver;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.ExperimentalAuxiliaryArtifactResolver;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.LegacyAuxiliaryArtifactResolver;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactIndex;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
@@ -312,7 +314,15 @@ public final class GradleDependencyResolver {
     @NotNull Configuration configuration,
     @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts
   ) {
-    QueryBasedAuxiliaryArtifactResolver resolver = new QueryBasedAuxiliaryArtifactResolver(myProject, myDownloadPolicy, resolvedArtifacts);
+    String experimentalResolverPropertyValue = System.getProperty("idea.experimental.gradle.dependency.resolver", "false");
+    boolean useExperimentalResolver = Boolean.parseBoolean(experimentalResolverPropertyValue);
+    AuxiliaryArtifactResolver resolver;
+    if (GradleVersionUtil.isCurrentGradleAtLeast("7.3") && useExperimentalResolver) {
+      resolver = new ExperimentalAuxiliaryArtifactResolver(myProject, myDownloadPolicy);
+    }
+    else {
+      resolver = new LegacyAuxiliaryArtifactResolver(myProject, myDownloadPolicy, resolvedArtifacts);
+    }
     return resolver.resolve(configuration);
   }
 

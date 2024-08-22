@@ -24,13 +24,13 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class QueryBasedAuxiliaryArtifactResolver extends AuxiliaryArtifactResolver {
+public class LegacyAuxiliaryArtifactResolver extends AuxiliaryArtifactResolver {
 
   private final @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts;
 
-  public QueryBasedAuxiliaryArtifactResolver(@NotNull Project project,
-                                             @NotNull GradleDependencyDownloadPolicy downloadPolicy,
-                                             @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts) {
+  public LegacyAuxiliaryArtifactResolver(@NotNull Project project,
+                                         @NotNull GradleDependencyDownloadPolicy downloadPolicy,
+                                         @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts) {
     super(project, downloadPolicy);
     this.resolvedArtifacts = resolvedArtifacts;
   }
