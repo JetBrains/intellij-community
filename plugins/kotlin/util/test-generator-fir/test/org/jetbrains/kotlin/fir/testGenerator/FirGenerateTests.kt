@@ -85,6 +85,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2RefactoringsTests()
     generateK2SearchTests()
     generateK2RefIndexTests()
+    generateK2AnalysisApiTests()
 
     testGroup("base/fir/analysis-api-platform") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
@@ -251,6 +252,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
             model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
+        }
+
+        testClass<AbstractK2JvmBasicCompletionFullJdkTest> {
+            model("basic/fullJdk", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractKotlinKmpCompletionTest>(

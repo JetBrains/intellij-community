@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import java.awt.event.MouseEvent
 
 class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {

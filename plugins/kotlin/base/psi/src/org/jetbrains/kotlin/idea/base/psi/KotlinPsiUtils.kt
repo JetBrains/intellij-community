@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration as isExpectDeclaration_alias
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
@@ -151,12 +152,11 @@ private fun PsiElement.isSuitableTopmostElementAtOffset(offset: Int): Boolean =
 
 fun KtExpression.safeDeparenthesize(): KtExpression = KtPsiUtil.safeDeparenthesize(this)
 
-fun KtDeclaration.isExpectDeclaration(): Boolean =
-    when {
-        hasExpectModifier() -> true
-        this is KtParameter -> ownerFunction?.isExpectDeclaration() == true
-        else -> containingClassOrObject?.isExpectDeclaration() == true
-    }
+@Deprecated(
+    "Use 'isExpectDeclaration()' instead",
+    ReplaceWith("isExpectDeclaration()", "org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration"),
+)
+fun KtDeclaration.isExpectDeclaration(): Boolean = isExpectDeclaration_alias()
 
 fun KtDeclaration.isEffectivelyActual(checkConstructor: Boolean = true): Boolean = when {
     hasActualModifier() -> true
@@ -239,7 +239,7 @@ fun KtPrimaryConstructor.isRedundant(): Boolean {
         valueParameters.isNotEmpty() -> false
         annotations.isNotEmpty() -> false
         modifierList?.text?.isBlank() == false -> false
-        isExpectDeclaration() -> false
+        isExpectDeclaration_alias() -> false
         containingClass.mustHaveNonEmptyPrimaryConstructor() -> false
         containingClass.secondaryConstructors.isNotEmpty() -> false
         else -> true

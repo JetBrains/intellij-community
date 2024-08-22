@@ -23,7 +23,7 @@ import java.io.File
 
 abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest(), KMPTest {
 
-    private val HIGHLIGHTING_FIR_EXTENSION = "highlighting.fir"
+    protected val HIGHLIGHTING_FIR_EXTENSION = "highlighting.fir"
 
     override fun getDefaultProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
