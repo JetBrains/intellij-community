@@ -600,5 +600,10 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
         public void testKotlinVarParameter() throws Exception {
             runTest("testData/hierarchy/overrides/kotlinVarParameter/");
         }
+
+        @TestMetadata("overriddenInAnonymousObject")
+        public void testOverriddenInAnonymousObject() throws Exception {
+            runTest("testData/hierarchy/overrides/overriddenInAnonymousObject/");
+        }
     }
 }

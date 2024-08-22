@@ -600,5 +600,10 @@ public abstract class FirHierarchyTestGenerated extends AbstractFirHierarchyTest
         public void testKotlinVarParameter() throws Exception {
             runTest("../../idea/tests/testData/hierarchy/overrides/kotlinVarParameter/");
         }
+
+        @TestMetadata("overriddenInAnonymousObject")
+        public void testOverriddenInAnonymousObject() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/overriddenInAnonymousObject/");
+        }
     }
 }
