@@ -660,9 +660,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val perClientComponent = (storageManager.componentManager ?: application).getService(componentClass)
-    if (perClientComponent == null || perClientComponent === info.component) {
+                             ?: return
+    if (perClientComponent === info.component) {
       LOG.error(
-        "Failed to reload per-client component '${info.stateSpec?.name ?: componentClass.simpleName}: " +
+        "Failed to reload per-client component '${info.stateSpec?.name ?: componentClass.simpleName}': " +
         "looks like it is not registered as a per-client service (componentManager=${storageManager.componentManager})"
       )
       return
