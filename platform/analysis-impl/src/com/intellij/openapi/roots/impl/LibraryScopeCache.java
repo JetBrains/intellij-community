@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -17,7 +16,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -34,18 +32,7 @@ public final class LibraryScopeCache {
   }
 
   private final Project myProject;
-  private final ConcurrentMap<Module[], GlobalSearchScope> myLibraryScopes =
-    ConcurrentCollectionFactory.createConcurrentMap(new HashingStrategy<>() {
-      @Override
-      public int hashCode(Module[] object) {
-        return Arrays.hashCode(object);
-      }
-
-      @Override
-      public boolean equals(Module[] o1, Module[] o2) {
-        return Arrays.equals(o1, o2);
-      }
-    });
+  private final ConcurrentMap<List<? extends Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = new ConcurrentHashMap<>();
   private final Map<List<? extends OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache = ConcurrentFactoryMap.createMap(key -> calcLibraryScope(key));
   private final Map<List<? extends OrderEntry>, GlobalSearchScope> myLibraryUseScopeCache = ConcurrentFactoryMap.createMap(key -> calcLibraryUseScope(key));
@@ -67,10 +54,9 @@ public final class LibraryScopeCache {
   }
 
   private @NotNull GlobalSearchScope getScopeForLibraryUsedIn(@NotNull List<? extends Module> modulesLibraryIsUsedIn) {
-    Module[] array = modulesLibraryIsUsedIn.toArray(Module.EMPTY_ARRAY);
-    GlobalSearchScope scope = myLibraryScopes.get(array);
-    return scope != null ? scope : ConcurrencyUtil.cacheOrGet(myLibraryScopes, array,
-                                                              new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn));
+    return myLibraryScopes.computeIfAbsent(modulesLibraryIsUsedIn, key ->
+      new LibraryRuntimeClasspathScope(myProject, key)
+    );
   }
 
   /**

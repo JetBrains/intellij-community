@@ -28,16 +28,16 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Set<Sdk> processedSdk = new HashSet<>();
     final Set<Library> processedLibraries = new HashSet<>();
-    final Set<Module> processedModules = new HashSet<>();
+    final Set<String> processedModuleNames = new HashSet<>();
     final Condition<OrderEntry> condition = orderEntry -> {
       if (orderEntry instanceof ModuleOrderEntry) {
-        final Module module = ((ModuleOrderEntry)orderEntry).getModule();
-        return module != null && !processedModules.contains(module);
+        final String moduleName = ((ModuleOrderEntry)orderEntry).getModuleName();
+        return !processedModuleNames.contains(moduleName);
       }
       return true;
     };
     for (Module module : modules) {
-      buildEntries(module, processedModules, processedLibraries, processedSdk, condition);
+      buildEntries(module, processedModuleNames, processedLibraries, processedSdk, condition);
     }
   }
 
@@ -63,11 +63,11 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   }
 
   private void buildEntries(final @NotNull Module module,
-                            final @NotNull Set<? super Module> processedModules,
+                            final @NotNull Set<? super String> processedModuleNames,
                             final @NotNull Set<? super Library> processedLibraries,
                             final @NotNull Set<? super Sdk> processedSdk,
                             @NotNull Condition<? super OrderEntry> condition) {
-    if (!processedModules.add(module)) return;
+    if (!processedModuleNames.add(module.getName())) return;
 
     ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<>() {
       @Override
@@ -84,7 +84,7 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       @Override
       public Object2IntMap<VirtualFile> visitModuleSourceOrderEntry(final @NotNull ModuleSourceOrderEntry moduleSourceOrderEntry,
                                                                     final Object2IntMap<VirtualFile> value) {
-        processedModules.add(moduleSourceOrderEntry.getOwnerModule());
+        processedModuleNames.add(moduleSourceOrderEntry.getOwnerModule().getName());
         addAll(value, moduleSourceOrderEntry.getRootModel().getSourceRoots());
         return value;
       }
