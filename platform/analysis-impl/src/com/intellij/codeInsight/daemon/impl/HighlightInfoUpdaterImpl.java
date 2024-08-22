@@ -12,6 +12,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +30,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -39,10 +41,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.PairProcessor;
+import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -54,6 +54,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -235,29 +236,25 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     collectPsiElements(psiFile, requestor, session, toolIdPredicate,
                        psiElement -> psiElement == PsiUtilCore.NULL_PSI_ELEMENT/*evicted*/ || psiElement != FAKE_ELEMENT && !psiElement.isValid(), // find invalid PSI
                        (info, psiElement) -> {
+                         RangeHighlighterEx highlighter = info.getHighlighter();
                          if (psiElement == PsiUtilCore.NULL_PSI_ELEMENT) {
+                           if (highlighter != null) {
+                             UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, session);
+                           }
                            return false; // psi element was evicted
                          }
-                         RangeHighlighterEx highlighter = info.getHighlighter();
-                         // heuristic: when the invalid PSI element is contained within the dirty range, kill it immediately (e.g. when the user is typing, a lot of red code happens under the caret)
-                         // OTOH, when the PSI element is invalidated outside the dirty range, it usually means the incremental reparse support is poor, and a lot of PSI is invalidated unnecessarily on each typing,
-                         //  meaning that that PSI has a big chance to be recreated in that exact place later, when a (major) chunk of the file is reparsed, so we do not kill that highlighter, just recycle it to avoid annoying blinking
-                         boolean shootAtFirstSight = highlighter == null || !highlighter.isValid() || somewhereNear(compositeDocumentDirtyRange, highlighter);
+                         // heuristic: when the incremental reparse support is poor, and a lot of PSI is invalidated unnecessarily on each typing,
+                         //  that PSI has a big chance to be recreated in that exact place later, when a (major) chunk of the file is reparsed, so we do not kill that highlighter, just recycle it to avoid annoying blinking
+                         // if however, that invalid PSI highlighter wasn't recycled after a short delay, kill it (runWithInvalidPsiRecycler()) to improve responsiveness to outdated infos
                          if (LOG.isDebugEnabled()) {
                            LOG.debug("recycleInvalidPsiElements (predicate=" +toolIdPredicate + ") "+highlighter +
-                                     "; shootAtFirstSight="+shootAtFirstSight+
                                      "; compositeDocumentDirtyRange="+compositeDocumentDirtyRange+
                                      "; toolIdPredicate="+toolIdPredicate+
                                      " for invalid " + psiElement + " from " + requestor +
                                      currentProgressInfo());
                          }
-                         if (shootAtFirstSight) {
-                           UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, session);
-                         }
-                         else {
-                           invalidPsiRecycler.recycleHighlighter(psiElement, info);
-                         }
-                         return !shootAtFirstSight;
+                         invalidPsiRecycler.recycleHighlighter(psiElement, info);
+                         return true;
                        }
     );
 
@@ -314,8 +311,8 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
 
 
         boolean toolIdMatches = isInspectionToolId(toolId) ? toolPredicate == WhatTool.INSPECTION :
-                    isAnnotatorToolId(toolId) || isHighlightVisitorToolId(toolId) ? toolPredicate == WhatTool.ANNOTATOR_OR_VISITOR :
-                    false;
+                                isAnnotatorToolId(toolId) || isHighlightVisitorToolId(toolId) ? toolPredicate == WhatTool.ANNOTATOR_OR_VISITOR :
+                                false;
         if (!toolIdMatches) {
           continue;
         }
@@ -400,7 +397,6 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       // execute in non-cancelable block. It should not throw PCE anyway, but just in case
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup before psiElementVisited ");
-
         List<? extends HighlightInfo> newInfosToStore = List.copyOf(newInfos);
         if (LOG.isDebugEnabled()) {
           //noinspection removal
@@ -686,6 +682,20 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                                  @NotNull Consumer<? super ManagedHighlighterRecycler> invalidPsiRecyclerConsumer) {
     ManagedHighlighterRecycler.runWithRecycler(session, invalidPsiRecycler -> {
       recycleInvalidPsiElements(session.getPsiFile(), this, session, invalidPsiRecycler, toolIdPredicate);
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+        // grab RA first, to avoid deadlock when InvalidPsi.toString() tries to obtain RA again from within this monitor
+        ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+          // do not incinerate when the session is canceled because even though all RHs here need to be disposed eventually, the new restarted session might have used them to reduce flicker
+          if (!session.isCanceled() && !session.getProgressIndicator().isCanceled()) {
+            invalidPsiRecycler.incinerateAndRemoveFromDataAtomically();
+          }
+          else {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("runWithInvalidPsiRecycler: recycler(" +toolIdPredicate+") abandoned because the session was canceled: "+invalidPsiRecycler);
+            }
+          }
+        });
+      }, Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
       invalidPsiRecyclerConsumer.accept(invalidPsiRecycler);
     });
   }
@@ -1030,7 +1040,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         }
         if (recycled != null) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("remap: recycled " + recycled + " from " + from);
+            LOG.debug("remap: pickedup " + recycled + " from " + from);
           }
         }
         newInfo.setGroup(-1);
@@ -1042,7 +1052,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
         };
         if (LOG.isDebugEnabled()) {
-          LOG.debug("remap: create " + (newInfo.getHighlighter() == null ? "" : "(recycled)") + newInfo + currentProgressInfo());
+          LOG.debug("remap: create " + (recycled == null ? "(new RH)" : "(recycled)") + newInfo + currentProgressInfo());
         }
         if (recycled == null) {
           // create new

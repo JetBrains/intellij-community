@@ -85,6 +85,15 @@ final class ManagedHighlighterRecycler {
   static void runWithRecycler(@NotNull HighlightingSession session, @NotNull Consumer<? super ManagedHighlighterRecycler> consumer) {
     ManagedHighlighterRecycler recycler = new ManagedHighlighterRecycler(session);
     consumer.accept(recycler);
-    recycler.myHighlightInfoUpdater.incinerateAndRemoveFromDataAtomically(recycler.myHighlightingSession, recycler);
+    recycler.incinerateAndRemoveFromDataAtomically();
+  }
+
+  void incinerateAndRemoveFromDataAtomically() {
+    myHighlightInfoUpdater.incinerateAndRemoveFromDataAtomically(myHighlightingSession, this);
+  }
+
+  @Override
+  public synchronized String toString() {
+    return "ManagedHighlighterRecycler: "+ incinerator.size() + " recycled RHs";
   }
 }

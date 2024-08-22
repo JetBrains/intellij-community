@@ -2334,4 +2334,78 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       .filter(h -> h.getSeverity() == HighlightSeverity.ERROR)
       .toList();
   }
+
+  public void testMultiplePSIInvalidationsMustDelayTheirHighlightersRemovalForShortTimeToAvoidFlickering() {
+    //IJPL-160136 Blinking highlighting on refactoring TS code
+
+    @Language("JAVA")
+    String text = """
+      class X {
+         int xxx;
+         void foo() {
+           for (int i=0; i<xxx+1; i++) {
+              if (i == xxx) return xxx;
+           }
+         }
+         public int hashCode() {
+           return xxx;
+         }
+      }""";
+
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyXXXIdentifierAnnotator()}, ()->{
+      configureByText(JavaFileType.INSTANCE, text);
+      makeEditorWindowVisible(new Point(0, 1000), myEditor);
+
+      MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
+      doHighlighting();
+      assertSize(5, MyXXXIdentifierAnnotator.myHighlights(markupModel));
+
+      List<String> events = Collections.synchronizedList(new ArrayList<>());
+      markupModel.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
+        @Override
+        public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+          events.add("added " + highlighter);
+        }
+
+        @Override
+        public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
+          events.add("removed " + highlighter);
+        }
+      });
+      // invalidate all xxx (leaving the text the same), check that these highlighters are recycled
+      List<PsiIdentifier> identifiers = new ArrayList<>();
+      getFile().accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitIdentifier(@NotNull PsiIdentifier identifier) {
+          super.visitIdentifier(identifier);
+          if (identifier.getText().equals("xxx")) identifiers.add(identifier);
+        }
+      });
+      for (PsiIdentifier identifier : identifiers) {
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> identifier.replace(PsiElementFactory.getInstance(getProject()).createIdentifier("xxx")));
+        assertFalse(identifier.isValid());
+      }
+      doHighlighting();
+      assertEmpty(events);
+    });
+  }
+  // highlight all identifiers with text "xxx"
+  public static class MyXXXIdentifierAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
+    private static final String MSG = "xxx?";
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiIdentifier && element.getText().equals("xxx")) {
+        holder.newAnnotation(HighlightSeverity.ERROR, MSG).range(element).create();
+        iDidIt();
+      }
+      LOG.debug(getClass()+".annotate("+element+") = "+didIDoIt());
+    }
+    static List<HighlightInfo> myHighlights(MarkupModel markupModel) {
+      return Arrays.stream(markupModel.getAllHighlighters())
+        .map(highlighter -> HighlightInfo.fromRangeHighlighter(highlighter))
+        .filter(Objects::nonNull)
+        .filter(info -> MSG.equals(info.getDescription())).toList();
+    }
+  }
 }
