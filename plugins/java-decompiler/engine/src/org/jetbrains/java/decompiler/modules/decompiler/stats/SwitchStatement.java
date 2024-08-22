@@ -50,7 +50,16 @@ public final class SwitchStatement extends Statement {
       regularSuccessors.remove(post);
     }
     defaultEdge = head.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
-    for (Statement successor : regularSuccessors) {
+
+    //We need to use set above in case we have multiple edges to the same node. But HashSets iterator is not ordered, so sort
+    List<Statement> sorted = new ArrayList<>(regularSuccessors);
+    Collections.sort(sorted, new Comparator<Statement>() {
+      @Override
+      public int compare(Statement o1, Statement o2) {
+        return o1.id - o2.id;
+      }
+    });
+    for (Statement successor : sorted) {
       stats.addWithKey(successor, successor.id);
     }
   }

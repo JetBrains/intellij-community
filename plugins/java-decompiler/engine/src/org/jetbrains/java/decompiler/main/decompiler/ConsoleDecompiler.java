@@ -12,7 +12,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.jar.JarOutputStream;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -195,7 +195,14 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       }
 
       FileOutputStream fileStream = new FileOutputStream(file);
-      ZipOutputStream zipStream = manifest != null ? new JarOutputStream(fileStream, manifest) : new ZipOutputStream(fileStream);
+      ZipOutputStream zipStream = new ZipOutputStream(fileStream);
+      if (manifest != null) {
+        final ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
+        manifestEntry.setTime(STABLE_ZIP_TIMESTAMP);
+        zipStream.putNextEntry(manifestEntry);
+        manifest.write(zipStream);
+        zipStream.closeEntry();
+      }
       mapArchiveStreams.put(file.getPath(), zipStream);
     }
     catch (IOException ex) {
@@ -221,7 +228,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       if (entry != null) {
         try (InputStream in = srcArchive.getInputStream(entry)) {
           ZipOutputStream out = mapArchiveStreams.get(file);
-          out.putNextEntry(new ZipEntry(entryName));
+          final ZipEntry newEntry = new ZipEntry(entryName);
+          newEntry.setTime(entry.getTime());
+          out.putNextEntry(newEntry);
           InterpreterUtil.copyStream(in, out);
         }
       }
@@ -242,7 +251,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
     try {
       ZipOutputStream out = mapArchiveStreams.get(file);
-      out.putNextEntry(new ZipEntry(entryName));
+      ZipEntry entry = new ZipEntry(entryName);
+      entry.setTime(STABLE_ZIP_TIMESTAMP);
+      out.putNextEntry(entry);
       if (content != null) {
         out.write(content.getBytes(StandardCharsets.UTF_8));
       }

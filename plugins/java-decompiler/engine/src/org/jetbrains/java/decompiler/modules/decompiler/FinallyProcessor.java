@@ -453,9 +453,16 @@ public class FinallyProcessor {
     // `throw` in the `try` body will point directly to the dummy exit, so remove it
     startBlocks.remove(graph.getLast());
     startBlocks.removeAll(tryBlocks);
+    List<BasicBlock> starts = new ArrayList<>(startBlocks);
+    Collections.sort(starts, new Comparator<BasicBlock>() {
+      @Override
+      public int compare(BasicBlock o1, BasicBlock o2) {
+        return o2.id - o1.id;
+      }
+    });
 
     List<Area> areas = new ArrayList<>();
-    for (BasicBlock start : startBlocks) {
+    for (BasicBlock start : starts) {
       Area arr = compareSubGraphsEx(graph, start, catchBlocks, first, finallyType, mapLast, skippedFirst);
       if (arr == null) {
         return false;
@@ -468,8 +475,12 @@ public class FinallyProcessor {
       deleteArea(graph, area);
     }
 
+    List<Entry<BasicBlock, Boolean>> lasts = new ArrayList<>(mapLast.entrySet());
+    // We must sort here to prevent decompile differences deriving from hash maps.
+    lasts.sort(Comparator.comparingInt(o -> o.getKey().id));
+
     // INFO: Empty basic blocks may remain in the graph!
-    for (Entry<BasicBlock, Boolean> entry : mapLast.entrySet()) {
+    for (Entry<BasicBlock, Boolean> entry : lasts) {
       BasicBlock last = entry.getKey();
 
       if (entry.getValue()) {

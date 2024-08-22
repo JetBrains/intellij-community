@@ -33,16 +33,16 @@ public class TestClassSimpleBytecodeMapping {
       var1.run();// 49
    }// 50
 
-   public class InnerClass2 {
-      public void print() {
-         System.out.println("Inner2");// 54
-      }// 55
-   }
-
    public class InnerClass {
       public void print() {
          System.out.println("Inner");// 44
       }// 45
+   }
+
+   public class InnerClass2 {
+      public void print() {
+         System.out.println("Inner2");// 54
+      }// 55
    }
 }
 
@@ -96,7 +96,7 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
    }
 }
 
-class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
+class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
    method 'print ()V' {
       0      37
       3      37
@@ -105,7 +105,7 @@ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
    }
 }
 
-class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
+class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
    method 'print ()V' {
       0      43
       3      43
@@ -130,11 +130,11 @@ Lines mapping:
 36 <-> 25
 38 <-> 27
 40 <-> 30
-44 <-> 44
-45 <-> 45
+44 <-> 38
+45 <-> 39
 49 <-> 33
 50 <-> 34
-54 <-> 38
-55 <-> 39
+54 <-> 44
+55 <-> 45
 Not mapped:
 39

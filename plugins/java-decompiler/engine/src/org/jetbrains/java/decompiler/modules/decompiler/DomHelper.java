@@ -194,7 +194,7 @@ public final class DomHelper {
 
     RootStatement root = graphToStatement(graph);
 
-    if (!processStatement(root, new HashMap<>())) {
+    if (!processStatement(root, new LinkedHashMap<>())) {
 
       //			try {
       //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
@@ -204,7 +204,7 @@ public final class DomHelper {
       throw new RuntimeException("parsing failure!");
     }
 
-    LabelHelper.lowContinueLabels(root, new HashSet<>());
+    LabelHelper.lowContinueLabels(root, new LinkedHashSet<>());
 
     SequenceHelper.condenseSequences(root);
     root.buildMonitorFlags();
@@ -452,11 +452,11 @@ public final class DomHelper {
 
         boolean same = (post == head);
 
-        HashSet<Statement> setNodes = new HashSet<>();
+        HashSet<Statement> setNodes = new LinkedHashSet<>();
         HashSet<Statement> setPreds = new HashSet<>();
 
         // collect statement nodes
-        HashSet<Statement> setHandlers = new HashSet<>();
+        HashSet<Statement> setHandlers = new LinkedHashSet<>();
         setHandlers.add(head);
         while (true) {
 
@@ -601,7 +601,7 @@ public final class DomHelper {
               set.removeAll(setOldNodes);
 
               if (setOldNodes.contains(key)) {
-                mapExtPost.computeIfAbsent(newid, k -> new HashSet<>()).addAll(set);
+                mapExtPost.computeIfAbsent(newid, k -> new LinkedHashSet<>()).addAll(set);
                 mapExtPost.remove(key);
               }
               else {

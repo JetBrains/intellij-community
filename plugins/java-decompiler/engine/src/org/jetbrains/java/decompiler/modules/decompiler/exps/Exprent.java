@@ -4,7 +4,6 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -14,12 +13,10 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class Exprent implements IMatchable {
   public static final int MULTIPLE_USES = 1;
@@ -126,6 +123,39 @@ public class Exprent implements IMatchable {
       }
     }
   }
+
+  public static List<? extends Exprent> sortIndexed(List<? extends Exprent> lst) {
+      List<Exprent> ret = new ArrayList<>();
+      List<VarExprent> defs = new ArrayList<>();
+
+      Comparator<VarExprent> comp = new Comparator<>() {
+        @Override
+        public int compare(VarExprent o1, VarExprent o2) {
+          return o1.getIndex() - o2.getIndex();
+        }
+      };
+
+      for (Exprent exp : lst) {
+        boolean isDef = exp instanceof VarExprent && ((VarExprent)exp).isDefinition();
+        if (!isDef) {
+          if (defs.size() > 0) {
+            Collections.sort(defs, comp);
+            ret.addAll(defs);
+            defs.clear();
+          }
+          ret.add(exp);
+        }
+        else {
+          defs.add((VarExprent)exp);
+        }
+      }
+
+      if (defs.size() > 0) {
+        Collections.sort(defs, comp);
+        ret.addAll(defs);
+      }
+      return ret;
+    }
 
   // *****************************************************************************
   // IMatchable implementation

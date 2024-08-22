@@ -35,7 +35,7 @@ public @interface MoreAnnotations {
       intArray = {1, 0, 2147483647, -2147483648},
       byteArray = {1, 0, 127, -128, -1},
       floatArray = {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0F, 1.0F / 0.0F, -1.0F / 0.0F},
-      doubleArray = {1.0, 0.0, 1.7976931348623157E308, 4.9E-324, 0.0 / 0.0, 1.0 / 0.0, -1.0 / 0.0},
+      doubleArray = {1.0D, 0.0D, 1.7976931348623157E308D, 4.9E-324D, 0.0D / 0.0D, 1.0D / 0.0D, -1.0D / 0.0D},
       booleanArray = {true, false},
       shortArray = {1, 0, 32767, -32768, -1},
       longArray = {1L, 0L, 9223372036854775807L, -9223372036854775808L},
@@ -53,7 +53,7 @@ public @interface MoreAnnotations {
 
    float floatValue() default 1.0F / 0.0F;
 
-   double doubleValue() default 0.0 / 0.0;
+   double doubleValue() default 0.0D / 0.0D;
 
    boolean booleanValue() default true;
 
@@ -77,7 +77,7 @@ public @interface MoreAnnotations {
 
    float[] floatArray() default {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0F, 1.0F / 0.0F, -1.0F / 0.0F};
 
-   double[] doubleArray() default {1.0, 0.0, 1.7976931348623157E308, 4.9E-324, 0.0 / 0.0, 1.0 / 0.0, -1.0 / 0.0};
+   double[] doubleArray() default {1.0D, 0.0D, 1.7976931348623157E308D, 4.9E-324D, 0.0D / 0.0D, 1.0D / 0.0D, -1.0D / 0.0D};
 
    boolean[] booleanArray() default {true, false};
 
@@ -95,13 +95,13 @@ public @interface MoreAnnotations {
 
    Class<? extends CharSequence>[] classArray() default {CharSequence.class, String.class, StringBuilder.class};
 
+   public @interface NestedAnnotation {
+      String value() default "MyString";
+   }
+
    public static enum TestEnum {
       FirstValue,
       SecondValue;
-   }
-
-   public @interface NestedAnnotation {
-      String value() default "MyString";
    }
 }
 

@@ -933,6 +933,7 @@ public class ExprProcessor {
     }
 
     TextBuffer buf = new TextBuffer();
+    lst = Exprent.sortIndexed(lst);
 
     for (Exprent expr : lst) {
       if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {

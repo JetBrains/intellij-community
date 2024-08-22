@@ -71,7 +71,7 @@ public class SSAUConstructorSparseEx {
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
-    HashSet<Integer> setInit = new HashSet<>();
+    List<Integer> setInit = new ArrayList<>();
     for (int i = 0; i < 64; i++) {
       setInit.add(i);
     }

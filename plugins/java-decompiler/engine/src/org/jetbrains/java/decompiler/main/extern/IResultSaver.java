@@ -4,6 +4,8 @@ package org.jetbrains.java.decompiler.main.extern;
 import java.util.jar.Manifest;
 
 public interface IResultSaver {
+  long STABLE_ZIP_TIMESTAMP = 0x386D4380; // 01/01/2000 00:00:00 java 8 breaks when using 0.
+
   void saveFolder(String path);
 
   void copyFile(String source, String path, String entryName);

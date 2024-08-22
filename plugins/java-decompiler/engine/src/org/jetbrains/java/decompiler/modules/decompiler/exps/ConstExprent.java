@@ -216,7 +216,7 @@ public class ConstExprent extends Exprent {
         else if (floatVal == Float.NEGATIVE_INFINITY) {
           yield new TextBuffer("-1.0F / 0.0F");
         }
-        yield new TextBuffer(value.toString()).append('F');
+        yield new TextBuffer(trimFloat(Float.toString(floatVal), floatVal)).append('F');
       }
       case CodeConstants.TYPE_DOUBLE -> {
         double doubleVal = (Double)value;
@@ -247,15 +247,15 @@ public class ConstExprent extends Exprent {
           }
         }
         else if (Double.isNaN(doubleVal)) {
-          yield new TextBuffer("0.0 / 0.0");
+          yield new TextBuffer("0.0D / 0.0D");
         }
         else if (doubleVal == Double.POSITIVE_INFINITY) {
-          yield new TextBuffer("1.0 / 0.0");
+          yield new TextBuffer("1.0D / 0.0D");
         }
         else if (doubleVal == Double.NEGATIVE_INFINITY) {
-          yield new TextBuffer("-1.0 / 0.0");
+          yield new TextBuffer("-1.0D / 0.0D");
         }
-        yield new TextBuffer(value.toString());
+        yield new TextBuffer(trimDouble(Double.toString(doubleVal), doubleVal)).append('D');
       }
       case CodeConstants.TYPE_NULL -> new TextBuffer("null");
       case CodeConstants.TYPE_OBJECT -> {
@@ -271,6 +271,92 @@ public class ConstExprent extends Exprent {
       }
       default -> throw new RuntimeException("invalid constant type: " + constType);
     };
+  }
+
+  // Different JVM implementations/version display Floats and Doubles with different String representations
+  // for the same thing. This trims them all down to only the necessary amount.
+  private static String trimFloat(String value, float start) {
+    // Includes NaN and simple numbers
+    if (value.length() <= 3 || !DecompilerContext.getOption(IFernflowerPreferences.STANDARDIZE_FLOATING_POINT_NUMBERS))
+      return value;
+
+    String exp = "";
+    int eIdx = value.indexOf('E');
+    if (eIdx != -1) {
+      exp = value.substring(eIdx);
+      value = value.substring(0, eIdx);
+    }
+
+    // Cut off digits that don't affect the value
+    String temp = value;
+    int dotIdx = value.indexOf('.');
+    do {
+      value = temp;
+      temp = value.substring(0, value.length() - 1);
+    } while (!temp.isEmpty() && !"-".equals(temp) && Float.parseFloat(temp + exp) == start);
+
+    if (dotIdx != -1 && value.indexOf('.') == -1) {
+      value += ".0";
+    } else if (dotIdx != -1) {
+      String integer = value.substring(0, dotIdx);
+      String decimal = value.substring(dotIdx + 1);
+
+      String rounded = (Integer.parseInt(integer) + 1) + ".0" + exp;
+      if (Float.parseFloat(rounded) == start)
+        return rounded;
+
+      long decimalVal = 1;
+      for (int i = 0; i < decimal.length() - 1; i++) {
+        decimalVal = (decimalVal - 1) * 10 + decimal.charAt(i) - '0' + 1;
+        rounded = integer + '.' + decimalVal + exp;
+        if (Float.parseFloat(rounded) == start)
+          return rounded;
+      }
+    }
+
+    return value + exp;
+  }
+
+  private static String trimDouble(String value, double start) {
+    // Includes NaN and simple numbers
+    if (value.length() <= 3 || !DecompilerContext.getOption(IFernflowerPreferences.STANDARDIZE_FLOATING_POINT_NUMBERS))
+      return value;
+
+    String exp = "";
+    int eIdx = value.indexOf('E');
+    if (eIdx != -1) {
+      exp = value.substring(eIdx);
+      value = value.substring(0, eIdx);
+    }
+
+    // Cut off digits that don't affect the value
+    String temp = value;
+    int dotIdx = value.indexOf('.');
+    do {
+      value = temp;
+      temp = value.substring(0, value.length() - 1);
+    } while (!temp.isEmpty() && !"-".equals(temp) && Double.parseDouble(temp + exp) == start);
+
+    if (dotIdx != -1 && value.indexOf('.') == -1) {
+      value += ".0";
+    } else if (dotIdx != -1) {
+      String integer = value.substring(0, dotIdx);
+      String decimal = value.substring(dotIdx + 1);
+
+      String rounded = (Long.parseLong(integer) + 1) + ".0" + exp;
+      if (Double.parseDouble(rounded) == start)
+        return rounded;
+
+      long decimalVal = 1;
+      for (int i = 0; i < decimal.length() - 1; i++) {
+        decimalVal = (decimalVal - 1) * 10 + decimal.charAt(i) - '0' + 1;
+        rounded = integer + '.' + decimalVal + exp;
+        if (Double.parseDouble(rounded) == start)
+          return rounded;
+      }
+    }
+
+    return value + exp;
   }
 
   private boolean inConstantVariable(String classSignature, String variableName) {

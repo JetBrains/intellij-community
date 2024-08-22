@@ -37,6 +37,8 @@ public interface IFernflowerPreferences {
   String CONVERT_RECORD_PATTERN = "crp";
   String CONVERT_PATTERN_SWITCH = "cps";
 
+  String STANDARDIZE_FLOATING_POINT_NUMBERS = "sfn";
+
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
   String RENAME_ENTITIES = "ren";
@@ -84,6 +86,8 @@ public interface IFernflowerPreferences {
     defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
     defaults.put(CONVERT_RECORD_PATTERN, "0");
     defaults.put(CONVERT_PATTERN_SWITCH, "0");
+
+    defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "1");
 
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     defaults.put(MAX_PROCESSING_METHOD, "0");

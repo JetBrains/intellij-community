@@ -14,10 +14,10 @@ public class DominatorTreeExceptionFilter {
   private final Statement statement;
 
   // idom, nodes
-  private final Map<Integer, Set<Integer>> mapTreeBranches = new HashMap<>();
+  private final Map<Integer, Set<Integer>> mapTreeBranches = new LinkedHashMap<>();
 
   // handler, range nodes
-  private final Map<Integer, Set<Integer>> mapExceptionRanges = new HashMap<>();
+  private final Map<Integer, Set<Integer>> mapExceptionRanges = new LinkedHashMap<>();
 
   // handler, head dom
   private Map<Integer, Integer> mapExceptionDoms = new HashMap<>();
@@ -67,7 +67,7 @@ public class DominatorTreeExceptionFilter {
     for (int index = lstKeys.size() - 1; index >= 0; index--) {
       Integer key = lstKeys.get(index);
       Integer idom = orderedIDoms.get(index);
-      mapTreeBranches.computeIfAbsent(idom, k -> new HashSet<>()).add(key);
+      mapTreeBranches.computeIfAbsent(idom, k -> new LinkedHashSet<>()).add(key);
     }
 
     Integer firstid = statement.getFirst().id;
@@ -79,7 +79,7 @@ public class DominatorTreeExceptionFilter {
       List<Statement> lstPreds = stat.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD);
       if (!lstPreds.isEmpty()) {
 
-        Set<Integer> set = new HashSet<>();
+        Set<Integer> set = new LinkedHashSet<>();
 
         for (Statement st : lstPreds) {
           set.add(st.id);
