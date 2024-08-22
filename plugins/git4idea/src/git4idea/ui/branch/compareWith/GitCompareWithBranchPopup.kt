@@ -18,6 +18,7 @@ import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import git4idea.ui.branch.tree.GitBranchesTreeSingleRepoModel
+import git4idea.ui.branch.tree.createTreePathFor
 import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.tree.TreePath
@@ -65,7 +66,9 @@ private class GitCompareWithBranchesTreeModel(project: Project, repository: GitR
     return this.filter { it != currentBranch }
   }
 
-  override fun getPreferredSelection(): TreePath? = null
+  override fun getPreferredSelection(): TreePath? {
+    return getPreferredBranch()?.let { createTreePathFor(this, it) }
+  }
 }
 
 class GitCompareWithBranchPopup(
