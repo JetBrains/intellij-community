@@ -1,0 +1,30 @@
+{
+  "language": "Java",
+  "projectPath": "../../ml-eval/cbor-java",
+  "outputDir": "ml-eval-test-generation-java-output",
+  "strategy": {
+    "placeholderName": "DUMMY",
+    "suggestionsProvider": "LLM-Rename",
+    "collectContextOnly": true
+  },
+  "actions": {
+    "evaluationRoots": [
+      "src/main/java/co/nstant/in/cbor/decoder/SpecialDecoder.java"
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 10,
+    "filesLimit": 5,
+    "order": "LINEAR",
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

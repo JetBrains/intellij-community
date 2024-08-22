@@ -24,13 +24,7 @@ class TestGenerationInvoker(private val project: Project,
     val session = Session(offset, expectedText, expectedText.length, TokenProperties.UNKNOWN)
     val lookup = getSuggestions(expectedText, editor, strategy.suggestionsProvider)
 
-    val res = mapOf(
-      "unitTest" to (properties as SimpleTokenProperties).additionalProperty("unitTest")!!,
-      "testPath" to properties.additionalProperty("testPath")!!,
-      "testOffset" to properties.additionalProperty("testOffset")!!
-    )
-
-    session.addLookup(Lookup.fromExpectedText("", "", lookup.suggestions, lookup.latency, null, false, additionalInfo = lookup.additionalInfo + res, comparator = this::comparator))
+    session.addLookup(Lookup.fromExpectedText("", "", lookup.suggestions, lookup.latency, null, false, additionalInfo = lookup.additionalInfo, comparator = this::comparator))
     return session
   }
 
