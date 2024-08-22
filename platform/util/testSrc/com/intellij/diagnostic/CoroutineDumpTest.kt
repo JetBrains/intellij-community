@@ -3,7 +3,6 @@ package com.intellij.diagnostic
 
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -85,8 +84,9 @@ class CoroutineDumpTest {
       b1.await()
     }
     try {
-      // kind of an implementation detail, not really required for the test,
-      // but if it fails, then the thread dump lacks the information about which exactly blocking coroutine it awaits
+      while (LockSupport.getBlocker(t) == null) { // wait until runBlocking parks
+        Thread.yield()
+      }
       assertEquals(blockingCoroutine.get(), LockSupport.getBlocker(t))
       val dumpWithDeduplication = dumpCoroutines(blockingCoroutine.get()!! as CoroutineScope, stripDump = false, deduplicateTrees = true)!!
       assert(dumpWithDeduplication.contains(blockingCoroutine.get()!!.toString())) { dumpWithDeduplication }
