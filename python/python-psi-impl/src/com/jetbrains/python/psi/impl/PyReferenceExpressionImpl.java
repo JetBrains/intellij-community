@@ -488,19 +488,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             return readWriteInstruction.getType(context, anchor);
           }
           if (instr instanceof ConditionalInstruction conditionalInstruction) {
-             if (context.getType((PyTypedElement)conditionalInstruction.getCondition()) instanceof PyNarrowedType narrowedType) {
-               PyExpression[] arguments = narrowedType.getOriginal().getArguments();
-               if (arguments.length > 0) {
-                 var firstArgument = arguments[0];
+             if (context.getType((PyTypedElement)conditionalInstruction.getCondition()) instanceof PyNarrowedType narrowedType
+                 && narrowedType.isBound()) {
+               var arguments = narrowedType.getOriginal().getArguments(null);
+               if (!arguments.isEmpty()) {
+                 var firstArgument = arguments.get(0);
                  if (firstArgument instanceof PyReferenceExpression) {
                    return PyTypeAssertionEvaluator.createAssertionType(
                      context.getType(firstArgument),
                      narrowedType.getNarrowedType(),
                      conditionalInstruction.getResult() ^ narrowedType.getNegated(),
-                     false,
                      narrowedType.getTypeIs(),
-                     context,
-                     null);
+                     context);
                  }
                }
              }

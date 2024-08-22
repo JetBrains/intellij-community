@@ -435,7 +435,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   public static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
                                                @Nullable PyExpression source) {
-    return function.getCallType(source, buildArgumentsToParametersMap(source, function, context), context);
+    return function.getCallType(source, null, buildArgumentsToParametersMap(source, function, context), context);
   }
 
   @NotNull

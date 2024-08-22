@@ -1158,6 +1158,10 @@ public final class PyTypeChecker {
           );
           return PyTypedDictType.Companion.createFromKeysToValueTypes(typedDictType.myClass, substitutedTDFields, false);
         }
+        else if (type instanceof PyNarrowedType pyNarrowedType) {
+          return pyNarrowedType.substitute(ContainerUtil.flatMap(pyNarrowedType.getElementTypes(),
+                                                                 t -> substituteExpand(t, substitutions, context, substituting)));
+        }
         else if (type instanceof final PyCollectionTypeImpl collection) {
           return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(),
                                           ContainerUtil.flatMap(collection.getElementTypes(),

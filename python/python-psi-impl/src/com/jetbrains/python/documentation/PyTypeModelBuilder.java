@@ -93,11 +93,16 @@ public class PyTypeModelBuilder {
     private final TypeModel collectionType;
     private final List<TypeModel> elementTypes;
     private final boolean useTypingAlias;
+    private final Boolean isTypeIs;
 
-    private CollectionOf(TypeModel collectionType, List<TypeModel> elementTypes, boolean useTypingAlias) {
+    private CollectionOf(TypeModel collectionType,
+                         List<TypeModel> elementTypes,
+                         boolean useTypingAlias,
+                         @Nullable Boolean isTypeIs) {
       this.collectionType = collectionType;
       this.elementTypes = elementTypes;
       this.useTypingAlias = useTypingAlias;
+      this.isTypeIs = isTypeIs;
     }
 
     @Override
@@ -305,7 +310,10 @@ public class PyTypeModelBuilder {
       if (!elementModels.isEmpty()) {
         final TypeModel collectionType = build(new PyClassTypeImpl(asCollection.getPyClass(), asCollection.isDefinition()), false);
         boolean useTypingAlias = PyiUtil.getOriginalLanguageLevel(asCollection.getPyClass()).isOlderThan(LanguageLevel.PYTHON39);
-        result = new CollectionOf(collectionType, elementModels, useTypingAlias);
+        result = new CollectionOf(collectionType,
+                                  elementModels,
+                                  useTypingAlias,
+                                  asCollection instanceof PyNarrowedType pyNarrowedType ? pyNarrowedType.getTypeIs() : null);
       }
     }
     else if (type instanceof PyUnionType unionType && allowUnions) {
@@ -649,7 +657,13 @@ public class PyTypeModelBuilder {
     protected void typingGenericFormat(CollectionOf collectionOf) {
       final boolean prevSwitchBuiltinToTyping = switchBuiltinToTyping;
       switchBuiltinToTyping = collectionOf.useTypingAlias;
-      collectionOf.collectionType.accept(this);
+      if (collectionOf.isTypeIs == null) {
+        collectionOf.collectionType.accept(this);
+      } else if (collectionOf.isTypeIs) {
+        add(styled("TypeIs", PyHighlighter.PY_CLASS_DEFINITION));
+      } else {
+        add(styled("TypeGuard", PyHighlighter.PY_CLASS_DEFINITION));
+      }
       switchBuiltinToTyping = prevSwitchBuiltinToTyping;
 
       if (!collectionOf.elementTypes.isEmpty()) {

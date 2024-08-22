@@ -51,14 +51,14 @@ public class PyCallableTypeImpl implements PyCallableType {
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (!PyTypeChecker.hasGenerics(myReturnType, context)) {
-      return myReturnType;
+      return PyNarrowedType.Companion.bindIfNeeded(myReturnType, callSite);
     }
 
     final var fullMapping = PyCallExpressionHelper.mapArguments(callSite, this, context);
     final var actualParameters = fullMapping.getMappedParameters();
     final var allParameters = ContainerUtil.notNullize(getParameters(context));
     final var receiver = callSite.getReceiver(this.myCallable);
-    return analyzeCallType(myReturnType, actualParameters, allParameters, receiver, context);
+    return analyzeCallType(myReturnType, actualParameters, allParameters, receiver, callSite, context);
   }
 
   @Nullable
@@ -66,11 +66,13 @@ public class PyCallableTypeImpl implements PyCallableType {
                                         @NotNull Map<PyExpression, PyCallableParameter> actualParameters,
                                         @NotNull Collection<PyCallableParameter> allParameters,
                                         @Nullable PyExpression receiver,
+                                        @NotNull PyCallSiteExpression callsite,
                                         @NotNull TypeEvalContext context) {
     final var substitutions = PyTypeChecker.unifyGenericCall(receiver, actualParameters, context);
     final var substitutionsWithUnresolvedReturnGenerics =
       PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(allParameters, type, substitutions, context);
-    return PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
+    PyType typeAfterSubstitution = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
+    return PyNarrowedType.Companion.bindIfNeeded(typeAfterSubstitution, callsite);
   }
 
   @Nullable

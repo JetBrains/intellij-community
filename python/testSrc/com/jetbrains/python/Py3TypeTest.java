@@ -1924,8 +1924,8 @@ public class Py3TypeTest extends PyTestCase {
 
 
 
-  public void testTypeGuardBool() {
-    doTest("bool",
+  public void testTypeGuardPresentation() {
+    doTest("TypeGuard[list[str]]",
            """
              from typing import List
              from typing import TypeGuard
@@ -1939,6 +1939,88 @@ public class Py3TypeTest extends PyTestCase {
                  expr = is_str_list(val)
              """);
   }
+
+  public void testTypeIsPresentation() {
+    doTest("TypeIs[list[str]]",
+           """
+             from typing import List
+             from typing_extensions import TypeIs
+
+
+             def is_str_list(val: List[object]) -> TypeIs[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+
+
+             def func1(val: List[object]):
+                 expr = is_str_list(val)
+             """);
+  }
+
+  public void testTypeGuardIsErasedOnReturn() {
+    doTest("bool",
+           """
+             from typing import List
+             from typing_extensions import TypeIs
+
+             def is_str_list(val: List[object]) -> TypeIs[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+
+             def func1(val: List[object]):
+                 return is_str_list(val)
+             
+             expr = func1([])
+             """);
+  }
+
+  public void testTypeAliasesWithTypeIs() {
+    doTest("list[str]", """
+      from typing import List
+      from typing_extensions import TypeIs
+      
+      MyTypeIs = TypeIs[List[str]]
+
+      def is_str_list(val: List[object]) -> MyTypeIs:
+          return all(isinstance(x, str) for x in val)
+
+      def func1(val: List[object]):
+          if is_str_list(val):
+              expr = val
+      """);
+  }
+
+  public void testTypeAliasWithGenericTypeIs() {
+    doTest("list[str]", """
+      from typing import List
+      from typing_extensions import TypeIs
+      
+      type MyTypeIs[T] = TypeIs[T]
+
+      def is_str_list(val: List[object]) -> MyTypeIs[List[str]]:
+          return all(isinstance(x, str) for x in val)
+
+      def func1(val: List[object]):
+          if is_str_list(val):
+              expr = val
+      """);
+  }
+
+  public void testTypeIsWithGenerics() {
+    doTest("tuple[str, str]", """
+      from typing_extensions import TypeIs
+      from typing import TypeVar
+      
+      T = TypeVar("T")
+      
+      def is_two_element_tuple(val: tuple[T, ...]) -> TypeIs[tuple[T, T]]:
+          return len(val) == 2
+      
+      
+      def func7(names: tuple[str, ...]):
+          if is_two_element_tuple(names):
+              expr = names
+      """);
+  }
+
 
   public void testTypeGuardListInStringLiteral() {
     doTest("list[str]",
@@ -2044,7 +2126,6 @@ public class Py3TypeTest extends PyTestCase {
                  name: str
                  age: int
                                 
-                                
              def is_person(val: dict) -> TypeGuard[Person]:
                  try:
                      return isinstance(val["name"], str) and isinstance(val["age"], int)
@@ -2057,6 +2138,20 @@ public class Py3TypeTest extends PyTestCase {
                      expr = val
                  else:
                      print("Not a person!")""");
+  }
+
+  public void testTypeIsInCallable() {
+    doTest("str", """
+      from typing import Callable
+      from typing import assert_type
+      from typing_extensions import TypeIs
+     
+      def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
+          if narrower(x):
+              pass
+          else:
+              expr = x
+     """);
   }
 
   public void testTypeGuardDoubleCheckNegation() {
@@ -2106,17 +2201,45 @@ public class Py3TypeTest extends PyTestCase {
            """
              from typing import List
              from typing_extensions import TypeIs
-                          
-                          
+             
              def is_str_list(val: List[object]) -> TypeIs[List[str]]:
                  return all(isinstance(x, str) for x in val)
-                          
+             
              def func1(val: List[int] | List[str]):
                  if not is_str_list(val):
                      expr = val
                  else:
                      pass
              """);
+  }
+
+  public void testHandleGenericReturnType() {
+    doTest("list[str]", """
+      from typing import List
+      
+      def create_list_of_type[T](item: T, count: int) -> List[T]:
+          return [item] * count
+      
+      expr = create_list_of_type("foo", 3)
+      """);
+  }
+
+  public void testHandleGenericWithAliasesReturnType() {
+    doTest("int | None", """
+      from typing import Dict, TypeAlias, TypeVar
+      
+      V = TypeVar("V")
+      
+      StringDict = Dict[str, V]
+      
+      def create_dict_of_type[T](item: T,) -> StringDict[T]:
+          return {"foo": item}
+      
+      
+      dict = create_dict_of_type(23)
+      
+      expr = dict.get("foo")
+      """);
   }
 
   public void testNoReturn() {

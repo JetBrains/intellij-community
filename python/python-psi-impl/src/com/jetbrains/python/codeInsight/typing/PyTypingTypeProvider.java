@@ -19,7 +19,6 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.PyAstFunction;
-import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -347,10 +346,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   @Override
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull Context context) {
     if (callable instanceof PyFunction function) {
-
-      if (getTypeGuardKind(function, context.myContext) != TypeGuardKind.None) {
-        return Ref.create(PyBuiltinCache.getInstance(callable).getBoolType());
-      }      
       final PyExpression returnTypeAnnotation = getReturnTypeAnnotation(function, context.myContext);
       if (returnTypeAnnotation != null) {
         final Ref<PyType> typeRef = getType(returnTypeAnnotation, context);
@@ -403,25 +398,25 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
 
     if (callSite instanceof PyCallExpression callExpression) {
-      var typeGuardKind = getTypeGuardKind(function, context.myContext);
-      if (typeGuardKind != TypeGuardKind.None) {
-        var arguments = callSite.getArguments(function);
-        if (!arguments.isEmpty() && arguments.get(0) instanceof PyReferenceExpression refExpr) {
-          var qname = PyPsiUtilsCore.asQualifiedName(refExpr);
-          if (qname != null) {
-            var narrowedType = getTypeFromTypeGuardLikeType(function, context.myContext);
-            if (narrowedType != null) {
-              return Ref.create(PyNarrowedType.Companion.create(callSite,
-                                                                qname.toString(),
-                                                                narrowedType,
-                                                                callExpression,
-                                                                false,
-                                                                TypeGuardKind.TypeIs.equals(typeGuardKind)));
-            }
-          }
-        }
-        return Ref.create(PyBuiltinCache.getInstance(function).getBoolType());
-      }
+      //var typeGuardKind = getTypeGuardKind(function, context.myContext);
+      //if (typeGuardKind != TypeGuardKind.None) {
+      //  var arguments = callSite.getArguments(function);
+      //  if (!arguments.isEmpty() && arguments.get(0) instanceof PyReferenceExpression refExpr) {
+      //    var qname = PyPsiUtilsCore.asQualifiedName(refExpr);
+      //    if (qname != null) {
+      //      var narrowedType = getTypeFromTypeGuardLikeType(function, context.myContext);
+      //      if (narrowedType != null) {
+      //        return Ref.create(PyNarrowedType.Companion.create(callSite,
+      //                                                          qname.toString(),
+      //                                                          narrowedType,
+      //                                                          callExpression,
+      //                                                          false,
+      //                                                          TypeGuardKind.TypeIs.equals(typeGuardKind)));
+      //      }
+      //    }
+      //  }
+      //  return Ref.create(PyBuiltinCache.getInstance(function).getBoolType());
+      //}
     }
 
     if (callSite instanceof PyCallExpression) {
@@ -945,6 +940,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (selfType != null) {
         return selfType;
       }
+      final Ref<PyType> narrowedType = getNarrowedType(resolved, context.getTypeContext());
+      if (narrowedType != null) {
+        return narrowedType;
+      }
       return null;
     }
     finally {
@@ -952,6 +951,18 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         context.getTypeAliasStack().remove(alias);
       }
     }
+  }
+
+  private static Ref<PyType> getNarrowedType(@NotNull PsiElement resolved, @NotNull TypeEvalContext context) {
+    if (resolved instanceof PyExpression expression) {
+      Collection<String> names = resolveToQualifiedNames(expression, context);
+      var isTypeIs = names.contains(TYPE_IS) || names.contains(TYPE_IS_EXT);
+      var isTypeGuard = names.contains(TYPE_GUARD) || names.contains(TYPE_GUARD_EXT);
+      if (isTypeIs || isTypeGuard) {
+        return Ref.create(PyNarrowedType.Companion.create(expression, isTypeIs));
+      }
+    }
+    return null;
   }
 
   private static Ref<PyType> getSelfType(@NotNull PsiElement resolved, @NotNull PyExpression typeHint, @NotNull Context context) {
@@ -1952,9 +1963,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return returnType;
   }
 
+  /**
+   * Bound narrowed types shouldn't leak out of its scope, since it is bound to a particular call site.
+   */
   @Nullable
   public static PyType removeNarrowedTypeIfNeeded(@Nullable PyType type) {
-    if (type instanceof PyNarrowedType pyNarrowedType) {
+    if (type instanceof PyNarrowedType pyNarrowedType && pyNarrowedType.isBound()) {
       return PyBuiltinCache.getInstance(pyNarrowedType.getOriginal()).getBoolType();
     }
     else {

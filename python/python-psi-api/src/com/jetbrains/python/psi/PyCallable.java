@@ -60,11 +60,26 @@ public interface PyCallable extends PyAstCallable, PyTypedElement, PyQualifiedNa
   PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite);
 
   /**
+   * Please use getCallType with four arguments instead
+   */
+  @Nullable
+  @Deprecated(forRemoval = true)
+  default PyType getCallType(@Nullable PyExpression receiver,
+                             @NotNull Map<PyExpression, PyCallableParameter> parameters,
+                             @NotNull TypeEvalContext context) {
+    return getCallType(receiver, null, parameters, context);
+  }
+
+
+
+  /**
    * Returns the type of the call to the callable where the call site is specified by the optional receiver and the arguments to parameters
    * mapping.
    */
   @Nullable
-  PyType getCallType(@Nullable PyExpression receiver, @NotNull Map<PyExpression, PyCallableParameter> parameters,
+  PyType getCallType(@Nullable PyExpression receiver,
+                     @Nullable PyCallSiteExpression pyCallSiteExpression,
+                     @NotNull Map<PyExpression, PyCallableParameter> parameters,
                      @NotNull TypeEvalContext context);
 
   /**
