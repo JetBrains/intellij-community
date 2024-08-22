@@ -765,10 +765,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   }
 
   private static @NotNull AnActionEvent fakeEvent(@NotNull ToggleAction action) {
-    return new AnActionEvent(
-      null, DataContext.EMPTY_CONTEXT, "",
-      action.getTemplatePresentation().clone(), ActionManager.getInstance(), 0
-    );
+    return AnActionEvent.createEvent(
+      DataContext.EMPTY_CONTEXT,
+      action.getTemplatePresentation().clone(), ActionPlaces.UNKNOWN, ActionUiKind.NONE, null);
   }
 
   private static @NotNull Predicate<? super Usage> originUsageCheck(@Nullable Editor editor) {

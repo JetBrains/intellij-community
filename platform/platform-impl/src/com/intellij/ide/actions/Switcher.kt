@@ -697,9 +697,8 @@ object Switcher : BaseSwitcherAction(null) {
         val dataContext = CustomizedDataContext.withSnapshot(focusDC) { sink ->
           sink[PlatformDataKeys.PREDEFINED_TEXT] = fileName
         }
-        val event = AnActionEvent(e, dataContext, "Switcher",
-                                  gotoAction.templatePresentation.clone(),
-                                  ActionManager.getInstance(), 0)
+        val event = AnActionEvent.createEvent(dataContext, gotoAction.templatePresentation.clone(),
+                                              "Switcher", ActionUiKind.NONE, e)
         blockingContext {
           ActionUtil.performActionDumbAwareWithCallbacks(gotoAction, event)
         }

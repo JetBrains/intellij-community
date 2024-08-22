@@ -242,7 +242,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     private final AnActionButton myPeer;
 
     private AnActionEventWrapper(AnActionEvent e, AnActionButton peer) {
-      super(e.getInputEvent(), e.getDataContext(), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+      super(e.getDataContext(), e.getPresentation(), e.getPlace(),
+            e.getUiKind(), e.getInputEvent(), e.getModifiers(), e.getActionManager());
       myPeer = peer;
     }
 

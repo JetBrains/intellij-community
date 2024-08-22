@@ -152,9 +152,8 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
           .showUnderneathOf(setUpButton);
       }
       else if (group.getChildrenCount() == 1) {
-        final AnActionEvent event =
-          new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0);
-        group.getChildren(event)[0].actionPerformed(event);
+        AnActionEvent event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.TOOLBAR, null);
+        group.getChildren(ActionManager.getInstance())[0].actionPerformed(event);
       }
     });
   }

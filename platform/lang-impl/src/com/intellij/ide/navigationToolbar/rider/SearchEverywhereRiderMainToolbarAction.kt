@@ -16,6 +16,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText.NORMAL
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.MacKeymapUtil
@@ -145,15 +146,13 @@ private class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction(),
         else DataManager.getInstance().dataContext
 
         if (!firstOpened) {
-          super.actionPerformed(AnActionEvent(
-            e.inputEvent, dataContext, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE, templatePresentation,
-            ActionManager.getInstance(), 0))
+          super.actionPerformed(AnActionEvent.createEvent(
+            dataContext, templatePresentation.clone(), ActionPlaces.RUN_TOOLBAR_LEFT_SIDE, e.uiKind, e.inputEvent))
           firstOpened = true
         }
         else {
-          super.actionPerformed(AnActionEvent(
-            e.inputEvent, dataContext, ActionPlaces.KEYBOARD_SHORTCUT, templatePresentation,
-            ActionManager.getInstance(), 0))
+          super.actionPerformed(AnActionEvent.createEvent(
+            dataContext, templatePresentation.clone(), ActionPlaces.KEYBOARD_SHORTCUT, e.uiKind, e.inputEvent))
         }
 
       }
