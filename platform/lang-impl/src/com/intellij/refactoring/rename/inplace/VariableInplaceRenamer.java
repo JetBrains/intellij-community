@@ -526,7 +526,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         .finishOnUiThread(ModalityState.nonModal(), problem -> {
           if (problem == null) {
             if (mySnapshot != null) {
-              ApplicationManager.getApplication().runWriteAction(() -> mySnapshot.apply(myInsertedName));
+              WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> mySnapshot.apply(myInsertedName));
             }
             performRefactoringRename(myInsertedName, myMarkAction);
           }
