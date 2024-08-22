@@ -46,10 +46,14 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       WorkspaceFileIndexEx index = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
       Collection<VirtualFile> recursiveRoots = new HashSet<>();
       Collection<VirtualFile> nonRecursiveRoots = new SmartList<>();
+      final int[] visitedCount = {0};
       index.visitFileSets(new WorkspaceFileSetVisitor() {
         @Override
         public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet) {
-          ProgressManager.checkCanceled();
+          visitedCount[0]++;
+          if (visitedCount[0] % 100 == 0) {
+            ProgressManager.checkCanceled();
+          }
           if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>) || !isInContent((WorkspaceFileSetWithCustomData<?>)fileSet)) {
             return;
           }
