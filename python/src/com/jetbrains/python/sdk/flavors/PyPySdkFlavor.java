@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -42,8 +43,8 @@ public final class PyPySdkFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
   }
 
   @Override
-  public boolean isValidSdkPath(@NotNull File file) {
-    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).startsWith("pypy");
+  public boolean isValidSdkPath(@NotNull Path path) {
+    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(path.getFileName().toString())).startsWith("pypy");
   }
 
   @Override

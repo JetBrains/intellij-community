@@ -78,9 +78,12 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
   }
 
   @Override
-  public boolean isValidSdkPath(@NotNull File file) {
-    if (!super.isValidSdkPath(file)) return false;
-    return PythonSdkUtil.isConda(file.getPath());
+  public boolean isValidSdkPath(@NotNull Path path) {
+    if (!super.isValidSdkPath(path)) {
+      return false;
+    }
+
+    return PythonSdkUtil.isConda(path.toString());
   }
 
   public static @Nullable File getCondaEnvRoot(final @NotNull String binaryPath) {

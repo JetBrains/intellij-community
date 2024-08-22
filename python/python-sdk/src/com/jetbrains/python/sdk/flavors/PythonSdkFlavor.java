@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -290,12 +291,10 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    */
   @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
   public static @Nullable PythonSdkFlavor<?> tryDetectFlavorByLocalPath(@NotNull Path sdkPath) {
-    var sdkPathStr = sdkPath.toString();
-
     // Iterate over all flavors starting with platform-independent (like venv): see `getApplicableFlavors` doc.
     // Order is important as venv must have priority over unix/windows
     for (PythonSdkFlavor<?> flavor : getApplicableFlavors(true)) {
-      if (flavor.isValidSdkHome(sdkPathStr)) {
+      if (flavor.isValidSdkPath(sdkPath)) {
         return flavor;
       }
     }
@@ -308,41 +307,30 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   @Deprecated
   @Nullable
   public static PythonSdkFlavor<?> getPlatformIndependentFlavor(@Nullable final String sdkPath) {
-    if (sdkPath == null) return null;
+    if (sdkPath == null) {
+      return null;
+    }
 
+    Path path = Path.of(sdkPath);
     for (PythonSdkFlavor<?> flavor : getPlatformIndependentFlavors()) {
-      if (flavor.isValidSdkHome(sdkPath)) {
+      if (flavor.isValidSdkPath(path)) {
         return flavor;
       }
     }
 
     for (PythonSdkFlavor<?> flavor : getPlatformFlavorsFromExtensions(true)) {
-      if (flavor.isValidSdkHome(sdkPath)) {
+      if (flavor.isValidSdkPath(path)) {
         return flavor;
       }
     }
     return null;
   }
 
-
-  /**
-   * @param path path to check.
-   * @return true if paths points to a valid home.
-   * Checks if the path is the name of a Python interpreter of this flavor.
-   * @deprecated path is not enough, use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)}
-   */
-  @Deprecated
-  public boolean isValidSdkHome(@NotNull String path) {
-    File file = new File(path);
-    return file.isFile() && isValidSdkPath(file);
-  }
-
-
   /**
    * It only validates path for local target, hence use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)} instead
    */
-  public boolean isValidSdkPath(@NotNull File file) {
-    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).contains("python");
+  public boolean isValidSdkPath(@NotNull Path path) {
+    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(path.getFileName().toString())).contains("python");
   }
 
   @Nullable

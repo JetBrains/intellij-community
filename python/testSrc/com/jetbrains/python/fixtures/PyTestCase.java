@@ -74,6 +74,40 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected CodeInsightTestFixture myFixture;
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
+    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      if (myFixture != null) {
+        PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        PyModuleNameCompletionContributor.ENABLED = true;
+        setLanguageLevel(null);
+
+        myFixture.tearDown();
+        myFixture = null;
+      }
+
+      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
   protected void assertProjectFilesNotParsed(@NotNull PsiFile currentFile) {
     assertRootNotParsed(currentFile, myFixture.getTempDirFixture().getFile("."), null);
   }
@@ -119,17 +153,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     final PsiFile file = myFixture.getFile();
     final TextRange myTextRange = file.getTextRange();
     CodeStyleManager.getInstance(myFixture.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
-    myFixture.setTestDataPath(getTestDataPath());
-    myFixture.setUp();
   }
 
   /**
@@ -242,24 +265,6 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
-      PyModuleNameCompletionContributor.ENABLED = true;
-      setLanguageLevel(null);
-      myFixture.tearDown();
-      myFixture = null;
-      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   @Nullable
