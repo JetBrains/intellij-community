@@ -15,7 +15,7 @@ import java.io.IOException;
  * <p>
  * The update as a whole is going to the forward index, while the changes are going to the inverted index.
  * So the {@link #updateForwardIndex()} is to update the forward index with the new data, and
- * {@link #iterateChanges(KeyValueUpdateProcessor, KeyValueUpdateProcessor, RemovedKeyProcessor)} is to stream
+ * {@link #iterateChanges(UpdatedEntryProcessor)} is to stream
  * the changes against current data to apply on the inverted index.
  * <p>
  * The 2 sides are separated to allow indexes to skip forward index update, and/or to provide an optimized version
@@ -47,14 +47,8 @@ public final class UpdateData<Key, Value> {
   //MAYBE RC: move ChangesProducer to the upper level, and make UpdateData implement ChangesProducer, so this
   //          method become .forEachChange()?
   /** @return true if new data is different from current data -- which means at least one processor _was_ called */
-  boolean iterateChanges(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addedEntriesProcessor,
-                         @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updatedEntriesProcessor,
-                         @NotNull RemovedKeyProcessor<? super Key> removedEntriesProcessor) throws StorageException {
-    return changesProducer.forEachChange(
-      addedEntriesProcessor,
-      updatedEntriesProcessor,
-      removedEntriesProcessor
-    );
+  boolean iterateChanges(@NotNull UpdatedEntryProcessor<? super Key, ? super Value> changedEntriesProcessor) throws StorageException {
+    return changesProducer.forEachChange(changedEntriesProcessor);
   }
 
   void updateForwardIndex() throws IOException {
@@ -90,8 +84,6 @@ public final class UpdateData<Key, Value> {
   @ApiStatus.Internal
   @FunctionalInterface
   public interface ChangesProducer<Key, Value> {
-    boolean forEachChange(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addedEntriesProcessor,
-                          @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updatedEntriesProcessor,
-                          @NotNull RemovedKeyProcessor<? super Key> removedEntriesProcessor) throws StorageException;
+    boolean forEachChange(@NotNull UpdatedEntryProcessor<? super Key, ? super Value> changedEntriesProcessor) throws StorageException;
   }
 }

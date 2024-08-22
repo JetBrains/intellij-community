@@ -92,19 +92,19 @@ public abstract class StubIndexEx extends StubIndex {
           fileId,
           index.getExtension().getName(),
 
-          (addedEntriesProcessor, updatedEntriesProcessor, removedEntriesProcessor) -> {
+          (changedEntriesProcessor) -> {
 
             boolean modified = false;
             for (K oldKey : oldKeys) {
               if (!newKeys.contains(oldKey)) {
-                removedEntriesProcessor.process(oldKey, fileId);
+                changedEntriesProcessor.removed(oldKey, fileId);
                 if (!modified) modified = true;
               }
             }
 
             for (K newKey : newKeys) {
               if (!oldKeys.contains(newKey)) {
-                addedEntriesProcessor.process(newKey, null, fileId);
+                changedEntriesProcessor.added(newKey, null, fileId);
                 if (!modified) modified = true;
               }
             }

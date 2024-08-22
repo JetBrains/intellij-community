@@ -4306,12 +4306,6 @@ f:com.intellij.util.indexing.impl.CollectionDataExternalizer
 - <init>(com.intellij.util.io.DataExternalizer):V
 - read(java.io.DataInput):java.util.Collection
 - save(java.io.DataOutput,java.util.Collection):V
-f:com.intellij.util.indexing.impl.EmptyInputDataDiffBuilder
-- <init>(I):V
-- differentiate(java.util.Map,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.RemovedKeyProcessor):Z
-- getKeys():java.util.Collection
-- s:processAllKeyValuesAsAdded(I,java.util.Map,com.intellij.util.indexing.impl.KeyValueUpdateProcessor):Z
-- s:processAllKeyValuesAsRemoved(I,java.util.Map,com.intellij.util.indexing.impl.RemovedKeyProcessor):Z
 com.intellij.util.indexing.impl.IndexStorage
 - java.io.Closeable
 - java.io.Flushable
@@ -4336,18 +4330,10 @@ f:com.intellij.util.indexing.impl.InputIndexDataExternalizer
 - <init>(com.intellij.util.io.KeyDescriptor,com.intellij.util.indexing.IndexId):V
 - read(java.io.DataInput):java.util.Collection
 - save(java.io.DataOutput,java.util.Collection):V
-com.intellij.util.indexing.impl.KeyValueUpdateProcessor
-- a:process(java.lang.Object,java.lang.Object,I):V
-c:com.intellij.util.indexing.impl.MapInputDataDiffBuilder
-- <init>(I,java.util.Map):V
-- differentiate(java.util.Map,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.RemovedKeyProcessor):Z
-- getKeys():java.util.Collection
 *f:com.intellij.util.indexing.impl.MapReduceIndexMappingException
 - java.lang.RuntimeException
 - <init>(java.lang.Throwable,java.lang.Class):V
 - getClassToBlame():java.lang.Class
-com.intellij.util.indexing.impl.RemovedKeyProcessor
-- a:process(java.lang.Object,I):V
 com.intellij.util.indexing.impl.ValueSerializationProblemReporter
 - a:reportProblem(java.lang.Exception):V
 com.intellij.util.indexing.impl.forward.ForwardIndex

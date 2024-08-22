@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.util.indexing.IndexExtension;
@@ -51,13 +51,11 @@ public final class KeyCollectionForwardIndexAccessor<Key, Value> extends Abstrac
 
     @Override
     public boolean differentiate(@NotNull Map<Key, Value> newData,
-                                 @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
-                                 @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
-                                 @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
+                                 @NotNull UpdatedEntryProcessor<? super Key, ? super Value> changesProcessor) throws StorageException {
       for (Key key : myKeys) {
-        removeProcessor.process(key, myInputId);
+        changesProcessor.removed(key, myInputId);
       }
-      boolean anyAdded = EmptyInputDataDiffBuilder.processAllKeyValuesAsAdded(myInputId, newData, addProcessor);
+      boolean anyAdded = EmptyInputDataDiffBuilder.processAllKeyValuesAsAdded(myInputId, newData, changesProcessor);
       boolean anyRemoved = !myKeys.isEmpty();
       return anyAdded || anyRemoved;
     }

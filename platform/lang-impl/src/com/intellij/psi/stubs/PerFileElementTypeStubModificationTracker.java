@@ -223,7 +223,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
         }
         final Stub stub = StubTreeBuilder.buildStubTree(fileContent);
         Map<Integer, SerializedStubTree> serializedStub = stub == null ? Collections.emptyMap() : stubIndexer.map(fileContent);
-        if (diffBuilder.differentiate(serializedStub, (__, ___, ____) -> { }, (__, ___, ____) -> { }, (__, ___) -> { }, true)) {
+        if (diffBuilder.differentiate(serializedStub, (__, ___, ____, _____) -> { }, true)) {
           registerModificationFor(info.type);
         }
       }

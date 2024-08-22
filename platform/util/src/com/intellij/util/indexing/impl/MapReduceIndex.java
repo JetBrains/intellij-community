@@ -313,16 +313,11 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       inputId,
       indexId(),
 
-      (addedEntriesProcessor, updatedEntriesProcessor, removedEntriesProcessor) -> {
+      (changedEntriesProcessor) -> {
         try {
           InputDataDiffBuilder<Key, Value> diffBuilder = getKeysDiffBuilder(inputId);
           Map<Key, Value> newData = inputData.getKeyValues();
-          return diffBuilder.differentiate(
-            newData,
-            addedEntriesProcessor,
-            updatedEntriesProcessor,
-            removedEntriesProcessor
-          );
+          return diffBuilder.differentiate(newData, changedEntriesProcessor);
         }
         catch (IOException e) {
           throw new StorageException("Error while applying " + this, e);
@@ -391,27 +386,21 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   protected abstract void requestRebuild(@NotNull Throwable e);
 
-  private final RemovedKeyProcessor<Key> myRemovedKeyProcessor = new RemovedKeyProcessor<Key>() {
+  private final UpdatedEntryProcessor<Key, Value> changedEntriesProcessor = new UpdatedEntryProcessor<Key, Value>() {
     @Override
-    public void process(Key key, int inputId) throws StorageException {
+    public void process(@NotNull UpdateKind kind, Key key, Value value, int inputId) throws StorageException {
       incrementModificationStamp();
-      myStorage.removeAllValues(key, inputId);
-    }
-  };
-
-  private final KeyValueUpdateProcessor<Key, Value> myAddedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
-    @Override
-    public void process(Key key, Value value, int inputId) throws StorageException {
-      incrementModificationStamp();
-      myStorage.addValue(key, inputId, value);
-    }
-  };
-
-  private final KeyValueUpdateProcessor<Key, Value> myUpdatedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
-    @Override
-    public void process(Key key, Value value, int inputId) throws StorageException {
-      incrementModificationStamp();
-      myStorage.updateValue(key, inputId, value);
+      switch (kind) {
+        case ADDED:
+          myStorage.addValue(key, inputId, value);
+          break;
+        case UPDATED:
+          myStorage.updateValue(key, inputId, value);
+          break;
+        case REMOVED:
+          myStorage.removeAllValues(key, inputId);
+          break;
+      }
     }
   };
 
@@ -425,11 +414,8 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
         IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
-        boolean hasDifference = updateData.iterateChanges(
-          myAddedKeyProcessor,
-          myUpdatedKeyProcessor,
-          myRemovedKeyProcessor
-        );
+        boolean hasDifference = updateData.iterateChanges(changedEntriesProcessor);
+
         //TODO RC: separate lock for forwardIndex? -- it seems it is used only in updates (?), i.e. only in one place,
         //         so if it is out-of-sync with inverted index it is not a big deal since nobody able to see it?
         //         ...but it is important to not allow same fileId data to be applied by different threads, because
