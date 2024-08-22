@@ -90,6 +90,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import javax.swing.Icon
+import javax.swing.JLabel
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
 import kotlin.time.Duration
@@ -1359,7 +1360,7 @@ private fun tryToExecuteNow(action: AnAction,
   val componentAdjusted = PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext) ?: contextComponent
   val actionProcessor = object : ActionProcessor() {}
   val inputEventAdjusted = inputEvent ?: KeyEvent(
-    componentAdjusted, KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
+    componentAdjusted ?: JLabel(), KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
   val event = Utils.runWithInputEventEdtDispatcher(componentAdjusted) block@{
     Utils.runUpdateSessionForInputEvent(
       listOf(action), inputEventAdjusted, wrappedContext, place, actionProcessor, presentationFactory) { rearranged, updater, events ->
