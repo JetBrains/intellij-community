@@ -929,6 +929,10 @@
 
     <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
 
+    <!-- VCS -->
+    <!--Should be moved to VCS module, but lang depends on this-->
+    <group id="VersionControlsGroup"/>
+
     <group id="MainToolBar">
       <reference ref="OpenFile"/>
       <reference ref="SaveAll"/>

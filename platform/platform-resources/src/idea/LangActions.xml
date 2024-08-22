@@ -733,9 +733,6 @@
            popup="true" searchable="false" use-shortcut-of="NewElement"/>
     <reference ref="AssociateWithFileType"/>
 
-    <!-- VCS -->
-    <group id="VersionControlsGroup"/>
-
     <!-- Toolbar -->
     <group id="ToolbarFindGroup">
       <add-to-group group-id="MainToolBar" relative-to-action="Back" anchor="before"/>
