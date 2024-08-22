@@ -6,7 +6,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
-import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KtNamedDeclaration

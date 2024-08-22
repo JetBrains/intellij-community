@@ -2,7 +2,7 @@
 // ERROR: Val cannot be reassigned
 // COMPILER_ARGUMENTS: -XXLanguage:-ProhibitOpenValDeferredInitialization
 open class Foo {
-    <caret>open val foo: Int
+    open <caret>val foo: Int
         get() = field
 
     init {

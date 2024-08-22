@@ -8,7 +8,12 @@ import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import java.io.File
 
 abstract class AbstractK2ComposeCompilerPluginCheckerTest : AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest() {
-    override fun highlightingFileNameSuffix(testKtFile: File): String = HIGHLIGHTING_EXTENSION
+    override fun highlightingFileNameSuffix(testKtFile: File): String {
+        if (testKtFile.resolveSibling("${testKtFile.name}.$HIGHLIGHTING_FIR_EXTENSION").exists()) {
+            return HIGHLIGHTING_FIR_EXTENSION
+        }
+        return HIGHLIGHTING_EXTENSION
+    }
 
     override fun getDefaultProjectDescriptor(): ProjectDescriptorWithStdlibSources =
         ProjectDescriptorWithStdlibSourcesAndComposeRuntime
