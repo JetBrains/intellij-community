@@ -334,7 +334,8 @@ public final class BuildTargetSourcesState implements BuildListener {
 
   private static long getOutputFileHash(@NotNull Path file, @NotNull Path rootPath, @NotNull HashStream64 hashToReuse) throws IOException {
     // reduce GC - reuse hashToReuse - do not inline fileHash variable
-    long fileHash = FileHashUtilKt.getFileHash(file, hashToReuse);
+    FileHashUtilKt.getFileHash(file, hashToReuse.reset());
+    long fileHash = hashToReuse.getAsLong();
     return hashToReuse
       .reset()
       .putLong(fileHash)

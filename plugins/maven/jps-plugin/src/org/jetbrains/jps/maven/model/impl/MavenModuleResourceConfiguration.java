@@ -2,7 +2,7 @@
 package org.jetbrains.jps.maven.model.impl;
 
 import com.dynatrace.hash4j.hashing.HashFunnel;
-import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -74,7 +74,7 @@ public final class MavenModuleResourceConfiguration {
     return Collections.unmodifiableSet(result);
   }
 
-  public void computeConfigurationHash(boolean forTestResources, @NotNull HashStream64 hash) {
+  public void computeConfigurationHash(boolean forTestResources, @NotNull HashSink hash) {
     computeModuleConfigurationHash(hash);
 
     List<ResourceRootConfiguration> _resources = forTestResources? testResources : resources;
@@ -84,7 +84,7 @@ public final class MavenModuleResourceConfiguration {
     hash.putInt(_resources.size());
   }
 
-  public void computeModuleConfigurationHash(@NotNull HashStream64 hash) {
+  public void computeModuleConfigurationHash(@NotNull HashSink hash) {
     hash.putInt(parentId == null ? 0 : parentId.hashCode());
     hash.putString(directory);
     hashNullableString(manifest, hash);
@@ -105,7 +105,7 @@ public final class MavenModuleResourceConfiguration {
     hash.putBoolean(overwrite);
   }
 
-  private static void hashNullableString(@Nullable String s, @NotNull HashStream64 hash) {
+  private static void hashNullableString(@Nullable String s, @NotNull HashSink hash) {
     if (s == null) {
       hash.putInt(-1);
     }

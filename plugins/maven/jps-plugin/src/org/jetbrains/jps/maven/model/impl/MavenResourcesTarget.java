@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
-import com.dynatrace.hash4j.hashing.HashStream64;
-import com.dynatrace.hash4j.hashing.Hashing;
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,14 +20,13 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
 @ApiStatus.Internal
-public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> {
+public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> implements BuildTargetHashSupplier {
   MavenResourcesTarget(@NotNull MavenResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
   }
@@ -137,13 +135,15 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
   }
 
   @Override
-  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
-    BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
+  public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
+    BuildDataPaths dataPaths = projectDescriptor.getTargetsState().getDataPaths();
     MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
-    HashStream64 hash = Hashing.komihash5_0().hashStream();
-    if (configuration != null) {
+    if (configuration == null) {
+      hash.putBoolean(false);
+    }
+    else {
+      hash.putBoolean(true);
       configuration.computeConfigurationHash(isTests(), hash);
-      out.write(Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX));
     }
   }
 }

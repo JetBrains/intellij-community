@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,7 +49,7 @@ public final class FileBasedArtifactRootDescriptor extends ArtifactRootDescripto
   }
 
   @Override
-  public void writeConfiguration(@NotNull HashStream64 hash, PathRelativizerService relativizer) {
+  public void writeConfiguration(@NotNull HashSink hash, PathRelativizerService relativizer) {
     super.writeConfiguration(hash, relativizer);
     myCopyingHandler.writeConfiguration(hash);
   }

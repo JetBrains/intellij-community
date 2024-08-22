@@ -3,8 +3,7 @@
 
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
-import com.dynatrace.hash4j.hashing.HashStream64
-import com.dynatrace.hash4j.hashing.Hashing
+import com.dynatrace.hash4j.hashing.HashSink
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
 import com.intellij.openapi.diagnostic.logger
@@ -26,10 +25,11 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
-import java.io.PrintWriter
 import kotlin.system.measureTimeMillis
 
-internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTarget<BuildRootDescriptor?>(RuntimeModuleRepositoryTarget) {
+internal class RuntimeModuleRepositoryTarget(
+  val project: JpsProject,
+) : BuildTarget<BuildRootDescriptor>(RuntimeModuleRepositoryTarget), BuildTargetHashSupplier {
   override fun getId(): String {
     return "project"
   }
@@ -72,54 +72,52 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
     return java.util.List.of(File(JpsPathUtil.urlToFile(outputUrl), JAR_REPOSITORY_FILE_NAME))
   }
 
-  override fun writeConfiguration(pd: ProjectDescriptor, out: PrintWriter) {
-    val digest: Long
+  override fun computeConfigurationDigest(projectDescriptor: ProjectDescriptor, hash: HashSink) {
+    hash.putString(JarFileSerializer.SPECIFICATION_VERSION)
+    hash.putInt(RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION)
+
     val time = measureTimeMillis {
-      digest = computeDependenciesDigest(pd)
+      computeDependenciesDigest(projectDescriptor, hash)
     }
     LOG.info("Dependencies digest computed in ${time}ms")
-    out.println("${JarFileSerializer.SPECIFICATION_VERSION}.${RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION}")
-    out.println(java.lang.Long.toUnsignedString(digest, Character.MAX_RADIX))
   }
 
-  private fun computeDependenciesDigest(pd: ProjectDescriptor): Long {
-    val digest = Hashing.komihash5_0().hashStream()
+  private fun computeDependenciesDigest(pd: ProjectDescriptor, hash: HashSink) {
     val relativizer = pd.dataManager.relativizer
 
     val modules = pd.project.modules
     for (module in modules) {
-      digest.putString(module.name)
+      hash.putString(module.name)
       val sourceRoots = module.sourceRoots
       for (sourceRoot in sourceRoots) {
-        digest.putString(relativizer.toRelative(sourceRoot.path.toString()))
+        hash.putString(relativizer.toRelative(sourceRoot.path.toString()))
       }
-      digest.putInt(sourceRoots.size)
+      hash.putInt(sourceRoots.size)
 
       var counter = 0
       RuntimeModuleRepositoryBuilder.enumerateRuntimeDependencies(module).processModuleAndLibraries(
         {
-          digest.putString(it.name)
+          hash.putString(it.name)
           counter++
         },
         { library ->
-          digest.putString(library.name)
+          hash.putString(library.name)
           if (library.createReference().parentReference is JpsModuleReference) {
-            updateFromRoots(library, digest, relativizer)
+            updateFromRoots(library, hash, relativizer)
           }
           counter++
         },
       )
-      digest.putInt(counter)
+      hash.putInt(counter)
     }
-    digest.putInt(modules.size)
+    hash.putInt(modules.size)
 
     val libraries = pd.project.libraryCollection.libraries
     for (library in libraries) {
-      digest.putString(library.name)
-      updateFromRoots(library, digest, relativizer)
+      hash.putString(library.name)
+      updateFromRoots(library, hash, relativizer)
     }
-    digest.putInt(libraries.size)
-    return digest.asLong
+    hash.putInt(libraries.size)
   }
 
   companion object : BuildTargetType<RuntimeModuleRepositoryTarget?>(RuntimeModuleRepositoryBuildConstants.TARGET_TYPE_ID), ModuleInducedTargetType {
@@ -152,7 +150,7 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
       return project.modules.any { it.name == "intellij.idea.community.main" || it.name == "intellij.platform.commercial" }
     }
 
-    private fun updateFromRoots(library: JpsLibrary, digest: HashStream64, relativizer: PathRelativizerService) {
+    private fun updateFromRoots(library: JpsLibrary, digest: HashSink, relativizer: PathRelativizerService) {
       val roots = library.getRoots(JpsOrderRootType.COMPILED)
       for (root in roots) {
         digest.putString(relativizer.toRelative(JpsPathUtil.urlToPath(root.url)))

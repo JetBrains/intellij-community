@@ -2,7 +2,7 @@
 package org.jetbrains.jps.maven.compiler;
 
 import com.dynatrace.hash4j.hashing.HashFunnel;
-import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -90,7 +90,6 @@ public final class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRo
   }
 
   private static class MavenWebArtifactCopyingHandler extends FilterCopyHandler {
-
     private final ResourceRootConfiguration myWarRootConfig;
     private final MavenModuleResourceConfiguration myModuleResourceConfig;
 
@@ -116,12 +115,12 @@ public final class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRo
     }
 
     @Override
-    public void writeConfiguration(@NotNull HashStream64 hash) {
+    public void writeConfiguration(@NotNull HashSink hash) {
       hash.putString("maven hash:");
       configurationHash(hash);
     }
 
-    protected void configurationHash(@NotNull HashStream64 hash) {
+    protected void configurationHash(@NotNull HashSink hash) {
       hash.putUnorderedIterable(myWarRootConfig.includes, HashFunnel.forString(), Hashing.komihash5_0());
       hash.putUnorderedIterable(myWarRootConfig.excludes, HashFunnel.forString(), Hashing.komihash5_0());
       myWarRootConfig.computeConfigurationHash(hash);
@@ -181,7 +180,7 @@ public final class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRo
     }
 
     @Override
-    protected void configurationHash(@NotNull HashStream64 hash) {
+    protected void configurationHash(@NotNull HashSink hash) {
       super.configurationHash(hash);
 
       FileHashUtilKt.normalizedPathHashCode(myTargetDir.toPath().toAbsolutePath().normalize().toString(), hash);
@@ -246,7 +245,8 @@ public final class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRo
       FileFilter superFileFilter = super.createFileFilter();
       FileFilter rootFileFilter = new MavenResourceFileFilter(root, myRootConfiguration).acceptingWebXml();
 
-      //for additional resource directory 'exclude' means 'exclude from copying' but for the default webapp resource it mean 'exclude from filtering'
+      // for additional resource directory 'exclude' means 'exclude from copying'
+      // but for the default webapp resource it means 'exclude from filtering'
       boolean isMainWebAppRoot = FileUtil.pathsEqual(artifactConfiguration.warSourceDirectory, rootConfiguration.directory);
 
       if (isMainWebAppRoot) {
@@ -272,7 +272,7 @@ public final class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRo
     }
 
     @Override
-    protected void configurationHash(@NotNull HashStream64 hash) {
+    protected void configurationHash(@NotNull HashSink hash) {
       myRootConfiguration.computeConfigurationHash(hash);
       super.configurationHash(hash);
     }

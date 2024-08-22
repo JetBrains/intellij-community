@@ -56,11 +56,11 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * Allows the build target to tag the current project settings relevant to the build of this target
    * (e.g., the language level of a Java module) so that the target is fully recompiled when those settings change.
    *
-   * @param pd  the complete state of a compilation invocation
+   * @param projectDescriptor  the complete state of a compilation invocation
    * @param out the print writer to which the project settings can be written (the settings are compared with the ones
    *            written during the invocation of the same method in a previous compilation).
    */
-  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor projectDescriptor, @NotNull PrintWriter out) {
   }
 
   /**

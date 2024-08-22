@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
-import com.dynatrace.hash4j.hashing.HashStream64;
-import com.dynatrace.hash4j.hashing.Hashing;
+import com.dynatrace.hash4j.hashing.HashSink;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetHashSupplier;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
 import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
@@ -26,7 +26,6 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,7 +36,7 @@ import static org.jetbrains.jps.incremental.FileHashUtilKt.normalizedPathHashCod
 /**
  * Describes a step of compilation process which copies resource's files from source and resource roots of a Java module.
  */
-public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDescriptor> {
+public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDescriptor> implements BuildTargetHashSupplier {
   private final @NotNull ResourcesTargetType targetType;
 
   public ResourcesTarget(@NotNull JpsModule module, @NotNull ResourcesTargetType targetType) {
@@ -115,8 +114,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   }
 
   @Override
-  public void writeConfiguration(@NotNull ProjectDescriptor projectDescriptor, @NotNull PrintWriter out) {
-    HashStream64 hash = Hashing.komihash5_0().hashStream();
+  public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
     PathRelativizerService relativizer = projectDescriptor.dataManager.getRelativizer();
 
     List<ResourceRootDescriptor> roots = projectDescriptor.getBuildRootIndex().getTargetRoots(this, null);
@@ -126,7 +124,5 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
       hash.putString(root.getPackagePrefix());
     }
     hash.putInt(roots.size());
-
-    out.write(Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX));
   }
 }

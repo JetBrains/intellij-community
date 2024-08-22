@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.HashSink;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -43,7 +43,7 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
 
   protected abstract String getFullPath();
 
-  public void writeConfiguration(@NotNull HashStream64 hash, PathRelativizerService relativizer) {
+  public void writeConfiguration(@NotNull HashSink hash, PathRelativizerService relativizer) {
     hash.putString(relativizer.toRelative(getFullPath()));
     hash.putString(relativizer.toRelative(myDestinationInfo.getOutputPath()));
   }

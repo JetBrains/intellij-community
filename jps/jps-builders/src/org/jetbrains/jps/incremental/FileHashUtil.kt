@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental
 
-import com.dynatrace.hash4j.hashing.HashStream64
+import com.dynatrace.hash4j.hashing.HashSink
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtilRt
@@ -15,11 +15,15 @@ import java.nio.file.StandardOpenOption
 
 @Internal
 @Throws(IOException::class)
-fun getFileHash(file: Path): Long = getFileHash(file, Hashing.komihash5_0().hashStream())
+fun getFileHash(file: Path): Long {
+  val hash = Hashing.komihash5_0().hashStream()
+  getFileHash(file, hash)
+  return hash.asLong
+}
 
 @Internal
 @Throws(IOException::class)
-fun getFileHash(file: Path, hash: HashStream64): Long {
+fun getFileHash(file: Path, hash: HashSink) {
   FileChannel.open(file, StandardOpenOption.READ).use { channel ->
     val fileSize = channel.size()
     val buffer = ByteBuffer.allocate(256 * 1024)
@@ -36,13 +40,12 @@ fun getFileHash(file: Path, hash: HashStream64): Long {
       offset += readBytes
     }
     hash.putLong(fileSize)
-    return hash.asLong
   }
 }
 
 /** path must be absolute ([Path.toAbsolutePath]), normalized ([Path.normalize]) and system-independent */
 @Internal
-fun normalizedPathHashCode(path: String, hash: HashStream64) {
+fun normalizedPathHashCode(path: String, hash: HashSink) {
   if (path.isEmpty()) {
     hash.putInt(0)
     return

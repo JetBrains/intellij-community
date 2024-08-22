@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.dynatrace.hash4j.hashing.HashStream64;
-import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -11,10 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.BuildTargetRegistry;
-import org.jetbrains.jps.builders.ModuleBasedTarget;
-import org.jetbrains.jps.builders.TargetOutputIndex;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -34,7 +31,10 @@ import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ import static org.jetbrains.jps.incremental.FileHashUtilKt.normalizedPathHashCod
  * Describes a step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module.
  * These targets are built by {@link ModuleLevelBuilder} and they are the only targets that can have circular dependencies on each other.
  */
-public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {
+public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> implements BuildTargetHashSupplier {
   private static final Logger LOG = Logger.getInstance(ModuleBuildTarget.class);
 
   public static final Boolean REBUILD_ON_DEPENDENCY_CHANGE = Boolean.valueOf(
@@ -173,17 +173,15 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   }
 
   @Override
-  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
+  public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
     JpsModule module = getModule();
-    PathRelativizerService relativizer = pd.dataManager.getRelativizer();
+    PathRelativizerService relativizer = projectDescriptor.dataManager.getRelativizer();
 
     StringBuilder logBuilder = LOG.isDebugEnabled() ? new StringBuilder() : null;
 
-    HashStream64 hash = Hashing.komihash5_0().hashStream();
-
     getDependenciesFingerprint(logBuilder, relativizer, hash);
 
-    List<JavaSourceRootDescriptor> roots = pd.getBuildRootIndex().getTargetRoots(this, null);
+    List<JavaSourceRootDescriptor> roots = projectDescriptor.getBuildRootIndex().getTargetRoots(this, null);
     for (JavaSourceRootDescriptor root : roots) {
       String path = relativizer.toRelative(root.rootFile.toString());
       if (logBuilder != null) {
@@ -216,7 +214,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       hash.putString(bytecodeTarget);
     }
 
-    CompilerEncodingConfiguration encodingConfig = pd.getEncodingConfiguration();
+    CompilerEncodingConfiguration encodingConfig = projectDescriptor.getEncodingConfiguration();
     String encoding = encodingConfig.getPreferredModuleEncoding(module);
     if (encoding == null) {
       hash.putInt(0);
@@ -228,13 +226,11 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       hash.putString(encoding);
     }
 
-    String hashString = Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX);
-    out.write(hashString);
     if (logBuilder == null) {
       return;
     }
 
-    Path configurationTextFile = pd.getTargetsState().getDataPaths().getTargetDataRoot(this).toPath().resolve("config.dat.debug.txt");
+    Path configurationTextFile = projectDescriptor.getTargetsState().getDataPaths().getTargetDataRoot(this).toPath().resolve("config.dat.debug.txt");
     @NonNls String oldText;
     try {
       oldText = Files.readString(configurationTextFile);
@@ -244,9 +240,9 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     }
     String newText = logBuilder.toString();
     if (!newText.equals(oldText)) {
-      if (oldText != null) {
+      if (oldText != null && hash instanceof HashStream64) {
         LOG.debug("Configuration differs from the last recorded one for " + getPresentableName() + ".\nRecorded configuration:\n" + oldText +
-                  "\nCurrent configuration (hash=" + hashString + "):\n" + newText);
+                  "\nCurrent configuration (hash=" + ((HashStream64)hash).getAsLong() + "):\n" + newText);
       }
       try {
         Files.createDirectories(configurationTextFile.getParent());
@@ -260,7 +256,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
   private void getDependenciesFingerprint(@Nullable StringBuilder logBuilder,
                                           @NotNull PathRelativizerService relativizer,
-                                          @NotNull HashStream64 hash) {
+                                          @NotNull HashSink hash) {
     if (!REBUILD_ON_DEPENDENCY_CHANGE) {
       hash.putInt(0);
       return;
@@ -282,7 +278,9 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       if (logBuilder != null) {
         logBuilder.append(path);
         // not a content hash, but the current hash value
-        logBuilder.append(": ").append(hash.getAsLong());
+        if (hash instanceof HashStream64) {
+          logBuilder.append(": ").append((((HashStream64)hash).getAsLong()));
+        }
         logBuilder.append("\n");
       }
       normalizedPathHashCode(path, hash);
@@ -290,7 +288,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     hash.putInt(roots.size());
   }
 
-  private static void getContentHash(Path file, HashStream64 hash) {
+  private static void getContentHash(Path file, HashSink hash) {
     if (!ProjectStamps.TRACK_LIBRARY_CONTENT) {
       hash.putInt(0);
       return;

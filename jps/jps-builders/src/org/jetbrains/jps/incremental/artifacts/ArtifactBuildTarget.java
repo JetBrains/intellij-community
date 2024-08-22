@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts;
 
-import com.dynatrace.hash4j.hashing.HashStream64;
-import com.dynatrace.hash4j.hashing.Hashing;
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,11 +21,10 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.util.*;
 
 @ApiStatus.Internal
-public final class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
+public final class ArtifactBuildTarget extends ArtifactBasedBuildTarget implements BuildTargetHashSupplier {
   public ArtifactBuildTarget(@NotNull JpsArtifact artifact) {
     super(ArtifactBuildTargetType.INSTANCE, artifact);
   }
@@ -62,18 +60,16 @@ public final class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   }
 
   @Override
-  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
-    PathRelativizerService relativizer = pd.dataManager.getRelativizer();
+  public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
+    PathRelativizerService relativizer = projectDescriptor.dataManager.getRelativizer();
     String outputPath = getArtifact().getOutputPath();
-    HashStream64 hash = Hashing.komihash5_0().hashStream();
     hash.putString(Strings.isEmpty(outputPath) ? "" : relativizer.toRelative(outputPath));
-    BuildRootIndex rootIndex = pd.getBuildRootIndex();
+    BuildRootIndex rootIndex = projectDescriptor.getBuildRootIndex();
     List<ArtifactRootDescriptor> targetRoots = rootIndex.getTargetRoots(this, null);
     for (ArtifactRootDescriptor descriptor : targetRoots) {
       descriptor.writeConfiguration(hash, relativizer);
     }
     hash.putInt(targetRoots.size());
-    out.write(Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX));
   }
 
   @Override

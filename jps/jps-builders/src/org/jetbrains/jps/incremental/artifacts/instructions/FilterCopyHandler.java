@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.openapi.util.io.FileFilters;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ public class FilterCopyHandler extends FileCopyingHandler {
   }
 
   @Override
-  public void writeConfiguration(@NotNull HashStream64 hash) { }
+  public void writeConfiguration(@NotNull HashSink hash) { }
 
   @Override
   public @NotNull FileFilter createFileFilter() {

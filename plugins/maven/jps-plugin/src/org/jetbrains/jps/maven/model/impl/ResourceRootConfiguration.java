@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
-import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,7 +21,7 @@ public final class ResourceRootConfiguration extends FilePattern {
   @Attribute("filtered")
   public boolean isFiltered;
 
-  public void computeConfigurationHash(@NotNull HashStream64 hash) {
+  public void computeConfigurationHash(@NotNull HashSink hash) {
     hash.putString(directory);
     if (targetPath == null) {
       hash.putInt(-1);
