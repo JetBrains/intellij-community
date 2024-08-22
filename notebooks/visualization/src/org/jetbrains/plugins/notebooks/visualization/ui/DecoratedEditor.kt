@@ -62,15 +62,9 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
 
           val selectedCell = getCellViewByPoint(point)?.cell ?: return
 
-          if (event.area == EditorMouseEventArea.EDITING_AREA && event.inlay == null && event.collapsedFoldRegion == null) {
-            editor.setMode(NotebookEditorMode.EDIT)
-          }
-          else {
-            editor.setMode(NotebookEditorMode.COMMAND)
-          }
-          if (event.area != EditorMouseEventArea.EDITING_AREA)
+          if (event.area != EditorMouseEventArea.EDITING_AREA) {
             mousePressed(selectedCell.interval, event.isCtrlPressed(), event.isShiftPressed())
-
+          }
         }
       }
     }, this)

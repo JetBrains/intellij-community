@@ -189,13 +189,17 @@ class EditorCell(
   }
 
   fun switchToEditMode() = manager.update { ctx ->
-    mode = NotebookEditorMode.EDIT
-    view?.switchToEditMode(ctx)
+    if (mode != NotebookEditorMode.EDIT) {
+      mode = NotebookEditorMode.EDIT
+      view?.switchToEditMode(ctx)
+    }
   }
 
   fun switchToCommandMode() = manager.update { ctx ->
-    mode = NotebookEditorMode.COMMAND
-    view?.switchToCommandMode(ctx)
+    if (mode != NotebookEditorMode.COMMAND) {
+      mode = NotebookEditorMode.COMMAND
+      view?.switchToCommandMode(ctx)
+    }
   }
 
   fun requestCaret() {

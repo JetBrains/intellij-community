@@ -14,10 +14,14 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
+import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.setMode
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import org.jetbrains.plugins.notebooks.visualization.UpdateContext
 import java.awt.Dimension
 import java.awt.Rectangle
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import kotlin.text.lines
 
 class TextEditorCellViewComponent(
@@ -33,6 +37,20 @@ class TextEditorCellViewComponent(
   // todo: must be removed once we have a robust way to avoid getting interval for an invalid/deleted cell
   private val safeInterval: NotebookCellLines.Interval?
     get() = cell.intervalPointer.get()
+
+  // [MouseListener] is used instead of [EditorMouseListener] because the listener needs to be fired after caret positions were updated.
+  private val mouseListener = object : MouseAdapter() {
+    override fun mousePressed(e: MouseEvent) {
+      if (editor.xyToLogicalPosition(e.point).line in cell.interval.lines) {
+        editor.setMode(NotebookEditorMode.EDIT)
+        cell.switchToEditMode()
+      }
+    }
+  }
+
+  init {
+    editor.contentComponent.addMouseListener(mouseListener)
+  }
 
   override fun updateGutterIcons(gutterAction: AnAction?) {
     disposeExistingHighlighter()
@@ -55,6 +73,8 @@ class TextEditorCellViewComponent(
 
   override fun doDispose() {
     disposeExistingHighlighter()
+    presentationToInlay.values.forEach { Disposer.dispose(it) }
+    editor.contentComponent.removeMouseListener(mouseListener)
   }
 
   private fun disposeExistingHighlighter() {
