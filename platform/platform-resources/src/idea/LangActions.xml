@@ -84,6 +84,10 @@
     </group>
 
     <!-- Edit -->
+    <reference ref="EditorIndentSelection">
+      <add-to-group group-id="EditSmartGroup" anchor="before" relative-to-action="EditorUnindentSelection"/>
+    </reference>
+
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
       <add-to-group group-id="CopyReferencePopupGroup" anchor="after" relative-to-action="CopyExternalReferenceGroup"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>

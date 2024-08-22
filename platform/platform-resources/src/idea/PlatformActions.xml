@@ -564,7 +564,6 @@
           <reference ref="EditorReverseLines"/>
           <reference ref="EditorTranspose"/>
           <separator/>
-          <reference ref="EditorIndentSelection"/>
           <reference ref="EditorUnindentSelection"/>
           <group id="ConvertIndentsGroup" popup="true">
             <action id="ConvertIndentsToSpaces" class="com.intellij.openapi.editor.actions.ConvertIndentsToSpacesAction"/>
