@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
@@ -59,13 +61,17 @@ public final class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
 
   @Override
   public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
-    final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
+    PathRelativizerService relativizer = pd.dataManager.getRelativizer();
     String outputPath = getArtifact().getOutputPath();
-    out.println(Strings.isNotEmpty(outputPath) ? relativizer.toRelative(outputPath) : "");
-    final BuildRootIndex rootIndex = pd.getBuildRootIndex();
-    for (ArtifactRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
-      descriptor.writeConfiguration(out, relativizer);
+    HashStream64 hash = Hashing.komihash5_0().hashStream();
+    hash.putString(Strings.isEmpty(outputPath) ? "" : relativizer.toRelative(outputPath));
+    BuildRootIndex rootIndex = pd.getBuildRootIndex();
+    List<ArtifactRootDescriptor> targetRoots = rootIndex.getTargetRoots(this, null);
+    for (ArtifactRootDescriptor descriptor : targetRoots) {
+      descriptor.writeConfiguration(hash, relativizer);
     }
+    hash.putInt(targetRoots.size());
+    out.write(Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX));
   }
 
   @Override

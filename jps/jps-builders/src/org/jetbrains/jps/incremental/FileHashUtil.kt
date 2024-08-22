@@ -41,7 +41,8 @@ fun getFileHash(file: Path, hash: HashStream64): Long {
 }
 
 /** path must be absolute ([Path.toAbsolutePath]), normalized ([Path.normalize]) and system-independent */
-internal fun normalizedPathHashCode(path: String, hash: HashStream64) {
+@Internal
+fun normalizedPathHashCode(path: String, hash: HashStream64) {
   if (path.isEmpty()) {
     hash.putInt(0)
     return
