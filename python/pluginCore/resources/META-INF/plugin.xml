@@ -861,6 +861,15 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
   </extensions>
 
+  <actions resource-bundle="messages.PyBundle">
+    <group id="PyPackageToolwindowContext">
+      <action id="PyInstallPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallPackageAction"/>
+      <action id="PyDeletePackage" class="com.jetbrains.python.packaging.toolwindow.actions.DeletePackageAction"/>
+      <action id="PyChangeVersionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.ChangeVersionPackageAction"/>
+      <action id="PyUpdateToLatestPackage" class="com.jetbrains.python.packaging.toolwindow.actions.UpdatePackageToLatestAction"/>
+    </group>
+  </actions>
+
   <actions>
     <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"
             icon="AllIcons.Debugger.ForceStepInto"/>
@@ -907,6 +916,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <action id="CollapsePythonTypeAnnotations" class="com.jetbrains.python.actions.PyCollapseTypeAnnotationsAction"/>
     <action id="ExpandPythonTypeAnnotations" class="com.jetbrains.python.actions.PyExpandTypeAnnotationsAction"/>
 
+
     <group id="PyPackagingMenu">
       <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
@@ -914,12 +924,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <group id="PyPackageToolwindowContext">
-      <action id="PyInstallPackage" class="com.jetbrains.python.packaging.toolwindow.actions.InstallPackageAction"/>
-      <action id="PyDeletePackage" class="com.jetbrains.python.packaging.toolwindow.actions.DeletePackageAction"/>
-      <action id="PyChangeVersionPackage" class="com.jetbrains.python.packaging.toolwindow.actions.ChangeVersionPackageAction"/>
-      <action id="PyUpdateToLatestPackage" class="com.jetbrains.python.packaging.toolwindow.actions.UpdatePackageToLatestAction"/>
-    </group>
 
     <action id="PythonGenerateDictionaries" class="com.jetbrains.python.spellchecker.PythonSpellcheckerGenerateDictionariesAction"
             internal="true">

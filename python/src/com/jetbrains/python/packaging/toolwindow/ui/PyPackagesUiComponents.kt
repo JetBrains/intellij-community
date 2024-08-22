@@ -16,9 +16,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
@@ -44,12 +44,12 @@ object PyPackagesUiComponents {
     get() = dataContext.progressBar
 
 
-  fun createAvailableVersionsPopup(selectedPackage: DisplayablePackage, details: PythonPackageDetails, project: Project, controller: PyPackagingToolWindowPanel): ListPopup {
+  fun createAvailableVersionsPopup(selectedPackage: DisplayablePackage, details: PythonPackageDetails, project: Project): ListPopup {
     return JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<String>(null, details.availableVersions) {
       override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
         return doFinalStep {
           val specification = selectedPackage.repository.createPackageSpecification(selectedPackage.name, selectedValue)
-          controller.packagingScope.launch(Dispatchers.IO) {
+          PyPackageCoroutine.getIoScope(project).launch(Dispatchers.IO) {
             project.service<PyPackagingToolWindowService>().installPackage(specification)
           }
         }

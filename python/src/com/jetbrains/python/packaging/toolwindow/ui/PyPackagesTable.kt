@@ -20,6 +20,7 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.ExpandResultNode
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,6 +41,8 @@ internal class PyPackagesTable<T : DisplayablePackage>(
   tablesView: PyPackagingTablesView,
   val controller: PyPackagingToolWindowPanel,
 ) : JBTable(model) {
+  private val scope = PyPackageCoroutine.getIoScope(project)
+
   private var lastSelectedRow = -1
   internal var hoveredColumn = -1
 
@@ -90,15 +93,15 @@ internal class PyPackagesTable<T : DisplayablePackage>(
         val selectedPackage = this@PyPackagesTable.items[hoveredRow]
 
         if (selectedPackage is InstallablePackage) {
-          controller.packagingScope.launch(Dispatchers.IO) {
+          scope.launch(Dispatchers.IO) {
             val details = service.detailsForPackage(selectedPackage)
             withContext(Dispatchers.Main) {
-              PyPackagesUiComponents.createAvailableVersionsPopup(selectedPackage, details, project, controller).show(RelativePoint(e))
+              PyPackagesUiComponents.createAvailableVersionsPopup(selectedPackage, details, project).show(RelativePoint(e))
             }
           }
         }
         else if (selectedPackage is InstalledPackage && selectedPackage.canBeUpdated) {
-          controller.packagingScope.launch(Dispatchers.IO) {
+          scope.launch(Dispatchers.IO) {
             val specification = selectedPackage.repository.createPackageSpecification(selectedPackage.name,
                                                                                       selectedPackage.nextVersion!!.presentableText)
             project.service<PyPackagingToolWindowService>().updatePackage(specification)

@@ -21,8 +21,6 @@ internal class InstallPackageAction : DumbAwareAction() {
     val pkg = e.selectedPackage as? InstallablePackage ?: return
 
     val service = PyPackagingToolWindowService.getInstance(project)
-    val controller = service.toolWindowPanel ?: return
-
 
     val progressBar = e.progressBar
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
@@ -30,7 +28,7 @@ internal class InstallPackageAction : DumbAwareAction() {
       try {
         val details = service.detailsForPackage(pkg)
         withContext(Dispatchers.Main) {
-          val popup = PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project, controller)
+          val popup = PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project)
           popup.show(RelativePoint(e.inputEvent as MouseEvent))
         }
       }

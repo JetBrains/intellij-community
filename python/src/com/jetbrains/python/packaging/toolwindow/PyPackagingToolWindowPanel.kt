@@ -31,16 +31,15 @@ import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.common.PythonLocalPackageSpecification
-import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonVcsPackageSpecification
+import com.jetbrains.python.packaging.toolwindow.details.PyPackageDescriptionController
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackageDescriptionController
+import com.jetbrains.python.packaging.toolwindow.packages.PyPackagesListController
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.pythonSdk
@@ -60,17 +59,19 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     Disposer.register(this, it)
   }
 
+  private val packageListController = PyPackagesListController(project, controller = this).also {
+    Disposer.register(this, it)
+  }
+
+
   internal val packagingScope = PyPackageCoroutine.getIoScope(project)
 
   private var selectedPackage: DisplayablePackage? = null
-  private var selectedPackageDetails: PythonPackageDetails? = null
 
   private val searchTextField: SearchTextField
   private val searchAlarm: SingleAlarm
 
 
-  private val packageListPanel: JPanel
-  private val tablesView: PyPackagingTablesView
   private val noPackagePanel = JBPanelWithEmptyText().apply { emptyText.text = message("python.toolwindow.packages.description.panel.placeholder") }
 
   // layout
@@ -96,18 +97,6 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     val service = project.service<PyPackagingToolWindowService>()
     Disposer.register(service, this)
     withEmptyText(message("python.toolwindow.packages.no.interpreter.text"))
-
-
-
-
-
-    packageListPanel = JPanel().apply {
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      alignmentX = LEFT_ALIGNMENT
-      background = UIUtil.getListBackground()
-    }
-
-    tablesView = PyPackagingTablesView(project, packageListPanel, this)
 
     leftPanel = createLeftPanel(service)
 
@@ -204,7 +193,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
   }
 
   private fun createLeftPanel(service: PyPackagingToolWindowService): JComponent {
-    if (project.modules.size == 1) return ScrollPaneFactory.createScrollPane(packageListPanel, true)
+    if (project.modules.size == 1) return packageListController.component
 
     val left = JPanel(BorderLayout()).apply {
       border = BorderFactory.createEmptyBorder()
@@ -253,7 +242,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
     modulePanel.add(moduleList)
     left.add(ScrollPaneFactory.createScrollPane(modulePanel, true), BorderLayout.WEST)
-    left.add(ScrollPaneFactory.createScrollPane(packageListPanel, true), BorderLayout.CENTER)
+    left.add(packageListController.component, BorderLayout.CENTER)
 
     return left
   }
@@ -341,7 +330,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
   fun packageSelected(selectedPackage: DisplayablePackage) {
     descriptionController.setPackage(pyPackage = selectedPackage)
     val service = project.service<PyPackagingToolWindowService>()
-    showHeaderForPackage(selectedPackage)
+    descriptionController.setPackage(selectedPackage)
 
     this.selectedPackage = selectedPackage
     packagingScope.launch {
@@ -349,7 +338,6 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
       withContext(Dispatchers.EDT) {
         descriptionController.setPackageDetails(packageDetails)
-        selectedPackageDetails = packageDetails
 
         if (splitter?.secondComponent != rightPanel) {
           splitter!!.secondComponent = rightPanel
@@ -360,17 +348,13 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
 
   fun showSearchResult(installed: List<InstalledPackage>, repoData: List<PyPackagesViewData>) {
-    tablesView.showSearchResult(installed, repoData)
+    packageListController.showSearchResult(installed, repoData)
   }
 
   fun resetSearch(installed: List<InstalledPackage>, repos: List<PyPackagesViewData>) {
-    tablesView.resetSearch(installed, repos)
+    packageListController.resetSearch(installed, repos)
   }
 
-
-  private fun showHeaderForPackage(selectedPackage: DisplayablePackage) {
-    descriptionController.setPackage(selectedPackage)
-  }
 
   fun setEmpty() {
     splitter?.secondComponent = noPackagePanel

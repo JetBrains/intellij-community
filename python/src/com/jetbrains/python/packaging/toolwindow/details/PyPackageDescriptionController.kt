@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.packaging.toolwindow.ui
+package com.jetbrains.python.packaging.toolwindow.details
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
@@ -21,13 +21,14 @@ import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.toolwindow.PyPackagingJcefHtmlPanel
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.actions.DeletePackageAction
 import com.jetbrains.python.packaging.toolwindow.actions.InstallPackageAction
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
+import com.jetbrains.python.packaging.toolwindow.ui.CustomListCellRenderer
+import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.CUSTOM_PROGRESS_BAR_DATA_CONTEXT
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +68,9 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
       packageDetails ?: return@afterChange
 
       PyPackageCoroutine.launch(project, Dispatchers.Main) {
-        service.getHtml(packageDetails)
+        val render = PyPackageDetailsHtmlRender(project, service.currentSdk)
+        val html = render.getHtml(packageDetails)
+        panel.setHtml(html)
       }
     }
   }
@@ -142,7 +145,7 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     val details = selectedPackageDetails.get() ?: return
     val newVersionSpec = details.toPackageSpecification(newVersion)
     val pyPackagingToolWindowService = PyPackagingToolWindowService.getInstance(project)
-    PyPackageCoroutine.launch(project) {
+    PyPackageCoroutine.launch(project, Dispatchers.IO) {
       pyPackagingToolWindowService.installPackage(newVersionSpec)
     }
   }

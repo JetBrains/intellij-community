@@ -1,21 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.toolwindow
 
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -24,8 +19,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -36,16 +29,9 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
-import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel.Companion.NO_DESCRIPTION
 import com.jetbrains.python.packaging.toolwindow.model.*
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.run.applyHelperPackageToPythonPath
-import com.jetbrains.python.run.buildTargetedCommandLine
-import com.jetbrains.python.run.prepareHelperScriptExecution
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.sdkFlavor
 import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
@@ -62,6 +48,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   private val invalidRepositories: List<PyInvalidRepositoryViewData>
     get() = service<PyPackageRepositories>().invalidRepositories.map(::PyInvalidRepositoryViewData)
+
 
   fun initialize(toolWindowPanel: PyPackagingToolWindowPanel) {
     this.toolWindowPanel = toolWindowPanel
@@ -84,7 +71,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     if (query.isNotEmpty()) {
       searchJob?.cancel()
       searchJob = serviceScope.launch {
-
         val installed = installedPackages.values.filter { pkg ->
           when {
             pkg.instance is CondaPackage && !pkg.instance.installedWithPip -> StringUtil.containsIgnoreCase(pkg.name, query)
@@ -137,10 +123,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       manager = PythonPackageManager.forSdk(project, currentSdk!!)
       manager.repositoryManager.initCaches()
       manager.reloadPackages()
-      refreshInstalledPackages()
-      withContext(Dispatchers.Main) {
-        handleSearch("")
-      }
     }
     withContext(Dispatchers.Main) {
       toolWindowPanel?.contentVisible = currentSdk != null
@@ -156,9 +138,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       override fun packagesChanged(sdk: Sdk) {
         if (currentSdk == sdk) serviceScope.launch(Dispatchers.IO) {
           refreshInstalledPackages()
-          withContext(Dispatchers.Main) {
-            handleSearch(currentQuery)
-          }
         }
       }
     })
@@ -189,13 +168,20 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   suspend fun refreshInstalledPackages() {
     val packages = manager.installedPackages.map {
       val repository = installedPackages.values.find { pkg -> pkg.name == it.name }?.repository ?: PyEmptyPackagePackageRepository
-
-
       InstalledPackage(it, repository, null)
     }
+
     installedPackages = packages.associateBy { it.name }
 
+    withContext(Dispatchers.Main) {
+      handleSearch(query = currentQuery)
+    }
+
     invokeUpdateLatestVersion()
+
+    withContext(Dispatchers.Main) {
+      handleSearch(query = currentQuery)
+    }
   }
 
   private suspend fun invokeUpdateLatestVersion() {
@@ -248,92 +234,12 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     return PyPackagesViewData(repository, shownPackages, exactMatch, packageNames.size - shownPackages.size)
   }
 
-  suspend fun getHtml(packageDetails: PythonPackageDetails) {
-    runCatching {
-      with(packageDetails) {
-        when {
-          !description.isNullOrEmpty() -> convertToHTML(descriptionContentType, description!!)
-          !summary.isNullOrEmpty() -> wrapHtml(summary!!)
-          else -> NO_DESCRIPTION
-        }
-      }
-    }.getOrElse {
-      thisLogger().info(it)
-      message("conda.packaging.error.rendering.description")
-    }
-  }
-
-  suspend fun convertToHTML(contentType: String?, description: String): String {
-    return withContext(Dispatchers.IO) {
-      when (contentType?.split(';')?.firstOrNull()?.trim()) {
-        "text/markdown" -> markdownToHtml(description)
-        "text/x-rst", "" -> rstToHtml(description, currentSdk!!)
-        else -> description
-      }
-    }
-  }
-
-  private suspend fun rstToHtml(text: String, sdk: Sdk): String {
-    val localSdk = PythonSdkType.findLocalCPythonForSdk(sdk)
-    if (localSdk == null) return wrapHtml("<p>${message("python.toolwindow.packages.documentation.local.interpreter")}</p>")
-
-    val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(localSdk, project)
-    val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
-    val pythonExecution = prepareHelperScriptExecution(PythonHelper.REST_RUNNER, helpersAwareTargetRequest)
-
-    // todo[akniazev]: this workaround should can be removed when PY-57134 is fixed
-    val helperLocation = if (localSdk.sdkFlavor.getLanguageLevel(localSdk).isPython2) "py2only" else "py3only"
-    val path = PythonHelpersLocator.findPathStringInHelpers(helperLocation)
-    pythonExecution.applyHelperPackageToPythonPath(listOf(path), helpersAwareTargetRequest)
-
-    pythonExecution.addParameter("rst2html_no_code")
-    val targetProgressIndicator = TargetProgressIndicator.EMPTY
-    val targetEnvironment = targetEnvironmentRequest.prepareEnvironment(targetProgressIndicator)
-
-    targetEnvironment.uploadVolumes.entries.forEach { (_, value) ->
-      value.upload(".", targetProgressIndicator)
-    }
-
-    val targetedCommandLine = pythonExecution.buildTargetedCommandLine(targetEnvironment, localSdk, emptyList())
-
-    val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-    val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
-
-    val commandLine = targetedCommandLine.collectCommandsSynchronously()
-    val commandLineString = commandLine.joinToString(" ")
-
-    val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
-
-    val output = withBackgroundProgress(project, message("python.toolwindow.packages.converting.description.progress"), cancellable = true) {
-      reportRawProgress {
-        val processInput = handler.processInput
-        processInput.use {
-          processInput.write(text.toByteArray())
-        }
-        handler.runProcess(10 * 60 * 1000)
-      }
-    }
-
-    return when {
-      output.checkSuccess(thisLogger()) -> output.stdout
-      else -> wrapHtml("<p>${message("python.toolwindow.packages.rst.parsing.failed")}</p>")
-    }
-  }
-
-  private fun markdownToHtml(text: String): String {
-    val mdHtml = PyPIPackageRanking::class.java.getResource("/packaging/md.template.html")?.readText() ?: error("Cannot get md template")
-    val quotedText = text.replace("`", "\\`")
-
-    val prepared = mdHtml.replace("{MD_TEXT}", "\n" + quotedText)
-    return prepared
-  }
 
   override fun dispose() {
     searchJob?.cancel()
     serviceScope.cancel()
   }
 
-  fun wrapHtml(html: String): String = "<html><head></head><body><p>$html</p></body></html>"
 
   fun reloadPackages() {
     serviceScope.launch(Dispatchers.IO) {
@@ -342,10 +248,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
           manager.reloadPackages()
           manager.repositoryManager.refreshCashes()
           refreshInstalledPackages()
-
-          withContext(Dispatchers.Main) {
-            handleSearch("")
-          }
         }
       }
     }

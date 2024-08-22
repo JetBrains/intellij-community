@@ -22,14 +22,13 @@ internal class ChangeVersionPackageAction : DumbAwareAction() {
     val project = e.project ?: return
     val pkg = e.selectedPackage as? InstalledPackage ?: return
     val service = PyPackagingToolWindowService.getInstance(project)
-    val controller = service.toolWindowPanel ?: return
     val progressBar = e.progressBar
     PyPackageCoroutine.getIoScope(project).launch {
       progressBar?.isVisible = true
       try {
         val details = service.detailsForPackage(pkg)
         withContext(Dispatchers.EDT) {
-          PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project, controller).show(
+          PyPackagesUiComponents.createAvailableVersionsPopup(pkg, details, project).show(
             RelativePoint(e.inputEvent as MouseEvent))
         }
       }
