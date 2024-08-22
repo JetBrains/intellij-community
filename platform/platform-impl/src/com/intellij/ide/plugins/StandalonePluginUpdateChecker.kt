@@ -147,7 +147,7 @@ open class StandalonePluginUpdateChecker(
     } else {
       try {
         updateStatus = checkUpdatesInMainRepository()
-        for (host in RepositoryHelper.getPluginHosts().filterNotNull()) {
+        for (host in RepositoryHelper.getCustomPluginRepositoryHosts()) {
           val customUpdateStatus = checkUpdatesInCustomRepository(host)
           updateStatus = updateStatus.mergeWith(customUpdateStatus)
         }
