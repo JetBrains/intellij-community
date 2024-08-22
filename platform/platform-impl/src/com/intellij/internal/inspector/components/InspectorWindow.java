@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
@@ -120,6 +121,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.add(new ShowDataContextAction());
     actions.addSeparator();
     actions.add(new MyNavigateAction());
+    actions.addSeparator();
+    actions.add(new ShowAccessibilityIssuesAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
     toolbar.setTargetComponent(getRootPane());
@@ -430,6 +433,45 @@ public final class InspectorWindow extends JDialog implements Disposable {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
+    }
+  }
+
+  private final class ShowAccessibilityIssuesAction extends MyTextAction {
+    private final boolean isAccessibilityAuditEnabled = Registry.is("ui.inspector.accessibility.audit", false);
+    private boolean showAccessibilityIssues = false;
+
+    private ShowAccessibilityIssuesAction() {
+      super(InternalActionsBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      showAccessibilityIssues = !showAccessibilityIssues;
+
+      updateTreeWithAccessibilityStatus();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) { e.getPresentation().setEnabledAndVisible(isAccessibilityAuditEnabled); }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.BGT; }
+
+    private void updateTreeWithAccessibilityStatus() {
+      TreeUtil.visitVisibleRows(myHierarchyTree, path -> {
+        Object node = path.getLastPathComponent();
+        if (node instanceof HierarchyTree.ComponentNode componentNode) {
+          if (showAccessibilityIssues){
+            componentNode.runAccessibilityTests();
+          } else {
+            componentNode.clearAccessibilityTestsResult();
+          }
+        }
+
+        return TreeVisitor.Action.CONTINUE;
+      });
+
+      myHierarchyTree.repaint();
     }
   }
 

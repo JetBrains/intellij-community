@@ -150,6 +150,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     private final Accessible myAccessible;
     private final String myName;
     private final boolean isAccessibleNode;
+    private String accessibilityTestResult;
 
     String myText;
 
@@ -184,6 +185,10 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       TreeUtil.addChildrenTo(node, prepareComponentChildren(component));
       return node;
     }
+
+    public void runAccessibilityTests() { this.accessibilityTestResult = "pass"; }
+
+    public void clearAccessibilityTestsResult() { this.accessibilityTestResult = null; }
 
     private ComponentNode(@Nullable Component component,
                           @Nullable Accessible accessible,
@@ -341,11 +346,17 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
             append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           }
+
           componentNode.setText(toString());
           setIcon(Icons.findIconFor(component));
         }
         else {
           append(componentNode.myName);
+        }
+
+        if (componentNode.accessibilityTestResult != null) {
+          append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(componentNode.accessibilityTestResult, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
       }
       if (isRenderer) {
