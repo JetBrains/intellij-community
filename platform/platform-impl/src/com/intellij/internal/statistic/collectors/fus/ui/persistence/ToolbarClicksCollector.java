@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.openapi.actionSystem.ActionUiKind;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,8 +30,8 @@ public final class ToolbarClicksCollector extends CounterUsagesCollector {
   }
 
   public static void record(@NotNull AnAction action, String place, @NotNull InputEvent inputEvent, @NotNull DataContext dataContext) {
-    AnActionEvent event = AnActionEvent.createFromInputEvent(
-      inputEvent, place, null, dataContext, false, true);
+    AnActionEvent event = AnActionEvent.createEvent(
+      dataContext, null, place, ActionUiKind.TOOLBAR, inputEvent);
     ActionsCollectorImpl.record(CLICKED, event.getProject(), action, event, (list) -> Unit.INSTANCE);
   }
 }

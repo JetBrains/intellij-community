@@ -202,9 +202,10 @@ public class RecentProjectPanel extends JPanel {
 
   private @NotNull AnAction performSelectedAction(@NotNull InputEvent event, AnAction selection) {
     String actionPlace = UIUtil.uiParents(myList, true).filter(FlatWelcomeFrame.class).isEmpty() ? ActionPlaces.POPUP : ActionPlaces.WELCOME_SCREEN;
-    AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(
-      event, actionPlace, selection.getTemplatePresentation(),
-      DataManager.getInstance().getDataContext(myList), false, false);
+    DataContext dataContext = DataManager.getInstance().getDataContext(myList);
+    AnActionEvent actionEvent = AnActionEvent.createEvent(
+      dataContext, selection.getTemplatePresentation().clone(),
+      actionPlace, ActionUiKind.NONE, event);
     ActionUtil.performActionDumbAwareWithCallbacks(selection, actionEvent);
     return selection;
   }

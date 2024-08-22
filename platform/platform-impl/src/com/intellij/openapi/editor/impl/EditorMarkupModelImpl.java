@@ -1625,7 +1625,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
         private void showInspectionHint(MouseEvent me) {
           DataContext context = ActionToolbar.getDataContextFor(TrafficLightButton.this);
-          AnActionEvent event = AnActionEvent.createFromInputEvent(me, place, presentation, context, false, true);
+          AnActionEvent event = AnActionEvent.createEvent(context, presentation, place, ActionUiKind.TOOLBAR, me);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
             ActionUtil.performActionDumbAwareWithCallbacks(action, event);
             ActionsCollector.getInstance().record(event.getProject(), action, event, null);

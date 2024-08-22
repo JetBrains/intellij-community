@@ -41,7 +41,7 @@ class PreviewZoomIndicatorView(private val preview: MarkdownJCEFHtmlPanel) : JPa
 
   internal class SettingsButton(settingsAction: SettingsAction) : ActionButton(settingsAction, settingsAction.templatePresentation.clone(), ActionPlaces.POPUP, JBUI.size(22, 22)) {
     override fun performAction(e: MouseEvent?) {
-      val event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, dataContext, false, true)
+      val event = AnActionEvent.createEvent(dataContext, myPresentation, myPlace, ActionUiKind.TOOLBAR, e)
       ActionUtil.performDumbAwareWithCallbacks(myAction, event) { actionPerformed(event) }
     }
     override fun isShowing() = true
@@ -68,9 +68,8 @@ class PreviewZoomIndicatorView(private val preview: MarkdownJCEFHtmlPanel) : JPa
 
   private val resetLink = ActionManager.getInstance().getAction("Markdown.Preview.ResetFontSize").run {
     val dataContext = SimpleDataContext.builder().add(PREVIEW_JCEF_PANEL, WeakReference(preview)).build()
-    val event = AnActionEvent.createFromInputEvent(null, ActionPlaces.POPUP,
-                                                   null, dataContext,
-                                                   false, true)
+    val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.TOOLBAR,
+                                          ActionUiKind.TOOLBAR, null)
     update(event)
     fontSizeLabel.addPropertyChangeListener {
       if (it.propertyName == "text") {
